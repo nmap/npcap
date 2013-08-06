@@ -1,0 +1,90 @@
+;-------------------------------------------------------------------------
+; NPF6X.INF -- NPF6X NDIS Protocol Driver
+;
+; Copyright (c) 2013, InSecure.Com, LLC.
+;-------------------------------------------------------------------------
+[version]
+Signature   = "$Windows NT$"
+Class       = NetTrans
+ClassGUID   = {4d36e975-e325-11ce-bfc1-08002be10318}
+Provider    = %Insecure%
+DriverVer   = 07/14/2013,1.0.0000.0
+
+[Manufacturer]
+%Insecure%=Insecure,NTx86,NTia64,NTamd64
+
+[INSECURE.NTx86]
+%NPF6X_Desc%=Install, INSECURE_NPF6X
+
+[INSECURE.NTia64]
+%NPF6X_Desc%=Install, INSECURE_NPF6X
+
+[INSECURE.NTamd64]
+%NPF6X_Desc%=Install, INSECURE_NPF6X
+
+;-------------------------------------------------------------------------
+; Installation Section
+;-------------------------------------------------------------------------
+[Install]
+AddReg=Inst_Ndi
+Characteristics=0x0 ; 
+CopyFiles=CpyFiles_Sys
+
+;-------------------------------------------------------------------------
+; Ndi installation support
+;-------------------------------------------------------------------------
+[Inst_Ndi]
+HKR,Ndi,Service,,"npf6x"
+HKR,Ndi,HelpText,,%NPF6X_HelpText%
+HKR,Ndi\Interfaces, UpperRange,, noupper
+HKR,"Ndi\Interfaces","LowerRange",,"ndis5,ndis4,ndis5_prot"
+
+;-------------------------------------------------------------------------
+; Service installation support
+;-------------------------------------------------------------------------
+[Install.Services]
+AddService=npf,,NPF6X_Service_Inst
+
+[NPF6X_Service_Inst]
+DisplayName     = %NPF6X_Desc%
+ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
+StartType       = 3 ;SERVICE_DEMAND_START
+ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
+ServiceBinary   = %12%\npf6x.sys
+LoadOrderGroup  = NDIS
+Description     = %NPF6X_Desc%
+
+[Install.Remove.Services]
+DelService=npf,0x200
+
+;-------------------------------------------------------------------------
+; Declare Destination Directories for file copy/deletion
+;-------------------------------------------------------------------------
+[SourceDisksNames]
+1=%DiskDescription%,"",,
+
+[SourceDisksFiles]
+npf6x.sys=1
+
+
+[DestinationDirs]
+CpyFiles_Sys    = 12    ; DIRID_DRIVERS
+
+
+;-------------------------------------------------------------------------
+; Files to Copy/Delete - Referenced by Install and Remove sections above
+;-------------------------------------------------------------------------
+[CpyFiles_Sys]
+npf6x.sys,,,2
+
+[Strings]
+Insecure = "InSecure.Com, LLC."
+DiskDescription = "NPF NDIS 6.x Protocol Driver Disk for Packet Capture"
+NPF6X_Desc = "NPF NDIS 6.x Protocol Driver"
+NPF6X_HelpText = "A driver to support packet capturing for Win7/Win8 using WinPcap"
+
+
+
+
+
+

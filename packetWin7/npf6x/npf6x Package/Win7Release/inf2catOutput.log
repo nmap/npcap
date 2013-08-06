@@ -1,0 +1,10 @@
+Inf2Cat Tool Output:
+.....................
+Signability test failed.
+
+Errors:
+22.9.4: Missing 32-bit CatalogFile entry (CatalogFile.ntx86, CatalogFile.nt, CatalogFile) from [Version] section in \npf6x.inf
+22.9.7: DriverVer set to incorrect date (postdated DriverVer not allowed) in \npf6x.inf.  The current date (UTC) is 8/4/2013.
+
+Warnings:
+None

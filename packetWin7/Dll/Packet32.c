@@ -43,14 +43,17 @@
 #include <tchar.h>
 #include <strsafe.h>
 
+#include "ProtInstall.h"
 #include "Packet32-Int.h"
-#include "../driver/ioctls.h"
+#include "../npf6x/npf6x/ioctls.h"
 
 #ifdef HAVE_WANPACKET_API
 #include "wanpacket/wanpacket.h"
 #endif //HAVE_WANPACKET_API
 
 #include "debug.h"
+
+BOOL bUseNPF60 = FALSE;
 
 #ifdef _WINNT4
 #if (defined(HAVE_NPFIM_API) || defined(HAVE_WANPACKET_API) || defined (HAVE_AIRPCAP_API) || defined(HAVE_IPHELPER_API))
@@ -253,6 +256,12 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 
 	UNUSED(lpReserved);
 
+#ifdef NDIS6X
+	bUseNPF60 = TRUE;
+#else
+	bUseNPF60 = FALSE;
+#endif
+
     switch(Reason)
     {
 	case DLL_PROCESS_ATTACH:
@@ -299,7 +308,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 		//
 		// XXX We want to replace this with a constant. We leave it out for the moment
 		// TODO fixme. Those hardcoded strings are terrible...
-		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
+		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_FILE_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
 		
 		break;
 		
@@ -940,6 +949,17 @@ BOOLEAN PacketInstallDriver()
 	
 }
 
+BOOLEAN PacketInstallDriver60()
+{
+	BOOLEAN result = FALSE;
+	TRACE_ENTER("PacketInstallDriver60");
+
+	result = (BOOLEAN) InstallDriver();
+
+	TRACE_EXIT("PacketInstallDriver60");
+	return result;
+}
+
 /*! 
   \brief Dumps a registry key to disk in text format. Uses regedit.
   \param KeyName Name of the ket to dump. All its subkeys will be saved recursively.
@@ -984,6 +1004,7 @@ BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLe
 	TCHAR	SubBlock[64];
 	PVOID	lpBuffer;
 	PCHAR	TmpStr;
+	DWORD aaa;
 	
 	// Structure used to store enumerated languages and code pages.
 	struct LANGANDCODEPAGE {
@@ -994,7 +1015,14 @@ BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLe
 	TRACE_ENTER("PacketGetFileVersion");
 
 	// Now lets dive in and pull out the version information:
+	
     dwVerInfoSize = GetFileVersionInfoSize(FileName, &dwVerHnd);
+	if (dwVerInfoSize == 0)
+	{
+		aaa = GetLastError();
+		aaa = aaa;
+	}
+
     if (dwVerInfoSize) 
 	{
         lpstrVffInfo = GlobalAllocPtr(GMEM_MOVEABLE, dwVerInfoSize);
@@ -1137,7 +1165,14 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 		if(KeyRes != ERROR_SUCCESS)
 		{
  			TRACE_PRINT("NPF registry key not present, trying to install the driver.");
-			Result = PacketInstallDriver();
+			if (bUseNPF60)
+			{
+				Result = PacketInstallDriver60();
+			}
+			else
+			{
+				Result = PacketInstallDriver();
+			}
 		}
 		else
 		{
@@ -1220,7 +1255,14 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 		else
 		{
 			if(KeyRes != ERROR_SUCCESS)
-				Result = PacketInstallDriver();
+				if (bUseNPF60)
+				{
+					Result = PacketInstallDriver60();
+				}
+				else
+				{
+					Result = PacketInstallDriver();
+				}
 			else
 				Result = TRUE;
 			
@@ -1762,6 +1804,18 @@ BOOL PacketStopDriver()
 	
 	TRACE_EXIT("PacketStopDriver");
 	return ret;
+}
+
+BOOL PacketStopDriver60()
+{
+	BOOL result;
+	TRACE_ENTER("PacketStopDriver60");
+
+	result = (BOOL) UninstallDriver();
+
+	TRACE_EXIT("PacketStopDriver60");
+
+	return result;
 }
 
 /*! 
