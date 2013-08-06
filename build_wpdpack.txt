@@ -1,0 +1,16 @@
+In order to build the developers' pack, you need to compile the various DLLs and then call build_wpdpack.bat
+This batch file, in turn, calls the four batches
+- create_includes.bat	creates the include folder
+- create_lib.bat		creates the lib folder
+- create_examples.bat	copies the examples folder to the developers' pack. The examples can be compiled only under the developers' pack folder.
+- create_docs.bat		creates the documentation (via doxygen), and then copies the generated files under the developers' pack folder.
+
+The syntax for the various scripts is
+
+<script.bat> winpcap_folder developer_folder
+
+winpcap_folder		The winpcap sources folder. It is defaulted to .\
+developer_folder	The developers' pack folder. It is defaulted to .\wpdpack.
+
+HINT: just call build_wpdpack.bat without any parameter!
+

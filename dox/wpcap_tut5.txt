@@ -1,0 +1,50 @@
+/** @ingroup wpcap_tut
+ */
+
+
+/** @defgroup wpcap_tut5 Filtering the traffic
+ *  @{
+
+One of the most powerful features offered by WinPcap (and by libpcap as well) is the filtering engine. It provides a very efficient way to receive subsets of the network traffic, and is (usually) integrated with the capture mechanism provided by WinPcap. The functions used to filter packets are pcap_compile() and pcap_setfilter().
+
+pcap_compile() takes a string containing a high-level Boolean (filter) expression and produces a low-level byte code that can be interpreted by the fileter engine in the packet driver. The syntax of the boolean expression can be found in the \ref language section of this documentation.
+
+pcap_setfilter() associates a filter with a capture session in the kernel driver. Once pcap_setfilter() is called, the associated filter will be applied to all the packets coming from the network, and all the conformant packets (i.e., packets for which the Boolean expression evaluates to true) will be actually copied to the application.
+
+The following code shows how to compile and set a filter. Note that we must retrieve the netmask from the pcap_if structure that describes the adapter, because some filters created by pcap_compile() require it.
+
+The filter passed to pcap_compile() in this code snippet is "ip and tcp", which means to "keep only the packets that are both IPv4 and TCP and deliver them to the application".
+
+\code
+	if (d->addresses != NULL)
+		/* Retrieve the mask of the first address of the interface */
+		netmask=((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
+	else
+		/* If the interface is without an address we suppose to be in a C class network */
+		netmask=0xffffff; 
+
+
+	//compile the filter
+	if (pcap_compile(adhandle, &fcode, "ip and tcp", 1, netmask) < 0)
+	{
+		fprintf(stderr,"\nUnable to compile the packet filter. Check the syntax.\n");
+		/* Free the device list */
+		pcap_freealldevs(alldevs);
+		return -1;
+	}
+	
+	//set the filter
+	if (pcap_setfilter(adhandle, &fcode) < 0)
+	{
+		fprintf(stderr,"\nError setting the filter.\n");
+		/* Free the device list */
+		pcap_freealldevs(alldevs);
+		return -1;
+	}
+\endcode
+
+If you want to see some code that uses the filtering functions shown in this lesson, look at the example presented in the next Lesson, \ref wpcap_tut6.
+
+\ref wpcap_tut4 "<<< Previous" \ref wpcap_tut6 "Next >>>"
+
+@}*/

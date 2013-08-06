@@ -1,0 +1,52 @@
+/** @ingroup wpcap_tut
+ */
+
+/** @defgroup wpcap_tut9 Gathering Statistics on the network traffic
+ *  @{
+
+This lesson shows another advanced feature of WinPcap: the ability to collect statistics about network traffic. The statistical engine makes use of the kernel-level packet filter to efficiently classify the incoming packet.
+You can take a look at the \ref NPF if you want to know more details.
+
+In order to use this feature, the programmer must open an adapter and put it in \e statistical \e mode. 
+This can be done with pcap_setmode(). In particular, MODE_STAT must be used as the \e mode argument of this function.
+
+With statistical mode, making an application that monitors the TCP traffic load is a matter of few lines of code. 
+The following sample shows how to do it.
+
+\include tcptop/tcptop.c
+
+Before enabling statistical mode, the user has the option to set a filter that defines the subset of network traffic that will be monitored. See the paragraph on the \ref language for details. 
+If no filter has been set, all of the traffic will be monitored.
+
+Once
+
+- the filter is set
+- pcap_setmode() is called
+- callback invocation is enabled with pcap_loop()
+
+the interface descriptor starts to work in statistical mode.
+Notice the fourth parameter (\e to_ms) of pcap_open(): it defines the interval among the statistical samples. 
+The callback function receives the samples calculated by the driver every \e to_ms milliseconds. These samples are encapsulated in the second and third parameters of the callback function, as shown in the following figure:
+
+\image html stats_wpcap.gif
+
+
+Two 64-bit counters are provided: the number of packets and the amount of bytes received during the last interval.
+
+In the example, the adapter is opened with a timeout of 1000 ms. 
+This means that dispatcher_handler() is called once per second.
+At this point a filter that keeps only tcp packets is compiled and set. 
+Then pcap_setmode() and pcap_loop() are called. 
+Note that a struct timeval pointer is passed to pcap_loop() as the \e user parameter. 
+This structure will be used to store a timestamp in order to calculate the interval between two samples.
+dispatcher_handler()uses this interval to obtain the bits per second and the 
+packets per second and then prints these values on the screen.
+
+Note finally that this example is by far more efficient than a program that captures the packets in the traditional way and calculates statistics at user-level.  
+Statistical mode requires the minumum amount of data copies and context switches and therefore the CPU is optimized. Moreover, a very small amount of memory is required.
+
+\ref wpcap_tut8 "<<< Previous"
+
+@}*/
+
+

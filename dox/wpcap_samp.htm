@@ -1,0 +1,84 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 6.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title></title>
+</head>
+
+<body>
+<h2>Creating an application that uses <i>wpcap.dll</i></h2>
+<p>To create an application that uses <i>wpcap.dll</i> with Microsoft Visual C++, 
+follow these
+steps:</p>
+<ul>
+  <li>Include the file <i>pcap.h</i> at the beginning of every source file that
+    uses the functions exported by library.</li>
+  <li>If your program uses Win32 specific functions of WinPcap, remember to include <i>WPCAP</i>
+    among the preprocessor definitions.</li>
+  <li>If your program uses the remote capture capabilities of WinPcap, add <i>
+	HAVE_REMOTE</i> among the preprocessor definitions. Do <i>not</i> include 
+	remote-ext.h directly in your source files.<li>Set the options of the linker to include the <i>wpcap.lib</i> library
+    file specific for your target (x86 or x64). <i>wpcap.lib</i> for x86 can be 
+	found in the \lib folder of the WinPcap developer's 
+	pack, <i>wpcap.lib</i> for x64 can
+    be found in the \lib\x64 folder.<li>Set the options of the linker to include the winsock library file<i> 
+	ws2_32.lib</i>. This file is distributed with the C compiler
+    and contains the socket functions for Windows. It is needed by some 
+	functions used by the samples in the tutorial.</li>
+</ul>
+<p><b>How to properly set Microsoft Visual Studio<br>
+<br>
+</b><i>Visual Studio 6</i></p>
+<ul>
+  <li>To add a preprocessor definition, you must select <em>Settings</em> from the <em>Project</em> menu, then select <em>C/C++</em>
+    from the tab control, and under the category <i>General</i>, you must add
+    the definition under the Preprocessor Definitions text box.
+  <li>To add a new library to the project with Microsoft Visual C++, you must
+    select <em>Settings</em> from the <em>Project</em> menu, then select <em>Link</em>
+    from the tab control, and then add the name of the new library in the <em>Object/library
+    modules</em>  editbox.
+  <li>To add a new path where Microsoft Visual C++ will look for the libraries,
+    you must select <em>Options</em> from the <em>Tools</em> menu, then <em>
+	Directories</em>
+    from the tab control, <em>Library files</em> from the <em>Show directories
+    for</em>  combobox, and the add the path in the <em>Directories</em> box.
+  <li>To add a new path where Microsoft Visual C++ will look for include files, you must select <em>Options</em> from the <em>Tools</em> menu, then 
+	<em>Directories</em>
+    from the tab control, <em>Include files</em> from the <em>Show directories
+    for</em>  combobox, and the add the path in the <em>Directories</em> box.</li>
+</ul>
+<p><i>Visual Studio 2005 (needed to compile x64 applications)</i></p>
+<ul>
+  <li>To add a preprocessor definition, you must select <em>Properties</em> from the <em>Project</em> menu, then select <em>C/C++</em>
+    from the list control on the left, and under the category <i>Preprocessor</i>, you must add
+    the definition under the <i>Preprocessor Definitions</i> text box.
+  <li>To add a new library to the project, you must
+    select <em>Properties</em> from the <em>Project</em> menu, then select <em>Linker</em>
+    from the list control on the left, and under the category <i>Input</i> add the name of the new library in the
+	<em>Additional Dependencies</em> text box.<li>To add a new path where Microsoft Visual 
+	Studio will look for the libraries,
+    you must select <em>Options</em> from the <em>Tools</em> menu, then <em>
+	Project and Solutions</em> from the list control on the left, <em>VC++ 
+	Directories</em>, then choose <i>Library</i> <i>Files</i> in the <em>Show directories
+    for</em>  combobox, and the add the path in the box below.
+  <li>To add a new path where Microsoft Visual 
+	Studio will look for the include files,
+    you must select <em>Options</em> from the <em>Tools</em> menu, then <em>
+	Project and Solutions</em> from the list control on the left, <em>VC++ 
+	Directories</em>, then choose <i>Include</i> <i>Files</i> in the <em>Show directories
+    for</em>  combobox, and the add the path in the box below.
+  </ul>
+<p>&nbsp;</p>
+<h2>Sample programs</h2>
+<p>A couple of sample programs are provided to show the usage of the WinPcap API. The
+source of the examples, along with all the files needed to compile and run them, can be found in the <a href="http://www.winpcap.org/install/bin">Developer's
+Pack</a>.&nbsp; For didactic purpose we provide here a browsable version of the 
+code: it is possible to click on the variables and functions to jump the 
+documentation of each of them. For a more complete set of samples, try <a href="group__wpcap__tut.htm">WinPcap
+Tutorial Section</a>.</p>
+
+</body>
+
+</html>

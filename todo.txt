@@ -1,0 +1,3 @@
+- Implement the kernel dump with the new buffering mode 
+- Check the buffered write functionality, in particular with the new gigabit adapters that caused problems to some users
+- Change the #define WIN32 with #define _WIN32

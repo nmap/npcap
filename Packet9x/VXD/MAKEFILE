@@ -1,0 +1,39 @@
+##################################################################
+#
+#       Microsoft Confidential
+#       Copyright (C) Microsoft Corporation 1993-95
+#       All Rights Reserved.
+#
+#	This document is provided for informational purposes only and Microsoft 
+#	Corporation makes no warranties, either expressed or implied, in this document.
+#	Information in this document may be substantially changed without notice in
+#	subsequent versions of windows and does not represent a commitment on the 
+#	part of Microsoft Corporation. This information is for internal use only for 
+#	development purposes.
+#
+#       INPUT:
+#               BIN: Where to put the stuff
+#               DEB: Flags to control debug level
+#
+##################################################################
+
+DEVICE=NPF
+
+BIN = debug
+#SDK = $(SDKROOT)
+#DDK = $(DDKROOT)
+
+OBJS=\
+$(BIN)\openclos.obj\
+$(BIN)\packet.obj\
+$(BIN)\request.obj\
+$(BIN)\win_bpf_filter.obj\
+$(BIN)\read.obj\
+$(BIN)\write.obj\
+$(BIN)\lock.obj\
+$(BIN)\functs.obj\
+$(BIN)\ndisdev.obj\
+# this is needed by 64 bit math operations
+$(MSVCDIR)\lib\msvcrt.lib\
+
+!include ndis.mk

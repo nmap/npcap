@@ -1,0 +1,67 @@
+/** @ingroup wpcap_tut
+ */
+
+/** @defgroup wpcap_tut7 Handling offline dump files
+ *  @{
+
+In this lession we are going to learn how to handle packet capture to a file (dump to file). 
+WinPcap offers a wide range of functions to save the network traffic to a file and to read the content of dumps -- this lesson will teach how to use all of these functions. We'll see also how to use the kernel dump feature of WinPcap to obtain high-performance dumps 
+(<b>NOTE:</b> At the moment, due to some problems with the new kernel buffer, this feature has been disabled). 
+
+The format for dump files is the libpcap one. This format contains the data of the captured packets in binary form and is a standard used by many network tools including WinDump, Ethereal and Snort.
+
+<b>Saving packets to a dump file</b>
+
+First of all, let's see how to write packets in libpcap format.
+
+The following example captures the packets from the selected interface and saves them on a file 
+whose name is provided by the user.
+
+\include misc\savedump.c
+
+As you can see, the structure of the program is very similar to the ones we have seen in the previous lessons. 
+The differences are:
+- a call to pcap_dump_open() is issued once the interface is opened. This call opens a dump file and associates it with the interface.
+- the packets are written to this file with a pcap_dump() from the packet_handler() callback. The parameters of
+pcap_dump() are in 1-1 correspondence with the parameters of pcap_handler().
+
+<b>Reading packets from a dump file</b>
+
+Now that we have a dump file available, we can try to read its content. 
+The following code opens a WinPcap/libpcap dump file and displays every packet contained in the file. 
+The file is opened with pcap_open_offline(), then the usual pcap_loop() is used to sequence through the packets. 
+As you can see, reading packets from an offline capture is nearly identical to receiving them from a physical interface.
+
+This example introduces another function: pcap_createsrcsrc(). 
+This function is required to create a source string that begins with a marker used to tell WinPcap the type of the source, 
+e.g. "rpcap://" if we are going to open an adapter, or "file://" if we are going to open a file. 
+This step is not required when pcap_findalldevs_ex() is used (the returned values already contain these strings). 
+However, it is required in this example because the name of the file is read from the user input.
+
+\include misc\readfile.c
+
+The following example has the same purpose of the last one, but pcap_next_ex() is used instead of the pcap_loop() callback method.
+
+\include misc\readfile_ex.c
+
+<b>Writing packets to a dump file with pcap_live_dump</b>
+
+<b>NOTE:</b> At the moment, due to some problems with the new kernel buffer, this feature has been disabled. 
+
+Recent versions of WinPcap provide a further way to save network traffic to disk, the pcap_live_dump() function. pcap_live_dump() takes three parameters: a file name, the maximum size (in bytes) that this file is allowed to reach and the maximum amount of packets that the file is allowed to contain. Zero means no limit for both these values. Notice that the program can set a filter (with pcap_setfilter(), see the tutorial \ref wpcap_tut5) before calling pcap_live_dump() to define the subset of the traffic that will be saved.
+
+pcap_live_dump() is non-blocking, therefore it starts the dump and returns immediately: The dump process goes on asynchronously until the maximum file size or the maximum amount of packets has been reached.
+
+The application can wait or check the end of the dump with pcap_live_dump_ended().
+\b Beware that if the \e sync parameter is nonzero, this function will block your application forever if the limits are both 0.
+
+\include kdump\kdump.c
+
+The difference between pcap_live_dump() and pcap_dump(), apart from the possibility to set limits, is performance. pcap_live_dump() exploits the ability of the WinPcap NPF driver (see \ref NPF) to write dumps from kernel level, minimizing the number of context switches and memory copies.
+
+Obviously, since this feature is currently not available on other operating systems, 
+pcap_live_dump() is WinPcap specific and is present only under Win32.
+
+\ref wpcap_tut6 "<<< Previous" \ref wpcap_tut8 "Next >>>"
+
+@}*/

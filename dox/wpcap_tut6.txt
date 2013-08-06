@@ -1,0 +1,48 @@
+/** @ingroup wpcap_tut
+ */
+
+/** @defgroup wpcap_tut6 Interpreting the packets
+ *  @{
+
+Now that we are able to capture and filter network traffic, we want to put our knowledge to work with a simple "real world" application. 
+
+In this lesson we will take code from the previous lessons and use these pieces to build a more useful program. the main purpose of the current program is to show how the protocol headers of a captured packet can be parsed and interpreted. 
+The resulting application, called UDPdump, prints a summary of the UDP traffic on our network.
+
+We have chosen to parse and display the UDP protocol because it is more accessible than other protocols such as TCP and consequently is an excellent initial example. Let's look at the code:
+
+\include UDPdump/udpdump.c
+
+First of all, we set the filter to "ip and udp". In this way we are sure that packet_handler() will receive only UDP packets over IPv4: this simplifies the parsing and increases the efficiency of the program.
+
+We have also created a couple of structs that describe the IP and UDP headers. These structs are used by packet_handler() to properly locate the various header fields. 
+
+packet_handler(), although limited to a single protocol dissector (UDP over IPv4), shows how complex "sniffers" like tcpdump/WinDump decode the network traffic.  Since we aren't interested in the MAC header, we skip it. 
+For simplicity and before starting the capture, we check the MAC layer with pcap_datalink() to make sure that
+we are dealing with an Ethernet network. This way we can be sure that the MAC header is exactly 14 bytes.
+
+The IP header is located just after the MAC header. We will extract the IP source and destination addresses from the
+IP header.
+
+Reaching the UDP header is a bit more complicated, because the IP header doesn't have a fixed length.
+Therefore, we use the IP header's length field to know its size. 
+Once we know the location of the UDP header, we extract the source and destination ports.
+
+The extracted values are printed on the screen, and the result is something like:
+
+<tt>
+1. \\Device\\Packet_{A7FD048A-5D4B-478E-B3C1-34401AC3B72F} (Xircom
+t 10/100 Adapter) \n
+Enter the interface number (1-2):1\n
+
+listening on Xircom CardBus Ethernet 10/100 Adapter... \n
+16:13:15.312784 len:87 130.192.31.67.2682 -> 130.192.3.21.53 \n
+16:13:15.314796 len:137 130.192.3.21.53 -> 130.192.31.67.2682 \n
+16:13:15.322101 len:78 130.192.31.67.2683 -> 130.192.3.21.53 \n
+</tt>
+
+Each of the final 3 lines represents a different packet.
+
+\ref wpcap_tut5 "<<< Previous" \ref wpcap_tut7 "Next >>>"
+
+@}*/

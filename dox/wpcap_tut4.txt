@@ -1,0 +1,27 @@
+/** @ingroup wpcap_tut
+ */
+
+
+/** @defgroup wpcap_tut4 Capturing the packets without the callback
+ *  @{
+
+The example program in this lesson behaves exactly like the previous program (\ref wpcap_tut3), but it uses pcap_next_ex() instead of pcap_loop().
+
+The callback-based capture mechanism of pcap_loop() is elegant and it could be a good choice in some situations. However, handling a callback is sometimes not practical -- it often makes the program more complex especially in situations with multithreaded applications or C++ classes.
+
+In these cases, pcap_next_ex() retrievs a packet with a direct call -- using pcap_next_ex() packets are received only when the programmer wants them.
+
+The parameters of this function are the same as a capture callback -- it takes an adapter descriptor and a couple of pointers that will be initialized and returned to the user (one to a pcap_pkthdr structure and another to a buffer with the packet data). 
+
+In the following program, we recycle the callback code of the previous lesson's example and move it inside main() right after the call to pcap_next_ex().
+
+
+\include misc/basic_dump_ex.c
+
+Why do we use pcap_next_ex() instead of the old pcap_next()? Because pcap_next() has some drawbacks. First of all, it is inefficient because it hides the callback method but still relies on pcap_dispatch(). Second, it is not able to detect EOF, so it's not very useful when gathering packets from a file.
+
+Notice also that pcap_next_ex() returns different values for success, timeout elapsed, error and EOF conditions. 
+
+\ref wpcap_tut3 "<<< Previous" \ref wpcap_tut5 "Next >>>"
+
+@}*/

@@ -1,0 +1,31 @@
+/** @ingroup wpcap_tut
+ */
+
+
+/** @defgroup wpcap_tut3 Opening an adapter and capturing the packets
+ *  @{
+
+Now that we've seen how to obtain an adapter to play with, let's start the real job, opening an adapter and capturing some traffic. In this lesson we'll write a program that prints some information about each packet flowing through the adapter.
+
+The function that opens a capture device is pcap_open(). The parameters, \e snaplen, \e flags and \e to_ms deserve some explanation. 
+
+\e snaplen specifies the portion of the packet to capture. On some OSes (like xBSD and Win32), the packet driver can be configured to capture only the initial part of any packet: this decreases the amount of data to copy to the application and therefore improves the efficiency of the capture. In this case we use the value 65536 which is higher than the greatest MTU that we could encounter. In this manner we ensure that the application will always receive the whole packet.
+
+\e flags: the most important flag is the one that indicates if the adapter will be put in promiscuous mode. In normal operation, an adapter only captures packets from the network that are destined to it; the packets exchanged by other hosts are therefore ignored. Instead, when the adapter is in promiscuous mode it captures all packets whether they are destined to it or not.  This means that on shared media (like non-switched Ethernet), WinPcap will be able to capture the packets of other hosts. Promiscuous mode is the default for most capture applications, so we enable it in the following example.
+
+\e to_ms specifies the read timeout, in milliseconds. A read on the adapter (for example, with pcap_dispatch() or pcap_next_ex()) will always return after \e to_ms milliseconds, even if no packets are available from the network. \e to_ms also defines the interval between statistical reports if the adapter is in statistical mode (see the lesson "\ref wpcap_tut9" for information about statistical mode). Setting \e to_ms to 0 means no timeout, a read on the adapter never returns if no packets arrive. A -1 timeout on the other side causes a read on the adapter to always return immediately.
+
+
+\include misc/basic_dump.c
+
+Once the adapter is opened, the capture can be started with pcap_dispatch() or pcap_loop(). These two functions are very similar, the difference is that pcap_ dispatch() returns (although not guaranteed) when the timeout expires while pcap_loop() doesn't return until \e cnt packets have been captured, so it can block for an arbitrary period on an under-utilized network. pcap_loop() is enough for the purpose of this sample, while pcap_dispatch() is normally used in a more complex program.
+
+Both of these functions have a \e callback parameter, \e packet_handler, pointing to a function that will receive the packets. This function is invoked by libpcap for every new packet coming from the network and receives a generic status (corresponding to the \e user parameter of pcap_loop() and pcap_dispatch()), a header with some information on the packet like the timestamp and the length and the actual data of the packet including all the protocol headers. Note that the frame CRC is normally not present, because it is removed by the network adapter after frame validation. Note also that most adapters discard packets with wrong CRCs, therefore WinPcap is normally not able to capture them.
+
+The above example extracts the timestamp and the length of every packet from the pcap_pkthdr header and prints them on the screen.
+
+Please note that there may be a drawback using pcap_loop() mainly related to the fact that the handler is called by the packet capture driver; therefore the user application does not have direct control over it. Another approach (and to have more readable programs) is to use the pcap_next_ex() function, which is presented in the next example (\ref wpcap_tut4).
+
+\ref wpcap_tut2 "<<< Previous" \ref wpcap_tut4 "Next >>>"
+
+@}*/

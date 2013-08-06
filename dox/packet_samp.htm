@@ -1,0 +1,59 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 6.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title></title>
+</head>
+
+<body>
+<h2>How to create an application that uses packet.dll</h2>
+<p>The creation of an application that uses packet.dll requires the following
+steps:</p>
+<ul>
+  <li>Include the file <i>packet32.h</i> at the beginning of every source file
+    that uses the functions exported by the dll. <i>Packet32.h</i> is
+    distributed both with the packet.dll source code and with the WinPcap
+    developer's pack. It is platform-independent.
+  <li>Include <i>packet.lib</i> in the project. <i>Packet.lib</i> is generated
+    compiling the packet driver and can be found in the developer's pack.</li>
+</ul>
+<p><b>Remember that</b>:</p>
+<ul>
+  <li>To add a new library to the project with Microsoft Visual C++, you must
+    select <em>Settings</em> from the <em>Project</em> menu, then select <em>Link</em>
+    from the tab control, and then add the name of the new library in the <em>Objcet/library
+    modules</em> editbox.
+  <li>To add a new path where Microsoft Visual C++ will look for the libraries,
+    you must select <em>Options</em> from the <em>Tools</em> menu, then <em>Link</em>
+    from the tab control, <em>library files</em> from the <em>show directories
+    for</em> combobox, and the add the path in the <em>directories</em> box.
+  <li>To add a new path where Microsoft Visual C++ will look for the include
+    files, you must select <em>Options</em> from the <em>Tools</em> menu, then <em>Link</em>
+    from the tab control, <em>include files</em> from the <em>show directories
+    for</em> combobox, and the add the path in the <em>directories</em> box.</li>
+</ul>
+<h2>Sample programs</h2>
+<p>A couple of sample programs are provided to show how to use packet.dll. The
+source code of the examples, along with all the files needed to compile and run
+them, can be found in the <a href="http://www.winpcap.org/install/default.htm">Developer's
+Pack</a>.</p>
+<p><a href="TestPacketCapture_8c-source.html">TestPacketCapture</a></p>
+<p>This is a very simple capture program that tests packet.dll. It is a console
+application that once complied can be executed both under Win9x and under WinNTx.
+When executed, TestPacketCapture gives to the user the opportunity to choose one of the
+adapters installed on the machine, then it captures packets from the specified
+network adapter until a key is pressed, dumping the contents of each packet on
+the screen.&nbsp;</p>
+<p><a href="TestPacketSend_8c-source.html">Traffic Generator (TestPacketSend)</a></p>
+<p>This example shows how to use packet.dll to send packets to the network. It
+receives three input parameters: the interface that will be used, the number of
+packets to send and their size. The generated packets will have 1:1:1:1:1:1 as
+source MAC address, and 2:2:2:2:2:2 as destination address. The 'multiple write'
+feature of the driver is used to obtain a higher transmit rate.</p>
+<p>
+
+</body>
+
+</html>

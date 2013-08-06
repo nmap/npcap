@@ -1,0 +1,27 @@
+per far linkare correttamente gli esempi di libpcap:
+	- editare il file funcs\pcap.h
+	- cambiare il blocco a inizio file:
+	 /** @defgroup wpcapfunc Exported functions
+	 *  @ingroup wpcap
+	 *  Functions exported by wpcap.dll
+	 *  @{
+	 */
+	
+	in
+
+	/** @ingroup wpcapfunc
+	 *  @{
+	 */
+	- generare la documentazione
+	- salvare il file "funcs_2pcap_8h.html"
+	- rimettere tutto a posto
+	- rigenerare la documentazione
+	- sovrascrivere il file salvato su quello nuovo
+
+per far si' che gli esempi puntino al manuale in maniera corretta:
+	- generare la documentazione winpcap_noc.dox
+	- backuppare i vari group__wpcap__tutXXX.html, pcap__filter_8c-source.html, Pktdump_8c-source.html, group__wpcapsampsXXX.html
+	- generare la documentazione winpcap_c.dox
+	- copiare i file backuppati sui nuovi
+
+l'immagine nella pagina principale e' da mettere: al centro

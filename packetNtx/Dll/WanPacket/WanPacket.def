@@ -1,0 +1,13 @@
+LIBRARY	WanPacket
+EXPORTS
+	WanPacketOpenAdapter
+	WanPacketCloseAdapter
+	WanPacketReceivePacket
+	WanPacketSetBufferSize
+	WanPacketSetBpfFilter
+	WanPacketSetMinToCopy
+	WanPacketSetReadTimeout
+	WanPacketGetStats
+	WanPacketGetReadEvent
+	WanPacketSetMode
+	WanPacketTestAdapter	

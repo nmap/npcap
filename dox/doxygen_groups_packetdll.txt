@@ -1,0 +1,114 @@
+/*!
+	\defgroup internals WinPcap internals
+	\htmlinclude internals.htm
+*/
+
+/*!
+	\ingroup internals
+	\defgroup NPF NPF driver internals manual 
+	\htmlinclude npf.htm
+*/ 
+
+
+
+/*!
+	\ingroup internals
+	\defgroup compilation How to compile WinPcap 
+	\htmlinclude compile.htm
+*/ 
+
+
+
+/*!
+	\ingroup internals
+	\defgroup packetapi Packet Driver API developer's manual
+	\htmlinclude packet.htm
+*/
+
+
+/*!
+	\ingroup packetapi
+	\defgroup packetsamps Packet.dll samples
+	\htmlinclude packet_samp.htm
+*/
+
+
+
+/*!
+	\defgroup wpcap WinPcap user's manual
+	\htmlinclude wpcap.htm
+*/
+
+/*!
+	\ingroup wpcap
+	\defgroup language Filtering expression syntax
+	\htmlinclude language.htm
+*/
+
+
+/*!
+	\ingroup wpcap
+	\defgroup wpcapsamps Using WinPcap in your programs
+	\htmlinclude wpcap_samp.htm
+
+	\htmlinclude wpcap_samp1.htm
+	\include pktdump_ex\pktdump_ex.c
+
+	\htmlinclude wpcap_samp2.htm
+	\include pcap_filter/pcap_filter.c
+*/
+
+
+
+
+
+/*!
+	\defgroup remote Remote Capture
+	\htmlinclude wpcap_remote.htm
+*/
+
+/*!
+	\ingroup remote
+	\defgroup remote_struct Exported Structures and Definitions
+*/
+
+/*!
+	\ingroup remote
+	\defgroup remotefunc Exported Functions
+*/
+
+/*!
+	\ingroup remote
+	\defgroup remote_pri_func Internal Functions
+*/
+
+/*!
+	\ingroup remote
+	\defgroup remote_pri_struct Internal Structures and Definitions
+*/
+
+
+/*!
+	\ingroup remote_struct
+	\defgroup remote_source_string Strings related to the new source syntax
+*/
+
+/*!
+	\ingroup remote_struct
+	\defgroup remote_source_ID Identifiers related to the new source syntax
+*/
+
+/*!
+	\ingroup remote_struct
+	\defgroup remote_open_flags Flags defined in the pcap_open() function
+*/
+
+/*!
+	\ingroup remote_struct
+	\defgroup remote_samp_methods Sampling methods defined in the pcap_setsampling() function
+*/
+
+/*!
+	\ingroup remote_struct
+	\defgroup remote_auth_methods Authentication methods supported by the RPCAP protocol
+*/

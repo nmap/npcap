@@ -1,0 +1,21 @@
+/** @ingroup wpcap_tut
+ */
+
+/** @defgroup wpcap_tut2 Obtaining advanced information about installed devices
+ *  @{
+
+Lesson 1 (\ref wpcap_tut1) demonstrated how to get basic information (i.e. device name and description) about available adapters. Actually, WinPcap provides also other advanced information. In particular, every pcap_if structure returned by pcap_findalldevs_ex() contains also a list of pcap_addr structures, with:
+- a list of addresses for that interface.
+- a list of netmasks (each of which corresponds to an entry in the addresses list).
+- a list of broadcast addresses (each of which corresponds to an entry in the addresses list).
+- a list of destination addresses (each of which corresponds to an entry in the addresses list).
+
+Additionally, pcap_findalldevs_ex() can also return remote adapters and a list of pcap files that are located in a given local folder.
+
+The following sample provides an ifprint() function that prints the complete contents of a pcap_if structure. It is invoked by the program for every entry returned by pcap_findalldevs_ex().
+
+\include iflist/iflist.c
+
+\ref wpcap_tut1 "<<< Previous" \ref wpcap_tut3 "Next >>>"
+
+@}*/

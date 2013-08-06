@@ -1,0 +1,48 @@
+#include "windows.h"
+#include "..\..\version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION WINPCAP_MAJOR,WINPCAP_MINOR,WINPCAP_REV,WINPCAP_BUILD
+ PRODUCTVERSION WINPCAP_MAJOR,WINPCAP_MINOR,WINPCAP_REV,WINPCAP_BUILD
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x3L
+ FILESUBTYPE 0x7L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+			VALUE "CompanyName",       WINPCAP_COMPANY_NAME
+#ifdef __NPF_NT4__
+			VALUE "FileDescription",   "npf.sys (NT4) Kernel Driver"
+#elif defined(_AMD64_)
+			VALUE "FileDescription",   "npf.sys (NT5/6 AMD64) Kernel Driver"
+#else
+			VALUE "FileDescription",   "npf.sys (NT5/6 x86) Kernel Driver"
+#endif
+			VALUE "FileVersion",       WINPCAP_VER_STRING
+			VALUE "InternalName",      "NPF + TME"
+			VALUE "LegalCopyright",    WINPCAP_COPYRIGHT_STRING
+			VALUE "LegalTrademarks",   ""
+			VALUE "OriginalFilename",  "npf.sys"
+			VALUE "ProductName",       WINPCAP_PRODUCT_NAME
+			VALUE "ProductVersion",    WINPCAP_VER_STRING
+            VALUE "Build Description", WINPCAP_BUILD_DESCRIPTION
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+

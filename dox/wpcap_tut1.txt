@@ -1,0 +1,77 @@
+/** @ingroup wpcap_tut
+ */
+
+
+/** @defgroup wpcap_tut1 Obtaining the device list
+ *  @{
+
+Typically, the first thing that a WinPcap-based application does is get a list of attached network adapters. Both libpcap and WinPcap provide the pcap_findalldevs_ex() function for this purpose: this function returns a linked list of pcap_if structures, each of which contains comprehensive information about an attached adapter. In particular, the fields \e name and \e description contain the name and a human readable description, respectively, of the corresponding device.
+
+The following code retrieves the adapter list and shows it on the screen, printing an error if no adapters are found.
+
+\code
+#include "pcap.h"
+
+main()
+{
+	pcap_if_t *alldevs;
+	pcap_if_t *d;
+	int i=0;
+	char errbuf[PCAP_ERRBUF_SIZE];
+	
+	/* Retrieve the device list from the local machine */
+	if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL /* auth is not needed */, &alldevs, errbuf) == -1)
+	{
+		fprintf(stderr,"Error in pcap_findalldevs_ex: %s\n", errbuf);
+		exit(1);
+	}
+	
+	/* Print the list */
+	for(d= alldevs; d != NULL; d= d->next)
+	{
+		printf("%d. %s", ++i, d->name);
+		if (d->description)
+			printf(" (%s)\n", d->description);
+		else
+			printf(" (No description available)\n");
+	}
+	
+	if (i == 0)
+	{
+		printf("\nNo interfaces found! Make sure WinPcap is installed.\n");
+		return;
+	}
+
+	/* We don't need any more the device list. Free it */
+	pcap_freealldevs(alldevs);
+}
+\endcode
+
+Some comments about this code.
+
+First of all, pcap_findalldevs_ex(), like other libpcap functions, has an \e errbuf parameter. This parameter points to a string filled by libpcap with a description of the error if something goes wrong. 
+
+Second, remember that not all the OSes supported by libpcap provide a description of the network interfaces, therefore if we want to write a portable application, we must consider the case in which \e description is null: we print the string "No description available" in that situation.
+
+Note finally that we free the list with pcap_freealldevs() once when we have finished with it.
+
+Let's try to compile and run the code of this first sample. In order to compile it under Unix or Cygwin, simply type:
+
+<pre>
+  gcc -o testprog testprog.c -lpcap
+</pre>
+
+On Windows, you will need to create a project, following the instructions in the \ref wpcapsamps section of this manual. However, we suggest that you use the WinPcap developer's pack (available at the WinPcap website, http://www.winpcap.org ), since it provides many examples already configured as projects including all the code presented in this tutorial and the \e includes and \e libraries needed to compile and run the examples. 
+
+Assuming we have compiled the program, let's try to run it. On a particular WinXP workstation, the result we optained is
+
+<pre>
+   1. \\Device\\NPF_{4E273621-5161-46C8-895A-48D0E52A0B83} (Realtek RTL8029(AS) Ethernet Adapter)
+   2. \\Device\\NPF_{5D24AE04-C486-4A96-83FB-8B5EC6C7F430} (3Com EtherLink PCI) 
+</pre>
+
+As you can see, the name of the network adapters (that will be passed to libpcap when opening the devices) under Windows are quite unreadable, so the parenthetical descriptions can be very helpful.
+
+\ref wpcap_tut "<<< Previous" \ref wpcap_tut2 "Next >>>"
+
+@}*/

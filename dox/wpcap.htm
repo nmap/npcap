@@ -1,0 +1,45 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 6.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title></title>
+</head>
+
+<body>
+<p>This section contains the user manual of <code><font face="Courier New">wpcap.dll</font></code>, the
+dynamic library that contains the public WinPcap API. 
+<font face="Times New Roman">wpcap.dll </font>exports a set of
+system-independent functions for packet capture and network analysis. These 
+functions can be used to:</p>
+<ul>
+  <li>obtain the list of the available network adapters
+  <li>retrieve various information about an adapter, like the description and the list of addresses</li>
+  <li>sniff the packets using one of the network interface cards of the PC</li>
+  <li>send packets to the network
+  <li>efficiently save packets to disk and load them with an interface similar to the one of
+    live capture</li>
+  <li>create packet filters using a high level language and apply them to the captured
+    packets</li>
+</ul>
+<p>wpcap.dll is compatible with libpcap, the well known packet capture library 
+for Unix. This compatibility means that one can develop portable network tools 
+that will run on the Win32 OS family and on all of the major Unix flavors.</p>
+<p>Several portions of the manual present in this section derive directly from the man pages of tcpdump and libpcap, maintained by the tcpdump.org developers. Therefore, if you
+are looking for updated docs, you can consult the web site <a href="http://www.tcpdump.org">www.tcpdump.org</a>.</p>
+<h2>Note</h2>
+<p>Some functions are marked <i>deprecated</i>
+or <i>discouraged</i>. The meanings of these labels are:</p>
+<ul>
+  <li><i>discouraged</i>: the use of another function with similar purpose is
+    suggested, however this one is still valid.</li>
+  <li><i>deprecated</i>: the function is present only for portability and
+    backward compatibility. It should be avoided, and it is strongly suggested
+    to use another equivalent function instead.<br>
+  </li>
+</ul>
+<p>
+</body>
+
+</html>

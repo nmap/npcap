@@ -1,0 +1,17 @@
+/** @ingroup wpcap
+ */
+
+
+/** @defgroup wpcap_tut WinPcap tutorial: a step by step guide to using WinPcap
+ *  @{
+
+
+This section shows how to use the features of the WinPcap API. It is organized as a tutorial, subdivided into a set of lessons that will introduce the reader, in a step-by-step fashion, to program development using WinPcap, from the basic functions (obtaining the adapter list, starting a capture, etc.) to the most advanced ones (handling send queues and gathering statistics about network traffic). 
+
+Several code snippets, as well as simple but complete programs are provided as a reference: all of the source code contains links to the rest of the manual, making it is possible to click on functions and data structures to jump to the corresponding documentation.
+
+The samples are written in plain C, so a basic knowledge of C programming is required. Also, since this is a tutorial about a library dealing with "raw" networking packets, good knowledge of networks and network protocols is assumed.
+
+\ref wpcap_tut1 "Next >>>"
+
+@}*/
