@@ -39,12 +39,27 @@
 //  - please do not use prefix names longer than 70 chars. 
 //  - the following characters are surely accepted in the prefixes:  "[A-Z][a-z][0-9]_-',"   
 //
-#define NPF_DRIVER_NAME							"NPF"					///< (HHH) Packet.dll
-#define NPF_DRIVER_NAME_WIDECHAR				L"NPF"					///< (HHH) Packet.dll
+#define NPF_DRIVER_NAME							"NPF"					///< (HHH) Packet.dll, used as a service name, so in order to keep the service name unchanged, we will not change it to NPF6X.
+#define NPF_DRIVER_NAME_WIDECHAR				L"NPF"					///< (HHH) Packet.dll, used as below
+#define NPF6X_DRIVER_NAME						"NPF6X"					///< (HHH) Packet.dll, used as below
+#define NPF6X_DRIVER_NAME_WIDECHAR				L"NPF6X"				///< (HHH) Packet.dll, used as below
 
 //
 // Derived strings
 //
+#ifdef NDIS6X
+#define NPF_DRIVER_FILE_NAME				NPF6X_DRIVER_NAME										/// used by PacketGetFileVersion function.
+#define NPF_DEVICE_NAMES_PREFIX				NPF6X_DRIVER_NAME "_"     								///< (AAA) packet.dll
+#define NPF_DEVICE_NAMES_PREFIX_WIDECHAR	NPF6X_DRIVER_NAME_WIDECHAR L"_"     					///< (AAA) used by the NPF6X driver for device name and symbolic name.
+//#define NPF_EVENTS_NAMES					NPF_DRIVER_NAME											///< (BBB) 
+//#define NPF_EVENTS_NAMES_WIDECHAR			NPF_DRIVER_NAME_WIDECHAR								///< (BBB) 
+#define FAKE_NDISWAN_ADAPTER_NAME			"\\Device\\" NPF6X_DRIVER_NAME "_GenericDialupAdapter"	///< (CCC) Name of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
+#define FAKE_NDISWAN_ADAPTER_DESCRIPTION	"Adapter for generic dialup and VPN capture"			///< (DDD) Description of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
+#define NPF_SERVICE_DESC					"WinPcap Packet Driver (" NPF6X_DRIVER_NAME ")"			///< (FFF) packet.dll
+#define NPF_DRIVER_COMPLETE_DEVICE_PREFIX	"\\Device\\" NPF6X_DRIVER_NAME "_"						///< (III) packet.dll
+#define NPF_DRIVER_COMPLETE_PATH			"system32\\drivers\\" NPF6X_DRIVER_NAME ".sys"			///< (LLL) packet.dll
+#else
+#define NPF_DRIVER_FILE_NAME				NPF_DRIVER_NAME
 #define NPF_DEVICE_NAMES_PREFIX				NPF_DRIVER_NAME "_"     								///< (AAA) packet.dll
 #define NPF_DEVICE_NAMES_PREFIX_WIDECHAR	NPF_DRIVER_NAME_WIDECHAR L"_"     						///< (AAA) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
 #define NPF_EVENTS_NAMES					NPF_DRIVER_NAME											///< (BBB) 
@@ -54,6 +69,7 @@
 #define NPF_SERVICE_DESC					"WinPcap Packet Driver (" NPF_DRIVER_NAME ")"			///< (FFF) packet.dll
 #define NPF_DRIVER_COMPLETE_DEVICE_PREFIX	"\\Device\\" NPF_DRIVER_NAME "_"						///< (III) packet.dll
 #define NPF_DRIVER_COMPLETE_PATH			"system32\\drivers\\" NPF_DRIVER_NAME ".sys"			///< (LLL) packet.dll
+#endif
 
 
 //
