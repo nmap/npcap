@@ -40,7 +40,6 @@
 #include "packet.h"
 #include "..\..\..\Common\WpcapNames.h"
 
-
 static
 VOID NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen);
 
@@ -74,6 +73,8 @@ ULONG g_NumOpenedInstances = 0;
 
 extern POPEN_INSTANCE g_arrOpen;
 
+//-------------------------------------------------------------------
+
 BOOLEAN NPF_StartUsingBinding(IN POPEN_INSTANCE pOpen)
 {
 	ASSERT(pOpen != NULL);
@@ -94,6 +95,8 @@ BOOLEAN NPF_StartUsingBinding(IN POPEN_INSTANCE pOpen)
 	return TRUE;
 }
 
+//-------------------------------------------------------------------
+
 VOID NPF_StopUsingBinding(IN POPEN_INSTANCE pOpen)
 {
 	ASSERT(pOpen != NULL);
@@ -113,6 +116,8 @@ VOID NPF_StopUsingBinding(IN POPEN_INSTANCE pOpen)
 
 	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
 }
+
+//-------------------------------------------------------------------
 
 VOID NPF_CloseBinding(IN POPEN_INSTANCE pOpen)
 {
@@ -161,29 +166,12 @@ VOID NPF_CloseBinding(IN POPEN_INSTANCE pOpen)
 
 	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
 
-	//
-	// do the release procedure
-	//
-	// 	NdisResetEvent(&pOpen->NdisOpenCloseCompleteEvent);
-	// 
-	// 	// Close the adapter
-	// 	Status = NdisCloseAdapterEx(pOpen->AdapterHandle);
-	// 
-	// 	if (Status == NDIS_STATUS_PENDING)
-	// 	{
-	// 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Pending NdisCloseAdapter");
-	// 		NdisWaitEvent(&pOpen->NdisOpenCloseCompleteEvent, 0);
-	// 	}
-	// 	else
-	// 	{
-	// 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Not Pending NdisCloseAdapter");
-	// 	}
-	TRACE_MESSAGE(PACKET_DEBUG_LOUD, "No need to call NdisCloseAdapter here");
-
 	NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
 	pOpen->AdapterBindingStatus = ADAPTER_UNBOUND;
 	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
 }
+
+//-------------------------------------------------------------------
 
 VOID NPF_CloseBindingAndAdapter(IN POPEN_INSTANCE pOpen)
 {
@@ -232,25 +220,6 @@ VOID NPF_CloseBindingAndAdapter(IN POPEN_INSTANCE pOpen)
 
 	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
 
-	//
-	// do the release procedure
-	//
-	NdisResetEvent(&pOpen->NdisOpenCloseCompleteEvent);
-
-	// Close the adapter
-	Status = NdisCloseAdapterEx(pOpen->AdapterHandle);
-
-	if (Status == NDIS_STATUS_PENDING)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Pending NdisCloseAdapter");
-		NdisWaitEvent(&pOpen->NdisOpenCloseCompleteEvent, 0);
-	}
-	else
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Not Pending NdisCloseAdapter");
-	}
-	TRACE_MESSAGE(PACKET_DEBUG_LOUD, "No need to call NdisCloseAdapter here");
-
 	NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
 	pOpen->AdapterBindingStatus = ADAPTER_UNBOUND;
 	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
@@ -264,25 +233,8 @@ NTSTATUS NPF_OpenAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	POPEN_INSTANCE Open;
 	PIO_STACK_LOCATION IrpSp;
 	NDIS_STATUS Status;
-	NDIS_STATUS ErrorStatus;
-	UINT i;
-	PUCHAR tpointer;
-	PLIST_ENTRY PacketListEntry;
 	NTSTATUS returnStatus;
-	ULONG localNumOpenedInstances;	
-
-	NET_BUFFER_LIST_POOL_PARAMETERS PoolParameters;
-	NDIS_OPEN_PARAMETERS OpenParameters;
-	NET_FRAME_TYPE FrameTypeArray[2] =
-	{
-		NDIS_ETH_TYPE_802_1X, NDIS_ETH_TYPE_802_1Q
-	};
-
-	//  
-	//	Old registry based WinPcap names
-	//
-	//	WCHAR				EventPrefix[MAX_WINPCAP_KEY_CHARS];
-	//	UINT				RegStrLen;
+	ULONG localNumOpenedInstances;
 
 	TRACE_ENTER();
 
@@ -297,6 +249,7 @@ NTSTATUS NPF_OpenAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		//cannot find the adapter from the global open array.
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
 		return STATUS_UNSUCCESSFUL;
 	}
 
@@ -314,7 +267,9 @@ NTSTATUS NPF_OpenAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	// This is used for timestamp conversion.
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
-	returnStatus = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
+	//returnStatus = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
+	returnStatus = NDIS_STATUS_SUCCESS;
+	Open->MaxFrameSize = 1514;	
 
 	if (!NT_SUCCESS(returnStatus))
 	{
@@ -349,6 +304,8 @@ NTSTATUS NPF_OpenAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	return returnStatus;
 }
 
+//-------------------------------------------------------------------
+
 BOOLEAN NPF_StartUsingOpenInstance(IN POPEN_INSTANCE pOpen)
 {
 	BOOLEAN returnStatus;
@@ -376,6 +333,8 @@ VOID NPF_StopUsingOpenInstance(IN POPEN_INSTANCE pOpen)
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 }
 
+//-------------------------------------------------------------------
+
 VOID NPF_CloseOpenInstance(IN POPEN_INSTANCE pOpen)
 {
 	ULONG i = 0;
@@ -400,6 +359,7 @@ VOID NPF_CloseOpenInstance(IN POPEN_INSTANCE pOpen)
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 }
 
+//-------------------------------------------------------------------
 
 VOID NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen)
 {
@@ -467,6 +427,13 @@ VOID NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen)
 		NdisFreeSpinLock(&pOpen->CpuData[i].BufferLock);
 	}
 
+	NdisFreeSpinLock(&pOpen->OIDLock);
+	NdisFreeSpinLock(&pOpen->CountersLock);
+	NdisFreeSpinLock(&pOpen->WriteLock);
+	NdisFreeSpinLock(&pOpen->MachineLock);
+	NdisFreeSpinLock(&pOpen->AdapterHandleLock);
+	NdisFreeSpinLock(&pOpen->OpenInUseLock);
+
 	//
 	// Free the string with the name of the dump file
 	//
@@ -476,41 +443,7 @@ VOID NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen)
 	TRACE_EXIT();
 }
 
-
 //-------------------------------------------------------------------
-
-VOID NPF_OpenAdapterCompleteEx(IN NDIS_HANDLE  ProtocolBindingContext, IN NDIS_STATUS  Status)
-{
-	POPEN_INSTANCE Open;
-	PLIST_ENTRY RequestListEntry;
-	PINTERNAL_REQUEST MaxSizeReq;
-	NDIS_STATUS ReqStatus;
-
-	TRACE_ENTER();
-
-	Open = (POPEN_INSTANCE)ProtocolBindingContext;
-
-	ASSERT(Open != NULL);
-
-	if (Status != NDIS_STATUS_SUCCESS)
-	{
-		//
-		// this is not completely correct, as we are converting an NDIS_STATUS to a NTSTATUS
-		//
-		Open->OpenCloseStatus = Status;
-	}
-	else
-	{
-		Open->OpenCloseStatus = STATUS_SUCCESS;
-	}
-
-	//
-	// wake up the caller of NdisOpen, that is NPF_Open
-	//
-	NdisSetEvent(&Open->NdisOpenCloseCompleteEvent);
-
-	TRACE_EXIT();
-}
 
 NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu)
 {
@@ -543,6 +476,11 @@ NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu
 
 	MaxSizeReq = CONTAINING_RECORD(RequestListEntry, INTERNAL_REQUEST, ListElement);
 
+	NdisZeroMemory(&MaxSizeReq->Request, sizeof(NDIS_OID_REQUEST));
+	MaxSizeReq->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
+	MaxSizeReq->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
+	MaxSizeReq->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
+
 	MaxSizeReq->Request.RequestType = NdisRequestQueryInformation;
 	MaxSizeReq->Request.DATA.QUERY_INFORMATION.Oid = OID_GEN_MAXIMUM_TOTAL_SIZE;
 
@@ -551,12 +489,18 @@ NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu
 
 	NdisResetEvent(&MaxSizeReq->InternalRequestCompletedEvent);
 
+	if (*((PVOID *) MaxSizeReq->Request.SourceReserved) != NULL)
+	{
+		*((PVOID *) MaxSizeReq->Request.SourceReserved) = NULL;
+	}
+
 	//  submit the request
-	ReqStatus = NdisOidRequest(pOpen->AdapterHandle, &MaxSizeReq->Request);
+	MaxSizeReq->Request.RequestId = (PVOID) NPF6X_REQUEST_ID;
+	ReqStatus = NdisFOidRequest(pOpen->AdapterHandle, &MaxSizeReq->Request);
 
 	if (ReqStatus == NDIS_STATUS_PENDING)
 	{
-		NdisWaitEvent(&MaxSizeReq->InternalRequestCompletedEvent, 0);
+		NdisWaitEvent(&MaxSizeReq->InternalRequestCompletedEvent, 1000);
 		ReqStatus = MaxSizeReq->RequestStatus;
 	}
 
@@ -588,8 +532,8 @@ NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu
 	}
 }
 
-
 //-------------------------------------------------------------------
+
 NTSTATUS NPF_CloseAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
 	POPEN_INSTANCE pOpen;
@@ -612,6 +556,8 @@ NTSTATUS NPF_CloseAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
 }
+
+//-------------------------------------------------------------------
 
 NTSTATUS NPF_CloseAdapterForUnclosed(POPEN_INSTANCE pOpen)
 {
@@ -733,6 +679,7 @@ NTSTATUS NPF_Cleanup(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 }
 
 //-------------------------------------------------------------------
+
 NTSTATUS NPF_CleanupForUnclosed(POPEN_INSTANCE Open)
 {
 	NDIS_STATUS Status;
@@ -831,40 +778,6 @@ NTSTATUS NPF_CleanupForUnclosed(POPEN_INSTANCE Open)
 
 //-------------------------------------------------------------------
 
-VOID NPF_CloseAdapterCompleteEx(IN NDIS_HANDLE  ProtocolBindingContext)
-{
-	POPEN_INSTANCE Open;
-	PIRP Irp;
-
-	TRACE_ENTER();
-
-	Open = (POPEN_INSTANCE)ProtocolBindingContext;
-
-	ASSERT(Open != NULL);
-
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open= %p", Open);
-
-	NdisSetEvent(&Open->NdisOpenCloseCompleteEvent);
-
-	TRACE_EXIT();
-	return;
-}
-
-//-------------------------------------------------------------------
-
-NDIS_STATUS NPF_NetPowerChange(IN NDIS_HANDLE ProtocolBindingContext, IN PNET_PNP_EVENT_NOTIFICATION pNetPnPEvent)
-{
-	TRACE_ENTER();
-
-	TIME_DESYNCHRONIZE(&G_Start_Time);
-	TIME_SYNCHRONIZE(&G_Start_Time);
-
-	TRACE_EXIT();
-	return STATUS_SUCCESS;
-}
-
-//-------------------------------------------------------------------
-
 void NPF_AddToOpenArray(POPEN_INSTANCE Open)
 {
 	POPEN_INSTANCE CurOpen;
@@ -886,6 +799,8 @@ void NPF_AddToOpenArray(POPEN_INSTANCE Open)
 
 	TRACE_EXIT();
 }
+
+//-------------------------------------------------------------------
 
 void NPF_AddToGroupOpenArray(POPEN_INSTANCE Open)
 {
@@ -921,10 +836,13 @@ void NPF_AddToGroupOpenArray(POPEN_INSTANCE Open)
 	TRACE_EXIT();
 }
 
+//-------------------------------------------------------------------
+
 void NPF_RemoveFromOpenArray(POPEN_INSTANCE Open)
 {
 	POPEN_INSTANCE CurOpen = NULL;
 	POPEN_INSTANCE PrevOpen = NULL;
+	TRACE_ENTER();
 
 	if (Open == NULL)
 	{
@@ -947,7 +865,11 @@ void NPF_RemoveFromOpenArray(POPEN_INSTANCE Open)
 		}
 		PrevOpen = CurOpen;
 	}
+
+	TRACE_EXIT();
 }
+
+//-------------------------------------------------------------------
 
 void NPF_RemoveFromGroupOpenArray(POPEN_INSTANCE Open)
 {
@@ -990,17 +912,20 @@ void NPF_RemoveFromGroupOpenArray(POPEN_INSTANCE Open)
 	TRACE_EXIT();
 }
 
-//\Device\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}
-//\Device\NdisWanIp
-//\DEVICE\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}
-//\DEVICE\NdisWanIp
+//-------------------------------------------------------------------
+
 int NPF_CompareAdapterName(PNDIS_STRING s1, PNDIS_STRING s2)
 {
 	int i;
 	WCHAR buf1[255];
 	WCHAR buf2[255];
-	TRACE_ENTER();
+	//TRACE_ENTER();
 
+	//Example
+	//\Device\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}
+	//\Device\NdisWanIp
+	//\DEVICE\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}
+	//\DEVICE\NdisWanIp
 	wcscpy(buf1, s1->Buffer);
 	wcscpy(buf2, s2->Buffer);
 	if (wcslen(buf1) < 7 || wcslen(buf2) < 7)
@@ -1021,9 +946,11 @@ int NPF_CompareAdapterName(PNDIS_STRING s1, PNDIS_STRING s2)
 			buf2[i] += ('a' - 'A');
 		}
 	}
-	TRACE_EXIT();
+	//TRACE_EXIT();
 	return wcscmp(buf1, buf2);
 }
+
+//-------------------------------------------------------------------
 
 POPEN_INSTANCE NPF_GetCopyFromOpenArray(PNDIS_STRING pAdapterName, PDEVICE_EXTENSION DeviceExtension)
 {
@@ -1070,6 +997,8 @@ void NPF_RemoveUnclosedAdapters()
 	TRACE_EXIT();
 }
 
+//-------------------------------------------------------------------
+
 POPEN_INSTANCE NPF_DuplicateOpenObject(POPEN_INSTANCE OriginalOpen, PDEVICE_EXTENSION DeviceExtension)
 {
 	POPEN_INSTANCE Open;
@@ -1097,7 +1026,7 @@ POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex
 	{
 		// no memory
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate memory pool");
-
+		TRACE_EXIT();
 		return NULL;
 	}
 
@@ -1119,28 +1048,10 @@ POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex
 	if (Open->PacketPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate packet pool");
-
 		ExFreePool(Open);
-
+		TRACE_EXIT();
 		return NULL;
 	}
-
-	// 	//  Allocate a packet pool for our xmit and receive packets
-	// 	NdisAllocatePacketPool(
-	// 		&Status,
-	// 		&Open->PacketPool,
-	// 		TRANSMIT_PACKETS,
-	// 		sizeof(PACKET_RESERVED));
-	// 
-	// 	if (Status != NDIS_STATUS_SUCCESS) {
-	// 
-	// 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate packet pool");
-	// 
-	// 		ExFreePool(Open);
-	// 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
-	// 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-	// 		return STATUS_INSUFFICIENT_RESOURCES;
-	// 	}
 
 	NdisInitializeEvent(&Open->WriteEvent);
 	NdisInitializeEvent(&Open->NdisRequestEvent);
@@ -1209,6 +1120,11 @@ POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex
 	NdisAllocateSpinLock(&Open->CountersLock);
 
 	//
+	//allocate the spinlock for the OID requests
+	//
+	NdisAllocateSpinLock(&Open->OIDLock);
+
+	//
 	//  link up the request stored in our open block
 	//
 	for (i = 0 ; i < MAX_REQUESTS ; i++)
@@ -1233,143 +1149,304 @@ POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex
 	return Open;
 }
 
-//------------------------------------------------------------------
+//-------------------------------------------------------------------
 
-NDIS_STATUS NPF_BindAdapterEx(IN NDIS_HANDLE ProtocolDriverContext, IN NDIS_HANDLE BindContext, IN PNDIS_BIND_PARAMETERS BindParameters)
+_Use_decl_annotations_
+NDIS_STATUS
+NPF_RegisterOptions(
+	NDIS_HANDLE  NdisFilterDriverHandle,
+	NDIS_HANDLE  FilterDriverContext
+	)
+/*++
+
+Routine Description:
+
+	Register optional handlers with NDIS.  This sample does not happen to
+	have any optional handlers to register, so this routine does nothing
+	and could simply have been omitted.  However, for illustrative purposes,
+	it is presented here.
+
+Arguments:
+
+	NdisFilterHandle - pointer the driver handle received from
+							 NdisFRegisterFilterDriver
+
+	FilterDriverContext    - pointer to our context passed into
+							 NdisFRegisterFilterDriver
+
+Return Value:
+
+	NDIS_STATUS_SUCCESS
+
+--*/
 {
-	NTSTATUS Status;
-	NTSTATUS returnStatus;
-	UINT i;
-	POPEN_INSTANCE Open;
-	NDIS_OPEN_PARAMETERS OpenParameters;
-	UINT tmpSelectedMediumIndex;
-	NDIS_HANDLE tmpAdapterHandle;
-
-
 	TRACE_ENTER();
-	
-	IF_LOUD (DbgPrint("NPF_BindAdapterEx: AdapterName=%ws, MacAddress=%c-%c-%c-%c-%c-%c\n",
-		BindParameters->AdapterName->Buffer,
-		BindParameters->CurrentMacAddress[0], 
-		BindParameters->CurrentMacAddress[1], 
-		BindParameters->CurrentMacAddress[2], 
-		BindParameters->CurrentMacAddress[3], 
-		BindParameters->CurrentMacAddress[4], 
-		BindParameters->CurrentMacAddress[5]);)
 
+	ASSERT(NdisFilterDriverHandle == FilterDriverHandle);
+	ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
 
-	Open = NPF_CreateOpenObject(BindParameters->AdapterName, 0, NULL);
-	if (Open == NULL)
+	if ((NdisFilterDriverHandle != (NDIS_HANDLE)FilterDriverHandle) ||
+		(FilterDriverContext != (NDIS_HANDLE)FilterDriverObject))
 	{
-		returnStatus = STATUS_INSUFFICIENT_RESOURCES;
-		TRACE_EXIT();
-		return returnStatus;
-	}
-
-	//
-	//  Try to open the MAC
-	//
-	//TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Opening the device %ws, BindingContext=%p", DeviceExtension->AdapterName.Buffer, Open);
-
-	returnStatus = STATUS_SUCCESS;
-
-	NdisZeroMemory(&OpenParameters, sizeof(NDIS_OPEN_PARAMETERS));
-	OpenParameters.Header.Type = NDIS_OBJECT_TYPE_OPEN_PARAMETERS;
-	OpenParameters.Header.Revision = NDIS_OPEN_PARAMETERS_REVISION_1;
-	OpenParameters.Header.Size = sizeof(NDIS_OPEN_PARAMETERS);
-	OpenParameters.AdapterName = BindParameters->AdapterName;
-	OpenParameters.MediumArray = MediumArray;
-	OpenParameters.MediumArraySize = sizeof(MediumArray) / sizeof(NDIS_MEDIUM);
-	OpenParameters.SelectedMediumIndex = &Open->Medium;
-	OpenParameters.FrameTypeArray = NULL;
-	OpenParameters.FrameTypeArraySize = 0;
-	//OpenParameters.FrameTypeArray = &FrameTypeArray[0];
-	//OpenParameters.FrameTypeArraySize = sizeof(FrameTypeArray) / sizeof(NET_FRAME_TYPE);
-
-
-	NDIS_DECLARE_PROTOCOL_OPEN_CONTEXT(OPEN_INSTANCE);
-	Status = NdisOpenAdapterEx(g_NdisProtocolHandle, Open, &OpenParameters, BindContext, &Open->AdapterHandle);
-
-	// 	NdisOpenAdapter(
-	// 		&Status,
-	// 		&ErrorStatus,
-	// 		&Open->AdapterHandle,
-	// 		&Open->Medium,
-	// 		MediumArray,
-	// 		NUM_NDIS_MEDIA,
-	// 		g_NdisProtocolHandle,
-	// 		Open,
-	// 		&DeviceExtension->AdapterName,
-	// 		0,
-	// 		NULL);
-
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened the device, Status=%x", Status);
-
-	if (Status == NDIS_STATUS_PENDING)
-	{
-		NdisWaitEvent(&Open->NdisOpenCloseCompleteEvent, 0);
-
-		if (!NT_SUCCESS(Open->OpenCloseStatus))
-		{
-			returnStatus = Open->OpenCloseStatus;
-		}
-		else
-		{
-			returnStatus = STATUS_SUCCESS;
-		}
-	}
-	else
-	{
-		//
-		// request not pending, we know the result, and OpenComplete has not been called.
-		//
-		if (Status == NDIS_STATUS_SUCCESS)
-		{
-			returnStatus = STATUS_SUCCESS;
-		}
-		else
-		{
-			//
-			// this is not completely correct, as we are converting an NDIS_STATUS to a NTSTATUS
-			//
-			returnStatus = Status;
-		}
-	}
-
-	if (!NT_SUCCESS(returnStatus))
-	{
-		NPF_ReleaseOpenInstanceResources(Open);
-		//
-		// Free the open instance itself
-		//
-		ExFreePool(Open);
-	}
-	else
-	{
-		NPF_AddToOpenArray(Open); //aki
+		return NDIS_STATUS_INVALID_PARAMETER;
 	}
 
 	TRACE_EXIT();
-	return returnStatus;
+
+	return NDIS_STATUS_SUCCESS;
 }
 
 //-------------------------------------------------------------------
 
+_Use_decl_annotations_
+NDIS_STATUS
+NPF_Attach(
+	NDIS_HANDLE                     NdisFilterHandle,
+	NDIS_HANDLE                     FilterDriverContext,
+	PNDIS_FILTER_ATTACH_PARAMETERS  AttachParameters
+	)
+/*++
 
-NDIS_STATUS NPF_UnbindAdapterEx(IN  NDIS_HANDLE UnbindContext, IN  NDIS_HANDLE ProtocolBindingContext)
+Routine Description:
+
+	Filter attach routine.
+	Create filter's context, allocate NetBufferLists and NetBuffer pools and any
+	other resources, and read configuration if needed.
+
+Arguments:
+
+	NdisFilterHandle - Specify a handle identifying this instance of the filter. FilterAttach
+					   should save this handle. It is a required  parameter in subsequent calls
+					   to NdisFxxx functions.
+	FilterDriverContext - Filter driver context passed to NdisFRegisterFilterDriver.
+
+	AttachParameters - attach parameters
+
+Return Value:
+
+	NDIS_STATUS_SUCCESS: FilterAttach successfully allocated and initialize data structures
+						 for this filter instance.
+	NDIS_STATUS_RESOURCES: FilterAttach failed due to insufficient resources.
+	NDIS_STATUS_FAILURE: FilterAttach could not set up this instance of this filter and it has called
+						 NdisWriteErrorLogEntry with parameters specifying the reason for failure.
+
+N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper 
+	layer can send Irps to the filter.
+
+--*/
 {
-	NTSTATUS Status;
-	ULONG localNumOpenInstances;
-	POPEN_INSTANCE Open = (POPEN_INSTANCE)ProtocolBindingContext;
+	POPEN_INSTANCE			Open = NULL;
+	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
+	NDIS_STATUS				returnStatus;
+	NDIS_FILTER_ATTRIBUTES  FilterAttributes;
+	BOOLEAN               bFalse = FALSE;
 
 	TRACE_ENTER();
 
+	do
+	{
+		ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
+		if (FilterDriverContext != (NDIS_HANDLE)FilterDriverObject)
+		{
+			Status = NDIS_STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		// Verify the media type is supported.  This is a last resort; the
+		// the filter should never have been bound to an unsupported miniport
+		// to begin with.  If this driver is marked as a Mandatory filter (which
+		// is the default for this sample; see the INF file), failing to attach 
+		// here will leave the network adapter in an unusable state.
+		//
+		// Your setup/install code should not bind the filter to unsupported
+		// media types.
+		if ((AttachParameters->MiniportMediaType != NdisMedium802_3)
+				&& (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
+// 				&& (AttachParameters->MiniportMediaType != NdisMediumWan)
+// 				&& (AttachParameters->MiniportMediaType != NdisMediumWirelessWan)
+				&& (AttachParameters->MiniportMediaType != NdisMediumFddi)
+				&& (AttachParameters->MiniportMediaType != NdisMediumArcnet878_2)
+				&& (AttachParameters->MiniportMediaType != NdisMediumAtm)
+				&& (AttachParameters->MiniportMediaType != NdisMedium802_5))
+		{
+			IF_LOUD(DbgPrint("Unsupported media type.\n");)
+			
+			Status = NDIS_STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		Open = NPF_CreateOpenObject(AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType, NULL);
+		if (Open == NULL)
+		{
+			returnStatus = NDIS_STATUS_RESOURCES;
+			TRACE_EXIT();
+			return returnStatus;
+		}
+
+		Open->AdapterHandle = NdisFilterHandle;
+
+		NdisZeroMemory(&FilterAttributes, sizeof(NDIS_FILTER_ATTRIBUTES));
+		FilterAttributes.Header.Revision = NDIS_FILTER_ATTRIBUTES_REVISION_1;
+		FilterAttributes.Header.Size = sizeof(NDIS_FILTER_ATTRIBUTES);
+		FilterAttributes.Header.Type = NDIS_OBJECT_TYPE_FILTER_ATTRIBUTES;
+		FilterAttributes.Flags = 0;
+
+		NDIS_DECLARE_FILTER_MODULE_CONTEXT(OPEN_INSTANCE);
+		Status = NdisFSetAttributes(NdisFilterHandle,
+									Open,
+									&FilterAttributes);
+
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened the device, Status=%x", Status);
+
+		if (Status != NDIS_STATUS_SUCCESS)
+		{
+			IF_LOUD(DbgPrint("Failed to set attributes.\n");)
+			NPF_ReleaseOpenInstanceResources(Open);
+			//
+			// Free the open instance itself
+			//
+			if (Open != NULL)
+			{
+				ExFreePool(Open);
+			}
+			break;
+		}
+		else
+		{
+			NPF_AddToOpenArray(Open);
+
+// 			FILTER_ACQUIRE_LOCK(&FilterListLock, bFalse);
+// 			InsertHeadList(&FilterModuleList, &Open->FilterModuleLink);
+// 			FILTER_RELEASE_LOCK(&FilterListLock, bFalse);
+		}
+	}
+	while (bFalse);
+
+	TRACE_EXIT();
+	return Status;
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+NDIS_STATUS
+NPF_Pause(
+	NDIS_HANDLE                     FilterModuleContext,
+	PNDIS_FILTER_PAUSE_PARAMETERS   PauseParameters
+	)
+/*++
+
+Routine Description:
+
+	Filter pause routine.
+	Complete all the outstanding sends and queued sends,
+	wait for all the outstanding recvs to be returned
+	and return all the queued receives.
+
+Arguments:
+
+	FilterModuleContext - pointer to the filter context stucture
+	PauseParameters     - additional information about the pause
+
+Return Value:
+
+	NDIS_STATUS_SUCCESS if filter pauses successfully, NDIS_STATUS_PENDING
+	if not.  No other return value is allowed (pause must succeed, eventually).
+
+N.B.: When the filter is in Pausing state, it can still process OID requests, 
+	complete sending, and returning packets to NDIS, and also indicate status.
+	After this function completes, the filter must not attempt to send or 
+	receive packets, but it may still process OID requests and status 
+	indications.
+
+--*/
+{
+	NDIS_STATUS         Status;
+
+	UNREFERENCED_PARAMETER(FilterModuleContext);
+	UNREFERENCED_PARAMETER(PauseParameters);
+	TRACE_ENTER();
+
+	// Do nothing here
 	Status = NDIS_STATUS_SUCCESS;
-	ASSERT(Open != NULL);
+	TRACE_EXIT();
+	return Status;
+}
 
-// 	if (Open->ReadEvent != NULL)
-// 		KeSetEvent(Open->ReadEvent,0,FALSE);
+//-------------------------------------------------------------------
 
+_Use_decl_annotations_
+NDIS_STATUS
+NPF_Restart(
+	NDIS_HANDLE                     FilterModuleContext,
+	PNDIS_FILTER_RESTART_PARAMETERS RestartParameters
+	)
+/*++
+
+Routine Description:
+
+	Filter restart routine.
+	Start the datapath - begin sending and receiving NBLs.
+
+Arguments:
+
+	FilterModuleContext - pointer to the filter context stucture.
+	RestartParameters   - additional information about the restart operation.
+
+Return Value:
+
+	NDIS_STATUS_SUCCESS: if filter restarts successfully
+	NDIS_STATUS_XXX: Otherwise.
+
+--*/
+{
+	NDIS_STATUS     Status;
+
+	UNREFERENCED_PARAMETER(FilterModuleContext);
+	TRACE_ENTER();
+
+	Status = NDIS_STATUS_SUCCESS;
+	TRACE_EXIT();
+	return Status;
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_Detach(
+	NDIS_HANDLE     FilterModuleContext
+	)
+/*++
+
+Routine Description:
+
+	Filter detach routine.
+	This is a required function that will deallocate all the resources allocated during
+	FilterAttach. NDIS calls FilterAttach to remove a filter instance from a filter stack.
+
+Arguments:
+
+	FilterModuleContext - pointer to the filter context area.
+
+Return Value:
+	None.
+
+NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
+
+--*/
+{
+	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
+	BOOLEAN				bFalse = FALSE;
+
+	TRACE_ENTER();
+
+// 	FILTER_ACQUIRE_LOCK(&FilterListLock, bFalse);
+// 	RemoveEntryList(&Open->FilterModuleLink);
+// 	FILTER_RELEASE_LOCK(&FilterListLock, bFalse);
+
+	// 	if (Open->ReadEvent != NULL)
+	// 		KeSetEvent(Open->ReadEvent,0,FALSE);
 
 	NPF_RemoveFromOpenArray(Open); //aki
 	NPF_CloseBindingAndAdapter(Open);
@@ -1379,33 +1456,587 @@ NDIS_STATUS NPF_UnbindAdapterEx(IN  NDIS_HANDLE UnbindContext, IN  NDIS_HANDLE P
 	NPF_RemoveUnclosedAdapters(); //aki
 
 	TRACE_EXIT();
+	return;
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+NDIS_STATUS
+NPF_OidRequest(
+	NDIS_HANDLE         FilterModuleContext,
+	PNDIS_OID_REQUEST   Request
+	)
+/*++
+
+Routine Description:
+
+	Request handler
+	Handle requests from upper layers
+
+Arguments:
+
+	FilterModuleContext   - our filter
+	Request               - the request passed down
+
+
+Return Value:
+
+	 NDIS_STATUS_SUCCESS
+	 NDIS_STATUS_PENDING
+	 NDIS_STATUS_XXX
+
+NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
+
+--*/
+{
+	POPEN_INSTANCE          Open = (POPEN_INSTANCE) FilterModuleContext;
+	NDIS_STATUS             Status;
+	PNDIS_OID_REQUEST       ClonedRequest=NULL;
+	BOOLEAN                 bSubmitted = FALSE;
+	PFILTER_REQUEST_CONTEXT Context;
+	BOOLEAN                 bFalse = FALSE;
+
+	TRACE_ENTER();
+
+	do
+	{
+		Status = NdisAllocateCloneOidRequest(Open->AdapterHandle,
+											Request,
+											NPF6X_ALLOC_TAG,
+											&ClonedRequest);
+		if (Status != NDIS_STATUS_SUCCESS)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "FilerOidRequest: Cannot Clone Request\n");
+			break;
+		}
+
+		Context = (PFILTER_REQUEST_CONTEXT)(&ClonedRequest->SourceReserved[0]);
+		*Context = Request;
+
+		bSubmitted = TRUE;
+
+		//
+		// Use same request ID
+		//
+		ClonedRequest->RequestId = Request->RequestId;
+
+		Open->PendingOidRequest = ClonedRequest;
+
+		Status = NdisFOidRequest(Open->AdapterHandle, ClonedRequest);
+
+		if (Status != NDIS_STATUS_PENDING)
+		{
+			NPF_OidRequestComplete(Open, ClonedRequest, Status);
+			Status = NDIS_STATUS_PENDING;
+		}
+
+
+	}while (bFalse);
+
+	if (bSubmitted == FALSE)
+	{
+		switch(Request->RequestType)
+		{
+			case NdisRequestMethod:
+				Request->DATA.METHOD_INFORMATION.BytesRead = 0;
+				Request->DATA.METHOD_INFORMATION.BytesNeeded = 0;
+				Request->DATA.METHOD_INFORMATION.BytesWritten = 0;
+				break;
+
+			case NdisRequestSetInformation:
+				Request->DATA.SET_INFORMATION.BytesRead = 0;
+				Request->DATA.SET_INFORMATION.BytesNeeded = 0;
+				break;
+
+			case NdisRequestQueryInformation:
+			case NdisRequestQueryStatistics:
+			default:
+				Request->DATA.QUERY_INFORMATION.BytesWritten = 0;
+				Request->DATA.QUERY_INFORMATION.BytesNeeded = 0;
+				break;
+		}
+
+	}
+
+	TRACE_EXIT();
+	return Status;
+
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_CancelOidRequest(
+	NDIS_HANDLE             FilterModuleContext,
+	PVOID                   RequestId
+	)
+/*++
+
+Routine Description:
+
+	Cancels an OID request
+
+	If your filter driver does not intercept and hold onto any OID requests,
+	then you do not need to implement this routine.  You may simply omit it.
+	Furthermore, if the filter only holds onto OID requests so it can pass
+	down a clone (the most common case) the filter does not need to implement 
+	this routine; NDIS will then automatically request that the lower-level 
+	filter/miniport cancel your cloned OID.
+
+	Most filters do not need to implement this routine.
+
+Arguments:
+
+	FilterModuleContext   - our filter
+	RequestId             - identifies the request(s) to cancel
+
+--*/
+{
+	POPEN_INSTANCE                      Open = (POPEN_INSTANCE) FilterModuleContext;
+	PNDIS_OID_REQUEST                   Request = NULL;
+	PFILTER_REQUEST_CONTEXT             Context;
+	PNDIS_OID_REQUEST                   OriginalRequest = NULL;
+	BOOLEAN                             bFalse = FALSE;
+
+	FILTER_ACQUIRE_LOCK(&Open->OIDLock, bFalse);
+
+	Request = Open->PendingOidRequest;
+
+	if (Request != NULL)
+	{
+		Context = (PFILTER_REQUEST_CONTEXT)(&Request->SourceReserved[0]);
+
+		OriginalRequest = (*Context);
+	}
+
+	if ((OriginalRequest != NULL) && (OriginalRequest->RequestId == RequestId))
+	{
+		FILTER_RELEASE_LOCK(&Open->OIDLock, bFalse);
+
+		NdisFCancelOidRequest(Open->AdapterHandle, RequestId);
+	}
+	else
+	{
+		FILTER_RELEASE_LOCK(&Open->OIDLock, bFalse);
+	}
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_OidRequestComplete(
+	NDIS_HANDLE         FilterModuleContext,
+	PNDIS_OID_REQUEST   Request,
+	NDIS_STATUS         Status
+	)
+/*++
+
+Routine Description:
+
+	Notification that an OID request has been completed
+
+	If this filter sends a request down to a lower layer, and the request is
+	pended, the FilterOidRequestComplete routine is invoked when the request
+	is complete.  Most requests we've sent are simply clones of requests
+	received from a higher layer; all we need to do is complete the original
+	higher request.
+
+	However, if this filter driver sends original requests down, it must not
+	attempt to complete a pending request to the higher layer.
+
+Arguments:
+
+	FilterModuleContext   - our filter context area
+	NdisRequest           - the completed request
+	Status                - completion status
+
+--*/
+{
+	POPEN_INSTANCE                      Open = (POPEN_INSTANCE) FilterModuleContext;
+	PNDIS_OID_REQUEST                   OriginalRequest;
+	PFILTER_REQUEST_CONTEXT             Context;
+	BOOLEAN                             bFalse = FALSE;
+
+	TRACE_ENTER();
+
+	Context = (PFILTER_REQUEST_CONTEXT)(&Request->SourceReserved[0]);
+	OriginalRequest = (*Context);
+
+	//
+	// This is an internal request
+	//
+	if (OriginalRequest == NULL)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status= %p", Status);
+		NPF_InternalRequestComplete(Open, Request, Status);
+		TRACE_EXIT();
+		return;
+	}
+
+
+	FILTER_ACQUIRE_LOCK(&Open->OIDLock, bFalse);
+
+	ASSERT(Open->PendingOidRequest == Request);
+	Open->PendingOidRequest = NULL;
+
+	FILTER_RELEASE_LOCK(&Open->OIDLock, bFalse);
+
+
+	//
+	// Copy the information from the returned request to the original request
+	//
+	switch(Request->RequestType)
+	{
+		case NdisRequestMethod:
+			OriginalRequest->DATA.METHOD_INFORMATION.OutputBufferLength =  Request->DATA.METHOD_INFORMATION.OutputBufferLength;
+			OriginalRequest->DATA.METHOD_INFORMATION.BytesRead = Request->DATA.METHOD_INFORMATION.BytesRead;
+			OriginalRequest->DATA.METHOD_INFORMATION.BytesNeeded = Request->DATA.METHOD_INFORMATION.BytesNeeded;
+			OriginalRequest->DATA.METHOD_INFORMATION.BytesWritten = Request->DATA.METHOD_INFORMATION.BytesWritten;
+			break;
+
+		case NdisRequestSetInformation:
+			OriginalRequest->DATA.SET_INFORMATION.BytesRead = Request->DATA.SET_INFORMATION.BytesRead;
+			OriginalRequest->DATA.SET_INFORMATION.BytesNeeded = Request->DATA.SET_INFORMATION.BytesNeeded;
+			break;
+
+		case NdisRequestQueryInformation:
+		case NdisRequestQueryStatistics:
+		default:
+			OriginalRequest->DATA.QUERY_INFORMATION.BytesWritten = Request->DATA.QUERY_INFORMATION.BytesWritten;
+			OriginalRequest->DATA.QUERY_INFORMATION.BytesNeeded = Request->DATA.QUERY_INFORMATION.BytesNeeded;
+			break;
+	}
+
+
+	(*Context) = NULL;
+
+	NdisFreeCloneOidRequest(Open->AdapterHandle, Request);
+
+	NdisFOidRequestComplete(Open->AdapterHandle, OriginalRequest, Status);
+
+	TRACE_EXIT();
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_Status(
+	NDIS_HANDLE             FilterModuleContext,
+	PNDIS_STATUS_INDICATION StatusIndication
+	)
+/*++
+
+Routine Description:
+
+	Status indication handler
+
+Arguments:
+
+	FilterModuleContext     - our filter context
+	StatusIndication        - the status being indicated
+
+NOTE: called at <= DISPATCH_LEVEL
+
+  FILTER driver may call NdisFIndicateStatus to generate a status indication to 
+  all higher layer modules.
+
+--*/
+{
+	POPEN_INSTANCE      Open = (POPEN_INSTANCE) FilterModuleContext;
+
+// 	TRACE_ENTER();
+// 	IF_LOUD(DbgPrint("NPF: Status Indication\n");)
+
+	//
+	// The filter may do processing on the status indication here, including
+	// intercepting and dropping it entirely.  However, the sample does nothing
+	// with status indications except pass them up to the higher layer.  It is 
+	// more efficient to omit the FilterStatus handler entirely if it does 
+	// nothing, but it is included in this sample for illustrative purposes.
+	//
+	NdisFIndicateStatus(Open->AdapterHandle, StatusIndication);
+
+/*	TRACE_EXIT();*/
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_DevicePnPEventNotify(
+	NDIS_HANDLE             FilterModuleContext,
+	PNET_DEVICE_PNP_EVENT   NetDevicePnPEvent
+	)
+/*++
+
+Routine Description:
+
+	Device PNP event handler
+
+Arguments:
+
+	FilterModuleContext         - our filter context
+	NetDevicePnPEvent           - a Device PnP event
+
+NOTE: called at PASSIVE_LEVEL
+
+--*/
+{
+	POPEN_INSTANCE		   Open = (POPEN_INSTANCE) FilterModuleContext;
+	NDIS_DEVICE_PNP_EVENT  DevicePnPEvent = NetDevicePnPEvent->DevicePnPEvent;
+
+/*	TRACE_ENTER();*/
+
+	//
+	// The filter may do processing on the event here, including intercepting
+	// and dropping it entirely.  However, the sample does nothing with Device
+	// PNP events, except pass them down to the next lower* layer.  It is more
+	// efficient to omit the FilterDevicePnPEventNotify handler entirely if it
+	// does nothing, but it is included in this sample for illustrative purposes.
+	//
+	// * Trivia: Device PNP events percolate DOWN the stack, instead of upwards
+	// like status indications and Net PNP events.  So the next layer is the
+	// LOWER layer.
+	//
+
+	switch (DevicePnPEvent)
+	{
+
+		case NdisDevicePnPEventQueryRemoved:
+		case NdisDevicePnPEventRemoved:
+		case NdisDevicePnPEventSurpriseRemoved:
+		case NdisDevicePnPEventQueryStopped:
+		case NdisDevicePnPEventStopped:
+		case NdisDevicePnPEventPowerProfileChanged:
+		case NdisDevicePnPEventFilterListChanged:
+			break;
+
+		default:
+			IF_LOUD(DbgPrint("FilterDevicePnPEventNotify: Invalid event.\n");)
+			break;
+	}
+
+	NdisFDevicePnPEventNotify(Open->AdapterHandle, NetDevicePnPEvent);
+
+/*	TRACE_EXIT();*/
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+NDIS_STATUS
+NPF_NetPnPEvent(
+	NDIS_HANDLE              FilterModuleContext,
+	PNET_PNP_EVENT_NOTIFICATION NetPnPEventNotification
+	)
+/*++
+
+Routine Description:
+
+	Net PNP event handler
+
+Arguments:
+
+	FilterModuleContext         - our filter context
+	NetPnPEventNotification     - a Net PnP event
+
+NOTE: called at PASSIVE_LEVEL
+
+--*/
+{
+	POPEN_INSTANCE			  Open = (POPEN_INSTANCE) FilterModuleContext;
+	NDIS_STATUS               Status = NDIS_STATUS_SUCCESS;
+
+/*	TRACE_ENTER();*/
+
+	//
+	// The filter may do processing on the event here, including intercepting 
+	// and dropping it entirely.  However, the sample does nothing with Net PNP
+	// events, except pass them up to the next higher layer.  It is more
+	// efficient to omit the FilterNetPnPEvent handler entirely if it does
+	// nothing, but it is included in this sample for illustrative purposes.
+	//
+
+// 	TIME_DESYNCHRONIZE(&G_Start_Time);
+// 	TIME_SYNCHRONIZE(&G_Start_Time);
+
+	Status = NdisFNetPnPEvent(Open->AdapterHandle, NetPnPEventNotification);
+
+/*	TRACE_EXIT();*/
 	return Status;
 }
 
 //-------------------------------------------------------------------
 
-VOID NPF_ResetComplete(IN NDIS_HANDLE  ProtocolBindingContext, IN NDIS_STATUS  Status)
-{
-	POPEN_INSTANCE Open;
-	PIRP Irp;
+_Use_decl_annotations_
+VOID
+NPF_ReturnEx(
+	NDIS_HANDLE         FilterModuleContext,
+	PNET_BUFFER_LIST    NetBufferLists,
+	ULONG               ReturnFlags
+	)
+/*++
 
-	PLIST_ENTRY ResetListEntry;
+Routine Description:
+
+	FilterReturnNetBufferLists handler.
+	FilterReturnNetBufferLists is an optional function. If provided, NDIS calls
+	FilterReturnNetBufferLists to return the ownership of one or more NetBufferLists
+	and their embedded NetBuffers to the filter driver. If this handler is NULL, NDIS
+	will skip calling this filter when returning NetBufferLists to the underlying
+	miniport and will call the next lower driver in the stack. A filter that doesn't
+	provide a FilterReturnNetBufferLists handler cannot originate a receive indication
+	on its own.
+
+Arguments:
+
+	FilterInstanceContext       - our filter context area
+	NetBufferLists              - a linked list of NetBufferLists that this 
+								  filter driver indicated in a previous call to 
+								  NdisFIndicateReceiveNetBufferLists
+	ReturnFlags                 - flags specifying if the caller is at DISPATCH_LEVEL
+
+--*/
+{
+	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
+	PNET_BUFFER_LIST    CurrNbl = NetBufferLists;
+	UINT                NumOfNetBufferLists = 0;
+	BOOLEAN             DispatchLevel;
+	ULONG               Ref;
+
+/*	TRACE_ENTER();*/
+	
+	// Return the received NBLs.  If you removed any NBLs from the chain, make
+	// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
+	NdisFReturnNetBufferLists(Open->AdapterHandle, NetBufferLists, ReturnFlags);
+
+/*	TRACE_EXIT();*/
+}
+
+// NDIS_FILTER_PARTIAL_CHARACTERISTICS DefaultChars = {
+// 	{ 0, 0, 0},
+// 	0,
+// 	NPF_SendEx,
+// 	NPF_SendCompleteEx,
+// 	NULL,
+// 	NPF_TapEx,
+// 	NPF_ReturnEx
+// };
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_CancelSendNetBufferLists(
+	NDIS_HANDLE             FilterModuleContext,
+	PVOID                   CancelId
+	)
+/*++
+
+Routine Description:
+
+	This function cancels any NET_BUFFER_LISTs pended in the filter and then
+	calls the NdisFCancelSendNetBufferLists to propagate the cancel operation.
+
+	If your driver does not queue any send NBLs, you may omit this routine.  
+	NDIS will propagate the cancelation on your behalf more efficiently.
+
+Arguments:
+
+	FilterModuleContext      - our filter context area.
+	CancelId                 - an identifier for all NBLs that should be dequeued
+
+Return Value:
+
+	None
+
+*/
+{
+	POPEN_INSTANCE  Open = (POPEN_INSTANCE) FilterModuleContext;
+
+	NdisFCancelSendNetBufferLists(Open->AdapterHandle, CancelId);
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+NDIS_STATUS
+NPF_SetModuleOptions(
+	NDIS_HANDLE             FilterModuleContext
+	)
+/*++
+
+Routine Description:
+
+	This function set the optional handlers for the filter
+
+Arguments:
+
+	FilterModuleContext: The FilterModuleContext given to NdisFSetAttributes
+
+Return Value:
+
+	NDIS_STATUS_SUCCESS
+	NDIS_STATUS_RESOURCES
+	NDIS_STATUS_FAILURE
+
+--*/
+{
+   NDIS_STATUS                              Status = NDIS_STATUS_SUCCESS;
+   UNREFERENCED_PARAMETER(FilterModuleContext);
+
+   return Status;
+}
+
+//-------------------------------------------------------------------
+
+VOID
+NPF_InternalRequestComplete(
+	_In_ NDIS_HANDLE                  FilterModuleContext,
+	_In_ PNDIS_OID_REQUEST            NdisRequest,
+	_In_ NDIS_STATUS                  Status
+	)
+/*++
+
+Routine Description:
+
+	NDIS entry point indicating completion of a pended NDIS_OID_REQUEST.
+
+Arguments:
+
+	FilterModuleContext - pointer to filter module context
+	NdisRequest - pointer to NDIS request
+	Status - status of request completion
+
+Return Value:
+
+	None
+
+--*/
+{
+	PINTERNAL_REQUEST pRequest;
+
+	UNREFERENCED_PARAMETER(FilterModuleContext);
 
 	TRACE_ENTER();
 
-	Open = (POPEN_INSTANCE)ProtocolBindingContext;
+	pRequest = CONTAINING_RECORD(NdisRequest, INTERNAL_REQUEST, Request);
 
 	//
-	//  remove the reset IRP from the list
+	// Set the request result
 	//
-	ResetListEntry = ExInterlockedRemoveHeadList(&Open->ResetIrpList, &Open->RequestSpinLock);
+	pRequest->RequestStatus = Status;
 
-	Irp = CONTAINING_RECORD(ResetListEntry, IRP, Tail.Overlay.ListEntry);
-
-	Irp->IoStatus.Status = STATUS_SUCCESS;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+	//
+	// and awake the caller
+	//
+	NdisSetEvent(&pRequest->InternalRequestCompletedEvent);
 
 	TRACE_EXIT();
-
 	return;
 }
+

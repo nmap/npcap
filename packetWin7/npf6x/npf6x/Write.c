@@ -44,6 +44,8 @@
 NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
 	POPEN_INSTANCE Open;
+	POPEN_INSTANCE		GroupOpen;
+	POPEN_INSTANCE		TempOpen;
 	PIO_STACK_LOCATION IrpSp;
 	ULONG SendFlags = 0;
 	PNET_BUFFER_LIST pNetBufferList;
@@ -205,13 +207,29 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			pNetBufferList->SourceHandle = Open->AdapterHandle;
 			NPF6XSetNBLChildOpen(pNetBufferList, Open);
 
-			SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
+			//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
-			NdisSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
-			//Status = NDIS_STATUS_SUCCESS;
+			if (Open->GroupHead != NULL)
+			{
+				GroupOpen = Open->GroupHead->GroupNext;
+			}
+			else
+			{
+				GroupOpen = Open->GroupNext;
+			}
 
-			//  The send didn't pend so call the completion handler now
-			//NPF_SendCompleteEx(Open, pNetBufferList, Status);
+			while (GroupOpen != NULL)
+			{
+				TempOpen = GroupOpen;
+				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+				{
+					NPF_tapExForEachOpen(TempOpen, pNetBufferList);
+				}
+
+				GroupOpen = TempOpen->GroupNext;
+			}
+
+			//NdisFSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
 
 			numSentPackets ++;
 		}
@@ -264,6 +282,8 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOOLEAN Sync)
 {
 	POPEN_INSTANCE Open;
+	POPEN_INSTANCE		GroupOpen;
+	POPEN_INSTANCE		TempOpen;
 	PIO_STACK_LOCATION IrpSp;
 	//PNDIS_PACKET		pPacket;
 	PNET_BUFFER_LIST pNetBufferList;
@@ -457,18 +477,23 @@ INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOO
 		ASSERT(Open->GroupHead != NULL);
 		pNetBufferList->SourceHandle = Open->AdapterHandle;
 		NPF6XSetNBLChildOpen(pNetBufferList, Open);
-
+		
 		// Call the MAC
-		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
+		//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
-		NdisSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
-// 		Status = NDIS_STATUS_SUCCESS;
-// 
-// 		if (Status != NDIS_STATUS_PENDING)
-// 		{
-// 			// The send didn't pend so call the completion handler now
-// 			NPF_SendCompleteEx(Open, pNetBufferList, Status);
-// 		}
+		GroupOpen = Open->GroupNext;
+		while (GroupOpen != NULL)
+		{
+			TempOpen = GroupOpen;
+			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+			{
+				NPF_tapExForEachOpen(TempOpen, pNetBufferList);
+			}
+
+			GroupOpen = TempOpen->GroupNext;
+		}
+
+		//NdisFSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
 
 		if (Sync)
 		{
@@ -544,80 +569,193 @@ VOID NPF_WaitEndOfBufferedWrite(POPEN_INSTANCE Open)
 	return;
 }
 
-VOID NPF_SendCompleteEx(IN NDIS_HANDLE   ProtocolBindingContext, IN PNET_BUFFER_LIST pNetBufferList, IN ULONG SendCompleteFlags)
+_Use_decl_annotations_
+VOID
+NPF_SendCompleteEx(
+	NDIS_HANDLE         FilterModuleContext,
+	PNET_BUFFER_LIST    NetBufferLists,
+	ULONG               SendCompleteFlags
+	)
+/*++
+
+Routine Description:
+
+	Send complete handler
+
+	This routine is invoked whenever the lower layer is finished processing 
+	sent NET_BUFFER_LISTs.  If the filter does not need to be involved in the
+	send path, you should remove this routine and the FilterSendNetBufferLists
+	routine.  NDIS will pass along send packets on behalf of your filter more 
+	efficiently than the filter can.
+
+Arguments:
+
+	FilterModuleContext     - our filter context
+	NetBufferLists          - a chain of NBLs that are being returned to you
+	SendCompleteFlags       - flags (see documentation)
+
+Return Value:
+
+	 NONE
+
+--*/
 {
-	POPEN_INSTANCE		Open;
 	POPEN_INSTANCE		ChildOpen;
 	POPEN_INSTANCE		GroupOpen;
 	POPEN_INSTANCE		TempOpen;
 	BOOLEAN				FreeBufAfterWrite;
 
+	PNET_BUFFER_LIST    pNetBufList;
+	PNET_BUFFER_LIST    pNextNetBufList;
 	PNET_BUFFER_LIST    CurrNbl,nextNbl= NULL;
 	PNET_BUFFER         Currbuff;
 	PMDL                pMdl;
+	int					Count = 0;
+
+	POPEN_INSTANCE     Open = (POPEN_INSTANCE) FilterModuleContext;
 
 	TRACE_ENTER();
 
-	Open = (POPEN_INSTANCE) ProtocolBindingContext;
-	ChildOpen = NPF6XGetNBLChildOpen(pNetBufferList);
-	FreeBufAfterWrite = RESERVED(pNetBufferList)->FreeBufAfterWrite;
+	//
+	// If your filter injected any send packets into the datapath to be sent,
+	// you must identify their NBLs here and remove them from the chain.  Do not
+	// attempt to send-complete your NBLs up to the higher layer.
+	//
 
-	if (FreeBufAfterWrite)
-	{
-		//
-		// Packet sent by NPF_BufferedWrite()
-		//
-		
-		//Free all the NBLs allocate by myself
-		CurrNbl = pNetBufferList;
-		while (CurrNbl)
-		{
-			Currbuff = NET_BUFFER_LIST_FIRST_NB(CurrNbl);
-			while (Currbuff)
-			{
-				pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
-				NdisFreeMdl(pMdl); //Free MDL
-				Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
-			}
-			nextNbl = NET_BUFFER_LIST_NEXT_NBL(CurrNbl); //get Next MBL
-			NdisFreeNetBufferList(CurrNbl); //Free CurrentNBL
-			CurrNbl = nextNbl;
-		}
-	}
-	else
-	{
-		//
-		// Packet sent by NPF_Write()
-		//
+// 	pNetBufList = NetBufferLists;
+// 
+// 	while (pNetBufList != NULL)
+// 	{
+// 		Count ++;
+// 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
+// 
+// 		if (pNetBufList->SourceHandle == Open->AdapterHandle)
+// 		{
+// 			if (Count >= 2)
+// 			{
+// 				ASSERT(0);
+// 			}
+// 			ChildOpen = NPF6XGetNBLChildOpen(pNetBufList);
+// 			FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
+// 
+// 			if (FreeBufAfterWrite)
+// 			{
+// 				//
+// 				// Packet sent by NPF_BufferedWrite()
+// 				//
+// 
+// 				//Free the NBL allocate by myself
+// 				Currbuff = NET_BUFFER_LIST_FIRST_NB(pNetBufList);
+// 				while (Currbuff)
+// 				{
+// 					pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
+// 					NdisFreeMdl(pMdl); //Free MDL
+// 					Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
+// 				}
+// 				NdisFreeNetBufferList(pNetBufList); //Free NBL
+// 			}
+// 			else
+// 			{
+// 				//
+// 				// Packet sent by NPF_Write()
+// 				//
+// 
+// 				//Free the NBL allocate by myself
+// 				NdisFreeNetBufferList(pNetBufList); //Free NBL
+// 			}
+// 
+// 			GroupOpen = Open->GroupNext;
+// 			while (GroupOpen != NULL)
+// 			{
+// 				TempOpen = GroupOpen;
+// 				//if (ChildOpen == TempOpen)
+// 				//{
+// 					NPF_SendCompleteExForEachOpen(TempOpen, FreeBufAfterWrite);
+// 				//	break;
+// 				//}
+// 
+// 				GroupOpen = TempOpen->GroupNext;
+// 			}
+// 		}
+// 		else
+// 		{
+// 			// Send complete the NBLs.  If you removed any NBLs from the chain, make
+// 			// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
+// 			NET_BUFFER_LIST_NEXT_NBL(pNetBufList) = NULL;
+// 			NdisFSendNetBufferListsComplete(Open->AdapterHandle, pNetBufList, SendCompleteFlags);
+// 		}
+// 
+// 		pNetBufList = pNextNetBufList;
+// 	}
 
-		//Free all the NBLs allocate by myself
-		CurrNbl = pNetBufferList;
-		while (CurrNbl)
-		{
-			nextNbl = NET_BUFFER_LIST_NEXT_NBL(CurrNbl); //get Next MBL
-			NdisFreeNetBufferList(CurrNbl); //Free CurrentNBL
-			CurrNbl = nextNbl;
-		}
-	}
 
-	GroupOpen = Open->GroupNext;
-	while (GroupOpen != NULL)
-	{
-		TempOpen = GroupOpen;
-		//if (ChildOpen == TempOpen)
-		//{
-			NPF_SendCompleteExForEachOpen(TempOpen, FreeBufAfterWrite);
-			//break;
-		//}
+// 	if (NetBufferLists->SourceHandle == Open->AdapterHandle)
+// 	{
+// 		ChildOpen = NPF6XGetNBLChildOpen(NetBufferLists);
+// 		FreeBufAfterWrite = RESERVED(NetBufferLists)->FreeBufAfterWrite;
+// 
+// 		if (FreeBufAfterWrite)
+// 		{
+// 			//
+// 			// Packet sent by NPF_BufferedWrite()
+// 			//
+// 
+// 			//Free all the NBLs allocate by myself
+// 			CurrNbl = NetBufferLists;
+// 			while (CurrNbl)
+// 			{
+// 				Currbuff = NET_BUFFER_LIST_FIRST_NB(CurrNbl);
+// 				while (Currbuff)
+// 				{
+// 					pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
+// 					NdisFreeMdl(pMdl); //Free MDL
+// 					Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
+// 				}
+// 				nextNbl = NET_BUFFER_LIST_NEXT_NBL(CurrNbl); //get Next MBL
+// 				NdisFreeNetBufferList(CurrNbl); //Free CurrentNBL
+// 				CurrNbl = nextNbl;
+// 			}
+// 		}
+// 		else
+// 		{
+// 			//
+// 			// Packet sent by NPF_Write()
+// 			//
+// 
+// 			//Free all the NBLs allocate by myself
+// 			CurrNbl = NetBufferLists;
+// 			while (CurrNbl)
+// 			{
+// 				nextNbl = NET_BUFFER_LIST_NEXT_NBL(CurrNbl); //get Next MBL
+// 				NdisFreeNetBufferList(CurrNbl); //Free CurrentNBL
+// 				CurrNbl = nextNbl;
+// 			}
+// 		}
+// 
+// 		GroupOpen = Open->GroupNext;
+// 		while (GroupOpen != NULL)
+// 		{
+// 			TempOpen = GroupOpen;
+// 			if (ChildOpen == TempOpen)
+// 			{
+// 				NPF_SendCompleteExForEachOpen(TempOpen, FreeBufAfterWrite);
+// 				break;
+// 			}
+// 
+// 			GroupOpen = TempOpen->GroupNext;
+// 		}
+// 	}
+// 	else
+// 	{
+// 		// Send complete the NBLs.  If you removed any NBLs from the chain, make
+// 		// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
+// 		NdisFSendNetBufferListsComplete(Open->AdapterHandle, NetBufferLists, SendCompleteFlags);
+// 	}
 
-		GroupOpen = TempOpen->GroupNext;
-	}
+	NdisFSendNetBufferListsComplete(Open->AdapterHandle, NetBufferLists, SendCompleteFlags);
 
 	TRACE_EXIT();
-	return;
-
 }
-
 
 VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterWrite)
 {
@@ -654,7 +792,7 @@ VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterW
 		{
 			//
 			// otherwise, reset the event, so that we are sure that the NPF_Write will eventually block to
-			// waitg for availability of packets in the TX packet pool
+			// wait for availability of packets in the TX packet pool
 			//
 			NdisResetEvent(&Open->WriteEvent);
 		}

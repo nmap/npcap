@@ -1,9 +1,0 @@
-Inf2Cat Tool Output:
-.....................
-Signability test failed.
-
-Errors:
-22.9.4: Missing AMD64 CatalogFile entry (CatalogFile.ntamd64, CatalogFile.nt, CatalogFile) from [Version] section in \npf6x.inf
-
-Warnings:
-None

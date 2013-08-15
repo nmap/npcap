@@ -68,8 +68,7 @@ NTSTATUS NPF_Read(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	ULONG i;
 	ULONG Occupation;
 
-	IF_LOUD(DbgPrint("NPF: Read\n");)
-
+	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	Open = IrpSp->FileObject->FsContext;
@@ -406,52 +405,154 @@ NTSTATUS NPF_Read(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		EXIT_SUCCESS(copied);
 	}
 
-	//------------------------------------------------------------------------------
+	TRACE_EXIT();
 }
 
-VOID NPF_tapEx(
-	NDIS_HANDLE ProtocolBindingContext,
-	IN PNET_BUFFER_LIST pNetBufferLists,
-	IN NDIS_PORT_NUMBER PortNumber,
-	IN ULONG NumberOfNetBufferLists,
-	IN ULONG ReceiveFlags)
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_SendEx(
+	NDIS_HANDLE         FilterModuleContext,
+	PNET_BUFFER_LIST    NetBufferLists,
+	NDIS_PORT_NUMBER    PortNumber,
+	ULONG               SendFlags
+	)
+/*++
+
+Routine Description:
+
+	Send Net Buffer List handler
+	This function is an optional function for filter drivers. If provided, NDIS
+	will call this function to transmit a linked list of NetBuffers, described by a
+	NetBufferList, over the network. If this handler is NULL, NDIS will skip calling
+	this filter when sending a NetBufferList and will call the next lower 
+	driver in the stack.  A filter that doesn't provide a FilerSendNetBufferList
+	handler can not originate a send on its own.
+
+Arguments:
+
+	FilterModuleContext     - our filter context area
+	NetBufferLists          - a List of NetBufferLists to send
+	PortNumber              - Port Number to which this send is targeted
+	SendFlags               - specifies if the call is at DISPATCH_LEVEL
+
+--*/
 {
-	POPEN_INSTANCE Open;
-	POPEN_INSTANCE GroupOpen;
-	POPEN_INSTANCE TempOpen;
-	ULONG ReturnFlags = 0;
+	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
+	POPEN_INSTANCE		GroupOpen;
+	POPEN_INSTANCE		TempOpen;
+	PVOID i = 0;
+	PVOID j = 0;
 
 	TRACE_ENTER();
 
-	Open = (POPEN_INSTANCE) ProtocolBindingContext;
+// 	if (Open->GroupHead != NULL)
+// 	{
+// 		GroupOpen = Open->GroupHead->GroupNext;
+// 	}
+// 	else
+// 	{
+// 		GroupOpen = Open->GroupNext;
+// 	}
+// 
+// 	while (GroupOpen != NULL)
+// 	{
+// 		TempOpen = GroupOpen;
+// 		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+// 		{
+// 			NPF_tapExForEachOpen(TempOpen, NetBufferLists);
+// 		}
+// 
+// 		GroupOpen = TempOpen->GroupNext;
+// 	}
+
+	NdisFSendNetBufferLists(Open->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
+
+	TRACE_EXIT();
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_TapEx(
+	NDIS_HANDLE         FilterModuleContext,
+	PNET_BUFFER_LIST    NetBufferLists,
+	NDIS_PORT_NUMBER    PortNumber,
+	ULONG               NumberOfNetBufferLists,
+	ULONG               ReceiveFlags
+	)
+/*++
+
+Routine Description:
+
+	FilerReceiveNetBufferLists is an optional function for filter drivers.
+	If provided, this function processes receive indications made by underlying
+	NIC or lower level filter drivers. This function  can also be called as a
+	result of loopback. If this handler is NULL, NDIS will skip calling this
+	filter when processing a receive indication and will call the next higher
+	driver in the stack. A filter that doesn't provide a
+	FilterReceiveNetBufferLists handler cannot provide a
+	FilterReturnNetBufferLists handler and cannot a initiate an original receive 
+	indication on its own.
+
+Arguments:
+
+	FilterModuleContext      - our filter context area.
+	NetBufferLists           - a linked list of NetBufferLists
+	PortNumber               - Port on which the receive is indicated
+	ReceiveFlags             -
+
+N.B.: It is important to check the ReceiveFlags in NDIS_TEST_RECEIVE_CANNOT_PEND.
+	This controls whether the receive indication is an synchronous or 
+	asynchronous function call.
+
+--*/
+{
+
+	POPEN_INSTANCE      Open = (POPEN_INSTANCE) FilterModuleContext;
+	POPEN_INSTANCE		GroupOpen;
+	POPEN_INSTANCE		TempOpen;
+	ULONG				ReturnFlags = 0;
+
+	TRACE_ENTER();
 
 	UNREFERENCED_PARAMETER(PortNumber);
 	UNREFERENCED_PARAMETER(NumberOfNetBufferLists);
 
-	if (NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags))
-	{
-		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
-	}
-	
-	GroupOpen = Open->GroupNext;
-	while (GroupOpen != NULL)
-	{
-		TempOpen = GroupOpen;
-		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
-		{
-			NPF_tapExForEachOpen(TempOpen, pNetBufferLists);
-		}
+// 	if (NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags))
+// 	{
+// 		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
+// 	}
 
-		GroupOpen = TempOpen->GroupNext;
-	}
+// 	if (Open->GroupHead != NULL)
+// 	{
+// 		GroupOpen = Open->GroupHead->GroupNext;
+// 	}
+// 	else
+// 	{
+// 		GroupOpen = Open->GroupNext;
+// 	}
+// 
+// 	while (GroupOpen != NULL)
+// 	{
+// 		TempOpen = GroupOpen;
+// 		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+// 		{
+// 			NPF_tapExForEachOpen(TempOpen, NetBufferLists);
+// 		}
+// 
+// 		GroupOpen = TempOpen->GroupNext;
+// 	}
 
-	if (!(ReceiveFlags & NDIS_RECEIVE_FLAGS_RESOURCES))
-	{
-		NdisReturnNetBufferLists(
-			Open->AdapterHandle,
-			pNetBufferLists,
-			ReturnFlags);
-	}
+	NdisFIndicateReceiveNetBufferLists(
+				Open->AdapterHandle,
+				NetBufferLists,
+				PortNumber,
+				NumberOfNetBufferLists,
+				ReceiveFlags);
+
 	TRACE_EXIT();
 }
 

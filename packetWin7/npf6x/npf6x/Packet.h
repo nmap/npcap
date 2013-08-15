@@ -69,29 +69,153 @@
 
 #include "win_bpf.h"
 
-//
-//  Globals:
-//
-typedef struct _NDISPROT_GLOBALS
-{
-	PDRIVER_OBJECT DriverObject;
-	//WDFDEVICE 			  ControlDevice;
-	NDIS_HANDLE NdisProtocolHandle;
-	USHORT EthType; 		   // frame type we are interested in
-	UCHAR PartialCancelId;    // for cancelling sends
-	ULONG LocalCancelId;
-	LIST_ENTRY OpenList;		   // of OPEN_CONTEXT structures
-} NDISPROT_GLOBALS, * PNDISPROT_GLOBALS;
 
-NDISPROT_GLOBALS Globals;
+// #define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel)              \
+// 	{                                                           \
+// 	if (DispatchLevel)                                      \
+// 		{                                                       \
+// 		NdisDprAcquireSpinLock(_pLock);                     \
+// 		}                                                       \
+// 		else                                                    \
+// 		{                                                       \
+// 		NdisAcquireSpinLock(_pLock);                        \
+// 		}                                                       \
+// 	}
+// 
+// #define FILTER_RELEASE_LOCK(_pLock, DispatchLevel)              \
+// 	{                                                           \
+// 	if (DispatchLevel)                                      \
+// 		{                                                       \
+// 		NdisDprReleaseSpinLock(_pLock);                     \
+// 		}                                                       \
+// 		else                                                    \
+// 		{                                                       \
+// 		NdisReleaseSpinLock(_pLock);                        \
+// 		}                                                       \
+// 	}
+
+#define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel) NdisAcquireSpinLock(_pLock)
+#define FILTER_RELEASE_LOCK(_pLock, DispatchLevel) NdisReleaseSpinLock(_pLock)
+
+
+extern NDIS_SPIN_LOCK         FilterListLock;
+extern LIST_ENTRY          FilterModuleList;
+
+#define FILTER_ALLOC_MEM(_NdisHandle, _Size)     \
+	NdisAllocateMemoryWithTagPriority(_NdisHandle, _Size, NPF6X_ALLOC_TAG, LowPoolPriority)
+#define FILTER_FREE_MEM(_pMem)    NdisFreeMemory(_pMem, 0, 0)
+
+//
+// Define the filter struct
+//
+// typedef struct _MS_FILTER
+//  {
+// 	 LIST_ENTRY                     FilterModuleLink;
+// 	 //Reference to this filter
+// 	 ULONG                           RefCount;
+// 
+// 	 NDIS_HANDLE                     FilterHandle;
+// 
+// 	 NDIS_STATUS                     Status;
+// 	 NDIS_EVENT                      Event;
+// 	 ULONG                           BackFillSize;
+// 	 FILTER_LOCK                     Lock;    // Lock for protection of state and outstanding sends and recvs
+// 
+// 	 FILTER_STATE                    State;   // Which state the filter is in
+// 	 ULONG                           OutstandingSends;
+// 	 ULONG                           OutstandingRequest;
+// 	 ULONG                           OutstandingRcvs;
+// 	 FILTER_LOCK                     SendLock;
+// 	 FILTER_LOCK                     RcvLock;
+// 	 QUEUE_HEADER                    SendNBLQueue;
+// 	 QUEUE_HEADER                    RcvNBLQueue;
+// 
+// 
+// 	 NDIS_STRING                     FilterName;
+// 	 ULONG                           CallsRestart;
+// 	 BOOLEAN                         TrackReceives;
+// 	 BOOLEAN                         TrackSends;
+// 
+// 	 PNDIS_OID_REQUEST               PendingOidRequest;
+// 
+//  }MS_FILTER, * PMS_FILTER;
+
+typedef struct _FILTER_DEVICE_EXTENSION
+{
+	ULONG            Signature;
+	NDIS_HANDLE      Handle;
+} FILTER_DEVICE_EXTENSION, *PFILTER_DEVICE_EXTENSION;
+
+typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTEXT;
+
+//
+// Global variables
+//
+extern NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
+extern NDIS_HANDLE         FilterDriverObject;
+extern NDIS_HANDLE         NdisFilterDeviceHandle;
+extern PDEVICE_OBJECT      DeviceObject;
+
+extern NDIS_SPIN_LOCK         FilterListLock;
+extern LIST_ENTRY          FilterModuleList;
+
+//
+// function prototypes
+//
+DRIVER_INITIALIZE DriverEntry;
+
+FILTER_SET_OPTIONS NPF_RegisterOptions;
+
+FILTER_ATTACH NPF_Attach;
+
+FILTER_DETACH NPF_Detach;
+
+DRIVER_UNLOAD NPF_Unload;
+
+FILTER_RESTART NPF_Restart;
+
+FILTER_PAUSE NPF_Pause;
+
+FILTER_OID_REQUEST NPF_OidRequest;
+
+FILTER_CANCEL_OID_REQUEST NPF_CancelOidRequest;
+
+FILTER_OID_REQUEST_COMPLETE NPF_OidRequestComplete;
+
+FILTER_STATUS NPF_Status;
+
+FILTER_DEVICE_PNP_EVENT_NOTIFY NPF_DevicePnPEventNotify;
+
+FILTER_NET_PNP_EVENT NPF_NetPnPEvent;
+
+FILTER_SEND_NET_BUFFER_LISTS NPF_SendEx;
+
+FILTER_RETURN_NET_BUFFER_LISTS NPF_ReturnEx;
+
+FILTER_SEND_NET_BUFFER_LISTS_COMPLETE NPF_SendCompleteEx;
+
+FILTER_RECEIVE_NET_BUFFER_LISTS NPF_TapEx;
+
+FILTER_CANCEL_SEND_NET_BUFFER_LISTS NPF_CancelSendNetBufferLists;
+
+FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
+
+DRIVER_DISPATCH FilterDispatch;
+
+DRIVER_DISPATCH FilterDeviceIoControl;
+
+VOID
+	NPF_InternalRequestComplete(
+	_In_ NDIS_HANDLE                  FilterModuleContext,
+	_In_ PNDIS_OID_REQUEST            NdisRequest,
+	_In_ NDIS_STATUS                  Status
+	);
 
 #define  MAX_REQUESTS   32 ///< Maximum number of simultaneous IOCTL requests.
 
 #define Packet_ALIGNMENT sizeof(int) ///< Alignment macro. Defines the alignment size.
 #define Packet_WORDALIGN(x) (((x)+(Packet_ALIGNMENT-1))&~(Packet_ALIGNMENT-1))	///< Alignment macro. Rounds up to the next 
 ///< even multiple of Packet_ALIGNMENT. 
-
-#define KERNEL_EVENT_NAMESPACE L"\\BaseNamedObjects\\"
 
 
 // Working modes
@@ -262,6 +386,16 @@ CpuPrivateData;
 */
 typedef struct _OPEN_INSTANCE
 {
+	NDIS_STRING AdapterName;
+	BOOLEAN DirectBinded;
+	struct _OPEN_INSTANCE *Next;
+	struct _OPEN_INSTANCE *GroupNext;
+	struct _OPEN_INSTANCE *GroupHead;
+
+	//LIST_ENTRY FilterModuleLink;
+	NDIS_SPIN_LOCK OIDLock;    // Lock for protection of state and outstanding sends and recvs
+	PNDIS_OID_REQUEST PendingOidRequest;
+
 	PDEVICE_EXTENSION DeviceExtension;	///< Pointer to the _DEVICE_EXTENSION structure of the device on which
 	///< the instance is bound.
 	NDIS_HANDLE AdapterHandle;		///< NDIS idetifier of the adapter used by this instance.
@@ -345,12 +479,6 @@ typedef struct _OPEN_INSTANCE
 	ULONG NumPendingIrps;
 	BOOLEAN ClosePending; 
 	NDIS_SPIN_LOCK OpenInUseLock;
-
-	NDIS_STRING AdapterName;
-	BOOLEAN DirectBinded;
-	struct _OPEN_INSTANCE *Next;
-	struct _OPEN_INSTANCE *GroupNext;
-	struct _OPEN_INSTANCE *GroupHead;
 }
 OPEN_INSTANCE, * POPEN_INSTANCE;
 
@@ -375,7 +503,6 @@ struct PacketHeader
 };
 
 extern ULONG g_NCpu;
-extern NDIS_HANDLE g_NdisProtocolHandle;
 extern struct time_conv G_Start_Time; // from openclos.c
 extern UINT g_SendPacketFlags;
 
@@ -466,18 +593,6 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 NTSTATUS NPF_OpenAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 /*!
-  \brief Ends the opening of an adapter.
-  \param ProtocolBindingContext Context of the function. Contains a pointer to the OPEN_INSTANCE structure associated with the current instance.
-  \param Status Status of the opening operation performed by NDIS.
-  \param OpenErrorStatus not used by NPF.
-
-  Callback function associated with the NdisOpenAdapter() NDIS function. It is invoked by NDIS when the NIC 
-  driver has finished an open operation that was previously started by NPF_Open().
-*/
-
-VOID NPF_OpenAdapterCompleteEx(IN NDIS_HANDLE  ProtocolBindingContext, IN NDIS_STATUS  Status);
-
-/*!
   \brief Closes an instance of the driver.
   \param DeviceObject Pointer to the device object utilized by the user.
   \param Irp Pointer to the IRP containing the user request.
@@ -495,18 +610,6 @@ NTSTATUS NPF_CloseAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS NPF_CloseAdapterForUnclosed(POPEN_INSTANCE pOpen);
 
-
-
-/*!
-  \brief Ends the closing of an adapter.
-  \param ProtocolBindingContext Context of the function. Contains a pointer to the OPEN_INSTANCE structure associated with the current instance.
-  \param Status Status of the close operation performed by NDIS.
-
-  Callback function associated with the NdisCloseAdapter() NDIS function. It is invoked by NDIS when the NIC 
-  driver has finished a close operation that was previously started by NPF_Close().
-*/
-
-VOID NPF_CloseAdapterCompleteEx(IN NDIS_HANDLE  ProtocolBindingContext);
 
 /*!
   \brief Callback invoked by NDIS when a packet arrives from the network.
@@ -530,18 +633,6 @@ VOID NPF_CloseAdapterCompleteEx(IN NDIS_HANDLE  ProtocolBindingContext);
   along with the filtering ones, that is executed for every incoming packet, therefore it is carefully 
   optimized.
 */
-// NDIS_STATUS
-// NPF_tap(
-// 	IN NDIS_HANDLE ProtocolBindingContext,
-// 	IN NDIS_HANDLE MacReceiveContext,
-// 	IN PVOID HeaderBuffer,
-// 	IN UINT HeaderBufferSize,
-// 	IN PVOID LookAheadBuffer,
-// 	IN UINT LookaheadBufferSize,
-// 	IN UINT PacketSize
-// 	);
-
-VOID NPF_tapEx(IN NDIS_HANDLE ProtocolBindingContext, IN PNET_BUFFER_LIST NetBufferLists, IN NDIS_PORT_NUMBER PortNumber, IN ULONG NumberOfNetBufferLists, IN ULONG ReceiveFlags);
 
 VOID NPF_tapExForEachOpen(IN POPEN_INSTANCE Open, IN PNET_BUFFER_LIST pNetBufferLists);
 
@@ -570,19 +661,6 @@ VOID NPF_tapExForEachOpen(IN POPEN_INSTANCE Open, IN PNET_BUFFER_LIST pNetBuffer
 */
 NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-
-
-/*!
-  \brief Ends an OID request.
-  \param ProtocolBindingContext Context of the function. Contains a pointer to the OPEN_INSTANCE structure associated with the current instance.
-  \param pRequest Pointer to the completed OID request. 
-  \param Status Status of the operation.
-
-  Callback function associated with the NdisRequest() NDIS function. It is invoked by NDIS when the NIC 
-  driver has finished an OID request operation that was previously started by NPF_IoControl().
-*/
-
-VOID NPF_OidRequestComplete(IN NDIS_HANDLE   ProtocolBindingContext, IN PNDIS_OID_REQUEST OidRequest, IN NDIS_STATUS   Status);
 
 /*!
   \brief Writes a raw packet to the network.
@@ -630,32 +708,9 @@ INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOO
 VOID NPF_WaitEndOfBufferedWrite(POPEN_INSTANCE Open);
 
 /*!
-  \brief Ends a send operation.
-  \param ProtocolBindingContext Context of the function. Contains a pointer to the OPEN_INSTANCE structure associated with the current instance.
-  \param pPacket Pointer to the NDIS PACKET structure used by NPF_Write() to send the packet. 
-  \param Status Status of the operation.
-
-  Callback function associated with the NdisSend() NDIS function. It is invoked by NDIS when the NIC 
-  driver has finished an OID request operation that was previously started by NPF_Write().
-*/
-
-VOID NPF_SendCompleteEx(IN NDIS_HANDLE   ProtocolBindingContext, IN PNET_BUFFER_LIST pNetBufferLists, IN ULONG SendCompleteFlags);
-
-/*!
 */
 
 VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterWrite);
-
-/*!
-  \brief Ends a reset of the adapter.
-  \param ProtocolBindingContext Context of the function. Contains a pointer to the OPEN_INSTANCE structure associated with the current instance.
-  \param Status Status of the operation.
-
-  Callback function associated with the NdisReset() NDIS function. It is invoked by NDIS when the NIC 
-  driver has finished an OID request operation that was previously started by NPF_IoControl(), in an IOCTL_PROTOCOL_RESET 
-  command.
-*/
-VOID NPF_ResetComplete(IN NDIS_HANDLE  ProtocolBindingContext, IN NDIS_STATUS  Status);
 
 /*!
   \brief Callback for NDIS StatusHandler. Not used by NPF
@@ -667,18 +722,6 @@ VOID NPF_StatusEx(IN NDIS_HANDLE				ProtocolBindingContext, IN PNDIS_STATUS_INDI
   \brief Callback for NDIS StatusCompleteHandler. Not used by NPF
 */
 VOID NPF_StatusComplete(IN NDIS_HANDLE  ProtocolBindingContext);
-
-/*!
-  \brief Function called by the OS when NPF is unloaded.
-  \param DriverObject The driver object of NPF created by the system.
-
-  This is the last function executed when the driver is unloaded from the system. It frees global resources,
-  delete the devices and deregisters the protocol. The driver can be unloaded by the user stopping the NPF
-  service (from control panel or with a console 'net stop npf').
-*/
-VOID NPF_Unload(IN PDRIVER_OBJECT DriverObject);
-
-VOID NPF_Uninstall();
 
 
 /*!
@@ -701,24 +744,7 @@ VOID NPF_Uninstall();
 */
 NTSTATUS NPF_Read(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-/*!
-  \brief Reads the registry keys associated woth NPF if the driver is manually installed via the control panel.
 
-  Normally not used in recent versions of NPF.
-*/
-NTSTATUS NPF_ReadRegistry(IN  PWSTR* MacDriverName, IN  PWSTR* PacketDriverName, IN  PUNICODE_STRING	 RegistryPath);
-
-/*!
-  \brief Function used by NPF_ReadRegistry() to quesry the registry keys associated woth NPF if the driver 
-  is manually installed via the control panel.
-
-  Normally not used in recent versions of NPF.
-*/
-NTSTATUS NPF_QueryRegistryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength, IN PVOID Context, IN PVOID EntryContext);
-
-/*!
-
-*/
 void NPF_AddToOpenArray(POPEN_INSTANCE Open);
 
 /*!
@@ -751,28 +777,6 @@ void NPF_RemoveUnclosedAdapters();
 POPEN_INSTANCE NPF_DuplicateOpenObject(POPEN_INSTANCE OriginalOpen, PDEVICE_EXTENSION DeviceExtension);
 
 POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex, PDEVICE_EXTENSION DeviceExtension);
-
-/*!
-  \brief Callback for NDIS BindAdapterHandler. Not used by NPF.
-  
-  Function called by NDIS when a new adapter is installed on the machine With Plug and Play.
-*/
-
-NDIS_STATUS NPF_BindAdapterEx(IN NDIS_HANDLE ProtocolDriverContext, IN NDIS_HANDLE BindContext, IN PNDIS_BIND_PARAMETERS BindParameters);
-
-/*!
-  \brief Callback for NDIS UnbindAdapterHandler.
-  \param Status out variable filled by NPF_UnbindAdapter with the status of the unbind operation.
-  \param ProtocolBindingContext Context of the function. Contains a pointer to the OPEN_INSTANCE structure associated with current instance.
-  \param UnbindContext Specifies a handle, supplied by NDIS, that NPF can use to complete the opration.
-  
-  Function called by NDIS when a new adapter is removed from the machine without shutting it down.
-  NPF_UnbindAdapter closes the adapter calling NdisCloseAdapter() and frees the memory and the structures
-  associated with it. It also releases the waiting user-level app and closes the dump thread if the instance
-  is in dump mode.
-*/
-NDIS_STATUS NPF_UnbindAdapterEx(IN  NDIS_HANDLE 		UnbindContext, IN  NDIS_HANDLE  	   ProtocolBindingContext);
-
 
 /*!
   \brief Creates the file that will receive the packets when the driver is in dump mode.
@@ -855,19 +859,6 @@ NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu
 */
 UINT GetBuffOccupation(POPEN_INSTANCE Open);
 
-/*!
-  \brief Called by NDIS to notify us of a PNP event. The most significant one for us is power state change.
-
-  \param ProtocolBindingContext Pointer to open context structure. This is NULL for global reconfig 
-  events.
-  \param pNetPnPEvent Pointer to the PnP event
-
-  If there is a power state change, the driver is forced to resynchronize the global timer.
-  This hopefully avoids the synchronization issues caused by hibernation or standby.
-  This function is excluded from the NT4 driver, where PnP is not supported
-*/
-
-NDIS_STATUS NPF_NetPowerChange(IN NDIS_HANDLE ProtocolBindingContext, IN PNET_PNP_EVENT_NOTIFICATION pNetPnPEvent);
 //  
 //	Old registry based WinPcap names
 //
@@ -880,6 +871,7 @@ NDIS_STATUS NPF_NetPowerChange(IN NDIS_HANDLE ProtocolBindingContext, IN PNET_PN
 //								 WCHAR *DefaultValue);
 //
 
+VOID NPF_ResetBufferContents(POPEN_INSTANCE Open);
 
 /**
  *  @}

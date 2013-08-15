@@ -1,9 +1,0 @@
-Inf2Cat Tool Output:
-.....................
-Signability test failed.
-
-Errors:
-22.9.4: Missing 32-bit CatalogFile entry (CatalogFile.ntx86, CatalogFile.nt, CatalogFile) from [Version] section in \npf6x.inf
-
-Warnings:
-None

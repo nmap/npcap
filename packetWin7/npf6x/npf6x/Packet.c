@@ -47,8 +47,10 @@
 
 #include "..\..\..\Common\WpcapNames.h"
 
+#define __FILENUMBER    'PNPF'
+
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT, DriverEntry)
+#pragma NDIS_INIT_FUNCTION(DriverEntry)
 #endif // ALLOC_PRAGMA
 
 
@@ -64,11 +66,6 @@ PDEVICE_EXTENSION GlobalDeviceExtension;
 // Global strings
 //
 WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
-
-NDISPROT_GLOBALS Globals =
-{
-	0
-};
 
 POPEN_INSTANCE g_arrOpen = NULL;
 
@@ -90,28 +87,45 @@ NDIS_STRING g_WinpcapGlobalKey = NDIS_STRING_CONST("\\Registry\\Machine\\" WINPC
 /// Global variable that points to the names of the bound adapters
 WCHAR* bindP = NULL;
 
-NDIS_HANDLE g_NdisProtocolHandle = NULL;
-
 ULONG g_NCpu;
 
 ULONG TimestampMode;
 UINT g_SendPacketFlags = 0;
 
-static VOID NPF_ResetBufferContents(POPEN_INSTANCE Open);
+//static VOID NPF_ResetBufferContents(POPEN_INSTANCE Open);
+
+//
+// Global variables
+//
+NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
+NDIS_HANDLE         FilterDriverObject;
+NDIS_HANDLE         NdisFilterDeviceHandle = NULL;
+PDEVICE_OBJECT      DeviceObject = NULL;
+
+NDIS_SPIN_LOCK         FilterListLock;
+LIST_ENTRY          FilterModuleList;
+
 
 //
 //  Packet Driver's entry routine.
 //
-NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
+_Use_decl_annotations_
+NTSTATUS
+DriverEntry(
+	IN PDRIVER_OBJECT DriverObject,
+	IN PUNICODE_STRING RegistryPath
+	)
 {
-	NDIS_PROTOCOL_DRIVER_CHARACTERISTICS ProtocolChar;
+	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars;
 	UNICODE_STRING MacDriverName;
 	UNICODE_STRING UnicodeDeviceName;
 	PDEVICE_OBJECT DeviceObject = NULL;
 	PDEVICE_EXTENSION DeviceExtension = NULL;
 	NTSTATUS Status = STATUS_SUCCESS;
 	NTSTATUS ErrorCode = STATUS_SUCCESS;
-	NDIS_STRING ProtoName = NDIS_STRING_CONST("npf6x");
+	NDIS_STRING FriendlyName = NDIS_STRING_CONST("WinPcap NDIS LightWeight Filter");
+	NDIS_STRING UniqueName   = NDIS_STRING_CONST("{5cbf81bd-5055-47cd-9055-a76b2b4e2637}"); //unique name, quid name
+	NDIS_STRING ServiceName = NDIS_STRING_CONST("npf6x"); //this to match the service name in the INF
 	ULONG DevicesCreated = 0;
 	PWSTR BindString;
 	PWSTR ExportString;
@@ -120,84 +134,27 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	WCHAR* bindT;
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
-	//  
-	//	Old registry based WinPcap names
-	//
-	//	UINT RegStrLen;
 	ULONG OsMajorVersion, OsMinorVersion;
 
 	TRACE_ENTER();
 
-#ifndef __NPF_NT4__
+	UNREFERENCED_PARAMETER(RegistryPath);
 
-	TRACE_MESSAGE(PACKET_DEBUG_INIT, "DriverEntry -- NT4");
-
-	Globals.DriverObject = DriverObject;
-	Globals.EthType = NPROT_ETH_TYPE;
+	FilterDriverObject = DriverObject;
 
 	//
 	// Get OS version and store it in a global variable. 
-	// For the moment we use the deprecated PsGetVersion() because the suggested
-	// RtlGetVersion() doesn't seem to exist in Windows 2000, and we don't want
-	// to have two separated drivers just for this call.
-	// Morever, the NT4 version of the driver just excludes this, since those flags 
-	// are not available.
 	//
 	// Note: both RtlGetVersion() and PsGetVersion() are documented to always return success.
 	//
 	//	OsVersion.dwOSVersionInfoSize = sizeof(OsVersion);
 	//	RtlGetVersion(&OsVersion);
-
+	//
 	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
 	TRACE_MESSAGE2(PACKET_DEBUG_INIT, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
 
-	//
-	// Define the correct flag to skip the loopback packets, according to the OS
-	//
 
-
-
-
-
-	// 	if((OsMajorVersion == 5) && (OsMinorVersion == 0))
-	// 	{
-	// 		// Windows 2000 wants both NDIS_FLAGS_DONT_LOOPBACK and NDIS_FLAGS_SKIP_LOOPBACK
-	// 		g_SendPacketFlags = NDIS_FLAGS_DONT_LOOPBACK | NDIS_FLAGS_SKIP_LOOPBACK_W2K;
-	// 	}
-	// 	else
-	// 	{
-	// 		// Windows XP, 2003 and follwing want only  NDIS_FLAGS_DONT_LOOPBACK
-	// 		g_SendPacketFlags =  NDIS_FLAGS_DONT_LOOPBACK;
-	// 	}
-
-
-
-
-
-#endif //__NPF_NT4__
-
-	//
-	// Set timestamp gathering method getting it from the registry
-	//
-
-	//ReadTimeStampModeFromRegistry(RegistryPath);
-	//TRACE_MESSAGE1(PACKET_DEBUG_INIT, "%ws", RegistryPath->Buffer); //akisn0w
-
-	//  
-	//	Old registry based WinPcap names
-	//
-	//	//
-	//	// Get the device names prefix from the registry
-	//	//
-	//	RegStrLen = sizeof(g_NPF_PrefixBuffer) / sizeof(g_NPF_PrefixBuffer[0]);
-	//
-	//	NPF_QueryWinpcapRegistryString(NPF_DEVICES_PREFIX_REG_KEY_WC,
-	//		g_NPF_PrefixBuffer,
-	//		RegStrLen,
-	//		NPF_DEVICE_NAMES_PREFIX_WIDECHAR);
-	//
 	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
-
 
 	//
 	// Get number of CPUs and save it
@@ -208,64 +165,89 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	g_NCpu = NdisSystemProcessorCount();
 #endif
 
-	NdisZeroMemory(&ProtocolChar, sizeof(NDIS_PROTOCOL_DRIVER_CHARACTERISTICS));
+	//
+	// TODO: Most handlers are optional, however, this sample includes them
+	// all for illustrative purposes.  If you do not need a particular 
+	// handler, set it to NULL and NDIS will more efficiently pass the
+	// operation through on your behalf.
+	//
 
 	//
-	// Register as a protocol with NDIS
+	// Register as a service with NDIS
 	//
-
-	ProtocolChar.Header.Type = NDIS_OBJECT_TYPE_PROTOCOL_DRIVER_CHARACTERISTICS;
-	ProtocolChar.Header.Size = sizeof(NDIS_PROTOCOL_DRIVER_CHARACTERISTICS);
-#ifdef NDIS620
-	ProtocolChar.Header.Revision = NDIS_PROTOCOL_DRIVER_CHARACTERISTICS_REVISION_2;
+	NdisZeroMemory(&FChars, sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS));
+	FChars.Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
+	FChars.Header.Size = sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS);
+#if NDIS_SUPPORT_NDIS61
+	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_2;
 #else
-	ProtocolChar.Header.Revision = NDIS_PROTOCOL_DRIVER_CHARACTERISTICS_REVISION_1;
+	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
 #endif
 
-	ProtocolChar.MajorNdisVersion = PROTOCOL_MAJOR_DRIVER_VERSION;
-	ProtocolChar.MinorNdisVersion = PROTOCOL_MINOR_DRIVER_VERSION;
+	FChars.MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION;
+	FChars.MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
+	FChars.MajorDriverVersion = 1;
+	FChars.MinorDriverVersion = 0;
+	FChars.Flags = 0;
 
-// 	ProtocolChar.MajorNdisVersion = 5;
-// 	ProtocolChar.MinorNdisVersion = 3;
+	FChars.FriendlyName = FriendlyName;
+	FChars.UniqueName = UniqueName;
+	FChars.ServiceName = ServiceName;
+	
+	FChars.SetOptionsHandler = NPF_RegisterOptions;
+	FChars.AttachHandler = NPF_Attach;
+	FChars.DetachHandler = NPF_Detach;
+	FChars.RestartHandler = NPF_Restart;
+	FChars.PauseHandler = NPF_Pause;
+	FChars.SetFilterModuleOptionsHandler = NULL; //NPF_SetModuleOptions;
+	FChars.OidRequestHandler = NPF_OidRequest;
+	FChars.OidRequestCompleteHandler = NPF_OidRequestComplete;
+	FChars.CancelOidRequestHandler = NPF_CancelOidRequest;
 
-// 	ProtocolChar.MajorDriverVersion = PROTOCOL_MAJOR_DRIVER_VERSION;
-// 	ProtocolChar.MinorDriverVersion = PROTOCOL_MINOR_DRIVER_VERSION;
+	FChars.SendNetBufferListsHandler = NPF_SendEx;
+	FChars.ReturnNetBufferListsHandler = NPF_ReturnEx;
+	FChars.SendNetBufferListsCompleteHandler = NPF_SendCompleteEx;
+	FChars.ReceiveNetBufferListsHandler = NPF_TapEx;
+	FChars.DevicePnPEventNotifyHandler = NPF_DevicePnPEventNotify;
+	FChars.NetPnPEventHandler = NPF_NetPnPEvent;
+	FChars.StatusHandler = NPF_Status;
+	FChars.CancelSendNetBufferListsHandler = NPF_CancelSendNetBufferLists;
 
-	//ProtocolChar.Reserved							= 0;
-	ProtocolChar.OpenAdapterCompleteHandlerEx = NPF_OpenAdapterCompleteEx;
-	ProtocolChar.CloseAdapterCompleteHandlerEx = NPF_CloseAdapterCompleteEx;
-	//ProtocolChar.SendCompleteHandler				= NPF_SendComplete;
-	//ProtocolChar.TransferDataCompleteHandler		= NPF_TransferDataComplete;
-	//ProtocolChar.ResetCompleteHandler				= NPF_ResetComplete;
-	ProtocolChar.OidRequestCompleteHandler = NPF_OidRequestComplete;
-	//ProtocolChar.ReceiveHandler					= NPF_tap;
-	//ProtocolChar.ReceiveCompleteHandler			= NPF_ReceiveComplete;
-	ProtocolChar.StatusHandlerEx = NPF_StatusEx;
-	//ProtocolChar.StatusCompleteHandler			= NPF_StatusComplete;
+	DriverObject->DriverUnload = NPF_Unload;
 
-	ProtocolChar.ReceiveNetBufferListsHandler = NPF_tapEx;
-	ProtocolChar.SendNetBufferListsCompleteHandler = NPF_SendCompleteEx;
+	//
+	// Initialize spin locks
+	//
+	NdisAllocateSpinLock(&FilterListLock);
 
-	ProtocolChar.BindAdapterHandlerEx = NPF_BindAdapterEx;
-	ProtocolChar.UnbindAdapterHandlerEx = NPF_UnbindAdapterEx;
+	InitializeListHead(&FilterModuleList);
 
-	ProtocolChar.NetPnPEventHandler = NPF_NetPowerChange;
-
-	ProtocolChar.UninstallHandler = (UNINSTALL_PROTOCOL_HANDLER) NPF_Uninstall;
-	ProtocolChar.SetOptionsHandler = NULL;
-
-	ProtocolChar.Name = ProtoName;
-
-	Status = NdisRegisterProtocolDriver(NULL, &ProtocolChar, &g_NdisProtocolHandle);
-
+	Status = NdisFRegisterFilterDriver(DriverObject,
+		(NDIS_HANDLE) FilterDriverObject,
+		&FChars,
+		&FilterDriverHandle);
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_INIT, "Failed to register protocol with NDIS");
-
+		TRACE_MESSAGE(PACKET_DEBUG_INIT, "Failed to register filter with NDIS.");
 		TRACE_EXIT();
 		return Status;
 	}
-	
+
+// 	ProtocolChar.OpenAdapterCompleteHandlerEx = NPF_OpenAdapterCompleteEx;
+// 	ProtocolChar.CloseAdapterCompleteHandlerEx = NPF_CloseAdapterCompleteEx;
+// 	ProtocolChar.OidRequestCompleteHandler = NPF_OidRequestComplete;
+// 	ProtocolChar.StatusHandlerEx = NPF_StatusEx;
+// 
+// 	ProtocolChar.ReceiveNetBufferListsHandler = NPF_tapEx;
+// 	ProtocolChar.SendNetBufferListsCompleteHandler = NPF_SendCompleteEx;
+// 
+// 	ProtocolChar.BindAdapterHandlerEx = NPF_BindAdapterEx;
+// 	ProtocolChar.UnbindAdapterHandlerEx = NPF_UnbindAdapterEx;
+// 
+// 	ProtocolChar.NetPnPEventHandler = NPF_NetPowerChange;
+// 
+// 	ProtocolChar.UninstallHandler = (UNINSTALL_PROTOCOL_HANDLER) NPF_Uninstall;
+// 	ProtocolChar.SetOptionsHandler = NULL;
 
 	// 
 	// Standard device driver entry points stuff.
@@ -276,7 +258,6 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	DriverObject->MajorFunction[IRP_MJ_READ] = NPF_Read;
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
-	DriverObject->DriverUnload = NPF_Unload;
 
 	bindP = getAdaptersList();
 
@@ -309,10 +290,9 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
 
-	RegistryError : NdisDeregisterProtocolDriver(g_NdisProtocolHandle);
+	RegistryError : NdisFDeregisterFilterDriver(FilterDriverHandle);
 
 	Status = STATUS_UNSUCCESSFUL;
-
 	TRACE_EXIT();
 	return(Status);
 }
@@ -579,12 +559,7 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 	IF_LOUD(DbgPrint("Creating device name: %ws\n", deviceName.Buffer);)
 
 	status = IoCreateDevice(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
-#ifdef __NPF_NT4__
-		0,
-#else //__NPF_NT4__
-		FILE_DEVICE_SECURE_OPEN,
-#endif //__NPF_NT4__
-		FALSE, &devObjP);
+		FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
 
 	if (NT_SUCCESS(status))
 	{
@@ -627,9 +602,31 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 		return FALSE;
 	}
 }
+
 //-------------------------------------------------------------------
 
-VOID NPF_Unload(IN PDRIVER_OBJECT DriverObject)
+_Use_decl_annotations_
+VOID
+NPF_Unload(
+	PDRIVER_OBJECT      DriverObject
+	)
+/*++
+
+Routine Description:
+
+Filter driver's unload routine.
+	Deregister the driver from NDIS.
+
+Arguments:
+
+	DriverObject - pointer to the system's driver object structure
+				   for this driver
+
+Return Value:
+
+	NONE
+
+--*/
 {
 	PDEVICE_OBJECT DeviceObject;
 	PDEVICE_OBJECT OldDeviceObject;
@@ -649,7 +646,7 @@ VOID NPF_Unload(IN PDRIVER_OBJECT DriverObject)
 
 		DeviceExtension = OldDeviceObject->DeviceExtension;
 
-		TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "Deleting Adapter %ws, Protocol Handle=%p, Device Obj=%p (%p)", DeviceExtension->AdapterName.Buffer, g_NdisProtocolHandle, DeviceObject, OldDeviceObject);
+		TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "Deleting Adapter %ws, Protocol Handle=%p, Device Obj=%p (%p)", DeviceExtension->AdapterName.Buffer, FilterDriverHandle, DeviceObject, OldDeviceObject);
 
 		if (DeviceExtension->ExportString)
 		{
@@ -664,19 +661,13 @@ VOID NPF_Unload(IN PDRIVER_OBJECT DriverObject)
 		IoDeleteDevice(OldDeviceObject);
 	}
 
-	NdisDeregisterProtocolDriver(g_NdisProtocolHandle);
+	NdisFDeregisterFilterDriver(FilterDriverHandle);
 
 	// Free the adapters names
 	ExFreePool(bindP);
+	NdisFreeSpinLock(&FilterListLock);
 
 	TRACE_EXIT();
-
-	// Free the device names string that was allocated in the DriverEntry 
-	//	NdisFreeString(g_NPF_Prefix);
-}
-
-VOID NPF_Uninstall(void)
-{
 }
 
 #define SET_FAILURE_BUFFER_SMALL() do{\
@@ -1455,25 +1446,9 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		SET_RESULT_SUCCESS(0);
 		break;
 
-		//	case IOCTL_PROTOCOL_RESET:
-		//
-		//		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "IOCTL_PROTOCOL_RESET");
-		//
-		//		IoMarkIrpPending(Irp);
-		//		Irp->IoStatus.Status = STATUS_SUCCESS;
-		//
-		//		ExInterlockedInsertTailList(&Open->ResetIrpList,&Irp->Tail.Overlay.ListEntry,&Open->RequestSpinLock);
-		//  	NdisReset(&Status,Open->AdapterHandle);
-		//  	if (Status != NDIS_STATUS_PENDING)
-		//  	  {
-		//  		  IF_LOUD(DbgPrint("NPF: IoControl - ResetComplete being called\n");)
-		//				NPF_ResetComplete(Open,Status);
-		//  	  }
-		//		
-		//		break;
-
-	case BIOCSETOID:
 	case BIOCQUERYOID:
+	case BIOCSETOID:
+		
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID - BIOCQUERYOID");
 
 		//
@@ -1509,13 +1484,20 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 		//
 		OidData = Irp->AssociatedIrp.SystemBuffer;
 
-		if ((IrpSp->Parameters.DeviceIoControl.InputBufferLength == IrpSp->Parameters.DeviceIoControl.OutputBufferLength) && (IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA)) && (IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA) - 1 + OidData->Length))
+		if ((IrpSp->Parameters.DeviceIoControl.InputBufferLength == IrpSp->Parameters.DeviceIoControl.OutputBufferLength) &&
+			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA)) &&
+			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA) - 1 + OidData->Length))
 		{
 			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCSETOID|BIOCQUERYOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
 
 			//
 			//  The buffer is valid
 			//
+			NdisZeroMemory(&pRequest->Request, sizeof(NDIS_OID_REQUEST));
+			pRequest->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
+			pRequest->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
+			pRequest->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
+
 			if (FunctionCode == BIOCSETOID)
 			{
 				pRequest->Request.RequestType = NdisRequestSetInformation;
@@ -1535,10 +1517,17 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 			NdisResetEvent(&pRequest->InternalRequestCompletedEvent);
 
+			if (*((PVOID *) pRequest->Request.SourceReserved) != NULL)
+			{
+				*((PVOID *) pRequest->Request.SourceReserved) = NULL;
+			}
 			//
 			//  submit the request
 			//
-			Status = NdisOidRequest(Open->AdapterHandle, &pRequest->Request);
+			pRequest->Request.RequestId = (PVOID) NPF6X_REQUEST_ID;
+			ASSERT(Open->AdapterHandle != NULL);
+			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
+			//Status = NDIS_STATUS_FAILURE;
 		}
 		else
 		{
@@ -1556,7 +1545,7 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 		if (Status == NDIS_STATUS_PENDING)
 		{
-			NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 0);
+			NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 1000);
 			Status = pRequest->RequestStatus;
 		}
 
@@ -1642,143 +1631,6 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 //-------------------------------------------------------------------
 
-VOID NPF_OidRequestComplete(IN NDIS_HANDLE   ProtocolBindingContext, IN PNDIS_OID_REQUEST OidRequest, IN NDIS_STATUS   Status)
-{
-	PINTERNAL_REQUEST pRequest;
-
-	TRACE_ENTER();
-
-	pRequest = CONTAINING_RECORD(OidRequest, INTERNAL_REQUEST, Request);
-
-	//
-	// Set the request result
-	//
-	pRequest->RequestStatus = Status;
-
-	//
-	// and awake the caller
-	//
-	NdisSetEvent(&pRequest->InternalRequestCompletedEvent);
-
-	TRACE_EXIT();
-	return;
-}
-
-//-------------------------------------------------------------------
-
-VOID NPF_StatusEx(IN NDIS_HANDLE ProtocolBindingContext, IN PNDIS_STATUS_INDICATION	StatusIndication)
-{
-	IF_LOUD(DbgPrint("NPF: Status Indication\n");)
-	return;
-}
-
-//-------------------------------------------------------------------
-
-VOID NPF_StatusComplete(IN NDIS_HANDLE ProtocolBindingContext)
-{
-	IF_LOUD(DbgPrint("NPF: Status Indication Complete\n");) 
-	return;
-}
-
-//-------------------------------------------------------------------
-
-NTSTATUS NPF_ReadRegistry(IN  PWSTR* MacDriverName, IN  PWSTR* PacketDriverName, IN  PUNICODE_STRING RegistryPath)
-{
-	NTSTATUS Status;
-
-	RTL_QUERY_REGISTRY_TABLE ParamTable[4];
-
-	PWSTR Bind = L"Bind";
-	PWSTR Export = L"Export";
-	PWSTR Parameters = L"Parameters";
-	PWSTR Linkage = L"Linkage";
-
-	PWCHAR Path;
-
-
-
-	Path = ExAllocatePoolWithTag(PagedPool, RegistryPath->Length + sizeof(WCHAR), '7PWA');
-
-	if (Path == NULL)
-	{
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	RtlZeroMemory(Path, RegistryPath->Length + sizeof(WCHAR));
-
-	RtlCopyMemory(Path, RegistryPath->Buffer, RegistryPath->Length);
-
-	IF_LOUD(DbgPrint("NPF: Reg path is %ws\n", RegistryPath->Buffer);)
-
-	RtlZeroMemory(ParamTable, sizeof(ParamTable));
-
-
-
-	//
-	//  change to the linkage key
-	//
-
-	ParamTable[0].QueryRoutine = NULL;
-	ParamTable[0].Flags = RTL_QUERY_REGISTRY_SUBKEY;
-	ParamTable[0].Name = Linkage;
-
-
-	//
-	//  Get the name of the mac driver we should bind to
-	//
-
-	ParamTable[1].QueryRoutine = NPF_QueryRegistryRoutine;
-	ParamTable[1].Flags = RTL_QUERY_REGISTRY_REQUIRED | RTL_QUERY_REGISTRY_NOEXPAND;
-
-	ParamTable[1].Name = Bind;
-	ParamTable[1].EntryContext = (PVOID)MacDriverName;
-	ParamTable[1].DefaultType = REG_MULTI_SZ;
-
-	//
-	//  Get the name that we should use for the driver object
-	//
-
-	ParamTable[2].QueryRoutine = NPF_QueryRegistryRoutine;
-	ParamTable[2].Flags = RTL_QUERY_REGISTRY_REQUIRED | RTL_QUERY_REGISTRY_NOEXPAND;
-
-	ParamTable[2].Name = Export;
-	ParamTable[2].EntryContext = (PVOID)PacketDriverName;
-	ParamTable[2].DefaultType = REG_MULTI_SZ;
-
-
-	Status = RtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, Path, ParamTable, NULL, NULL);
-
-
-	ExFreePool(Path);
-
-	return Status;
-}
-
-//-------------------------------------------------------------------
-
-NTSTATUS NPF_QueryRegistryRoutine(IN PWSTR     ValueName, IN ULONG     ValueType, IN PVOID     ValueData, IN ULONG     ValueLength, IN PVOID	 Context, IN PVOID     EntryContext)
-{
-	PUCHAR Buffer;
-
-	IF_LOUD (DbgPrint("Perf: QueryRegistryRoutine\n");)if(ValueType != REG_MULTI_SZ)
-	{
-		return STATUS_OBJECT_NAME_NOT_FOUND;
-	}
-
-	Buffer = ExAllocatePoolWithTag(NonPagedPool, ValueLength, '8PWA');
-
-	if (Buffer == NULL)
-	{
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	RtlCopyMemory(Buffer, ValueData, ValueLength);
-
-	*((PUCHAR *)EntryContext) = Buffer;
-
-	return STATUS_SUCCESS;
-}
-
 VOID NPF_ResetBufferContents(POPEN_INSTANCE Open)
 {
 	UINT i;
@@ -1821,180 +1673,3 @@ VOID NPF_ResetBufferContents(POPEN_INSTANCE Open)
 	}
 	while (i != 0);
 }
-
-#if 0
-//  
-//	Old registry based WinPcap names
-//
-
-//-------------------------------------------------------------------
-
-//NOTE: ValueLen is the length of Value in characters
-
-VOID NPF_QueryWinpcapRegistryString(PWSTR SubKeyName,
-								 WCHAR *Value,
-								 UINT ValueLen, 
-								 WCHAR *DefaultValue)
-{
-	UINT CharsToCopy;
-
-#ifdef WPCAP_OEM
-	OBJECT_ATTRIBUTES objAttrs;
-	NTSTATUS status;
-	HANDLE keyHandle;
-	UNICODE_STRING SubKeyToQueryU;
-	CHAR kvpiBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(WCHAR) * MAX_WINPCAP_KEY_CHARS];
-	ULONG QvkResultLength;
-	PKEY_VALUE_PARTIAL_INFORMATION pKeyValuePartialInformation = (PKEY_VALUE_PARTIAL_INFORMATION)kvpiBuffer;	
-	PWCHAR pResultingKeyValue;
-
-	//
-	// Create subkey string
-	//
-	RtlInitUnicodeString(&SubKeyToQueryU, SubKeyName);
-
-	//
-	// Init Attributes
-	//
-	InitializeObjectAttributes(&objAttrs,
-		&g_WinpcapGlobalKey,
-		OBJ_CASE_INSENSITIVE, 
-		NULL, 
-		NULL);
-
-	//
-	// Open the key
-	//
-	status = ZwOpenKey(&keyHandle, 
-		KEY_QUERY_VALUE, 
-		&objAttrs);
-	
-	if(!NT_SUCCESS(status)) 
-	{
-		IF_LOUD(DbgPrint("NPF_QueryWinpcapRegistryKey: ZwOpenKey error %x\n", status);)
-		
-		//copy the default value and return
-		CharsToCopy = wcslen(DefaultValue) + 1;
-		if (CharsToCopy > ValueLen)
-		{
-			RtlCopyMemory(Value, DefaultValue, ValueLen * 2);
-			Value[ValueLen - 1] = 0;
-		}
-		else
-		{
-			RtlCopyMemory(Value, DefaultValue, CharsToCopy * 2);
-		}
-		return;
-	}
-
-	//
-	// Query the requested value
-	//
-	status = ZwQueryValueKey(keyHandle, 
-		&SubKeyToQueryU,
-		KeyValuePartialInformation, 
-		pKeyValuePartialInformation,
-		sizeof(kvpiBuffer),
-		&QvkResultLength);
-
-	if(!NT_SUCCESS(status))
-	{
-		IF_LOUD(DbgPrint("NPF_QueryWinpcapRegistryKey: Status of %x querying key value %ws\n", 
-			status,
-			SubKeyToQueryU.Buffer);)
-		
-		ZwClose(keyHandle);
-		
-		//copy the default value and return
-		CharsToCopy = wcslen(DefaultValue) + 1;
-		if (CharsToCopy > ValueLen)
-		{
-			RtlCopyMemory(Value, DefaultValue, ValueLen * 2);
-			Value[ValueLen - 1] = 0;
-		}
-		else
-		{
-			RtlCopyMemory(Value, DefaultValue, CharsToCopy * 2);
-		}
-		return;
-	}
-	
-	//
-	// Check that the resulting value is of the correct type
-	//
-	if (pKeyValuePartialInformation->Type != REG_SZ)
-	{
-		IF_LOUD(DbgPrint("NPF_QueryWinpcapRegistryKey: the reg key has the wrong type (%u)\n", pKeyValuePartialInformation->Type);)
-		
-		ZwClose(keyHandle);
-		
-		//copy the default value and return
-		CharsToCopy = wcslen(DefaultValue) + 1;
-		if (CharsToCopy > ValueLen)
-		{
-			RtlCopyMemory(Value, DefaultValue, ValueLen * 2);
-			Value[ValueLen - 1] = 0;
-		}
-		else
-		{
-			RtlCopyMemory(Value, DefaultValue, CharsToCopy * 2);
-		}
-		return;
-	}
-
-	pResultingKeyValue = (PWCHAR)pKeyValuePartialInformation->Data;
-
-	//
-	// Check we have enough space for the result. We include 1 to account for the UNICODE NULL terminator
-	//
-	if(wcslen(pResultingKeyValue) + 1 > ValueLen)
-	{
-		IF_LOUD(DbgPrint("NPF_QueryWinpcapRegistryKey: storage buffer too small\n");)		
-
-		ZwClose(keyHandle);
-		
-		//copy the default value and return
-		CharsToCopy = wcslen(DefaultValue) + 1;
-		if (CharsToCopy > ValueLen)
-		{
-			RtlCopyMemory(Value, DefaultValue, ValueLen * 2);
-			Value[ValueLen - 1] = 0;
-		}
-		else
-		{
-			RtlCopyMemory(Value, DefaultValue, CharsToCopy * 2);
-		}
-		return;
-	}
-	
-	//
-	// Copy the value to the user-provided values
-	//
-	wcscpy(Value, pResultingKeyValue);
-
-	//
-	// Free the key
-	//
-	ZwClose(keyHandle);
-
-	return;
-
-#else // WPCAP_OEM
-
-	//copy the default value and return
-	CharsToCopy = wcslen(DefaultValue) + 1;
-	if (CharsToCopy > ValueLen)
-	{
-		RtlCopyMemory(Value, DefaultValue, ValueLen * 2);
-		Value[ValueLen - 1] = 0;
-	}
-	else
-	{
-		RtlCopyMemory(Value, DefaultValue, CharsToCopy * 2);
-	}
-	return;
-
-#endif // WPCAP_OEM
-}
-
-#endif
