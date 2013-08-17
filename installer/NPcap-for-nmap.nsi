@@ -15,7 +15,7 @@
 ;; Updated to 4.1.2, July 2010
 
 ;; Yang Luo
-;; Updated to 4.1.4, August 2013
+;; Updated to 4.1.3, August 2013
 
 SetCompressor /SOLID /FINAL lzma
 
@@ -29,10 +29,10 @@ SetCompressor /SOLID /FINAL lzma
 ;General
 
 ; The name of the installer
-Name "WinPcap 4.1.4 for Nmap"
+Name "WinPcap 4.1.3 for Nmap (NPcap)"
 
 ; The file to write
-OutFile "winpcap-nmap-4.1.4.exe"
+OutFile "winpcap-nmap-4.1.3-NDIS6-1.0.exe"
 
 Var /GLOBAL os_ver
 
@@ -51,7 +51,7 @@ FunctionEnd
 VIProductVersion "4.1.0.3001"
 VIAddVersionKey /LANG=1033 "FileVersion" "4.1.0.3001"
 VIAddVersionKey /LANG=1033 "ProductName" "WinPcap"
-VIAddVersionKey /LANG=1033 "FileDescription" "WinPcap 4.1.4 installer"
+VIAddVersionKey /LANG=1033 "FileDescription" "WinPcap 4.1.3 for Nmap installer"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2013 Riverbed Technology"
 
 ;--------------------------------
@@ -462,6 +462,7 @@ Section "WinPcap" SecWinPcap
       File win7_above\x86\NPF6xInstall.exe
       File win7_above\x86\npf6x.sys ; x86 NT6.1/NT6.2/NT6.3 version
       File win7_above\x86\npf6x.inf
+      File win7_above\x86\npf6x.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Win7 and Win8"
       SetOutPath $SYSDIR\drivers
@@ -510,6 +511,7 @@ Section "WinPcap" SecWinPcap
       File win7_above\x64\NPF6xInstall.exe
       File win7_above\x64\npf6x.sys ; x64 NT6.1 and above version
       File win7_above\x64\npf6x.inf
+      File win7_above\x64\npf6x.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x64 driver for Win7 and Win8"
       SetOutPath $SYSDIR\drivers
@@ -556,7 +558,7 @@ Section "WinPcap" SecWinPcap
 
     ; Write the rest of the uninstall keys for Windows
 
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayName" "WinPcap 4.1.4"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayName" "WinPcap 4.1.3 for Nmap"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayVersion" "4.1.0.3001"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "Publisher" "Riverbed Technology"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "URLInfoAbout" "http://www.riverbed.com"
@@ -624,6 +626,7 @@ Section "Uninstall"
   Delete $INSTDIR\NPF6xInstall.exe
   Delete $INSTDIR\npf6x.sys
   Delete $INSTDIR\npf6x.inf
+  Delete $INSTDIR\npf6x.cat
   Delete $INSTDIR\uninstall.exe
 
   ; This deletes the x86 files from SysWOW64 if we're on x64.
