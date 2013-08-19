@@ -462,7 +462,7 @@ PostBuild_Cmds=copy                    $(OutDir)\packet.lib                    .
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x410 /d "_DEBUG"
-# ADD RSC /l 0x409 /d "_DEBUG" /d "_WINVISTA"
+# ADD RSC /l 0x409 /d "_DEBUG" /d "_WIN7"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -496,7 +496,7 @@ PostBuild_Cmds=copy                    $(OutDir)\packet.lib                    .
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x410 /d "NDEBUG"
-# ADD RSC /l 0x410 /d "NDEBUG" /d "_WINVISTA"
+# ADD RSC /l 0x410 /d "NDEBUG" /d "_WIN7"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -532,7 +532,7 @@ PostBuild_Cmds=copy                    $(OutDir)\packet.lib                    .
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x410 /d "NDEBUG"
-# ADD RSC /l 0x410 /d "NDEBUG" /d "_WINVISTA"
+# ADD RSC /l 0x410 /d "NDEBUG" /d "_WIN7"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo

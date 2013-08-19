@@ -208,7 +208,6 @@
     <ClInclude Include="memory_t.h" />
     <ClInclude Include="normal_lookup.h" />
     <ClInclude Include="Packet.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="tcp_session.h" />
     <ClInclude Include="time_calls.h" />
@@ -216,6 +215,9 @@
     <ClInclude Include="valid_insns.h" />
     <ClInclude Include="win_bpf.h" />
     <ClInclude Include="win_bpf_filter_init.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="npf6x.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

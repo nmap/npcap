@@ -117,20 +117,13 @@ DriverEntry(
 	)
 {
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars;
-	UNICODE_STRING MacDriverName;
-	UNICODE_STRING UnicodeDeviceName;
-	PDEVICE_OBJECT DeviceObject = NULL;
-	PDEVICE_EXTENSION DeviceExtension = NULL;
 	NTSTATUS Status = STATUS_SUCCESS;
-	NTSTATUS ErrorCode = STATUS_SUCCESS;
-	NDIS_STRING FriendlyName = NDIS_STRING_CONST("WinPcap NDIS LightWeight Filter");
-	NDIS_STRING UniqueName   = NDIS_STRING_CONST("{5cbf81bd-5055-47cd-9055-a76b2b4e2637}"); //unique name, quid name
-	NDIS_STRING ServiceName = NDIS_STRING_CONST("npf6x"); //this to match the service name in the INF
-	ULONG DevicesCreated = 0;
-	PWSTR BindString;
-	PWSTR ExportString;
-	PWSTR BindStringSave;
-	PWSTR ExportStringSave;
+// 	NDIS_STRING FriendlyName = NDIS_STRING_CONST("WinPcap NDIS LightWeight Filter");
+// 	NDIS_STRING UniqueName   = NDIS_STRING_CONST("{5cbf81bd-5055-47cd-9055-a76b2b4e2637}"); //unique name, quid name
+// 	NDIS_STRING ServiceName = NDIS_STRING_CONST("npf6x"); //this to match the service name in the INF
+	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(L"WinPcap NDIS LightWeight Filter");
+	NDIS_STRING UniqueName   = RTL_CONSTANT_STRING(L"{5cbf81bd-5055-47cd-9055-a76b2b4e2637}"); //unique name, quid name
+	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(L"npf6x"); //this to match the service name in the INF
 	WCHAR* bindT;
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
@@ -172,6 +165,15 @@ DriverEntry(
 	// operation through on your behalf.
 	//
 
+
+	//
+	// Register as a service with NDIS
+	//
+// 	NdisZeroMemory(&FChars, NDIS_SIZEOF_FILTER_DRIVER_CHARACTERISTICS_REVISION_1);
+// 	FChars.Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
+// 	FChars.Header.Size = NDIS_SIZEOF_FILTER_DRIVER_CHARACTERISTICS_REVISION_1;
+// 	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
+
 	//
 	// Register as a service with NDIS
 	//
@@ -199,7 +201,7 @@ DriverEntry(
 	FChars.DetachHandler = NPF_Detach;
 	FChars.RestartHandler = NPF_Restart;
 	FChars.PauseHandler = NPF_Pause;
-	FChars.SetFilterModuleOptionsHandler = NULL; //NPF_SetModuleOptions;
+	FChars.SetFilterModuleOptionsHandler = NPF_SetModuleOptions;
 	FChars.OidRequestHandler = NPF_OidRequest;
 	FChars.OidRequestCompleteHandler = NPF_OidRequestComplete;
 	FChars.CancelOidRequestHandler = NPF_CancelOidRequest;
@@ -218,36 +220,10 @@ DriverEntry(
 	//
 	// Initialize spin locks
 	//
-	NdisAllocateSpinLock(&FilterListLock);
+	//NdisAllocateSpinLock(&FilterListLock);
 
-	InitializeListHead(&FilterModuleList);
+	//InitializeListHead(&FilterModuleList);
 
-	Status = NdisFRegisterFilterDriver(DriverObject,
-		(NDIS_HANDLE) FilterDriverObject,
-		&FChars,
-		&FilterDriverHandle);
-	if (Status != NDIS_STATUS_SUCCESS)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_INIT, "Failed to register filter with NDIS.");
-		TRACE_EXIT();
-		return Status;
-	}
-
-// 	ProtocolChar.OpenAdapterCompleteHandlerEx = NPF_OpenAdapterCompleteEx;
-// 	ProtocolChar.CloseAdapterCompleteHandlerEx = NPF_CloseAdapterCompleteEx;
-// 	ProtocolChar.OidRequestCompleteHandler = NPF_OidRequestComplete;
-// 	ProtocolChar.StatusHandlerEx = NPF_StatusEx;
-// 
-// 	ProtocolChar.ReceiveNetBufferListsHandler = NPF_tapEx;
-// 	ProtocolChar.SendNetBufferListsCompleteHandler = NPF_SendCompleteEx;
-// 
-// 	ProtocolChar.BindAdapterHandlerEx = NPF_BindAdapterEx;
-// 	ProtocolChar.UnbindAdapterHandlerEx = NPF_UnbindAdapterEx;
-// 
-// 	ProtocolChar.NetPnPEventHandler = NPF_NetPowerChange;
-// 
-// 	ProtocolChar.UninstallHandler = (UNINSTALL_PROTOCOL_HANDLER) NPF_Uninstall;
-// 	ProtocolChar.SetOptionsHandler = NULL;
 
 	// 
 	// Standard device driver entry points stuff.
@@ -287,6 +263,19 @@ DriverEntry(
 		NPF_CreateDevice(DriverObject, &macName);
 	}
 
+
+	Status = NdisFRegisterFilterDriver(DriverObject,
+		(NDIS_HANDLE) FilterDriverObject,
+		&FChars,
+		&FilterDriverHandle);
+	if (Status != NDIS_STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_INIT, "Failed to register filter with NDIS.");
+		TRACE_EXIT();
+		return Status;
+	}
+
+
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
 
@@ -307,13 +296,16 @@ PWCHAR getAdaptersList(void)
 	HANDLE keyHandle;
 	UINT BufPos = 0;
 	UINT BufLen = 4096;
-
+/*	UNICODE_STRING adapterName;*/
 
 	PWCHAR DeviceNames = (PWCHAR)ExAllocatePoolWithTag(PagedPool, BufLen, '0PWA');
+
+	TRACE_ENTER();
 
 	if (DeviceNames == NULL)
 	{
 		IF_LOUD(DbgPrint("Unable the allocate the buffer for the list of the network adapters\n");)
+		TRACE_EXIT();
 		return NULL;
 	}
 
@@ -382,13 +374,16 @@ PWCHAR getAdaptersList(void)
 				if (valueInfoP != NULL)
 				{
 					status = ZwQueryValueKey(ExportKeyHandle, &FinalExportKey, KeyValuePartialInformation, valueInfoP, valueInfoLength, &resultLength);
+// 					adapterName.Buffer = (PWCH) valueInfoP->Data;
+// 					adapterName.Length = adapterName.MaximumLength = (USHORT) wcslen((PWCHAR) valueInfoP->Data);
 					if (!NT_SUCCESS(status))
 					{
 						IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
 					}
 					else
 					{
-						IF_LOUD (DbgPrint("Device %d = %ws\n", i, valueInfoP->Data);)if(BufPos + valueInfoP->DataLength > BufLen)
+						IF_LOUD(DbgPrint("Device %d = %ws\n", i, valueInfoP->Data);)
+						if(BufPos + valueInfoP->DataLength > BufLen)
 						{
 							// double the buffer size
 							PWCHAR DeviceNames2 = (PWCHAR)ExAllocatePoolWithTag(PagedPool, BufLen << 1, '0PWA');
@@ -428,8 +423,10 @@ PWCHAR getAdaptersList(void)
 	if (BufPos == 0)
 	{
 		ExFreePool(DeviceNames);
+		TRACE_EXIT();
 		return NULL;
 	}
+	TRACE_EXIT();
 	return DeviceNames;
 }
 
@@ -524,9 +521,12 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 	UNICODE_STRING deviceName;
 	UNICODE_STRING deviceSymLink;
 
+	TRACE_ENTER();
+
 	IF_LOUD(DbgPrint("\n\ncreateDevice for MAC %ws\n", amacNameP->Buffer););
 	if (RtlCompareMemory(amacNameP->Buffer, devicePrefix.Buffer, devicePrefix.Length) < devicePrefix.Length)
 	{
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -535,7 +535,10 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 	deviceName.Buffer = ExAllocatePoolWithTag(PagedPool, deviceName.MaximumLength, '3PWA');
 
 	if (deviceName.Buffer == NULL)
+	{
+		TRACE_EXIT();
 		return FALSE;
+	}
 
 	deviceSymLink.Length = 0;
 	deviceSymLink.MaximumLength = (USHORT)(amacNameP->Length - devicePrefix.Length + symbolicLinkPrefix.Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
@@ -545,6 +548,7 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 	if (deviceSymLink.Buffer == NULL)
 	{
 		ExFreePool(deviceName.Buffer);
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -581,6 +585,7 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 
 			devExtP->ExportString = NULL;
 
+			TRACE_EXIT();
 			return FALSE;
 		}
 
@@ -590,6 +595,7 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 
 		ExFreePool(deviceName.Buffer);
 
+		TRACE_EXIT();
 		return TRUE;
 	}
 	else
@@ -599,6 +605,7 @@ BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRIN
 		ExFreePool(deviceName.Buffer);
 		ExFreePool(deviceSymLink.Buffer);
 
+		TRACE_EXIT();
 		return FALSE;
 	}
 }
@@ -665,7 +672,7 @@ Return Value:
 
 	// Free the adapters names
 	ExFreePool(bindP);
-	NdisFreeSpinLock(&FilterListLock);
+	//NdisFreeSpinLock(&FilterListLock);
 
 	TRACE_EXIT();
 }
@@ -891,7 +898,6 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 	case BIOCSETF:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETF");
-
 		//
 		// Get the pointer to the new program
 		//
@@ -1310,7 +1316,6 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	case BIOCSETBUFFERSIZE:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETBUFFERSIZE");
 
-
 		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
 		{
 			SET_FAILURE_BUFFER_SMALL();
@@ -1526,8 +1531,11 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			//
 			pRequest->Request.RequestId = (PVOID) NPF6X_REQUEST_ID;
 			ASSERT(Open->AdapterHandle != NULL);
-			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
-			//Status = NDIS_STATUS_FAILURE;
+			if (OidData->Oid != OID_GEN_CURRENT_PACKET_FILTER)
+			{
+				Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
+			}
+			Status = NDIS_STATUS_SUCCESS;
 		}
 		else
 		{

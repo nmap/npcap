@@ -688,7 +688,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -768,7 +768,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -845,7 +845,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -925,7 +925,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1161,7 +1161,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1241,7 +1241,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1482,7 +1482,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1565,6 +1565,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1642,7 +1643,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1717,6 +1718,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1797,7 +1799,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1877,7 +1879,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -1954,7 +1956,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -2034,7 +2036,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_UNICODE;UNICODE;_WINVISTA"
+				PreprocessorDefinitions="_UNICODE;UNICODE;_WIN7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"

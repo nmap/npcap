@@ -7,14 +7,14 @@
 	(PVOID)(Globals.PartialCancelId |   										\
 	((NdisInterlockedIncrement((PLONG)&Globals.LocalCancelId)) & NPROT_CANCEL_ID_LOW_MASK))
 
-#define NPF6XSetNBLFlags(_NBL, _Flags)     (DWORD) ((_NBL)->ProtocolReserved[0]) |= (_Flags)
-#define NPF6XClearNBLFlags(_NBL, _Flags)   (DWORD) ((_NBL)->ProtocolReserved[0]) &= ~(_Flags)
+// #define NPF6XSetNBLFlags(_NBL, _Flags)     (DWORD) ((_NBL)->ProtocolReserved[0]) |= (_Flags)
+// #define NPF6XClearNBLFlags(_NBL, _Flags)   (DWORD) ((_NBL)->ProtocolReserved[0]) &= ~(_Flags)
 
-#define NPF6XSetNBLTag(_NBL, _Flags)		 ((_NBL)->ProtocolReserved[2]) = (_Flags)
-#define NPF6XGetNBLTag(_NBL)				 ((_NBL)->ProtocolReserved[2])
+// #define NPF6XSetNBLTag(_NBL, _Flags)		 ((_NBL)->ProtocolReserved[2]) = (_Flags)
+// #define NPF6XGetNBLTag(_NBL)				 ((_NBL)->ProtocolReserved[2])
 
-#define NPF6XSetNBLChildOpen(_NBL, _Flags)		 ((_NBL)->ProtocolReserved[3]) = (_Flags)
-#define NPF6XGetNBLChildOpen(_NBL)				 ((_NBL)->ProtocolReserved[3])
+#define NPF6XSetNBLChildOpen(_NBL, _Flags)		 ((_NBL)->Scratch) = (_Flags)
+#define NPF6XGetNBLChildOpen(_NBL)				 ((_NBL)->Scratch)
 
 #define NPROT_MAC_ADDR_LEN            6
 

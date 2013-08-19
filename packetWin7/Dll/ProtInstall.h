@@ -3,7 +3,7 @@
 
 // Copyright And Configuration Management ----------------------------------
 //
-//  			  NDISPROT String Definitions - ProtInstall.h
+//  			  NDISLWF String Definitions - ProtInstall.h
 //
 //  				Companion Sample Code for the Article
 //
@@ -38,7 +38,7 @@
 //
 // ATTENTION!!!
 // ------------
-// If you make changes to the NDISPROT string definitions you must also make
+// If you make changes to the NDISLWF string definitions you must also make
 // matching changes in this file.
 //
 
@@ -49,30 +49,30 @@
 //
 // "Friendly" Name
 //
-#define NDISPROT_FRIENDLY_NAME_A		  "NPF NDIS 6.x Protocol Driver"
-#define NDISPROT_FRIENDLY_NAME_W		  L"NPF NDIS 6.x Protocol Driver"
+#define NDISLWF_FRIENDLY_NAME_A		  "WinPcap Lightweight Filter Driver (NPF)"
+#define NDISLWF_FRIENDLY_NAME_W		  L"WinPcap Lightweight Filter Driver (NPF)"
 
 #ifdef UNICODE
-#define NDISPROT_FRIENDLY_NAME  		  NDISPROT_FRIENDLY_NAME_W
+#define NDISLWF_FRIENDLY_NAME  		  NDISLWF_FRIENDLY_NAME_W
 #else
-#define NDISPROT_FRIENDLY_NAME  		  NDISPROT_FRIENDLY_NAME_A
+#define NDISLWF_FRIENDLY_NAME  		  NDISLWF_FRIENDLY_NAME_A
 #endif
 
 //
 // Driver INF File and PnP ID Names
 //
-#define NDISPROT_SERVICE_PNP_DEVICE_ID_A	  "INSECURE_NPF6X"
-#define NDISPROT_SERVICE_PNP_DEVICE_ID_W	  L"INSECURE_NPF6X"
+#define NDISLWF_SERVICE_PNP_DEVICE_ID_A	  "INSECURE_NPF6X"
+#define NDISLWF_SERVICE_PNP_DEVICE_ID_W	  L"INSECURE_NPF6X"
 
-#define NDISPROT_SERVICE_INF_FILE_A 		  "npf6x"
-#define NDISPROT_SERVICE_INF_FILE_W 		  L"npf6x"
+#define NDISLWF_SERVICE_INF_FILE_A 		  "npf6x"
+#define NDISLWF_SERVICE_INF_FILE_W 		  L"npf6x"
 
 #ifdef UNICODE
-#define NDISPROT_SERVICE_PNP_DEVICE_ID  	  NDISPROT_SERVICE_PNP_DEVICE_ID_W
-#define NDISPROT_SERVICE_INF_FILE   		  NDISPROT_SERVICE_INF_FILE_W
+#define NDISLWF_SERVICE_PNP_DEVICE_ID  	  NDISLWF_SERVICE_PNP_DEVICE_ID_W
+#define NDISLWF_SERVICE_INF_FILE   		  NDISLWF_SERVICE_INF_FILE_W
 #else
-#define NDISPROT_SERVICE_PNP_DEVICE_ID  	  NDISPROT_SERVICE_PNP_DEVICE_ID_A
-#define NDISPROT_SERVICE_INF_FILE   		  NDISPROT_SERVICE_INF_FILE_A
+#define NDISLWF_SERVICE_PNP_DEVICE_ID  	  NDISLWF_SERVICE_PNP_DEVICE_ID_A
+#define NDISLWF_SERVICE_INF_FILE   		  NDISLWF_SERVICE_INF_FILE_A
 #endif
 
 #ifdef __cplusplus

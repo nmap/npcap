@@ -447,25 +447,25 @@ Arguments:
 
 	TRACE_ENTER();
 
-// 	if (Open->GroupHead != NULL)
-// 	{
-// 		GroupOpen = Open->GroupHead->GroupNext;
-// 	}
-// 	else
-// 	{
-// 		GroupOpen = Open->GroupNext;
-// 	}
-// 
-// 	while (GroupOpen != NULL)
-// 	{
-// 		TempOpen = GroupOpen;
-// 		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
-// 		{
-// 			NPF_tapExForEachOpen(TempOpen, NetBufferLists);
-// 		}
-// 
-// 		GroupOpen = TempOpen->GroupNext;
-// 	}
+	if (Open->GroupHead != NULL)
+	{
+		GroupOpen = Open->GroupHead->GroupNext;
+	}
+	else
+	{
+		GroupOpen = Open->GroupNext;
+	}
+
+	while (GroupOpen != NULL)
+	{
+		TempOpen = GroupOpen;
+		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+		{
+			NPF_tapExForEachOpen(TempOpen, NetBufferLists);
+		}
+
+		GroupOpen = TempOpen->GroupNext;
+	}
 
 	NdisFSendNetBufferLists(Open->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
 
@@ -521,30 +521,30 @@ N.B.: It is important to check the ReceiveFlags in NDIS_TEST_RECEIVE_CANNOT_PEND
 	UNREFERENCED_PARAMETER(PortNumber);
 	UNREFERENCED_PARAMETER(NumberOfNetBufferLists);
 
-// 	if (NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags))
-// 	{
-// 		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
-// 	}
+	if (NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags))
+	{
+		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
+	}
 
-// 	if (Open->GroupHead != NULL)
-// 	{
-// 		GroupOpen = Open->GroupHead->GroupNext;
-// 	}
-// 	else
-// 	{
-// 		GroupOpen = Open->GroupNext;
-// 	}
-// 
-// 	while (GroupOpen != NULL)
-// 	{
-// 		TempOpen = GroupOpen;
-// 		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
-// 		{
-// 			NPF_tapExForEachOpen(TempOpen, NetBufferLists);
-// 		}
-// 
-// 		GroupOpen = TempOpen->GroupNext;
-// 	}
+	if (Open->GroupHead != NULL)
+	{
+		GroupOpen = Open->GroupHead->GroupNext;
+	}
+	else
+	{
+		GroupOpen = Open->GroupNext;
+	}
+
+	while (GroupOpen != NULL)
+	{
+		TempOpen = GroupOpen;
+		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+		{
+			NPF_tapExForEachOpen(TempOpen, NetBufferLists);
+		}
+
+		GroupOpen = TempOpen->GroupNext;
+	}
 
 	NdisFIndicateReceiveNetBufferLists(
 				Open->AdapterHandle,

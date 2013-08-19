@@ -5,8 +5,8 @@
 #endif
 #define WIN_NT_DRIVER
 
-#define NDIS620 1
-// #define NDIS60 1
+//#define NDIS620 1
+#define NDIS60 1
 
 // TODO: Specify which version of the NDIS contract you will use here.
 // In many cases, 6.0 is the best choice.  You only need to select a later

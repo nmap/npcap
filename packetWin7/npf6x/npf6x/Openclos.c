@@ -1038,11 +1038,12 @@ POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex
 	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
 	PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
 	PoolParameters.Header.Revision = NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
-	PoolParameters.Header.Size = sizeof(PoolParameters);
-	PoolParameters.ProtocolId = NDIS_PROTOCOL_ID_TCP_IP;
-	PoolParameters.ContextSize = 0;
+	PoolParameters.Header.Size = NDIS_SIZEOF_NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
+	PoolParameters.ProtocolId = NDIS_PROTOCOL_ID_DEFAULT;
 	PoolParameters.fAllocateNetBuffer = TRUE;
+	PoolParameters.ContextSize = 0;
 	PoolParameters.PoolTag = NPF6X_ALLOC_TAG;
+	PoolParameters.DataSize = 0;
 
 	Open->PacketPool = NdisAllocateNetBufferListPool(NULL, &PoolParameters);
 	if (Open->PacketPool == NULL)
@@ -1262,8 +1263,8 @@ N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper
 		// media types.
 		if ((AttachParameters->MiniportMediaType != NdisMedium802_3)
 				&& (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
-// 				&& (AttachParameters->MiniportMediaType != NdisMediumWan)
-// 				&& (AttachParameters->MiniportMediaType != NdisMediumWirelessWan)
+//				&& (AttachParameters->MiniportMediaType != NdisMediumWan)
+//				&& (AttachParameters->MiniportMediaType != NdisMediumWirelessWan)
 				&& (AttachParameters->MiniportMediaType != NdisMediumFddi)
 				&& (AttachParameters->MiniportMediaType != NdisMediumArcnet878_2)
 				&& (AttachParameters->MiniportMediaType != NdisMediumAtm)
@@ -1275,6 +1276,15 @@ N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper
 			break;
 		}
 
+		IF_LOUD (DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%c-%c-%c-%c-%c-%c\n",
+			AttachParameters->BaseMiniportName,
+			AttachParameters->CurrentMacAddress[0], 
+			AttachParameters->CurrentMacAddress[1], 
+			AttachParameters->CurrentMacAddress[2], 
+			AttachParameters->CurrentMacAddress[3], 
+			AttachParameters->CurrentMacAddress[4], 
+			AttachParameters->CurrentMacAddress[5]);)
+
 		Open = NPF_CreateOpenObject(AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType, NULL);
 		if (Open == NULL)
 		{
@@ -1283,7 +1293,12 @@ N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper
 			return returnStatus;
 		}
 
-		Open->AdapterHandle = NdisFilterHandle;
+		//
+		//  Try to open the MAC
+		//
+		//TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Opening the device %ws, BindingContext=%p", DeviceExtension->AdapterName.Buffer, Open);
+
+		returnStatus = STATUS_SUCCESS;
 
 		NdisZeroMemory(&FilterAttributes, sizeof(NDIS_FILTER_ATTRIBUTES));
 		FilterAttributes.Header.Revision = NDIS_FILTER_ATTRIBUTES_REVISION_1;
@@ -1295,26 +1310,24 @@ N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper
 		Status = NdisFSetAttributes(NdisFilterHandle,
 									Open,
 									&FilterAttributes);
+		Open->AdapterHandle = NdisFilterHandle;
 
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened the device, Status=%x", Status);
 
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
+			returnStatus = Status;
 			IF_LOUD(DbgPrint("Failed to set attributes.\n");)
 			NPF_ReleaseOpenInstanceResources(Open);
 			//
 			// Free the open instance itself
 			//
-			if (Open != NULL)
-			{
-				ExFreePool(Open);
-			}
-			break;
+			ExFreePool(Open);
 		}
 		else
 		{
+			returnStatus = STATUS_SUCCESS;
 			NPF_AddToOpenArray(Open);
-
 // 			FILTER_ACQUIRE_LOCK(&FilterListLock, bFalse);
 // 			InsertHeadList(&FilterModuleList, &Open->FilterModuleLink);
 // 			FILTER_RELEASE_LOCK(&FilterListLock, bFalse);
@@ -1323,7 +1336,7 @@ N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper
 	while (bFalse);
 
 	TRACE_EXIT();
-	return Status;
+	return returnStatus;
 }
 
 //-------------------------------------------------------------------
@@ -1404,6 +1417,9 @@ Return Value:
 
 	UNREFERENCED_PARAMETER(FilterModuleContext);
 	TRACE_ENTER();
+
+	TIME_DESYNCHRONIZE(&G_Start_Time);
+	TIME_SYNCHRONIZE(&G_Start_Time);
 
 	Status = NDIS_STATUS_SUCCESS;
 	TRACE_EXIT();
@@ -1860,9 +1876,6 @@ NOTE: called at PASSIVE_LEVEL
 	// efficient to omit the FilterNetPnPEvent handler entirely if it does
 	// nothing, but it is included in this sample for illustrative purposes.
 	//
-
-// 	TIME_DESYNCHRONIZE(&G_Start_Time);
-// 	TIME_SYNCHRONIZE(&G_Start_Time);
 
 	Status = NdisFNetPnPEvent(Open->AdapterHandle, NetPnPEventNotification);
 

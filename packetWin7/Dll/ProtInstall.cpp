@@ -119,7 +119,7 @@ DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
 
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
-	_tmakepath(lpFilename, szDrive, szDir, NDISPROT_SERVICE_INF_FILE, _T(".inf"));
+	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
 
 	return (DWORD)_tcslen(lpFilename);
 }
@@ -209,7 +209,7 @@ DWORD InstallDriver()
 
 	//_tprintf( _T("PnpID: %s\n"), NDISPROT_SERVICE_PNP_DEVICE_ID );
 
-	hr = InstallSpecifiedComponent(szFileFullPath, NDISPROT_SERVICE_PNP_DEVICE_ID, &GUID_DEVCLASS_NETTRANS);
+	hr = InstallSpecifiedComponent(szFileFullPath, NDISLWF_SERVICE_PNP_DEVICE_ID, &GUID_DEVCLASS_NETSERVICE);
 
 	if (hr != S_OK)
 	{
@@ -250,7 +250,7 @@ DWORD UninstallDriver()
 		//
 		// Get a reference to the network component to uninstall.
 		//
-		hr = pnc->FindComponent(NDISPROT_SERVICE_PNP_DEVICE_ID, &pncc);
+		hr = pnc->FindComponent(NDISLWF_SERVICE_PNP_DEVICE_ID, &pncc);
 
 		if (hr == S_OK)
 		{
@@ -292,7 +292,7 @@ DWORD UninstallDriver()
 							if ((hr != S_OK) && (hr != NETCFG_S_REBOOT))
 							{
 								ErrMsg(hr, L"Couldn't apply the changes after"
-									L" uninstalling %s.", NDISPROT_SERVICE_PNP_DEVICE_ID);
+									L" uninstalling %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 							}
 							else
 							{
@@ -302,7 +302,7 @@ DWORD UninstallDriver()
 						}
 						else
 						{
-							ErrMsg(hr, L"Failed to uninstall %s.", NDISPROT_SERVICE_PNP_DEVICE_ID);
+							ErrMsg(hr, L"Failed to uninstall %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 						}
 
 						ReleaseRef(pncClassSetup);
@@ -317,19 +317,19 @@ DWORD UninstallDriver()
 				else
 				{
 					ErrMsg(hr, L"Couldn't get a pointer to class interface "
-						L"of %s.", NDISPROT_SERVICE_PNP_DEVICE_ID);
+						L"of %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 				}
 			}
 			else
 			{
-				ErrMsg(hr, L"Couldn't get the class guid of %s.", NDISPROT_SERVICE_PNP_DEVICE_ID);
+				ErrMsg(hr, L"Couldn't get the class guid of %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 			}
 
 			ReleaseRef(pncc);
 		}
 		else
 		{
-			ErrMsg(hr, L"Couldn't get an interface pointer to %s.", NDISPROT_SERVICE_PNP_DEVICE_ID);
+			ErrMsg(hr, L"Couldn't get an interface pointer to %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 		}
 
 		HrReleaseINetCfg(pnc, TRUE);

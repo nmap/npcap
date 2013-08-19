@@ -7,22 +7,22 @@
 Signature       = "$Windows NT$"
 Class           = NetService
 ClassGUID       = {4D36E974-E325-11CE-BFC1-08002BE10318}
-;CatalogFile     = netlwf.cat
+CatalogFile     = npf6x.cat
 Provider        = %Insecure%
-DriverVer=08/08/2013,16.0.39.717
+DriverVer=08/18/2013,0.31.43.389
 
 
 [Manufacturer]
 %Insecure%=Insecure,NTx86,NTia64,NTamd64
 
 [Insecure.NTx86]
-%NPF6x_Desc%=Install, MS_NdisLwf
+%NPF6x_Desc%=Install, INSECURE_NPF6X
 
 [Insecure.NTia64]
-%NPF6x_Desc%=Install, MS_NdisLwf
+%NPF6x_Desc%=Install, INSECURE_NPF6X
 
 [Insecure.NTamd64]
-%NPF6x_Desc%=Install, MS_NdisLwf
+%NPF6x_Desc%=Install, INSECURE_NPF6X
 
 ;-------------------------------------------------------------------------
 ; Installation Section
@@ -127,5 +127,5 @@ HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to defaul
 
 [Strings]
 Insecure = "InSecure.Com, LLC."
-NPF6X_Desc = "NPF NDIS 6.x LightWeight Filter Driver"
-NPF6X_HelpText = "A driver to support packet capturing for Win7/Win8 using WinPcap"
+NPF6X_Desc = "WinPcap Lightweight Filter Driver (NPF)"
+NPF6X_HelpText = "A NDIS 6.x kernel driver to support packet capturing under Win7 & Win8"
