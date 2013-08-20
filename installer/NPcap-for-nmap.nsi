@@ -52,7 +52,7 @@ VIProductVersion "4.1.0.3001"
 VIAddVersionKey /LANG=1033 "FileVersion" "4.1.0.3001"
 VIAddVersionKey /LANG=1033 "ProductName" "WinPcap"
 VIAddVersionKey /LANG=1033 "FileDescription" "WinPcap 4.1.3 for Nmap installer"
-VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2013 Riverbed Technology"
+VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2013 Riverbed Technology, Nmap Project"
 
 ;--------------------------------
 ; Windows API Definitions
@@ -560,8 +560,8 @@ Section "WinPcap" SecWinPcap
 
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayName" "WinPcap 4.1.3 for Nmap"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayVersion" "4.1.0.3001"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "Publisher" "Riverbed Technology"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "URLInfoAbout" "http://www.riverbed.com"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "Publisher" "Nmap Project"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "URLInfoAbout" "http://www.nmap.org"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "URLUpdateInfo" "http://www.winpcap.org"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "VersionMajor" "4"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "VersionMinor" "1"
