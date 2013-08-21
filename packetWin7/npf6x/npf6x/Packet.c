@@ -279,7 +279,7 @@ DriverEntry(
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
 
-	RegistryError : NdisFDeregisterFilterDriver(FilterDriverHandle);
+	RegistryError :
 
 	Status = STATUS_UNSUCCESSFUL;
 	TRACE_EXIT();
@@ -1537,7 +1537,7 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			{
 				ASSERT(Open->GroupHead != NULL);
 				Open->GroupHead->MyPacketFilter = *(ULONG*) OidData->Data;
-				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
+				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | NDIS_PACKET_TYPE_PROMISCUOUS;
 				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 			}
 
