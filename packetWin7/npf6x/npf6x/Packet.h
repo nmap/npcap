@@ -392,6 +392,9 @@ typedef struct _OPEN_INSTANCE
 	struct _OPEN_INSTANCE *GroupNext;
 	struct _OPEN_INSTANCE *GroupHead;
 
+	ULONG MyPacketFilter;
+	ULONG HigherPacketFilter;
+
 	//LIST_ENTRY FilterModuleLink;
 	NDIS_SPIN_LOCK OIDLock;    // Lock for protection of state and outstanding sends and recvs
 	PNDIS_OID_REQUEST PendingOidRequest;

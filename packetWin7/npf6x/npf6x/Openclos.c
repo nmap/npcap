@@ -1512,6 +1512,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 	BOOLEAN                 bSubmitted = FALSE;
 	PFILTER_REQUEST_CONTEXT Context;
 	BOOLEAN                 bFalse = FALSE;
+	ULONG					combinedPacketFilter = 0;
 
 	TRACE_ENTER();
 
@@ -1525,6 +1526,13 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "FilerOidRequest: Cannot Clone Request\n");
 			break;
+		}
+
+		if (Request->RequestType == NdisRequestSetInformation && Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER)
+		{
+			Open->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
+			combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter;
+			ClonedRequest->DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 		}
 
 		Context = (PFILTER_REQUEST_CONTEXT)(&ClonedRequest->SourceReserved[0]);

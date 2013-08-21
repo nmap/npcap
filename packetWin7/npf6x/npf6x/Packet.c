@@ -735,6 +735,7 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	BOOLEAN Flag;
 	PUINT pStats;
 	ULONG StatsLength;
+	ULONG combinedPacketFilter;
 
 	HANDLE hUserEvent;
 	PKEVENT pKernelEvent;
@@ -1531,11 +1532,16 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			//
 			pRequest->Request.RequestId = (PVOID) NPF6X_REQUEST_ID;
 			ASSERT(Open->AdapterHandle != NULL);
-			if (OidData->Oid != OID_GEN_CURRENT_PACKET_FILTER)
+
+			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
 			{
-				Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
+				ASSERT(Open->GroupHead != NULL);
+				Open->GroupHead->MyPacketFilter = *(ULONG*) OidData->Data;
+				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
+				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 			}
-			Status = NDIS_STATUS_SUCCESS;
+
+			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
 		}
 		else
 		{
