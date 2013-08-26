@@ -204,6 +204,21 @@ DRIVER_DISPATCH FilterDispatch;
 
 DRIVER_DISPATCH FilterDeviceIoControl;
 
+ULONG NPF_GetPacketFilter(NDIS_HANDLE FilterModuleContext);
+
+NDIS_STATUS
+	NPF_DoInternalRequest(
+	_In_ NDIS_HANDLE                 FilterModuleContext,
+	_In_ NDIS_REQUEST_TYPE            RequestType,
+	_In_ NDIS_OID                     Oid,
+	_Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed)
+	PVOID                        InformationBuffer,
+	_In_ ULONG                        InformationBufferLength,
+	_In_opt_ ULONG                    OutputBufferLength,
+	_In_ ULONG                        MethodId,
+	_Out_ PULONG                      pBytesProcessed
+	);
+
 VOID
 	NPF_InternalRequestComplete(
 	_In_ NDIS_HANDLE                  FilterModuleContext,

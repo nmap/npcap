@@ -1310,9 +1310,6 @@ N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper
 		Status = NdisFSetAttributes(NdisFilterHandle,
 									Open,
 									&FilterAttributes);
-		Open->AdapterHandle = NdisFilterHandle;
-
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened the device, Status=%x", Status);
 
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
@@ -1326,6 +1323,10 @@ N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper
 		}
 		else
 		{
+			Open->AdapterHandle = NdisFilterHandle;
+			Open->HigherPacketFilter = NPF_GetPacketFilter(Open);
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Opened the device, Status=%x, HigherPacketFilter=%x", Status, Open->HigherPacketFilter);
+
 			returnStatus = STATUS_SUCCESS;
 			NPF_AddToOpenArray(Open);
 // 			FILTER_ACQUIRE_LOCK(&FilterListLock, bFalse);
@@ -1699,7 +1700,7 @@ Arguments:
 		TRACE_EXIT();
 		return;
 	}
-
+	
 
 	FILTER_ACQUIRE_LOCK(&Open->OIDLock, bFalse);
 
@@ -2011,6 +2012,190 @@ Return Value:
    UNREFERENCED_PARAMETER(FilterModuleContext);
 
    return Status;
+}
+
+//-------------------------------------------------------------------
+
+ULONG NPF_GetPacketFilter(NDIS_HANDLE FilterModuleContext)
+{
+	ULONG PacketFilter = 0;
+	ULONG BytesProcessed = 0;
+
+	NPF_DoInternalRequest(FilterModuleContext,
+		NdisRequestQueryInformation,
+		OID_GEN_CURRENT_PACKET_FILTER,
+		&PacketFilter,
+		sizeof(PacketFilter),
+		0,
+		0,
+		&BytesProcessed
+		);
+
+	if (BytesProcessed != sizeof(PacketFilter))
+	{
+		return 0;
+	}
+	else
+	{
+		return PacketFilter;
+	}
+}
+
+//-------------------------------------------------------------------
+
+NDIS_STATUS
+NPF_DoInternalRequest(
+	_In_ NDIS_HANDLE			      FilterModuleContext,
+	_In_ NDIS_REQUEST_TYPE            RequestType,
+	_In_ NDIS_OID                     Oid,
+	_Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed)
+		 PVOID                        InformationBuffer,
+	_In_ ULONG                        InformationBufferLength,
+	_In_opt_ ULONG                    OutputBufferLength,
+	_In_ ULONG                        MethodId,
+	_Out_ PULONG                      pBytesProcessed
+	)
+/*++
+
+Routine Description:
+
+	Utility routine that forms and sends an NDIS_OID_REQUEST to the
+	miniport, waits for it to complete, and returns status
+	to the caller.
+
+	NOTE: this assumes that the calling routine ensures validity
+	of the filter handle until this returns.
+
+Arguments:
+
+	FilterModuleContext - pointer to our filter module context
+	RequestType - NdisRequest[Set|Query|method]Information
+	Oid - the object being set/queried
+	InformationBuffer - data for the request
+	InformationBufferLength - length of the above
+	OutputBufferLength  - valid only for method request
+	MethodId - valid only for method request
+	pBytesProcessed - place to return bytes read/written
+
+Return Value:
+
+	Status of the set/query request
+
+--*/
+{
+	POPEN_INSTANCE				Open = (POPEN_INSTANCE) FilterModuleContext;
+	INTERNAL_REQUEST            FilterRequest;
+	PNDIS_OID_REQUEST           NdisRequest = &FilterRequest.Request;
+	NDIS_STATUS                 Status;
+	BOOLEAN                     bFalse;
+
+
+	bFalse = FALSE;
+	*pBytesProcessed = 0;
+	NdisZeroMemory(NdisRequest, sizeof(NDIS_OID_REQUEST));
+
+	NdisInitializeEvent(&FilterRequest.InternalRequestCompletedEvent);
+	NdisResetEvent(&FilterRequest.InternalRequestCompletedEvent);
+
+	if (*((PVOID *) FilterRequest.Request.SourceReserved) != NULL)
+	{
+		*((PVOID *) FilterRequest.Request.SourceReserved) = NULL;
+	}
+
+	NdisRequest->Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
+	NdisRequest->Header.Revision = NDIS_OID_REQUEST_REVISION_1;
+	NdisRequest->Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
+	NdisRequest->RequestType = RequestType;
+
+	switch (RequestType)
+	{
+		case NdisRequestQueryInformation:
+			 NdisRequest->DATA.QUERY_INFORMATION.Oid = Oid;
+			 NdisRequest->DATA.QUERY_INFORMATION.InformationBuffer =
+									InformationBuffer;
+			 NdisRequest->DATA.QUERY_INFORMATION.InformationBufferLength =
+									InformationBufferLength;
+			break;
+
+		case NdisRequestSetInformation:
+			 NdisRequest->DATA.SET_INFORMATION.Oid = Oid;
+			 NdisRequest->DATA.SET_INFORMATION.InformationBuffer =
+									InformationBuffer;
+			 NdisRequest->DATA.SET_INFORMATION.InformationBufferLength =
+									InformationBufferLength;
+			break;
+
+		case NdisRequestMethod:
+			 NdisRequest->DATA.METHOD_INFORMATION.Oid = Oid;
+			 NdisRequest->DATA.METHOD_INFORMATION.MethodId = MethodId;
+			 NdisRequest->DATA.METHOD_INFORMATION.InformationBuffer =
+									InformationBuffer;
+			 NdisRequest->DATA.METHOD_INFORMATION.InputBufferLength =
+									InformationBufferLength;
+			 NdisRequest->DATA.METHOD_INFORMATION.OutputBufferLength = OutputBufferLength;
+			 break;
+
+
+
+		default:
+			ASSERT(bFalse);
+			break;
+	}
+
+	NdisRequest->RequestId = (PVOID)NPF6X_REQUEST_ID;
+
+	Status = NdisFOidRequest(Open->AdapterHandle,
+							NdisRequest);
+
+
+	if (Status == NDIS_STATUS_PENDING)
+	{
+
+		NdisWaitEvent(&FilterRequest.InternalRequestCompletedEvent, 0);
+		Status = FilterRequest.RequestStatus;
+	}
+
+
+	if (Status == NDIS_STATUS_SUCCESS)
+	{
+		if (RequestType == NdisRequestSetInformation)
+		{
+			*pBytesProcessed = NdisRequest->DATA.SET_INFORMATION.BytesRead;
+		}
+
+		if (RequestType == NdisRequestQueryInformation)
+		{
+			*pBytesProcessed = NdisRequest->DATA.QUERY_INFORMATION.BytesWritten;
+		}
+
+		if (RequestType == NdisRequestMethod)
+		{
+			*pBytesProcessed = NdisRequest->DATA.METHOD_INFORMATION.BytesWritten;
+		}
+
+		//
+		// The driver below should set the correct value to BytesWritten
+		// or BytesRead. But now, we just truncate the value to InformationBufferLength
+		//
+		if (RequestType == NdisRequestMethod)
+		{
+			if (*pBytesProcessed > OutputBufferLength)
+			{
+				*pBytesProcessed = OutputBufferLength;
+			}
+		}
+		else
+		{
+
+			if (*pBytesProcessed > InformationBufferLength)
+			{
+				*pBytesProcessed = InformationBufferLength;
+			}
+		}
+	}
+
+
+	return Status;
 }
 
 //-------------------------------------------------------------------

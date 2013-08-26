@@ -81,8 +81,6 @@ NDIS_STRING tcpLinkageKeyName = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 NDIS_STRING AdapterListKey = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 								L"\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}");
 NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
-NDIS_STRING g_WinpcapGlobalKey = NDIS_STRING_CONST("\\Registry\\Machine\\" WINPCAP_INSTANCE_KEY_WIDECHAR);
-//NDIS_STRING g_WinpcapGlobalKey = NDIS_STRING_CONST("\\Registry\\Machine\\" WINPCAP_GLOBAL_KEY_WIDECHAR);
 
 /// Global variable that points to the names of the bound adapters
 WCHAR* bindP = NULL;
@@ -122,32 +120,20 @@ DriverEntry(
 // 	NDIS_STRING UniqueName   = NDIS_STRING_CONST("{5cbf81bd-5055-47cd-9055-a76b2b4e2637}"); //unique name, quid name
 // 	NDIS_STRING ServiceName = NDIS_STRING_CONST("npf6x"); //this to match the service name in the INF
 	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(L"WinPcap NDIS LightWeight Filter");
-	NDIS_STRING UniqueName   = RTL_CONSTANT_STRING(L"{5cbf81bd-5055-47cd-9055-a76b2b4e2637}"); //unique name, quid name
+	NDIS_STRING UniqueName   = RTL_CONSTANT_STRING(L"{6dcc66ba-876d-4595-b4af-9bff65c7445a}"); //unique name, quid name
 	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(L"npf6x"); //this to match the service name in the INF
 	WCHAR* bindT;
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
 	ULONG OsMajorVersion, OsMinorVersion;
-
-	TRACE_ENTER();
-
 	UNREFERENCED_PARAMETER(RegistryPath);
 
+	TRACE_ENTER();
 	FilterDriverObject = DriverObject;
+	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
 
-	//
-	// Get OS version and store it in a global variable. 
-	//
-	// Note: both RtlGetVersion() and PsGetVersion() are documented to always return success.
-	//
-	//	OsVersion.dwOSVersionInfoSize = sizeof(OsVersion);
-	//	RtlGetVersion(&OsVersion);
-	//
 	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
 	TRACE_MESSAGE2(PACKET_DEBUG_INIT, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
-
-
-	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
 
 	//
 	// Get number of CPUs and save it
@@ -158,21 +144,6 @@ DriverEntry(
 	g_NCpu = NdisSystemProcessorCount();
 #endif
 
-	//
-	// TODO: Most handlers are optional, however, this sample includes them
-	// all for illustrative purposes.  If you do not need a particular 
-	// handler, set it to NULL and NDIS will more efficiently pass the
-	// operation through on your behalf.
-	//
-
-
-	//
-	// Register as a service with NDIS
-	//
-// 	NdisZeroMemory(&FChars, NDIS_SIZEOF_FILTER_DRIVER_CHARACTERISTICS_REVISION_1);
-// 	FChars.Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
-// 	FChars.Header.Size = NDIS_SIZEOF_FILTER_DRIVER_CHARACTERISTICS_REVISION_1;
-// 	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
 
 	//
 	// Register as a service with NDIS
@@ -217,14 +188,6 @@ DriverEntry(
 
 	DriverObject->DriverUnload = NPF_Unload;
 
-	//
-	// Initialize spin locks
-	//
-	//NdisAllocateSpinLock(&FilterListLock);
-
-	//InitializeListHead(&FilterModuleList);
-
-
 	// 
 	// Standard device driver entry points stuff.
 	//
@@ -262,8 +225,7 @@ DriverEntry(
 		RtlInitUnicodeString(&macName, bindT);
 		NPF_CreateDevice(DriverObject, &macName);
 	}
-
-
+	
 	Status = NdisFRegisterFilterDriver(DriverObject,
 		(NDIS_HANDLE) FilterDriverObject,
 		&FChars,
@@ -275,11 +237,10 @@ DriverEntry(
 		return Status;
 	}
 
-
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
 
-	RegistryError :
+RegistryError:
 
 	Status = STATUS_UNSUCCESSFUL;
 	TRACE_EXIT();
@@ -1537,7 +1498,11 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			{
 				ASSERT(Open->GroupHead != NULL);
 				Open->GroupHead->MyPacketFilter = *(ULONG*) OidData->Data;
-				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | NDIS_PACKET_TYPE_PROMISCUOUS;
+				if (Open->GroupHead->MyPacketFilter == NDIS_PACKET_TYPE_ALL_LOCAL)
+				{
+					Open->GroupHead->MyPacketFilter = 0;
+				}
+				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
 				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 			}
 
