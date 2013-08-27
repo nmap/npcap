@@ -32,7 +32,7 @@ SetCompressor /SOLID /FINAL lzma
 Name "WinPcap 4.1.3 for Nmap (NPcap)"
 
 ; The file to write
-OutFile "winpcap-nmap-4.1.3-NDIS6-1.1.exe"
+OutFile "winpcap-nmap-4.1.3-NDIS6-1.2.exe"
 
 Var /GLOBAL os_ver
 
@@ -294,7 +294,7 @@ FunctionEnd
 Function doOptions
   ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 1" "State"
   StrCmp $0 "0" do_options_next
-  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 2
+  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 1
   do_options_next:
   ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 2" "State"
   StrCmp $0 "0" do_options_end
@@ -353,7 +353,7 @@ FunctionEnd
 Function registerServiceAPI_win7
   ; delete the npf service to avoid an error message later if it already exists
   ; create the new npf service
-  ExecWait '"$INSTDIR\NPF6xInstall.exe" -i' $0
+  ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
   StrCmp $0 "0" register_win7_success register_win7_fail
 
   register_win7_fail:
@@ -368,7 +368,7 @@ Function registerServiceAPI_win7
 FunctionEnd
 
 Function un.registerServiceAPI_win7
-  ExecWait '"$INSTDIR\NPF6xInstall.exe" -u' $0
+  ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
   StrCmp $0 "0" unregister_win7_success unregister_win7_fail
   
   unregister_win7_fail:
@@ -380,7 +380,7 @@ Function un.registerServiceAPI_win7
 FunctionEnd
 
 Function autoStartWinPcap
-    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 2
+    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 1
     nsExec::Exec "net start npf"
 FunctionEnd
 
@@ -459,10 +459,10 @@ Section "WinPcap" SecWinPcap
       SetOutPath $INSTDIR
       File rpcapd.exe
       File LICENSE
-      File win7_above\x86\NPF6xInstall.exe
-      File win7_above\x86\npf6x.sys ; x86 NT6.1/NT6.2/NT6.3 version
-      File win7_above\x86\npf6x.inf
-      File win7_above\x86\npf6x.cat
+      File win7_above\x86\NPFInstall.exe
+      File win7_above\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
+      File win7_above\x86\npf.inf
+      File win7_above\x86\npf.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Win7 and Win8"
       SetOutPath $SYSDIR\drivers
@@ -508,10 +508,10 @@ Section "WinPcap" SecWinPcap
       SetOutPath $INSTDIR
       File rpcapd.exe
       File LICENSE
-      File win7_above\x64\NPF6xInstall.exe
-      File win7_above\x64\npf6x.sys ; x64 NT6.1 and above version
-      File win7_above\x64\npf6x.inf
-      File win7_above\x64\npf6x.cat
+      File win7_above\x64\NPFInstall.exe
+      File win7_above\x64\npf.sys ; x64 NT6.1 and above version
+      File win7_above\x64\npf.inf
+      File win7_above\x64\npf.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x64 driver for Win7 and Win8"
       SetOutPath $SYSDIR\drivers
@@ -547,7 +547,7 @@ Section "WinPcap" SecWinPcap
     registerdone:
 
     ; Create the default NPF startup setting of 3 (SERVICE_DEMAND_START)
-    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 3
+    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 1
 
     ; automatically start the service if performing a silent install, unless
     ; /NPFSTARTUP=NO was given.
@@ -623,10 +623,10 @@ Section "Uninstall"
 
   Delete $INSTDIR\rpcapd.exe
   Delete $INSTDIR\LICENSE
-  Delete $INSTDIR\NPF6xInstall.exe
-  Delete $INSTDIR\npf6x.sys
-  Delete $INSTDIR\npf6x.inf
-  Delete $INSTDIR\npf6x.cat
+  Delete $INSTDIR\NPFInstall.exe
+  Delete $INSTDIR\npf.sys
+  Delete $INSTDIR\npf.inf
+  Delete $INSTDIR\npf.cat
   Delete $INSTDIR\uninstall.exe
 
   ; This deletes the x86 files from SysWOW64 if we're on x64.
@@ -675,7 +675,7 @@ Section "Uninstall"
     ; disable Wow64FsRedirection
     System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
-    Delete $SYSDIR\drivers\npf6x.sys
+    Delete $SYSDIR\drivers\npf.sys
     ; Also delete the x64 files in System32
     Delete $SYSDIR\wpcap.dll
     Delete $SYSDIR\Packet.dll
@@ -686,7 +686,7 @@ Section "Uninstall"
 
 
   del32bitnpf_win7:
-    Delete $SYSDIR\drivers\npf6x.sys
+    Delete $SYSDIR\drivers\npf.sys
     Goto npfdeleted
 
 
