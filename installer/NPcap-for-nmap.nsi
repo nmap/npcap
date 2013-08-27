@@ -29,10 +29,10 @@ SetCompressor /SOLID /FINAL lzma
 ;General
 
 ; The name of the installer
-Name "WinPcap 4.1.3 for Nmap (NPcap)"
+Name "WinPcap 4.1.3 for Nmap (NPcap 1.2.0)"
 
 ; The file to write
-OutFile "winpcap-nmap-4.1.3-NDIS6-1.2.exe"
+OutFile "winpcap-nmap-4.1.3-NDIS6-1.2.0.exe"
 
 Var /GLOBAL os_ver
 
@@ -238,7 +238,7 @@ Function .onInit
     quit
 
   same_ver:
-    MessageBox MB_OK "Skipping WinPcap installation since version $inst_ver already exists on this system.  Uninstall that version first if you wish to force install."
+    MessageBox MB_OK "Skipping WinPcap installation since version $inst_ver already exists on this system.  Uninstall that version first if you wish to force install. If you cannot uninstall it in your Control Panel, go to your Program Files\WinPcap directory and execute uninstall.exe manually."
     quit
 
   try_uninstallers:
