@@ -2231,7 +2231,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\npf6x\npf6x\win_bpf_filter.c"
+				RelativePath="..\..\npf\npf\win_bpf_filter.c"
 				>
 			</File>
 		</Filter>

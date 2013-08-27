@@ -45,7 +45,7 @@
 
 #include "ProtInstall.h"
 #include "Packet32-Int.h"
-#include "../npf6x/npf6x/ioctls.h"
+#include "../npf/npf/ioctls.h"
 
 #ifdef HAVE_WANPACKET_API
 #include "wanpacket/wanpacket.h"
@@ -308,7 +308,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 		//
 		// XXX We want to replace this with a constant. We leave it out for the moment
 		// TODO fixme. Those hardcoded strings are terrible...
-		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_FILE_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
+		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
 		
 		break;
 		

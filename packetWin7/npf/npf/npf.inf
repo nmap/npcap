@@ -1,13 +1,13 @@
 ;-------------------------------------------------------------------------
-; NPF6X.INF -- NPF NDIS 6.x LightWeight Filter Driver
+; NPF.INF -- NPF NDIS 6.x LightWeight Filter Driver
 ;
-; Copyright (c) 2013, InSecure.Com, LLC.  All rights reserved.
+; Copyright (c) 2013, Insecure.Com LLC.  All rights reserved.
 ;------------------------------------------------------------------------
 [version]
 Signature       = "$Windows NT$"
 Class           = NetService
 ClassGUID       = {4D36E974-E325-11CE-BFC1-08002BE10318}
-CatalogFile     = npf6x.cat
+CatalogFile     = npf.cat
 Provider        = %Insecure%
 DriverVer=08/18/2013,0.31.43.389
 
@@ -16,13 +16,13 @@ DriverVer=08/18/2013,0.31.43.389
 %Insecure%=Insecure,NTx86,NTia64,NTamd64
 
 [Insecure.NTx86]
-%NPF6x_Desc%=Install, INSECURE_NPF6X
+%NPF_Desc%=Install, INSECURE_NPF
 
 [Insecure.NTia64]
-%NPF6x_Desc%=Install, INSECURE_NPF6X
+%NPF_Desc%=Install, INSECURE_NPF
 
 [Insecure.NTamd64]
-%NPF6x_Desc%=Install, INSECURE_NPF6X
+%NPF_Desc%=Install, INSECURE_NPF
 
 ;-------------------------------------------------------------------------
 ; Installation Section
@@ -30,30 +30,30 @@ DriverVer=08/18/2013,0.31.43.389
 [Install]
 AddReg=Inst_Ndi
 Characteristics=0x40000
-NetCfgInstanceId="{5cbf81bd-5055-47cd-9055-a76b2b4e2637}"
-Copyfiles = npf6x.copyfiles.sys
+NetCfgInstanceId="{7daf2ac8-e9f6-4765-a842-f1f5d2501339}"
+Copyfiles = npf.copyfiles.sys
 
 [SourceDisksNames]
-1=%NPF6x_Desc%,"",,
+1=%NPF_Desc%,"",,
 
 [SourceDisksFiles]
-npf6x.sys=1
+npf.sys=1
 
 [DestinationDirs]
 DefaultDestDir=12
-npf6x.copyfiles.sys=12
+npf.copyfiles.sys=12
 
-[npf6x.copyfiles.sys]
-npf6x.sys,,,2
+[npf.copyfiles.sys]
+npf.sys,,,2
 
 
 ;-------------------------------------------------------------------------
 ; Ndi installation support
 ;-------------------------------------------------------------------------
 [Inst_Ndi]
-HKR, Ndi,Service,,"npf6x"
-HKR, Ndi,CoServices,0x00010000,"npf6x"
-HKR, Ndi,HelpText,,%NPF6X_HelpText%
+HKR, Ndi,Service,,"npf"
+HKR, Ndi,CoServices,0x00010000,"npf"
+HKR, Ndi,HelpText,,%NPF_HelpText%
 HKR, Ndi,FilterClass,, compression
 
 
@@ -99,19 +99,22 @@ HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter
 ; Service installation support
 ;-------------------------------------------------------------------------
 [Install.Services]
-AddService=npf,,NPF6X_Service_Inst
+AddService=npf,,NPF_Service_Inst
 
-[NPF6X_Service_Inst]
-DisplayName     = %NPF6x_Desc%
+[NPF_Service_Inst]
+DisplayName     = %NPF_Desc%
 ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
-StartType       = 3 ;SERVICE_DEMAND_START
+StartType       = 1 ;SERVICE_SYSTEM_START
 ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
-ServiceBinary   = %12%\npf6x.sys
+ServiceBinary   = %12%\npf.sys
 LoadOrderGroup  = NDIS
-Description     = %NPF6x_Desc%
+Description     = %NPF_Desc%
+AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
 
 [Install.Remove.Services]
 DelService=npf,0x200 ; SPSVCINST_STOPSERVICE
+
+[Common.Params.reg]
 
 [NdisImPlatformBindingOptions.reg]
 ; By default, when an LBFO team or Bridge is created, all filters will be
@@ -126,6 +129,6 @@ DelService=npf,0x200 ; SPSVCINST_STOPSERVICE
 HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to default behavior
 
 [Strings]
-Insecure = "InSecure.Com, LLC."
-NPF6X_Desc = "WinPcap Lightweight Filter Driver (NPF)"
-NPF6X_HelpText = "A NDIS 6.x kernel driver to support packet capturing under Win7 & Win8"
+Insecure = "Nmap Project"
+NPF_Desc = "WinPcap Lightweight Filter Driver (NPF)"
+NPF_HelpText = "A NDIS 6 kernel filter driver to support packet capturing under Windows 7 & Windows 8"

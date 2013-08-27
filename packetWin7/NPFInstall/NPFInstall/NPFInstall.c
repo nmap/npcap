@@ -50,7 +50,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else
 		{
-			_tprintf(_T("Command Usage: NPF6xInstall -[i/u]: i - install, u - uninstall.\n"));
+			_tprintf(_T("Command Usage: NPFInstall -[i/u]: i - install, u - uninstall.\n"));
 			return -1;
 		}
 	}
@@ -62,7 +62,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	if (argc < 2)
 	{
-		_tprintf(_T("Command Usage: NPF6xInstall -[i/u]: i - install, u - uninstall.\n"));
+		_tprintf(_T("Command Usage: NPFInstall -[i/u]: i - install, u - uninstall.\n"));
 		return -1;
 	}
 	else //argc == 2
@@ -97,12 +97,12 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else if (_tcscmp(_T("-h"), argv[1]) == 0)
 		{
-			_tprintf(_T("Command Usage: NPF6xInstall -[i/u]: i - install, u - uninstall.\n"));
+			_tprintf(_T("Command Usage: NPFInstall -[i/u]: i - install, u - uninstall.\n"));
 			return -1;
 		}
 		else
 		{
-			_tprintf(_T("Invalid parameter, type in \"NPF6xInstall -h\" for help.\n"));
+			_tprintf(_T("Invalid parameter, type in \"NPFInstall -h\" for help.\n"));
 			return -1;
 		}
 	}
