@@ -5,8 +5,8 @@
 #endif
 #define WIN_NT_DRIVER
 
-#define NDIS620 1
-//#define NDIS60 1
+//#define NDIS620 1
+#define NDIS60 1
 
 // TODO: Specify which version of the NDIS contract you will use here.
 // In many cases, 6.0 is the best choice.  You only need to select a later
@@ -21,9 +21,9 @@
 // to pick up whatever version is defined by your build system
 // (for example, "-DNDIS630").
 
-#define NPF_ALLOC_TAG '1234'
-#define NPF_REQUEST_ID '5678'
-//#define NPF_NBL_TAG (PVOID) 0x31572455
+#define NPF6X_ALLOC_TAG '1234'
+#define NPF6X_REQUEST_ID '5678'
+//#define NPF6X_NBL_TAG (PVOID) 0x31572455
 
 //#pragma comment(lib, "ndis.lib")
 

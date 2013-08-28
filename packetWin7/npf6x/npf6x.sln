@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npf", "npf\npf.vcxproj", "{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npf6x", "npf6x\npf6x.vcxproj", "{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npf Package", "npf Package\npf Package.vcxproj", "{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npf6x Package", "npf6x Package\npf6x Package.vcxproj", "{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61} = {3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}
 	EndProjectSection

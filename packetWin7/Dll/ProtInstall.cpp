@@ -39,7 +39,7 @@
 //
 // End ---------------------------------------------------------------------
 
-#define APP_NAME	_T("NPF")
+#define APP_NAME	_T("NPF6X")
 
 BOOLEAN bVerbose = TRUE;
 

@@ -102,7 +102,7 @@ extern NDIS_SPIN_LOCK         FilterListLock;
 extern LIST_ENTRY          FilterModuleList;
 
 #define FILTER_ALLOC_MEM(_NdisHandle, _Size)     \
-	NdisAllocateMemoryWithTagPriority(_NdisHandle, _Size, NPF_ALLOC_TAG, LowPoolPriority)
+	NdisAllocateMemoryWithTagPriority(_NdisHandle, _Size, NPF6X_ALLOC_TAG, LowPoolPriority)
 #define FILTER_FREE_MEM(_pMem)    NdisFreeMemory(_pMem, 0, 0)
 
 //

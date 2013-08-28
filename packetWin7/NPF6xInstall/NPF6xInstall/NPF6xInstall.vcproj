@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="NPFInstall"
+	Name="NPF6xInstall"
 	ProjectGUID="{5D8A2717-4F35-4402-B868-45612D27291B}"
-	RootNamespace="NPFInstall"
+	RootNamespace="NPF6xInstall"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -346,7 +346,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NPFInstall.c"
+				RelativePath=".\NPF6xInstall.c"
 				>
 			</File>
 			<File

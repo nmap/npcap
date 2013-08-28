@@ -59,7 +59,7 @@
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
   </PropertyGroup>
   <PropertyGroup Label="Globals">
-    <RootNamespace>npf</RootNamespace>
+    <RootNamespace>npf6x</RootNamespace>
     <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VisualStudioVersion)' == '11.0'">$(VCTargetsPath11)</VCTargetsPath>
   </PropertyGroup>
   <PropertyGroup Label="PropertySheets">
@@ -175,7 +175,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Inf Include="npf.inf" />
+    <Inf Include="npf6x.inf" />
   </ItemGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" />
@@ -217,7 +217,7 @@
     <ClInclude Include="win_bpf_filter_init.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="npf.rc" />
+    <ResourceCompile Include="npf6x.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

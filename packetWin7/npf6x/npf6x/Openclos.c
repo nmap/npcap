@@ -495,7 +495,7 @@ NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu
 	}
 
 	//  submit the request
-	MaxSizeReq->Request.RequestId = (PVOID) NPF_REQUEST_ID;
+	MaxSizeReq->Request.RequestId = (PVOID) NPF6X_REQUEST_ID;
 	ReqStatus = NdisFOidRequest(pOpen->AdapterHandle, &MaxSizeReq->Request);
 
 	if (ReqStatus == NDIS_STATUS_PENDING)
@@ -1042,7 +1042,7 @@ POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex
 	PoolParameters.ProtocolId = NDIS_PROTOCOL_ID_DEFAULT;
 	PoolParameters.fAllocateNetBuffer = TRUE;
 	PoolParameters.ContextSize = 0;
-	PoolParameters.PoolTag = NPF_ALLOC_TAG;
+	PoolParameters.PoolTag = NPF6X_ALLOC_TAG;
 	PoolParameters.DataSize = 0;
 
 	Open->PacketPool = NdisAllocateNetBufferListPool(NULL, &PoolParameters);
@@ -1521,7 +1521,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 	{
 		Status = NdisAllocateCloneOidRequest(Open->AdapterHandle,
 											Request,
-											NPF_ALLOC_TAG,
+											NPF6X_ALLOC_TAG,
 											&ClonedRequest);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
@@ -2142,7 +2142,7 @@ Return Value:
 			break;
 	}
 
-	NdisRequest->RequestId = (PVOID)NPF_REQUEST_ID;
+	NdisRequest->RequestId = (PVOID)NPF6X_REQUEST_ID;
 
 	Status = NdisFOidRequest(Open->AdapterHandle,
 							NdisRequest);

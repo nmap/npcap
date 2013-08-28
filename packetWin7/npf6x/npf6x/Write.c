@@ -182,7 +182,7 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			//
 			//if (Open->SkipSentPackets)
 			//{
-			//	NPFSetNBLFlags(pNetBufferList, g_SendPacketFlags);
+			//	NPF6XSetNBLFlags(pNetBufferList, g_SendPacketFlags);
 			//}
 
 
@@ -224,7 +224,7 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			}
 
 			pNetBufferList->SourceHandle = Open->AdapterHandle;
-			NPFSetNBLChildOpen(pNetBufferList, Open);
+			NPF6XSetNBLChildOpen(pNetBufferList, Open);
 			//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 			NdisFSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
 
@@ -459,7 +459,7 @@ INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOO
 		// packets, i.e. of the packets sent by us.
 		//if (Open->SkipSentPackets)
 		//{
-		//	NPFSetNBLFlags(pNetBufferList, g_SendPacketFlags);
+		//	NPF6XSetNBLFlags(pNetBufferList, g_SendPacketFlags);
 		//}
 
 		// The packet has a buffer that needs to be freed after every single write
@@ -496,7 +496,7 @@ INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOO
 		}
 
 		pNetBufferList->SourceHandle = Open->AdapterHandle;
-		NPFSetNBLChildOpen(pNetBufferList, Open);
+		NPF6XSetNBLChildOpen(pNetBufferList, Open);
 		//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 		NdisFSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
 
@@ -639,7 +639,7 @@ Return Value:
 
 		if (pNetBufList->SourceHandle == Open->AdapterHandle)
 		{
-			ChildOpen = NPFGetNBLChildOpen(pNetBufList);
+			ChildOpen = NPF6XGetNBLChildOpen(pNetBufList);
 			FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
 
 			if (FreeBufAfterWrite)
@@ -694,7 +694,7 @@ Return Value:
 
 // 	if (NetBufferLists->SourceHandle != NULL && NetBufferLists->SourceHandle == Open->AdapterHandle)
 // 	{
-// 		ChildOpen = NPFGetNBLChildOpen(NetBufferLists);
+// 		ChildOpen = NPF6XGetNBLChildOpen(NetBufferLists);
 // 		FreeBufAfterWrite = RESERVED(NetBufferLists)->FreeBufAfterWrite;
 // 
 // 		if (FreeBufAfterWrite)
