@@ -31,872 +31,1622 @@
  *
  */
 
-/** @addtogroup NPF 
- *  @{
- */
-
-/** @defgroup NPF_include NPF structures and definitions 
- *  @{
- */
 #include "stdafx.h"
 
-#ifndef __PACKET_INCLUDE______
-#define __PACKET_INCLUDE______
+#include <ntddk.h>
+#include <ndis.h>
 
-// #if !defined(NDIS620)
-// #error NDIS620 should be defined
-// #endif
-
-#ifdef _X86_
-#define NTKERNEL	///< Forces the compilation of the jitter with kernel calls 
-#include "jitter.h"
-#endif
-
-#ifdef HAVE_BUGGY_TME_SUPPORT
-#ifndef _X86_
-#error TME support is available only on x86 architectures
-#endif // _X86_
-#endif //HAVE_BUGGY_TME_SUPPORT
-
-
-//
-// Needed to disable a warning due to the #pragma prefast directives,
-// that are ignored by the normal DDK compiler
-//
-#ifndef _PREFAST_
-#pragma warning(disable:4068)
-#endif
-
+#include "debug.h"
+#include "packet.h"
 #include "win_bpf.h"
+#include "ioctls.h"
 
-
-// #define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel)              \
-// 	{                                                           \
-// 	if (DispatchLevel)                                      \
-// 		{                                                       \
-// 		NdisDprAcquireSpinLock(_pLock);                     \
-// 		}                                                       \
-// 		else                                                    \
-// 		{                                                       \
-// 		NdisAcquireSpinLock(_pLock);                        \
-// 		}                                                       \
-// 	}
-// 
-// #define FILTER_RELEASE_LOCK(_pLock, DispatchLevel)              \
-// 	{                                                           \
-// 	if (DispatchLevel)                                      \
-// 		{                                                       \
-// 		NdisDprReleaseSpinLock(_pLock);                     \
-// 		}                                                       \
-// 		else                                                    \
-// 		{                                                       \
-// 		NdisReleaseSpinLock(_pLock);                        \
-// 		}                                                       \
-// 	}
-
-#define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel) NdisAcquireSpinLock(_pLock)
-#define FILTER_RELEASE_LOCK(_pLock, DispatchLevel) NdisReleaseSpinLock(_pLock)
-
-
-extern NDIS_SPIN_LOCK         FilterListLock;
-extern LIST_ENTRY          FilterModuleList;
-
-#define FILTER_ALLOC_MEM(_NdisHandle, _Size)     \
-	NdisAllocateMemoryWithTagPriority(_NdisHandle, _Size, NPF6X_ALLOC_TAG, LowPoolPriority)
-#define FILTER_FREE_MEM(_pMem)    NdisFreeMemory(_pMem, 0, 0)
-
-//
-// Define the filter struct
-//
-// typedef struct _MS_FILTER
-//  {
-// 	 LIST_ENTRY                     FilterModuleLink;
-// 	 //Reference to this filter
-// 	 ULONG                           RefCount;
-// 
-// 	 NDIS_HANDLE                     FilterHandle;
-// 
-// 	 NDIS_STATUS                     Status;
-// 	 NDIS_EVENT                      Event;
-// 	 ULONG                           BackFillSize;
-// 	 FILTER_LOCK                     Lock;    // Lock for protection of state and outstanding sends and recvs
-// 
-// 	 FILTER_STATE                    State;   // Which state the filter is in
-// 	 ULONG                           OutstandingSends;
-// 	 ULONG                           OutstandingRequest;
-// 	 ULONG                           OutstandingRcvs;
-// 	 FILTER_LOCK                     SendLock;
-// 	 FILTER_LOCK                     RcvLock;
-// 	 QUEUE_HEADER                    SendNBLQueue;
-// 	 QUEUE_HEADER                    RcvNBLQueue;
-// 
-// 
-// 	 NDIS_STRING                     FilterName;
-// 	 ULONG                           CallsRestart;
-// 	 BOOLEAN                         TrackReceives;
-// 	 BOOLEAN                         TrackSends;
-// 
-// 	 PNDIS_OID_REQUEST               PendingOidRequest;
-// 
-//  }MS_FILTER, * PMS_FILTER;
-
-typedef struct _FILTER_DEVICE_EXTENSION
-{
-	ULONG            Signature;
-	NDIS_HANDLE      Handle;
-} FILTER_DEVICE_EXTENSION, *PFILTER_DEVICE_EXTENSION;
-
-typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTEXT;
-
-//
-// Global variables
-//
-extern NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
-extern NDIS_HANDLE         FilterDriverObject;
-extern NDIS_HANDLE         NdisFilterDeviceHandle;
-extern PDEVICE_OBJECT      DeviceObject;
-
-extern NDIS_SPIN_LOCK         FilterListLock;
-extern LIST_ENTRY          FilterModuleList;
-
-//
-// function prototypes
-//
-DRIVER_INITIALIZE DriverEntry;
-
-FILTER_SET_OPTIONS NPF_RegisterOptions;
-
-FILTER_ATTACH NPF_Attach;
-
-FILTER_DETACH NPF_Detach;
-
-DRIVER_UNLOAD NPF_Unload;
-
-FILTER_RESTART NPF_Restart;
-
-FILTER_PAUSE NPF_Pause;
-
-FILTER_OID_REQUEST NPF_OidRequest;
-
-FILTER_CANCEL_OID_REQUEST NPF_CancelOidRequest;
-
-FILTER_OID_REQUEST_COMPLETE NPF_OidRequestComplete;
-
-FILTER_STATUS NPF_Status;
-
-FILTER_DEVICE_PNP_EVENT_NOTIFY NPF_DevicePnPEventNotify;
-
-FILTER_NET_PNP_EVENT NPF_NetPnPEvent;
-
-FILTER_SEND_NET_BUFFER_LISTS NPF_SendEx;
-
-FILTER_RETURN_NET_BUFFER_LISTS NPF_ReturnEx;
-
-FILTER_SEND_NET_BUFFER_LISTS_COMPLETE NPF_SendCompleteEx;
-
-FILTER_RECEIVE_NET_BUFFER_LISTS NPF_TapEx;
-
-FILTER_CANCEL_SEND_NET_BUFFER_LISTS NPF_CancelSendNetBufferLists;
-
-FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
-
-DRIVER_DISPATCH FilterDispatch;
-
-DRIVER_DISPATCH FilterDeviceIoControl;
-
-ULONG NPF_GetPacketFilter(NDIS_HANDLE FilterModuleContext);
-
-NDIS_STATUS
-	NPF_DoInternalRequest(
-	_In_ NDIS_HANDLE                 FilterModuleContext,
-	_In_ NDIS_REQUEST_TYPE            RequestType,
-	_In_ NDIS_OID                     Oid,
-	_Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed)
-	PVOID                        InformationBuffer,
-	_In_ ULONG                        InformationBufferLength,
-	_In_opt_ ULONG                    OutputBufferLength,
-	_In_ ULONG                        MethodId,
-	_Out_ PULONG                      pBytesProcessed
-	);
-
-VOID
-	NPF_InternalRequestComplete(
-	_In_ NDIS_HANDLE                  FilterModuleContext,
-	_In_ PNDIS_OID_REQUEST            NdisRequest,
-	_In_ NDIS_STATUS                  Status
-	);
-
-#define  MAX_REQUESTS   32 ///< Maximum number of simultaneous IOCTL requests.
-
-#define Packet_ALIGNMENT sizeof(int) ///< Alignment macro. Defines the alignment size.
-#define Packet_WORDALIGN(x) (((x)+(Packet_ALIGNMENT-1))&~(Packet_ALIGNMENT-1))	///< Alignment macro. Rounds up to the next 
-///< even multiple of Packet_ALIGNMENT. 
-
-
-// Working modes
-#define MODE_CAPT 0x0		///< Capture working mode
-#define MODE_STAT 0x1		///< Statistical working mode
-#define MODE_MON  0x2		///< Kernel monitoring mode
-#define MODE_DUMP 0x10		///< Kernel dump working mode
-
-
-#define IMMEDIATE 1			///< Immediate timeout. Forces a read call to return immediately.
-
-#define NDIS_FLAGS_SKIP_LOOPBACK_W2K	0x400 ///< This is an undocumented flag for NdisSetPacketFlags() that allows to disable loopback reception.
-
-// The following definitions are used to provide compatibility 
-// of the dump files with the ones of libpcap
-#define TCPDUMP_MAGIC 0xa1b2c3d4	///< Libpcap magic number. Used by programs like tcpdump to recognize a driver's generated dump file.
-#define PCAP_VERSION_MAJOR 2		///< Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
-#define PCAP_VERSION_MINOR 4		///< Minor libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
-
-// Loopback behaviour definitions
-#define NPF_DISABLE_LOOPBACK	1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
-#define NPF_ENABLE_LOOPBACK		2	///< Tells the driver to capture the packets sent by itself.
-
-/*!
-  \brief Header of a libpcap dump file.
-
-  Used when a driver instance is set in dump mode to create a libpcap-compatible file.
-*/
-struct packet_file_header
-{
-	UINT magic;				///< Libpcap magic number
-	USHORT version_major;	///< Libpcap major version
-	USHORT version_minor;	///< Libpcap minor version
-	UINT thiszone;			///< Gmt to local correction
-	UINT sigfigs;			///< Accuracy of timestamps
-	UINT snaplen;			///< Length of the max saved portion of each packet
-	UINT linktype;			///< Data link type (DLT_*). See win_bpf.h for details.
-};
-
-/*!
-  \brief Header associated to a packet in the driver's buffer when the driver is in dump mode.
-  Similar to the bpf_hdr structure, but simpler.
-*/
-struct sf_pkthdr
-{
-	struct timeval ts;			///< time stamp
-	UINT caplen;		///< Length of captured portion. The captured portion can be different from 
-	///< the original packet, because it is possible (with a proper filter) to 
-	///< instruct the driver to capture only a portion of the packets. 
-	UINT len;		///< Length of the original packet (off wire).
-};
-
-//
-// NT4 DDK doesn't have C_ASSERT
-//
-#ifndef C_ASSERT
-#define C_ASSERT(a)
-#endif
-
-/*!
-  \brief Structure containing an OID request.
-
-  It is used by the PacketRequest() function to send an OID to the interface card driver. 
-  It can be used, for example, to retrieve the status of the error counters on the adapter, its MAC address, 
-  the list of the multicast groups defined on it, and so on.
-*/
-typedef struct _PACKET_OID_DATA
-{
-	ULONG Oid;					///< OID code. See the Microsoft DDK documentation or the file ntddndis.h
-	///< for a complete list of valid codes.
-	ULONG Length;				///< Length of the data field
-	UCHAR Data[1];				///< variable-lenght field that contains the information passed to or received 
-	///< from the adapter.
-}
-PACKET_OID_DATA, * PPACKET_OID_DATA;
-
-C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
-
-/*!
-  \brief Stores an OID request.
-  
-  This structure is used by the driver to perform OID query or set operations on the underlying NIC driver. 
-  The OID operations be performed usually only by network drivers, but NPF exports this mechanism to user-level 
-  applications through an IOCTL interface. The driver uses this structure to wrap a NDIS_REQUEST structure.
-  This allows to handle correctly the callback structure of NdisRequest(), handling multiple requests and
-  maintaining information about the IRPs to complete.
-*/
-typedef struct _INTERNAL_REQUEST
-{
-	LIST_ENTRY ListElement;		///< Used to handle lists of requests.
-	//    PIRP			Irp;				///< Irp that performed the request
-	//	BOOLEAN			Internal;			///< True if the request is for internal use of npf.sys. False if the request is performed by the user through an IOCTL.
-	NDIS_EVENT InternalRequestCompletedEvent;
-	NDIS_OID_REQUEST Request;			///< The structure with the actual request, that will be passed to NdisRequest().
-	NDIS_STATUS RequestStatus;
-} INTERNAL_REQUEST, * PINTERNAL_REQUEST;
-
-/*!
-  \brief Contains a NDIS packet.
-  
-  The driver uses this structure to wrap a NDIS_PACKET  structure.
-  This allows to handle correctly the callback structure of NdisTransferData(), handling multiple requests and
-  maintaining information about the IRPs to complete.
-*/
-
-typedef struct _PACKET_RESERVED
-{
-	LIST_ENTRY ListElement;		///< Used to handle lists of packets. ((NO USE!!)
-	BOOLEAN FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
-	PVOID ChildOpen;	///< The child open pointer that binded the group head open.
-	PIRP Irp;					///< Irp that performed the request.
-	//PMDL pMdl;				///< MDL mapping the buffer of the packet. (NO USE!! also no space for this variable)
-	///< after a call to NdisSend().
-	//ULONG Cpu;				///< The CPU on which the packet was pulled out of the linked list of free packets (NO USE!! also no space for this variable)
-}  PACKET_RESERVED, * PPACKET_RESERVED;
-
-#define RESERVED(_p) ((PPACKET_RESERVED)((_p)->ProtocolReserved)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
-
-/*!
-  \brief Port device extension.
-  
-  Structure containing some data relative to every adapter on which NPF is bound.
-*/
-typedef struct _DEVICE_EXTENSION
-{
-	NDIS_STRING AdapterName;			///< Name of the adapter.
-	PWSTR ExportString;		///< Name of the exported device, i.e. name that the applications will use 
-	///< to open this adapter through WinPcap.
-} DEVICE_EXTENSION, * PDEVICE_EXTENSION;
-
-/*!
-  \brief Kernel buffer of each CPU.
-
-  Structure containing the kernel buffer (and other CPU related fields) used to capture packets.
-*/
-typedef struct __CPU_Private_Data
-{
-	ULONG P;					///< Zero-based index of the producer in the buffer. It indicates the first free byte to be written.
-	ULONG C;					///< Zero-based index of the consumer in the buffer. It indicates the first free byte to be read.
-	ULONG Free;				///< Number of the free bytes in the buffer
-	PUCHAR Buffer;				///< Pointer to the kernel buffer used to capture packets.
-	ULONG Accepted;			///< Number of packet that current capture instance acepted, from its opening. A packet 
-	///< is accepted if it passes the filter and fits in the buffer. Accepted packets are the
-	///< ones that reach the application. 
-	///< This number is related to the particular CPU this structure is referring to.
-	ULONG Received;			///< Number of packets received by current instance from its opening, i.e. number of 
-	///< packet received by the network adapter since the beginning of the 
-	///< capture/monitoring/dump session. 
-	///< This number is related to the particular CPU this structure is referring to.
-	ULONG Dropped;			///< Number of packet that current instance had to drop, from its opening. A packet 
-	///< is dropped if there is no more space to store it in the circular buffer that the 
-	///< driver associates to current instance. 
-	///< This number is related to the particular CPU this structure is referring to.
-	NDIS_SPIN_LOCK BufferLock;	///< It protects the buffer associated with this CPU.
-	PMDL TransferMdl1;		///< MDL used to map the portion of the buffer that will contain an incoming packet. 
-	PMDL TransferMdl2;		///< Second MDL used to map the portion of the buffer that will contain an incoming packet. 
-	ULONG NewP;				///< Used by NdisTransferData() (when we call NdisTransferData, p index must be updated only in the TransferDataComplete.
-}
-CpuPrivateData;
-
-
-/*!
-  \brief Contains the state of a running instance of the NPF driver.
-  
-  This is the most important structure of NPF: it is used by almost all the functions of the driver. An
-  _OPEN_INSTANCE structure is associated with every user-level session, allowing concurrent access
-  to the driver.
-*/
-typedef struct _OPEN_INSTANCE
-{
-	NDIS_STRING AdapterName;
-	BOOLEAN DirectBinded;
-	struct _OPEN_INSTANCE *Next;
-	struct _OPEN_INSTANCE *GroupNext;
-	struct _OPEN_INSTANCE *GroupHead;
-
-	ULONG MyPacketFilter;
-	ULONG HigherPacketFilter;
-
-	//LIST_ENTRY FilterModuleLink;
-	NDIS_SPIN_LOCK OIDLock;    // Lock for protection of state and outstanding sends and recvs
-	PNDIS_OID_REQUEST PendingOidRequest;
-
-	PDEVICE_EXTENSION DeviceExtension;	///< Pointer to the _DEVICE_EXTENSION structure of the device on which
-	///< the instance is bound.
-	NDIS_HANDLE AdapterHandle;		///< NDIS idetifier of the adapter used by this instance.
-	//NDIS_HANDLE BindContext;
-	UINT Medium;				///< Type of physical medium the underlying NDIS driver uses. See the
-	///< documentation of NdisOpenAdapter in the MS DDK for details.
-	NDIS_HANDLE PacketPool;			///< Pool of NDIS_PACKET structures used to transfer the packets from and to the NIC driver.
-	KSPIN_LOCK RequestSpinLock;	///< SpinLock used to synchronize the OID requests.
-	LIST_ENTRY RequestList;		///< List of pending OID requests.
-	LIST_ENTRY ResetIrpList;		///< List of pending adapter reset requests.
-	INTERNAL_REQUEST Requests[MAX_REQUESTS]; ///< Array of structures that wrap every single OID request.
-	PMDL BufferMdl;			///< Pointer to a Memory descriptor list (MDL) that maps the circular buffer's memory.
-	PKEVENT ReadEvent;			///< Pointer to the event on which the read calls on this instance must wait.
-	PUCHAR bpfprogram;			///< Pointer to the filtering pseudo-code associated with current instance of the driver.
-	///< This code is used only in particular situations (for example when the packet received
-	///< from the NIC driver is stored in two non-consecutive buffers. In normal situations
-	///< the filtering routine created by the JIT compiler and pointed by the next field 
-	///< is used. See \ref NPF for details on the filtering process.
-#ifdef _X86_
-	JIT_BPF_Filter* Filter;			///< Pointer to the native filtering function created by the jitter. 
-	///< See BPF_jitter() for details.
-#endif //_X86_
-	UINT MinToCopy;			///< Minimum amount of data in the circular buffer that unlocks a read. Set with the
-	///< BIOCSMINTOCOPY IOCTL. 
-	LARGE_INTEGER TimeOut;			///< Timeout after which a read is released, also if the amount of data in the buffer is 
-	///< less than MinToCopy. Set with the BIOCSRTIMEOUT IOCTL.
-
-	int mode;				///< Working mode of the driver. See PacketSetMode() for details.
-	LARGE_INTEGER Nbytes;				///< Amount of bytes accepted by the filter when this instance is in statistical mode.
-	LARGE_INTEGER Npackets;			///< Number of packets accepted by the filter when this instance is in statistical mode.
-	NDIS_SPIN_LOCK CountersLock;		///< SpinLock that protects the statistical mode counters.
-	UINT Nwrites;			///< Number of times a single write must be physically repeated. See \ref NPF for an 
-	///< explanation
-	ULONG Multiple_Write_Counter;	///< Counts the number of times a single write has already physically repeated.
-	NDIS_EVENT WriteEvent;			///< Event used to synchronize the multiple write process.
-	BOOLEAN WriteInProgress;	///< True if a write is currently in progress. NPF currently allows a single wite on 
-	///< the same open instance.
-	NDIS_SPIN_LOCK WriteLock;			///< SpinLock that protects the WriteInProgress variable.
-	NDIS_EVENT NdisRequestEvent;	///< Event used to synchronize I/O requests with the callback structure of NDIS.
-	BOOLEAN SkipSentPackets;	///< True if this instance should not capture back the packets that it transmits.
-	NDIS_STATUS IOStatus;			///< Maintains the status of and OID request call, that will be passed to the application.
-	HANDLE DumpFileHandle;		///< Handle of the file used in dump mode.
-	PFILE_OBJECT DumpFileObject;		///< Pointer to the object of the file used in dump mode.
-	PKTHREAD DumpThreadObject;	///< Pointer to the object of the thread used in dump mode.
-	HANDLE DumpThreadHandle;	///< Handle of the thread created by dump mode to asynchronously move the buffer to disk.
-	NDIS_EVENT DumpEvent;			///< Event used to synchronize the dump thread with the tap when the instance is in dump mode.
-	LARGE_INTEGER DumpOffset;			///< Current offset in the dump file.
-	UNICODE_STRING DumpFileName;		///< String containing the name of the dump file.
-	UINT MaxDumpBytes;		///< Maximum dimension in bytes of the dump file. If the dump file reaches this size it 
-	///< will be closed. A value of 0 means unlimited size.
-	UINT MaxDumpPacks;		///< Maximum number of packets that will be saved in the dump file. If this number of 
-	///< packets is reached the dump will be closed. A value of 0 means unlimited number of 
-	///< packets.
-	BOOLEAN DumpLimitReached;	///< TRUE if the maximum dimension of the dump file (MaxDumpBytes or MaxDumpPacks) is 
-	///< reached.
 #ifdef HAVE_BUGGY_TME_SUPPORT
-	MEM_TYPE mem_ex;				///< Memory used by the TME virtual co-processor
-	TME_CORE tme;				///< Data structure containing the virtualization of the TME co-processor
+#include "win_bpf_filter_init.h"
 #endif //HAVE_BUGGY_TME_SUPPORT
 
-	NDIS_SPIN_LOCK MachineLock;		///< SpinLock that protects the BPF filter and the TME engine, if in use.
-	UINT MaxFrameSize;		///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the 
-	///< size of the frames sent with NPF_Write() or NPF_BufferedWrite().
-	//
-	// KAFFINITY is used as a bit mask for the affinity in the system. So on every supported OS is big enough for all the CPUs on the system (32 bits on x86, 64 on x64?).
-	// We use its size to compute the max number of CPUs.
-	//
-	CpuPrivateData CpuData[sizeof(KAFFINITY) * 8];		///< Pool of kernel buffer structures, one for each CPU.
-	ULONG ReaderSN;			///< Sequence number of the next packet to be read from the pool of kernel buffers.
-	ULONG WriterSN;			///< Sequence number of the next packet to be written in the pool of kernel buffers.
-	///< These two sequence numbers are unique for each capture instance.
-	ULONG Size;				///< Size of each kernel buffer contained in the CpuData field.
-	ULONG AdapterHandleUsageCounter;
-	NDIS_SPIN_LOCK AdapterHandleLock;
-	ULONG AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.	
+#include "..\..\..\Common\WpcapNames.h"
 
-	NDIS_EVENT NdisOpenCloseCompleteEvent;
-	NDIS_EVENT NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
-	NTSTATUS OpenCloseStatus;
-	ULONG TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
-	ULONG NumPendingIrps;
-	BOOLEAN ClosePending; 
-	NDIS_SPIN_LOCK OpenInUseLock;
-}
-OPEN_INSTANCE, * POPEN_INSTANCE;
+#define __FILENUMBER    'PNPF'
 
-enum ADAPTER_BINDING_STATUS
-{
-	ADAPTER_UNBOUND,
-	ADAPTER_BOUND,
-	ADAPTER_UNBINDING,
-};
+#ifdef ALLOC_PRAGMA
+#pragma NDIS_INIT_FUNCTION(DriverEntry)
+#endif // ALLOC_PRAGMA
 
-/*!
-  \brief Structure prepended to each packet in the kernel buffer pool.
-  
-  Each packet in one of the kernel buffers is prepended by this header. It encapsulates the bpf_header, 
-  which will be passed to user level programs, as well as the sequence number of the packet, set by the producer (the tap function),
-  and used by the consumer (the read function) to "reorder" the packets contained in the various kernel buffers.
-*/
-struct PacketHeader
-{
-	ULONG SN;								///< Sequence number of the packet.
-	struct bpf_hdr header;					///< bpf header, created by the tap, and copied unmodified to user level programs.
-};
 
-extern ULONG g_NCpu;
-extern struct time_conv G_Start_Time; // from openclos.c
-extern UINT g_SendPacketFlags;
+#if DBG
+// Declare the global debug flag for this driver.
+ULONG PacketDebugFlag = PACKET_DEBUG_LOUD;
 
-#define TRANSMIT_PACKETS 256	///< Maximum number of packets in the transmit packet pool. This value is an upper bound to the number
-///< of packets that can be transmitted at the same time or with a single call to NdisSendPackets.
+#endif
 
+PDEVICE_EXTENSION GlobalDeviceExtension;
 
-/// Macro used in the I/O routines to return the control to user-mode with a success status.
-#define EXIT_SUCCESS(quantity) Irp->IoStatus.Information=quantity;\
-	Irp->IoStatus.Status = STATUS_SUCCESS;\
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);\
-	return STATUS_SUCCESS;\
+//
+// Global strings
+//
+WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
 
-/// Macro used in the I/O routines to return the control to user-mode with a failure status.
-#define EXIT_FAILURE(quantity) Irp->IoStatus.Information=quantity;\
-	Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;\
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);\
-	return STATUS_UNSUCCESSFUL;\
-
-/**
- *  @}
- */
-
-
-/***************************/
-/*  	 Prototypes 	   */
-/***************************/
-
-/** @defgroup NPF_code NPF functions 
- *  @{
- */
-
-
-/*!
-  \brief The initialization routine of the driver.
-  \param DriverObject The driver object of NPF created by the system.
-  \param RegistryPath The registry path containing the keys related to the driver.
-  \return A string containing a list of network adapters.
-
-  DriverEntry is a mandatory function in a device driver. Like the main() of a user level program, it is called
-  by the system when the driver is loaded in memory and started. Its purpose is to initialize the driver, 
-  performing all the allocations and the setup. In particular, DriverEntry registers all the driver's I/O
-  callbacks, creates the devices, defines NPF as a protocol inside NDIS.
-*/ 
-NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
-
-/*!
-  \brief Returns the list of the MACs available on the system.
-  \return A string containing a list of network adapters.
-
-  The list of adapters is retrieved from the 
-  SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318} registry key. 
-  NPF tries to create its bindings from this list. In this way it is possible to be loaded
-  and unloaded dynamically without passing from the control panel.
-*/
-PWCHAR getAdaptersList(VOID);
-
-/*!
-  \brief Returns the MACs that bind to TCP/IP.
-  \return Pointer to the registry key containing the list of adapters on which TCP/IP is bound.
-
-  If getAdaptersList() fails, NPF tries to obtain the TCP/IP bindings through this function.
-*/
-PKEY_VALUE_PARTIAL_INFORMATION getTcpBindings(VOID);
-
-/*!
-  \brief Creates a device for a given MAC.
-  \param adriverObjectP The driver object that will be associated with the device, i.e. the one of NPF.
-  \param amacNameP The name of the network interface that the device will point.
-  \return If the function succeeds, the return value is nonzero.
-
-  NPF creates a device for every valid network adapter. The new device points to the NPF driver, but contains
-  information about the original device. In this way, when the user opens the new device, NPF will be able to
-  determine the correct adapter to use.
-*/
-BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRING amacNameP);
-/*!
-  \brief Opens a new instance of the driver.
-  \param DeviceObject Pointer to the device object utilized by the user.
-  \param Irp Pointer to the IRP containing the user request.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  This function is called by the OS when a new instance of the driver is opened, i.e. when a user application 
-  performs a CreateFile on a device created by NPF. NPF_Open allocates and initializes variables, objects
-  and buffers needed by the new instance, fills the OPEN_INSTANCE structure associated with it and opens the 
-  adapter with a call to NdisOpenAdapter.
-*/
-NTSTATUS NPF_OpenAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
-
-/*!
-  \brief Closes an instance of the driver.
-  \param DeviceObject Pointer to the device object utilized by the user.
-  \param Irp Pointer to the IRP containing the user request.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  This function is called when a running instance of the driver is closed by the user with a CloseHandle(). 
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
-  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter. 
-*/
-NTSTATUS NPF_Cleanup(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
-
-NTSTATUS NPF_CleanupForUnclosed(POPEN_INSTANCE Open);
-
-NTSTATUS NPF_CloseAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
-
-NTSTATUS NPF_CloseAdapterForUnclosed(POPEN_INSTANCE pOpen);
-
-
-/*!
-  \brief Callback invoked by NDIS when a packet arrives from the network.
-  \param ProtocolBindingContext Context of the function. Points to a OPEN_INSTANCE structure that identifies 
-   the NPF instance to which the packets are destined.
-  \param MacReceiveContext Handle that identifies the underlying NIC driver that generated the request. 
-   This value must be used when the packet is transferred from the NIC driver with NdisTransferData().
-  \param HeaderBuffer Pointer to the buffer in the NIC driver memory that contains the header of the packet.
-  \param HeaderBufferSize Size in bytes of the header.
-  \param LookAheadBuffer Pointer to the buffer in the NIC driver's memory that contains the incoming packet's 
-   data <b>available to NPF</b>. This value does not necessarily coincide with the actual size of the packet,
-   since only a portion can be available at this time. The remaining portion can be obtained with the
-   NdisTransferData() NDIS function.
-  \param LookaheadBufferSize Size in bytes of the lookahead buffer.
-  \param PacketSize Total size of the incoming packet, excluded the header.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  NPF_tap() is called by the underlying NIC for every incoming packet. It is the most important and one of 
-  the most complex functions of NPF: it executes the filter, runs the statistical engine (if the instance is in 
-  statistical mode), gathers the timestamp, moves the packet in the buffer. NPF_tap() is the only function,
-  along with the filtering ones, that is executed for every incoming packet, therefore it is carefully 
-  optimized.
-*/
-
-VOID NPF_tapExForEachOpen(IN POPEN_INSTANCE Open, IN PNET_BUFFER_LIST pNetBufferLists);
-
-/*!
-  \brief Handles the IOCTL calls.
-  \param DeviceObject Pointer to the device object utilized by the user.
-  \param Irp Pointer to the IRP containing the user request.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  Once the packet capture driver is opened it can be configured from user-level applications with IOCTL commands
-  using the DeviceIoControl() system call. NPF_IoControl receives and serves all the IOCTL calls directed to NPF.
-  The following commands are recognized: 
-  - #BIOCSETBUFFERSIZE 
-  - #BIOCSETF 
-  - #BIOCGSTATS 
-  - #BIOCSRTIMEOUT
-  - #BIOCSMODE 
-  - #BIOCSWRITEREP 
-  - #BIOCSMINTOCOPY 
-  - #BIOCSETOID 
-  - #BIOCQUERYOID 
-  - #BIOCSETDUMPFILENAME
-  - #BIOCGEVNAME
-  -	#BIOCSENDPACKETSSYNC
-  -	#BIOCSENDPACKETSNOSYNC
-*/
-NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
-
-
-/*!
-  \brief Writes a raw packet to the network.
-  \param DeviceObject Pointer to the device object on which the user wrote the packet.
-  \param Irp Pointer to the IRP containing the user request.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  This function is called by the OS in consequence of user WriteFile() call, with the data of the packet that must
-  be sent on the net. The data is contained in the buffer associated with Irp, NPF_Write takes it and
-  delivers it to the NIC driver via the NdisSend() function. The Nwrites field of the OPEN_INSTANCE structure 
-  associated with Irp indicates the number of copies of the packet that will be sent: more than one copy of the
-  packet can be sent for performance reasons.
-*/
-NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
-
-
-/*!
-  \brief Writes a buffer of raw packets to the network.
-  \param Irp Pointer to the IRP containing the user request.
-  \param UserBuff Pointer to the buffer containing the packets to send.
-  \param UserBuffSize Size of the buffer with the packets.
-  \param sync If set to TRUE, the packets are transmitted respecting their timestamps.
-  \return The amount of bytes actually sent. If the return value is smaller than the Size parameter, an
-		  error occurred during the send. The error can be caused by an adapter problem or by an
-		  inconsistent/bogus user buffer.
-
-  This function is called by the OS in consequence of a BIOCSENDPACKETSNOSYNC or a BIOCSENDPACKETSSYNC IOCTL.
-  The buffer received as input parameter contains an arbitrary number of packets, each of which preceded by a
-  sf_pkthdr structure. NPF_BufferedWrite() scans the buffer and sends every packet via the NdisSend() function.
-  When Sync is set to TRUE, the packets are synchronized with the KeQueryPerformanceCounter() function.
-  This requires a remarkable amount of CPU, but allows to respect the timestamps associated with packets with a precision 
-  of some microseconds (depending on the precision of the performance counter of the machine).
-  If Sync is false, the timestamps are ignored and the packets are sent as fat as possible.
-*/
-
-INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOOLEAN sync);
-
-/*!
-  \brief Waits the completion of all the sends performed by NPF_BufferedWrite.
-
-  \param Open Pointer to open context structure
-
-  Used by NPF_BufferedWrite to wait the completion of all the sends before returning the control to the user.
-*/
-VOID NPF_WaitEndOfBufferedWrite(POPEN_INSTANCE Open);
-
-/*!
-*/
-
-VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterWrite);
-
-/*!
-  \brief Callback for NDIS StatusHandler. Not used by NPF
-*/
-VOID NPF_StatusEx(IN NDIS_HANDLE				ProtocolBindingContext, IN PNDIS_STATUS_INDICATION	StatusIndication);
-
-
-/*!
-  \brief Callback for NDIS StatusCompleteHandler. Not used by NPF
-*/
-VOID NPF_StatusComplete(IN NDIS_HANDLE  ProtocolBindingContext);
-
-
-/*!
-  \brief Function that serves the user's reads.
-  \param DeviceObject Pointer to the device used by the user.
-  \param Irp Pointer to the IRP containing the user request.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  This function is called by the OS in consequence of user ReadFile() call. It moves the data present in the
-  kernel buffer to the user buffer associated with Irp.
-  First of all, NPF_Read checks the amount of data in kernel buffer associated with current NPF instance. 
-  - If the instance is in capture mode and the buffer contains more than OPEN_INSTANCE::MinToCopy bytes,
-  NPF_Read moves the data in the user buffer and returns immediatly. In this way, the read performed by the
-  user is not blocking.
-  - If the buffer contains less than MinToCopy bytes, the application's request isn't 
-  satisfied immediately, but it's blocked until at least MinToCopy bytes arrive from the net 
-  or the timeout on this read expires. The timeout is kept in the OPEN_INSTANCE::TimeOut field.
-  - If the instance is in statistical mode or in dump mode, the application's request is blocked until the 
-  timeout kept in OPEN_INSTANCE::TimeOut expires.
-*/
-NTSTATUS NPF_Read(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
-
-
-void NPF_AddToOpenArray(POPEN_INSTANCE Open);
-
-/*!
-
-*/
-void NPF_AddToGroupOpenArray(POPEN_INSTANCE Open);
-
-/*!
-
-*/
-void NPF_RemoveFromOpenArray(POPEN_INSTANCE Open);
-
-/*!
-
-*/
-void NPF_RemoveFromGroupOpenArray(POPEN_INSTANCE Open);
-
-/*!
-
-*/
-int NPF_CompareAdapterName(PNDIS_STRING s1, PNDIS_STRING s2);
-
-/*!
-
-*/
-POPEN_INSTANCE NPF_GetCopyFromOpenArray(PNDIS_STRING pAdapterName, PDEVICE_EXTENSION DeviceExtension);
-
-void NPF_RemoveUnclosedAdapters();
-
-POPEN_INSTANCE NPF_DuplicateOpenObject(POPEN_INSTANCE OriginalOpen, PDEVICE_EXTENSION DeviceExtension);
-
-POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex, PDEVICE_EXTENSION DeviceExtension);
-
-/*!
-  \brief Creates the file that will receive the packets when the driver is in dump mode.
-  \param Open The NPF instance that opens the file.
-  \param fileName Pointer to a UNICODE string containing the name of the file.
-  \param append Boolean value that specifies if the data must be appended to the file.
-  \return The status of the operation. See ntstatus.h in the DDK.
-*/
-NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN append);
-
-/*!
-  \brief Starts dump to file.
-  \param Open The NPF instance that opens the file.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  This function performs two operations. First, it writes the libpcap header at the beginning of the file.
-  Second, it starts the thread that asynchronously dumps the network data to the file.
-*/
-NTSTATUS NPF_StartDump(POPEN_INSTANCE Open);
-
-/*!
-  \brief The dump thread.
-  \param Open The NPF instance that creates the thread.
-
-  This function moves the content of the NPF kernel buffer to file. It runs in the user context, so at lower 
-  priority than the TAP.
-*/
-VOID NPF_DumpThread(PVOID Open);
-
-/*!
-  \brief Saves the content of the packet buffer to the file associated with current instance.
-  \param Open The NPF instance that creates the thread.
-
-  Used by NPF_DumpThread() and NPF_CloseDumpFile().
-*/
-NTSTATUS NPF_SaveCurrentBuffer(POPEN_INSTANCE Open);
-
-/*!
-  \brief Writes a block of packets on the dump file.
-  \param FileObject The file object that will receive the packets.
-  \param Offset The offset in the file where the packets will be put.
-  \param Length The amount of bytes to write.
-  \param Mdl MDL mapping the memory buffer that will be written to disk.
-  \param IoStatusBlock Used by the function to return the status of the operation.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  NPF_WriteDumpFile addresses directly the file system, creating a custom IRP and using it to send a portion
-  of the NPF circular buffer to disk. This function is used by NPF_DumpThread().
-*/
-VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Length, PMDL Mdl, PIO_STATUS_BLOCK IoStatusBlock);
-
-
-
-/*!
-  \brief Closes the dump file associated with an instance of the driver.
-  \param Open The NPF instance that closes the file.
-  \return The status of the operation. See ntstatus.h in the DDK.
-*/
-NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
-
-BOOLEAN NPF_StartUsingBinding(IN POPEN_INSTANCE pOpen);
-
-VOID NPF_StopUsingBinding(IN POPEN_INSTANCE pOpen);
-
-VOID NPF_CloseBinding(IN POPEN_INSTANCE pOpen);
-
-VOID NPF_CloseBindingAndAdapter(IN POPEN_INSTANCE pOpen);
-
-BOOLEAN NPF_StartUsingOpenInstance(IN POPEN_INSTANCE pOpen);
-
-VOID NPF_StopUsingOpenInstance(IN POPEN_INSTANCE pOpen);
-
-VOID NPF_CloseOpenInstance(IN POPEN_INSTANCE pOpen);
-
-NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu);
-
-/*!
-  \brief Returns the amount of bytes present in the packet buffer.
-  \param Open The NPF instance that closes the file.
-*/
-UINT GetBuffOccupation(POPEN_INSTANCE Open);
+POPEN_INSTANCE g_arrOpen = NULL;
 
 //  
 //	Old registry based WinPcap names
 //
-///*!
-//  \brief Helper function to query a value from the global WinPcap registry key
-//*/
-//VOID NPF_QueryWinpcapRegistryString(PWSTR SubKeyName,
-//								 WCHAR *Value,
-//  							 UINT ValueLen, 
-//								 WCHAR *DefaultValue);
+//WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS];
+NDIS_STRING g_NPF_Prefix;
+NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
+NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
+NDIS_STRING tcpLinkageKeyName = NDIS_STRING_CONST("\\Registry\\Machine\\System"
+								L"\\CurrentControlSet\\Services\\Tcpip\\Linkage");
+NDIS_STRING AdapterListKey = NDIS_STRING_CONST("\\Registry\\Machine\\System"
+								L"\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}");
+NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
+
+/// Global variable that points to the names of the bound adapters
+WCHAR* bindP = NULL;
+
+ULONG g_NCpu;
+
+ULONG TimestampMode;
+UINT g_SendPacketFlags = 0;
+
+//static VOID NPF_ResetBufferContents(POPEN_INSTANCE Open);
+
 //
+// Global variables
+//
+NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
+NDIS_HANDLE         FilterDriverObject;
+NDIS_HANDLE         NdisFilterDeviceHandle = NULL;
+PDEVICE_OBJECT      DeviceObject = NULL;
 
-VOID NPF_ResetBufferContents(POPEN_INSTANCE Open);
+NDIS_SPIN_LOCK         FilterListLock;
+LIST_ENTRY          FilterModuleList;
 
-/**
- *  @}
- */
 
-/**
- *  @}
- */
+//
+//  Packet Driver's entry routine.
+//
+_Use_decl_annotations_
+NTSTATUS
+DriverEntry(
+	IN PDRIVER_OBJECT DriverObject,
+	IN PUNICODE_STRING RegistryPath
+	)
+{
+	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars;
+	NTSTATUS Status = STATUS_SUCCESS;
 
-#endif  /*main ifndef/define*/
+	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(L"WinPcap NDIS LightWeight Filter");
+	NDIS_STRING UniqueName   = RTL_CONSTANT_STRING(L"{7daf2ac8-e9f6-4765-a842-f1f5d2501339}"); //unique name, quid name
+	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(L"npf"); //this to match the service name in the INF
+	WCHAR* bindT;
+	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
+	UNICODE_STRING macName;
+	ULONG OsMajorVersion, OsMinorVersion;
+	UNREFERENCED_PARAMETER(RegistryPath);
+
+	TRACE_ENTER();
+	FilterDriverObject = DriverObject;
+	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
+
+	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
+	TRACE_MESSAGE2(PACKET_DEBUG_INIT, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
+
+	//
+	// Get number of CPUs and save it
+	//
+#ifdef NDIS620
+	g_NCpu = NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
+#else
+	g_NCpu = NdisSystemProcessorCount();
+#endif
+
+
+	//
+	// Register as a service with NDIS
+	//
+	NdisZeroMemory(&FChars, sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS));
+	FChars.Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
+	FChars.Header.Size = sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS);
+#if NDIS_SUPPORT_NDIS61
+	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_2;
+#else
+	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
+#endif
+
+	FChars.MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION;
+	FChars.MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
+	FChars.MajorDriverVersion = 1;
+	FChars.MinorDriverVersion = 0;
+	FChars.Flags = 0;
+
+	FChars.FriendlyName = FriendlyName;
+	FChars.UniqueName = UniqueName;
+	FChars.ServiceName = ServiceName;
+	
+	FChars.SetOptionsHandler = NPF_RegisterOptions;
+	FChars.AttachHandler = NPF_Attach;
+	FChars.DetachHandler = NPF_Detach;
+	FChars.RestartHandler = NPF_Restart;
+	FChars.PauseHandler = NPF_Pause;
+	FChars.SetFilterModuleOptionsHandler = NPF_SetModuleOptions;
+	FChars.OidRequestHandler = NPF_OidRequest;
+	FChars.OidRequestCompleteHandler = NPF_OidRequestComplete;
+	FChars.CancelOidRequestHandler = NPF_CancelOidRequest;
+
+	FChars.SendNetBufferListsHandler = NPF_SendEx;
+	FChars.ReturnNetBufferListsHandler = NPF_ReturnEx;
+	FChars.SendNetBufferListsCompleteHandler = NPF_SendCompleteEx;
+	FChars.ReceiveNetBufferListsHandler = NPF_TapEx;
+	FChars.DevicePnPEventNotifyHandler = NPF_DevicePnPEventNotify;
+	FChars.NetPnPEventHandler = NPF_NetPnPEvent;
+	FChars.StatusHandler = NPF_Status;
+	FChars.CancelSendNetBufferListsHandler = NPF_CancelSendNetBufferLists;
+
+	DriverObject->DriverUnload = NPF_Unload;
+
+	// 
+	// Standard device driver entry points stuff.
+	//
+	DriverObject->MajorFunction[IRP_MJ_CREATE] = NPF_OpenAdapter;
+	DriverObject->MajorFunction[IRP_MJ_CLOSE] = NPF_CloseAdapter;
+	DriverObject->MajorFunction[IRP_MJ_CLEANUP] = NPF_Cleanup; 
+	DriverObject->MajorFunction[IRP_MJ_READ] = NPF_Read;
+	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
+	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
+
+	bindP = getAdaptersList();
+
+	if (bindP == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_INIT, "Adapters not found in the registry, try to copy the bindings of TCP-IP.");
+
+		tcpBindingsP = getTcpBindings();
+
+		if (tcpBindingsP == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_INIT, "TCP-IP not found, quitting.");
+			goto RegistryError;
+		}
+
+		bindP = (WCHAR *)tcpBindingsP;
+		bindT = (WCHAR *)(tcpBindingsP->Data);
+	}
+	else
+	{
+		bindT = bindP;
+	}
+
+	for (; *bindT != UNICODE_NULL; bindT += (macName.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR))
+	{
+		RtlInitUnicodeString(&macName, bindT);
+		NPF_CreateDevice(DriverObject, &macName);
+	}
+	
+	Status = NdisFRegisterFilterDriver(DriverObject,
+		(NDIS_HANDLE) FilterDriverObject,
+		&FChars,
+		&FilterDriverHandle);
+	if (Status != NDIS_STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_INIT, "Failed to register filter with NDIS.");
+		TRACE_EXIT();
+		return Status;
+	}
+
+	TRACE_EXIT();
+	return STATUS_SUCCESS;
+
+RegistryError:
+
+	Status = STATUS_UNSUCCESSFUL;
+	TRACE_EXIT();
+	return(Status);
+}
+
+//-------------------------------------------------------------------
+
+PWCHAR getAdaptersList(void)
+{
+	PKEY_VALUE_PARTIAL_INFORMATION result = NULL;
+	OBJECT_ATTRIBUTES objAttrs;
+	NTSTATUS status;
+	HANDLE keyHandle;
+	UINT BufPos = 0;
+	UINT BufLen = 4096;
+/*	UNICODE_STRING adapterName;*/
+
+	PWCHAR DeviceNames = (PWCHAR)ExAllocatePoolWithTag(PagedPool, BufLen, '0PWA');
+
+	TRACE_ENTER();
+
+	if (DeviceNames == NULL)
+	{
+		IF_LOUD(DbgPrint("Unable the allocate the buffer for the list of the network adapters\n");)
+		TRACE_EXIT();
+		return NULL;
+	}
+
+	InitializeObjectAttributes(&objAttrs, &AdapterListKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
+	if (!NT_SUCCESS(status))
+	{
+		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, tcpLinkageKeyName.Buffer);)
+	}
+	else
+	{
+		//OK
+
+		ULONG resultLength;
+		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
+		CHAR AdapInfo[1024];
+		UINT i = 0;
+
+		IF_LOUD (DbgPrint("getAdaptersList: scanning the list of the adapters in the registry, DeviceNames=%p\n", DeviceNames);)
+
+		// Scan the list of the devices
+		while((status = ZwEnumerateKey(keyHandle, i, KeyBasicInformation, AdapInfo, sizeof(AdapInfo), &resultLength)) == STATUS_SUCCESS)
+		{
+			WCHAR ExportKeyName[512];
+			PWCHAR ExportKeyPrefix = L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\";
+			UINT ExportKeyPrefixSize = sizeof(L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}");
+			PWCHAR LinkageKeyPrefix = L"\\Linkage";
+			UINT LinkageKeyPrefixSize = sizeof(L"\\Linkage");
+			NDIS_STRING FinalExportKey = NDIS_STRING_CONST("Export");
+			PKEY_BASIC_INFORMATION tInfo = (PKEY_BASIC_INFORMATION)AdapInfo;
+			UNICODE_STRING AdapterKeyName;
+			HANDLE ExportKeyHandle;
+
+			RtlCopyMemory(ExportKeyName, ExportKeyPrefix, ExportKeyPrefixSize);
+
+			RtlCopyMemory((PCHAR)ExportKeyName + ExportKeyPrefixSize, tInfo->Name, tInfo->NameLength + 2);
+
+			RtlCopyMemory((PCHAR)ExportKeyName + ExportKeyPrefixSize + tInfo->NameLength, LinkageKeyPrefix, LinkageKeyPrefixSize);
+
+			IF_LOUD(DbgPrint("Key name=%ws\n", ExportKeyName);)
+
+			RtlInitUnicodeString(&AdapterKeyName, ExportKeyName);
+
+			InitializeObjectAttributes(&objAttrs, &AdapterKeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+			status = ZwOpenKey(&ExportKeyHandle, KEY_READ, &objAttrs);
+
+			if (!NT_SUCCESS(status))
+			{
+				IF_LOUD(DbgPrint("OpenKey Failed, %d!\n", status);)
+				i++;
+				continue;
+			}
+
+			status = ZwQueryValueKey(ExportKeyHandle, &FinalExportKey, KeyValuePartialInformation, &valueInfo, sizeof(valueInfo), &resultLength);
+
+			if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
+			{
+				IF_LOUD(DbgPrint("\n\nStatus of %x querying key value for size\n", status);)
+			}
+			else
+			{
+				// We know how big it needs to be.
+				ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
+				PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '1PWA');
+				if (valueInfoP != NULL)
+				{
+					status = ZwQueryValueKey(ExportKeyHandle, &FinalExportKey, KeyValuePartialInformation, valueInfoP, valueInfoLength, &resultLength);
+// 					adapterName.Buffer = (PWCH) valueInfoP->Data;
+// 					adapterName.Length = adapterName.MaximumLength = (USHORT) wcslen((PWCHAR) valueInfoP->Data);
+					if (!NT_SUCCESS(status))
+					{
+						IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
+					}
+					else
+					{
+						IF_LOUD(DbgPrint("Device %d = %ws\n", i, valueInfoP->Data);)
+						if(BufPos + valueInfoP->DataLength > BufLen)
+						{
+							// double the buffer size
+							PWCHAR DeviceNames2 = (PWCHAR)ExAllocatePoolWithTag(PagedPool, BufLen << 1, '0PWA');
+							if (DeviceNames2)
+							{
+								RtlCopyMemory((PCHAR)DeviceNames2, (PCHAR)DeviceNames, BufLen);
+								BufLen <<= 1;
+								ExFreePool(DeviceNames);
+								DeviceNames = DeviceNames2;
+							}
+						} 
+						if (BufPos + valueInfoP->DataLength < BufLen)
+						{
+							RtlCopyMemory((PCHAR)DeviceNames + BufPos, valueInfoP->Data, valueInfoP->DataLength);
+							BufPos += valueInfoP->DataLength - 2;
+						}
+					}
+
+					ExFreePool(valueInfoP);
+				}
+				else
+				{
+					IF_LOUD(DbgPrint("Error Allocating the buffer for the device name\n");)
+				}
+			}
+
+			// terminate the buffer
+			DeviceNames[BufPos / 2] = 0;
+			DeviceNames[BufPos / 2 + 1] = 0;
+
+			ZwClose(ExportKeyHandle);
+			i++;
+		}
+
+		ZwClose(keyHandle);
+	}
+	if (BufPos == 0)
+	{
+		ExFreePool(DeviceNames);
+		TRACE_EXIT();
+		return NULL;
+	}
+	TRACE_EXIT();
+	return DeviceNames;
+}
+
+//-------------------------------------------------------------------
+
+PKEY_VALUE_PARTIAL_INFORMATION getTcpBindings(void)
+{
+	PKEY_VALUE_PARTIAL_INFORMATION result = NULL;
+	OBJECT_ATTRIBUTES objAttrs;
+	NTSTATUS status;
+	HANDLE keyHandle;
+
+	InitializeObjectAttributes(&objAttrs, &tcpLinkageKeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
+	if (!NT_SUCCESS(status))
+	{
+		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, tcpLinkageKeyName.Buffer);)
+	}
+	else
+	{
+		ULONG resultLength;
+		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
+
+		IF_LOUD(DbgPrint("\n\nOpened %ws\n", tcpLinkageKeyName.Buffer);)
+
+		status = ZwQueryValueKey(keyHandle, &bindValueName, KeyValuePartialInformation, &valueInfo, sizeof(valueInfo), &resultLength);
+		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
+		{
+			IF_LOUD(DbgPrint("\n\nStatus of %x querying key value for size\n", status);)
+		}
+		else
+		{
+			// We know how big it needs to be.
+			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
+			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '2PWA');
+
+			if (valueInfoP != NULL)
+			{
+				status = ZwQueryValueKey(keyHandle, &bindValueName, KeyValuePartialInformation, valueInfoP, valueInfoLength, &resultLength);
+
+				if (!NT_SUCCESS(status))
+				{
+					IF_LOUD(DbgPrint("\n\nStatus of %x querying key value\n", status);)
+					ExFreePool(valueInfoP);
+				}
+				else
+				{
+					if (valueInfoLength != resultLength)
+					{
+						IF_LOUD(DbgPrint("\n\nQuerying key value result len = %u "
+						  "but previous len = %u\n", resultLength, valueInfoLength);)
+						ExFreePool(valueInfoP);
+					}
+					else
+					{
+						if (valueInfoP->Type != REG_MULTI_SZ)
+						{
+							IF_LOUD(DbgPrint("\n\nTcpip bind value not REG_MULTI_SZ but %u\n", valueInfoP->Type);)
+							ExFreePool(valueInfoP);
+						}
+						else
+						{
+							// It's OK
+#if DBG
+							ULONG i;
+							WCHAR* dataP = (WCHAR*)(&valueInfoP->Data[0]);
+							IF_LOUD (DbgPrint("\n\nBind value:\n");)for(i = 0; *dataP != UNICODE_NULL; i++)
+							{
+								UNICODE_STRING macName;
+								RtlInitUnicodeString(&macName, dataP);
+								IF_LOUD(DbgPrint("\n\nMac %u = %ws\n", i, macName.Buffer);)
+								dataP += (macName.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR);
+							}
+#endif // DBG
+							result = valueInfoP;
+						}
+					}
+				}
+			}
+		}
+		ZwClose(keyHandle);
+	}
+	return result;
+}
+
+//-------------------------------------------------------------------
+
+BOOLEAN NPF_CreateDevice(IN OUT PDRIVER_OBJECT adriverObjectP, IN PUNICODE_STRING amacNameP)
+{
+	NTSTATUS status;
+	PDEVICE_OBJECT devObjP;
+	UNICODE_STRING deviceName;
+	UNICODE_STRING deviceSymLink;
+
+	TRACE_ENTER();
+
+	IF_LOUD(DbgPrint("\n\ncreateDevice for MAC %ws\n", amacNameP->Buffer););
+	if (RtlCompareMemory(amacNameP->Buffer, devicePrefix.Buffer, devicePrefix.Length) < devicePrefix.Length)
+	{
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	deviceName.Length = 0;
+	deviceName.MaximumLength = (USHORT)(amacNameP->Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
+	deviceName.Buffer = ExAllocatePoolWithTag(PagedPool, deviceName.MaximumLength, '3PWA');
+
+	if (deviceName.Buffer == NULL)
+	{
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	deviceSymLink.Length = 0;
+	deviceSymLink.MaximumLength = (USHORT)(amacNameP->Length - devicePrefix.Length + symbolicLinkPrefix.Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
+
+	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, '3PWA');
+
+	if (deviceSymLink.Buffer == NULL)
+	{
+		ExFreePool(deviceName.Buffer);
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	RtlAppendUnicodeStringToString(&deviceName, &devicePrefix);
+	RtlAppendUnicodeStringToString(&deviceName, &g_NPF_Prefix);
+	RtlAppendUnicodeToString(&deviceName, amacNameP->Buffer + devicePrefix.Length / sizeof(WCHAR));
+
+	RtlAppendUnicodeStringToString(&deviceSymLink, &symbolicLinkPrefix);
+	RtlAppendUnicodeStringToString(&deviceSymLink, &g_NPF_Prefix);
+	RtlAppendUnicodeToString(&deviceSymLink, amacNameP->Buffer + devicePrefix.Length / sizeof(WCHAR));
+
+	IF_LOUD(DbgPrint("Creating device name: %ws\n", deviceName.Buffer);)
+
+	status = IoCreateDevice(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
+		FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
+
+	if (NT_SUCCESS(status))
+	{
+		PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
+
+		IF_LOUD(DbgPrint("Device created successfully\n"););
+
+		devObjP->Flags |= DO_DIRECT_IO;
+		RtlInitUnicodeString(&devExtP->AdapterName, amacNameP->Buffer);   
+
+		IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
+
+		if (IoCreateSymbolicLink(&deviceSymLink, &deviceName) != STATUS_SUCCESS)
+		{
+			IF_LOUD(DbgPrint("\n\nError creating SymLink %ws\nn", deviceSymLink.Buffer););
+
+			ExFreePool(deviceName.Buffer);
+			ExFreePool(deviceSymLink.Buffer);
+
+			devExtP->ExportString = NULL;
+
+			TRACE_EXIT();
+			return FALSE;
+		}
+
+		IF_LOUD(DbgPrint("SymLink %ws successfully created.\n\n", deviceSymLink.Buffer););
+
+		devExtP->ExportString = deviceSymLink.Buffer;
+
+		ExFreePool(deviceName.Buffer);
+
+		TRACE_EXIT();
+		return TRUE;
+	}
+	else
+	{
+		IF_LOUD(DbgPrint("\n\nIoCreateDevice status = %x\n", status););
+
+		ExFreePool(deviceName.Buffer);
+		ExFreePool(deviceSymLink.Buffer);
+
+		TRACE_EXIT();
+		return FALSE;
+	}
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_Unload(
+	PDRIVER_OBJECT      DriverObject
+	)
+/*++
+
+Routine Description:
+
+Filter driver's unload routine.
+	Deregister the driver from NDIS.
+
+Arguments:
+
+	DriverObject - pointer to the system's driver object structure
+				   for this driver
+
+Return Value:
+
+	NONE
+
+--*/
+{
+	PDEVICE_OBJECT DeviceObject;
+	PDEVICE_OBJECT OldDeviceObject;
+	PDEVICE_EXTENSION DeviceExtension;
+	NDIS_STATUS Status;
+	NDIS_STRING SymLink;
+
+	TRACE_ENTER();
+
+	DeviceObject = DriverObject->DeviceObject;
+
+	while (DeviceObject != NULL)
+	{
+		OldDeviceObject = DeviceObject;
+
+		DeviceObject = DeviceObject->NextDevice;
+
+		DeviceExtension = OldDeviceObject->DeviceExtension;
+
+		TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "Deleting Adapter %ws, Protocol Handle=%p, Device Obj=%p (%p)", DeviceExtension->AdapterName.Buffer, FilterDriverHandle, DeviceObject, OldDeviceObject);
+
+		if (DeviceExtension->ExportString)
+		{
+			RtlInitUnicodeString(&SymLink, DeviceExtension->ExportString);
+
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting SymLink at %p", SymLink.Buffer);
+
+			IoDeleteSymbolicLink(&SymLink);
+			ExFreePool(DeviceExtension->ExportString);
+		}
+
+		IoDeleteDevice(OldDeviceObject);
+	}
+
+	NdisFDeregisterFilterDriver(FilterDriverHandle);
+
+	// Free the adapters names
+	ExFreePool(bindP);
+	//NdisFreeSpinLock(&FilterListLock);
+
+	TRACE_EXIT();
+}
+
+#define SET_FAILURE_BUFFER_SMALL() do{\
+	Information = 0; \
+	Status = STATUS_BUFFER_TOO_SMALL; \
+} while(FALSE)
+
+#define SET_RESULT_SUCCESS(__a__) do{\
+	Information = __a__;	\
+	Status = STATUS_SUCCESS;	\
+} while(FALSE)
+
+#define SET_FAILURE_INVALID_REQUEST() do{\
+	Information = 0; \
+	Status = STATUS_INVALID_DEVICE_REQUEST; \
+} while(FALSE)
+
+#define SET_FAILURE_UNSUCCESSFUL()  do{\
+	Information = 0; \
+	Status = STATUS_UNSUCCESSFUL; \
+} while(FALSE)
+
+#define SET_FAILURE_NOMEM()  do{\
+	Information = 0; \
+	Status = STATUS_INSUFFICIENT_RESOURCES; \
+} while(FALSE)
+
+//-------------------------------------------------------------------
+
+NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
+{
+	POPEN_INSTANCE Open;
+	PIO_STACK_LOCATION IrpSp;
+	PLIST_ENTRY RequestListEntry;
+	PINTERNAL_REQUEST pRequest;
+	ULONG FunctionCode;
+	NDIS_STATUS Status;
+	ULONG Information = 0;
+	PLIST_ENTRY PacketListEntry;
+	UINT i;
+	PUCHAR tpointer = NULL; //akisn0w: to surpress error C4703: potentially uninitialized local pointer variable
+	ULONG dim, timeout;
+	struct bpf_insn* NewBpfProgram;
+	PPACKET_OID_DATA OidData;
+	int* StatsBuf;
+	//PNDIS_PACKET  	  pPacket;
+	ULONG mode;
+	PWSTR DumpNameBuff;
+	PUCHAR TmpBPFProgram;
+	INT WriteRes;
+	BOOLEAN SyncWrite = FALSE;
+	struct bpf_insn* initprogram;
+	ULONG insns;
+	ULONG cnt;
+	BOOLEAN IsExtendedFilter = FALSE;
+	ULONG StringLength;
+	ULONG NeededBytes;
+	BOOLEAN Flag;
+	PUINT pStats;
+	ULONG StatsLength;
+	ULONG combinedPacketFilter;
+
+	HANDLE hUserEvent;
+	PKEVENT pKernelEvent;
+#ifdef _AMD64_
+	VOID* POINTER_32 hUserEvent32Bit;
+#endif //_AMD64_
+	PMDL mdl;
+
+	TRACE_ENTER();
+
+	IrpSp = IoGetCurrentIrpStackLocation(Irp);
+	FunctionCode = IrpSp->Parameters.DeviceIoControl.IoControlCode;
+	Open = IrpSp->FileObject->FsContext;
+
+	if (NPF_StartUsingOpenInstance(Open) == FALSE)
+	{
+		// 
+		// an IRP_MJ_CLEANUP was received, just fail the request
+		//
+		Irp->IoStatus.Information = 0;
+		Irp->IoStatus.Status = STATUS_CANCELLED;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return STATUS_CANCELLED;
+	}
+
+	Irp->IoStatus.Status = STATUS_SUCCESS;
+
+	TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "Function code is %08lx Input size=%08lx Output size %08lx", FunctionCode, IrpSp->Parameters.DeviceIoControl.InputBufferLength, IrpSp->Parameters.DeviceIoControl.OutputBufferLength);
+
+	switch (FunctionCode)
+	{
+	case BIOCGSTATS:
+		//function to get the capture stats
+
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCGSTATS");
+
+		StatsLength = 4 * sizeof(UINT);
+		if (IrpSp->Parameters.DeviceIoControl.OutputBufferLength < StatsLength)
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		if (Irp->UserBuffer == NULL)
+		{
+			SET_FAILURE_UNSUCCESSFUL();
+			break;
+		}
+
+		//
+		// temp fix to a GIANT bug from LD. The CTL code has been defined as METHOD_NEITHER, so it
+		// might well be a dangling pointer. We need to probe and lock the address.
+		//
+
+		mdl = NULL;
+		pStats = NULL;
+
+		__try
+		{
+			mdl = IoAllocateMdl(Irp->UserBuffer, StatsLength, FALSE, TRUE, NULL);
+
+			if (mdl == NULL)
+			{
+				SET_FAILURE_UNSUCCESSFUL();
+				break;
+			}
+
+			MmProbeAndLockPages(mdl, UserMode, IoWriteAccess);
+
+			pStats = (PUINT)(Irp->UserBuffer);
+		}
+		__except(GetExceptionCode() == STATUS_ACCESS_VIOLATION)
+		{
+			pStats = NULL;
+		}
+
+		if (pStats == NULL)
+		{
+			if (mdl != NULL)
+			{
+				IoFreeMdl(mdl);
+			}
+
+			SET_FAILURE_UNSUCCESSFUL();
+			break;
+		}
+
+		pStats[3] = 0;
+		pStats[0] = 0;
+		pStats[1] = 0;
+		pStats[2] = 0;		// Not yet supported
+
+		for (i = 0 ; i < g_NCpu ; i++)
+		{
+			pStats[3] += Open->CpuData[i].Accepted;
+			pStats[0] += Open->CpuData[i].Received;
+			pStats[1] += Open->CpuData[i].Dropped;
+			pStats[2] += 0;		// Not yet supported
+		}
+
+		MmUnlockPages(mdl);
+		IoFreeMdl(mdl);
+
+		SET_RESULT_SUCCESS(StatsLength);
+
+		break;
+
+	case BIOCGEVNAME:
+		//function to get the name of the event associated with the current instance
+
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCGEVNAME");
+
+		//
+		// Since 20060405, the event handling has been changed:
+		// we no longer use named events, instead the user level app creates an event,
+		// and passes it back to the kernel, that references it (ObReferenceObjectByHandle), and
+		// signals it.
+		// For the time being, we still leave this ioctl code here, and we simply fail.
+		//
+		SET_FAILURE_INVALID_REQUEST();
+		break;
+
+	case BIOCSENDPACKETSSYNC:
+		SyncWrite = TRUE;
+
+	case BIOCSENDPACKETSNOSYNC:
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSENDPACKETSNOSYNC");
+
+		NdisAcquireSpinLock(&Open->WriteLock);
+		if (Open->WriteInProgress)
+		{
+			NdisReleaseSpinLock(&Open->WriteLock);
+			//
+			// Another write operation is currently in progress
+			//
+			SET_FAILURE_UNSUCCESSFUL();
+			break;
+		}
+		else
+		{
+			Open->WriteInProgress = TRUE;
+		}
+		NdisReleaseSpinLock(&Open->WriteLock);
+
+		WriteRes = NPF_BufferedWrite(Irp, (PUCHAR)Irp->AssociatedIrp.SystemBuffer, IrpSp->Parameters.DeviceIoControl.InputBufferLength, SyncWrite);
+
+		NdisAcquireSpinLock(&Open->WriteLock);
+		Open->WriteInProgress = FALSE;
+		NdisReleaseSpinLock(&Open->WriteLock);
+
+		if (WriteRes != -1)
+		{
+			SET_RESULT_SUCCESS(WriteRes);
+		}
+		else
+		{
+			SET_FAILURE_UNSUCCESSFUL();
+		}
+		break;
+
+	case BIOCSETF:
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETF");
+		//
+		// Get the pointer to the new program
+		//
+		NewBpfProgram = (struct bpf_insn *)Irp->AssociatedIrp.SystemBuffer;
+
+		if (NewBpfProgram == NULL)
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		//
+		// Lock the machine. After this call we are at DISPATCH level
+		//
+		NdisAcquireSpinLock(&Open->MachineLock);
+
+		do
+		{
+			// Free the previous buffer if it was present
+			if (Open->bpfprogram != NULL)
+			{
+				TmpBPFProgram = Open->bpfprogram;
+				Open->bpfprogram = NULL;
+				ExFreePool(TmpBPFProgram);
+			}
+
+			//
+			// Jitted filters are supported on x86 (32bit) only
+			// 
+#ifdef _X86_
+			if (Open->Filter != NULL)
+			{
+				BPF_Destroy_JIT_Filter(Open->Filter);
+				Open->Filter = NULL;
+			}
+#endif // _X86_
+
+			insns = (IrpSp->Parameters.DeviceIoControl.InputBufferLength) / sizeof(struct bpf_insn);
+
+			//count the number of operative instructions
+			for (cnt = 0 ; (cnt < insns) && (NewBpfProgram[cnt].code != BPF_SEPARATION); cnt++)
+				;
+
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Operative instructions=%u", cnt);
+
+#ifdef HAVE_BUGGY_TME_SUPPORT
+			if ((cnt != insns) && (insns != cnt + 1) && (NewBpfProgram[cnt].code == BPF_SEPARATION))
+			{
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Initialization instructions = %u", insns - cnt - 1);
+
+				IsExtendedFilter = TRUE;
+
+				initprogram = &NewBpfProgram[cnt + 1];
+
+				if (bpf_filter_init(initprogram, &(Open->mem_ex), &(Open->tme), &G_Start_Time) != INIT_OK)
+				{
+					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error initializing NPF machine (bpf_filter_init)");
+
+					SET_FAILURE_INVALID_REQUEST();
+					break;
+				}
+			}
+#else  // HAVE_BUGGY_TME_SUPPORT
+			if (cnt != insns)
+			{
+				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error installing the BPF filter. The filter contains TME extensions,"
+					" not supported on 64bit platforms.");
+
+				SET_FAILURE_INVALID_REQUEST();
+				break;
+			}
+#endif // HAVE_BUGGY_TME_SUPPORT
+
+			//the NPF processor has been initialized, we have to validate the operative instructions
+			insns = cnt;
+
+			//NOTE: the validation code checks for TME instructions, and fails if a TME instruction is
+			//encountered on 64 bit machines
+#ifdef HAVE_BUGGY_TME_SUPPORT
+			if (bpf_validate(NewBpfProgram, cnt, Open->mem_ex.size) == 0)
+						#else //HAVE_BUGGY_TME_SUPPORT
+				if (bpf_validate(NewBpfProgram, cnt) == 0)
+								#endif //HAVE_BUGGY_TME_SUPPORT
+				{
+					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error validating program");
+					//FIXME: the machine has been initialized(?), but the operative code is wrong. 
+					//we have to reset the machine!
+					//something like: reallocate the mem_ex, and reset the tme_core
+					SET_FAILURE_INVALID_REQUEST();
+					break;
+				}
+
+			// Allocate the memory to contain the new filter program
+			// We could need the original BPF binary if we are forced to use bpf_filter_with_2_buffers()
+			TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, cnt * sizeof(struct bpf_insn), '4PWA');
+			if (TmpBPFProgram == NULL)
+			{
+				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error - No memory for filter");
+				// no memory
+
+				SET_FAILURE_NOMEM();
+				break;
+			}
+
+			//
+			// At the moment the JIT compiler works on x86 (32 bit) only
+			//
+#ifdef _X86_
+			// Create the new JIT filter function
+			if (!IsExtendedFilter)
+			{
+				if ((Open->Filter = BPF_jitter(NewBpfProgram, cnt)) == NULL)
+				{
+					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error jittering filter");
+
+					ExFreePool(TmpBPFProgram);
+
+					SET_FAILURE_UNSUCCESSFUL();
+					break;
+				}
+			}
+#endif //_X86_
+
+			//copy the program in the new buffer
+			RtlCopyMemory(TmpBPFProgram, NewBpfProgram, cnt * sizeof(struct bpf_insn));
+			Open->bpfprogram = TmpBPFProgram;
+
+			SET_RESULT_SUCCESS(0);
+		}
+		while (FALSE);
+
+		//
+		// release the machine lock and then reset the buffer
+		//
+		NdisReleaseSpinLock(&Open->MachineLock);
+
+		NPF_ResetBufferContents(Open);
+
+		break;		
+
+	case BIOCSMODE:
+		//set the capture mode
+
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSMODE");
+
+		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		mode = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
+
+		///////kernel dump does not work at the moment//////////////////////////////////////////
+		if (mode & MODE_DUMP)
+		{
+			SET_FAILURE_INVALID_REQUEST();
+			break;
+		}
+		///////kernel dump does not work at the moment//////////////////////////////////////////
+
+		if (mode == MODE_CAPT)
+		{
+			Open->mode = MODE_CAPT;
+
+			SET_RESULT_SUCCESS(0);
+			break;
+		}
+		else if (mode == MODE_MON)
+		{
+			//
+			// The MONITOR_MODE (aka TME extensions) is not supported on 
+			// 64 bit architectures
+			//
+
+#ifdef HAVE_BUGGY_TME_SUPPORT
+			Open->mode = MODE_MON;
+			SET_RESULT_SUCCESS(0);
+#else // HAVE_BUGGY_TME_SUPPORT
+			SET_FAILURE_INVALID_REQUEST();
+#endif // HAVE_BUGGY_TME_SUPPORT
+
+			break;
+		}
+		else
+		{
+			if (mode & MODE_STAT)
+			{
+				Open->mode = MODE_STAT;
+				NdisAcquireSpinLock(&Open->CountersLock);
+				Open->Nbytes.QuadPart = 0;
+				Open->Npackets.QuadPart = 0;
+				NdisReleaseSpinLock(&Open->CountersLock);
+
+				if (Open->TimeOut.QuadPart == 0)
+					Open->TimeOut.QuadPart = -10000000;
+			}
+
+			if (mode & MODE_DUMP)
+			{
+				Open->mode |= MODE_DUMP;
+				//				Open->MinToCopy=(Open->BufSize<2000000)?Open->BufSize/2:1000000;
+			}	
+
+			SET_RESULT_SUCCESS(0);
+			break;
+		}
+
+		SET_FAILURE_INVALID_REQUEST();
+
+		break;
+
+	case BIOCSETDUMPFILENAME:
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETDUMPFILENAME");
+
+		///////kernel dump does not work at the moment//////////////////////////////////////////
+		SET_FAILURE_INVALID_REQUEST();
+		break;
+		///////kernel dump does not work at the moment//////////////////////////////////////////
+
+		//if(Open->mode & MODE_DUMP)
+		//{
+		//	
+		//	// Close current dump file
+		//	if(Open->DumpFileHandle != NULL)
+		//	{
+		//		NPF_CloseDumpFile(Open);
+		//		Open->DumpFileHandle = NULL;
+		//	}
+		//	
+		//	if(IrpSp->Parameters.DeviceIoControl.InputBufferLength == 0){
+		//		EXIT_FAILURE(0);
+		//	}
+		//	
+		//	// Allocate the buffer that will contain the string
+		//	DumpNameBuff=ExAllocatePoolWithTag(NonPagedPool, IrpSp->Parameters.DeviceIoControl.InputBufferLength, '5PWA');
+		//	if(DumpNameBuff==NULL || Open->DumpFileName.Buffer!=NULL){
+		//		IF_LOUD(DbgPrint("NPF: unable to allocate the dump filename: not enough memory or name already set\n");)
+		//			EXIT_FAILURE(0);
+		//	}
+		//	
+		//	// Copy the buffer
+		//	RtlCopyBytes((PVOID)DumpNameBuff, 
+		//		Irp->AssociatedIrp.SystemBuffer, 
+		//		IrpSp->Parameters.DeviceIoControl.InputBufferLength);
+		//	
+		//	// Force a \0 at the end of the filename to avoid that malformed strings cause RtlInitUnicodeString to crash the system 
+		//	((PSHORT)DumpNameBuff)[IrpSp->Parameters.DeviceIoControl.InputBufferLength/2-1]=0;
+		//	
+		//	// Create the unicode string
+		//	RtlInitUnicodeString(&Open->DumpFileName, DumpNameBuff);
+		//	
+		//	IF_LOUD(DbgPrint("NPF: dump file name set to %ws, len=%d\n",
+		//		Open->DumpFileName.Buffer,
+		//		IrpSp->Parameters.DeviceIoControl.InputBufferLength);)
+		//		
+		//	// Try to create the file
+		//	if ( NT_SUCCESS( NPF_OpenDumpFile(Open,&Open->DumpFileName,FALSE)) &&
+		//		NT_SUCCESS( NPF_StartDump(Open)))
+		//	{
+		//		EXIT_SUCCESS(0);
+		//	}
+		//}
+		//
+		//EXIT_FAILURE(0);
+		//
+		//break;
+
+	case BIOCSETDUMPLIMITS:
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETDUMPLIMITS");
+
+		///////kernel dump does not work at the moment//////////////////////////////////////////
+		SET_FAILURE_INVALID_REQUEST();
+		break;
+		///////kernel dump does not work at the moment//////////////////////////////////////////
+
+		//if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < 2*sizeof(ULONG))
+		//{
+		//	EXIT_FAILURE(0);
+		//}
+		//
+		//Open->MaxDumpBytes = *(PULONG)Irp->AssociatedIrp.SystemBuffer;
+		//Open->MaxDumpPacks = *((PULONG)Irp->AssociatedIrp.SystemBuffer + 1);
+		//
+		//IF_LOUD(DbgPrint("NPF: Set dump limits to %u bytes, %u packs\n", Open->MaxDumpBytes, Open->MaxDumpPacks);)
+		//
+		//EXIT_SUCCESS(0);
+		//
+		//break;
+
+	case BIOCISDUMPENDED:
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCISDUMPENDED");
+
+		///////kernel dump does not work at the moment//////////////////////////////////////////
+		SET_FAILURE_INVALID_REQUEST();
+		break;
+		///////kernel dump does not work at the moment//////////////////////////////////////////
+
+		//if(IrpSp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(UINT))
+		//{			
+		//	EXIT_FAILURE(0);
+		//}
+
+		//*((UINT*)Irp->UserBuffer) = (Open->DumpLimitReached)?1:0;
+
+		//EXIT_SUCCESS(4);
+
+		//break;
+
+	case BIOCISETLOBBEH:
+		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(INT))
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+#ifdef __NPF_NT4__
+
+		// NT4 doesn't support loopback inhibition / activation
+		SET_FAILURE_INVALID_REQUEST();
+		break;
+
+#else //not __NPF_NT4__
+		//
+		// win2000/xp/2003/vista
+		//
+		if (*(PINT)Irp->AssociatedIrp.SystemBuffer == NPF_DISABLE_LOOPBACK)
+		{
+			Open->SkipSentPackets = TRUE;
+
+			//
+			// Reset the capture buffers, since they could contain loopbacked packets
+			//
+
+			NPF_ResetBufferContents(Open);
+
+			SET_RESULT_SUCCESS(0);
+			break;
+		}
+		else if (*(PINT)Irp->AssociatedIrp.SystemBuffer == NPF_ENABLE_LOOPBACK)
+		{
+			Open->SkipSentPackets = FALSE;
+
+			SET_RESULT_SUCCESS(0);
+			break;
+		}
+		else
+		{
+			// Unknown operation
+			SET_FAILURE_INVALID_REQUEST();
+			break;
+		}
+
+#endif // !__NPF_NT4__
+		break;
+
+	case BIOCSETEVENTHANDLE:
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETEVENTHANDLE");
+
+#ifdef _AMD64_
+		if (IoIs32bitProcess(Irp))
+		{
+			//
+			// validate the input
+			//
+			if (IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(hUserEvent32Bit))
+		{
+				SET_FAILURE_INVALID_REQUEST();
+					break;
+			}
+
+			hUserEvent32Bit = *(VOID * POINTER_32 *)Irp->AssociatedIrp.SystemBuffer;
+			hUserEvent = hUserEvent32Bit;
+		}
+		else
+				#endif //_AMD64_
+		{
+			//
+			// validate the input
+			//
+			if (IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(hUserEvent))
+			{
+				SET_FAILURE_INVALID_REQUEST();
+				break;
+			}
+
+			hUserEvent = *(PHANDLE)Irp->AssociatedIrp.SystemBuffer;
+		}
+
+		Status = ObReferenceObjectByHandle(hUserEvent, EVENT_MODIFY_STATE, *ExEventObjectType, Irp->RequestorMode, (PVOID *)&pKernelEvent, NULL);	
+
+		if (!NT_SUCCESS(Status))
+		{
+			// Status = ??? already set
+			Information = 0;
+			break;
+		}
+
+
+		if (InterlockedCompareExchangePointer(&Open->ReadEvent, pKernelEvent, NULL) != NULL)
+		{
+			//
+			// dereference the new pointer
+			//
+
+			ObDereferenceObject(pKernelEvent);
+			SET_FAILURE_INVALID_REQUEST();
+			break;
+		}
+
+		KeResetEvent(Open->ReadEvent);
+
+		SET_RESULT_SUCCESS(0);
+		break;
+
+	case BIOCSETBUFFERSIZE:
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETBUFFERSIZE");
+
+		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		// Get the number of bytes to allocate
+		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
+
+		if (dim / g_NCpu < sizeof(struct PacketHeader))
+		{
+			dim = 0;
+		}
+		else
+		{
+			tpointer = ExAllocatePoolWithTag(NonPagedPool, dim, '6PWA');
+			if (tpointer == NULL)
+			{
+				// no memory
+				SET_FAILURE_NOMEM();
+				break;
+			}
+		}
+
+		//
+		// acquire the locks for all the buffers
+		//
+		for (i = 0; i < g_NCpu ; i++)
+		{
+#pragma prefast(suppress:8103, "There's no Spinlock leak here, as it's released some lines below.")
+			NdisAcquireSpinLock(&Open->CpuData[i].BufferLock);
+		}
+
+		//
+		// free the old buffer, if any
+		//
+		if (Open->CpuData[0].Buffer != NULL)
+		{
+			ExFreePool(Open->CpuData[0].Buffer);
+		}
+
+		for (i = 0 ; i < g_NCpu ; i++)
+		{
+			if (dim > 0)
+				Open->CpuData[i].Buffer = (PUCHAR)tpointer + (dim / g_NCpu) * i;
+			else
+				Open->CpuData[i].Buffer = NULL;
+			Open->CpuData[i].Free = dim / g_NCpu;
+			Open->CpuData[i].P = 0;
+			Open->CpuData[i].C = 0;
+			Open->CpuData[i].Accepted = 0;
+			Open->CpuData[i].Dropped = 0;
+			Open->CpuData[i].Received = 0;
+		}
+
+		Open->ReaderSN = 0;
+		Open->WriterSN = 0;
+
+		Open->Size = dim / g_NCpu;
+
+		//
+		// acquire the locks for all the buffers
+		//
+		i = g_NCpu;
+
+		do
+		{
+			i--;
+
+#pragma prefast(suppress:8107, "There's no Spinlock leak here, as it's acquired some lines above.")
+			NdisReleaseSpinLock(&Open->CpuData[i].BufferLock);
+		}
+		while (i != 0);
+
+		SET_RESULT_SUCCESS(0);
+		break;
+
+	case BIOCSRTIMEOUT:
+		//set the timeout on the read calls
+
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSRTIMEOUT");
+
+		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		timeout = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
+		if (timeout == (ULONG) - 1)
+			Open->TimeOut.QuadPart = (LONGLONG)IMMEDIATE;
+		else
+		{
+			Open->TimeOut.QuadPart = (LONGLONG)timeout;
+			Open->TimeOut.QuadPart *= 10000;
+			Open->TimeOut.QuadPart = -Open->TimeOut.QuadPart;
+		}
+
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Read timeout set to %I64d", Open->TimeOut.QuadPart);
+
+		SET_RESULT_SUCCESS(0);		
+		break;
+
+	case BIOCSWRITEREP:
+		//set the writes repetition number
+
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSWRITEREP");
+
+		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		Open->Nwrites = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
+
+		SET_RESULT_SUCCESS(0);
+		break;
+
+	case BIOCSMINTOCOPY:
+		//set the minimum buffer's size to copy to the application
+
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSMINTOCOPY");
+
+		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		Open->MinToCopy = (*((PULONG)Irp->AssociatedIrp.SystemBuffer)) / g_NCpu;  //An hack to make the NCPU-buffers behave like a larger one
+
+		SET_RESULT_SUCCESS(0);
+		break;
+
+	case BIOCQUERYOID:
+	case BIOCSETOID:
+		
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID - BIOCQUERYOID");
+
+		//
+		// gain ownership of the Ndis Handle
+		//
+		if (NPF_StartUsingBinding(Open) == FALSE)
+		{
+			//
+			// MAC unbindind or unbound
+			//
+			SET_FAILURE_INVALID_REQUEST();
+			break;
+		}
+
+
+		// Extract a request from the list of free ones
+		RequestListEntry = ExInterlockedRemoveHeadList(&Open->RequestList, &Open->RequestSpinLock);
+		if (RequestListEntry == NULL)
+		{
+			//
+			// Release ownership of the Ndis Handle
+			//
+			NPF_StopUsingBinding(Open);
+
+			SET_FAILURE_NOMEM();
+			break;
+		}
+
+		pRequest = CONTAINING_RECORD(RequestListEntry, INTERNAL_REQUEST, ListElement);
+
+		//
+		//  See if it is an Ndis request
+		//
+		OidData = Irp->AssociatedIrp.SystemBuffer;
+
+		if ((IrpSp->Parameters.DeviceIoControl.InputBufferLength == IrpSp->Parameters.DeviceIoControl.OutputBufferLength) &&
+			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA)) &&
+			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA) - 1 + OidData->Length))
+		{
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCSETOID|BIOCQUERYOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
+
+			//
+			//  The buffer is valid
+			//
+			NdisZeroMemory(&pRequest->Request, sizeof(NDIS_OID_REQUEST));
+			pRequest->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
+			pRequest->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
+			pRequest->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
+
+			if (FunctionCode == BIOCSETOID)
+			{
+				pRequest->Request.RequestType = NdisRequestSetInformation;
+				pRequest->Request.DATA.SET_INFORMATION.Oid = OidData->Oid;
+
+				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = OidData->Data;
+				pRequest->Request.DATA.SET_INFORMATION.InformationBufferLength = OidData->Length;
+			}
+			else
+			{
+				pRequest->Request.RequestType = NdisRequestQueryInformation;
+				pRequest->Request.DATA.QUERY_INFORMATION.Oid = OidData->Oid;
+
+				pRequest->Request.DATA.QUERY_INFORMATION.InformationBuffer = OidData->Data;
+				pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength = OidData->Length;
+			}
+
+			NdisResetEvent(&pRequest->InternalRequestCompletedEvent);
+
+			if (*((PVOID *) pRequest->Request.SourceReserved) != NULL)
+			{
+				*((PVOID *) pRequest->Request.SourceReserved) = NULL;
+			}
+			//
+			//  submit the request
+			//
+			pRequest->Request.RequestId = (PVOID) NPF_REQUEST_ID;
+			ASSERT(Open->AdapterHandle != NULL);
+
+			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
+			{
+				ASSERT(Open->GroupHead != NULL);
+				Open->GroupHead->MyPacketFilter = *(ULONG*) OidData->Data;
+				if (Open->GroupHead->MyPacketFilter == NDIS_PACKET_TYPE_ALL_LOCAL)
+				{
+					Open->GroupHead->MyPacketFilter = 0;
+				}
+				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
+				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
+			}
+
+			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
+		}
+		else
+		{
+			//
+			// Release ownership of the Ndis Handle
+			//
+			NPF_StopUsingBinding(Open);
+
+			//
+			//  buffer too small
+			//
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		if (Status == NDIS_STATUS_PENDING)
+		{
+			NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 1000);
+			Status = pRequest->RequestStatus;
+		}
+
+		//
+		// Release ownership of the Ndis Handle
+		//
+		NPF_StopUsingBinding(Open);
+
+		//
+		// Complete the request
+		//
+		if (FunctionCode == BIOCSETOID)
+		{
+			OidData->Length = pRequest->Request.DATA.SET_INFORMATION.BytesRead;
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCSETOID completed, BytesRead = %u", OidData->Length);
+		}
+		else
+		{
+			if (FunctionCode == BIOCQUERYOID)
+			{
+				OidData->Length = pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten;
+
+				if (Status == NDIS_STATUS_SUCCESS)
+				{
+					//
+					// check for the stupid bug of the Nortel driver ipsecw2k.sys v. 4.10.0.0 that doesn't set the BytesWritten correctly
+					// The driver is the one shipped with Nortel client Contivity VPN Client V04_65.18, and the MD5 for the buggy (unsigned) driver
+					// is 3c2ff8886976214959db7d7ffaefe724 *ipsecw2k.sys (there are multiple copies of this binary with the same exact version info!)
+					// 
+					// The (certified) driver shipped with Nortel client Contivity VPN Client V04_65.320 doesn't seem affected by the bug.
+					//
+					if (pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten > pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength)
+					{
+						TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!", pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten, pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength);
+
+						Status = NDIS_STATUS_INVALID_DATA;
+					}
+				}
+
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
+			}
+		}
+
+
+		ExInterlockedInsertTailList(&Open->RequestList, &pRequest->ListElement, &Open->RequestSpinLock);
+
+		if (Status == NDIS_STATUS_SUCCESS)
+		{
+			SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+		}
+		else
+		{
+			SET_FAILURE_INVALID_REQUEST();
+		}
+
+		break;
+
+
+	default:
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown IOCTL code");
+		SET_FAILURE_INVALID_REQUEST();
+		break;
+	}
+
+
+	//
+	// release the Open structure
+	//
+	NPF_StopUsingOpenInstance(Open);
+
+	//
+	// complete the IRP
+	//
+	Irp->IoStatus.Information = Information;
+	Irp->IoStatus.Status = Status;
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+
+
+	TRACE_EXIT();
+
+	return Status;
+}
+
+//-------------------------------------------------------------------
+
+VOID NPF_ResetBufferContents(POPEN_INSTANCE Open)
+{
+	UINT i;
+
+	//
+	// lock all the buffers
+	//
+	for (i = 0 ; i < g_NCpu ; i++)
+	{
+		//#pragma prefast(suppress:8103, "There's no Spinlock leak here, as it's released some lines below.")
+		NdisAcquireSpinLock(&Open->CpuData[i].BufferLock);
+	}
+
+	Open->ReaderSN = 0;
+	Open->WriterSN = 0;
+
+	//
+	// reset their pointers
+	//
+	for (i = 0 ; i < g_NCpu ; i++)
+	{
+		Open->CpuData[i].C = 0;
+		Open->CpuData[i].P = 0;
+		Open->CpuData[i].Free = Open->Size;
+		Open->CpuData[i].Accepted = 0;
+		Open->CpuData[i].Dropped = 0;
+		Open->CpuData[i].Received = 0;
+	}
+
+	// 
+	// release the locks in reverse order
+	//
+	i = g_NCpu;
+
+	do
+	{
+		i--;
+#pragma prefast(suppress:8107, "There's no Spinlock leak here, as it's allocated some lines above.")
+		NdisReleaseSpinLock(&Open->CpuData[i].BufferLock);
+	}
+	while (i != 0);
+}

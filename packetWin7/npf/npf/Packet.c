@@ -116,12 +116,10 @@ DriverEntry(
 {
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars;
 	NTSTATUS Status = STATUS_SUCCESS;
-// 	NDIS_STRING FriendlyName = NDIS_STRING_CONST("WinPcap NDIS LightWeight Filter");
-// 	NDIS_STRING UniqueName   = NDIS_STRING_CONST("{5cbf81bd-5055-47cd-9055-a76b2b4e2637}"); //unique name, quid name
-// 	NDIS_STRING ServiceName = NDIS_STRING_CONST("npf6x"); //this to match the service name in the INF
+
 	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(L"WinPcap NDIS LightWeight Filter");
-	NDIS_STRING UniqueName   = RTL_CONSTANT_STRING(L"{6dcc66ba-876d-4595-b4af-9bff65c7445a}"); //unique name, quid name
-	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(L"npf6x"); //this to match the service name in the INF
+	NDIS_STRING UniqueName   = RTL_CONSTANT_STRING(L"{7daf2ac8-e9f6-4765-a842-f1f5d2501339}"); //unique name, quid name
+	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(L"npf"); //this to match the service name in the INF
 	WCHAR* bindT;
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
@@ -1491,7 +1489,7 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			//
 			//  submit the request
 			//
-			pRequest->Request.RequestId = (PVOID) NPF6X_REQUEST_ID;
+			pRequest->Request.RequestId = (PVOID) NPF_REQUEST_ID;
 			ASSERT(Open->AdapterHandle != NULL);
 
 			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
