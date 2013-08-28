@@ -28,15 +28,15 @@ BEGIN
         BEGIN
 			VALUE "CompanyName",       WINPCAP_COMPANY_NAME
 #ifdef _WIN8
-			VALUE "FileDescription",   "NPF6xInstall.exe (Win8) Driver Installer"
+			VALUE "FileDescription",   "NPFInstall.exe (Win8) Driver Installer"
 #elif defined(_WIN7)
-			VALUE "FileDescription",   "NPF6xInstall.exe (Win7) Driver Installer"
+			VALUE "FileDescription",   "NPFInstall.exe (Win7) Driver Installer"
 #endif
 			VALUE "FileVersion",       WINPCAP_VER_STRING
-			VALUE "InternalName",      "NPF6xInstall.exe"
+			VALUE "InternalName",      "NPFInstall.exe"
 			VALUE "LegalCopyright",    WINPCAP_COPYRIGHT_STRING
 			VALUE "LegalTrademarks",   ""
-			VALUE "OriginalFilename",  "NPF6xInstall.exe"
+			VALUE "OriginalFilename",  "NPFInstall.exe"
 			VALUE "ProductName",       WINPCAP_PRODUCT_NAME
 			VALUE "ProductVersion",    WINPCAP_VER_STRING
             VALUE "Build Description", WINPCAP_BUILD_DESCRIPTION
