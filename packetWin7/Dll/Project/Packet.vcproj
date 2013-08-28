@@ -912,7 +912,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf6x\npf6x;..\..\..\..\AirPcap_devpack\include"
+				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS; ;HAVE_AIRPCAP_API;HAVE_IPHELPER_API"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -1467,7 +1467,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf6x\npf6x;..\..\..\..\AirPcap_devpack\include"
+				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include"
 				PreprocessorDefinitions="NDIS6X;_X86_;WIN32;_DEBUG;_WINDOWS;HAVE_IPHELPER_API"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -1552,7 +1552,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf6x\npf6x;..\..\..\..\AirPcap_devpack\include"
+				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include"
 				PreprocessorDefinitions="NDIS6X;_AMD64_;_DEBUG;_WINDOWS;HAVE_IPHELPER_API"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -1630,7 +1630,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf6x\npf6x;..\..\..\..\AirPcap_devpack\include"
+				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include"
 				PreprocessorDefinitions="NDIS6X;_X86_;WIN32;NDEBUG;_WINDOWS;HAVE_IPHELPER_API"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -1709,7 +1709,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf6x\npf6x;..\..\..\..\AirPcap_devpack\include"
+				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include"
 				PreprocessorDefinitions="NDIS6X;_AMD64_;NDEBUG;_WINDOWS;HAVE_IPHELPER_API"
 				Detect64BitPortabilityProblems="true"
 			/>
@@ -1784,7 +1784,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf6x\npf6x;..\..\..\..\AirPcap_devpack\include"
+				AdditionalIncludeDirectories="..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include"
 				PreprocessorDefinitions="NDIS6X;_X86_;WIN32;_DEBUG;_WINDOWS;HAVE_IPHELPER_API"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -2231,7 +2231,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\npf6x\npf6x\win_bpf_filter.c"
+				RelativePath="..\..\npf\npf\win_bpf_filter.c"
 				>
 			</File>
 		</Filter>
