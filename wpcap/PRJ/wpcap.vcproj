@@ -384,7 +384,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib packet.lib"
+				AdditionalDependencies="ws2_32.lib lib\packet.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\packetNtx\Dll\Project\Debug\x86"
 				IgnoreAllDefaultLibraries="false"
@@ -543,7 +543,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib packet.lib"
+				AdditionalDependencies="ws2_32.lib lib\packet.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\packetNtx\Dll\Project\Release\x86"
 				ModuleDefinitionFile="wpcap.def"
@@ -623,7 +623,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib packet.lib"
+				AdditionalDependencies="ws2_32.lib lib\x64\packet.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\packetNtx\Dll\Project\Release\x64"
 				ModuleDefinitionFile="wpcap.def"
