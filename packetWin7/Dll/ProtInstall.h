@@ -75,6 +75,8 @@
 #define NDISLWF_SERVICE_INF_FILE   		  NDISLWF_SERVICE_INF_FILE_A
 #endif
 
+#define APP_NAME	_T("NPF")
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -82,6 +84,7 @@ extern "C"
 
 	DWORD InstallDriver();
 	DWORD UninstallDriver();
+	BOOL RenableBindings();
 
 #ifdef __cplusplus
 }

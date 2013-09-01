@@ -39,8 +39,6 @@
 //
 // End ---------------------------------------------------------------------
 
-#define APP_NAME	_T("NPF")
-
 BOOLEAN bVerbose = TRUE;
 
 //
@@ -397,3 +395,25 @@ DWORD UninstallDriver()
 //     return 0;
 // }
 
+BOOL RenableBindings()
+{
+	CComPtr<INetCfg> netcfg;
+	CComPtr<INetCfgLock> lock;
+
+	HRESULT hr;
+
+	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	if (FAILED(hr))
+	{
+		wprintf(L"CoInitializeEx 0x%08x\n", hr);
+		return 1;
+	}
+
+	BOOL ok = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID);
+
+	CoUninitialize();
+
+	wprintf(ok ? L"Succeeded.\n" : L"Failed.\n");
+
+	return ok;
+}

@@ -1,5 +1,5 @@
 #include "NetCfgAPI.h"
-
+#include "ProtInstall.h"
 
 
 //+---------------------------------------------------------------------------
@@ -442,3 +442,166 @@ VOID ReleaseRef(IN IUnknown* punk)
 	return;
 }
 
+BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR name)
+{
+	HRESULT hr;
+	CComPtr<INetCfgComponent> comp;
+	CComPtr<INetCfgComponentBindings> bindings;
+
+	hr = netcfg->FindComponent(name, &comp);
+	if (FAILED(hr))
+	{
+		wprintf(L"INetCfg::FindComponent 0x%08x\n", hr);
+		return FALSE;
+	}
+
+	hr = comp.QueryInterface(&bindings);
+	if (FAILED(hr))
+	{
+		wprintf(L"QueryInterface(INetCfgComponentBindings) 0x%08x\n", hr);
+		return FALSE;
+	}
+
+	CComPtr<IEnumNetCfgBindingPath> enumerator;
+	hr = bindings->EnumBindingPaths(EBP_BELOW, &enumerator);
+	if (FAILED(hr))
+	{
+		wprintf(L"INetCfgComponentBindings::EnumBindingPaths 0x%08x\n", hr);
+		return FALSE;
+	}
+
+	// Loop over all bindings that involve this component
+	while (true)
+	{
+		CComPtr<INetCfgBindingPath> path;
+		hr = enumerator->Next(1, &path, NULL);
+		if (hr == S_FALSE)
+		{
+			// Reached end of list; quit.
+			break;
+		}
+		if (FAILED(hr))
+		{
+			wprintf(L"IEnumNetCfgBindingPath::Next 0x%08x\n", hr);
+			return FALSE;
+		}
+
+		PWSTR token = NULL;
+		hr = path->GetPathToken(&token);
+		if (FAILED(hr))
+		{
+			wprintf(L"INetCfgBindingPath::GetPathToken 0x%08x\n", hr);
+			continue;
+		}
+
+		wprintf(L"Found binding %s\n", token);
+		CoTaskMemFree(token);
+
+		hr = path->IsEnabled();
+		if (FAILED(hr))
+		{
+			wprintf(L"INetCfgBindingPath::IsEnabled 0x%08x\n", hr);
+			continue;
+		}
+
+		if (S_FALSE == hr)
+		{
+			wprintf(L"\tPath is already disabled.  Skipping over it.\n");
+			continue;
+		}
+
+		// Diable
+
+		hr = path->Enable(FALSE);
+		if (FAILED(hr))
+		{
+			wprintf(L"INetCfgBindingPath::Enable(FALSE) 0x%8x\n", hr);
+			continue;
+		}
+
+		hr = netcfg->Apply();
+		if (FAILED(hr))
+		{
+			wprintf(L"INetCfg::Apply 0x%08x\n", hr);
+			return FALSE;
+		}
+
+		wprintf(L"\tPath disabled\n");
+
+		// Enable
+
+		hr = path->Enable(TRUE);
+		if (FAILED(hr))
+		{
+			wprintf(L"INetCfgBindingPath::Enable(TRUE) 0x%8x\n", hr);
+			return FALSE;
+		}
+
+		hr = netcfg->Apply();
+		if (FAILED(hr))
+		{
+			wprintf(L"INetCfg::Apply 0x%08x\n", hr);
+			return FALSE;
+		}
+
+		wprintf(L"\tPath enabled\n");
+	}
+
+
+
+	return TRUE;
+}
+
+BOOL ConnectToNetCfg(PCWSTR name)
+{
+	HRESULT hr;
+	CComPtr<INetCfg> netcfg;
+	CComPtr<INetCfgLock> lock;
+
+	// Before we can get started, we need to do some initialization work.
+
+	hr = netcfg.CoCreateInstance(CLSID_CNetCfg);
+	if (FAILED(hr))
+	{
+		wprintf(L"CoCreateInstance(CLSID_CNetCfg 0x%08x\n", hr);
+		return FALSE;
+	}
+
+	hr = netcfg.QueryInterface(&lock);
+	if (FAILED(hr))
+	{
+		wprintf(L"QueryInterface(INetCfgLock) 0x%08x\n", hr);
+		return FALSE;
+	}
+
+	// Note that this call can block.
+	hr = lock->AcquireWriteLock(INFINITE, APP_NAME, NULL);
+	if (FAILED(hr))
+	{
+		wprintf(L"INetCfgLock::AcquireWriteLock 0x%08x\n", hr);
+		return FALSE;
+	}
+
+	hr = netcfg->Initialize(NULL);
+	if (FAILED(hr))
+	{
+		wprintf(L"INetCfg::Initialize 0x%08x\n", hr);
+		return FALSE;
+	}
+
+	BOOL ok = RestartAllBindings(netcfg.p, name);
+
+	hr = netcfg->Uninitialize();
+	if (FAILED(hr))
+	{
+		wprintf(L"INetCfg::Uninitialize 0x%08x\n", hr);
+	}
+
+	hr = lock->ReleaseWriteLock();
+	if (FAILED(hr))
+	{
+		wprintf(L"INetCfgLock::ReleaseWriteLock 0x%08x\n", hr);
+	}
+
+	return ok;
+}

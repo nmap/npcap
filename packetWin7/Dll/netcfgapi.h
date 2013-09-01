@@ -31,6 +31,7 @@
 #include <setupapi.h>
 #include <devguid.h>
 #include <objbase.h>
+#include <atlbase.h>
 
 #define LOCK_TIME_OUT     5000
 
@@ -45,5 +46,9 @@ HRESULT HrInstallComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const G
 HRESULT HrUninstallNetComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId);
 
 VOID ReleaseRef(IUnknown* punk);
+
+BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR name);
+
+BOOL ConnectToNetCfg(PCWSTR name);
 
 #endif

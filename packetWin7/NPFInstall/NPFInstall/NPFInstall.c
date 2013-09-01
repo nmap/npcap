@@ -7,22 +7,26 @@
 BOOL PacketInstallDriver60()
 {
 	BOOL result = FALSE;
-	//TRACE_ENTER("PacketInstallDriver60");
 
 	result = (BOOL) InstallDriver();
 
-	//TRACE_EXIT("PacketInstallDriver60");
 	return result;
 }
 
 BOOL PacketStopDriver60()
 {
 	BOOL result;
-	//TRACE_ENTER("PacketStopDriver60");
 
 	result = (BOOL) UninstallDriver();
 
-	//TRACE_EXIT("PacketStopDriver60");
+	return result;
+}
+
+BOOL PacketRenableBindings()
+{
+	BOOL result;
+
+	result = (BOOL) RenableBindings();
 
 	return result;
 }
@@ -62,7 +66,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	if (argc < 2)
 	{
-		_tprintf(_T("Command Usage: NPFInstall -[i/u]: i - install, u - uninstall.\n"));
+		_tprintf(_T("Command Usage: NPFInstall -[i/u/r]: i - install, u - uninstall, r - restartBindings.\n"));
 		return -1;
 	}
 	else //argc == 2
@@ -95,9 +99,23 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		else if (_tcscmp(_T("-r"), argv[1]) == 0)
+		{
+			bSuccess = PacketRenableBindings();
+			if (bSuccess)
+			{
+				_tprintf(_T("NPF6x driver's bindings have been successfully restarted!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("NPF6x driver's bindings have failed to restart."));
+				return -1;
+			}
+		}
 		else if (_tcscmp(_T("-h"), argv[1]) == 0)
 		{
-			_tprintf(_T("Command Usage: NPFInstall -[i/u]: i - install, u - uninstall.\n"));
+			_tprintf(_T("Command Usage: NPFInstall -[i/u/r]: i - install, u - uninstall, r - restartBindings.\n"));
 			return -1;
 		}
 		else

@@ -238,7 +238,7 @@ Function .onInit
     quit
 
   same_ver:
-    MessageBox MB_OK "Skipping WinPcap installation since version $inst_ver already exists on this system.  Uninstall that version first if you wish to force install. If you cannot uninstall it in your Control Panel, go to your Program Files\WinPcap directory and execute uninstall.exe manually."
+    MessageBox MB_YESNO|MB_ICONQUESTION "WinPcap version $inst_ver already exists on this system. Reinstall this version?" IDYES try_uninstallers
     quit
 
   try_uninstallers:
@@ -293,12 +293,9 @@ FunctionEnd
 
 Function doOptions
   ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 1" "State"
-  StrCmp $0 "0" do_options_next
-  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 1
-  do_options_next:
-  ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 2" "State"
-  StrCmp $0 "0" do_options_end
-  nsExec::Exec "net start npf"
+  StrCmp $0 "0" do_options_start do_options_end
+  do_options_start:
+  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 3
   do_options_end:
 FunctionEnd
 
@@ -546,7 +543,7 @@ Section "WinPcap" SecWinPcap
     
     registerdone:
 
-    ; Create the default NPF startup setting of 3 (SERVICE_DEMAND_START)
+    ; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
     WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 1
 
     ; automatically start the service if performing a silent install, unless
@@ -569,7 +566,7 @@ Section "WinPcap" SecWinPcap
     WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "NoModify" 1
     WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "NoRepair" 1
 
-  ; delete our  legacy winpcap-nmap keys if they still exist (e.g. official 4.0.2 force installed over our 4.0.2):
+  ; delete our legacy winpcap-nmap keys if they still exist (e.g. official 4.0.2 force installed over our 4.0.2):
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\winpcap-nmap"
 
 SectionEnd ; end the section
