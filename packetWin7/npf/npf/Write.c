@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy)
  * Copyright (c) 2005 - 2010 CACE Technologies, Davis (California)
+ * Copyright (c) 2010 - 2013 Riverbed Technology, San Francisco (California), Yang Luo (China)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,17 +42,21 @@
 
 //-------------------------------------------------------------------
 
-NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
+NTSTATUS
+NPF_Write(
+	IN PDEVICE_OBJECT DeviceObject,
+	IN PIRP Irp
+	)
 {
-	POPEN_INSTANCE Open;
+	POPEN_INSTANCE		Open;
 	POPEN_INSTANCE		GroupOpen;
 	POPEN_INSTANCE		TempOpen;
-	PIO_STACK_LOCATION IrpSp;
-	ULONG SendFlags = 0;
-	PNET_BUFFER_LIST pNetBufferList;
-	NDIS_STATUS Status;
-	ULONG NumSends;
-	ULONG numSentPackets;
+	PIO_STACK_LOCATION	IrpSp;
+	ULONG				SendFlags = 0;
+	PNET_BUFFER_LIST	pNetBufferList;
+	NDIS_STATUS			Status;
+	ULONG				NumSends;
+	ULONG				numSentPackets;
 
 	TRACE_ENTER();
 
@@ -95,7 +100,8 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	//
 	if (IrpSp->Parameters.Write.Length == 0 || 	// Check that the buffer provided by the user is not empty
 		Open->MaxFrameSize == 0 ||	// Check that the MaxFrameSize is correctly initialized
-		Irp->MdlAddress == NULL || IrpSp->Parameters.Write.Length > Open->MaxFrameSize) // Check that the fame size is smaller that the MTU
+		Irp->MdlAddress == NULL ||
+		IrpSp->Parameters.Write.Length > Open->MaxFrameSize) // Check that the fame size is smaller that the MTU
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Frame size out of range, or maxFrameSize = 0. Send aborted");
 
@@ -154,7 +160,10 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 	NdisReleaseSpinLock(&Open->WriteLock);
 
-	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Max frame size = %u, packet size = %u", Open->MaxFrameSize, IrpSp->Parameters.Write.Length);
+	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+		"Max frame size = %u, packet size = %u",
+		Open->MaxFrameSize,
+		IrpSp->Parameters.Write.Length);
 
 	//
 	// reset the number of packets pending the SendComplete
@@ -167,7 +176,12 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 	while (numSentPackets < NumSends)
 	{
-		pNetBufferList = NdisAllocateNetBufferAndNetBufferList(Open->PacketPool, 0, 0, Irp->MdlAddress, 0, Irp->MdlAddress->ByteCount);
+		pNetBufferList = NdisAllocateNetBufferAndNetBufferList(Open->PacketPool,
+			0,
+			0,
+			Irp->MdlAddress,
+			0,
+			Irp->MdlAddress->ByteCount);
 
 		if (pNetBufferList != NULL)
 		{
@@ -189,19 +203,16 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			// The packet hasn't a buffer that needs not to be freed after every single write
 			RESERVED(pNetBufferList)->FreeBufAfterWrite = FALSE;
 
-			//			// Save the IRP associated with the packet
-			//			RESERVED(pPacket)->Irp=Irp;
+			// Save the IRP associated with the packet
+			// RESERVED(pPacket)->Irp=Irp;
 
-			//  Attach the writes buffer to the packet
-			//NdisChainBufferAtFront(pPacket,Irp->MdlAddress);
+			// Attach the writes buffer to the packet
 
 			InterlockedIncrement(&Open->TransmitPendingPackets);
 
 			NdisResetEvent(&Open->NdisWriteCompleteEvent);
 
-			//
-			//  Call the MAC
-			//
+			//receive the packets before sending them
 			ASSERT(Open->GroupHead != NULL);
 			if (Open->GroupHead != NULL)
 			{
@@ -209,6 +220,7 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			}
 			else
 			{
+				//this is impossible
 				GroupOpen = Open->GroupNext;
 			}
 
@@ -224,9 +236,16 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 			}
 
 			pNetBufferList->SourceHandle = Open->AdapterHandle;
-			NPFSetNBLChildOpen(pNetBufferList, Open);
+			NPFSetNBLChildOpen(pNetBufferList, Open); //save the child open object in the packets
 			//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
-			NdisFSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
+
+			//
+			//  Call the MAC
+			//
+			NdisFSendNetBufferLists(Open->AdapterHandle,
+				pNetBufferList,
+				NDIS_DEFAULT_PORT_NUMBER,
+				SendFlags);
 
 			numSentPackets ++;
 		}
@@ -276,27 +295,31 @@ NTSTATUS NPF_Write(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 //-------------------------------------------------------------------
 
-INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOOLEAN Sync)
+INT
+NPF_BufferedWrite(
+	IN PIRP Irp,
+	IN PCHAR UserBuff,
+	IN ULONG UserBuffSize,
+	BOOLEAN Sync)
 {
-	POPEN_INSTANCE Open;
-	POPEN_INSTANCE		GroupOpen;
-	POPEN_INSTANCE		TempOpen;
-	PIO_STACK_LOCATION IrpSp;
-	//PNDIS_PACKET		pPacket;
-	PNET_BUFFER_LIST pNetBufferList;
-	PNET_BUFFER pNetBuffer;
-	ULONG SendFlags = 0;
-	UINT i;
-	NDIS_STATUS Status;
-	LARGE_INTEGER StartTicks, CurTicks, TargetTicks;
-	LARGE_INTEGER TimeFreq;
-	struct timeval BufStartTime;
-	struct sf_pkthdr* pWinpcapHdr;
-	PMDL TmpMdl;
-	ULONG Pos = 0;
+	POPEN_INSTANCE			Open;
+	POPEN_INSTANCE			GroupOpen;
+	POPEN_INSTANCE			TempOpen;
+	PIO_STACK_LOCATION		IrpSp;
+	PNET_BUFFER_LIST		pNetBufferList;
+	PNET_BUFFER				pNetBuffer;
+	ULONG					SendFlags = 0;
+	UINT					i;
+	NDIS_STATUS				Status;
+	LARGE_INTEGER			StartTicks, CurTicks, TargetTicks;
+	LARGE_INTEGER			TimeFreq;
+	struct timeval			BufStartTime;
+	struct sf_pkthdr*		pWinpcapHdr;
+	PMDL					TmpMdl;
+	ULONG					Pos = 0;
 	//	PCHAR				CurPos;
 	//	PCHAR				EndOfUserBuff = UserBuff + UserBuffSize;
-	INT result;
+	INT						result;
 
 	TRACE_ENTER();
 
@@ -470,9 +493,7 @@ INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOO
 		// Increment the number of pending sends
 		InterlockedIncrement(&Open->Multiple_Write_Counter);
 
-		//
-		// Call the MAC
-		//
+		//receive the packets before sending them
 		ASSERT(Open->GroupHead != NULL);
 		if (Open->GroupHead != NULL)
 		{
@@ -496,8 +517,12 @@ INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOO
 		}
 
 		pNetBufferList->SourceHandle = Open->AdapterHandle;
-		NPFSetNBLChildOpen(pNetBufferList, Open);
+		NPFSetNBLChildOpen(pNetBufferList, Open); //save the child open object in the packets
 		//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
+
+		//
+		// Call the MAC
+		//
 		NdisFSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
 
 		if (Sync)
@@ -560,9 +585,13 @@ INT NPF_BufferedWrite(IN PIRP Irp, IN PCHAR UserBuff, IN ULONG UserBuffSize, BOO
 
 //-------------------------------------------------------------------
 
-VOID NPF_WaitEndOfBufferedWrite(POPEN_INSTANCE Open)
+VOID
+NPF_WaitEndOfBufferedWrite(
+	POPEN_INSTANCE Open
+	)
 {
 	UINT i;
+
 	TRACE_ENTER();
 
 	NdisResetEvent(&Open->WriteEvent);
@@ -575,6 +604,8 @@ VOID NPF_WaitEndOfBufferedWrite(POPEN_INSTANCE Open)
 
 	TRACE_EXIT();
 }
+
+//-------------------------------------------------------------------
 
 _Use_decl_annotations_
 VOID
@@ -637,9 +668,9 @@ Return Value:
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
 		NET_BUFFER_LIST_NEXT_NBL(pNetBufList) = NULL;
 
-		if (pNetBufList->SourceHandle == Open->AdapterHandle)
+		if (pNetBufList->SourceHandle == Open->AdapterHandle) //this is our self-sent packets
 		{
-			ChildOpen = NPFGetNBLChildOpen(pNetBufList);
+			ChildOpen = NPFGetNBLChildOpen(pNetBufList); //get the child open object that sends these packets
 			FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
 
 			if (FreeBufAfterWrite)
@@ -672,7 +703,7 @@ Return Value:
 			while (GroupOpen != NULL)
 			{
 				TempOpen = GroupOpen;
-				if (ChildOpen == TempOpen)
+				if (ChildOpen == TempOpen) //only indicate the specific child open object
 				{
 					NPF_SendCompleteExForEachOpen(TempOpen, FreeBufAfterWrite);
 					break;
@@ -691,7 +722,7 @@ Return Value:
 		pNetBufList = pNextNetBufList;
 	}
 
-
+//////////// this is another SendComplete handling method, view the buffer lists as a whole
 // 	if (NetBufferLists->SourceHandle != NULL && NetBufferLists->SourceHandle == Open->AdapterHandle)
 // 	{
 // 		ChildOpen = NPFGetNBLChildOpen(NetBufferLists);
@@ -758,7 +789,13 @@ Return Value:
 	TRACE_EXIT();
 }
 
-VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterWrite)
+//-------------------------------------------------------------------
+
+VOID
+NPF_SendCompleteExForEachOpen(
+	IN POPEN_INSTANCE Open,
+	IN BOOLEAN FreeBufAfterWrite
+	)
 {
 	//TRACE_ENTER();
 
@@ -770,7 +807,6 @@ VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterW
 		NdisSetEvent(&Open->WriteEvent);
 
 		//TRACE_EXIT();
-		return;
 	}
 	else
 	{
@@ -798,13 +834,12 @@ VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterW
 			NdisResetEvent(&Open->WriteEvent);
 		}
 
-		if(stillPendingPackets == 0)
+		if (stillPendingPackets == 0)
 		{
 			NdisSetEvent(&Open->NdisWriteCompleteEvent);
 		}
 
 		//TRACE_EXIT();
-		return;
 	}
 
 }

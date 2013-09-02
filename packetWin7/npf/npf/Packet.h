@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy)
  * Copyright (c) 2005 - 2010 CACE Technologies, Davis (California)
+ * Copyright (c) 2010 - 2013 Riverbed Technology, San Francisco (California), Yang Luo (China)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,10 +44,6 @@
 #ifndef __PACKET_INCLUDE______
 #define __PACKET_INCLUDE______
 
-// #if !defined(NDIS620)
-// #error NDIS620 should be defined
-// #endif
-
 #ifdef _X86_
 #define NTKERNEL	///< Forces the compilation of the jitter with kernel calls 
 #include "jitter.h"
@@ -69,82 +66,8 @@
 
 #include "win_bpf.h"
 
-
-// #define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel)              \
-// 	{                                                           \
-// 	if (DispatchLevel)                                      \
-// 		{                                                       \
-// 		NdisDprAcquireSpinLock(_pLock);                     \
-// 		}                                                       \
-// 		else                                                    \
-// 		{                                                       \
-// 		NdisAcquireSpinLock(_pLock);                        \
-// 		}                                                       \
-// 	}
-// 
-// #define FILTER_RELEASE_LOCK(_pLock, DispatchLevel)              \
-// 	{                                                           \
-// 	if (DispatchLevel)                                      \
-// 		{                                                       \
-// 		NdisDprReleaseSpinLock(_pLock);                     \
-// 		}                                                       \
-// 		else                                                    \
-// 		{                                                       \
-// 		NdisReleaseSpinLock(_pLock);                        \
-// 		}                                                       \
-// 	}
-
 #define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel) NdisAcquireSpinLock(_pLock)
 #define FILTER_RELEASE_LOCK(_pLock, DispatchLevel) NdisReleaseSpinLock(_pLock)
-
-
-extern NDIS_SPIN_LOCK         FilterListLock;
-extern LIST_ENTRY          FilterModuleList;
-
-#define FILTER_ALLOC_MEM(_NdisHandle, _Size)     \
-	NdisAllocateMemoryWithTagPriority(_NdisHandle, _Size, NPF_ALLOC_TAG, LowPoolPriority)
-#define FILTER_FREE_MEM(_pMem)    NdisFreeMemory(_pMem, 0, 0)
-
-//
-// Define the filter struct
-//
-// typedef struct _MS_FILTER
-//  {
-// 	 LIST_ENTRY                     FilterModuleLink;
-// 	 //Reference to this filter
-// 	 ULONG                           RefCount;
-// 
-// 	 NDIS_HANDLE                     FilterHandle;
-// 
-// 	 NDIS_STATUS                     Status;
-// 	 NDIS_EVENT                      Event;
-// 	 ULONG                           BackFillSize;
-// 	 FILTER_LOCK                     Lock;    // Lock for protection of state and outstanding sends and recvs
-// 
-// 	 FILTER_STATE                    State;   // Which state the filter is in
-// 	 ULONG                           OutstandingSends;
-// 	 ULONG                           OutstandingRequest;
-// 	 ULONG                           OutstandingRcvs;
-// 	 FILTER_LOCK                     SendLock;
-// 	 FILTER_LOCK                     RcvLock;
-// 	 QUEUE_HEADER                    SendNBLQueue;
-// 	 QUEUE_HEADER                    RcvNBLQueue;
-// 
-// 
-// 	 NDIS_STRING                     FilterName;
-// 	 ULONG                           CallsRestart;
-// 	 BOOLEAN                         TrackReceives;
-// 	 BOOLEAN                         TrackSends;
-// 
-// 	 PNDIS_OID_REQUEST               PendingOidRequest;
-// 
-//  }MS_FILTER, * PMS_FILTER;
-
-typedef struct _FILTER_DEVICE_EXTENSION
-{
-	ULONG            Signature;
-	NDIS_HANDLE      Handle;
-} FILTER_DEVICE_EXTENSION, *PFILTER_DEVICE_EXTENSION;
 
 typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTEXT;
 
@@ -153,11 +76,7 @@ typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTE
 //
 extern NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
 extern NDIS_HANDLE         FilterDriverObject;
-extern NDIS_HANDLE         NdisFilterDeviceHandle;
-extern PDEVICE_OBJECT      DeviceObject;
 
-extern NDIS_SPIN_LOCK         FilterListLock;
-extern LIST_ENTRY          FilterModuleList;
 
 //
 // function prototypes
@@ -208,15 +127,15 @@ ULONG NPF_GetPacketFilter(NDIS_HANDLE FilterModuleContext);
 
 NDIS_STATUS
 	NPF_DoInternalRequest(
-	_In_ NDIS_HANDLE                 FilterModuleContext,
-	_In_ NDIS_REQUEST_TYPE            RequestType,
-	_In_ NDIS_OID                     Oid,
+	_In_ NDIS_HANDLE					FilterModuleContext,
+	_In_ NDIS_REQUEST_TYPE				RequestType,
+	_In_ NDIS_OID						Oid,
 	_Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed)
-	PVOID                        InformationBuffer,
-	_In_ ULONG                        InformationBufferLength,
-	_In_opt_ ULONG                    OutputBufferLength,
-	_In_ ULONG                        MethodId,
-	_Out_ PULONG                      pBytesProcessed
+	PVOID								InformationBuffer,
+	_In_ ULONG							InformationBufferLength,
+	_In_opt_ ULONG						OutputBufferLength,
+	_In_ ULONG							MethodId,
+	_Out_ PULONG						pBytesProcessed
 	);
 
 VOID
@@ -246,9 +165,9 @@ VOID
 
 // The following definitions are used to provide compatibility 
 // of the dump files with the ones of libpcap
-#define TCPDUMP_MAGIC 0xa1b2c3d4	///< Libpcap magic number. Used by programs like tcpdump to recognize a driver's generated dump file.
-#define PCAP_VERSION_MAJOR 2		///< Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
-#define PCAP_VERSION_MINOR 4		///< Minor libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
+#define TCPDUMP_MAGIC		0xa1b2c3d4	///< Libpcap magic number. Used by programs like tcpdump to recognize a driver's generated dump file.
+#define PCAP_VERSION_MAJOR	2			///< Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
+#define PCAP_VERSION_MINOR	4			///< Minor libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
 
 // Loopback behaviour definitions
 #define NPF_DISABLE_LOOPBACK	1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
@@ -261,13 +180,13 @@ VOID
 */
 struct packet_file_header
 {
-	UINT magic;				///< Libpcap magic number
-	USHORT version_major;	///< Libpcap major version
-	USHORT version_minor;	///< Libpcap minor version
-	UINT thiszone;			///< Gmt to local correction
-	UINT sigfigs;			///< Accuracy of timestamps
-	UINT snaplen;			///< Length of the max saved portion of each packet
-	UINT linktype;			///< Data link type (DLT_*). See win_bpf.h for details.
+	UINT	magic;			///< Libpcap magic number
+	USHORT	version_major;	///< Libpcap major version
+	USHORT	version_minor;	///< Libpcap minor version
+	UINT	thiszone;		///< Gmt to local correction
+	UINT	sigfigs;		///< Accuracy of timestamps
+	UINT	snaplen;		///< Length of the max saved portion of each packet
+	UINT	linktype;		///< Data link type (DLT_*). See win_bpf.h for details.
 };
 
 /*!
@@ -276,11 +195,11 @@ struct packet_file_header
 */
 struct sf_pkthdr
 {
-	struct timeval ts;			///< time stamp
-	UINT caplen;		///< Length of captured portion. The captured portion can be different from 
-	///< the original packet, because it is possible (with a proper filter) to 
-	///< instruct the driver to capture only a portion of the packets. 
-	UINT len;		///< Length of the original packet (off wire).
+	struct timeval	ts;			///< time stamp
+	UINT			caplen;		///< Length of captured portion. The captured portion can be different from 
+								///< the original packet, because it is possible (with a proper filter) to 
+								///< instruct the driver to capture only a portion of the packets. 
+	UINT			len;		///< Length of the original packet (off wire).
 };
 
 //
@@ -300,10 +219,10 @@ struct sf_pkthdr
 typedef struct _PACKET_OID_DATA
 {
 	ULONG Oid;					///< OID code. See the Microsoft DDK documentation or the file ntddndis.h
-	///< for a complete list of valid codes.
+								///< for a complete list of valid codes.
 	ULONG Length;				///< Length of the data field
 	UCHAR Data[1];				///< variable-lenght field that contains the information passed to or received 
-	///< from the adapter.
+								///< from the adapter.
 }
 PACKET_OID_DATA, * PPACKET_OID_DATA;
 
@@ -320,13 +239,13 @@ C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
 */
 typedef struct _INTERNAL_REQUEST
 {
-	LIST_ENTRY ListElement;		///< Used to handle lists of requests.
-	//    PIRP			Irp;				///< Irp that performed the request
-	//	BOOLEAN			Internal;			///< True if the request is for internal use of npf.sys. False if the request is performed by the user through an IOCTL.
-	NDIS_EVENT InternalRequestCompletedEvent;
-	NDIS_OID_REQUEST Request;			///< The structure with the actual request, that will be passed to NdisRequest().
-	NDIS_STATUS RequestStatus;
-} INTERNAL_REQUEST, * PINTERNAL_REQUEST;
+	LIST_ENTRY			ListElement;		///< Used to handle lists of requests.
+	// PIRP				Irp;				///< Irp that performed the request
+	// BOOLEAN			Internal;			///< True if the request is for internal use of npf.sys. False if the request is performed by the user through an IOCTL.
+	NDIS_EVENT			InternalRequestCompletedEvent;
+	NDIS_OID_REQUEST	Request;			///< The structure with the actual request, that will be passed to NdisRequest().
+	NDIS_STATUS			RequestStatus;
+} INTERNAL_REQUEST, *PINTERNAL_REQUEST;
 
 /*!
   \brief Contains a NDIS packet.
@@ -335,17 +254,16 @@ typedef struct _INTERNAL_REQUEST
   This allows to handle correctly the callback structure of NdisTransferData(), handling multiple requests and
   maintaining information about the IRPs to complete.
 */
-
 typedef struct _PACKET_RESERVED
 {
-	LIST_ENTRY ListElement;		///< Used to handle lists of packets. ((NO USE!!)
-	BOOLEAN FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
-	PVOID ChildOpen;	///< The child open pointer that binded the group head open.
-	PIRP Irp;					///< Irp that performed the request.
-	//PMDL pMdl;				///< MDL mapping the buffer of the packet. (NO USE!! also no space for this variable)
-	///< after a call to NdisSend().
-	//ULONG Cpu;				///< The CPU on which the packet was pulled out of the linked list of free packets (NO USE!! also no space for this variable)
-}  PACKET_RESERVED, * PPACKET_RESERVED;
+	LIST_ENTRY	ListElement;		///< Used to handle lists of packets. ((NO USE!!)
+	BOOLEAN		FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
+	PVOID		ChildOpen;			///< The child open pointer that binded the group head open.
+	PIRP		Irp;				///< Irp that performed the request.
+	// PMDL		pMdl;				///< MDL mapping the buffer of the packet. (NO USE!! also no space for this variable)
+									///< after a call to NdisSend().
+	// ULONG	Cpu;				///< The CPU on which the packet was pulled out of the linked list of free packets (NO USE!! also no space for this variable)
+}  PACKET_RESERVED, *PPACKET_RESERVED;
 
 #define RESERVED(_p) ((PPACKET_RESERVED)((_p)->ProtocolReserved)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
 
@@ -356,10 +274,10 @@ typedef struct _PACKET_RESERVED
 */
 typedef struct _DEVICE_EXTENSION
 {
-	NDIS_STRING AdapterName;			///< Name of the adapter.
-	PWSTR ExportString;		///< Name of the exported device, i.e. name that the applications will use 
-	///< to open this adapter through WinPcap.
-} DEVICE_EXTENSION, * PDEVICE_EXTENSION;
+	NDIS_STRING	AdapterName;			///< Name of the adapter.
+	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use 
+										///< to open this adapter through WinPcap.
+} DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 /*!
   \brief Kernel buffer of each CPU.
@@ -368,28 +286,27 @@ typedef struct _DEVICE_EXTENSION
 */
 typedef struct __CPU_Private_Data
 {
-	ULONG P;					///< Zero-based index of the producer in the buffer. It indicates the first free byte to be written.
-	ULONG C;					///< Zero-based index of the consumer in the buffer. It indicates the first free byte to be read.
-	ULONG Free;				///< Number of the free bytes in the buffer
-	PUCHAR Buffer;				///< Pointer to the kernel buffer used to capture packets.
-	ULONG Accepted;			///< Number of packet that current capture instance acepted, from its opening. A packet 
-	///< is accepted if it passes the filter and fits in the buffer. Accepted packets are the
-	///< ones that reach the application. 
-	///< This number is related to the particular CPU this structure is referring to.
-	ULONG Received;			///< Number of packets received by current instance from its opening, i.e. number of 
-	///< packet received by the network adapter since the beginning of the 
-	///< capture/monitoring/dump session. 
-	///< This number is related to the particular CPU this structure is referring to.
-	ULONG Dropped;			///< Number of packet that current instance had to drop, from its opening. A packet 
-	///< is dropped if there is no more space to store it in the circular buffer that the 
-	///< driver associates to current instance. 
-	///< This number is related to the particular CPU this structure is referring to.
-	NDIS_SPIN_LOCK BufferLock;	///< It protects the buffer associated with this CPU.
-	PMDL TransferMdl1;		///< MDL used to map the portion of the buffer that will contain an incoming packet. 
-	PMDL TransferMdl2;		///< Second MDL used to map the portion of the buffer that will contain an incoming packet. 
-	ULONG NewP;				///< Used by NdisTransferData() (when we call NdisTransferData, p index must be updated only in the TransferDataComplete.
-}
-CpuPrivateData;
+	ULONG			P;				///< Zero-based index of the producer in the buffer. It indicates the first free byte to be written.
+	ULONG			C;				///< Zero-based index of the consumer in the buffer. It indicates the first free byte to be read.
+	ULONG			Free;			///< Number of the free bytes in the buffer
+	PUCHAR			Buffer;			///< Pointer to the kernel buffer used to capture packets.
+	ULONG			Accepted;		///< Number of packet that current capture instance acepted, from its opening. A packet 
+									///< is accepted if it passes the filter and fits in the buffer. Accepted packets are the
+									///< ones that reach the application. 
+									///< This number is related to the particular CPU this structure is referring to.
+	ULONG			Received;		///< Number of packets received by current instance from its opening, i.e. number of 
+									///< packet received by the network adapter since the beginning of the 
+									///< capture/monitoring/dump session. 
+									///< This number is related to the particular CPU this structure is referring to.
+	ULONG			Dropped;		///< Number of packet that current instance had to drop, from its opening. A packet 
+									///< is dropped if there is no more space to store it in the circular buffer that the 
+									///< driver associates to current instance. 
+									///< This number is related to the particular CPU this structure is referring to.
+	NDIS_SPIN_LOCK	BufferLock;		///< It protects the buffer associated with this CPU.
+	PMDL			TransferMdl1;	///< MDL used to map the portion of the buffer that will contain an incoming packet. 
+	PMDL			TransferMdl2;	///< Second MDL used to map the portion of the buffer that will contain an incoming packet. 
+	ULONG			NewP;			///< Used by NdisTransferData() (when we call NdisTransferData, p index must be updated only in the TransferDataComplete.
+} CpuPrivateData;
 
 
 /*!
@@ -401,111 +318,101 @@ CpuPrivateData;
 */
 typedef struct _OPEN_INSTANCE
 {
-	NDIS_STRING AdapterName;
-	BOOLEAN DirectBinded;
-	struct _OPEN_INSTANCE *Next;
-	struct _OPEN_INSTANCE *GroupNext;
-	struct _OPEN_INSTANCE *GroupHead;
+	NDIS_STRING				AdapterName;
+	BOOLEAN					DirectBinded;
+	struct _OPEN_INSTANCE	*Next;
+	struct _OPEN_INSTANCE	*GroupNext;
+	struct _OPEN_INSTANCE	*GroupHead;
+	ULONG					MyPacketFilter;
+	ULONG					HigherPacketFilter;
 
-	ULONG MyPacketFilter;
-	ULONG HigherPacketFilter;
+	NDIS_SPIN_LOCK			OIDLock;		///< Lock for protection of state and outstanding sends and recvs
+	PNDIS_OID_REQUEST		PendingOidRequest;
 
-	//LIST_ENTRY FilterModuleLink;
-	NDIS_SPIN_LOCK OIDLock;    // Lock for protection of state and outstanding sends and recvs
-	PNDIS_OID_REQUEST PendingOidRequest;
-
-	PDEVICE_EXTENSION DeviceExtension;	///< Pointer to the _DEVICE_EXTENSION structure of the device on which
-	///< the instance is bound.
-	NDIS_HANDLE AdapterHandle;		///< NDIS idetifier of the adapter used by this instance.
-	//NDIS_HANDLE BindContext;
-	UINT Medium;				///< Type of physical medium the underlying NDIS driver uses. See the
-	///< documentation of NdisOpenAdapter in the MS DDK for details.
-	NDIS_HANDLE PacketPool;			///< Pool of NDIS_PACKET structures used to transfer the packets from and to the NIC driver.
-	KSPIN_LOCK RequestSpinLock;	///< SpinLock used to synchronize the OID requests.
-	LIST_ENTRY RequestList;		///< List of pending OID requests.
-	LIST_ENTRY ResetIrpList;		///< List of pending adapter reset requests.
-	INTERNAL_REQUEST Requests[MAX_REQUESTS]; ///< Array of structures that wrap every single OID request.
-	PMDL BufferMdl;			///< Pointer to a Memory descriptor list (MDL) that maps the circular buffer's memory.
-	PKEVENT ReadEvent;			///< Pointer to the event on which the read calls on this instance must wait.
-	PUCHAR bpfprogram;			///< Pointer to the filtering pseudo-code associated with current instance of the driver.
-	///< This code is used only in particular situations (for example when the packet received
-	///< from the NIC driver is stored in two non-consecutive buffers. In normal situations
-	///< the filtering routine created by the JIT compiler and pointed by the next field 
-	///< is used. See \ref NPF for details on the filtering process.
+	PDEVICE_EXTENSION		DeviceExtension;///< Pointer to the _DEVICE_EXTENSION structure of the device on which
+											///< the instance is bound.
+	NDIS_HANDLE				AdapterHandle;	///< NDIS idetifier of the adapter used by this instance.
+	UINT					Medium;			///< Type of physical medium the underlying NDIS driver uses. See the
+											///< documentation of NdisOpenAdapter in the MS DDK for details.
+	NDIS_HANDLE				PacketPool;		///< Pool of NDIS_PACKET structures used to transfer the packets from and to the NIC driver.
+	KSPIN_LOCK				RequestSpinLock;///< SpinLock used to synchronize the OID requests.
+	LIST_ENTRY				RequestList;	///< List of pending OID requests.
+	LIST_ENTRY				ResetIrpList;	///< List of pending adapter reset requests.
+	INTERNAL_REQUEST		Requests[MAX_REQUESTS]; ///< Array of structures that wrap every single OID request.
+	PMDL					BufferMdl;		///< Pointer to a Memory descriptor list (MDL) that maps the circular buffer's memory.
+	PKEVENT					ReadEvent;		///< Pointer to the event on which the read calls on this instance must wait.
+	PUCHAR					bpfprogram;		///< Pointer to the filtering pseudo-code associated with current instance of the driver.
+											///< This code is used only in particular situations (for example when the packet received
+											///< from the NIC driver is stored in two non-consecutive buffers. In normal situations
+											///< the filtering routine created by the JIT compiler and pointed by the next field 
+											///< is used. See \ref NPF for details on the filtering process.
 #ifdef _X86_
-	JIT_BPF_Filter* Filter;			///< Pointer to the native filtering function created by the jitter. 
+	JIT_BPF_Filter*			Filter;			///< Pointer to the native filtering function created by the jitter. 
 	///< See BPF_jitter() for details.
 #endif //_X86_
-	UINT MinToCopy;			///< Minimum amount of data in the circular buffer that unlocks a read. Set with the
-	///< BIOCSMINTOCOPY IOCTL. 
-	LARGE_INTEGER TimeOut;			///< Timeout after which a read is released, also if the amount of data in the buffer is 
-	///< less than MinToCopy. Set with the BIOCSRTIMEOUT IOCTL.
+	UINT					MinToCopy;		///< Minimum amount of data in the circular buffer that unlocks a read. Set with the
+											///< BIOCSMINTOCOPY IOCTL. 
+	LARGE_INTEGER			TimeOut;		///< Timeout after which a read is released, also if the amount of data in the buffer is 
+											///< less than MinToCopy. Set with the BIOCSRTIMEOUT IOCTL.
 
-	int mode;				///< Working mode of the driver. See PacketSetMode() for details.
-	LARGE_INTEGER Nbytes;				///< Amount of bytes accepted by the filter when this instance is in statistical mode.
-	LARGE_INTEGER Npackets;			///< Number of packets accepted by the filter when this instance is in statistical mode.
-	NDIS_SPIN_LOCK CountersLock;		///< SpinLock that protects the statistical mode counters.
-	UINT Nwrites;			///< Number of times a single write must be physically repeated. See \ref NPF for an 
-	///< explanation
-	ULONG Multiple_Write_Counter;	///< Counts the number of times a single write has already physically repeated.
-	NDIS_EVENT WriteEvent;			///< Event used to synchronize the multiple write process.
-	BOOLEAN WriteInProgress;	///< True if a write is currently in progress. NPF currently allows a single wite on 
-	///< the same open instance.
-	NDIS_SPIN_LOCK WriteLock;			///< SpinLock that protects the WriteInProgress variable.
-	NDIS_EVENT NdisRequestEvent;	///< Event used to synchronize I/O requests with the callback structure of NDIS.
-	BOOLEAN SkipSentPackets;	///< True if this instance should not capture back the packets that it transmits.
-	NDIS_STATUS IOStatus;			///< Maintains the status of and OID request call, that will be passed to the application.
-	HANDLE DumpFileHandle;		///< Handle of the file used in dump mode.
-	PFILE_OBJECT DumpFileObject;		///< Pointer to the object of the file used in dump mode.
-	PKTHREAD DumpThreadObject;	///< Pointer to the object of the thread used in dump mode.
-	HANDLE DumpThreadHandle;	///< Handle of the thread created by dump mode to asynchronously move the buffer to disk.
-	NDIS_EVENT DumpEvent;			///< Event used to synchronize the dump thread with the tap when the instance is in dump mode.
-	LARGE_INTEGER DumpOffset;			///< Current offset in the dump file.
-	UNICODE_STRING DumpFileName;		///< String containing the name of the dump file.
-	UINT MaxDumpBytes;		///< Maximum dimension in bytes of the dump file. If the dump file reaches this size it 
-	///< will be closed. A value of 0 means unlimited size.
-	UINT MaxDumpPacks;		///< Maximum number of packets that will be saved in the dump file. If this number of 
-	///< packets is reached the dump will be closed. A value of 0 means unlimited number of 
-	///< packets.
-	BOOLEAN DumpLimitReached;	///< TRUE if the maximum dimension of the dump file (MaxDumpBytes or MaxDumpPacks) is 
-	///< reached.
+	int						mode;			///< Working mode of the driver. See PacketSetMode() for details.
+	LARGE_INTEGER			Nbytes;			///< Amount of bytes accepted by the filter when this instance is in statistical mode.
+	LARGE_INTEGER			Npackets;		///< Number of packets accepted by the filter when this instance is in statistical mode.
+	NDIS_SPIN_LOCK			CountersLock;	///< SpinLock that protects the statistical mode counters.
+	UINT					Nwrites;		///< Number of times a single write must be physically repeated. See \ref NPF for an 
+											///< explanation
+	ULONG					Multiple_Write_Counter;	///< Counts the number of times a single write has already physically repeated.
+	NDIS_EVENT				WriteEvent;		///< Event used to synchronize the multiple write process.
+	BOOLEAN					WriteInProgress;///< True if a write is currently in progress. NPF currently allows a single wite on 
+											///< the same open instance.
+	NDIS_SPIN_LOCK			WriteLock;		///< SpinLock that protects the WriteInProgress variable.
+	NDIS_EVENT				NdisRequestEvent;	///< Event used to synchronize I/O requests with the callback structure of NDIS.
+	BOOLEAN					SkipSentPackets;	///< True if this instance should not capture back the packets that it transmits.
+	NDIS_STATUS				IOStatus;		///< Maintains the status of and OID request call, that will be passed to the application.
+	HANDLE					DumpFileHandle;	///< Handle of the file used in dump mode.
+	PFILE_OBJECT			DumpFileObject;	///< Pointer to the object of the file used in dump mode.
+	PKTHREAD				DumpThreadObject;	///< Pointer to the object of the thread used in dump mode.
+	HANDLE					DumpThreadHandle;	///< Handle of the thread created by dump mode to asynchronously move the buffer to disk.
+	NDIS_EVENT				DumpEvent;		///< Event used to synchronize the dump thread with the tap when the instance is in dump mode.
+	LARGE_INTEGER			DumpOffset;		///< Current offset in the dump file.
+	UNICODE_STRING			DumpFileName;	///< String containing the name of the dump file.
+	UINT					MaxDumpBytes;	///< Maximum dimension in bytes of the dump file. If the dump file reaches this size it 
+											///< will be closed. A value of 0 means unlimited size.
+	UINT					MaxDumpPacks;	///< Maximum number of packets that will be saved in the dump file. If this number of 
+											///< packets is reached the dump will be closed. A value of 0 means unlimited number of 
+											///< packets.
+	BOOLEAN					DumpLimitReached;	///< TRUE if the maximum dimension of the dump file (MaxDumpBytes or MaxDumpPacks) is 
+											///< reached.
 #ifdef HAVE_BUGGY_TME_SUPPORT
-	MEM_TYPE mem_ex;				///< Memory used by the TME virtual co-processor
-	TME_CORE tme;				///< Data structure containing the virtualization of the TME co-processor
-#endif //HAVE_BUGGY_TME_SUPPORT
+	MEM_TYPE				mem_ex;			///< Memory used by the TME virtual co-processor
+	TME_CORE				tme;			///< Data structure containing the virtualization of the TME co-processor
+#endif//HAVE_BUGGY_TME_SUPPORT
 
-	NDIS_SPIN_LOCK MachineLock;		///< SpinLock that protects the BPF filter and the TME engine, if in use.
-	UINT MaxFrameSize;		///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the 
-	///< size of the frames sent with NPF_Write() or NPF_BufferedWrite().
+	NDIS_SPIN_LOCK			MachineLock;	///< SpinLock that protects the BPF filter and the TME engine, if in use.
+	UINT					MaxFrameSize;	///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the 
+											///< size of the frames sent with NPF_Write() or NPF_BufferedWrite().
 	//
 	// KAFFINITY is used as a bit mask for the affinity in the system. So on every supported OS is big enough for all the CPUs on the system (32 bits on x86, 64 on x64?).
 	// We use its size to compute the max number of CPUs.
 	//
-	CpuPrivateData CpuData[sizeof(KAFFINITY) * 8];		///< Pool of kernel buffer structures, one for each CPU.
-	ULONG ReaderSN;			///< Sequence number of the next packet to be read from the pool of kernel buffers.
-	ULONG WriterSN;			///< Sequence number of the next packet to be written in the pool of kernel buffers.
-	///< These two sequence numbers are unique for each capture instance.
-	ULONG Size;				///< Size of each kernel buffer contained in the CpuData field.
-	ULONG AdapterHandleUsageCounter;
-	NDIS_SPIN_LOCK AdapterHandleLock;
-	ULONG AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.	
+	CpuPrivateData			CpuData[sizeof(KAFFINITY) * 8];	///< Pool of kernel buffer structures, one for each CPU.
+	ULONG					ReaderSN;		///< Sequence number of the next packet to be read from the pool of kernel buffers.
+	ULONG					WriterSN;		///< Sequence number of the next packet to be written in the pool of kernel buffers.
+											///< These two sequence numbers are unique for each capture instance.
+	ULONG					Size;			///< Size of each kernel buffer contained in the CpuData field.
+	ULONG					AdapterHandleUsageCounter;
+	NDIS_SPIN_LOCK			AdapterHandleLock;
+	ULONG					AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.	
 
-	NDIS_EVENT NdisOpenCloseCompleteEvent;
-	NDIS_EVENT NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
-	NTSTATUS OpenCloseStatus;
-	ULONG TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
-	ULONG NumPendingIrps;
-	BOOLEAN ClosePending; 
-	NDIS_SPIN_LOCK OpenInUseLock;
+	NDIS_EVENT				NdisOpenCloseCompleteEvent;
+	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
+	NTSTATUS				OpenCloseStatus;
+	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
+	ULONG					NumPendingIrps;
+	BOOLEAN					ClosePending; 
+	NDIS_SPIN_LOCK			OpenInUseLock;
 }
-OPEN_INSTANCE, * POPEN_INSTANCE;
-
-enum ADAPTER_BINDING_STATUS
-{
-	ADAPTER_UNBOUND,
-	ADAPTER_BOUND,
-	ADAPTER_UNBINDING,
-};
+OPEN_INSTANCE, *POPEN_INSTANCE;
 
 /*!
   \brief Structure prepended to each packet in the kernel buffer pool.
@@ -516,13 +423,12 @@ enum ADAPTER_BINDING_STATUS
 */
 struct PacketHeader
 {
-	ULONG SN;								///< Sequence number of the packet.
-	struct bpf_hdr header;					///< bpf header, created by the tap, and copied unmodified to user level programs.
+	ULONG			SN;				///< Sequence number of the packet.
+	struct bpf_hdr	header;			///< bpf header, created by the tap, and copied unmodified to user level programs.
 };
 
 extern ULONG g_NCpu;
 extern struct time_conv G_Start_Time; // from openclos.c
-extern UINT g_SendPacketFlags;
 
 #define TRANSMIT_PACKETS 256	///< Maximum number of packets in the transmit packet pool. This value is an upper bound to the number
 ///< of packets that can be transmitted at the same time or with a single call to NdisSendPackets.

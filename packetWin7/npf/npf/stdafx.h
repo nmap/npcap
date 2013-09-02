@@ -5,10 +5,10 @@
 #endif
 #define WIN_NT_DRIVER
 
-#define NDIS620 1
+#define NDIS620 1 //NDIS 6.2 version (for Windows 7) is currently used
 //#define NDIS60 1
 
-// TODO: Specify which version of the NDIS contract you will use here.
+// Specify which version of the NDIS contract you will use here.
 // In many cases, 6.0 is the best choice.  You only need to select a later
 // version if you need a feature that is not available in 6.0.
 //
@@ -23,7 +23,6 @@
 
 #define NPF_ALLOC_TAG '1234'
 #define NPF_REQUEST_ID '5678'
-//#define NPF_NBL_TAG (PVOID) 0x31572455
 
 //#pragma comment(lib, "ndis.lib")
 
@@ -31,7 +30,6 @@
 
 #include <ntddk.h>
 #include <ndis.h>
-//#include <wdf.h>
 #include <wmistr.h>
 #include <wdmsec.h>
 #include <wdmguid.h>
