@@ -129,11 +129,11 @@ DriverEntry(
 	//
 	// Get number of CPUs and save it
 	//
-#ifdef NDIS620
-	g_NCpu = NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
-#else
+// #ifdef NDIS620
+// 	g_NCpu = NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
+// #else
 	g_NCpu = NdisSystemProcessorCount();
-#endif
+/*#endif*/
 
 
 	//
