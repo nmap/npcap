@@ -1280,40 +1280,11 @@ Return Value:
 
 _Use_decl_annotations_
 NDIS_STATUS
-NPF_Attach(
+NPF_AttachAdapter(
 	NDIS_HANDLE                     NdisFilterHandle,
 	NDIS_HANDLE                     FilterDriverContext,
 	PNDIS_FILTER_ATTACH_PARAMETERS  AttachParameters
 	)
-/*++
-
-Routine Description:
-
-	Filter attach routine.
-	Create filter's context, allocate NetBufferLists and NetBuffer pools and any
-	other resources, and read configuration if needed.
-
-Arguments:
-
-	NdisFilterHandle - Specify a handle identifying this instance of the filter. FilterAttach
-					   should save this handle. It is a required  parameter in subsequent calls
-					   to NdisFxxx functions.
-	FilterDriverContext - Filter driver context passed to NdisFRegisterFilterDriver.
-
-	AttachParameters - attach parameters
-
-Return Value:
-
-	NDIS_STATUS_SUCCESS: FilterAttach successfully allocated and initialize data structures
-						 for this filter instance.
-	NDIS_STATUS_RESOURCES: FilterAttach failed due to insufficient resources.
-	NDIS_STATUS_FAILURE: FilterAttach could not set up this instance of this filter and it has called
-						 NdisWriteErrorLogEntry with parameters specifying the reason for failure.
-
-N.B.:  FILTER can use NdisRegisterDeviceEx to create a device, so the upper 
-	layer can send Irps to the filter.
-
---*/
 {
 	POPEN_INSTANCE			Open = NULL;
 	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
@@ -1429,32 +1400,6 @@ NPF_Pause(
 	NDIS_HANDLE                     FilterModuleContext,
 	PNDIS_FILTER_PAUSE_PARAMETERS   PauseParameters
 	)
-/*++
-
-Routine Description:
-
-	Filter pause routine.
-	Complete all the outstanding sends and queued sends,
-	wait for all the outstanding recvs to be returned
-	and return all the queued receives.
-
-Arguments:
-
-	FilterModuleContext - pointer to the filter context stucture
-	PauseParameters     - additional information about the pause
-
-Return Value:
-
-	NDIS_STATUS_SUCCESS if filter pauses successfully, NDIS_STATUS_PENDING
-	if not.  No other return value is allowed (pause must succeed, eventually).
-
-N.B.: When the filter is in Pausing state, it can still process OID requests, 
-	complete sending, and returning packets to NDIS, and also indicate status.
-	After this function completes, the filter must not attempt to send or 
-	receive packets, but it may still process OID requests and status 
-	indications.
-
---*/
 {
 	NDIS_STATUS Status;
 
@@ -1476,24 +1421,6 @@ NPF_Restart(
 	NDIS_HANDLE                     FilterModuleContext,
 	PNDIS_FILTER_RESTART_PARAMETERS RestartParameters
 	)
-/*++
-
-Routine Description:
-
-	Filter restart routine.
-	Start the datapath - begin sending and receiving NBLs.
-
-Arguments:
-
-	FilterModuleContext - pointer to the filter context stucture.
-	RestartParameters   - additional information about the restart operation.
-
-Return Value:
-
-	NDIS_STATUS_SUCCESS: if filter restarts successfully
-	NDIS_STATUS_XXX: Otherwise.
-
---*/
 {
 	NDIS_STATUS Status;
 
@@ -1512,7 +1439,7 @@ Return Value:
 
 _Use_decl_annotations_
 VOID
-NPF_Detach(
+NPF_DetachAdapter(
 	NDIS_HANDLE     FilterModuleContext
 	)
 /*++
@@ -2126,33 +2053,6 @@ NPF_DoInternalRequest(
 	_In_ ULONG                        MethodId,
 	_Out_ PULONG                      pBytesProcessed
 	)
-/*++
-
-Routine Description:
-
-	Utility routine that forms and sends an NDIS_OID_REQUEST to the
-	miniport, waits for it to complete, and returns status
-	to the caller.
-
-	NOTE: this assumes that the calling routine ensures validity
-	of the filter handle until this returns.
-
-Arguments:
-
-	FilterModuleContext - pointer to our filter module context
-	RequestType - NdisRequest[Set|Query|method]Information
-	Oid - the object being set/queried
-	InformationBuffer - data for the request
-	InformationBufferLength - length of the above
-	OutputBufferLength  - valid only for method request
-	MethodId - valid only for method request
-	pBytesProcessed - place to return bytes read/written
-
-Return Value:
-
-	Status of the set/query request
-
---*/
 {
 	POPEN_INSTANCE				Open = (POPEN_INSTANCE) FilterModuleContext;
 	INTERNAL_REQUEST            FilterRequest;

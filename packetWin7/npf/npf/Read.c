@@ -433,26 +433,6 @@ NPF_SendEx(
 	NDIS_PORT_NUMBER    PortNumber,
 	ULONG               SendFlags
 	)
-/*++
-
-Routine Description:
-
-	Send Net Buffer List handler
-	This function is an optional function for filter drivers. If provided, NDIS
-	will call this function to transmit a linked list of NetBuffers, described by a
-	NetBufferList, over the network. If this handler is NULL, NDIS will skip calling
-	this filter when sending a NetBufferList and will call the next lower 
-	driver in the stack.  A filter that doesn't provide a FilerSendNetBufferList
-	handler can not originate a send on its own.
-
-Arguments:
-
-	FilterModuleContext     - our filter context area
-	NetBufferLists          - a List of NetBufferLists to send
-	PortNumber              - Port Number to which this send is targeted
-	SendFlags               - specifies if the call is at DISPATCH_LEVEL
-
---*/
 {
 	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
 	POPEN_INSTANCE		GroupOpen;
@@ -498,32 +478,6 @@ NPF_TapEx(
 	ULONG               NumberOfNetBufferLists,
 	ULONG               ReceiveFlags
 	)
-/*++
-
-Routine Description:
-
-	FilerReceiveNetBufferLists is an optional function for filter drivers.
-	If provided, this function processes receive indications made by underlying
-	NIC or lower level filter drivers. This function  can also be called as a
-	result of loopback. If this handler is NULL, NDIS will skip calling this
-	filter when processing a receive indication and will call the next higher
-	driver in the stack. A filter that doesn't provide a
-	FilterReceiveNetBufferLists handler cannot provide a
-	FilterReturnNetBufferLists handler and cannot a initiate an original receive 
-	indication on its own.
-
-Arguments:
-
-	FilterModuleContext      - our filter context area.
-	NetBufferLists           - a linked list of NetBufferLists
-	PortNumber               - Port on which the receive is indicated
-	ReceiveFlags             -
-
-N.B.: It is important to check the ReceiveFlags in NDIS_TEST_RECEIVE_CANNOT_PEND.
-	This controls whether the receive indication is an synchronous or 
-	asynchronous function call.
-
---*/
 {
 
 	POPEN_INSTANCE      Open = (POPEN_INSTANCE) FilterModuleContext;

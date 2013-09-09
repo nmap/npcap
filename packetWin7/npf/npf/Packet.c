@@ -159,8 +159,8 @@ DriverEntry(
 	FChars.ServiceName = ServiceName;
 	
 	FChars.SetOptionsHandler = NPF_RegisterOptions;
-	FChars.AttachHandler = NPF_Attach;
-	FChars.DetachHandler = NPF_Detach;
+	FChars.AttachHandler = NPF_AttachAdapter;
+	FChars.DetachHandler = NPF_DetachAdapter;
 	FChars.RestartHandler = NPF_Restart;
 	FChars.PauseHandler = NPF_Pause;
 	FChars.SetFilterModuleOptionsHandler = NPF_SetModuleOptions;
