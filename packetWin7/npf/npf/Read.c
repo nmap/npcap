@@ -456,7 +456,7 @@ NPF_SendEx(
 		TempOpen = GroupOpen;
 		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
 		{
-			NPF_tapExForEachOpen(TempOpen, NetBufferLists);
+			NPF_TapExForEachOpen(TempOpen, NetBufferLists);
 		}
 
 		GroupOpen = TempOpen->GroupNext;
@@ -512,7 +512,7 @@ NPF_TapEx(
 		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
 		{
 			//let every group adapter receive the packets
-			NPF_tapExForEachOpen(TempOpen, NetBufferLists);
+			NPF_TapExForEachOpen(TempOpen, NetBufferLists);
 		}
 
 		GroupOpen = TempOpen->GroupNext;
@@ -532,7 +532,7 @@ NPF_TapEx(
 //-------------------------------------------------------------------
 
 VOID
-NPF_tapExForEachOpen(
+NPF_TapExForEachOpen(
 	IN POPEN_INSTANCE Open,
 	IN PNET_BUFFER_LIST pNetBufferLists
 	)

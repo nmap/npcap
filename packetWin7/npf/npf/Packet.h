@@ -756,7 +756,6 @@ DriverEntry(
 */
 PWCHAR
 getAdaptersList(
-	VOID
 	);
 
 
@@ -768,7 +767,6 @@ getAdaptersList(
 */
 PKEY_VALUE_PARTIAL_INFORMATION
 getTcpBindings(
-	VOID
 	);
 
 
@@ -813,7 +811,8 @@ NPF_OpenAdapter(
   \param Irp Pointer to the IRP containing the user request.
   \return The status of the operation. See ntstatus.h in the DDK.
 
-  This function is called when a running instance of the driver is closed by the user with a CloseHandle(). 
+  This function is called when a running instance of the driver is closed by the user with a CloseHandle().
+  Used together with NPF_CloseAdapter().
   It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter. 
 */
@@ -830,6 +829,7 @@ NPF_Cleanup(
   \return The status of the operation. See ntstatus.h in the DDK.
 
   This function is called by NPF_RemoveUnclosedAdapters().
+  Used together with NPF_CloseAdapterForUnclosed().
   It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
@@ -839,35 +839,58 @@ NPF_CleanupForUnclosed(
 );
 
 
-NTSTATUS NPF_CloseAdapter(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
+/*!
+  \brief Closes an instance of the driver.
+  \param DeviceObject Pointer to the device object utilized by the user.
+  \param Irp Pointer to the IRP containing the user request.
+  \return The status of the operation. See ntstatus.h in the DDK.
 
-NTSTATUS NPF_CloseAdapterForUnclosed(POPEN_INSTANCE pOpen);
+  This function is called when a running instance of the driver is closed by the user with a CloseHandle().
+  Used together with NPF_Cleanup().
+  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
+  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter. 
+*/
+NTSTATUS
+NPF_CloseAdapter(
+	IN PDEVICE_OBJECT DeviceObject,
+	IN PIRP Irp
+	);
 
 
 /*!
-  \brief Callback invoked by NDIS when a packet arrives from the network.
-  \param ProtocolBindingContext Context of the function. Points to a OPEN_INSTANCE structure that identifies 
-   the NPF instance to which the packets are destined.
-  \param MacReceiveContext Handle that identifies the underlying NIC driver that generated the request. 
-   This value must be used when the packet is transferred from the NIC driver with NdisTransferData().
-  \param HeaderBuffer Pointer to the buffer in the NIC driver memory that contains the header of the packet.
-  \param HeaderBufferSize Size in bytes of the header.
-  \param LookAheadBuffer Pointer to the buffer in the NIC driver's memory that contains the incoming packet's 
-   data <b>available to NPF</b>. This value does not necessarily coincide with the actual size of the packet,
-   since only a portion can be available at this time. The remaining portion can be obtained with the
-   NdisTransferData() NDIS function.
-  \param LookaheadBufferSize Size in bytes of the lookahead buffer.
-  \param PacketSize Total size of the incoming packet, excluded the header.
+  \brief Closes an instance of the driver.
+  \param DeviceObject Pointer to the device object utilized by the user.
+  \param Irp Pointer to the IRP containing the user request.
   \return The status of the operation. See ntstatus.h in the DDK.
 
-  NPF_tap() is called by the underlying NIC for every incoming packet. It is the most important and one of 
+  This function is called by NPF_RemoveUnclosedAdapters().
+  Used together with NPF_CleanupForUnclosed().
+  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
+  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter. 
+*/
+NTSTATUS
+NPF_CloseAdapterForUnclosed(
+	POPEN_INSTANCE pOpen
+	);
+
+
+/*!
+  \brief Callback invoked by NPF_TapEx() when a packet arrives from the network.
+  \param Open Pointer to an OPEN_INSTANCE structure to which the packets are destined.
+  \param pNetBufferLists A List of NetBufferLists to receive.
+
+  NPF_TapExForEachOpen() is called by the underlying NIC for every incoming packet. It is the most important and one of 
   the most complex functions of NPF: it executes the filter, runs the statistical engine (if the instance is in 
   statistical mode), gathers the timestamp, moves the packet in the buffer. NPF_tap() is the only function,
   along with the filtering ones, that is executed for every incoming packet, therefore it is carefully 
   optimized.
 */
+VOID
+NPF_TapExForEachOpen(
+	IN POPEN_INSTANCE Open,
+	IN PNET_BUFFER_LIST pNetBufferLists
+	);
 
-VOID NPF_tapExForEachOpen(IN POPEN_INSTANCE Open, IN PNET_BUFFER_LIST pNetBufferLists);
 
 /*!
   \brief Handles the IOCTL calls.
@@ -947,7 +970,7 @@ NPF_BufferedWrite(
 
 /*!
   \brief Waits the completion of all the sends performed by NPF_BufferedWrite.
-  \param Open Pointer to open context structure
+  \param Open Pointer to open context structure.
 
   This function is used by NPF_BufferedWrite to wait the completion of
   all the sends before returning the control to the user.
@@ -959,8 +982,19 @@ NPF_WaitEndOfBufferedWrite(
 
 
 /*!
+  \brief Ends a send operation.
+  \param Open Pointer to open context structure.
+  \param FreeBufAfterWrite Whether the buffer should be freed. 
+
+  Callback function associated with the NdisFSend() NDIS function. It is invoked by NPF_SendCompleteEx() when the NIC 
+  driver has finished an OID request operation that was previously started by NPF_Write().
 */
-VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterWrite);
+VOID
+NPF_SendCompleteExForEachOpen(
+	IN POPEN_INSTANCE Open,
+	BOOLEAN FreeBufAfterWrite
+	);
+
 
 /*!
   \brief Callback for NDIS StatusHandler. Not used by NPF
@@ -968,8 +1002,8 @@ VOID NPF_SendCompleteExForEachOpen(IN POPEN_INSTANCE Open, BOOLEAN FreeBufAfterW
 VOID
 NPF_StatusEx(
 	IN NDIS_HANDLE ProtocolBindingContext,
-	IN PNDIS_STATUS_INDICATION StatusIndication)
-	;
+	IN PNDIS_STATUS_INDICATION StatusIndication
+	);
 
 
 /*!
@@ -991,7 +1025,7 @@ NPF_StatusComplete(
   kernel buffer to the user buffer associated with Irp.
   First of all, NPF_Read checks the amount of data in kernel buffer associated with current NPF instance. 
   - If the instance is in capture mode and the buffer contains more than OPEN_INSTANCE::MinToCopy bytes,
-  NPF_Read moves the data in the user buffer and returns immediatly. In this way, the read performed by the
+  NPF_Read moves the data in the user buffer and returns immediately. In this way, the read performed by the
   user is not blocking.
   - If the buffer contains less than MinToCopy bytes, the application's request isn't 
   satisfied immediately, but it's blocked until at least MinToCopy bytes arrive from the net 
@@ -1013,7 +1047,10 @@ NPF_Read(
   This function is used by NPF_AttachAdapter() and NPF_OpenAdapter() to add a new open context to
   the global open array, this array is designed to help find and clean the specific adapter context.
 */
-void NPF_AddToOpenArray(POPEN_INSTANCE Open);
+void
+NPF_AddToOpenArray(
+	POPEN_INSTANCE Open
+	);
 
 
 /*!
@@ -1027,7 +1064,10 @@ void NPF_AddToOpenArray(POPEN_INSTANCE Open);
   up-level packet.dll and so on. Head adapter contexts are designed because NDIS 6.x
   only allows one-time binding, unlike NDIS 5.0.
 */
-void NPF_AddToGroupOpenArray(POPEN_INSTANCE Open);
+void
+NPF_AddToGroupOpenArray(
+	POPEN_INSTANCE Open
+	);
 
 
 /*!
@@ -1037,7 +1077,10 @@ void NPF_AddToGroupOpenArray(POPEN_INSTANCE Open);
   This function is used by NPF_DetachAdapter(), NPF_Cleanup() and NPF_CleanupForUnclosed()
   to remove an open context from the global open array.
 */
-void NPF_RemoveFromOpenArray(POPEN_INSTANCE Open);
+void
+NPF_RemoveFromOpenArray(
+	POPEN_INSTANCE Open
+	);
 
 
 /*!
@@ -1047,24 +1090,85 @@ void NPF_RemoveFromOpenArray(POPEN_INSTANCE Open);
   This function is used by NPF_Cleanup() and NPF_CleanupForUnclosed()
   to remove an open context from the group open array of a head adapter.
 */
-void NPF_RemoveFromGroupOpenArray(POPEN_INSTANCE Open);
+void
+NPF_RemoveFromGroupOpenArray(
+	POPEN_INSTANCE Open
+	);
 
 
 /*!
-  \brief Compare
+  \brief Compare two NDIS strings.
+  \param s1 The first string.
+  \param s2 The second string.
+  \return  1 if s1 > s2
+		   0 if s1 = s2
+		  -1 if s1 < s2
+
+  This function is used to help decide whether two adapter names are the same.
 */
-int NPF_CompareAdapterName(PNDIS_STRING s1, PNDIS_STRING s2);
+int
+NPF_CompareAdapterName(
+	PNDIS_STRING s1,
+	PNDIS_STRING s2
+	);
+
 
 /*!
+  \brief Get a copy of open instance from the global array.
+  \param pAdapterName The adapter name of the target open instance.
+  \param DeviceExtension Pointer to the _DEVICE_EXTENSION structure of the device.
+  \return Pointer to the new open instance.
 
+  This function is used to create a group member adapter for the group head one.
 */
-POPEN_INSTANCE NPF_GetCopyFromOpenArray(PNDIS_STRING pAdapterName, PDEVICE_EXTENSION DeviceExtension);
+POPEN_INSTANCE
+NPF_GetCopyFromOpenArray(
+	PNDIS_STRING pAdapterName,
+	PDEVICE_EXTENSION DeviceExtension
+	);
 
-void NPF_RemoveUnclosedAdapters();
 
-POPEN_INSTANCE NPF_DuplicateOpenObject(POPEN_INSTANCE OriginalOpen, PDEVICE_EXTENSION DeviceExtension);
+/*!
+  \brief Check whether there are still unclosed open instances and close them if any.
+  
+  This function is used by NPF_DetachAdapter().
+*/
+void
+NPF_RemoveUnclosedAdapters(
+	);
 
-POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex, PDEVICE_EXTENSION DeviceExtension);
+
+/*!
+  \brief Get a copy of open instance from the global array.
+  \param OriginalOpen The open instance need to be copied.
+  \param DeviceExtension Pointer to the _DEVICE_EXTENSION structure of the device.
+  \return Pointer to the new open instance.
+
+  This function is used by NPF_GetCopyFromOpenArray().
+*/
+POPEN_INSTANCE
+NPF_DuplicateOpenObject(
+	POPEN_INSTANCE OriginalOpen,
+	PDEVICE_EXTENSION DeviceExtension
+	);
+
+
+/*!
+  \brief Create a open instance.
+  \param AdapterName The adapter name of the target open instance.
+  \param SelectedIndex The medium of the open instance.
+  \param DeviceExtension Pointer to the _DEVICE_EXTENSION structure of the device.
+  \return Pointer to the new open instance.
+
+  This function is used to create a group head open instance or a group member open instance.
+*/
+POPEN_INSTANCE
+NPF_CreateOpenObject(
+	PNDIS_STRING AdapterName,
+	UINT SelectedIndex,
+	PDEVICE_EXTENSION DeviceExtension
+	);
+
 
 /*!
   \brief Creates the file that will receive the packets when the driver is in dump mode.
@@ -1074,6 +1178,7 @@ POPEN_INSTANCE NPF_CreateOpenObject(PNDIS_STRING AdapterName, UINT SelectedIndex
   \return The status of the operation. See ntstatus.h in the DDK.
 */
 NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN append);
+
 
 /*!
   \brief Starts dump to file.
@@ -1085,6 +1190,7 @@ NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN
 */
 NTSTATUS NPF_StartDump(POPEN_INSTANCE Open);
 
+
 /*!
   \brief The dump thread.
   \param Open The NPF instance that creates the thread.
@@ -1094,6 +1200,7 @@ NTSTATUS NPF_StartDump(POPEN_INSTANCE Open);
 */
 VOID NPF_DumpThread(PVOID Open);
 
+
 /*!
   \brief Saves the content of the packet buffer to the file associated with current instance.
   \param Open The NPF instance that creates the thread.
@@ -1101,6 +1208,7 @@ VOID NPF_DumpThread(PVOID Open);
   Used by NPF_DumpThread() and NPF_CloseDumpFile().
 */
 NTSTATUS NPF_SaveCurrentBuffer(POPEN_INSTANCE Open);
+
 
 /*!
   \brief Writes a block of packets on the dump file.
@@ -1117,13 +1225,13 @@ NTSTATUS NPF_SaveCurrentBuffer(POPEN_INSTANCE Open);
 VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Length, PMDL Mdl, PIO_STATUS_BLOCK IoStatusBlock);
 
 
-
 /*!
   \brief Closes the dump file associated with an instance of the driver.
   \param Open The NPF instance that closes the file.
   \return The status of the operation. See ntstatus.h in the DDK.
 */
 NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
+
 
 BOOLEAN NPF_StartUsingBinding(IN POPEN_INSTANCE pOpen);
 
@@ -1147,23 +1255,8 @@ NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu
 */
 UINT GetBuffOccupation(POPEN_INSTANCE Open);
 
-//  
-//	Old registry based WinPcap names
-//
-///*!
-//  \brief Helper function to query a value from the global WinPcap registry key
-//*/
-//VOID NPF_QueryWinpcapRegistryString(PWSTR SubKeyName,
-//								 WCHAR *Value,
-//  							 UINT ValueLen, 
-//								 WCHAR *DefaultValue);
-//
 
 VOID NPF_ResetBufferContents(POPEN_INSTANCE Open);
-
-/**
- *  @}
- */
 
 /**
  *  @}

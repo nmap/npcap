@@ -242,7 +242,6 @@ RegistryError:
 
 PWCHAR
 getAdaptersList(
-	void
 	)
 {
 	PKEY_VALUE_PARTIAL_INFORMATION result = NULL;
@@ -396,7 +395,6 @@ getAdaptersList(
 
 PKEY_VALUE_PARTIAL_INFORMATION
 getTcpBindings(
-	void
 	)
 {
 	PKEY_VALUE_PARTIAL_INFORMATION result = NULL;

@@ -229,7 +229,7 @@ NPF_Write(
 				TempOpen = GroupOpen;
 				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
 				{
-					NPF_tapExForEachOpen(TempOpen, pNetBufferList);
+					NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 				}
 
 				GroupOpen = TempOpen->GroupNext;
@@ -510,7 +510,7 @@ NPF_BufferedWrite(
 			TempOpen = GroupOpen;
 			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
 			{
-				NPF_tapExForEachOpen(TempOpen, pNetBufferList);
+				NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 			}
 
 			GroupOpen = TempOpen->GroupNext;
