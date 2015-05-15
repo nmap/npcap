@@ -699,7 +699,18 @@ Return Value:
 				NdisFreeNetBufferList(pNetBufList); //Free NBL
 			}
 
-			GroupOpen = Open->GroupNext;
+			// this if should always be false, as Open is always the GroupHead itself, only GroupHead is known by NDIS and get invoked in NPF_SendCompleteEx() function.
+			if (Open->GroupHead != NULL)
+			{
+				GroupOpen = Open->GroupHead->GroupNext;
+			}
+			else
+			{
+				GroupOpen = Open->GroupNext;
+			}
+
+			//GroupOpen = Open->GroupNext;
+
 			while (GroupOpen != NULL)
 			{
 				TempOpen = GroupOpen;
