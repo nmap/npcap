@@ -1,7 +1,7 @@
 ;-------------------------------------------------------------------------
 ; NPF.INF -- NPF NDIS 6.x LightWeight Filter Driver
 ;
-; Copyright (c) 2013, Insecure.Com LLC.  All rights reserved.
+; Copyright (c) 2015, Insecure.Com LLC.  All rights reserved.
 ;------------------------------------------------------------------------
 [version]
 Signature       = "$Windows NT$"
@@ -9,7 +9,7 @@ Class           = NetService
 ClassGUID       = {4D36E974-E325-11CE-BFC1-08002BE10318}
 CatalogFile     = npf.cat
 Provider        = %Insecure%
-DriverVer=08/18/2013,0.31.43.389
+DriverVer=05/15/2015,14.48.38.905
 
 
 [Manufacturer]
@@ -131,4 +131,4 @@ HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to defaul
 [Strings]
 Insecure = "Nmap Project"
 NPF_Desc = "WinPcap Lightweight Filter Driver (NPF)"
-NPF_HelpText = "A NDIS 6 kernel filter driver to support packet capturing under Windows 7 & Windows 8"
+NPF_HelpText = "A NDIS 6 kernel filter driver to support packet capturing under Windows 7, 8 & 10"
