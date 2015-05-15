@@ -1,0 +1,43 @@
+TARGETNAME=npf
+TARGETTYPE=DRIVER
+
+MSC_WARNING_LEVEL=/WX /W4
+MSC_WARNING_LEVEL=/W4
+
+INCLUDES=..;.;
+
+C_DEFINES=$(C_DEFINES) -DNDIS_WDM=1
+
+C_DEFINES=$(C_DEFINES) -DNDIS60=1
+
+### C_DEFINES=$(C_DEFINES) -DNDIS620=1
+
+C_DEFINES=$(C_DEFINES) -DNDISLWF=1
+
+#pragma warning( disable: 4201 ) // nonstandard extension used : nameless struct/union
+#pragma warning( disable: 4214 ) // nonstandard extension used : bit field types other than int
+MSC_WARNING_LEVEL=$(MSC_WARNING_LEVEL) /wd4201 /wd4214
+
+PRECOMPILED_INCLUDE=stdafx.h
+
+TARGETLIBS=$(DDK_LIB_PATH)\ndis.lib
+
+SOURCES=\
+	bucket_lookup.c\
+	count_packets.c\
+	dump.c\
+	functions.c\
+	normal_lookup.c\
+	Openclos.c\
+	Packet.c\
+	Read.c\
+	tcp_session.c\
+	win_bpf_filter.c\
+	Write.c\
+    npf.rc
+    
+
+SSS=\
+	win_bpf_filter_init.c\
+	tme.c\
+	jitter.c
