@@ -3,9 +3,41 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <SignMode>ProductionSign</SignMode>
     <ProductionCertificate>C:\insecurecom-verisign-class3-codesigning-cert.pfx</ProductionCertificate>
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <SignMode>ProductionSign</SignMode>
     <ProductionCertificate>C:\insecurecom-verisign-class3-codesigning-cert.pfx</ProductionCertificate>
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|x64'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Debug|Win32'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|Win32'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8.1 Release|x64'">
+    <DbgengKernelMachineName>akisn0w-pc</DbgengKernelMachineName>
   </PropertyGroup>
 </Project>
