@@ -29,10 +29,10 @@ SetCompressor /SOLID /FINAL lzma
 ;General
 
 ; The name of the installer
-Name "WinPcap 4.1.3 for Nmap (NPcap 1.2.0)"
+Name "WinPcap 4.1.3 for Nmap (NPcap 1.2.1)"
 
 ; The file to write
-OutFile "winpcap-nmap-4.1.3-NDIS6-1.2.0.exe"
+OutFile "winpcap-nmap-4.1.3-NDIS6-1.2.1.exe"
 
 Var /GLOBAL os_ver
 
