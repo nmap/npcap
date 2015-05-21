@@ -94,4 +94,6 @@ extern "C"
 //// Registry Key Strings
 //
 
+DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize);
+
 #endif // _PROTINSTALL_H_

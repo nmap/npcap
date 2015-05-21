@@ -7,7 +7,7 @@
 #endif //APSTUDIO_INVOKED
 
 
-#include "..\..\version.h"
+#include "..\..\..\version.h"
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION		WINPCAP_MAJOR,WINPCAP_MINOR,WINPCAP_REV,WINPCAP_BUILD

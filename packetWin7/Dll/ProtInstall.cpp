@@ -122,6 +122,27 @@ DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
 	return (DWORD)_tcslen(lpFilename);
 }
 
+DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
+{
+	// Get Path to This Module
+	DWORD nResult;
+	TCHAR szDrive[_MAX_DRIVE];
+	TCHAR szDir[_MAX_DIR];
+
+	nResult = GetModuleFileName(NULL, lpFilename, nSize);
+
+	if (nResult == 0)
+	{
+		return 0;
+	}
+
+	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
+
+	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".sys"));
+
+	return (DWORD)_tcslen(lpFilename);
+}
+
 //
 // Function:  InstallSpecifiedComponent
 //
