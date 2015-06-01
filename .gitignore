@@ -1,6 +1,7 @@
 *.ncb
 *.suo
 *.sdf
+*.opensdf
 *.pdb
 *.exe
 *.ilk
