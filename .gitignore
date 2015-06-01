@@ -1,0 +1,17 @@
+*.ncb
+*.suo
+*.sdf
+*.pdb
+*.exe
+*.ilk
+*.obj
+*.user
+*.cat
+*.sys
+Debug/
+Release/
+Win7Debug/
+Win7Release/
+sdv/
+/installer/win7_above/x86/
+/installer/win7_above/x64/
