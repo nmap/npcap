@@ -17,6 +17,9 @@
 ;; Yang Luo
 ;; Updated to 4.1.3, August 2013
 
+;; Yang Luo
+;; Updated to 0.01, June 2015
+
 SetCompressor /SOLID /FINAL lzma
 
 ;--------------------------------
@@ -29,10 +32,10 @@ SetCompressor /SOLID /FINAL lzma
 ;General
 
 ; The name of the installer
-Name "WinPcap 4.1.3 for Nmap (NPcap 1.2.1)"
+Name "NPcap 0.01 for Nmap (beta)"
 
 ; The file to write
-OutFile "winpcap-nmap-4.1.3-NDIS6-1.2.1.exe"
+OutFile "npcap-nmap-0.01.exe"
 
 Var /GLOBAL os_ver
 
@@ -48,11 +51,11 @@ Function un.is64bit
   System::Call "kernel32::IsWow64Process(i s, *i .r0)"
 FunctionEnd
 
-VIProductVersion "4.1.0.3001"
-VIAddVersionKey /LANG=1033 "FileVersion" "4.1.0.3001"
-VIAddVersionKey /LANG=1033 "ProductName" "WinPcap"
-VIAddVersionKey /LANG=1033 "FileDescription" "WinPcap 4.1.3 for Nmap installer"
-VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2013 Riverbed Technology, Nmap Project"
+VIProductVersion "0.0.0.1"
+VIAddVersionKey /LANG=1033 "FileVersion" "0.01"
+VIAddVersionKey /LANG=1033 "ProductName" "NPcap"
+VIAddVersionKey /LANG=1033 "FileDescription" "NPcap 0.01 for Nmap installer"
+VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2015 Insecure.Com LLC, Nmap Project"
 
 ;--------------------------------
 ; Windows API Definitions
@@ -136,7 +139,7 @@ Function .onInit
   var /GLOBAL inst_ver
   var /GLOBAL my_ver
   var /GLOBAL npf_startup
-  StrCpy $my_ver "4.1.0.3001"
+  StrCpy $my_ver "0.01"
   StrCpy $npf_startup "YES"
 
   ; Always use the requested /D= $INSTDIR if given.
@@ -144,10 +147,10 @@ Function .onInit
   ; On 64-bit Windows, $PROGRAMFILES is "C:\Program Files (x86)" and
   ; $PROGRAMFILES64 is "C:\Program Files". We want "C:\Program Files"
   ; on 32-bit or 64-bit.
-  StrCpy $INSTDIR "$PROGRAMFILES\WinPcap"
+  StrCpy $INSTDIR "$PROGRAMFILES\NPcap"
   Call is64bit
   StrCmp $0 "0" instdir_nochange
-  StrCpy $INSTDIR "$PROGRAMFILES64\WinPcap"
+  StrCpy $INSTDIR "$PROGRAMFILES64\NPcap"
   instdir_nochange:
 
   ${GetParameters} $R0
@@ -158,11 +161,11 @@ Function .onInit
 
   do_silent:
     SetSilent silent
-    IfFileExists "$SYSDIR\wpcap.dll" silent_checks
+    IfFileExists "$INSTDIR\wpcap.dll" silent_checks
     return
     silent_checks:
       ; check for the presence of Nmap's custom WinPcapInst registry key:
-      ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "InstalledBy"
+      ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "InstalledBy"
       StrCmp $0 "Nmap" silent_uninstall winpcap_installedby_keys_not_present
 
       winpcap_installedby_keys_not_present:
@@ -171,12 +174,12 @@ Function .onInit
       ; the GUI uninstaller and assume our installer will overwrite
       ; the files. Needs to be checked in case someone (force)
       ; installs WinPcap over the top of our installation
-      ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "UninstallString"
+      ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "UninstallString"
       StrCmp $0 "" winpcap_keys_not_present
 
-      DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst"
+      DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst"
 
-      ReadRegStr $0 "HKLM" "Software\WinPcap" ""
+      ReadRegStr $0 "HKLM" "Software\NPcap" ""
       StrCmp $0 "" winpcap_keys_not_present
 
       Delete $0\rpcapd.exe
@@ -185,7 +188,7 @@ Function .onInit
       ; Official 4.1 installer creates an install.log
       Delete $0\install.log
       RMDir "$0"
-      DeleteRegKey HKLM "Software\WinPcap"
+      DeleteRegKey HKLM "Software\NPcap"
 
       ; because we've deleted their uninstaller, skip the next
       ; registry key check (we'll still need to overwrite stuff)
@@ -197,7 +200,7 @@ Function .onInit
       ; (we got this far so the official WinPcap wasn't installed)
       ; and use our uninstaller to (magically) silently uninstall
       ; everything cleanly and avoid having to overwrite files
-      ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\winpcap-nmap" "UninstallString"
+      ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap" "UninstallString"
       StrCmp $0 "" winpcap-nmap_keys_not_present silent_uninstall
 
       winpcap-nmap_keys_not_present:
@@ -207,7 +210,7 @@ Function .onInit
       SetOverwrite on
 
       ; try to ensure that npf has been stopped before we install/overwrite files
-      ExecWait '"net stop npf"'
+      ExecWait '"net stop npcap"'
 
       return
 
@@ -215,17 +218,17 @@ Function .onInit
         ; Our InstalledBy string is present, UninstallString should have quotes and uninstall.exe location
         ; and this file should support a silent uninstall by passing /S to it.
         ; we could read QuietUninstallString, but this should be exactly the same as UninstallString with /S on the end.
-        ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "UninstallString"
+        ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "UninstallString"
         ExecWait '$0 /S _?=$INSTDIR'
       return
 
   no_silent:
-    IfFileExists "$SYSDIR\wpcap.dll" do_version_check
+    IfFileExists "$INSTDIR\wpcap.dll" do_version_check
     return
 
   do_version_check:
 
-    GetDllVersion "$SYSDIR\wpcap.dll" $R0 $R1
+    GetDllVersion "$INSTDIR\wpcap.dll" $R0 $R1
     IntOp $R2 $R0 / 0x00010000
     IntOp $R3 $R0 & 0x0000FFFF
     IntOp $R4 $R1 / 0x00010000
@@ -234,17 +237,17 @@ Function .onInit
 
     StrCmp $inst_ver $my_ver same_ver
 
-    MessageBox MB_YESNO|MB_ICONQUESTION "WinPcap version $inst_ver exists on this system. Replace with version $my_ver?" IDYES try_uninstallers
+    MessageBox MB_YESNO|MB_ICONQUESTION "NPcap version $inst_ver exists on this system. Replace with version $my_ver?" IDYES try_uninstallers
     quit
 
   same_ver:
-    MessageBox MB_YESNO|MB_ICONQUESTION "WinPcap version $inst_ver already exists on this system. Reinstall this version?" IDYES try_uninstallers
+    MessageBox MB_YESNO|MB_ICONQUESTION "NPcap version $inst_ver already exists on this system. Reinstall this version?" IDYES try_uninstallers
     quit
 
   try_uninstallers:
 
     ; check for UninstallString and use that in preference (should already have double quotes and uninstall.exe)
-    ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "UninstallString"
+    ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "UninstallString"
     StrCmp $0 "" no_uninstallstring
     IfFileExists "$0" uninstaller_exists no_uninstallstring
     uninstaller_exists:
@@ -253,7 +256,7 @@ Function .onInit
 
     no_uninstallstring:
     ; didn't find an UninstallString, check for our old UninstallString and if uninstall.exe exists:
-    ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\winpcap-nmap" "UninstallString"
+    ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap" "UninstallString"
     StrCmp $0 "" still_no_uninstallstring
     IfFileExists "$0" old_uninstaller_exists still_no_uninstallstring
     old_uninstaller_exists:
@@ -263,7 +266,7 @@ Function .onInit
 
     still_no_uninstallstring:
     ; still didn't find anything, try looking for an uninstall.exe file at:
-      ReadRegStr $0 "HKLM" "Software\WinPcap" ""
+      ReadRegStr $0 "HKLM" "Software\NPcap" ""
     ; Strip any surrounding double quotes from around the install string,
     ; as WinPcap hasn't used quotes in the past, but our old installers did.
     ; Check the first and last character for safety!
@@ -287,7 +290,7 @@ Function .onInit
 FunctionEnd
 
 Function optionsPage
-  !insertmacro MUI_HEADER_TEXT "WinPcap Options" ""
+  !insertmacro MUI_HEADER_TEXT "NPcap Options" ""
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options.ini"
 FunctionEnd
 
@@ -295,13 +298,13 @@ Function doOptions
   ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 1" "State"
   StrCmp $0 "0" do_options_start do_options_end
   do_options_start:
-  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 3
+  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPCAP" "Start" 3
   do_options_end:
 FunctionEnd
 
 Function finalPage
   ; diplay a page saying everything's finished
-  !insertmacro MUI_HEADER_TEXT "Finished" "Thank you for installing WinPcap"
+  !insertmacro MUI_HEADER_TEXT "Finished" "Thank you for installing NPcap"
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "final.ini"
 FunctionEnd
 
@@ -324,7 +327,7 @@ Function registerServiceAPI_xp_vista
     DetailPrint "Failed to create the npf service for XP and Vista"
     IfSilent close_register_xp_vista_handle register_xp_vista_fail_messagebox
     register_xp_vista_fail_messagebox:
-      MessageBox MB_OK "Failed to create the npf service for XP and Vista. Please try installing WinPcap again, or use the official WinPcap installer from www.winpcap.org"
+      MessageBox MB_OK "Failed to create the npf service for XP and Vista. Please try installing NPcap again, or use the official NPcap installer from www.nmap.org"
     Goto close_register_xp_vista_handle
   register_xp_vista_success:
     DetailPrint "The npf service for XP and Vista was successfully created"
@@ -357,7 +360,7 @@ Function registerServiceAPI_win7
     DetailPrint "Failed to create the npf service for Win7 and Win8"
     IfSilent register_win7_done register_win7_fail_messagebox
     register_win7_fail_messagebox:
-      MessageBox MB_OK "Failed to create the npf service for Win7 and Win8. Please try installing WinPcap again, or use the official WinPcap installer from www.winpcap.org"
+      MessageBox MB_OK "Failed to create the npcap service for Win7 and Win8. Please try installing NPcap again, or use the official NPcap installer from www.nmap.org"
     Goto register_win7_done
   register_win7_success:
     DetailPrint "The npf service for Win7 and Win8 was successfully created"
@@ -377,8 +380,8 @@ Function un.registerServiceAPI_win7
 FunctionEnd
 
 Function autoStartWinPcap
-    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 1
-    nsExec::Exec "net start npf"
+    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPCAP" "Start" 1
+    nsExec::Exec "net start npcap"
 FunctionEnd
 
 
@@ -388,7 +391,7 @@ Section "WinPcap" SecWinPcap
 
   ; stop the service, in case it's still registered, so files can be
   ; safely overwritten and the service can be deleted.
-  nsExec::Exec "net stop npf"
+  nsExec::Exec "net stop npcap"
 
   ; NB: We may need to introduce a check here to ensure that NPF
   ; has been stopped before we continue, otherwise we Sleep for a
@@ -397,7 +400,7 @@ Section "WinPcap" SecWinPcap
   ; slower GUI installation.
 
   ; These x86 files are automatically redirected to the right place on x64
-  SetOutPath $SYSDIR
+  SetOutPath $INSTDIR
   File pthreadVC.dll
   File wpcap.dll
 
@@ -446,10 +449,10 @@ Section "WinPcap" SecWinPcap
       DetailPrint "Installing NDIS5.0 x86 driver for XP and Vista"
       SetOutPath $SYSDIR\drivers
       File npf.sys ; x86 NT5/NT6.0 version
-      WriteRegStr HKLM "Software\WinPcap" "" "$INSTDIR"
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
+      WriteRegStr HKLM "Software\NPcap" "" "$INSTDIR"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
       Goto npfdone
 
     install_win7_32bit:
@@ -457,16 +460,16 @@ Section "WinPcap" SecWinPcap
       File rpcapd.exe
       File LICENSE
       File win7_above\x86\NPFInstall.exe
-      File win7_above\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
-      File win7_above\x86\npf.inf
-      File win7_above\x86\npf.cat
+      File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+      File win7_above\x86\npcap.inf
+      File win7_above\x86\npcap.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Win7 and Win8"
-      SetOutPath $SYSDIR\drivers
-      WriteRegStr HKLM "Software\WinPcap" "" "$INSTDIR"
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
+      SetOutPath $INSTDIR\drivers
+      WriteRegStr HKLM "Software\NPcap" "" "$INSTDIR"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
       Goto npfdone
 
     install_xp_vista_64bit:
@@ -493,12 +496,12 @@ Section "WinPcap" SecWinPcap
       vista_x64_packet:
       File vista\x64\Packet.dll ; x64 Vista version
       nt5_x64_packet_done:
-      WriteRegStr HKLM "Software\WinPcap" "" "$INSTDIR"
+      WriteRegStr HKLM "Software\NPcap" "" "$INSTDIR"
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
       Goto npfdone
       
     install_win7_64bit:
@@ -506,9 +509,9 @@ Section "WinPcap" SecWinPcap
       File rpcapd.exe
       File LICENSE
       File win7_above\x64\NPFInstall.exe
-      File win7_above\x64\npf.sys ; x64 NT6.1 and above version
-      File win7_above\x64\npf.inf
-      File win7_above\x64\npf.cat
+      File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
+      File win7_above\x64\npcap.inf
+      File win7_above\x64\npcap.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x64 driver for Win7 and Win8"
       SetOutPath $SYSDIR\drivers
@@ -517,17 +520,17 @@ Section "WinPcap" SecWinPcap
       ; The x86 versions of wpcap.dll and packet.dll are
       ; installed into the right place further above.
       ; install the 64-bit version of wpcap.dll into System32
-      SetOutPath $SYSDIR
+      SetOutPath $INSTDIR
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.1 above version (for Win7 and Win8)
       File win7_above\x64\Packet.dll ; x64 NT6.1 and above version
-      WriteRegStr HKLM "Software\WinPcap" "" "$INSTDIR"
+      WriteRegStr HKLM "Software\NPcap" "" "$INSTDIR"
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 
     npfdone:
 
@@ -544,7 +547,7 @@ Section "WinPcap" SecWinPcap
     registerdone:
 
     ; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
-    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPF" "Start" 1
+    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPCAP" "Start" 1
 
     ; automatically start the service if performing a silent install, unless
     ; /NPFSTARTUP=NO was given.
@@ -555,19 +558,19 @@ Section "WinPcap" SecWinPcap
 
     ; Write the rest of the uninstall keys for Windows
 
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayName" "WinPcap 4.1.3 for Nmap"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "DisplayVersion" "4.1.0.3001"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "Publisher" "Nmap Project"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "URLInfoAbout" "http://www.nmap.org"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "URLUpdateInfo" "http://www.winpcap.org"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "VersionMajor" "4"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "VersionMinor" "1"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "InstalledBy" "Nmap"
-    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "NoModify" 1
-    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst" "NoRepair" 1
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "DisplayName" "NPcap 0.01 for Nmap"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "DisplayVersion" "0.01"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "Publisher" "Nmap Project"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "URLInfoAbout" "http://www.nmap.org"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "URLUpdateInfo" "http://www.nmap.org"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "VersionMajor" "0"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "VersionMinor" "1"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "InstalledBy" "Nmap"
+    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "NoModify" 1
+    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "NoRepair" 1
 
   ; delete our legacy winpcap-nmap keys if they still exist (e.g. official 4.0.2 force installed over our 4.0.2):
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\winpcap-nmap"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
 
 SectionEnd ; end the section
 
@@ -578,7 +581,7 @@ SectionEnd ; end the section
 Section "Uninstall"
 
   ; stop npf before we delete the service from the registry
-  nsExec::Exec "net stop npf"
+  nsExec::Exec "net stop npcap"
 
   ; Check windows version
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
@@ -614,22 +617,22 @@ Section "Uninstall"
   unregisterdone:
 
   ; delete our winpcap-nmap and any WinPcapInst registry keys
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\winpcap-nmap"
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinPcapInst"
-  DeleteRegKey HKLM "Software\WinPcap"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst"
+  DeleteRegKey HKLM "Software\NPcap"
 
   Delete $INSTDIR\rpcapd.exe
   Delete $INSTDIR\LICENSE
   Delete $INSTDIR\NPFInstall.exe
-  Delete $INSTDIR\npf.sys
-  Delete $INSTDIR\npf.inf
-  Delete $INSTDIR\npf.cat
+  Delete $INSTDIR\npcap.sys
+  Delete $INSTDIR\npcap.inf
+  Delete $INSTDIR\npcap.cat
   Delete $INSTDIR\uninstall.exe
 
   ; This deletes the x86 files from SysWOW64 if we're on x64.
-  Delete $SYSDIR\Packet.dll
-  Delete $SYSDIR\pthreadVC.dll
-  Delete $SYSDIR\wpcap.dll
+  Delete $INSTDIR\Packet.dll
+  Delete $INSTDIR\pthreadVC.dll
+  Delete $INSTDIR\wpcap.dll
 
   ; check for x64, delete npf.sys file from system32\drivers
   Call un.is64bit
@@ -672,10 +675,10 @@ Section "Uninstall"
     ; disable Wow64FsRedirection
     System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
-    Delete $SYSDIR\drivers\npf.sys
+    Delete $SYSDIR\drivers\npcap.sys
     ; Also delete the x64 files in System32
-    Delete $SYSDIR\wpcap.dll
-    Delete $SYSDIR\Packet.dll
+    Delete $INSTDIR\wpcap.dll
+    Delete $INSTDIR\Packet.dll
     
     ; re-enable Wow64FsRedirection
     System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -683,7 +686,7 @@ Section "Uninstall"
 
 
   del32bitnpf_win7:
-    Delete $SYSDIR\drivers\npf.sys
+    Delete $SYSDIR\drivers\npcap.sys
     Goto npfdeleted
 
 

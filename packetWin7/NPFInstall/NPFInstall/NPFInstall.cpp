@@ -45,7 +45,7 @@ BOOL PacketInstallDriver40()
 		return FALSE;
 	}
 
-	SC_HANDLE schService = CreateService(schSCManager, _T("npf"), _T("NetGroup Packet Filter Driver"),
+	SC_HANDLE schService = CreateService(schSCManager, _T("npcap"), _T("NPcap Packet Filter Driver"),
 		SERVICE_ALL_ACCESS,
 		SERVICE_KERNEL_DRIVER,
 		SERVICE_DEMAND_START,
@@ -72,7 +72,7 @@ BOOL PacketStopDriver40()
 		return FALSE;
 	}
 
-	SC_HANDLE schService = OpenService(schSCManager, _T("npf"), SERVICE_ALL_ACCESS | DELETE);
+	SC_HANDLE schService = OpenService(schSCManager, _T("npcap"), SERVICE_ALL_ACCESS | DELETE);
 	if (schService == NULL)
 	{
 		return FALSE;
@@ -99,7 +99,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	BOOL bSuccess = FALSE;
 	BOOL bVerbose = FALSE;
 
-	SetConsoleTitle( _T("NPF NDIS6.x Driver for WinPcap") );
+	SetConsoleTitle( _T("NPcap NDIS6.x Driver for packet capturing") );
 
 	if (argc >= 2)
 	{
@@ -139,12 +139,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketInstallDriver60();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPF6x driver has been successfully installed!\n"));
+				_tprintf(_T("NPcap driver has been successfully installed!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPF6x driver has failed the installation."));
+				_tprintf(_T("NPcap driver has failed the installation."));
 				return -1;
 			}
 		}
@@ -153,12 +153,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketStopDriver60();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPF6x driver has been successfully uninstalled!\n"));
+				_tprintf(_T("NPcap driver has been successfully uninstalled!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPF6x driver has failed the uninstallation."));
+				_tprintf(_T("NPcap driver has failed the uninstallation."));
 				return -1;
 			}
 		}
@@ -195,12 +195,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketRenableBindings();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPF6x driver's bindings have been successfully restarted!\n"));
+				_tprintf(_T("NPcap driver's bindings have been successfully restarted!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPF6x driver's bindings have failed to restart."));
+				_tprintf(_T("NPcap driver's bindings have failed to restart."));
 				return -1;
 			}
 		}

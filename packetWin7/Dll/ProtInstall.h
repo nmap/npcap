@@ -49,8 +49,8 @@
 //
 // "Friendly" Name
 //
-#define NDISLWF_FRIENDLY_NAME_A		  "WinPcap Lightweight Filter Driver (NPF)"
-#define NDISLWF_FRIENDLY_NAME_W		  L"WinPcap Lightweight Filter Driver (NPF)"
+#define NDISLWF_FRIENDLY_NAME_A		  "NPcap Lightweight Filter Driver (NPCAP)"
+#define NDISLWF_FRIENDLY_NAME_W		  L"NPcap Lightweight Filter Driver (NPCAP)"
 
 #ifdef UNICODE
 #define NDISLWF_FRIENDLY_NAME  		  NDISLWF_FRIENDLY_NAME_W
@@ -61,11 +61,11 @@
 //
 // Driver INF File and PnP ID Names
 //
-#define NDISLWF_SERVICE_PNP_DEVICE_ID_A	  "INSECURE_NPF"
-#define NDISLWF_SERVICE_PNP_DEVICE_ID_W	  L"INSECURE_NPF"
+#define NDISLWF_SERVICE_PNP_DEVICE_ID_A	  "INSECURE_NPCAP"
+#define NDISLWF_SERVICE_PNP_DEVICE_ID_W	  L"INSECURE_NPCAP"
 
-#define NDISLWF_SERVICE_INF_FILE_A 		  "NPF"
-#define NDISLWF_SERVICE_INF_FILE_W 		  L"NPF"
+#define NDISLWF_SERVICE_INF_FILE_A 		  "NPCAP"
+#define NDISLWF_SERVICE_INF_FILE_W 		  L"NPCAP"
 
 #ifdef UNICODE
 #define NDISLWF_SERVICE_PNP_DEVICE_ID  	  NDISLWF_SERVICE_PNP_DEVICE_ID_W
@@ -75,7 +75,7 @@
 #define NDISLWF_SERVICE_INF_FILE   		  NDISLWF_SERVICE_INF_FILE_A
 #endif
 
-#define APP_NAME	_T("NPF")
+#define APP_NAME	_T("NPCAP")
 
 #ifdef __cplusplus
 extern "C"

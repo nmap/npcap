@@ -1,5 +1,5 @@
 ;-------------------------------------------------------------------------
-; NPF.INF -- NPF NDIS 6.x LightWeight Filter Driver
+; NPCAP.INF -- NPcap NDIS 6.x LightWeight Filter Driver
 ;
 ; Copyright (c) 2015, Insecure.Com LLC.  All rights reserved.
 ;------------------------------------------------------------------------
@@ -7,7 +7,7 @@
 Signature       = "$Windows NT$"
 Class           = NetService
 ClassGUID       = {4D36E974-E325-11CE-BFC1-08002BE10318}
-CatalogFile     = npf.cat
+CatalogFile     = npcap.cat
 Provider        = %Insecure%
 DriverVer=05/15/2015,14.48.38.905
 
@@ -16,13 +16,13 @@ DriverVer=05/15/2015,14.48.38.905
 %Insecure%=Insecure,NTx86,NTia64,NTamd64
 
 [Insecure.NTx86]
-%NPF_Desc%=Install, INSECURE_NPF
+%NPF_Desc%=Install, INSECURE_NPCAP
 
 [Insecure.NTia64]
-%NPF_Desc%=Install, INSECURE_NPF
+%NPF_Desc%=Install, INSECURE_NPCAP
 
 [Insecure.NTamd64]
-%NPF_Desc%=Install, INSECURE_NPF
+%NPF_Desc%=Install, INSECURE_NPCAP
 
 ;-------------------------------------------------------------------------
 ; Installation Section
@@ -30,29 +30,29 @@ DriverVer=05/15/2015,14.48.38.905
 [Install]
 AddReg=Inst_Ndi
 Characteristics=0x40000
-NetCfgInstanceId="{7daf2ac8-e9f6-4765-a842-f1f5d2501339}"
-Copyfiles = npf.copyfiles.sys
+NetCfgInstanceId="{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"
+Copyfiles = npcap.copyfiles.sys
 
 [SourceDisksNames]
 1=%NPF_Desc%,"",,
 
 [SourceDisksFiles]
-npf.sys=1
+npcap.sys=1
 
 [DestinationDirs]
 DefaultDestDir=12
-npf.copyfiles.sys=12
+npcap.copyfiles.sys=12
 
-[npf.copyfiles.sys]
-npf.sys,,,2
+[npcap.copyfiles.sys]
+npcap.sys,,,2
 
 
 ;-------------------------------------------------------------------------
 ; Ndi installation support
 ;-------------------------------------------------------------------------
 [Inst_Ndi]
-HKR, Ndi,Service,,"npf"
-HKR, Ndi,CoServices,0x00010000,"npf"
+HKR, Ndi,Service,,"npcap"
+HKR, Ndi,CoServices,0x00010000,"npcap"
 HKR, Ndi,HelpText,,%NPF_HelpText%
 HKR, Ndi,FilterClass,, compression
 
@@ -99,20 +99,20 @@ HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter
 ; Service installation support
 ;-------------------------------------------------------------------------
 [Install.Services]
-AddService=npf,,NPF_Service_Inst
+AddService=npcap,,NPF_Service_Inst
 
 [NPF_Service_Inst]
 DisplayName     = %NPF_Desc%
 ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
 StartType       = 1 ;SERVICE_SYSTEM_START
 ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
-ServiceBinary   = %12%\npf.sys
+ServiceBinary   = %12%\npcap.sys
 LoadOrderGroup  = NDIS
 Description     = %NPF_Desc%
 AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
 
 [Install.Remove.Services]
-DelService=npf,0x200 ; SPSVCINST_STOPSERVICE
+DelService=npcap,0x200 ; SPSVCINST_STOPSERVICE
 
 [Common.Params.reg]
 
@@ -130,5 +130,5 @@ HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to defaul
 
 [Strings]
 Insecure = "Nmap Project"
-NPF_Desc = "WinPcap Lightweight Filter Driver (NPF)"
+NPF_Desc = "WinPcap Lightweight Filter Driver (NPCAP)"
 NPF_HelpText = "A NDIS 6 kernel filter driver to support packet capturing under Windows 7, 8 & 10"
