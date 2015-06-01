@@ -17,3 +17,7 @@ Win7Release/
 sdv/
 /installer/win7_above/x86/
 /installer/win7_above/x64/
+/packetWin7/Dll/Project/Debug*/
+/packetWin7/Dll/Project/Release*/
+/packetWin7/Dll/Project/x64/Debug*/
+/packetWin7/Dll/Project/x64/Release*/
