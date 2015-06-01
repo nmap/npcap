@@ -2,6 +2,7 @@
 *.suo
 *.sdf
 *.opensdf
+*.aps
 *.pdb
 *.exe
 *.ilk
