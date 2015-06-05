@@ -27,6 +27,7 @@ SetCompressor /SOLID /FINAL lzma
 
   !include "MUI.nsh"
   !include "FileFunc.nsh"
+  !include "EnvVarUpdate.nsh"
 
 ;--------------------------------
 ;General
@@ -161,7 +162,7 @@ Function .onInit
 
   do_silent:
     SetSilent silent
-    IfFileExists "$INSTDIR\wpcap.dll" silent_checks
+    IfFileExists "$SYSDIR\NPcap\wpcap.dll" silent_checks
     return
     silent_checks:
       ; check for the presence of Nmap's custom WinPcapInst registry key:
@@ -223,12 +224,12 @@ Function .onInit
       return
 
   no_silent:
-    IfFileExists "$INSTDIR\wpcap.dll" do_version_check
+    IfFileExists "$SYSDIR\NPcap\wpcap.dll" do_version_check
     return
 
   do_version_check:
 
-    GetDllVersion "$INSTDIR\wpcap.dll" $R0 $R1
+    GetDllVersion "$SYSDIR\NPcap\wpcap.dll" $R0 $R1
     IntOp $R2 $R0 / 0x00010000
     IntOp $R3 $R0 & 0x0000FFFF
     IntOp $R4 $R1 / 0x00010000
@@ -400,7 +401,7 @@ Section "WinPcap" SecWinPcap
   ; slower GUI installation.
 
   ; These x86 files are automatically redirected to the right place on x64
-  SetOutPath $INSTDIR
+  SetOutPath $SYSDIR\NPcap
   File pthreadVC.dll
   File wpcap.dll
 
@@ -465,7 +466,7 @@ Section "WinPcap" SecWinPcap
       File win7_above\x86\npcap.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Win7 and Win8"
-      SetOutPath $INSTDIR\drivers
+      SetOutPath $SYSDIR\drivers
       WriteRegStr HKLM "Software\NPcap" "" "$INSTDIR"
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NPcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
@@ -485,7 +486,7 @@ Section "WinPcap" SecWinPcap
       ; The x86 versions of wpcap.dll and packet.dll are
       ; installed into the right place further above.
       ; install the 64-bit version of wpcap.dll into System32
-      SetOutPath $SYSDIR
+      SetOutPath $SYSDIR\NPcap
       File x64\wpcap.dll ; x64 NT5/NT6.0 version
       ; install the 64-bit version of packet.dll into System32
       ; check for vista, otherwise install the NT5 version (for XP and 2003)
@@ -520,7 +521,7 @@ Section "WinPcap" SecWinPcap
       ; The x86 versions of wpcap.dll and packet.dll are
       ; installed into the right place further above.
       ; install the 64-bit version of wpcap.dll into System32
-      SetOutPath $INSTDIR
+      SetOutPath $SYSDIR\NPcap
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.1 above version (for Win7 and Win8)
@@ -545,6 +546,11 @@ Section "WinPcap" SecWinPcap
       Call registerServiceAPI_win7
     
     registerdone:
+
+    ; Add "system32\NPcap" directory to PATH
+    DetailPrint "Adding DLL folder: $\"$SYSDIR\NPcap$\" to PATH environment variable"
+    ; SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment"
+    ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$SYSDIR\NPcap"
 
     ; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
     WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPCAP" "Start" 1
@@ -582,6 +588,10 @@ Section "Uninstall"
 
   ; stop npf before we delete the service from the registry
   nsExec::Exec "net stop npcap"
+  
+  ; Remove "system32\NPcap" directory in PATH
+  DetailPrint "Removing DLL folder: $\"$SYSDIR\NPcap$\" from PATH environment variable"
+  ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$SYSDIR\NPcap"
 
   ; Check windows version
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
@@ -630,9 +640,9 @@ Section "Uninstall"
   Delete $INSTDIR\uninstall.exe
 
   ; This deletes the x86 files from SysWOW64 if we're on x64.
-  Delete $INSTDIR\Packet.dll
-  Delete $INSTDIR\pthreadVC.dll
-  Delete $INSTDIR\wpcap.dll
+  Delete $SYSDIR\NPcap\Packet.dll
+  Delete $SYSDIR\NPcap\pthreadVC.dll
+  Delete $SYSDIR\NPcap\wpcap.dll
 
   ; check for x64, delete npf.sys file from system32\drivers
   Call un.is64bit
@@ -658,8 +668,9 @@ Section "Uninstall"
 
     Delete $SYSDIR\drivers\npf.sys
     ; Also delete the x64 files in System32
-    Delete $SYSDIR\wpcap.dll
-    Delete $SYSDIR\Packet.dll
+    Delete $SYSDIR\NPcap\wpcap.dll
+    Delete $SYSDIR\NPcap\Packet.dll
+    RMDir "$SYSDIR\NPcap"
 
     ; re-enable Wow64FsRedirection
     System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -677,8 +688,9 @@ Section "Uninstall"
 
     Delete $SYSDIR\drivers\npcap.sys
     ; Also delete the x64 files in System32
-    Delete $INSTDIR\wpcap.dll
-    Delete $INSTDIR\Packet.dll
+    Delete $SYSDIR\NPcap\wpcap.dll
+    Delete $SYSDIR\NPcap\Packet.dll
+    RMDir "$SYSDIR\NPcap"
     
     ; re-enable Wow64FsRedirection
     System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -692,5 +704,6 @@ Section "Uninstall"
 
   npfdeleted:
     RMDir "$INSTDIR"
+	
 
 SectionEnd
