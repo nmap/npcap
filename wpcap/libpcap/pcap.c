@@ -1315,11 +1315,8 @@ pcap_offline_filter(struct bpf_program *fp, const struct pcap_pkthdr *h,
  * was linked, or even weirder things, such as the string being the one
  * from the library but being truncated).
  */
-#ifdef HAVE_VERSION_H
-#include "version.h"
-#else
+#include "..\..\version.h"
 static const char pcap_version_string[] = "libpcap version 1.0 branch 1_0_rel0b (20091008)";
-#endif
 
 #ifdef WIN32
 /*
@@ -1327,11 +1324,11 @@ static const char pcap_version_string[] = "libpcap version 1.0 branch 1_0_rel0b 
  * version numbers when building WinPcap.  (It'd be nice to do so for
  * the packet.dll version number as well.)
  */
-static const char wpcap_version_string[] = "4.1.3";
+static const char wpcap_version_string[] = WINPCAP_VER_STRING;
 static const char pcap_version_string_fmt[] =
-    "WinPcap version %s, based on %s";
+    WINPCAP_PRODUCT_NAME " version %s, based on %s";
 static const char pcap_version_string_packet_dll_fmt[] =
-    "WinPcap version %s (packet.dll version %s), based on %s";
+    WINPCAP_PRODUCT_NAME " version %s (packet.dll version %s), based on %s";
 static char *full_pcap_version_string;
 
 const char *
