@@ -21,3 +21,5 @@ sdv/
 /packetWin7/Dll/Project/Release*/
 /packetWin7/Dll/Project/x64/Debug*/
 /packetWin7/Dll/Project/x64/Release*/
+/wpcap/PRJ/Debug*/
+/wpcap/PRJ/Release*/
