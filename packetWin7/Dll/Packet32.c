@@ -55,6 +55,19 @@
 
 BOOL bUseNPF60 = FALSE;
 
+#define BUFSIZE 512
+#define MAX_SEM_COUNT 10
+#define MAX_TRY_TIME 50
+#define SLEEP_TIME 50
+// Handle for NPcapHelper named pipe.
+HANDLE g_NPcapHelperPipe = INVALID_HANDLE_VALUE;
+// Whether this process is running in Administrator mode.
+BOOL g_IsAdminMode = FALSE;
+// Whether we have already tried NPcapHelper.
+BOOL g_NPcapHelperTried = FALSE;
+// The handle to this DLL.
+HANDLE g_DllHandle = NULL;
+
 #ifdef _WINNT4
 #if (defined(HAVE_NPFIM_API) || defined(HAVE_WANPACKET_API) || defined (HAVE_AIRPCAP_API) || defined(HAVE_IPHELPER_API))
 #error Do not enable _WINNT4 with any other API
@@ -244,6 +257,286 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 }
 #endif
 
+BOOL NPcapCreatePipe(char *pipeName, HANDLE moduleName)
+{
+	int pid = GetCurrentProcessId();
+	char params[BUFSIZE];
+	SHELLEXECUTEINFOA shExInfo = { 0 };
+	DWORD nResult;
+	char lpFilename[BUFSIZE];
+	char szDrive[BUFSIZE];
+	char szDir[BUFSIZE];
+
+	TRACE_ENTER("NPcapCreatePipe");
+
+	// Get Path to This Module
+	nResult = GetModuleFileNameA((HMODULE) moduleName, lpFilename, BUFSIZE);
+	if (nResult == 0)
+	{
+		TRACE_PRINT1("GetModuleFileNameA failed. GLE=%d\n", GetLastError());
+		TRACE_EXIT("NPcapCreatePipe");
+		return FALSE;
+	}
+	_splitpath_s(lpFilename, szDrive, BUFSIZE, szDir, BUFSIZE, NULL, 0, NULL, 0);
+	_makepath_s(lpFilename, BUFSIZE, szDrive, szDir, "NPcapHelper", ".exe");
+
+	sprintf_s(params, BUFSIZE, "%s %d", pipeName, pid);
+
+	shExInfo.cbSize = sizeof(shExInfo);
+	shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+	shExInfo.hwnd = 0;
+	shExInfo.lpVerb = "runas";				// Operation to perform
+	shExInfo.lpFile = lpFilename;			// Application to start
+	shExInfo.lpParameters = params;			// Additional parameters
+	shExInfo.lpDirectory = 0;
+	shExInfo.nShow = SW_SHOW;
+	shExInfo.hInstApp = 0;
+
+	if (!ShellExecuteExA(&shExInfo))
+	{
+		DWORD dwError = GetLastError();
+		if (dwError == ERROR_CANCELLED)
+		{
+			// The user refused to allow privileges elevation.
+			// Do nothing ...
+		}
+		TRACE_EXIT("NPcapCreatePipe");
+		return FALSE;
+	}
+	else
+	{
+		TRACE_EXIT("NPcapCreatePipe");
+		CloseHandle(shExInfo.hProcess);
+		return TRUE;
+	}
+}
+
+HANDLE NPcapConnect(char *pipeName)
+{
+	HANDLE hPipe = INVALID_HANDLE_VALUE;
+	int tryTime = 0;
+	char lpszPipename[BUFSIZE];
+
+	TRACE_ENTER("NPcapConnect");
+
+	sprintf_s(lpszPipename, BUFSIZE, "\\\\.\\pipe\\%s", pipeName);
+
+	// Try to open a named pipe; wait for it, if necessary.
+	while (tryTime < MAX_TRY_TIME)
+	{
+		hPipe = CreateFileA(
+			lpszPipename,   // pipe name
+			GENERIC_READ |  // read and write access
+			GENERIC_WRITE,
+			0,              // no sharing
+			NULL,           // default security attributes
+			OPEN_EXISTING,  // opens existing pipe
+			0,              // default attributes
+			NULL);          // no template file
+
+		// Break if the pipe handle is valid.
+
+		if (hPipe != INVALID_HANDLE_VALUE)
+		{
+			break;
+		}
+		else
+		{
+			tryTime++;
+			Sleep(SLEEP_TIME);
+		}
+	}
+
+	TRACE_EXIT("NPcapConnect");
+	return hPipe;
+}
+
+HANDLE NPcapRequestHandle(char *sMsg, DWORD *pdwError)
+{
+	LPSTR lpvMessage = sMsg;
+	char  chBuf[BUFSIZE];
+	BOOL   fSuccess = FALSE;
+	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
+	HANDLE hPipe = g_NPcapHelperPipe;
+
+	TRACE_ENTER("NPcapRequestHandle");
+
+	if (hPipe == INVALID_HANDLE_VALUE)
+	{
+		TRACE_EXIT("NPcapRequestHandle");
+		return INVALID_HANDLE_VALUE;
+	}
+
+	// The pipe connected; change to message-read mode.
+	dwMode = PIPE_READMODE_MESSAGE;
+	fSuccess = SetNamedPipeHandleState(
+		hPipe,    // pipe handle
+		&dwMode,  // new pipe mode
+		NULL,     // don't set maximum bytes
+		NULL);    // don't set maximum time
+	if (!fSuccess)
+	{
+		TRACE_PRINT1("SetNamedPipeHandleState failed. GLE=%d\n", GetLastError());
+		TRACE_EXIT("NPcapRequestHandle");
+		return INVALID_HANDLE_VALUE;
+	}
+
+	// Send a message to the pipe server.
+
+	cbToWrite = (DWORD) (strlen(lpvMessage) + 1)*sizeof(char);
+	TRACE_PRINT2("\nSending %d byte message: \"%s\"\n", cbToWrite, lpvMessage);
+
+	fSuccess = WriteFile(
+		hPipe,                  // pipe handle
+		lpvMessage,             // message
+		cbToWrite,              // message length
+		&cbWritten,             // bytes written
+		NULL);                  // not overlapped
+
+	if (!fSuccess)
+	{
+		TRACE_PRINT1("WriteFile to pipe failed. GLE=%d\n", GetLastError());
+		TRACE_EXIT("NPcapRequestHandle");
+		return INVALID_HANDLE_VALUE;
+	}
+
+	TRACE_PRINT("Message sent to server, receiving reply as follows:\n");
+
+	do
+	{
+		// Read from the pipe.
+
+		fSuccess = ReadFile(
+			hPipe,    // pipe handle
+			chBuf,    // buffer to receive reply
+			BUFSIZE*sizeof(char),  // size of buffer
+			&cbRead,  // number of bytes read
+			NULL);    // not overlapped
+
+		if (!fSuccess && GetLastError() != ERROR_MORE_DATA)
+			break;
+
+		//printf("\"%s\"\n", chBuf );
+	} while (!fSuccess);  // repeat loop if ERROR_MORE_DATA
+
+	if (!fSuccess)
+	{
+		TRACE_PRINT1("ReadFile from pipe failed. GLE=%d\n", GetLastError());
+		TRACE_EXIT("NPcapRequestHandle");
+		return INVALID_HANDLE_VALUE;
+	}
+
+	//printf("\n<End of message, press ENTER to terminate connection and exit\n>");
+	if (cbRead != 0)
+	{
+		HANDLE hd;
+		sscanf_s(chBuf, "%x,%d", &hd, pdwError);
+		TRACE_PRINT1("Received Driver Handle: 0x%08x\n", hd);
+		TRACE_EXIT("NPcapRequestHandle");
+		return hd;
+	}
+	else
+	{
+		TRACE_EXIT("NPcapRequestHandle");
+		return INVALID_HANDLE_VALUE;
+	}
+}
+
+BOOL NPcapIsAdminMode()
+{
+	BOOL bIsRunAsAdmin = FALSE;
+	DWORD dwError = ERROR_SUCCESS;
+	PSID pAdministratorsGroup = NULL;
+	// Allocate and initialize a SID of the administrators group.
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+
+	TRACE_ENTER("NPcapIsAdminMode");
+
+	if (!AllocateAndInitializeSid(
+		&NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&pAdministratorsGroup))
+	{
+		dwError = GetLastError();
+		goto Cleanup;
+	}
+
+	// Determine whether the SID of administrators group is enabled in
+	// the primary access token of the process.
+	if (!CheckTokenMembership(NULL, pAdministratorsGroup, &bIsRunAsAdmin))
+	{
+		dwError = GetLastError();
+		goto Cleanup;
+	}
+
+Cleanup:
+	// Centralized cleanup for all allocated resources.
+	if (pAdministratorsGroup)
+	{
+		FreeSid(pAdministratorsGroup);
+		pAdministratorsGroup = NULL;
+	}
+
+	// Throw the error if something failed in the function.
+	if (ERROR_SUCCESS != dwError)
+	{
+		TRACE_PRINT1("IsProcessRunningAsAdminMode failed. GLE=%d\n", dwError);
+	}
+
+	TRACE_PRINT1("IsProcessRunningAsAdminMode result: %s\n", bIsRunAsAdmin ? "yes" : "no");
+	TRACE_EXIT("NPcapIsAdminMode");
+	return bIsRunAsAdmin;
+}
+
+void NPcapStartHelper()
+{
+	TRACE_ENTER("NPcapStartHelper");
+
+	g_NPcapHelperTried = TRUE;
+
+	// Check if this process is running in Administrator mode.
+	g_IsAdminMode = NPcapIsAdminMode();
+
+	if (!g_IsAdminMode)
+	{
+		char pipeName[BUFSIZE];
+		int pid = GetCurrentProcessId();
+		sprintf_s(pipeName, BUFSIZE, "npcap-%d", pid);
+		if (NPcapCreatePipe(pipeName, g_DllHandle))
+		{
+			g_NPcapHelperPipe = NPcapConnect(pipeName);
+			if (g_NPcapHelperPipe == INVALID_HANDLE_VALUE)
+			{
+				// NPcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNPcapHelper() calls.
+				g_IsAdminMode = TRUE;
+			}
+		}
+		else
+		{
+			// NPcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNPcapHelper() calls.
+			g_IsAdminMode = TRUE;
+		}
+	}
+
+	TRACE_EXIT("NPcapStartHelper");
+}
+
+void NPcapStopHelper()
+{
+	TRACE_ENTER("NPcapStopHelper");
+
+	if (g_NPcapHelperPipe != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(g_NPcapHelperPipe);
+		g_NPcapHelperPipe = INVALID_HANDLE_VALUE;
+	}
+
+	TRACE_EXIT("NPcapStopHelper");
+}
+
 /*! 
   \brief The main dll function.
 */
@@ -253,6 +546,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
     BOOLEAN Status=TRUE;
 	PADAPTER_INFO NewAdInfo;
 	TCHAR DllFileName[MAX_PATH];
+	g_DllHandle = DllHandle;
 
 	UNUSED(lpReserved);
 
@@ -336,6 +630,12 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 			GlobalFreePtr(g_AdaptersInfoList);
 			
 			g_AdaptersInfoList = NewAdInfo;
+		}
+
+		if (!g_IsAdminMode)
+		{
+			// NPcapHelper De-Initialization.
+			NPcapStopHelper();
 		}
 
 #ifdef WPCAP_OEM_UNLOAD_H 
@@ -1004,7 +1304,6 @@ BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLe
 	TCHAR	SubBlock[64];
 	PVOID	lpBuffer;
 	PCHAR	TmpStr;
-	DWORD aaa;
 	
 	// Structure used to store enumerated languages and code pages.
 	struct LANGANDCODEPAGE {
@@ -1017,12 +1316,6 @@ BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLe
 	// Now lets dive in and pull out the version information:
 	
     dwVerInfoSize = GetFileVersionInfoSize(FileName, &dwVerHnd);
-	if (dwVerInfoSize == 0)
-	{
-		aaa = GetLastError();
-		aaa = aaa;
-	}
-
     if (dwVerInfoSize) 
 	{
         lpstrVffInfo = GlobalAllocPtr(GMEM_MOVEABLE, dwVerInfoSize);
@@ -1096,59 +1389,46 @@ BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLe
 	return TRUE;
 }
 
-/*! 
-  \brief Opens an adapter using the NPF device driver.
-  \param AdapterName A string containing the name of the device to open. 
-  \return If the function succeeds, the return value is the pointer to a properly initialized ADAPTER object,
-   otherwise the return value is NULL.
-
-  \note internal function used by PacketOpenAdapter() and AddAdapter()
-*/
-LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
+BOOL PacketStartService()
 {
-    LPADAPTER lpAdapter;
-    BOOL Result;
 	DWORD error;
+	BOOL Result;
 	SC_HANDLE svcHandle = NULL;
 	SC_HANDLE scmHandle = NULL;
 	LONG KeyRes;
 	HKEY PathKey;
 	SERVICE_STATUS SStat;
 	BOOL QuerySStat;
-	CHAR SymbolicLinkA[MAX_PATH];
-//  
-//	Old registry based WinPcap names
-//
-//	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS];
-//	UINT	RegQueryLen;
+
+	//  
+	//	Old registry based WinPcap names
+	//
+	//	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS];
+	//	UINT	RegQueryLen;
 
 	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_NAME;
 	CHAR	NpfServiceLocation[MAX_WINPCAP_KEY_CHARS];
 
-	// Create the NPF device name from the original device name
-	TRACE_ENTER("PacketOpenAdapterNPF");
-	
-	TRACE_PRINT1("Trying to open adapter %s", AdapterNameA);
 
 	scmHandle = OpenSCManager(NULL, NULL, GENERIC_READ);
-		
-	if(scmHandle == NULL)
+
+	if (scmHandle == NULL)
 	{
 		error = GetLastError();
 		TRACE_PRINT1("OpenSCManager failed! LastError=%8.8x", error);
 	}
 	else
 	{
-//  
-//	Old registry based WinPcap names
-//
-//		RegQueryLen = sizeof(NpfDriverName)/sizeof(NpfDriverName[0]);
-//		if (QueryWinPcapRegistryStringA(NPF_DRIVER_NAME_REG_KEY, NpfDriverName, &RegQueryLen, NPF_DRIVER_NAME) == FALSE && RegQueryLen == 0)
-//		{
-//			//just use an empty string string for the service name
-//			NpfDriverName[0] = '\0';
-//		}
-		
+		//  
+		//	Old registry based WinPcap names
+		//
+		//		RegQueryLen = sizeof(NpfDriverName)/sizeof(NpfDriverName[0]);
+		//		if (QueryWinPcapRegistryStringA(NPF_DRIVER_NAME_REG_KEY, NpfDriverName, &RegQueryLen, NPF_DRIVER_NAME) == FALSE && RegQueryLen == 0)
+		//		{
+		//			//just use an empty string string for the service name
+		//			NpfDriverName[0] = '\0';
+		//		}
+
 		//
 		// Create the name of the registry key containing the service.
 		//
@@ -1156,15 +1436,15 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 
 		// check if the NPF registry key is already present
 		// this means that the driver is already installed and that we don't need to call PacketInstallDriver
-		KeyRes=RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+		KeyRes = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
 			NpfServiceLocation,
 			0,
 			KEY_READ,
 			&PathKey);
-		
-		if(KeyRes != ERROR_SUCCESS)
+
+		if (KeyRes != ERROR_SUCCESS)
 		{
- 			TRACE_PRINT("NPF registry key not present, trying to install the driver.");
+			TRACE_PRINT("NPF registry key not present, trying to install the driver.");
 			if (bUseNPF60)
 			{
 				Result = PacketInstallDriver60();
@@ -1176,20 +1456,20 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 		}
 		else
 		{
- 			TRACE_PRINT("NPF registry key present, driver is installed.");
+			TRACE_PRINT("NPF registry key present, driver is installed.");
 			Result = TRUE;
 			RegCloseKey(PathKey);
 		}
-		
-		if (Result) 
+
+		if (Result)
 		{
- 			TRACE_PRINT("Trying to see if the NPF service is running...");
-			svcHandle = OpenServiceA(scmHandle, NpfDriverName, SERVICE_START | SERVICE_QUERY_STATUS );
+			TRACE_PRINT("Trying to see if the NPF service is running...");
+			svcHandle = OpenServiceA(scmHandle, NpfDriverName, SERVICE_START | SERVICE_QUERY_STATUS);
 
 			if (svcHandle != NULL)
 			{
 				QuerySStat = QueryServiceStatus(svcHandle, &SStat);
-				
+
 #ifdef _DBG				
 				switch (SStat.dwCurrentState)
 				{
@@ -1221,28 +1501,28 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 				}
 #endif
 
-				if(!QuerySStat || SStat.dwCurrentState != SERVICE_RUNNING)
+				if (!QuerySStat || SStat.dwCurrentState != SERVICE_RUNNING)
 				{
 					TRACE_PRINT("Driver NPF not running. Calling startservice");
-					if (StartService(svcHandle, 0, NULL)==0)
-					{ 
+					if (StartService(svcHandle, 0, NULL) == 0)
+					{
 						error = GetLastError();
-						if(error!=ERROR_SERVICE_ALREADY_RUNNING && error!=ERROR_ALREADY_EXISTS)
+						if (error != ERROR_SERVICE_ALREADY_RUNNING && error != ERROR_ALREADY_EXISTS)
 						{
 							SetLastError(error);
-							if (scmHandle != NULL) 
+							if (scmHandle != NULL)
 								CloseServiceHandle(scmHandle);
 							error = GetLastError();
-							TRACE_PRINT1("PacketOpenAdapterNPF: StartService failed, LastError=%8.8x",error);
+							TRACE_PRINT1("PacketOpenAdapterNPF: StartService failed, LastError=%8.8x", error);
 							TRACE_EXIT("PacketOpenAdapterNPF");
 							SetLastError(error);
-							return NULL;
+							return FALSE;
 						}
-					}				
+					}
 				}
 
-				CloseServiceHandle( svcHandle );
-       			svcHandle = NULL;
+				CloseServiceHandle(svcHandle);
+				svcHandle = NULL;
 
 			}
 			else
@@ -1254,7 +1534,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 		}
 		else
 		{
-			if(KeyRes != ERROR_SUCCESS)
+			if (KeyRes != ERROR_SUCCESS)
 				if (bUseNPF60)
 				{
 					Result = PacketInstallDriver60();
@@ -1265,15 +1545,15 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 				}
 			else
 				Result = TRUE;
-			
+
 			if (Result) {
-				
+
 				svcHandle = OpenServiceA(scmHandle,
 					NpfDriverName,
 					SERVICE_START);
 				if (svcHandle != NULL)
 				{
-					
+
 					QuerySStat = QueryServiceStatus(svcHandle, &SStat);
 
 #ifdef _DBG
@@ -1306,25 +1586,25 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 						break;
 					}
 #endif
-					
-					if(!QuerySStat || SStat.dwCurrentState != SERVICE_RUNNING){
-						
+
+					if (!QuerySStat || SStat.dwCurrentState != SERVICE_RUNNING){
+
 						TRACE_PRINT("Calling startservice");
-						
-						if (StartService(svcHandle, 0, NULL)==0){ 
+
+						if (StartService(svcHandle, 0, NULL) == 0){
 							error = GetLastError();
-							if(error!=ERROR_SERVICE_ALREADY_RUNNING && error!=ERROR_ALREADY_EXISTS)
+							if (error != ERROR_SERVICE_ALREADY_RUNNING && error != ERROR_ALREADY_EXISTS)
 							{
 								if (scmHandle != NULL) CloseServiceHandle(scmHandle);
-								TRACE_PRINT1("PacketOpenAdapterNPF: StartService failed, LastError=%8.8x",error);
+								TRACE_PRINT1("PacketOpenAdapterNPF: StartService failed, LastError=%8.8x", error);
 								TRACE_EXIT("PacketOpenAdapterNPF");
 								SetLastError(error);
-								return NULL;
+								return FALSE;
 							}
 						}
 					}
-				    
-					CloseServiceHandle( svcHandle );
+
+					CloseServiceHandle(svcHandle);
 					svcHandle = NULL;
 
 				}
@@ -1337,7 +1617,45 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 		}
 	}
 
-    if (scmHandle != NULL) CloseServiceHandle(scmHandle);
+	if (scmHandle != NULL) CloseServiceHandle(scmHandle);
+	return TRUE;
+}
+
+/*! 
+  \brief Opens an adapter using the NPF device driver.
+  \param AdapterName A string containing the name of the device to open. 
+  \return If the function succeeds, the return value is the pointer to a properly initialized ADAPTER object,
+   otherwise the return value is NULL.
+
+  \note internal function used by PacketOpenAdapter() and AddAdapter()
+*/
+LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
+{
+	DWORD error;
+    LPADAPTER lpAdapter;
+	
+	CHAR SymbolicLinkA[MAX_PATH];
+
+	// Create the NPF device name from the original device name
+	TRACE_ENTER("PacketOpenAdapterNPF");
+
+	TRACE_PRINT1("Trying to open adapter %s", AdapterNameA);
+
+	// NPcapHelper Initialization, used for accessing the driver with Administrator privilege.
+	if (!g_NPcapHelperTried)
+	{
+		NPcapStartHelper();
+	}
+
+	// Try NPcapHelper to start service if we are in Non-Admin mode.
+// 	if (!g_IsAdminMode)
+// 	{
+// 		
+// 	}
+// 	else
+	{
+		PacketStartService();
+	}
 
 	lpAdapter=(LPADAPTER)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER));
 	if (lpAdapter==NULL)
@@ -1383,9 +1701,26 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	//
 	ZeroMemory(lpAdapter->SymbolicLink, sizeof(lpAdapter->SymbolicLink));
 
-	//try if it is possible to open the adapter immediately
-	lpAdapter->hFile=CreateFileA(SymbolicLinkA,GENERIC_WRITE | GENERIC_READ,
-		0,NULL,OPEN_EXISTING,0,0);
+	// Try NPcapHelper to request handle if we are in Non-Admin mode.
+	if (!g_IsAdminMode)
+	{
+		//try if it is possible to open the adapter immediately
+		DWORD dwErrorReceived;
+		lpAdapter->hFile = NPcapRequestHandle(SymbolicLinkA, &dwErrorReceived);
+		TRACE_PRINT1("Driver handle from NPcapHelper = %08x", lpAdapter->hFile);
+		if (lpAdapter->hFile == INVALID_HANDLE_VALUE)
+		{
+			TRACE_PRINT1("ErrorCode = %d", dwErrorReceived);
+			SetLastError(dwErrorReceived);
+		}
+	}
+	else
+	{
+		//try if it is possible to open the adapter immediately
+		lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
+			0, NULL, OPEN_EXISTING, 0, 0);
+		TRACE_PRINT1("lpAdapter->hFile = %08x", lpAdapter->hFile);
+	}
 	
 	if (lpAdapter->hFile != INVALID_HANDLE_VALUE) 
 	{
