@@ -42,6 +42,7 @@
 #include <Packet32.h>
 #include <tchar.h>
 #include <strsafe.h>
+#include <Shlwapi.h>
 
 #include "ProtInstall.h"
 #include "Packet32-Int.h"
@@ -279,6 +280,13 @@ BOOL NPcapCreatePipe(char *pipeName, HANDLE moduleName)
 	}
 	_splitpath_s(lpFilename, szDrive, BUFSIZE, szDir, BUFSIZE, NULL, 0, NULL, 0);
 	_makepath_s(lpFilename, BUFSIZE, szDrive, szDir, "NPcapHelper", ".exe");
+
+	if (!PathFileExistsA(lpFilename))
+	{
+		TRACE_PRINT1("PathFileExistsA failed. GLE=%d\n", GetLastError());
+		TRACE_EXIT("NPcapCreatePipe");
+		return FALSE;
+	}
 
 	sprintf_s(params, BUFSIZE, "%s %d", pipeName, pid);
 
