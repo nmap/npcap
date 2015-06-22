@@ -39,6 +39,7 @@ Name "NPcap 0.01 for Nmap (beta)"
 OutFile "npcap-nmap-0.01.exe"
 
 Var /GLOBAL os_ver
+Var /GLOBAL admin_only
 
 RequestExecutionLevel admin
 
@@ -99,6 +100,7 @@ VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2015 Insecure.Com LLC, Nm
 ;Pages
 
 !insertmacro MUI_PAGE_LICENSE "LICENSE"
+Page custom adminOnlyOptionsPage doAdminOnlyOptions
 ; Don't let user choose where to install the files. WinPcap doesn't let people, and it's one less thing for us to worry about.
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -114,6 +116,7 @@ Page custom finalPage doFinal
 ;--------------------------------
 ;Reserves
 
+ReserveFile "options_admin_only.ini"
 ReserveFile "options.ini"
 ReserveFile "final.ini"
 !insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
@@ -134,6 +137,7 @@ ReserveFile "final.ini"
 ; replace it or not.
 
 Function .onInit
+  !insertmacro MUI_INSTALLOPTIONS_EXTRACT "options_admin_only.ini"
   !insertmacro MUI_INSTALLOPTIONS_EXTRACT "options.ini"
   !insertmacro MUI_INSTALLOPTIONS_EXTRACT "final.ini"
 
@@ -290,8 +294,22 @@ Function .onInit
 
 FunctionEnd
 
+Function adminOnlyOptionsPage
+  !insertmacro MUI_HEADER_TEXT "Security Options" ""
+  !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
+FunctionEnd
+
+Function doAdminOnlyOptions
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State"
+  StrCmp $0 "0" do_admin_only_options_start do_admin_only_options_end
+  StrCpy $admin_only "yes" 3
+  do_admin_only_options_start:
+  StrCpy $admin_only "no" 3
+  do_admin_only_options_end:
+FunctionEnd
+
 Function optionsPage
-  !insertmacro MUI_HEADER_TEXT "NPcap Options" ""
+  !insertmacro MUI_HEADER_TEXT "Driver Options" ""
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options.ini"
 FunctionEnd
 
@@ -404,6 +422,9 @@ Section "WinPcap" SecWinPcap
   SetOutPath $SYSDIR\NPcap
   File pthreadVC.dll
   File wpcap.dll
+  StrCmp $admin_only 'no' no_admin_only_npcaphelper_x86
+  File win7_above\x86\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
+  no_admin_only_npcaphelper_x86:
 
   ; Check windows version
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
@@ -461,7 +482,14 @@ Section "WinPcap" SecWinPcap
       File rpcapd.exe
       File LICENSE
       File win7_above\x86\NPFInstall.exe
-      File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+
+	  StrCmp $admin_only 'no' no_admin_only_driver_x86
+	  File win7_above\x86\admin_only\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
+	  Goto no_admin_only_driver_x86_done
+	  no_admin_only_driver_x86:
+	  File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+	  no_admin_only_driver_x86_done:
+
       File win7_above\x86\npcap.inf
       File win7_above\x86\npcap.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -510,7 +538,14 @@ Section "WinPcap" SecWinPcap
       File rpcapd.exe
       File LICENSE
       File win7_above\x64\NPFInstall.exe
-      File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
+
+	  StrCmp $admin_only 'no' no_admin_only_driver_x64
+	  File win7_above\x64\admin_only\npcap.sys ; x64 NT6.1 and above version, admin only
+	  Goto no_admin_only_driver_x64_done
+	  no_admin_only_driver_x64:
+	  File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
+	  no_admin_only_driver_x64_done:
+
       File win7_above\x64\npcap.inf
       File win7_above\x64\npcap.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -522,6 +557,9 @@ Section "WinPcap" SecWinPcap
       ; installed into the right place further above.
       ; install the 64-bit version of wpcap.dll into System32
       SetOutPath $SYSDIR\NPcap
+	  StrCmp $admin_only 'no' no_admin_only_npcaphelper_x64
+	  File win7_above\x64\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
+	  no_admin_only_npcaphelper_x64:
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.1 above version (for Win7 and Win8)
@@ -643,6 +681,8 @@ Section "Uninstall"
   Delete $SYSDIR\NPcap\Packet.dll
   Delete $SYSDIR\NPcap\pthreadVC.dll
   Delete $SYSDIR\NPcap\wpcap.dll
+  Delete $SYSDIR\NPcap\NPcapHelper.exe
+  RMDir "$SYSDIR\NPcap"
 
   ; check for x64, delete npf.sys file from system32\drivers
   Call un.is64bit
@@ -690,6 +730,7 @@ Section "Uninstall"
     ; Also delete the x64 files in System32
     Delete $SYSDIR\NPcap\wpcap.dll
     Delete $SYSDIR\NPcap\Packet.dll
+	Delete $SYSDIR\NPcap\NPcapHelper.exe
     RMDir "$SYSDIR\NPcap"
     
     ; re-enable Wow64FsRedirection
