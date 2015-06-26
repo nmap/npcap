@@ -485,13 +485,15 @@ Section "WinPcap" SecWinPcap
 
 	  StrCmp $admin_only 'no' no_admin_only_driver_x86
 	  File win7_above\x86\admin_only\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
+	  File win7_above\x86\admin_only\npcap.inf
+	  File win7_above\x86\admin_only\npcap.cat
 	  Goto no_admin_only_driver_x86_done
 	  no_admin_only_driver_x86:
 	  File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+	  File win7_above\x86\npcap.inf
+	  File win7_above\x86\npcap.cat
 	  no_admin_only_driver_x86_done:
 
-      File win7_above\x86\npcap.inf
-      File win7_above\x86\npcap.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Win7 and Win8"
       SetOutPath $SYSDIR\drivers
@@ -541,13 +543,15 @@ Section "WinPcap" SecWinPcap
 
 	  StrCmp $admin_only 'no' no_admin_only_driver_x64
 	  File win7_above\x64\admin_only\npcap.sys ; x64 NT6.1 and above version, admin only
+	  File win7_above\x64\admin_only\npcap.inf
+	  File win7_above\x64\admin_only\npcap.cat
 	  Goto no_admin_only_driver_x64_done
 	  no_admin_only_driver_x64:
 	  File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
+	  File win7_above\x64\npcap.inf
+	  File win7_above\x64\npcap.cat
 	  no_admin_only_driver_x64_done:
 
-      File win7_above\x64\npcap.inf
-      File win7_above\x64\npcap.cat
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x64 driver for Win7 and Win8"
       SetOutPath $SYSDIR\drivers
