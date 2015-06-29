@@ -1,5 +1,14 @@
-// IPCTest.cpp : Defines the entry point for the console application.
-//
+/***************************************************************************
+ * NPcapHelperTest.c -- A program used to test NPcapHelper.exe             *
+ * Note: this code is now integrated into packet.dll, this file is only    *
+ * used for test. This is for "Admin-only mode", as packet.dll runs on     *
+ * non-Admin level and NPcapHelper.exe runs on Admin level. If user denies *
+ * the UAC prompt, NPcapHelper.exe will not start.                         *
+ *                                                                         *
+ * This program is based on Microsoft example:                             *
+ * https://msdn.microsoft.com/en-us/library/windows/desktop/aa365592%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396
+ * https://msdn.microsoft.com/en-us/library/windows/desktop/aa365588%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396
+ ***************************************************************************/
 
 #include <stdio.h>
 #include <windows.h>
