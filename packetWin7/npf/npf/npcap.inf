@@ -73,7 +73,7 @@ HKR, Ndi\Interfaces,LowerRange,,"nolower"
 ; native WWAN stacks, but you must be prepared to handle the packet framing.
 ; Possible values are listed on MSDN, but common values include:
 ;     ethernet, wan, ppip, wlan
-HKR, Ndi\Interfaces, FilterMediaTypes,,"ethernet, wan, ppip, wlan"
+HKR, Ndi\Interfaces, FilterMediaTypes,,"ethernet, wan, ppip, wlan, bluetooth, ndis5, vwifi, nolower"
 
 
 ; For a Mandatory filter, use this:
