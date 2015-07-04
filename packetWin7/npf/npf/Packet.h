@@ -105,6 +105,9 @@ extern NDIS_HANDLE         FilterDriverObject;
 #define NPF_DISABLE_LOOPBACK	1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
 #define NPF_ENABLE_LOOPBACK		2	///< Tells the driver to capture the packets sent by itself.
 
+// Admin only mode definition
+//#define NPF_ADMIN_ONLY_MODE			///< Tells the driver to restrict its access only to Administrators. This is used to support "Admin-only Mode" for NPcap.
+
 /*!
   \brief Header of a libpcap dump file.
 

@@ -540,12 +540,15 @@ BOOLEAN
 
 	IF_LOUD(DbgPrint("Creating device name: %ws\n", deviceName.Buffer);)
 
-// 	status = IoCreateDevice(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
-// 		FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
-	UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)");
+#ifdef NPF_ADMIN_ONLY_MODE
+	UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"); // this SDDL means only permits System and Administrator to access the device.
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
 	status = IoCreateDeviceSecure(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
 		FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID) &guidClassNPF, &devObjP);
+#else
+	status = IoCreateDevice(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
+		FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
+#endif
 
 	if (NT_SUCCESS(status))
 	{
