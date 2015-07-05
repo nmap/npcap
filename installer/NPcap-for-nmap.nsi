@@ -371,6 +371,8 @@ FunctionEnd
 
 Function registerServiceAPI_win7
   ; delete the npf service to avoid an error message later if it already exists
+  ; create the NPcap Loopback Adapter, used for capturing loopback packets
+  ExecWait '"$INSTDIR\NPFInstall.exe" -il' $0
   ; create the new npf service
   ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
   StrCmp $0 "0" register_win7_success register_win7_fail
@@ -388,6 +390,7 @@ FunctionEnd
 
 Function un.registerServiceAPI_win7
   ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
+  ExecWait '"$INSTDIR\NPFInstall.exe" -ul' $0
   StrCmp $0 "0" unregister_win7_success unregister_win7_fail
   
   unregister_win7_fail:
@@ -676,6 +679,7 @@ Section "Uninstall"
   Delete $INSTDIR\rpcapd.exe
   Delete $INSTDIR\LICENSE
   Delete $INSTDIR\NPFInstall.exe
+  Delete $INSTDIR\loopback.ini
   Delete $INSTDIR\npcap.sys
   Delete $INSTDIR\npcap.inf
   Delete $INSTDIR\npcap.cat

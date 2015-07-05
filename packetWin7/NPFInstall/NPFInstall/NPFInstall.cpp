@@ -1,14 +1,17 @@
+#pragma warning(disable: 4311 4312)
+
 #include <tchar.h>
 #include <windows.h>
 
 #include "ProtInstall.h"
+#include "LoopbackInstall.h"
 
 BOOL PacketInstallDriver60();
 BOOL PacketStopDriver60();
 BOOL PacketInstallDriver40();
 BOOL PacketStopDriver40();
 
-#define STR_COMMAND_USAGE _T("Command Usage: NPFInstall -[i/u/r/ii/uu]: i - install, u - uninstall, r - restartBindings, ii - install xp driver, uu - uninstall xp driver.\n")
+#define STR_COMMAND_USAGE _T("Command Usage: NPFInstall -[i/u/r/ii/uu]: i - install win7 driver, u - uninstall win7 driver, r - restartBindings, ii - install xp driver, uu - uninstall xp driver, il - install NPcap loopback adapter, ul - uninstall NPcap loopback adapter.\n")
 
 BOOL PacketInstallDriver60()
 {
@@ -187,6 +190,34 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				_tprintf(_T("NPF driver has failed the uninstallation."));
+				return -1;
+			}
+		}
+		else if (_tcscmp(_T("-il"), argv[1]) == 0)
+		{
+			bSuccess = InstallLoopbackAdapter();
+			if (bSuccess)
+			{
+				_tprintf(_T("NPcap Loopback adapter has been successfully installed!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("NPcap Loopback adapter has failed the installation."));
+				return -1;
+			}
+		}
+		else if (_tcscmp(_T("-ul"), argv[1]) == 0)
+		{
+			bSuccess = UninstallLoopbackAdapter();
+			if (bSuccess)
+			{
+				_tprintf(_T("NPcap Loopback adapter has been successfully uninstalled!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("NPcap Loopback adapter has failed the uninstallation."));
 				return -1;
 			}
 		}
