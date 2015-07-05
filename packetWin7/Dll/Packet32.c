@@ -545,6 +545,167 @@ void NPcapStopHelper()
 	TRACE_EXIT("NPcapStopHelper");
 }
 
+// find [substr] from a fixed-length buffer
+// [full_data] will be treated as binary data buffer)
+// return NULL if not found
+char* memstr(char* full_data, int full_data_len, char* substr)
+{
+	int sublen;
+	int i;
+	char* cur;
+	int last_possible;
+
+	if (full_data == NULL || full_data_len <= 0 || substr == NULL)
+	{
+		return NULL;
+	}
+
+	if (*substr == '\0')
+	{
+		return NULL;
+	}
+
+	sublen = strlen(substr);
+
+	cur = full_data;
+	last_possible = full_data_len - sublen + 1;
+	for (i = 0; i < last_possible; i++)
+	{
+		if (*cur == *substr)
+		{
+			//assert(full_data_len - i >= sublen);
+			if (memcmp(cur, substr, sublen) == 0)
+			{
+				//found
+				return cur;
+			}
+		}
+		cur ++;
+	}
+
+	return NULL;
+}
+
+// For memory block [mem], substitute all [source] strings with [destination], return the new memory block (need to free), if not found, return NULL.
+PCHAR NPcapReplaceMemory(PCHAR buf, int buf_size, PCHAR source, PCHAR destination)
+{
+	PCHAR tmp;
+	PCHAR newbuf;
+	PCHAR retbuf;
+	PCHAR sk;
+	size_t size;
+
+	sk = memstr(buf, buf_size, source);
+	if (sk == NULL)
+		return NULL;
+
+	size = 2 * buf_size + strlen(destination) + 1;
+	newbuf = (PCHAR) calloc(1, size);
+	if (newbuf == NULL)
+		return NULL;
+
+	retbuf = (PCHAR) calloc(1, size);
+	if (retbuf == NULL)
+	{
+		free (newbuf);
+		return NULL;
+	}
+
+	memcpy_s(newbuf, size - 1, buf, buf_size);
+	sk = memstr(newbuf, size, source);
+
+	while (sk != NULL)
+	{
+		int pos = 0;
+		memcpy(retbuf + pos, newbuf, sk - newbuf);
+		pos += sk - newbuf;
+		sk += strlen(source);
+		memcpy(retbuf + pos, destination, strlen(destination));
+		pos += strlen(destination);
+		memcpy(retbuf + pos, sk, newbuf + size - sk);
+
+		tmp = newbuf;
+		newbuf = retbuf;
+		retbuf = tmp;
+
+		memset(retbuf, 0, size);
+		sk = memstr(newbuf, size, source);
+	}
+
+	free(retbuf);
+	return newbuf;
+}
+
+// For [string], substitute all [source] strings with [destination], return the new string (need to free), if not found, return NULL.
+PCHAR NPcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
+{
+	PCHAR tmp;
+	PCHAR newstr;
+	PCHAR retstr;
+	PCHAR sk;
+	size_t size;
+
+	sk = strstr(string, source);
+	if (sk == NULL)
+		return NULL;
+
+	size = 2 * strlen(string) + strlen(destination) + 1;
+	newstr = (PCHAR) calloc(1, size);
+	if (newstr == NULL)
+		return NULL;
+
+	retstr = (PCHAR) calloc(1, size);
+	if (retstr == NULL)
+	{
+		free (newstr);
+		return NULL;
+	}
+
+	sprintf_s(newstr, size - 1, "%s", string);
+	sk = strstr(newstr, source);
+
+	while (sk != NULL)
+	{
+		int pos = 0;
+		memcpy(retstr + pos, newstr, sk - newstr);
+		pos += sk - newstr;
+		sk += strlen(source);
+		memcpy(retstr + pos, destination, strlen(destination));
+		pos += strlen(destination);
+		memcpy(retstr + pos, sk, strlen(sk));
+
+		tmp = newstr;
+		newstr = retstr;
+		retstr = tmp;
+
+		memset(retstr, 0, size);
+		sk = strstr(newstr, source);
+	}
+
+	free(retstr);
+	return newstr;
+}
+
+PCHAR NPcapAdapterNameNPF2NPCAP(PCHAR AdapterName)
+{
+	return NPcapReplaceString(AdapterName, "NPF", "NPCAP");
+}
+
+PCHAR NPcapAdapterNameNPCAP2NPF(PCHAR AdapterName)
+{
+	return NPcapReplaceString(AdapterName, "NPCAP", "NPF");
+}
+
+PCHAR NPcapMemNPF2NPCAP(PCHAR pStr, int iBufSize)
+{
+	return NPcapReplaceMemory(pStr, iBufSize, "NPF", "NPCAP");
+}
+
+PCHAR NPcapMemNPCAP2NPF(PCHAR pStr, int iBufSize)
+{
+	return NPcapReplaceMemory(pStr, iBufSize, "NPCAP", "NPF");
+}
+
 /*! 
   \brief The main dll function.
 */
@@ -2172,6 +2333,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 {
     LPADAPTER lpAdapter = NULL;
 	PCHAR AdapterNameA = NULL;
+	PCHAR TranslatedAdapterNameWA = NULL;
 	BOOL bFreeAdapterNameA;
 #ifndef _WINNT4
 	PADAPTER_INFO TAdInfo;
@@ -2184,6 +2346,13 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	TRACE_PRINT_OS_INFO();
 	
 	TRACE_PRINT2("Packet DLL version %s, Driver version %s", PacketLibraryVersion, PacketDriverVersion);
+
+	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+	TranslatedAdapterNameWA = NPcapAdapterNameNPF2NPCAP(AdapterNameWA);
+	if (TranslatedAdapterNameWA)
+	{
+		AdapterNameWA = TranslatedAdapterNameWA;
+	}
 
 	//
 	// Check the presence on some libraries we rely on, and load them if we found them
@@ -2213,6 +2382,8 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 		if (AdapterNameA == NULL)
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			if (TranslatedAdapterNameWA)
+				free(TranslatedAdapterNameWA);
 			return NULL;
 		}
 
@@ -2428,12 +2599,16 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	{
 		TRACE_EXIT("PacketOpenAdapter");
 		SetLastError(dwLastError);
+		if (TranslatedAdapterNameWA)
+			free(TranslatedAdapterNameWA);
 
 		return NULL;
 	}
 	else
 	{
 		TRACE_EXIT("PacketOpenAdapter");
+		if (TranslatedAdapterNameWA)
+			free(TranslatedAdapterNameWA);
 
 		return lpAdapter;
 	}
@@ -4084,6 +4259,7 @@ BOOLEAN PacketGetAdapterNames(PTSTR pStr,PULONG  BufferSize)
 	ULONG	SizeNames = 0;
 	ULONG	SizeDesc;
 	ULONG	OffDescriptions;
+	PCHAR pStrTranslated = NULL;
 
 	TRACE_ENTER("PacketGetAdapterNames");
 
@@ -4180,6 +4356,13 @@ BOOLEAN PacketGetAdapterNames(PTSTR pStr,PULONG  BufferSize)
 	// End the list with a further \0
 	((PCHAR)pStr)[SizeNeeded + 1] = 0;
 
+	// Translate the adapter name string's "NPCAP_{XXX}" to "NPF_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+	pStrTranslated = NPcapMemNPCAP2NPF(pStr, *BufferSize);
+	if (pStrTranslated)
+	{
+		memcpy_s(((PCHAR)pStr), *BufferSize, pStrTranslated, *BufferSize);
+		free(pStrTranslated);
+	}
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 	TRACE_EXIT("PacketGetAdapterNames");
@@ -4204,8 +4387,16 @@ BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntrie
 	PADAPTER_INFO TAdInfo;
 	PCHAR Tname;
 	BOOLEAN Res, FreeBuff;
+	PCHAR TranslatedAdapterName = NULL;
 
 	TRACE_ENTER("PacketGetNetInfoEx");
+
+	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+	TranslatedAdapterName = NPcapAdapterNameNPF2NPCAP(AdapterName);
+	if (TranslatedAdapterName)
+	{
+		AdapterName = TranslatedAdapterName;
+	}
 
 	// Provide conversion for backward compatibility
 	if(AdapterName[1] != 0)
@@ -4229,6 +4420,9 @@ BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntrie
 			GlobalFreePtr(Tname);
 
 		TRACE_EXIT("PacketGetNetInfoEx");
+
+		if (TranslatedAdapterName)
+			free(TranslatedAdapterName);
 		
 		return FALSE;
 	}
@@ -4276,6 +4470,9 @@ BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntrie
 	if(FreeBuff)GlobalFreePtr(Tname);
 	
 	TRACE_EXIT("PacketGetNetInfoEx");
+
+	if (TranslatedAdapterName)
+		free(TranslatedAdapterName);
 	return Res;
 }
 
