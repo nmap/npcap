@@ -18,6 +18,7 @@
 #define _NETCFGAPI_H_INCLUDED
 
 #pragma warning(disable: 4996)
+#pragma warning(disable: 4311 4312)
 #include <iostream>
 #include <tchar.h>
 
