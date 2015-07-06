@@ -1355,14 +1355,14 @@ BOOL RemoveLoopbackDeviceInternal(int iDevID)
 
 BOOL SaveDevIDToFile(int iDevID)
 {
-	char strLoopbackInfPath[MAX_PATH + 30];
-	if (!GetConfigFilePath(strLoopbackInfPath))
+	char strLoopbackIDFilePath[MAX_PATH + 30];
+	if (!GetConfigFilePath(strLoopbackIDFilePath))
 	{
 		return FALSE;
 	}
 
 	FILE *fp;
-	if ((fp = fopen(strLoopbackInfPath, "w")) == NULL)
+	if ((fp = fopen(strLoopbackIDFilePath, "w")) == NULL)
 	{
 		return FALSE;
 	}
@@ -1373,15 +1373,15 @@ BOOL SaveDevIDToFile(int iDevID)
 
 int LoadDevIDFromFile()
 {
-	char strLoopbackInfPath[MAX_PATH + 30];
-	if (!GetConfigFilePath(strLoopbackInfPath))
+	char strLoopbackIDFilePath[MAX_PATH + 30];
+	if (!GetConfigFilePath(strLoopbackIDFilePath))
 	{
 		return FALSE;
 	}
 
 	FILE *fp;
 	int iDevID;
-	if ((fp = fopen(strLoopbackInfPath, "r")) == NULL)
+	if ((fp = fopen(strLoopbackIDFilePath, "r")) == NULL)
 	{
 		return -1;
 	}
