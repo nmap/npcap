@@ -73,7 +73,7 @@ int cmdInstall(_In_ LPCTSTR BaseName, _In_opt_ LPCTSTR Machine, _In_ DWORD Flags
 int cmdRemove(_In_ LPCTSTR BaseName, _In_opt_ LPCTSTR Machine, _In_ DWORD Flags, _In_ int argc, _In_reads_(argc) PTSTR argv[]);
 typedef int (*CallbackFunc)(_In_ HDEVINFO Devs, _In_ PSP_DEVINFO_DATA DevInfo, _In_ DWORD Index, _In_ LPVOID Context);
 
-BOOL ListLoopbackAdapters();
+/*BOOL ListLoopbackAdapters();*/
 BOOL GetLoopbackINFFilePath(TCHAR strLoopbackInfPath[]);
 BOOL GetConfigFilePath(char strConfigPath[]);
 BOOL InstallLoopbackDeviceInternal();

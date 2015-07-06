@@ -51,6 +51,8 @@ struct IdEntry {
 	BOOL    InstanceId;
 };
 
+int g_DevInstanceID = -1;
+
 BOOL g_DevIDPreEnabled = TRUE;
 
 int g_DevIDCount = 0;
@@ -1174,6 +1176,20 @@ Return Value:
         goto final;
     }
 
+	//
+	// Get the Device Instance ID for our adapter.
+	//
+	TCHAR DevInstanceID[BUF_SIZE];
+	if (!SetupDiGetDeviceInstanceId(DeviceInfoSet,
+		&DeviceInfoData,
+		DevInstanceID,
+		BUF_SIZE,
+		NULL))
+	{
+		goto final;
+	}
+	g_DevInstanceID = getIntDevID(DevInstanceID);
+
     //
     // Transform the registry element into an actual devnode
     // in the PnP HW tree.
@@ -1262,18 +1278,18 @@ Return Value:
     return failcode;
 }
 
-BOOL ListLoopbackAdapters()
-{
-	TCHAR *strArgVs[1] = {_T("*msloop")}; // Hardware ID: *msloop
-	if (cmdStatus(_T("devcon.exe"), NULL, 0, 1, strArgVs) == EXIT_OK)
-	{
-		return TRUE;
-	}
-	else
-	{
-		return FALSE;
-	}
-}
+// BOOL ListLoopbackAdapters()
+// {
+// 	TCHAR *strArgVs[1] = {_T("*msloop")}; // Hardware ID: *msloop
+// 	if (cmdStatus(_T("devcon.exe"), NULL, 0, 1, strArgVs) == EXIT_OK)
+// 	{
+// 		return TRUE;
+// 	}
+// 	else
+// 	{
+// 		return FALSE;
+// 	}
+// }
 
 BOOL GetLoopbackINFFilePath(TCHAR strLoopbackInfPath[])
 {
@@ -1376,24 +1392,12 @@ int LoadDevIDFromFile()
 
 BOOL InstallLoopbackAdapter()
 {
-	g_DevIDPreEnabled = TRUE;
-	if (!ListLoopbackAdapters())
-	{
-		return FALSE;
-	}
-
 	if (!InstallLoopbackDeviceInternal())
 	{
 		return FALSE;
 	}
 
-	g_DevIDPreEnabled = FALSE;
-	if (!ListLoopbackAdapters())
-	{
-		return FALSE;
-	}
-
-	int iNPcapAdapterID = getNPcapLoopbackAdapterID();
+	int iNPcapAdapterID = g_DevInstanceID;
 	if (iNPcapAdapterID == -1)
 	{
 		return FALSE;
