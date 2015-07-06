@@ -14,6 +14,7 @@ Abstract:
 --*/
 
 #include "LoopbackInstall.h"
+#include "LoopbackRecord.h"
 
 #include <shlobj.h>
 
@@ -69,7 +70,7 @@ void addDevID(int iDevID)
 void addDevID(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 {
 	int iDevID;
-	_stscanf(strDevID, _T("ROOT\\NET\\%04d"), &iDevID);
+	_stscanf_s(strDevID, _T("ROOT\\NET\\%04d"), &iDevID);
 	addDevID(iDevID);
 }
 
@@ -84,7 +85,7 @@ void addDevID_Pre(int iDevID)
 void addDevID_Pre(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 {
 	int iDevID;
-	_stscanf(strDevID, _T("ROOT\\NET\\%04d"), &iDevID);
+	_stscanf_s(strDevID, _T("ROOT\\NET\\%04d"), &iDevID);
 	addDevID_Pre(iDevID);
 }
 
@@ -1294,7 +1295,7 @@ BOOL GetConfigFilePath(char strConfigPath[])
 	{
 		return FALSE;
 	}
-	_splitpath(tmp, drive, dir, NULL, NULL);
+	_splitpath_s(tmp, drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0);
 	sprintf_s(strConfigPath, MAX_PATH + 30, "%s%sloopback.ini", drive, dir);
 	return TRUE;
 }
@@ -1368,7 +1369,7 @@ int LoadDevIDFromFile()
 	{
 		return -1;
 	}
-	fscanf(fp, "%d", &iDevID);
+	fscanf_s(fp, "%d", &iDevID);
 	fclose(fp);
 	return iDevID;
 }
@@ -1394,6 +1395,11 @@ BOOL InstallLoopbackAdapter()
 
 	int iNPcapAdapterID = getNPcapLoopbackAdapterID();
 	if (iNPcapAdapterID == -1)
+	{
+		return FALSE;
+	}
+
+	if (!RecordLoopbackDevice(iNPcapAdapterID))
 	{
 		return FALSE;
 	}
