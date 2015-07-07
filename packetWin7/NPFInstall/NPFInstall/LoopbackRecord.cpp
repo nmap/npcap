@@ -20,6 +20,7 @@ Abstract:
 #include <devguid.h> // GUID_DEVCLASS_NET, ...
 
 #include "LoopbackRecord.h"
+#include "LoopbackRename.h"
 
 #define NPCAP_LOOPBACK_ADAPTER_NAME L"NPcap Loopback Adapter"
 #define NPCAP_LOOPBACK_APP_NAME L"NPCAP_Loopback"
@@ -208,6 +209,11 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 			else
 			{
 				if (!AddFlagToRegistry(pszBindName))
+				{
+					bFailed = TRUE;
+				}
+
+				if (!RenameLoopbackNetwork(pszBindName))
 				{
 					bFailed = TRUE;
 				}

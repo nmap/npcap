@@ -343,6 +343,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LoopbackRename.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Dll\netcfgapi.cpp"
 				>
 			</File>
@@ -366,6 +370,10 @@
 			</File>
 			<File
 				RelativePath=".\LoopbackRecord.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LoopbackRename.h"
 				>
 			</File>
 			<File
