@@ -76,6 +76,14 @@ NDIS_STRING tcpLinkageKeyName = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 NDIS_STRING AdapterListKey = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 								L"\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}");
 NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
+#ifdef _X86_
+NDIS_STRING g_NPcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software"
+								L"\\NPCAP");
+#else
+NDIS_STRING g_NPcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software\\Wow6432Node"
+	L"\\NPCAP");
+#endif
+NDIS_STRING g_LoopbackAdapterName;
 
 /// Global variable that points to the names of the bound adapters
 WCHAR* bindP = NULL;
@@ -189,6 +197,7 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
+	NPF_GetLoopbackAdapterName();
 	bindP = getAdaptersList();
 
 	if (bindP == NULL)
@@ -488,6 +497,100 @@ getTcpBindings(
 
 //-------------------------------------------------------------------
 
+VOID
+	NPF_GetLoopbackAdapterName(
+)
+{
+	OBJECT_ATTRIBUTES objAttrs;
+	NTSTATUS status;
+	HANDLE keyHandle;
+
+	TRACE_ENTER();
+
+	InitializeObjectAttributes(&objAttrs, &g_NPcapSoftwareKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
+	if (!NT_SUCCESS(status))
+	{
+		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, g_NPcapSoftwareKey.Buffer);)
+	}
+	else //OK
+	{
+		ULONG resultLength;
+		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
+		NDIS_STRING LoopbackValueName = NDIS_STRING_CONST("Loopback");
+		status = ZwQueryValueKey(keyHandle,
+			&LoopbackValueName,
+			KeyValuePartialInformation,
+			&valueInfo,
+			sizeof(valueInfo),
+			&resultLength);
+
+		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
+		{
+			IF_LOUD(DbgPrint("\n\nStatus of %x querying key value for size\n", status);)
+		}
+		else
+		{
+			// We know how big it needs to be.
+			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
+			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '1PWA');
+			if (valueInfoP != NULL)
+			{
+				status = ZwQueryValueKey(keyHandle,
+					&LoopbackValueName,
+					KeyValuePartialInformation,
+					valueInfoP,
+					valueInfoLength,
+					&resultLength);
+				if (!NT_SUCCESS(status))
+				{
+					IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
+				}
+				else
+				{
+					IF_LOUD(DbgPrint("Loopback Device Key = %ws\n", valueInfoP->Data);)
+
+					g_LoopbackAdapterName.Length = 0;
+					g_LoopbackAdapterName.MaximumLength = (USHORT)(valueInfoP->DataLength + sizeof(UNICODE_NULL));
+					g_LoopbackAdapterName.Buffer = ExAllocatePoolWithTag(PagedPool, g_LoopbackAdapterName.MaximumLength, '3PWA');
+					RtlCopyMemory(g_LoopbackAdapterName.Buffer, valueInfoP->Data, valueInfoP->DataLength);
+// 						if (BufPos + valueInfoP->DataLength > BufLen)
+// 						{
+// 							// double the buffer size
+// 							PWCHAR DeviceNames2 = (PWCHAR)ExAllocatePoolWithTag(PagedPool, BufLen << 1, '0PWA');
+// 							if (DeviceNames2)
+// 							{
+// 								RtlCopyMemory((PCHAR)DeviceNames2, (PCHAR)DeviceNames, BufLen);
+// 								BufLen <<= 1;
+// 								ExFreePool(DeviceNames);
+// 								DeviceNames = DeviceNames2;
+// 							}
+// 						}
+// 					if (BufPos + valueInfoP->DataLength < BufLen)
+// 					{
+// 						RtlCopyMemory((PCHAR)DeviceNames + BufPos,
+// 							valueInfoP->Data,
+// 							valueInfoP->DataLength);
+// 						BufPos += valueInfoP->DataLength - 2;
+// 					}
+				}
+
+				ExFreePool(valueInfoP);
+			}
+			else
+			{
+				IF_LOUD(DbgPrint("Error Allocating the buffer for the device name\n");)
+			}
+		}
+
+		ZwClose(keyHandle);
+	}
+
+	TRACE_EXIT();
+}
+
+//-------------------------------------------------------------------
+
 BOOLEAN
 	NPF_CreateDevice(
 	IN OUT PDRIVER_OBJECT adriverObjectP,
@@ -555,6 +658,15 @@ BOOLEAN
 		PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
 
 		IF_LOUD(DbgPrint("Device created successfully\n"););
+
+		devExtP->Loopback = FALSE;
+		if (g_LoopbackAdapterName.Buffer != NULL)
+		{
+			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, amacNameP->Buffer + devicePrefix.Length / sizeof(WCHAR), amacNameP->Length - devicePrefix.Length) == amacNameP->Length - devicePrefix.Length)
+			{
+				devExtP->Loopback = TRUE;
+			}
+		}
 
 		devObjP->Flags |= DO_DIRECT_IO;
 		RtlInitUnicodeString(&devExtP->AdapterName, amacNameP->Buffer);   
@@ -657,6 +769,12 @@ Return Value:
 
 	// Free the adapters names
 	ExFreePool(bindP);
+
+	// Free the loopback adapter name
+	if (g_LoopbackAdapterName.Buffer != NULL)
+	{
+		ExFreePool(g_LoopbackAdapterName.Buffer);
+	}
 
 	TRACE_EXIT();
 

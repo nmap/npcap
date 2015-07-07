@@ -210,7 +210,8 @@ typedef struct _PACKET_RESERVED
 typedef struct _DEVICE_EXTENSION
 {
 	NDIS_STRING	AdapterName;			///< Name of the adapter.
-	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use 
+	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
+	BOOLEAN		Loopback;
 										///< to open this adapter through WinPcap.
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
@@ -770,6 +771,16 @@ getAdaptersList(
 */
 PKEY_VALUE_PARTIAL_INFORMATION
 getTcpBindings(
+	);
+
+
+/*!
+\brief read NPcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.
+
+If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
+*/
+VOID
+NPF_GetLoopbackAdapterName(
 	);
 
 
