@@ -14,5 +14,5 @@ Also, we need to make a flag in registry to let the NPcap driver know that "this
 --*/
 
 int getIntDevID(TCHAR strDevID[]);
-BOOL AddFlagToLoopbackDevice();
+BOOL AddFlagToRegistry(wchar_t strDeviceName[]);
 BOOL RecordLoopbackDevice(int iNPcapAdapterID);

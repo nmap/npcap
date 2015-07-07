@@ -23,6 +23,8 @@ Abstract:
 
 #define NPCAP_LOOPBACK_ADAPTER_NAME L"NPcap Loopback Adapter"
 #define NPCAP_LOOPBACK_APP_NAME L"NPCAP_Loopback"
+#define NPCAP_REG_KEY_NAME L"SOFTWARE\\NPcap"
+#define NPCAP_REG_LOOPBACK_VALUE_NAME L"Loopback"
 
 int g_NPcapAdapterID = -1;
 
@@ -160,7 +162,6 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 		LPWSTR pszBindName = NULL;
 		pINetCfgComponent->GetBindName(&pszBindName);
 //		wcout << L"\tBind name: " << wstring(pszBindName) << L'\n';
-		CoTaskMemFree(pszBindName);
 
 // 		DWORD dwCharacteristics = 0;
 // 		pINetCfgComponent->GetCharacteristics(&dwCharacteristics);
@@ -206,10 +207,14 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 			}
 			else
 			{
-				AddFlagToLoopbackDevice();
+				if (!AddFlagToRegistry(pszBindName))
+				{
+					bFailed = TRUE;
+				}
 			}
 		}
 
+		CoTaskMemFree(pszBindName);
 		CoTaskMemFree(pszPndDevNodeId);
 		pINetCfgComponent.Release();
 
@@ -239,8 +244,29 @@ int getIntDevID(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 	return iDevID;
 }
 
-BOOL AddFlagToLoopbackDevice()
+BOOL AddFlagToRegistry(wchar_t strDeviceName[])
 {
+	LONG Status;
+	HKEY hNPcapKey;
+
+	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_REG_KEY_NAME, 0, KEY_WRITE | KEY_WOW64_32KEY, &hNPcapKey);
+	if (Status == ERROR_SUCCESS)
+	{
+		Status = RegSetValueExW(hNPcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strDeviceName, (lstrlen(strDeviceName) + 1) * sizeof (wchar_t));
+		if (Status != ERROR_SUCCESS)
+		{
+			printf("AddFlagToRegistry: 0x%08x\n", GetLastError());
+			RegCloseKey(hNPcapKey);
+			return FALSE;
+		}
+		RegCloseKey(hNPcapKey);
+	}
+	else
+	{
+		printf("AddFlagToRegistry: 0x%08x\n", GetLastError());
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
