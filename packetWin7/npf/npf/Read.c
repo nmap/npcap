@@ -444,22 +444,28 @@ NPF_SendEx(
 
 	if (Open->GroupHead != NULL)
 	{
+		// Should not come here, because Open called by NDIS will always be a group head itself, so its GroupHead member is NULL.
 		GroupOpen = Open->GroupHead->GroupNext;
 	}
 	else
 	{
+		//get the 1st group adapter child
 		GroupOpen = Open->GroupNext;
 	}
 
-	while (GroupOpen != NULL)
+	// Do not capture the normal NDIS send traffic, if this is our loopback adapter.
+	if (Open->Loopback == FALSE)
 	{
-		TempOpen = GroupOpen;
-		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+		while (GroupOpen != NULL)
 		{
-			NPF_TapExForEachOpen(TempOpen, NetBufferLists);
-		}
+			TempOpen = GroupOpen;
+			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+			{
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+			}
 
-		GroupOpen = TempOpen->GroupNext;
+			GroupOpen = TempOpen->GroupNext;
+		}
 	}
 
 	NdisFSendNetBufferLists(Open->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
@@ -497,7 +503,7 @@ NPF_TapEx(
 
 	if (Open->GroupHead != NULL)
 	{
-		//this should be impossible
+		// Should not come here, because Open called by NDIS will always be a group head itself, so its GroupHead member is NULL.
 		GroupOpen = Open->GroupHead->GroupNext;
 	}
 	else
@@ -506,16 +512,20 @@ NPF_TapEx(
 		GroupOpen = Open->GroupNext;
 	}
 
-	while (GroupOpen != NULL)
+	// Do not capture the normal NDIS receive traffic, if this is our loopback adapter.
+	if (Open->Loopback == FALSE)
 	{
-		TempOpen = GroupOpen;
-		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+		while (GroupOpen != NULL)
 		{
-			//let every group adapter receive the packets
-			NPF_TapExForEachOpen(TempOpen, NetBufferLists);
-		}
+			TempOpen = GroupOpen;
+			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+			{
+				//let every group adapter receive the packets
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+			}
 
-		GroupOpen = TempOpen->GroupNext;
+			GroupOpen = TempOpen->GroupNext;
+		}
 	}
 
 	//return the packets immediately

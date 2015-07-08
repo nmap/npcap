@@ -224,15 +224,19 @@ NPF_Write(
 				GroupOpen = Open->GroupNext;
 			}
 
-			while (GroupOpen != NULL)
+			// Do not capture the send traffic we send, if this is our loopback adapter.
+			if (Open->Loopback == FALSE)
 			{
-				TempOpen = GroupOpen;
-				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+				while (GroupOpen != NULL)
 				{
-					NPF_TapExForEachOpen(TempOpen, pNetBufferList);
-				}
+					TempOpen = GroupOpen;
+					if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+					{
+						NPF_TapExForEachOpen(TempOpen, pNetBufferList);
+					}
 
-				GroupOpen = TempOpen->GroupNext;
+					GroupOpen = TempOpen->GroupNext;
+				}
 			}
 
 			pNetBufferList->SourceHandle = Open->AdapterHandle;
