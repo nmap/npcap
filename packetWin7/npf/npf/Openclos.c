@@ -42,6 +42,7 @@
 #include "..\..\..\Common\WpcapNames.h"
 
 extern NDIS_STRING g_LoopbackAdapterName;
+extern NDIS_STRING devicePrefix;
 
 static
 VOID
@@ -1352,7 +1353,8 @@ NPF_AttachAdapter(
 		// Determine whether this is our loopback adapter for the open_instance.
 		if (g_LoopbackAdapterName.Buffer != NULL)
 		{
-			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, AttachParameters->BaseMiniportName->Buffer, AttachParameters->BaseMiniportName->Length) == AttachParameters->BaseMiniportName->Length)
+			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
+				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
 			{
 				if (g_LoopbackOpenGroupHead == NULL)
 				{

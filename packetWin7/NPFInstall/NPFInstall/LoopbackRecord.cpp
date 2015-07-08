@@ -27,6 +27,8 @@ Abstract:
 #define NPCAP_REG_KEY_NAME L"SOFTWARE\\NPcap"
 #define NPCAP_REG_LOOPBACK_VALUE_NAME L"Loopback"
 
+#define BUF_SIZE 255
+
 int g_NPcapAdapterID = -1;
 
 // RAII helper class
@@ -255,10 +257,12 @@ BOOL AddFlagToRegistry(wchar_t strDeviceName[])
 	LONG Status;
 	HKEY hNPcapKey;
 
+	wchar_t strFullDeviceName[BUF_SIZE];
+	wsprintf(strFullDeviceName, L"\\Device\\%s", strDeviceName);
 	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_REG_KEY_NAME, 0, KEY_WRITE | KEY_WOW64_32KEY, &hNPcapKey);
 	if (Status == ERROR_SUCCESS)
 	{
-		Status = RegSetValueExW(hNPcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strDeviceName, (lstrlen(strDeviceName) + 1) * sizeof (wchar_t));
+		Status = RegSetValueExW(hNPcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof (wchar_t));
 		if (Status != ERROR_SUCCESS)
 		{
 			printf("AddFlagToRegistry: 0x%08x\n", GetLastError());

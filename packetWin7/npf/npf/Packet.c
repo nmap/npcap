@@ -82,7 +82,7 @@ NDIS_STRING g_NPcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Softwar
 								L"\\NPCAP");
 #else
 NDIS_STRING g_NPcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software\\Wow6432Node"
-	L"\\NPCAP");
+								L"\\NPCAP");
 #endif
 NDIS_STRING g_LoopbackAdapterName;
 
@@ -569,11 +569,10 @@ VOID
 					IF_LOUD(DbgPrint("Loopback Device Key = %ws\n", valueInfoP->Data);)
 
 					g_LoopbackAdapterName.Length = 0;
-					g_LoopbackAdapterName.MaximumLength = (USHORT)(valueInfoP->DataLength + devicePrefix.Length + sizeof(UNICODE_NULL));
+					g_LoopbackAdapterName.MaximumLength = (USHORT)(valueInfoP->DataLength + sizeof(UNICODE_NULL));
 					g_LoopbackAdapterName.Buffer = ExAllocatePoolWithTag(PagedPool, g_LoopbackAdapterName.MaximumLength, '3PWA');
 
-					RtlAppendUnicodeStringToString(&g_LoopbackAdapterName, &devicePrefix);
-					RtlCopyMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, valueInfoP->Data, valueInfoP->DataLength);
+					RtlCopyMemory(g_LoopbackAdapterName.Buffer, valueInfoP->Data, valueInfoP->DataLength);
 				}
 
 				ExFreePool(valueInfoP);
