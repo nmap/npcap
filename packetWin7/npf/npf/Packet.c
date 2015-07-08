@@ -37,6 +37,7 @@
 #include <ntddk.h>
 #include <ndis.h>
 
+#include "Loopback.h"
 #include "debug.h"
 #include "packet.h"
 #include "win_bpf.h"
@@ -98,6 +99,11 @@ ULONG TimestampMode;
 //
 NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
 NDIS_HANDLE         FilterDriverObject; // Driver object for filter driver
+
+//
+// Global variables used by WFP
+//
+extern HANDLE gWFPEngineHandle;
 
 //
 //  Packet Driver's entry routine.
@@ -238,22 +244,19 @@ DriverEntry(
 		return Status;
 	}
 
-// 	// create the loopback adapter object
-// 	POPEN_INSTANCE Open = NPF_CreateOpenObject(&g_LoopbackAdapterName, NdisMedium802_3, NULL);
-// 	if (Open == NULL)
-// 	{
-// 		TRACE_EXIT();
-// 		return Status;
-// 	}
-// 
-// 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-// 		"Opening the device %ws, BindingContext=%p",
-// 		NdisMedium802_3,
-// 		Open);
-// 
-// 	Open->AdapterHandle = NULL;
-// 	Open->HigherPacketFilter = 0;
-// 	NPF_AddToOpenArray(Open);
+	if (DriverObject->DeviceObject)
+	{
+		Status = NPF_RegisterCallouts(DriverObject->DeviceObject);
+		if (!NT_SUCCESS(Status))
+		{
+			if (gWFPEngineHandle != NULL)
+			{
+				NPF_UnregisterCallouts();
+			}
+			TRACE_EXIT();
+			return Status;
+		}
+	}
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
@@ -776,6 +779,8 @@ Return Value:
 	{
 		ExFreePool(g_LoopbackAdapterName.Buffer);
 	}
+
+	NPF_UnregisterCallouts();
 
 	TRACE_EXIT();
 
