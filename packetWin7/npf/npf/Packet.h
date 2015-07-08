@@ -256,6 +256,7 @@ typedef struct _OPEN_INSTANCE
 {
 	NDIS_STRING				AdapterName;
 	BOOLEAN					DirectBinded;
+	BOOLEAN					Loopback;
 	struct _OPEN_INSTANCE	*Next;
 	struct _OPEN_INSTANCE	*GroupNext;
 	struct _OPEN_INSTANCE	*GroupHead;

@@ -41,6 +41,8 @@
 #include "packet.h"
 #include "..\..\..\Common\WpcapNames.h"
 
+extern NDIS_STRING g_LoopbackAdapterName;
+
 static
 VOID
 NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen);
@@ -53,8 +55,8 @@ struct time_conv G_Start_Time =
 
 ULONG g_NumOpenedInstances = 0;
 
-extern POPEN_INSTANCE g_arrOpen; //Adapter handle list head
-
+extern POPEN_INSTANCE g_arrOpen; //Adapter open_instance list head, each list item is a group head.
+extern POPEN_INSTANCE g_LoopbackOpenGroupHead; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
 //-------------------------------------------------------------------
 
 BOOLEAN
@@ -1113,6 +1115,7 @@ NPF_CreateOpenObject(
 
 	Open->DeviceExtension = DeviceExtension; //can be NULL before any actual bindings.
 	Open->DirectBinded = TRUE;
+	Open->Loopback = FALSE;
 
 	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
 	PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
@@ -1343,6 +1346,19 @@ NPF_AttachAdapter(
 			returnStatus = NDIS_STATUS_RESOURCES;
 			TRACE_EXIT();
 			return returnStatus;
+		}
+
+		// Determine whether this is our loopback adapter for the open_instance.
+		if (g_LoopbackAdapterName.Buffer != NULL)
+		{
+			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, AttachParameters->BaseMiniportName->Buffer, AttachParameters->BaseMiniportName->Length) == AttachParameters->BaseMiniportName->Length)
+			{
+				if (g_LoopbackOpenGroupHead == NULL)
+				{
+					Open->Loopback = TRUE;
+					g_LoopbackOpenGroupHead = Open;
+				}
+			}
 		}
 
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD,

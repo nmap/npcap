@@ -66,7 +66,8 @@ PDEVICE_EXTENSION GlobalDeviceExtension;
 //
 WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
 
-POPEN_INSTANCE g_arrOpen = NULL;
+POPEN_INSTANCE g_arrOpen = NULL; //Adapter open_instance list head, each list item is a group head.
+POPEN_INSTANCE g_LoopbackOpenGroupHead = NULL; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
 
 NDIS_STRING g_NPF_Prefix;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
@@ -236,6 +237,23 @@ DriverEntry(
 		TRACE_EXIT();
 		return Status;
 	}
+
+// 	// create the loopback adapter object
+// 	POPEN_INSTANCE Open = NPF_CreateOpenObject(&g_LoopbackAdapterName, NdisMedium802_3, NULL);
+// 	if (Open == NULL)
+// 	{
+// 		TRACE_EXIT();
+// 		return Status;
+// 	}
+// 
+// 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+// 		"Opening the device %ws, BindingContext=%p",
+// 		NdisMedium802_3,
+// 		Open);
+// 
+// 	Open->AdapterHandle = NULL;
+// 	Open->HigherPacketFilter = 0;
+// 	NPF_AddToOpenArray(Open);
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
@@ -551,28 +569,11 @@ VOID
 					IF_LOUD(DbgPrint("Loopback Device Key = %ws\n", valueInfoP->Data);)
 
 					g_LoopbackAdapterName.Length = 0;
-					g_LoopbackAdapterName.MaximumLength = (USHORT)(valueInfoP->DataLength + sizeof(UNICODE_NULL));
+					g_LoopbackAdapterName.MaximumLength = (USHORT)(valueInfoP->DataLength + devicePrefix.Length + sizeof(UNICODE_NULL));
 					g_LoopbackAdapterName.Buffer = ExAllocatePoolWithTag(PagedPool, g_LoopbackAdapterName.MaximumLength, '3PWA');
-					RtlCopyMemory(g_LoopbackAdapterName.Buffer, valueInfoP->Data, valueInfoP->DataLength);
-// 						if (BufPos + valueInfoP->DataLength > BufLen)
-// 						{
-// 							// double the buffer size
-// 							PWCHAR DeviceNames2 = (PWCHAR)ExAllocatePoolWithTag(PagedPool, BufLen << 1, '0PWA');
-// 							if (DeviceNames2)
-// 							{
-// 								RtlCopyMemory((PCHAR)DeviceNames2, (PCHAR)DeviceNames, BufLen);
-// 								BufLen <<= 1;
-// 								ExFreePool(DeviceNames);
-// 								DeviceNames = DeviceNames2;
-// 							}
-// 						}
-// 					if (BufPos + valueInfoP->DataLength < BufLen)
-// 					{
-// 						RtlCopyMemory((PCHAR)DeviceNames + BufPos,
-// 							valueInfoP->Data,
-// 							valueInfoP->DataLength);
-// 						BufPos += valueInfoP->DataLength - 2;
-// 					}
+
+					RtlAppendUnicodeStringToString(&g_LoopbackAdapterName, &devicePrefix);
+					RtlCopyMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, valueInfoP->Data, valueInfoP->DataLength);
 				}
 
 				ExFreePool(valueInfoP);
@@ -659,10 +660,11 @@ BOOLEAN
 
 		IF_LOUD(DbgPrint("Device created successfully\n"););
 
+		// Determine whether this is our loopback adapter for the device.
 		devExtP->Loopback = FALSE;
 		if (g_LoopbackAdapterName.Buffer != NULL)
 		{
-			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, amacNameP->Buffer + devicePrefix.Length / sizeof(WCHAR), amacNameP->Length - devicePrefix.Length) == amacNameP->Length - devicePrefix.Length)
+			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, amacNameP->Buffer, amacNameP->Length) == amacNameP->Length)
 			{
 				devExtP->Loopback = TRUE;
 			}
