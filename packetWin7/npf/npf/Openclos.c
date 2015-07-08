@@ -1082,6 +1082,7 @@ NPF_DuplicateOpenObject(
 	Open = NPF_CreateOpenObject(&OriginalOpen->AdapterName, OriginalOpen->Medium, DeviceExtension);
 	Open->AdapterHandle = OriginalOpen->AdapterHandle;
 	Open->DirectBinded = FALSE;
+	Open->Loopback = OriginalOpen->Loopback;
 
 	TRACE_EXIT();
 	return Open;
