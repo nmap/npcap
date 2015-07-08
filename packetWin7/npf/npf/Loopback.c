@@ -41,9 +41,16 @@
 #include "stdafx.h"
 
 #include "Loopback.h"
+#include "packet.h"
 #include "debug.h"
 
 #define NPCAP_CALLOUT_DRIVER_TAG (UINT32) 'NPCA'
+
+
+// 
+// Global variables
+//
+extern POPEN_INSTANCE g_LoopbackOpenGroupHead; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
 
 // 
 // Callout and sublayer GUIDs
@@ -156,6 +163,9 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 #endif
 
 {
+	POPEN_INSTANCE		GroupOpen;
+	POPEN_INSTANCE		TempOpen;
+
 	UNREFERENCED_PARAMETER(classifyContext);
 	UNREFERENCED_PARAMETER(filter);
 	UNREFERENCED_PARAMETER(flowContext);
@@ -175,54 +185,74 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
 		classifyOut->actionType = FWP_ACTION_CONTINUE;
 
-	inMetaValues->frameLength;
-	layerData;
-
-
-	// print "protocol, direction, fragment, reassembled" info for the current packet.
-	int iProtocol = -1;
-	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
+	// Send the loopback packets data to the user-mode code.
+	if (g_LoopbackOpenGroupHead)
 	{
-		iProtocol = 0;
-	}
-	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
-	{
-		iProtocol = 1;
-	}
-
-	int iDrection = -1;
-	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
-	{
-		iDrection = 0;
-	}
-	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
-	{
-		iDrection = 1;
-	}
-
-	int iFragment = -1;
-	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_FRAGMENT_DATA)
-	{
-		iFragment = 1;
+		//get the 1st group adapter child
+		GroupOpen = g_LoopbackOpenGroupHead->GroupNext;
 	}
 	else
 	{
-		iFragment = 0;
+		// Should not come here
+		GroupOpen = NULL;
 	}
 
-	int iReassembled = -1;
-	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_REASSEMBLED)
+	while (GroupOpen != NULL)
 	{
-		iReassembled = 1;
+		TempOpen = GroupOpen;
+		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+		{
+			//let every group adapter receive the packets
+			NPF_TapExForEachOpen(TempOpen, (PNET_BUFFER_LIST) layerData);
+		}
+
+		GroupOpen = TempOpen->GroupNext;
 	}
-	else
-	{
-		iReassembled = 0;
-	}
-	IF_LOUD(DbgPrint("\n\nNPF_NetworkClassify: Loopback packet found !!! protocol=[%d] (ipv4=0, ipv6=1), direction=[%d] (out=0, in=1), fragment=[%d], reassembled=[%d]\n", iProtocol, iDrection, iFragment, iReassembled);)
+
+// 	// print "protocol, direction, fragment, reassembled" info for the current packet.
+// 	int iProtocol = -1;
+// 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
+// 	{
+// 		iProtocol = 0;
+// 	}
+// 	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+// 	{
+// 		iProtocol = 1;
+// 	}
+// 
+// 	int iDrection = -1;
+// 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
+// 	{
+// 		iDrection = 0;
+// 	}
+// 	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+// 	{
+// 		iDrection = 1;
+// 	}
+// 
+// 	int iFragment = -1;
+// 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_FRAGMENT_DATA)
+// 	{
+// 		iFragment = 1;
+// 	}
+// 	else
+// 	{
+// 		iFragment = 0;
+// 	}
+// 
+// 	int iReassembled = -1;
+// 	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_REASSEMBLED)
+// 	{
+// 		iReassembled = 1;
+// 	}
+// 	else
+// 	{
+// 		iReassembled = 0;
+// 	}
+// 	IF_LOUD(DbgPrint("\n\nNPF_NetworkClassify: Loopback packet found !!! protocol=[%d] (ipv4=0, ipv6=1), direction=[%d] (out=0, in=1), fragment=[%d], reassembled=[%d]\n", iProtocol, iDrection, iFragment, iReassembled);)
 
 
-		TRACE_EXIT();
+	TRACE_EXIT();
 	return;
 }
 
