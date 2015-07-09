@@ -46,6 +46,40 @@
 
 #define NPCAP_CALLOUT_DRIVER_TAG (UINT32) 'NPCA'
 
+/*
+* The number of bytes in an Ethernet (MAC) address.
+*/
+#define	ETHER_ADDR_LEN		6
+
+/*
+* The number of bytes in the type field.
+*/
+#define	ETHER_TYPE_LEN		2
+
+/*
+* The length of the combined header.
+*/
+#define	ETHER_HDR_LEN		(ETHER_ADDR_LEN * 2 + ETHER_TYPE_LEN)
+
+/*
+* Structure of a 10Mb/s Ethernet header.
+*/
+typedef struct _ETHER_HEADER {
+	UCHAR	ether_dhost[ETHER_ADDR_LEN];
+	UCHAR	ether_shost[ETHER_ADDR_LEN];
+	USHORT	ether_type;
+} ETHER_HEADER, *PETHER_HEADER;
+
+/*
+* Types in an Ethernet (MAC) header.
+*/
+#define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
+#define	ETHERTYPE_IP		0x0800	/* IP protocol */
+#define ETHERTYPE_ARP		0x0806	/* Addr. resolution protocol */
+#define ETHERTYPE_REVARP	0x8035	/* reverse Addr. resolution protocol */
+#define	ETHERTYPE_VLAN		0x8100	/* IEEE 802.1Q VLAN tagging */
+#define ETHERTYPE_IPV6		0x86dd	/* IPv6 */
+#define	ETHERTYPE_LOOPBACK	0x9000	/* used to test interfaces */
 
 // 
 // Global variables
@@ -165,12 +199,19 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 {
 	POPEN_INSTANCE		GroupOpen;
 	POPEN_INSTANCE		TempOpen;
+	NTSTATUS			status = STATUS_SUCCESS;
+	UINT32				ipHeaderSize = 0;
+	UINT32				bytesRetreated = 0;
+	INT32				iProtocol = -1;
+	INT32				iDrection = -1;
+	PETHER_HEADER		pContiguousData = NULL;
+	NET_BUFFER*			pNetBuffer = 0;
 
 	UNREFERENCED_PARAMETER(classifyContext);
 	UNREFERENCED_PARAMETER(filter);
 	UNREFERENCED_PARAMETER(flowContext);
 
-	// filter out fragment packets and reassembled packets.
+	// Filter out fragment packets and reassembled packets.
 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_FRAGMENT_DATA)
 	{
 		return;
@@ -181,9 +222,79 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	}
 	TRACE_ENTER();
 
-	// make the default action.
+	// Make the default action.
 	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
 		classifyOut->actionType = FWP_ACTION_CONTINUE;
+
+	// Get the packet protocol (IPv4 or IPv6) and the direction (Inbound or Outbound).
+	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
+	{
+		iProtocol = 0;
+	}
+	else // if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+	{
+		iProtocol = 1;
+	}
+	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
+	{
+		iDrection = 0;
+	}
+	else // if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+	{
+		iDrection = 1;
+	}
+
+	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_IP_HEADER_SIZE)
+	{
+		ipHeaderSize = inMetaValues->ipHeaderSize;
+	}
+
+	// Inbound: Initial offset is at the Transport Header, so retreat the size of the Ethernet Header and IP Header.
+	// Outbound: Initial offset is at the IP Header, so just retreat the size of the Ethernet Header.
+	bytesRetreated = iDrection ? ETHER_HDR_LEN + ipHeaderSize : ETHER_HDR_LEN;
+	status = NdisRetreatNetBufferListDataStart((NET_BUFFER_LIST*) layerData,
+		bytesRetreated,
+		0,
+		0,
+		0);
+	if (status != STATUS_SUCCESS)
+	{
+		bytesRetreated = 0;
+
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_NetworkClassify: NdisRetreatNetBufferListDataStart() [status: %#x]\n",
+			status);
+
+		TRACE_EXIT();
+		return;
+	}
+
+	pNetBuffer = NET_BUFFER_LIST_FIRST_NB((NET_BUFFER_LIST*) layerData);
+	while (pNetBuffer)
+	{
+		pContiguousData = NdisGetDataBuffer(pNetBuffer,
+			NET_BUFFER_DATA_LENGTH(pNetBuffer),
+			0,
+			1,
+			0);
+		if (!pContiguousData)
+		{
+			status = STATUS_UNSUCCESSFUL;
+
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_NetworkClassify: NdisGetDataBuffer() [status: %#x]\n",
+				status);
+
+			TRACE_EXIT();
+			return;
+		}
+		else
+		{
+			pContiguousData->ether_type = iProtocol ? RtlUshortByteSwap(ETHERTYPE_IPV6) : RtlUshortByteSwap(ETHERTYPE_IP);
+		}
+
+		pNetBuffer = pNetBuffer->Next;
+	}
 
 	// Send the loopback packets data to the user-mode code.
 	if (g_LoopbackOpenGroupHead)
@@ -209,26 +320,13 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		GroupOpen = TempOpen->GroupNext;
 	}
 
+	// Advance the offset back to the original position.
+	NdisAdvanceNetBufferListDataStart((NET_BUFFER_LIST*) layerData,
+		bytesRetreated,
+		FALSE,
+		0);
+
 // 	// print "protocol, direction, fragment, reassembled" info for the current packet.
-// 	int iProtocol = -1;
-// 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
-// 	{
-// 		iProtocol = 0;
-// 	}
-// 	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
-// 	{
-// 		iProtocol = 1;
-// 	}
-// 
-// 	int iDrection = -1;
-// 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
-// 	{
-// 		iDrection = 0;
-// 	}
-// 	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
-// 	{
-// 		iDrection = 1;
-// 	}
 // 
 // 	int iFragment = -1;
 // 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_FRAGMENT_DATA)
