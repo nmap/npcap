@@ -10,6 +10,7 @@
 *.user
 *.cat
 *.sys
+*.dll
 Debug/
 Release/
 Win7Debug/
