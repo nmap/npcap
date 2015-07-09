@@ -106,7 +106,7 @@ extern NDIS_HANDLE         FilterDriverObject;
 #define NPF_ENABLE_LOOPBACK		2	///< Tells the driver to capture the packets sent by itself.
 
 // Admin only mode definition
-//#define NPF_ADMIN_ONLY_MODE			///< Tells the driver to restrict its access only to Administrators. This is used to support "Admin-only Mode" for NPcap.
+//#define NPF_ADMIN_ONLY_MODE			///< Tells the driver to restrict its access only to Administrators. This is used to support "Admin-only Mode" for Npcap.
 
 /*!
   \brief Header of a libpcap dump file.
@@ -776,7 +776,7 @@ getTcpBindings(
 
 
 /*!
-\brief read NPcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.
+\brief read Npcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.
 
 If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
 */

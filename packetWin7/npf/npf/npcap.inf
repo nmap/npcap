@@ -1,5 +1,5 @@
 ;-------------------------------------------------------------------------
-; NPCAP.INF -- NPcap NDIS 6.x LightWeight Filter Driver
+; NPCAP.INF -- Npcap NDIS 6.x LightWeight Filter Driver
 ;
 ; Copyright (c) 2015, Insecure.Com LLC.  All rights reserved.
 ;------------------------------------------------------------------------
@@ -130,5 +130,5 @@ HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to defaul
 
 [Strings]
 Insecure = "Nmap Project"
-NPF_Desc = "WinPcap Lightweight Filter Driver (NPCAP)"
-NPF_HelpText = "A NDIS 6 kernel filter driver to support packet capturing under Windows 7, 8 & 10"
+NPF_Desc = "Npcap Packet Driver (NPCAP)"
+NPF_HelpText = "A NDIS 6 filter driver & WFP callout driver to support packet capturing and sending under Windows 7, 8 & 10"

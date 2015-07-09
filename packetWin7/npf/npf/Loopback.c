@@ -390,8 +390,8 @@ _In_ const int iFlag
 	UINT conditionIndex;
 
 	filter.layerKey = *layerKey;
-	filter.displayData.name = L"Network NPcap Filter (Outbound)";
-	filter.displayData.description = L"NPcap inbound/outbound network traffic";
+	filter.displayData.name = L"Network Npcap Filter (Outbound)";
+	filter.displayData.description = L"Npcap inbound/outbound network traffic";
 
 	filter.action.calloutKey = *calloutKey;
 	filter.filterCondition = filterConditions;
@@ -507,8 +507,8 @@ FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
 	}
 	calloutRegistered = TRUE;
 
-	displayData.name = L"NPcap Network Callout";
-	displayData.description = L"NPcap inbound/outbound network traffic";
+	displayData.name = L"Npcap Network Callout";
+	displayData.description = L"Npcap inbound/outbound network traffic";
 
 	mCallout.calloutKey = *calloutKey;
 	mCallout.displayData = displayData;
@@ -613,8 +613,8 @@ Callouts and filters will be removed during DriverUnload.
 	RtlZeroMemory(&NPFSubLayer, sizeof(FWPM_SUBLAYER));
 
 	NPFSubLayer.subLayerKey = NPF_SUBLAYER;
-	NPFSubLayer.displayData.name = L"NPcap Loopback Sub-Layer";
-	NPFSubLayer.displayData.description = L"Sub-Layer for use by NPcap Loopback callouts";
+	NPFSubLayer.displayData.name = L"Npcap Loopback Sub-Layer";
+	NPFSubLayer.displayData.description = L"Sub-Layer for use by Npcap Loopback callouts";
 	NPFSubLayer.flags = 0;
 	NPFSubLayer.weight = 0; // must be less than the weight of 
 	// FWPM_SUBLAYER_UNIVERSAL to be

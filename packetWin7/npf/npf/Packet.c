@@ -53,6 +53,7 @@
 #pragma NDIS_INIT_FUNCTION(DriverEntry)
 #endif // ALLOC_PRAGMA
 
+#define				FILTER_UNIQUE_NAME		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"
 
 #if DBG
 // Declare the global debug flag for this driver.
@@ -78,12 +79,13 @@ NDIS_STRING tcpLinkageKeyName = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 NDIS_STRING AdapterListKey = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 								L"\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}");
 NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
+
 #ifdef _X86_
-NDIS_STRING g_NPcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software"
-								L"\\NPCAP");
+NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software"
+								L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
 #else
-NDIS_STRING g_NPcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software\\Wow6432Node"
-								L"\\NPCAP");
+NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software\\Wow6432Node"
+								L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
 #endif
 NDIS_STRING g_LoopbackAdapterName;
 
@@ -118,9 +120,9 @@ DriverEntry(
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars;
 	NTSTATUS Status = STATUS_SUCCESS;
 
-	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(L"WinPcap NDIS LightWeight Filter"); //display name
-	NDIS_STRING UniqueName   = RTL_CONSTANT_STRING(L"{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"); //unique name, quid name
-	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(L"npcap"); //this to match the service name in the INF
+	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR); //display name
+	NDIS_STRING UniqueName = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME); //unique name, quid name
+	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR); //this to match the service name in the INF
 	WCHAR* bindT;
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
@@ -528,11 +530,11 @@ VOID
 
 	TRACE_ENTER();
 
-	InitializeObjectAttributes(&objAttrs, &g_NPcapSoftwareKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	InitializeObjectAttributes(&objAttrs, &g_NpcapSoftwareKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
 	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
 	if (!NT_SUCCESS(status))
 	{
-		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, g_NPcapSoftwareKey.Buffer);)
+		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, g_NpcapSoftwareKey.Buffer);)
 	}
 	else //OK
 	{
