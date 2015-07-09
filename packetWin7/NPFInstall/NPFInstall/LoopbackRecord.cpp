@@ -4,14 +4,16 @@ Copyright (c) Nmap.org.  All rights reserved.
 
 Module Name:
 
-    LoopbackRecord.cpp
+	LoopbackRecord.cpp
 
 Abstract:
 
-    This is used for enumerating our "NPcap Loopback Adapter" using NetCfg API, if found, we changed its name from "Ethernet X" to "NPcap Loopback Adapter".
-    Also, we need to make a flag in registry to let the NPcap driver know that "this adapter is ours", so send the loopback traffic to it.
+	This is used for enumerating our "Npcap Loopback Adapter" using NetCfg API, if found, we changed its name from "Ethernet X" or "Local Network Area" to "Npcap Loopback Adapter".
+	Also, we need to make a flag in registry to let the Npcap driver know that "this adapter is ours", so send the loopback traffic to it.
 
 --*/
+
+#pragma warning(disable: 4311 4312)
 
 #include <Netcfgx.h>
 
@@ -22,14 +24,14 @@ Abstract:
 #include "LoopbackRecord.h"
 #include "LoopbackRename.h"
 
-#define NPCAP_LOOPBACK_ADAPTER_NAME L"NPcap Loopback Adapter"
-#define NPCAP_LOOPBACK_APP_NAME L"NPCAP_Loopback"
-#define NPCAP_REG_KEY_NAME L"SOFTWARE\\NPcap"
-#define NPCAP_REG_LOOPBACK_VALUE_NAME L"Loopback"
+#define			NPCAP_LOOPBACK_ADAPTER_NAME				NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
+#define			NPCAP_LOOPBACK_APP_NAME					NPF_DRIVER_NAME_NORMAL_WIDECHAR L"_Loopback"
+#define			NPCAP_REG_KEY_NAME						L"SOFTWARE\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR
+#define			NPCAP_REG_LOOPBACK_VALUE_NAME			L"Loopback"
 
-#define BUF_SIZE 255
+#define			BUF_SIZE 255
 
-int g_NPcapAdapterID = -1;
+int g_NpcapAdapterID = -1;
 
 // RAII helper class
 class COM
@@ -198,7 +200,7 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 //		wcout << L"\tPNP Device Node ID: " << wstring(pszPndDevNodeId) << L'\n';
 
 		int iDevID = getIntDevID(pszPndDevNodeId);
-		if (g_NPcapAdapterID == iDevID)
+		if (g_NpcapAdapterID == iDevID)
 		{
 			bFound = TRUE;
 
@@ -255,21 +257,21 @@ int getIntDevID(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 BOOL AddFlagToRegistry(wchar_t strDeviceName[])
 {
 	LONG Status;
-	HKEY hNPcapKey;
+	HKEY hNpcapKey;
 
 	wchar_t strFullDeviceName[BUF_SIZE];
 	wsprintf(strFullDeviceName, L"\\Device\\%s", strDeviceName);
-	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_REG_KEY_NAME, 0, KEY_WRITE | KEY_WOW64_32KEY, &hNPcapKey);
+	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_REG_KEY_NAME, 0, KEY_WRITE | KEY_WOW64_32KEY, &hNpcapKey);
 	if (Status == ERROR_SUCCESS)
 	{
-		Status = RegSetValueExW(hNPcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof (wchar_t));
+		Status = RegSetValueExW(hNpcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof (wchar_t));
 		if (Status != ERROR_SUCCESS)
 		{
 			printf("AddFlagToRegistry: 0x%08x\n", GetLastError());
-			RegCloseKey(hNPcapKey);
+			RegCloseKey(hNpcapKey);
 			return FALSE;
 		}
-		RegCloseKey(hNPcapKey);
+		RegCloseKey(hNpcapKey);
 	}
 	else
 	{
@@ -280,9 +282,9 @@ BOOL AddFlagToRegistry(wchar_t strDeviceName[])
 	return TRUE;
 }
 
-BOOL RecordLoopbackDevice(int iNPcapAdapterID)
+BOOL RecordLoopbackDevice(int iNpcapAdapterID)
 {
-	g_NPcapAdapterID = iNPcapAdapterID;
+	g_NpcapAdapterID = iNpcapAdapterID;
 
 	try
 	{

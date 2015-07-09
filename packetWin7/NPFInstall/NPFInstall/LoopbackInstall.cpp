@@ -91,7 +91,7 @@ void addDevID_Pre(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 	addDevID_Pre(iDevID);
 }
 
-int getNPcapLoopbackAdapterID()
+int getNpcapLoopbackAdapterID()
 {
 	if (g_DevIDCount == g_DevIDCount_Pre)
 	{
@@ -1397,18 +1397,18 @@ BOOL InstallLoopbackAdapter()
 		return FALSE;
 	}
 
-	int iNPcapAdapterID = g_DevInstanceID;
-	if (iNPcapAdapterID == -1)
+	int iNpcapAdapterID = g_DevInstanceID;
+	if (iNpcapAdapterID == -1)
 	{
 		return FALSE;
 	}
 
-	if (!RecordLoopbackDevice(iNPcapAdapterID))
+	if (!RecordLoopbackDevice(iNpcapAdapterID))
 	{
 		return FALSE;
 	}
 
-	if (!SaveDevIDToFile(iNPcapAdapterID))
+	if (!SaveDevIDToFile(iNpcapAdapterID))
 	{
 		return FALSE;
 	}
@@ -1417,13 +1417,13 @@ BOOL InstallLoopbackAdapter()
 
 BOOL UninstallLoopbackAdapter()
 {
-	int iNPcapAdapterID = LoadDevIDFromFile();
-	if (iNPcapAdapterID == -1)
+	int iNpcapAdapterID = LoadDevIDFromFile();
+	if (iNpcapAdapterID == -1)
 	{
 		return FALSE;
 	}
 
-	if (!RemoveLoopbackDeviceInternal(iNPcapAdapterID))
+	if (!RemoveLoopbackDeviceInternal(iNpcapAdapterID))
 	{
 		return FALSE;
 	}

@@ -11,7 +11,7 @@ BOOL PacketStopDriver60();
 BOOL PacketInstallDriver40();
 BOOL PacketStopDriver40();
 
-#define STR_COMMAND_USAGE _T("Command Usage: NPFInstall -[i/u/r/ii/uu]: i - install win7 driver, u - uninstall win7 driver, r - restartBindings, ii - install xp driver, uu - uninstall xp driver, il - install NPcap loopback adapter, ul - uninstall NPcap loopback adapter.\n")
+#define STR_COMMAND_USAGE _T("Command Usage: NPFInstall -[i/u/r/ii/uu]: i - install win7 driver, u - uninstall win7 driver, r - restartBindings, ii - install xp driver, uu - uninstall xp driver, il - install Npcap loopback adapter, ul - uninstall Npcap loopback adapter.\n")
 
 BOOL PacketInstallDriver60()
 {
@@ -48,7 +48,7 @@ BOOL PacketInstallDriver40()
 		return FALSE;
 	}
 
-	SC_HANDLE schService = CreateService(schSCManager, _T("npcap"), _T("NPcap Packet Filter Driver"),
+	SC_HANDLE schService = CreateService(schSCManager, _T(NPF_DRIVER_NAME_SMALL), NPF_SERVICE_DESC_TCHAR,
 		SERVICE_ALL_ACCESS,
 		SERVICE_KERNEL_DRIVER,
 		SERVICE_DEMAND_START,
@@ -75,7 +75,7 @@ BOOL PacketStopDriver40()
 		return FALSE;
 	}
 
-	SC_HANDLE schService = OpenService(schSCManager, _T("npcap"), SERVICE_ALL_ACCESS | DELETE);
+	SC_HANDLE schService = OpenService(schSCManager, _T(NPF_DRIVER_NAME_SMALL), SERVICE_ALL_ACCESS | DELETE);
 	if (schService == NULL)
 	{
 		return FALSE;
@@ -102,7 +102,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	BOOL bSuccess = FALSE;
 	BOOL bVerbose = FALSE;
 
-	SetConsoleTitle( _T("NPcap NDIS6.x Driver for packet capturing") );
+	SetConsoleTitle(NPF_SERVICE_DESC_TCHAR _T(" for packet capturing"));
 
 	if (argc >= 2)
 	{
@@ -142,12 +142,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketInstallDriver60();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPcap driver has been successfully installed!\n"));
+				_tprintf(_T("Npcap driver has been successfully installed!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPcap driver has failed the installation."));
+				_tprintf(_T("Npcap driver has failed the installation."));
 				return -1;
 			}
 		}
@@ -156,12 +156,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketStopDriver60();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPcap driver has been successfully uninstalled!\n"));
+				_tprintf(_T("Npcap driver has been successfully uninstalled!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPcap driver has failed the uninstallation."));
+				_tprintf(_T("Npcap driver has failed the uninstallation."));
 				return -1;
 			}
 		}
@@ -198,12 +198,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = InstallLoopbackAdapter();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPcap Loopback adapter has been successfully installed!\n"));
+				_tprintf(_T("Npcap Loopback adapter has been successfully installed!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPcap Loopback adapter has failed the installation."));
+				_tprintf(_T("Npcap Loopback adapter has failed the installation."));
 				return -1;
 			}
 		}
@@ -212,12 +212,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = UninstallLoopbackAdapter();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPcap Loopback adapter has been successfully uninstalled!\n"));
+				_tprintf(_T("Npcap Loopback adapter has been successfully uninstalled!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPcap Loopback adapter has failed the uninstallation."));
+				_tprintf(_T("Npcap Loopback adapter has failed the uninstallation."));
 				return -1;
 			}
 		}
@@ -226,12 +226,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketRenableBindings();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPcap driver's bindings have been successfully restarted!\n"));
+				_tprintf(_T("Npcap driver's bindings have been successfully restarted!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPcap driver's bindings have failed to restart."));
+				_tprintf(_T("Npcap driver's bindings have failed to restart."));
 				return -1;
 			}
 		}

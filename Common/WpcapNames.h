@@ -43,8 +43,15 @@
 #define NPF_DRIVER_NAME_WIDECHAR				L"NPCAP"											///< (HHH) Packet.dll
 #define NPF_DRIVER_NAME_SMALL					"npcap"												///< (HHH) Packet.dll
 #define NPF_DRIVER_NAME_SMALL_WIDECHAR			L"npcap"											///< (HHH) Packet.dll
+
+
+#define NPF_DRIVER_NAME_NORMAL					"Npcap"												///< (HHH) Packet.dll
+#define NPF_DRIVER_NAME_NORMAL_WIDECHAR			L"Npcap"											///< (HHH) Packet.dll
 #define NPF_SOFT_REGISTRY_NAME					"NPCAP"												///< (HHH) Packet.dll
 #define NPF_SOFT_REGISTRY_NAME_WIDECHAR			L"NPCAP"											///< (HHH) Packet.dll
+
+#define NPF_ORGAN_NAME							"INSECURE"											///< (HHH) Packet.dll
+#define NPF_ORGAN_NAME_WIDECHAR					L"INSECURE"											///< (HHH) Packet.dll
 
 //
 // Derived strings
@@ -55,8 +62,9 @@
 #define NPF_EVENTS_NAMES_WIDECHAR			NPF_DRIVER_NAME_WIDECHAR								///< (BBB) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
 #define FAKE_NDISWAN_ADAPTER_NAME			"\\Device\\" NPF_DRIVER_NAME "_GenericDialupAdapter"	///< (CCC) Name of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
 #define FAKE_NDISWAN_ADAPTER_DESCRIPTION	"Adapter for generic dialup and VPN capture"			///< (DDD) Description of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
-#define NPF_SERVICE_DESC					"Npcap Packet Driver (" NPF_DRIVER_NAME ")"				///< (FFF) packet.dll
-#define NPF_SERVICE_DESC_WIDECHAR			L"Npcap Packet Driver (" NPF_DRIVER_NAME_WIDECHAR L")"	///< (FFF) packet.dll
+#define NPF_SERVICE_DESC					NPF_DRIVER_NAME_NORMAL " Packet Driver (" NPF_DRIVER_NAME ")"				///< (FFF) packet.dll
+#define NPF_SERVICE_DESC_WIDECHAR			NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Packet Driver (" NPF_DRIVER_NAME_WIDECHAR L")"	///< (FFF) packet.dll
+#define NPF_SERVICE_DESC_TCHAR				_T(NPF_DRIVER_NAME_NORMAL) _T(" Packet Driver (") _T(NPF_DRIVER_NAME) _T(")")	///< (FFF) packet.dll
 #define NPF_DRIVER_COMPLETE_DEVICE_PREFIX	"\\Device\\" NPF_DRIVER_NAME "_"						///< (III) packet.dll
 #define NPF_DRIVER_COMPLETE_PATH			"system32\\drivers\\" NPF_DRIVER_NAME ".sys"			///< (LLL) packet.dll
 

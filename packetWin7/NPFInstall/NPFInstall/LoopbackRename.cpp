@@ -8,11 +8,13 @@ Module Name:
 
 Abstract:
 
-    This is used for enumerating our "NPcap Loopback Adapter" using NetCfg API, if found, we changed its name from "Ethernet X" to "NPcap Loopback Adapter".
-    Also, we need to make a flag in registry to let the NPcap driver know that "this adapter is ours", so send the loopback traffic to it.
+    This is used for enumerating our "Npcap Loopback Adapter" using NetCfg API, if found, we changed its name from "Ethernet X" to "Npcap Loopback Adapter".
+    Also, we need to make a flag in registry to let the Npcap driver know that "this adapter is ours", so send the loopback traffic to it.
 
 This code is modified based on example: https://msdn.microsoft.com/en-us/library/windows/desktop/aa364686.aspx
 --*/
+
+#pragma warning(disable: 4311 4312)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -25,11 +27,8 @@ This code is modified based on example: https://msdn.microsoft.com/en-us/library
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "oleaut32.lib")
 
-#define BUF_SIZE 255
-#define NPCAP_LOOPBACK_INTERFACE_NAME L"NPcap Loopback Adapter"
-
-// as in winsock.h
-#define NAT_PROTOCOL_TCP 6
+#define			NPCAP_LOOPBACK_INTERFACE_NAME			NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
+#define			BUF_SIZE								255
 
 BOOL DoTheWork(INetSharingManager *pNSM, wchar_t strDeviceName[])
 {   // add a port mapping to every firewalled or shared connection 
