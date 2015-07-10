@@ -290,6 +290,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		}
 		else
 		{
+			RtlZeroMemory(pContiguousData, ETHER_ADDR_LEN * 2);
 			pContiguousData->ether_type = iProtocol ? RtlUshortByteSwap(ETHERTYPE_IPV6) : RtlUshortByteSwap(ETHERTYPE_IP);
 		}
 
