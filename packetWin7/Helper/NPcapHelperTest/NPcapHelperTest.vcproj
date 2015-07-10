@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="gb2312"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="NPcapHelperTest"
 	ProjectGUID="{3F697FA8-4C35-416C-A381-2631AAB79D39}"
 	RootNamespace="NPcapHelperTest"

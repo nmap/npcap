@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="gb2312"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="NPcapHelper"
 	ProjectGUID="{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}"
 	RootNamespace="NPcapHelper"
