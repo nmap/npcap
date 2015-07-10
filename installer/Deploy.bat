@@ -19,10 +19,10 @@ xcopy /Y	"..\packetWin7\npf\x64\Win7Release\npf Package\npcap.sys"					.\win7_ab
 xcopy /Y	"..\packetWin7\NPFInstall\Release\NPFInstall.exe"							.\win7_above\x86
 xcopy /Y	"..\packetWin7\NPFInstall\x64\Release\NPFInstall.exe"						.\win7_above\x64
 
-:: We assume that wpcap.dll is already deployed, as Npcap uses the original WinPcap wpcap.dll.
+:: Npcap uses the original WinPcap wpcap.dll with exactly the same code, we just changed the version number.
 :: Copy wpcap.dll
-:: xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x86\wpcap.dll"								.
-:: xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64
+xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x86\wpcap.dll"								.
+xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64
 
 :: First need to add "signtool.exe" to PATH, then put the cert file (e.g. C:\xxx.pfx) to environment variable %NPF_CERT_PATH%,
 :: put the private key string (e.g. 123456) to environment variable %NPF_SIGN_PK%
@@ -40,7 +40,7 @@ signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\NPFInstall.ex
 
 :: Sign wpcap.dll
 signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\wpcap.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\wpcap.dll
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\x64\wpcap.dll
 
 :: First need to add "makensis.exe" to PATH
 :: Generate installer

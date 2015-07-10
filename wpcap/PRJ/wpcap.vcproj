@@ -543,7 +543,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib lib\packet.lib"
+				AdditionalDependencies="ws2_32.lib &quot;..\..\packetWin7\Dll\Project\Release No NetMon and AirPcap\Packet.lib&quot;"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\packetNtx\Dll\Project\Release\x86"
 				ModuleDefinitionFile="wpcap.def"
@@ -623,7 +623,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib lib\x64\packet.lib"
+				AdditionalDependencies="ws2_32.lib &quot;..\..\packetWin7\Dll\Project\x64\Release No NetMon and AirPcap\Packet.lib&quot;"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\packetNtx\Dll\Project\Release\x64"
 				ModuleDefinitionFile="wpcap.def"
