@@ -22,8 +22,7 @@ NPcapHelper.exe      packetWin7\Helper        the helper program for `Admin-only
 
 ## Build
 
-* wpcap.dll, packet.dll and NPcapHelper.exe need to be built using **Visual Studio 2005**.
-* NPFInstall.exe needs to be built using **Visual Studio 2008**.
+* wpcap.dll, packet.dll, NPFInstall.exe and NPcapHelper.exe need to be built using **Visual Studio 2008** with **Windows SDK 8.1**.
 * npcap.sys needs to be built using **Visual Studio 2013** with **Windows Driver Kit 8.1**.
 
 ## Packaging
