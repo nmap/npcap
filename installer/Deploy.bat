@@ -14,6 +14,12 @@ xcopy /Y	"..\packetWin7\npf\Win7Release\npf Package\npcap.sys"						.\win7_above
 xcopy /Y	"..\packetWin7\npf\x64\Win7Release\npf Package\npcap.cat"					.\win7_above\x64
 xcopy /Y	"..\packetWin7\npf\x64\Win7Release\npf Package\npcap.inf"					.\win7_above\x64
 xcopy /Y	"..\packetWin7\npf\x64\Win7Release\npf Package\npcap.sys"					.\win7_above\x64
+xcopy /Y	"..\packetWin7\npf\Win7ReleaseAdmin-onlyMode\npf Package\npcap.cat"			.\win7_above\x86\admin_only
+xcopy /Y	"..\packetWin7\npf\Win7ReleaseAdmin-onlyMode\npf Package\npcap.inf"			.\win7_above\x86\admin_only
+xcopy /Y	"..\packetWin7\npf\Win7ReleaseAdmin-onlyMode\npf Package\npcap.sys"			.\win7_above\x86\admin_only
+xcopy /Y	"..\packetWin7\npf\x64\Win7ReleaseAdmin-onlyMode\npf Package\npcap.cat"		.\win7_above\x64\admin_only
+xcopy /Y	"..\packetWin7\npf\x64\Win7ReleaseAdmin-onlyMode\npf Package\npcap.inf"		.\win7_above\x64\admin_only
+xcopy /Y	"..\packetWin7\npf\x64\Win7ReleaseAdmin-onlyMode\npf Package\npcap.sys"		.\win7_above\x64\admin_only
 
 :: Copy NPFInstall.exe
 xcopy /Y	"..\packetWin7\NPFInstall\Release\NPFInstall.exe"							.\win7_above\x86
