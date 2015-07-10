@@ -38,6 +38,10 @@
 #define lib_pcap_pcap_h
 
 #if defined(WIN32)
+#define snprintf _snprintf
+#endif
+
+#if defined(WIN32)
   #include <pcap-stdinc.h>
 #elif defined(MSDOS)
   #include <sys/types.h>
