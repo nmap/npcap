@@ -20,23 +20,24 @@
 // 4.1.0.2001 -->  WinPcap  4.1.2 RTM
 // 4.1.0.2980 -->  WinPcap  4.1.3 RTM
 // 4.1.0.3001 -->  WinPcap  4.1.3 RTM (NDIS6)
+// 0.1.0.710  -->  Npcap  0.01 RTM (NDIS6)
 
-#define WINPCAP_MAJOR	4
+#define WINPCAP_MAJOR	0
 #define WINPCAP_MINOR	1
 #define WINPCAP_REV		0
-#define WINPCAP_BUILD	3001
-#define WINPCAP_VER_STRING	"4.1.0.3001"
-#define WINPCAP_PACKET9x_STRING_VERSION	"4.1.3"
-#define WINPCAP_WPCAP_STRING_VERSION "4.1.3"
+#define WINPCAP_BUILD	710
+#define WINPCAP_VER_STRING	"0.01"
+#define WINPCAP_PACKET9x_STRING_VERSION	"0.01"
+#define WINPCAP_WPCAP_STRING_VERSION "0.01"
 
-#define WINPCAP_COMPANY_NAME 			"Riverbed Technology, Inc."
+#define WINPCAP_COMPANY_NAME 			"Insecure.Com LLC."
 
-#define WINPCAP_PRODUCT_NAME 			"WinPcap"
+#define WINPCAP_PRODUCT_NAME 			"Npcap"
 
-#define WINPCAP_COPYRIGHT_STRING 		"Copyright ?2010-2013 Riverbed Technology, Inc. Copyright ?2005-2010 CACE Technologies. Copyright ?1999-2005 NetGroup, Politecnico di Torino."
-#define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright ?2010-2013 Riverbed Technology, Inc. Copyright ?2005-2010 CACE Technologies. Copyright ?2003-2005 NetGroup, Politecnico di Torino."
-#define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright ?2010-2013 Riverbed Technology, Inc. Copyright ?2007-2010 CACE Technologies."
-#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright ?2010-2013 Riverbed Technology, Inc. Copyright ?2005-2010 CACE Technologies. Copyright ?2003-2005 NetGroup, Politecnico di Torino."
+#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2015, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright (c) 2015, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2015, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2015, Insecure.Com LLC.  All rights reserved."
 
 #define WINPCAP_BUILD_DESCRIPTION 		""
 #define WINPCAP_PRIVATE_BUILD			""
