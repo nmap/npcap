@@ -39,11 +39,17 @@
 //  - please do not use prefix names longer than 70 chars. 
 //  - the following characters are surely accepted in the prefixes:  "[A-Z][a-z][0-9]_-',"   
 //
-#define NPF_DRIVER_NAME							"NPCAP"												///< (HHH) Packet.dll
-#define NPF_DRIVER_NAME_WIDECHAR				L"NPCAP"											///< (HHH) Packet.dll
-#define NPF_DRIVER_NAME_SMALL					"npcap"												///< (HHH) Packet.dll
-#define NPF_DRIVER_NAME_SMALL_WIDECHAR			L"npcap"											///< (HHH) Packet.dll
-
+#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	#define NPF_DRIVER_NAME							"NPF"												///< (HHH) Packet.dll
+	#define NPF_DRIVER_NAME_WIDECHAR				L"NPF"												///< (HHH) Packet.dll
+	#define NPF_DRIVER_NAME_SMALL					"npf"												///< (HHH) Packet.dll
+	#define NPF_DRIVER_NAME_SMALL_WIDECHAR			L"npf"												///< (HHH) Packet.dll
+#else
+	#define NPF_DRIVER_NAME							"NPCAP"												///< (HHH) Packet.dll
+	#define NPF_DRIVER_NAME_WIDECHAR				L"NPCAP"											///< (HHH) Packet.dll
+	#define NPF_DRIVER_NAME_SMALL					"npcap"												///< (HHH) Packet.dll
+	#define NPF_DRIVER_NAME_SMALL_WIDECHAR			L"npcap"											///< (HHH) Packet.dll
+#endif
 
 #define NPF_DRIVER_NAME_NORMAL					"Npcap"												///< (HHH) Packet.dll
 #define NPF_DRIVER_NAME_NORMAL_WIDECHAR			L"Npcap"											///< (HHH) Packet.dll
