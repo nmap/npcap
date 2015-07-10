@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Packet", "Packet.vcproj", "
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug No NetMon and AirPcap(WinPcap Mode)|Win32 = Debug No NetMon and AirPcap(WinPcap Mode)|Win32
+		Debug No NetMon and AirPcap(WinPcap Mode)|x64 = Debug No NetMon and AirPcap(WinPcap Mode)|x64
 		Debug No NetMon and AirPcap|Win32 = Debug No NetMon and AirPcap|Win32
 		Debug No NetMon and AirPcap|x64 = Debug No NetMon and AirPcap|x64
 		Debug No NetMon|Win32 = Debug No NetMon|Win32
@@ -15,6 +17,8 @@ Global
 		Debug|x64 = Debug|x64
 		Release LOG_TO_FILE|Win32 = Release LOG_TO_FILE|Win32
 		Release LOG_TO_FILE|x64 = Release LOG_TO_FILE|x64
+		Release No NetMon and AirPcap(WinPcap Mode)|Win32 = Release No NetMon and AirPcap(WinPcap Mode)|Win32
+		Release No NetMon and AirPcap(WinPcap Mode)|x64 = Release No NetMon and AirPcap(WinPcap Mode)|x64
 		Release No NetMon and AirPcap|Win32 = Release No NetMon and AirPcap|Win32
 		Release No NetMon and AirPcap|x64 = Release No NetMon and AirPcap|x64
 		Release No NetMon LOG_TO_FILE|Win32 = Release No NetMon LOG_TO_FILE|Win32
@@ -29,6 +33,10 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No NetMon and AirPcap(WinPcap Mode)|Win32.ActiveCfg = Debug No NetMon and AirPcap(WinPcap Mode)|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No NetMon and AirPcap(WinPcap Mode)|Win32.Build.0 = Debug No NetMon and AirPcap(WinPcap Mode)|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No NetMon and AirPcap(WinPcap Mode)|x64.ActiveCfg = Debug No NetMon and AirPcap(WinPcap Mode)|x64
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No NetMon and AirPcap(WinPcap Mode)|x64.Build.0 = Debug No NetMon and AirPcap(WinPcap Mode)|x64
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No NetMon and AirPcap|Win32.ActiveCfg = Debug No NetMon and AirPcap|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No NetMon and AirPcap|Win32.Build.0 = Debug No NetMon and AirPcap|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No NetMon and AirPcap|x64.ActiveCfg = Debug No NetMon and AirPcap|x64
@@ -45,6 +53,10 @@ Global
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release LOG_TO_FILE|Win32.ActiveCfg = Release LOG_TO_FILE|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release LOG_TO_FILE|Win32.Build.0 = Release LOG_TO_FILE|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release LOG_TO_FILE|x64.ActiveCfg = Release LOG_TO_FILE|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release No NetMon and AirPcap(WinPcap Mode)|Win32.ActiveCfg = Release No NetMon and AirPcap(WinPcap Mode)|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release No NetMon and AirPcap(WinPcap Mode)|Win32.Build.0 = Release No NetMon and AirPcap(WinPcap Mode)|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release No NetMon and AirPcap(WinPcap Mode)|x64.ActiveCfg = Release No NetMon and AirPcap(WinPcap Mode)|x64
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release No NetMon and AirPcap(WinPcap Mode)|x64.Build.0 = Release No NetMon and AirPcap(WinPcap Mode)|x64
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release No NetMon and AirPcap|Win32.ActiveCfg = Release No NetMon and AirPcap|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release No NetMon and AirPcap|Win32.Build.0 = Release No NetMon and AirPcap|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release No NetMon and AirPcap|x64.ActiveCfg = Release No NetMon and AirPcap|x64

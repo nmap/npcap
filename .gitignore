@@ -13,6 +13,8 @@
 *.dll
 Debug/
 Release/
+Debug(WinPcap Mode)/
+Release(WinPcap Mode)/
 Win7Debug/
 Win7Release/
 Win7DebugAdmin-onlyMode/
@@ -20,6 +22,8 @@ Win7ReleaseAdmin-onlyMode/
 sdv/
 /installer/win7_above/x86/
 /installer/win7_above/x64/
+/installer/win7_above_winpcap/x86/
+/installer/win7_above_winpcap/x64/
 /packetWin7/Dll/Project/Debug*/
 /packetWin7/Dll/Project/Release*/
 /packetWin7/Dll/Project/x64/Debug*/

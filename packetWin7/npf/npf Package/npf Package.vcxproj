@@ -126,19 +126,19 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npcap</TargetName>
+    <TargetName>npf</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release Admin-only Mode|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npcap</TargetName>
+    <TargetName>npf</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npcap</TargetName>
+    <TargetName>npf</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release Admin-only Mode|x64'">
     <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npcap</TargetName>
+    <TargetName>npf</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <Inf2Cat>
