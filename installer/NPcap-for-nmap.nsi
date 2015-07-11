@@ -169,7 +169,7 @@ Function .onInit
 
   do_silent:
     SetSilent silent
-    IfFileExists "$SYSDIR\Npcap\wpcap.dll" silent_checks
+    IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
     return
     silent_checks:
       ; check for the presence of Nmap's custom WinPcapInst registry key:
@@ -231,12 +231,12 @@ Function .onInit
       return
 
   no_silent:
-    IfFileExists "$SYSDIR\Npcap\wpcap.dll" do_version_check
+    IfFileExists "$INSTDIR\NPFInstall.exe" do_version_check
     return
 
   do_version_check:
 
-    GetDllVersion "$SYSDIR\Npcap\wpcap.dll" $R0 $R1
+    GetDllVersion "$INSTDIR\NPFInstall.exe" $R0 $R1
     IntOp $R2 $R0 / 0x00010000
     IntOp $R3 $R0 & 0x0000FFFF
     IntOp $R4 $R1 / 0x00010000
