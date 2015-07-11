@@ -688,22 +688,38 @@ PCHAR NPcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 
 PCHAR NPcapAdapterNameNPF2NPCAP(PCHAR AdapterName)
 {
+#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	return NULL;
+#else
 	return NPcapReplaceString(AdapterName, "NPF", "NPCAP");
+#endif
 }
 
 PCHAR NPcapAdapterNameNPCAP2NPF(PCHAR AdapterName)
 {
+#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	return NULL;
+#else
 	return NPcapReplaceString(AdapterName, "NPCAP", "NPF");
+#endif
 }
 
 PCHAR NPcapMemNPF2NPCAP(PCHAR pStr, int iBufSize)
 {
+#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	return NULL;
+#else
 	return NPcapReplaceMemory(pStr, iBufSize, "NPF", "NPCAP");
+#endif
 }
 
 PCHAR NPcapMemNPCAP2NPF(PCHAR pStr, int iBufSize)
 {
+#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	return NULL;
+#else
 	return NPcapReplaceMemory(pStr, iBufSize, "NPCAP", "NPF");
+#endif
 }
 
 /*! 
