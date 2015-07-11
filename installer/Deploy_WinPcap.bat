@@ -35,6 +35,16 @@ xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64
 :: First need to add "signtool.exe" to PATH, then put the cert file (e.g. C:\xxx.pfx) to environment variable %NPF_CERT_PATH%,
 :: put the private key string (e.g. 123456) to environment variable %NPF_SIGN_PK%
 
+:: Sign the driver
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x86\npf.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x86\npf.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x64\npf.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x64\npf.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x86\admin_only\npf.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x86\admin_only\npf.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x64\admin_only\npf.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x64\admin_only\npf.cat
+
 :: Sign Packet.dll
 signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x86\Packet.dll
 signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above_winpcap\x64\Packet.dll
