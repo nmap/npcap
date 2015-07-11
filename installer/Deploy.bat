@@ -36,14 +36,14 @@ xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64
 :: put the private key string (e.g. 123456) to environment variable %NPF_SIGN_PK%
 
 :: Sign the driver
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\npcap.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\npcap.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\npcap.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\npcap.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\admin_only\npcap.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\admin_only\npcap.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\admin_only\npcap.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\admin_only\npcap.cat
+:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\npcap.sys
+:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\npcap.cat
+:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\npcap.sys
+:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\npcap.cat
+:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\admin_only\npcap.sys
+:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\admin_only\npcap.cat
+:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\admin_only\npcap.sys
+:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x64\admin_only\npcap.cat
 
 :: Sign Packet.dll
 signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\win7_above\x86\Packet.dll
