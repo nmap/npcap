@@ -439,7 +439,11 @@ Section "WinPcap" SecWinPcap
   ; slower GUI installation.
 
   ; These x86 files are automatically redirected to the right place on x64
-  SetOutPath $SYSDIR\Npcap
+  ${If} $winpcap_mode == "yes"
+    SetOutPath $SYSDIR
+  ${Else}
+    SetOutPath $SYSDIR\Npcap
+  ${EndIf}
   File pthreadVC.dll
   File wpcap.dll
   ${If} $admin_only == "yes"
@@ -465,7 +469,11 @@ Section "WinPcap" SecWinPcap
 
   win7_files:
     StrCpy $os_ver 'win7' 5
-    File win7_above\x86\Packet.dll
+	${If} $winpcap_mode == "yes"
+	  File win7_above_winpcap\x86\Packet.dll
+	${Else}
+	  File win7_above\x86\Packet.dll
+	${EndIf}
     Goto install_win7
 
   install_xp_vista:
@@ -501,16 +509,32 @@ Section "WinPcap" SecWinPcap
       SetOutPath $INSTDIR
       File rpcapd.exe
       File LICENSE
-      File win7_above\x86\NPFInstall.exe
+	  ${If} $winpcap_mode == "yes"
+	    File win7_above_winpcap\x86\NPFInstall.exe
+	  ${Else}
+	    File win7_above\x86\NPFInstall.exe
+	  ${EndIf}
 
 	  ${If} $admin_only == "yes"
-	    File win7_above\x86\admin_only\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
-	    File win7_above\x86\admin_only\npcap.inf
-	    File win7_above\x86\admin_only\npcap.cat
+	    ${If} $winpcap_mode == "yes"
+		  File win7_above_winpcap\x86\admin_only\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
+	      File win7_above_winpcap\x86\admin_only\npf.inf
+	      File win7_above_winpcap\x86\admin_only\npf.cat
+		${Else}
+	      File win7_above\x86\admin_only\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
+	      File win7_above\x86\admin_only\npcap.inf
+	      File win7_above\x86\admin_only\npcap.cat
+		${EndIf}
 	  ${Else}
-	    File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
-	    File win7_above\x86\npcap.inf
-	    File win7_above\x86\npcap.cat
+	    ${If} $winpcap_mode == "yes"
+	      File win7_above_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
+	      File win7_above_winpcap\x86\npf.inf
+	      File win7_above_winpcap\x86\npf.cat
+		${Else}
+		  File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+	      File win7_above\x86\npcap.inf
+	      File win7_above\x86\npcap.cat
+		${EndIf}
 	  ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -535,7 +559,11 @@ Section "WinPcap" SecWinPcap
       ; The x86 versions of wpcap.dll and packet.dll are
       ; installed into the right place further above.
       ; install the 64-bit version of wpcap.dll into System32
-      SetOutPath $SYSDIR\Npcap
+	  ${If} $winpcap_mode == "yes"
+	    SetOutPath $SYSDIR
+	  ${Else}
+        SetOutPath $SYSDIR\Npcap
+	  ${EndIf}
       File x64\wpcap.dll ; x64 NT5/NT6.0 version
       ; install the 64-bit version of packet.dll into System32
       ; check for vista, otherwise install the NT5 version (for XP and 2003)
@@ -558,16 +586,32 @@ Section "WinPcap" SecWinPcap
       SetOutPath $INSTDIR
       File rpcapd.exe
       File LICENSE
-      File win7_above\x64\NPFInstall.exe
+	  ${If} $winpcap_mode == "yes"
+	    File win7_above_winpcap\x64\NPFInstall.exe
+	  ${Else}
+        File win7_above\x64\NPFInstall.exe
+	  ${EndIf}
 
 	  ${If} $admin_only == "yes"
-	    File win7_above\x64\admin_only\npcap.sys ; x64 NT6.1 and above version, admin only
-	    File win7_above\x64\admin_only\npcap.inf
-	    File win7_above\x64\admin_only\npcap.cat
+	    ${If} $winpcap_mode == "yes"
+		  File win7_above_winpcap\x64\admin_only\npf.sys ; x64 NT6.1 and above version, admin only
+	      File win7_above_winpcap\x64\admin_only\npf.inf
+	      File win7_above_winpcap\x64\admin_only\npf.cat
+		${Else}
+	      File win7_above\x64\admin_only\npcap.sys ; x64 NT6.1 and above version, admin only
+	      File win7_above\x64\admin_only\npcap.inf
+	      File win7_above\x64\admin_only\npcap.cat
+		${EndIf}
 	  ${Else}
-	    File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
-	    File win7_above\x64\npcap.inf
-	    File win7_above\x64\npcap.cat
+	    ${If} $winpcap_mode == "yes"
+		  File win7_above_winpcap\x64\npf.sys ; x64 NT6.1 and above version
+	      File win7_above_winpcap\x64\npf.inf
+	      File win7_above_winpcap\x64\npf.cat
+		${Else}
+		  File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
+	      File win7_above\x64\npcap.inf
+	      File win7_above\x64\npcap.cat
+		${EndIf}
 	  ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -578,14 +622,22 @@ Section "WinPcap" SecWinPcap
       ; The x86 versions of wpcap.dll and packet.dll are
       ; installed into the right place further above.
       ; install the 64-bit version of wpcap.dll into System32
-      SetOutPath $SYSDIR\Npcap
+	  ${If} $winpcap_mode == "yes"
+	    SetOutPath $SYSDIR
+	  ${Else}
+        SetOutPath $SYSDIR\Npcap
+	  ${EndIf}
 	  ${If} $admin_only == "yes"
 	    File win7_above\x64\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
 	  ${EndIf}
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.1 above version (for Win7 and Win8)
-      File win7_above\x64\Packet.dll ; x64 NT6.1 and above version
+	  ${If} $winpcap_mode == "yes"
+	    File win7_above_winpcap\x64\Packet.dll ; x64 NT6.1 and above version
+	  ${Else}
+        File win7_above\x64\Packet.dll ; x64 NT6.1 and above version
+	  ${EndIf}
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -607,10 +659,12 @@ Section "WinPcap" SecWinPcap
     
     registerdone:
 
-    ; Add "system32\Npcap" directory to PATH
-    DetailPrint "Adding DLL folder: $\"$SYSDIR\Npcap$\" to PATH environment variable"
-    ; SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment"
-    ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$SYSDIR\Npcap"
+	${If} $winpcap_mode == "no"
+      ; Add "system32\Npcap" directory to PATH
+      DetailPrint "Adding DLL folder: $\"$SYSDIR\Npcap$\" to PATH environment variable"
+      ; SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment"
+      ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$SYSDIR\Npcap"
+	${EndIf}
 
     ; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
     WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPCAP" "Start" 1
@@ -646,12 +700,21 @@ SectionEnd ; end the section
 
 Section "Uninstall"
 
+  StrCpy $winpcap_mode "yes"
+  StrCpy $driver_name "npf"
+  IfFileExists "$INSTDIR\npf.sys" npcap_sys_checked
+  StrCpy $winpcap_mode "no"
+  StrCpy $driver_name "npcap"
+  npcap_sys_checked:
+
   ; stop npf before we delete the service from the registry
-  nsExec::Exec "net stop npcap"
+  nsExec::Exec "net stop $driver_name"
   
-  ; Remove "system32\Npcap" directory in PATH
-  DetailPrint "Removing DLL folder: $\"$SYSDIR\Npcap$\" from PATH environment variable"
-  ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$SYSDIR\Npcap"
+  ${If} $winpcap_mode == "no"
+    ; Remove "system32\Npcap" directory in PATH
+    DetailPrint "Removing DLL folder: $\"$SYSDIR\Npcap$\" from PATH environment variable"
+    ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$SYSDIR\Npcap"
+  ${EndIf}
 
   ; Check windows version
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
@@ -695,17 +758,30 @@ Section "Uninstall"
   Delete $INSTDIR\LICENSE
   Delete $INSTDIR\NPFInstall.exe
   Delete $INSTDIR\loopback.ini
-  Delete $INSTDIR\npcap.sys
-  Delete $INSTDIR\npcap.inf
-  Delete $INSTDIR\npcap.cat
+  ${If} $winpcap_mode == "yes"
+    Delete $INSTDIR\npf.sys
+    Delete $INSTDIR\npf.inf
+    Delete $INSTDIR\npf.cat
+  ${Else}
+    Delete $INSTDIR\npcap.sys
+    Delete $INSTDIR\npcap.inf
+    Delete $INSTDIR\npcap.cat
+  ${EndIf}
   Delete $INSTDIR\uninstall.exe
 
   ; This deletes the x86 files from SysWOW64 if we're on x64.
-  Delete $SYSDIR\Npcap\Packet.dll
-  Delete $SYSDIR\Npcap\pthreadVC.dll
-  Delete $SYSDIR\Npcap\wpcap.dll
-  Delete $SYSDIR\Npcap\NPcapHelper.exe
-  RMDir "$SYSDIR\Npcap"
+  ${If} $winpcap_mode == "yes"
+    Delete $SYSDIR\Packet.dll
+    Delete $SYSDIR\pthreadVC.dll
+    Delete $SYSDIR\wpcap.dll
+    Delete $SYSDIR\NPcapHelper.exe
+  ${Else}
+    Delete $SYSDIR\Npcap\Packet.dll
+    Delete $SYSDIR\Npcap\pthreadVC.dll
+    Delete $SYSDIR\Npcap\wpcap.dll
+    Delete $SYSDIR\Npcap\NPcapHelper.exe
+    RMDir "$SYSDIR\Npcap"
+  ${EndIf}
 
   ; check for x64, delete npf.sys file from system32\drivers
   Call un.is64bit
@@ -749,12 +825,20 @@ Section "Uninstall"
     ; disable Wow64FsRedirection
     System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
-    Delete $SYSDIR\drivers\npcap.sys
-    ; Also delete the x64 files in System32
-    Delete $SYSDIR\Npcap\wpcap.dll
-    Delete $SYSDIR\Npcap\Packet.dll
-	Delete $SYSDIR\Npcap\NPcapHelper.exe
-    RMDir "$SYSDIR\Npcap"
+	${If} $winpcap_mode == "yes"
+	  Delete $SYSDIR\drivers\npf.sys
+      ; Also delete the x64 files in System32
+      Delete $SYSDIR\wpcap.dll
+      Delete $SYSDIR\Packet.dll
+	  Delete $SYSDIR\NPcapHelper.exe
+	${Else}
+      Delete $SYSDIR\drivers\npcap.sys
+      ; Also delete the x64 files in System32
+      Delete $SYSDIR\Npcap\wpcap.dll
+      Delete $SYSDIR\Npcap\Packet.dll
+	  Delete $SYSDIR\Npcap\NPcapHelper.exe
+      RMDir "$SYSDIR\Npcap"
+	${EndIf}
     
     ; re-enable Wow64FsRedirection
     System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -762,7 +846,11 @@ Section "Uninstall"
 
 
   del32bitnpf_win7:
-    Delete $SYSDIR\drivers\npcap.sys
+    ${If} $winpcap_mode == "yes"
+	  Delete $SYSDIR\drivers\npf.sys
+	${Else}
+      Delete $SYSDIR\drivers\npcap.sys
+	${EndIf}
     Goto npfdeleted
 
 
