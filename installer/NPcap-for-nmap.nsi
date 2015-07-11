@@ -28,6 +28,7 @@ SetCompressor /SOLID /FINAL lzma
   !include "MUI.nsh"
   !include "FileFunc.nsh"
   !include "EnvVarUpdate.nsh"
+  !include "LogicLib.nsh"
 
 ;--------------------------------
 ;General
@@ -40,6 +41,8 @@ OutFile "npcap-nmap-0.01.exe"
 
 Var /GLOBAL os_ver
 Var /GLOBAL admin_only
+Var /GLOBAL winpcap_mode
+Var /GLOBAL driver_name
 
 RequestExecutionLevel admin
 
@@ -215,7 +218,7 @@ Function .onInit
       SetOverwrite on
 
       ; try to ensure that npf has been stopped before we install/overwrite files
-      ExecWait '"net stop npcap"'
+      ExecWait '"net stop $driver_name"'
 
       return
 
@@ -295,17 +298,25 @@ Function .onInit
 FunctionEnd
 
 Function adminOnlyOptionsPage
-  !insertmacro MUI_HEADER_TEXT "Security Options" ""
+  !insertmacro MUI_HEADER_TEXT "Security and API Options" ""
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
 FunctionEnd
 
 Function doAdminOnlyOptions
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State"
+  StrCpy $admin_only "yes"
   StrCmp $0 "0" do_admin_only_options_start do_admin_only_options_end
-  StrCpy $admin_only "yes" 3
   do_admin_only_options_start:
-  StrCpy $admin_only "no" 3
+  StrCpy $admin_only "no"
   do_admin_only_options_end:
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State"
+  StrCpy $winpcap_mode "yes"
+  StrCpy $driver_name "npf"
+  StrCmp $0 "0" do_winpcap_mode_options_start do_winpcap_mode_options_end
+  do_winpcap_mode_options_start:
+  StrCpy $winpcap_mode "no"
+  StrCpy $driver_name "npcap"
+  do_winpcap_mode_options_end:
 FunctionEnd
 
 Function optionsPage
@@ -317,7 +328,7 @@ Function doOptions
   ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 1" "State"
   StrCmp $0 "0" do_options_start do_options_end
   do_options_start:
-  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPCAP" "Start" 3
+  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 3
   do_options_end:
 FunctionEnd
 
@@ -402,8 +413,8 @@ Function un.registerServiceAPI_win7
 FunctionEnd
 
 Function autoStartWinPcap
-    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\NPCAP" "Start" 1
-    nsExec::Exec "net start npcap"
+    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
+    nsExec::Exec "net start $driver_name"
 FunctionEnd
 
 
@@ -413,7 +424,7 @@ Section "WinPcap" SecWinPcap
 
   ; stop the service, in case it's still registered, so files can be
   ; safely overwritten and the service can be deleted.
-  nsExec::Exec "net stop npcap"
+  nsExec::Exec "net stop $driver_name"
 
   ; NB: We may need to introduce a check here to ensure that NPF
   ; has been stopped before we continue, otherwise we Sleep for a
