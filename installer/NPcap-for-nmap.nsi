@@ -436,9 +436,9 @@ Section "WinPcap" SecWinPcap
   SetOutPath $SYSDIR\Npcap
   File pthreadVC.dll
   File wpcap.dll
-  StrCmp $admin_only 'no' no_admin_only_npcaphelper_x86
-  File win7_above\x86\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
-  no_admin_only_npcaphelper_x86:
+  ${If} $admin_only == "yes"
+	File win7_above\x86\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
+  ${EndIf}
 
   ; Check windows version
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
@@ -497,16 +497,15 @@ Section "WinPcap" SecWinPcap
       File LICENSE
       File win7_above\x86\NPFInstall.exe
 
-	  StrCmp $admin_only 'no' no_admin_only_driver_x86
-	  File win7_above\x86\admin_only\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
-	  File win7_above\x86\admin_only\npcap.inf
-	  File win7_above\x86\admin_only\npcap.cat
-	  Goto no_admin_only_driver_x86_done
-	  no_admin_only_driver_x86:
-	  File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
-	  File win7_above\x86\npcap.inf
-	  File win7_above\x86\npcap.cat
-	  no_admin_only_driver_x86_done:
+	  ${If} $admin_only == "yes"
+	    File win7_above\x86\admin_only\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
+	    File win7_above\x86\admin_only\npcap.inf
+	    File win7_above\x86\admin_only\npcap.cat
+	  ${Else}
+	    File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+	    File win7_above\x86\npcap.inf
+	    File win7_above\x86\npcap.cat
+	  ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Win7 and Win8"
@@ -555,16 +554,15 @@ Section "WinPcap" SecWinPcap
       File LICENSE
       File win7_above\x64\NPFInstall.exe
 
-	  StrCmp $admin_only 'no' no_admin_only_driver_x64
-	  File win7_above\x64\admin_only\npcap.sys ; x64 NT6.1 and above version, admin only
-	  File win7_above\x64\admin_only\npcap.inf
-	  File win7_above\x64\admin_only\npcap.cat
-	  Goto no_admin_only_driver_x64_done
-	  no_admin_only_driver_x64:
-	  File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
-	  File win7_above\x64\npcap.inf
-	  File win7_above\x64\npcap.cat
-	  no_admin_only_driver_x64_done:
+	  ${If} $admin_only == "yes"
+	    File win7_above\x64\admin_only\npcap.sys ; x64 NT6.1 and above version, admin only
+	    File win7_above\x64\admin_only\npcap.inf
+	    File win7_above\x64\admin_only\npcap.cat
+	  ${Else}
+	    File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
+	    File win7_above\x64\npcap.inf
+	    File win7_above\x64\npcap.cat
+	  ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x64 driver for Win7 and Win8"
@@ -575,9 +573,9 @@ Section "WinPcap" SecWinPcap
       ; installed into the right place further above.
       ; install the 64-bit version of wpcap.dll into System32
       SetOutPath $SYSDIR\Npcap
-	  StrCmp $admin_only 'no' no_admin_only_npcaphelper_x64
-	  File win7_above\x64\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
-	  no_admin_only_npcaphelper_x64:
+	  ${If} $admin_only == "yes"
+	    File win7_above\x64\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
+	  ${EndIf}
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.1 above version (for Win7 and Win8)
