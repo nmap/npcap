@@ -43,7 +43,7 @@
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
   </PropertyGroup>
   <PropertyGroup Label="Globals">
-    <RootNamespace>npf_Package</RootNamespace>
+    <RootNamespace>npcap_Package</RootNamespace>
     <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VisualStudioVersion)' == '11.0'">$(VCTargetsPath11)</VCTargetsPath>
   </PropertyGroup>
   <PropertyGroup Label="PropertySheets">
@@ -174,7 +174,7 @@
     <FilesToPackage Include="@(Inf->'%(CopyOutput)')" Condition="'@(Inf)'!=''" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\npf\npf.vcxproj">
+    <ProjectReference Include="..\npf\npcap.vcxproj">
       <Project>{3556f5bc-f8ec-437e-93e3-7cf2dc63ff61}</Project>
     </ProjectReference>
   </ItemGroup>
