@@ -298,6 +298,12 @@ Function .onInit
 FunctionEnd
 
 Function adminOnlyOptionsPage
+  IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
+  winpcap_exist:
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 0
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "Flags" "DISABLED"
+  no_winpcap_exist:
   !insertmacro MUI_HEADER_TEXT "Security and API Options" ""
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
 FunctionEnd
