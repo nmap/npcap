@@ -256,7 +256,9 @@ typedef struct _OPEN_INSTANCE
 {
 	NDIS_STRING				AdapterName;
 	BOOLEAN					DirectBinded;
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	BOOLEAN					Loopback;
+#endif
 	struct _OPEN_INSTANCE	*Next;
 	struct _OPEN_INSTANCE	*GroupNext;
 	struct _OPEN_INSTANCE	*GroupHead;
@@ -774,7 +776,7 @@ PKEY_VALUE_PARTIAL_INFORMATION
 getTcpBindings(
 	);
 
-
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
 \brief read Npcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.
 
@@ -783,7 +785,7 @@ If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
 VOID
 NPF_GetLoopbackAdapterName(
 	);
-
+#endif
 
 /*!
   \brief Creates a device for a given MAC.

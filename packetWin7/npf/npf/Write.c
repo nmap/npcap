@@ -224,9 +224,11 @@ NPF_Write(
 				GroupOpen = Open->GroupNext;
 			}
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			// Do not capture the send traffic we send, if this is our loopback adapter.
 			if (Open->Loopback == FALSE)
 			{
+#endif
 				while (GroupOpen != NULL)
 				{
 					TempOpen = GroupOpen;
@@ -237,7 +239,9 @@ NPF_Write(
 
 					GroupOpen = TempOpen->GroupNext;
 				}
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			}
+#endif
 
 			pNetBufferList->SourceHandle = Open->AdapterHandle;
 			NPFSetNBLChildOpen(pNetBufferList, Open); //save the child open object in the packets

@@ -41,6 +41,7 @@
 #ifndef __LOOPBACK
 #define __LOOPBACK
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 #pragma warning(push)
 #pragma warning(disable:4201)       // unnamed struct/union
 
@@ -119,5 +120,6 @@ void
 NPF_UnregisterCallouts(
 );
 
+#endif
 
 #endif // __LOOPBACK

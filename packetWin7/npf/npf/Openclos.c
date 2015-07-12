@@ -1083,7 +1083,9 @@ NPF_DuplicateOpenObject(
 	Open = NPF_CreateOpenObject(&OriginalOpen->AdapterName, OriginalOpen->Medium, DeviceExtension);
 	Open->AdapterHandle = OriginalOpen->AdapterHandle;
 	Open->DirectBinded = FALSE;
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	Open->Loopback = OriginalOpen->Loopback;
+#endif
 
 	TRACE_EXIT();
 	return Open;
@@ -1117,7 +1119,9 @@ NPF_CreateOpenObject(
 
 	Open->DeviceExtension = DeviceExtension; //can be NULL before any actual bindings.
 	Open->DirectBinded = TRUE;
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	Open->Loopback = FALSE;
+#endif
 
 	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
 	PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
@@ -1350,6 +1354,7 @@ NPF_AttachAdapter(
 			return returnStatus;
 		}
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is our loopback adapter for the open_instance.
 		if (g_LoopbackAdapterName.Buffer != NULL)
 		{
@@ -1363,6 +1368,7 @@ NPF_AttachAdapter(
 				}
 			}
 		}
+#endif
 
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
 			"Opening the device %ws, BindingContext=%p",

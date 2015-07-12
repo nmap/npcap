@@ -453,9 +453,11 @@ NPF_SendEx(
 		GroupOpen = Open->GroupNext;
 	}
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// Do not capture the normal NDIS send traffic, if this is our loopback adapter.
 	if (Open->Loopback == FALSE)
 	{
+#endif
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
@@ -466,7 +468,9 @@ NPF_SendEx(
 
 			GroupOpen = TempOpen->GroupNext;
 		}
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
+#endif
 
 	NdisFSendNetBufferLists(Open->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
 
@@ -513,8 +517,10 @@ NPF_TapEx(
 	}
 
 	// Do not capture the normal NDIS receive traffic, if this is our loopback adapter.
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (Open->Loopback == FALSE)
 	{
+#endif
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
@@ -526,7 +532,9 @@ NPF_TapEx(
 
 			GroupOpen = TempOpen->GroupNext;
 		}
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
+#endif
 
 	//return the packets immediately
 	NdisFIndicateReceiveNetBufferLists(

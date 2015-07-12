@@ -69,7 +69,23 @@ PDEVICE_EXTENSION GlobalDeviceExtension;
 WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
 
 POPEN_INSTANCE g_arrOpen = NULL; //Adapter open_instance list head, each list item is a group head.
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+//
+// Global variables used by WFP
+//
 POPEN_INSTANCE g_LoopbackOpenGroupHead = NULL; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
+#ifdef _X86_
+NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software"
+	L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
+#else
+NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software\\Wow6432Node"
+	L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
+#endif
+NDIS_STRING g_LoopbackAdapterName;
+
+extern HANDLE gWFPEngineHandle;
+#endif
 
 NDIS_STRING g_NPF_Prefix;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
@@ -79,15 +95,6 @@ NDIS_STRING tcpLinkageKeyName = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 NDIS_STRING AdapterListKey = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 								L"\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}");
 NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
-
-#ifdef _X86_
-NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software"
-								L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
-#else
-NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software\\Wow6432Node"
-								L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
-#endif
-NDIS_STRING g_LoopbackAdapterName;
 
 /// Global variable that points to the names of the bound adapters
 WCHAR* bindP = NULL;
@@ -101,11 +108,6 @@ ULONG TimestampMode;
 //
 NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
 NDIS_HANDLE         FilterDriverObject; // Driver object for filter driver
-
-//
-// Global variables used by WFP
-//
-extern HANDLE gWFPEngineHandle;
 
 //
 //  Packet Driver's entry routine.
@@ -206,7 +208,10 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetLoopbackAdapterName();
+#endif
+
 	bindP = getAdaptersList();
 
 	if (bindP == NULL)
@@ -246,6 +251,7 @@ DriverEntry(
 		return Status;
 	}
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (DriverObject->DeviceObject)
 	{
 		Status = NPF_RegisterCallouts(DriverObject->DeviceObject);
@@ -259,6 +265,7 @@ DriverEntry(
 			return Status;
 		}
 	}
+#endif
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
@@ -520,6 +527,7 @@ getTcpBindings(
 
 //-------------------------------------------------------------------
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 VOID
 	NPF_GetLoopbackAdapterName(
 )
@@ -593,6 +601,7 @@ VOID
 
 	TRACE_EXIT();
 }
+#endif
 
 //-------------------------------------------------------------------
 
@@ -664,6 +673,7 @@ BOOLEAN
 
 		IF_LOUD(DbgPrint("Device created successfully\n"););
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is our loopback adapter for the device.
 		devExtP->Loopback = FALSE;
 		if (g_LoopbackAdapterName.Buffer != NULL)
@@ -673,6 +683,7 @@ BOOLEAN
 				devExtP->Loopback = TRUE;
 			}
 		}
+#endif
 
 		devObjP->Flags |= DO_DIRECT_IO;
 		RtlInitUnicodeString(&devExtP->AdapterName, amacNameP->Buffer);   
@@ -776,6 +787,7 @@ Return Value:
 	// Free the adapters names
 	ExFreePool(bindP);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// Free the loopback adapter name
 	if (g_LoopbackAdapterName.Buffer != NULL)
 	{
@@ -783,6 +795,7 @@ Return Value:
 	}
 
 	NPF_UnregisterCallouts();
+#endif
 
 	TRACE_EXIT();
 

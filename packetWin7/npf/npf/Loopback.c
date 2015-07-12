@@ -38,6 +38,8 @@
 *
 */
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+
 #include "stdafx.h"
 
 #include "Loopback.h"
@@ -736,3 +738,5 @@ NPF_UnregisterCallouts(
 
 	TRACE_EXIT();
 }
+
+#endif
