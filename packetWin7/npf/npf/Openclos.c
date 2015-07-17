@@ -277,19 +277,23 @@ NPF_OpenAdapter(
 
 	if (!NT_SUCCESS(returnStatus))
 	{
-		//
 		// Close the binding
-		//
 		NPF_CloseBinding(Open);
-	}
-
-	if (!NT_SUCCESS(returnStatus))
-	{
+		
+		// Free the open instance' resources
 		NPF_ReleaseOpenInstanceResources(Open);
-		//
+
 		// Free the open instance itself
-		//
-		ExFreePool(Open);
+		if (Open)
+		{
+			ExFreePool(Open);
+			Open = NULL;
+		}
+
+		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return STATUS_UNSUCCESSFUL;
 	}
 	else
 	{
@@ -412,6 +416,7 @@ NPF_ReleaseOpenInstanceResources(
 	if (pOpen->bpfprogram != NULL)
 	{
 		ExFreePool(pOpen->bpfprogram);
+		pOpen->bpfprogram = NULL;
 	}
 
 	//
@@ -442,6 +447,7 @@ NPF_ReleaseOpenInstanceResources(
 	if (pOpen->Size > 0)
 	{
 		ExFreePool(pOpen->CpuData[0].Buffer);
+		pOpen->CpuData[0].Buffer = NULL;
 	}
 
 	//
@@ -583,7 +589,10 @@ NPF_CloseAdapter(
 	//
 	// Free the open instance itself
 	//
-	ExFreePool(pOpen);
+	if (pOpen)
+	{
+		ExFreePool(pOpen);
+	}
 
 	Irp->IoStatus.Status = STATUS_SUCCESS;
 	Irp->IoStatus.Information = 0;
@@ -606,7 +615,10 @@ NPF_CloseAdapterForUnclosed(
 	//
 	// Free the open instance itself
 	//
-	ExFreePool(pOpen);
+	if (pOpen)
+	{
+		ExFreePool(pOpen);
+	}
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;

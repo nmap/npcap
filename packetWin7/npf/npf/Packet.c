@@ -424,7 +424,10 @@ getAdaptersList(
 	}
 	if (BufPos == 0)
 	{
-		ExFreePool(DeviceNames);
+		if (DeviceNames)
+		{
+			ExFreePool(DeviceNames);
+		}
 		TRACE_EXIT();
 		return NULL;
 	}
@@ -764,6 +767,7 @@ Return Value:
 	if (g_LoopbackAdapterName.Buffer != NULL)
 	{
 		ExFreePool(g_LoopbackAdapterName.Buffer);
+		g_LoopbackAdapterName.Buffer = NULL;
 	}
 
 	NPF_UnregisterCallouts();
@@ -789,6 +793,7 @@ Return Value:
 
 			IoDeleteSymbolicLink(&SymLink);
 			ExFreePool(DeviceExtension->ExportString);
+			DeviceExtension->ExportString = NULL;
 		}
 
 		IoDeleteDevice(OldDeviceObject);
@@ -800,6 +805,7 @@ Return Value:
 	if (bindP != NULL)
 	{
 		ExFreePool(bindP);
+		bindP = NULL;
 	}
 
 	TRACE_EXIT();
@@ -1493,6 +1499,7 @@ NPF_IoControl(
 		if (Open->CpuData[0].Buffer != NULL)
 		{
 			ExFreePool(Open->CpuData[0].Buffer);
+			Open->CpuData[0].Buffer = NULL;
 		}
 
 		for (i = 0 ; i < g_NCpu ; i++)
