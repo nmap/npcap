@@ -254,6 +254,7 @@
   </ItemGroup>
   <ItemGroup>
     <Inf Include="npf.inf" />
+    <Inf Include="npf_wfp.inf" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="npf.rc" />

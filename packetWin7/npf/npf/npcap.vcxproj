@@ -254,6 +254,7 @@
   </ItemGroup>
   <ItemGroup>
     <Inf Include="npcap.inf" />
+    <Inf Include="npcap_wfp.inf" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="npcap.rc" />

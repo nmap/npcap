@@ -1,12 +1,12 @@
 ;-------------------------------------------------------------------------
-; NPF.INF -- Npcap NDIS 6.x LightWeight Filter Driver
+; NPCAP_WFP.INF -- Npcap NDIS 6.x LightWeight Filter Driver
 ;
 ; Copyright (c) 2015, Insecure.Com LLC.  All rights reserved.
 ;------------------------------------------------------------------------
 [version]
 Signature       = "$Windows NT$"
-Class           = NetService
-ClassGUID       = {4D36E974-E325-11CE-BFC1-08002BE10318}
+Class           = WFPCALLOUTS
+ClassGUID       = {57465043-616C-6C6F-7574-5F636C617373}
 CatalogFile     = %NPF_DriverName%.cat
 Provider        = %Insecure%
 DriverVer=05/15/2015,14.48.38.905
@@ -16,13 +16,13 @@ DriverVer=05/15/2015,14.48.38.905
 %Insecure%=Insecure,NTx86,NTia64,NTamd64
 
 [Insecure.NTx86]
-%NPF_Desc%=Install, INSECURE_NPF
+%NPF_Desc%=Install, INSECURE_NPCAP
 
 [Insecure.NTia64]
-%NPF_Desc%=Install, INSECURE_NPF
+%NPF_Desc%=Install, INSECURE_NPCAP
 
 [Insecure.NTamd64]
-%NPF_Desc%=Install, INSECURE_NPF
+%NPF_Desc%=Install, INSECURE_NPCAP
 
 ;-------------------------------------------------------------------------
 ; Installation Section
@@ -31,13 +31,13 @@ DriverVer=05/15/2015,14.48.38.905
 AddReg=Inst_Ndi
 Characteristics=0x40000
 NetCfgInstanceId="{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"
-;Copyfiles = npf.copyfiles.sys
+Copyfiles = npf.copyfiles.sys
 
 [SourceDisksNames]
 1=%NPF_Desc%,"",,
 
 [SourceDisksFiles]
-npf.sys=1
+npcap.sys=1
 
 [DestinationDirs]
 DefaultDestDir=12
@@ -104,7 +104,7 @@ AddService=%NPF_DriverName%,,NPF_Service_Inst
 [NPF_Service_Inst]
 DisplayName     = %NPF_Desc%
 ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
-StartType       = 3 ;SERVICE_DEMAND_START
+StartType       = 1 ;SERVICE_SYSTEM_START
 ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
 ServiceBinary   = %12%\%NPF_DriverName%.sys
 LoadOrderGroup  = NDIS
@@ -128,8 +128,33 @@ DelService=%NPF_DriverName%,0x200 ; SPSVCINST_STOPSERVICE
 ;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,3 ; Do not bind to TNic or unbind from Members
 HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to default behavior
 
+[DefaultInstall]
+    OptionDesc = %NPF_Desc%
+    CopyFiles  = LBTest.DriverFiles
+
+[DefaultInstall.Services]
+    AddService = %NPF_DriverName%,,LBTest.Service
+
+[DefaultUninstall]
+    DelFiles = LBTest.DriverFiles
+
+[DefaultUninstall.Services]
+    DelService = %NPF_DriverName%,0x200                                ; SPSVCINST_STOPSERVICE
+
+[LBTest.DriverFiles]
+    %NPF_DriverName%.sys,,,0x00000040                                               ; COPYFLG_OVERWRITE_OLDER_ONLY
+
+[LBTest.Service]
+    DisplayName   = %NPF_DriverName%
+    Description   = %NPF_Desc%
+    ServiceType   = 1                                                      ; SERVICE_KERNEL_DRIVER
+    StartType     = 1                                                      ; SERVICE_DEMAND_START
+    ErrorControl  = 1                                                      ; SERVICE_ERROR_NORMAL
+    ServiceBinary = %12%\%NPF_DriverName%.sys                                       ; %WinDir%\System32\Drivers\lbtest.sys
+    AddReg        = LBTest.AddRegistry
+
 [Strings]
-NPF_DriverName = "npf"
+NPF_DriverName = "npcap"
 Insecure = "Nmap Project"
 NPF_Desc = "Npcap Packet Driver (NPCAP)"
 NPF_HelpText = "A NDIS 6 filter driver & WFP callout driver to support packet capturing and sending under Windows 7, 8 & 10"

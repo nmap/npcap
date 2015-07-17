@@ -390,7 +390,9 @@ Function registerServiceAPI_win7
   ; delete the npf service to avoid an error message later if it already exists
   ; create the Npcap Loopback Adapter, used for capturing loopback packets
   ExecWait '"$INSTDIR\NPFInstall.exe" -il' $0
-  ; create the new npf service
+  ; install the WFP callout driver
+  ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
+  ; install the NDIS filter driver
   ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
   StrCmp $0 "0" register_win7_success register_win7_fail
 
@@ -406,7 +408,8 @@ Function registerServiceAPI_win7
 FunctionEnd
 
 Function un.registerServiceAPI_win7
-  ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
+  ;ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
+  ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
   ExecWait '"$INSTDIR\NPFInstall.exe" -ul' $0
   StrCmp $0 "0" unregister_win7_success unregister_win7_fail
   
@@ -519,20 +522,24 @@ Section "WinPcap" SecWinPcap
 	    ${If} $winpcap_mode == "yes"
 		  File win7_above_winpcap\x86\admin_only\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
 	      File win7_above_winpcap\x86\admin_only\npf.inf
+		  File win7_above_winpcap\x86\admin_only\npf_wfp.inf
 	      File win7_above_winpcap\x86\admin_only\npf.cat
 		${Else}
 	      File win7_above\x86\admin_only\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
 	      File win7_above\x86\admin_only\npcap.inf
+		  File win7_above\x86\admin_only\npcap_wfp.inf
 	      File win7_above\x86\admin_only\npcap.cat
 		${EndIf}
 	  ${Else}
 	    ${If} $winpcap_mode == "yes"
 	      File win7_above_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
 	      File win7_above_winpcap\x86\npf.inf
+		  File win7_above_winpcap\x86\npf_wfp.inf
 	      File win7_above_winpcap\x86\npf.cat
 		${Else}
 		  File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
 	      File win7_above\x86\npcap.inf
+		  File win7_above\x86\npcap_wfp.inf
 	      File win7_above\x86\npcap.cat
 		${EndIf}
 	  ${EndIf}
@@ -596,20 +603,24 @@ Section "WinPcap" SecWinPcap
 	    ${If} $winpcap_mode == "yes"
 		  File win7_above_winpcap\x64\admin_only\npf.sys ; x64 NT6.1 and above version, admin only
 	      File win7_above_winpcap\x64\admin_only\npf.inf
+		  File win7_above_winpcap\x64\admin_only\npf_wfp.inf
 	      File win7_above_winpcap\x64\admin_only\npf.cat
 		${Else}
 	      File win7_above\x64\admin_only\npcap.sys ; x64 NT6.1 and above version, admin only
 	      File win7_above\x64\admin_only\npcap.inf
+		  File win7_above\x64\admin_only\npcap_wfp.inf
 	      File win7_above\x64\admin_only\npcap.cat
 		${EndIf}
 	  ${Else}
 	    ${If} $winpcap_mode == "yes"
 		  File win7_above_winpcap\x64\npf.sys ; x64 NT6.1 and above version
 	      File win7_above_winpcap\x64\npf.inf
+		  File win7_above_winpcap\x64\npf_wfp.inf
 	      File win7_above_winpcap\x64\npf.cat
 		${Else}
 		  File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
 	      File win7_above\x64\npcap.inf
+		  File win7_above\x64\npcap_wfp.inf
 	      File win7_above\x64\npcap.cat
 		${EndIf}
 	  ${EndIf}
@@ -761,10 +772,12 @@ Section "Uninstall"
   ${If} $winpcap_mode == "yes"
     Delete $INSTDIR\npf.sys
     Delete $INSTDIR\npf.inf
+	Delete $INSTDIR\npf_wfp.inf
     Delete $INSTDIR\npf.cat
   ${Else}
     Delete $INSTDIR\npcap.sys
     Delete $INSTDIR\npcap.inf
+	Delete $INSTDIR\npcap_wfp.inf
     Delete $INSTDIR\npcap.cat
   ${EndIf}
   Delete $INSTDIR\uninstall.exe
