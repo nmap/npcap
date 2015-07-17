@@ -757,6 +757,16 @@ Return Value:
 
 	TRACE_ENTER();
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// Free the loopback adapter name
+	if (g_LoopbackAdapterName.Buffer != NULL)
+	{
+		ExFreePool(g_LoopbackAdapterName.Buffer);
+	}
+
+	NPF_UnregisterCallouts();
+#endif
+
 	DeviceObject = DriverObject->DeviceObject;
 
 	while (DeviceObject != NULL)
@@ -786,16 +796,6 @@ Return Value:
 
 	// Free the adapters names
 	ExFreePool(bindP);
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// Free the loopback adapter name
-	if (g_LoopbackAdapterName.Buffer != NULL)
-	{
-		ExFreePool(g_LoopbackAdapterName.Buffer);
-	}
-
-	NPF_UnregisterCallouts();
-#endif
 
 	TRACE_EXIT();
 
