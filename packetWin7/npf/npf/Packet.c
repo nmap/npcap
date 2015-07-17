@@ -260,6 +260,8 @@ DriverEntry(
 			if (gWFPEngineHandle != NULL)
 			{
 				NPF_UnregisterCallouts();
+
+				NdisFDeregisterFilterDriver(FilterDriverHandle);
 			}
 			TRACE_EXIT();
 			return Status;
@@ -795,7 +797,10 @@ Return Value:
 	NdisFDeregisterFilterDriver(FilterDriverHandle);
 
 	// Free the adapters names
-	ExFreePool(bindP);
+	if (bindP != NULL)
+	{
+		ExFreePool(bindP);
+	}
 
 	TRACE_EXIT();
 
