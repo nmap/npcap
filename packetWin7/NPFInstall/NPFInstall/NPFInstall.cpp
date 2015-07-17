@@ -12,7 +12,7 @@ BOOL PacketStopDriver60();
 BOOL PacketInstallDriver40();
 BOOL PacketStopDriver40();
 
-#define STR_COMMAND_USAGE _T("Command Usage: NPFInstall -[i/u/r/ii/uu]: i - install win7 driver, u - uninstall win7 driver, r - restartBindings, ii - install xp driver, uu - uninstall xp driver, il - install Npcap loopback adapter, ul - uninstall Npcap loopback adapter.\n")
+#define STR_COMMAND_USAGE _T("Command Usage: NPFInstall -[i/u/r/ii/uu]: i - install win7 driver, u - uninstall win7 driver, r - restartBindings, ii - install xp driver, uu - uninstall xp driver, il - install Npcap loopback adapter, ul - uninstall Npcap loopback adapter, iw - install WFP callout driver, uw - uninstall WFP callout driver.\n")
 
 BOOL PacketInstallDriver60()
 {

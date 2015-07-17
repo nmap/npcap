@@ -90,7 +90,7 @@ BOOL UninstallWFPCallout()
 	TCHAR szCmd[_MAX_PATH * 2];
 	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("DefaultUninstall 132 %s"), szFileFullPath);
 	InstallHinfSection(NULL, NULL, szCmd, 0);
-	InstallHinfSection(NULL, NULL, TEXT("DefaultUninstall 132 J:\\NPcap-LWF\\lbtest\\x64\\Win7Release\\lbtest Package\\lbtest.inf"), 0);
+	InstallHinfSection(NULL, NULL, TEXT("DefaultUninstall 132 %s"), 0);
 
 	return TRUE;
 }
