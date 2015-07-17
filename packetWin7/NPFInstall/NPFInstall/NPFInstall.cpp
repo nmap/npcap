@@ -5,6 +5,7 @@
 
 #include "ProtInstall.h"
 #include "LoopbackInstall.h"
+#include "CalloutInstall.h"
 
 BOOL PacketInstallDriver60();
 BOOL PacketStopDriver60();
@@ -142,12 +143,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketInstallDriver60();
 			if (bSuccess)
 			{
-				_tprintf(_T("Npcap driver has been successfully installed!\n"));
+				_tprintf(_T("Npcap LWF driver has been successfully installed!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("Npcap driver has failed the installation."));
+				_tprintf(_T("Npcap LWF driver has failed the installation."));
 				return -1;
 			}
 		}
@@ -156,12 +157,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketStopDriver60();
 			if (bSuccess)
 			{
-				_tprintf(_T("Npcap driver has been successfully uninstalled!\n"));
+				_tprintf(_T("Npcap LWF driver has been successfully uninstalled!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("Npcap driver has failed the uninstallation."));
+				_tprintf(_T("Npcap LWF driver has failed the uninstallation."));
 				return -1;
 			}
 		}
@@ -170,12 +171,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketInstallDriver40();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPF driver has been successfully installed!\n"));
+				_tprintf(_T("NPF legacy driver has been successfully installed!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPF driver has failed the installation."));
+				_tprintf(_T("NPF legacy driver has failed the installation."));
 				return -1;
 			}
 		}
@@ -184,12 +185,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			bSuccess = PacketStopDriver40();
 			if (bSuccess)
 			{
-				_tprintf(_T("NPF driver has been successfully uninstalled!\n"));
+				_tprintf(_T("NPF legacy driver has been successfully uninstalled!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("NPF driver has failed the uninstallation."));
+				_tprintf(_T("NPF legacy driver has failed the uninstallation."));
 				return -1;
 			}
 		}
@@ -218,6 +219,34 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				_tprintf(_T("Npcap Loopback adapter has failed the uninstallation."));
+				return -1;
+			}
+		}
+		else if (_tcscmp(_T("-iw"), argv[1]) == 0)
+		{
+			bSuccess = InstallWFPCallout();
+			if (bSuccess)
+			{
+				_tprintf(_T("Npcap WFP callout driver has been successfully installed!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Npcap WFP callout driver has failed the installation."));
+				return -1;
+			}
+		}
+		else if (_tcscmp(_T("-uw"), argv[1]) == 0)
+		{
+			bSuccess = UninstallWFPCallout();
+			if (bSuccess)
+			{
+				_tprintf(_T("Npcap WFP callout driver has been successfully uninstalled!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Npcap WFP callout driver has failed the uninstallation."));
 				return -1;
 			}
 		}
