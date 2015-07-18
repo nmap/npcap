@@ -33,6 +33,7 @@ This code is modified based on example: https://msdn.microsoft.com/en-us/library
 BOOL DoTheWork(INetSharingManager *pNSM, wchar_t strDeviceName[])
 {   // add a port mapping to every firewalled or shared connection 
 	BOOL bFound = FALSE;
+	BOOL bError = FALSE;
 	INetSharingEveryConnectionCollection * pNSECC = NULL;
 	HRESULT hr = pNSM->get_EnumEveryConnection (&pNSECC);
 	if (!pNSECC)
@@ -72,6 +73,23 @@ BOOL DoTheWork(INetSharingManager *pNSM, wchar_t strDeviceName[])
 						{
 							pNC->Rename(NPCAP_LOOPBACK_INTERFACE_NAME);
 							bFound = TRUE;
+
+							hr = pNC->Rename(NPCAP_LOOPBACK_INTERFACE_NAME);
+							bFound = TRUE;
+							if (hr == HRESULT_FROM_WIN32(ERROR_TRANSACTIONAL_CONFLICT))
+							{
+								wprintf(L"failed to create rename NPCAP_LOOPBACK_INTERFACE_NAME\r\n");
+								bError = TRUE;
+							}
+							else if (hr != S_OK)
+							{
+								wprintf(L"failed to create rename NPCAP_LOOPBACK_INTERFACE_NAME\r\n");
+								bError = TRUE;
+							}
+							else
+							{
+								bError = FALSE;
+							}
 						}
 						
 						pNC->Release();
@@ -84,7 +102,14 @@ BOOL DoTheWork(INetSharingManager *pNSM, wchar_t strDeviceName[])
 		pNSECC->Release();
 	}
 	
-	return bFound;
+	if (!bFound)
+	{
+		return FALSE;
+	}
+	else
+	{
+		return !bError;
+	}
 }
 
 BOOL RenameLoopbackNetwork(wchar_t strDeviceName[])
