@@ -1406,13 +1406,13 @@ BOOL InstallLoopbackAdapter()
 		return FALSE;
 	}
 
-// 	if (!RecordLoopbackDevice(iNpcapAdapterID))
-// 	{
+	if (!RecordLoopbackDevice(iNpcapAdapterID))
+	{
 		if (!DoRenameLoopbackNetwork2())
 		{
 			return FALSE;
 		}
-/*	}*/
+	}
 
 	if (!SaveDevIDToFile(iNpcapAdapterID))
 	{

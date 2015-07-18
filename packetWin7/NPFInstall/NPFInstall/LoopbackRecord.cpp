@@ -210,17 +210,15 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 			{
 				bFailed = TRUE;
 			}
-			else
-			{
-				if (!AddFlagToRegistry(pszBindName))
-				{
-					bFailed = TRUE;
-				}
 
-				if (!RenameLoopbackNetwork(pszBindName))
-				{
-					bFailed = TRUE;
-				}
+			if (!AddFlagToRegistry(pszBindName))
+			{
+				bFailed = TRUE;
+			}
+
+			if (!RenameLoopbackNetwork(pszBindName))
+			{
+				bFailed = TRUE;
 			}
 		}
 
