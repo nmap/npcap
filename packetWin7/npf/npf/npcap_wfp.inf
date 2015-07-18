@@ -142,16 +142,16 @@ HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to defaul
     DelService = %NPF_DriverName%,0x200                                ; SPSVCINST_STOPSERVICE
 
 [LBTest.DriverFiles]
-    %NPF_DriverName%.sys,,,0x00000040                                               ; COPYFLG_OVERWRITE_OLDER_ONLY
+    %NPF_DriverName%.sys,,,2 ; 0x00000040                                               ; COPYFLG_OVERWRITE_OLDER_ONLY
 
 [LBTest.Service]
     DisplayName   = %NPF_DriverName%
     Description   = %NPF_Desc%
     ServiceType   = 1                                                      ; SERVICE_KERNEL_DRIVER
-    StartType     = 1                                                      ; SERVICE_DEMAND_START
+    StartType     = 1                                                      ; SERVICE_SYSTEM_START
     ErrorControl  = 1                                                      ; SERVICE_ERROR_NORMAL
     ServiceBinary = %12%\%NPF_DriverName%.sys                                       ; %WinDir%\System32\Drivers\lbtest.sys
-    AddReg        = LBTest.AddRegistry
+;    AddReg        = LBTest.AddRegistry
 
 [Strings]
 NPF_DriverName = "npcap"

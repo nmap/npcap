@@ -31,7 +31,7 @@ DriverVer=05/15/2015,14.48.38.905
 AddReg=Inst_Ndi
 Characteristics=0x40000
 NetCfgInstanceId="{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"
-;Copyfiles = npf.copyfiles.sys
+Copyfiles = npf.copyfiles.sys
 
 [SourceDisksNames]
 1=%NPF_Desc%,"",,
