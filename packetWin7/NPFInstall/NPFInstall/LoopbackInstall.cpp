@@ -15,6 +15,7 @@ Abstract:
 
 #include "LoopbackInstall.h"
 #include "LoopbackRecord.h"
+#include "LoopbackRename2.h"
 
 #include <shlobj.h>
 
@@ -1392,6 +1393,8 @@ int LoadDevIDFromFile()
 
 BOOL InstallLoopbackAdapter()
 {
+	PrepareRenameLoopbackNetwork2();
+
 	if (!InstallLoopbackDeviceInternal())
 	{
 		return FALSE;
@@ -1403,10 +1406,13 @@ BOOL InstallLoopbackAdapter()
 		return FALSE;
 	}
 
-	if (!RecordLoopbackDevice(iNpcapAdapterID))
-	{
-		return FALSE;
-	}
+// 	if (!RecordLoopbackDevice(iNpcapAdapterID))
+// 	{
+		if (!DoRenameLoopbackNetwork2())
+		{
+			return FALSE;
+		}
+/*	}*/
 
 	if (!SaveDevIDToFile(iNpcapAdapterID))
 	{
