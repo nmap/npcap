@@ -228,11 +228,14 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 
 		if (bFound)
 		{
-			return TRUE;
-		}
-		if (bFailed)
-		{
-			return FALSE;
+			if (bFailed)
+			{
+				return FALSE;
+			}
+			else
+			{
+				return TRUE;
+			}
 		}
 	}
 
