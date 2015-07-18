@@ -1334,8 +1334,8 @@ NPF_AttachAdapter(
 		// media types.
 		if ((AttachParameters->MiniportMediaType != NdisMedium802_3)
 				&& (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
-//				&& (AttachParameters->MiniportMediaType != NdisMediumWan) //we don't care this kind of miniports
-//				&& (AttachParameters->MiniportMediaType != NdisMediumWirelessWan) //we don't care this kind of miniports
+				&& (AttachParameters->MiniportMediaType != NdisMediumWan) //we don't care this kind of miniports
+				&& (AttachParameters->MiniportMediaType != NdisMediumWirelessWan) //we don't care this kind of miniports
 				&& (AttachParameters->MiniportMediaType != NdisMediumFddi)
 				&& (AttachParameters->MiniportMediaType != NdisMediumArcnet878_2)
 				&& (AttachParameters->MiniportMediaType != NdisMediumAtm)
