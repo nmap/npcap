@@ -449,9 +449,7 @@ Section "WinPcap" SecWinPcap
   ${EndIf}
   File pthreadVC.dll
   File wpcap.dll
-  ${If} $admin_only == "yes"
-	File win7_above\x86\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
-  ${EndIf}
+  File win7_above\x86\NPcapHelper.exe
 
   ; Check windows version
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
@@ -518,31 +516,17 @@ Section "WinPcap" SecWinPcap
 	    File win7_above\x86\NPFInstall.exe
 	  ${EndIf}
 
-	  ${If} $admin_only == "yes"
-	    ${If} $winpcap_mode == "yes"
-		  File win7_above_winpcap\x86\admin_only\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
-	      File win7_above_winpcap\x86\admin_only\npf.inf
-		  File win7_above_winpcap\x86\admin_only\npf_wfp.inf
-	      File win7_above_winpcap\x86\admin_only\npf.cat
-		${Else}
-	      File win7_above\x86\admin_only\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version, admin only
-	      File win7_above\x86\admin_only\npcap.inf
-		  File win7_above\x86\admin_only\npcap_wfp.inf
-	      File win7_above\x86\admin_only\npcap.cat
-		${EndIf}
-	  ${Else}
-	    ${If} $winpcap_mode == "yes"
-	      File win7_above_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
-	      File win7_above_winpcap\x86\npf.inf
-		  File win7_above_winpcap\x86\npf_wfp.inf
-	      File win7_above_winpcap\x86\npf.cat
-		${Else}
-		  File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
-	      File win7_above\x86\npcap.inf
-		  File win7_above\x86\npcap_wfp.inf
-	      File win7_above\x86\npcap.cat
-		${EndIf}
-	  ${EndIf}
+      ${If} $winpcap_mode == "yes"
+        File win7_above_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
+        File win7_above_winpcap\x86\npf.inf
+        File win7_above_winpcap\x86\npf_wfp.inf
+        File win7_above_winpcap\x86\npf.cat
+      ${Else}
+        File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+        File win7_above\x86\npcap.inf
+        File win7_above\x86\npcap_wfp.inf
+        File win7_above\x86\npcap.cat
+      ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Win7 and Win8"
@@ -599,31 +583,17 @@ Section "WinPcap" SecWinPcap
         File win7_above\x64\NPFInstall.exe
 	  ${EndIf}
 
-	  ${If} $admin_only == "yes"
-	    ${If} $winpcap_mode == "yes"
-		  File win7_above_winpcap\x64\admin_only\npf.sys ; x64 NT6.1 and above version, admin only
-	      File win7_above_winpcap\x64\admin_only\npf.inf
-		  File win7_above_winpcap\x64\admin_only\npf_wfp.inf
-	      File win7_above_winpcap\x64\admin_only\npf.cat
-		${Else}
-	      File win7_above\x64\admin_only\npcap.sys ; x64 NT6.1 and above version, admin only
-	      File win7_above\x64\admin_only\npcap.inf
-		  File win7_above\x64\admin_only\npcap_wfp.inf
-	      File win7_above\x64\admin_only\npcap.cat
-		${EndIf}
-	  ${Else}
-	    ${If} $winpcap_mode == "yes"
-		  File win7_above_winpcap\x64\npf.sys ; x64 NT6.1 and above version
-	      File win7_above_winpcap\x64\npf.inf
-		  File win7_above_winpcap\x64\npf_wfp.inf
-	      File win7_above_winpcap\x64\npf.cat
-		${Else}
-		  File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
-	      File win7_above\x64\npcap.inf
-		  File win7_above\x64\npcap_wfp.inf
-	      File win7_above\x64\npcap.cat
-		${EndIf}
-	  ${EndIf}
+      ${If} $winpcap_mode == "yes"
+        File win7_above_winpcap\x64\npf.sys ; x64 NT6.1 and above version
+        File win7_above_winpcap\x64\npf.inf
+        File win7_above_winpcap\x64\npf_wfp.inf
+        File win7_above_winpcap\x64\npf.cat
+      ${Else}
+        File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
+        File win7_above\x64\npcap.inf
+        File win7_above\x64\npcap_wfp.inf
+        File win7_above\x64\npcap.cat
+      ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x64 driver for Win7 and Win8"
@@ -638,9 +608,7 @@ Section "WinPcap" SecWinPcap
 	  ${Else}
         SetOutPath $SYSDIR\Npcap
 	  ${EndIf}
-	  ${If} $admin_only == "yes"
-	    File win7_above\x64\admin_only\NPcapHelper.exe ; install NPcapHelper.exe only when "admin only" is chosen
-	  ${EndIf}
+      File win7_above\x64\NPcapHelper.exe
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.1 above version (for Win7 and Win8)
