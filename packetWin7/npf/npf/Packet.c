@@ -83,9 +83,12 @@ NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Softwar
 	L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
 #endif
 NDIS_STRING g_LoopbackAdapterName;
+NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("Loopback");
 
 extern HANDLE gWFPEngineHandle;
 #endif
+
+ULONG g_AdminOnlyMode = 0;
 
 NDIS_STRING g_NPF_Prefix;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
@@ -95,6 +98,8 @@ NDIS_STRING tcpLinkageKeyName = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 NDIS_STRING AdapterListKey = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 								L"\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}");
 NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
+
+NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
 
 /// Global variable that points to the names of the bound adapters
 WCHAR* bindP = NULL;
@@ -207,6 +212,8 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_READ] = NPF_Read;
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
+
+	NPF_GetAdminOnlyOption();
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetLoopbackAdapterName();
@@ -531,6 +538,80 @@ getTcpBindings(
 }
 
 //-------------------------------------------------------------------
+VOID
+NPF_GetAdminOnlyOption(
+)
+{
+	OBJECT_ATTRIBUTES objAttrs;
+	NTSTATUS status;
+	HANDLE keyHandle;
+
+	TRACE_ENTER();
+
+	InitializeObjectAttributes(&objAttrs, &g_NpcapSoftwareKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
+	if (!NT_SUCCESS(status))
+	{
+		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, g_NpcapSoftwareKey.Buffer);)
+	}
+	else //OK
+	{
+		ULONG resultLength;
+		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
+		NDIS_STRING AdminOnlyValueName = g_AdminOnlyRegValueName;
+		status = ZwQueryValueKey(keyHandle,
+			&AdminOnlyValueName,
+			KeyValuePartialInformation,
+			&valueInfo,
+			sizeof(valueInfo),
+			&resultLength);
+
+		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
+		{
+			IF_LOUD(DbgPrint("\n\nStatus of %x querying key value for size\n", status);)
+		}
+		else
+		{
+			// We know how big it needs to be.
+			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
+			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '1PWA');
+			if (valueInfoP != NULL)
+			{
+				status = ZwQueryValueKey(keyHandle,
+					&AdminOnlyValueName,
+					KeyValuePartialInformation,
+					valueInfoP,
+					valueInfoLength,
+					&resultLength);
+				if (!NT_SUCCESS(status))
+				{
+					IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
+				}
+				else
+				{
+					IF_LOUD(DbgPrint("Admin Only Key = %ws\n", valueInfoP->Data);)
+
+					if (valueInfoP->DataLength == 4)
+					{
+						g_AdminOnlyMode = *((DWORD *) valueInfoP->Data);
+					}
+				}
+
+				ExFreePool(valueInfoP);
+			}
+			else
+			{
+				IF_LOUD(DbgPrint("Error Allocating the buffer for the admin only option\n");)
+			}
+		}
+
+		ZwClose(keyHandle);
+	}
+
+	TRACE_EXIT();
+}
+
+//-------------------------------------------------------------------
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 VOID
@@ -553,7 +634,7 @@ VOID
 	{
 		ULONG resultLength;
 		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
-		NDIS_STRING LoopbackValueName = NDIS_STRING_CONST("Loopback");
+		NDIS_STRING LoopbackValueName = g_LoopbackRegValueName;
 		status = ZwQueryValueKey(keyHandle,
 			&LoopbackValueName,
 			KeyValuePartialInformation,
@@ -662,15 +743,18 @@ BOOLEAN
 
 	IF_LOUD(DbgPrint("Creating device name: %ws\n", deviceName.Buffer);)
 
-#ifdef NPF_ADMIN_ONLY_MODE
-	UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"); // this SDDL means only permits System and Administrator to access the device.
-	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
-	status = IoCreateDeviceSecure(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
-		FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID) &guidClassNPF, &devObjP);
-#else
-	status = IoCreateDevice(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
-		FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
-#endif
+	if (g_AdminOnlyMode != 0)
+	{
+		UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"); // this SDDL means only permits System and Administrator to access the device.
+		const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
+		status = IoCreateDeviceSecure(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
+			FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID)&guidClassNPF, &devObjP);
+	}
+	else
+	{
+		status = IoCreateDevice(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
+			FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
+	}
 
 	if (NT_SUCCESS(status))
 	{

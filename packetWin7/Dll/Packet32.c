@@ -63,7 +63,7 @@ BOOL bUseNPF60 = FALSE;
 // Handle for NPcapHelper named pipe.
 HANDLE g_NPcapHelperPipe = INVALID_HANDLE_VALUE;
 // Whether this process is running in Administrator mode.
-BOOL g_IsAdminMode = FALSE;
+BOOL g_IsRunByAdmin = FALSE;
 // Whether we have already tried NPcapHelper.
 BOOL g_NPcapHelperTried = FALSE;
 // The handle to this DLL.
@@ -450,7 +450,57 @@ HANDLE NPcapRequestHandle(char *sMsg, DWORD *pdwError)
 	}
 }
 
-BOOL NPcapIsAdminMode()
+#ifdef _X86_
+	#define NPCAP_SOFTWARE_REGISTRY_KEY "SOFTWARE\\" NPF_SOFT_REGISTRY_NAME
+#else // AMD64
+	#define NPCAP_SOFTWARE_REGISTRY_KEY "SOFTWARE\\Wow6432Node\\" NPF_SOFT_REGISTRY_NAME
+#endif
+
+BOOL NPcapIsAdminOnlyMode()
+{
+	HKEY hKey;
+	DWORD type;
+	char buffer[BUFSIZE];
+	int size = sizeof(buffer);
+	DWORD dwAdminOnlyMode = 0;
+
+#ifndef _X86_
+	Wow64EnableWow64FsRedirection(FALSE);
+#endif
+
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+	{
+		if (RegQueryValueExA(hKey, "AdminOnly", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_DWORD)
+		{
+			dwAdminOnlyMode = *((DWORD *) buffer);
+		}
+		else
+		{
+			dwAdminOnlyMode = 0;
+		}
+
+		RegCloseKey(hKey);
+	}
+	else
+	{
+		dwAdminOnlyMode = 0;
+	}
+
+#ifndef _X86_
+	Wow64EnableWow64FsRedirection(TRUE);
+#endif
+
+	if (dwAdminOnlyMode != 0)
+	{
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+
+BOOL NPcapIsRunByAdmin()
 {
 	BOOL bIsRunAsAdmin = FALSE;
 	DWORD dwError = ERROR_SUCCESS;
@@ -505,10 +555,18 @@ void NPcapStartHelper()
 
 	g_NPcapHelperTried = TRUE;
 
-	// Check if this process is running in Administrator mode.
-	g_IsAdminMode = NPcapIsAdminMode();
+	// Check if Npcap is installed in "Admin-Only Mode".
+	if (!NPcapIsAdminOnlyMode())
+	{
+		g_IsRunByAdmin = TRUE;
+	}
+	else
+	{
+		// Check if this process is running in Administrator mode.
+		g_IsRunByAdmin = NPcapIsRunByAdmin();
+	}
 
-	if (!g_IsAdminMode)
+	if (!g_IsRunByAdmin)
 	{
 		char pipeName[BUFSIZE];
 		int pid = GetCurrentProcessId();
@@ -519,13 +577,13 @@ void NPcapStartHelper()
 			if (g_NPcapHelperPipe == INVALID_HANDLE_VALUE)
 			{
 				// NPcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNPcapHelper() calls.
-				g_IsAdminMode = TRUE;
+				g_IsRunByAdmin = TRUE;
 			}
 		}
 		else
 		{
 			// NPcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNPcapHelper() calls.
-			g_IsAdminMode = TRUE;
+			g_IsRunByAdmin = TRUE;
 		}
 	}
 
@@ -817,7 +875,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 			g_AdaptersInfoList = NewAdInfo;
 		}
 
-		if (!g_IsAdminMode)
+		if (!g_IsRunByAdmin)
 		{
 			// NPcapHelper De-Initialization.
 			NPcapStopHelper();
@@ -1887,7 +1945,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	ZeroMemory(lpAdapter->SymbolicLink, sizeof(lpAdapter->SymbolicLink));
 
 	// Try NPcapHelper to request handle if we are in Non-Admin mode.
-	if (!g_IsAdminMode)
+	if (!g_IsRunByAdmin)
 	{
 		//try if it is possible to open the adapter immediately
 		DWORD dwErrorReceived;

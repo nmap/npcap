@@ -650,6 +650,11 @@ Section "WinPcap" SecWinPcap
         File win7_above\x64\Packet.dll ; x64 NT6.1 and above version
 	  ${EndIf}
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
+      ${If} $admin_only == "yes"
+        WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
+      ${Else}
+        WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 0 ;
+      ${EndIf}
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""

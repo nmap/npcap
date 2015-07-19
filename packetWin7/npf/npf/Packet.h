@@ -776,11 +776,20 @@ PKEY_VALUE_PARTIAL_INFORMATION
 getTcpBindings(
 	);
 
+/*!
+  \brief read Npcap software's registry, get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
+
+  If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
+*/
+VOID
+NPF_GetAdminOnlyOption(
+	);
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
-\brief read Npcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.
+  \brief read Npcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.
 
-If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
+  If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
 */
 VOID
 NPF_GetLoopbackAdapterName(
