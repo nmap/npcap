@@ -18,3 +18,5 @@ This code is based on the Windows built-in netsh.exe tool.
 void PrepareRenameLoopbackNetwork2();
 
 BOOL DoRenameLoopbackNetwork2();
+
+BOOL IsWindowsWin10();

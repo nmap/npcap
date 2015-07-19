@@ -130,6 +130,37 @@ vector<string> getInterfaceNamesFromNetshOutput(string strOutput)
 	return nResults;
 }
 
+// getMajorVersionNumberFromVerOutput() function is used to get Windows major version number from string like below:
+//
+// Microsoft Windows [Version 6.3.9600]
+//
+// OR
+//
+// Microsoft Windows [Version 10.0.10102]
+//
+// The "standard" GetWindowsVersionEx() way doesn't work out on Win10, because it returns 6.3 (Win8) on Win10.
+string getMajorVersionNumberFromVerOutput(string strOutput)
+{
+	size_t iStringStart;
+	size_t iStringEnd;
+
+	iStringStart = strOutput.find("Version");
+	if (iStringStart == string::npos)
+	{
+		return "";
+	}
+	iStringStart += 8;
+
+	iStringEnd = strOutput.find('.', iStringStart);
+	if (iStringEnd == string::npos)
+	{
+		return "";
+	}
+
+	string strNumber = strOutput.substr(iStringStart, iStringEnd - iStringStart);
+	return strNumber;
+}
+
 void snapshotInterfaceListBeforeInstall()
 {
 	string cmd = executeCommand("netsh.exe interface show interface");
@@ -160,4 +191,24 @@ BOOL DoRenameLoopbackNetwork2()
 	sprintf_s(renameCmd, MAX_PATH, "netsh.exe interface set interface name=\"%s\" newname=\"%s\"", strOriginalInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME);
 	executeCommand(renameCmd);
 	return TRUE;
+}
+
+BOOL IsWindowsWin10()
+{
+// 	OSVERSIONINFO osvi;
+// 	ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
+// 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+// 	GetVersionEx(&osvi);
+// 	return osvi.dwMajorVersion >= 10;
+
+	string cmd = executeCommand("ver");
+	string strMajorVersionNumber = getMajorVersionNumberFromVerOutput(cmd);
+	if (strMajorVersionNumber.compare("10") == 0)
+	{
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
 }

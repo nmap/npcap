@@ -1393,7 +1393,12 @@ int LoadDevIDFromFile()
 
 BOOL InstallLoopbackAdapter()
 {
-	PrepareRenameLoopbackNetwork2();
+	BOOL isWin10 = IsWindowsWin10();
+
+	if (isWin10)
+	{
+		PrepareRenameLoopbackNetwork2();
+	}
 
 	if (!InstallLoopbackDeviceInternal())
 	{
@@ -1408,7 +1413,14 @@ BOOL InstallLoopbackAdapter()
 
 	if (!RecordLoopbackDevice(iNpcapAdapterID))
 	{
-		if (!DoRenameLoopbackNetwork2())
+		if (isWin10)
+		{
+			if (!DoRenameLoopbackNetwork2())
+			{
+				return FALSE;
+			}
+		}
+		else
 		{
 			return FALSE;
 		}
