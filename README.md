@@ -36,7 +36,7 @@ Use **installer\Deploy_WinPcap.bat** to copy and sign the files for "WinPcap Mod
 
 Npcap uses NSIS script to package itself. The script location is: **installer\NPcap-for-nmap.nsi**. Compiling this script will generate the installer named **npcap-nmap-%VERSION%.exe**. The prebuilt installer is in [**my SVN repository**](https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/), which can be used to test without building it.
 
-**installer\Deploy.bat** will help you copied the files need packaging into right folders (Deploy_WinPcap.bat works similarly):
+**installer\Deploy.bat** and **installer\Deploy_WinPcap.bat** will help you copy the files from build directories into right deployment folders (you need to manually create these folders before deployment):
 ```
 XP: (the same with WinPcap)
   x86:
@@ -59,39 +59,45 @@ Vista: (the same with WinPcap)
     installer\x64\npf.sys
     installer\x64\wpcap.dll
     installer\vista\x64\Packet.dll
-    
-Win7 and later (with "Admin-only mode" OFF):
+
+Win7 and later (with "WinPcap Compatible Mode" OFF):
   x86:
     installer\win7_above\x86\npcap.cat
     installer\win7_above\x86\npcap.inf
+	installer\win7_above\x86\npcap_wfp.inf
     installer\win7_above\x86\npcap.sys
     installer\win7_above\x86\NPFInstall.exe
+	installer\win7_above\x86\NPcapHelper.exe
     installer\win7_above\x86\Packet.dll
     installer\wpcap.dll
   x64:
     installer\win7_above\x64\npcap.cat
     installer\win7_above\x64\npcap.inf
+	installer\win7_above\x64\npcap_wfp.inf
     installer\win7_above\x64\npcap.sys
     installer\win7_above\x64\NPFInstall.exe
+	installer\win7_above\x64\NPcapHelper.exe
     installer\win7_above\x64\Packet.dll
     installer\x64\wpcap.dll
-    
-Win7 and later (with "Admin-only mode" ON):
+
+Win7 and later (with "WinPcap Compatible Mode" ON, this is the DEFAULT option):
   x86:
-    installer\win7_above\x86\admin_only\npcap.cat
-    installer\win7_above\x86\admin_only\npcap.inf
-    installer\win7_above\x86\admin_only\npcap.sys
-    installer\win7_above\x86\admin_only\NPcapHelper.exe
-    installer\win7_above\x86\NPFInstall.exe
-    installer\win7_above\x86\Packet.dll
+    installer\win7_above_winpcap\x86\npf.cat
+    installer\win7_above_winpcap\x86\npf.inf
+	installer\win7_above_winpcap\x86\npf_wfp.inf
+    installer\win7_above_winpcap\x86\npf.sys
+    installer\win7_above_winpcap\x86\NPFInstall.exe
+	installer\win7_above_winpcap\x86\NPcapHelper.exe
+    installer\win7_above_winpcap\x86\Packet.dll
     installer\wpcap.dll
   x64:
-    installer\win7_above\x64\admin_only\npcap.cat
-    installer\win7_above\x64\admin_only\npcap.inf
-    installer\win7_above\x64\admin_only\npcap.sys
-    installer\win7_above\x64\admin_only\NPcapHelper.exe
-    installer\win7_above\x64\NPFInstall.exe
-    installer\win7_above\x64\Packet.dll
+    installer\win7_above_winpcap\x64\npf.cat
+    installer\win7_above_winpcap\x64\npf.inf
+	installer\win7_above_winpcap\x64\npf_wfp.inf
+    installer\win7_above_winpcap\x64\npf.sys
+    installer\win7_above_winpcap\x64\NPFInstall.exe
+	installer\win7_above_winpcap\x64\NPcapHelper.exe
+    installer\win7_above_winpcap\x64\Packet.dll
     installer\x64\wpcap.dll
 ```
 
