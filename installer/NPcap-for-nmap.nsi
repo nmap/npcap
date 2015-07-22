@@ -20,6 +20,9 @@
 ;; Yang Luo
 ;; Updated to 0.01, June 2015
 
+;; Yang Luo
+;; Updated to 0.02, July 2015
+
 SetCompressor /SOLID /FINAL lzma
 
 ;--------------------------------
@@ -33,11 +36,14 @@ SetCompressor /SOLID /FINAL lzma
 ;--------------------------------
 ;General
 
+; The version of Npcap
+!define VERSION "0.02"
+
 ; The name of the installer
-Name "Npcap 0.01 for Nmap (beta)"
+Name "Npcap ${VERSION} for Nmap (beta)"
 
 ; The file to write
-OutFile "npcap-nmap-0.01.exe"
+OutFile "npcap-nmap-${VERSION}.exe"
 
 Var /GLOBAL os_ver
 Var /GLOBAL admin_only
@@ -57,9 +63,9 @@ Function un.is64bit
 FunctionEnd
 
 VIProductVersion "0.0.0.1"
-VIAddVersionKey /LANG=1033 "FileVersion" "0.01"
+VIAddVersionKey /LANG=1033 "FileVersion" "${VERSION}"
 VIAddVersionKey /LANG=1033 "ProductName" "Npcap"
-VIAddVersionKey /LANG=1033 "FileDescription" "Npcap 0.01 for Nmap installer"
+VIAddVersionKey /LANG=1033 "FileDescription" "Npcap ${VERSION} for Nmap installer"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2015 Insecure.Com LLC, Nmap Project"
 
 ;--------------------------------
@@ -147,7 +153,7 @@ Function .onInit
   var /GLOBAL inst_ver
   var /GLOBAL my_ver
   var /GLOBAL npf_startup
-  StrCpy $my_ver "0.01"
+  StrCpy $my_ver "${VERSION}"
   StrCpy $npf_startup "YES"
 
   ; Always use the requested /D= $INSTDIR if given.
@@ -676,8 +682,8 @@ Section "WinPcap" SecWinPcap
 
     ; Write the rest of the uninstall keys for Windows
 
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayName" "Npcap 0.01 for Nmap"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayVersion" "0.01"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayName" "Npcap ${VERSION} for Nmap"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayVersion" "${VERSION}"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "Publisher" "Nmap Project"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "URLInfoAbout" "http://www.nmap.org"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "URLUpdateInfo" "http://www.nmap.org"
