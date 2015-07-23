@@ -76,6 +76,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="NPFInstall.exe.manifest.in"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -155,6 +156,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="NPFInstall.exe.manifest.in"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -233,6 +235,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="NPFInstall.exe.manifest.in"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -312,6 +315,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="NPFInstall.exe.manifest.in"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -390,6 +394,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="NPFInstall.exe.manifest.in"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -469,6 +474,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="NPFInstall.exe.manifest.in"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -547,6 +553,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="NPFInstall.exe.manifest.in"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -626,6 +633,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="NPFInstall.exe.manifest.in"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
