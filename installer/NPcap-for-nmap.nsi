@@ -712,8 +712,16 @@ Section "Uninstall"
   npcap_sys_checked:
 
   ; stop npf before we delete the service from the registry
+  DetailPrint "Trying to stop the npf service.."
   nsExec::Exec "net stop $driver_name"
   
+  ExecWait '"$INSTDIR\NPFInstall.exe" -d' $0
+  ${If} $0 == "0"
+    MessageBox MB_OK "Failed to stop the npf service, stop uninstallation now. Please stop using Npcap first"
+    DetailPrint "Failed to stop the npf service, stop uninstallation now"
+    Goto uninstall_fail
+  ${EndIf}
+
   ${If} $winpcap_mode == "no"
     ; Remove "system32\Npcap" directory in PATH
     DetailPrint "Removing DLL folder: $\"$SYSDIR\Npcap$\" from PATH environment variable"
@@ -863,5 +871,6 @@ Section "Uninstall"
   npfdeleted:
     RMDir "$INSTDIR"
 	
+  uninstall_fail:
 
 SectionEnd
