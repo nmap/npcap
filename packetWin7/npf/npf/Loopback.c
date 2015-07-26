@@ -208,10 +208,15 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	INT32				iDrection = -1;
 	PETHER_HEADER		pContiguousData = NULL;
 	NET_BUFFER*			pNetBuffer = 0;
+	UCHAR				pPacketData[ETHER_HDR_LEN];
 
 	UNREFERENCED_PARAMETER(classifyContext);
 	UNREFERENCED_PARAMETER(filter);
 	UNREFERENCED_PARAMETER(flowContext);
+
+	// Make the default action.
+	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
+		classifyOut->actionType = FWP_ACTION_CONTINUE;
 
 	// Filter out fragment packets and reassembled packets.
 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_FRAGMENT_DATA)
@@ -223,10 +228,6 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		return;
 	}
 	TRACE_ENTER();
-
-	// Make the default action.
-	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
-		classifyOut->actionType = FWP_ACTION_CONTINUE;
 
 	// Get the packet protocol (IPv4 or IPv6) and the direction (Inbound or Outbound).
 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
@@ -275,8 +276,8 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	while (pNetBuffer)
 	{
 		pContiguousData = NdisGetDataBuffer(pNetBuffer,
-			NET_BUFFER_DATA_LENGTH(pNetBuffer),
-			0,
+			ETHER_HDR_LEN,
+			pPacketData,
 			1,
 			0);
 		if (!pContiguousData)
@@ -285,10 +286,10 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 
 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 				"NPF_NetworkClassify: NdisGetDataBuffer() [status: %#x]\n",
+
 				status);
 
-			TRACE_EXIT();
-			return;
+			goto Exit;
 		}
 		else
 		{
@@ -323,6 +324,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		GroupOpen = TempOpen->GroupNext;
 	}
 
+Exit:
 	// Advance the offset back to the original position.
 	NdisAdvanceNetBufferListDataStart((NET_BUFFER_LIST*) layerData,
 		bytesRetreated,
