@@ -23,6 +23,9 @@
 ;; Yang Luo
 ;; Updated to 0.02, July 2015
 
+;; Yang Luo
+;; Updated to 0.02, July 2015
+
 SetCompressor /SOLID /FINAL lzma
 
 ;--------------------------------
@@ -37,7 +40,8 @@ SetCompressor /SOLID /FINAL lzma
 ;General
 
 ; The version of Npcap
-!define VERSION "0.02"
+!define VERSION "0.03"
+!define WIN_VERSION "0.3.0.727"
 
 ; The name of the installer
 Name "Npcap ${VERSION} for Nmap (beta)"
@@ -62,9 +66,10 @@ Function un.is64bit
   System::Call "kernel32::IsWow64Process(i s, *i .r0)"
 FunctionEnd
 
-VIProductVersion "0.0.0.1"
+VIProductVersion "${WIN_VERSION}"
 VIAddVersionKey /LANG=1033 "FileVersion" "${VERSION}"
 VIAddVersionKey /LANG=1033 "ProductName" "Npcap"
+VIAddVersionKey /LANG=1033 "ProductVersion" "${VERSION}"
 VIAddVersionKey /LANG=1033 "FileDescription" "Npcap ${VERSION} for Nmap installer"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2015 Insecure.Com LLC, Nmap Project"
 

@@ -20,15 +20,17 @@
 // 4.1.0.2001 -->  WinPcap  4.1.2 RTM
 // 4.1.0.2980 -->  WinPcap  4.1.3 RTM
 // 4.1.0.3001 -->  WinPcap  4.1.3 RTM (NDIS6)
-// 0.1.0.710  -->  Npcap  0.01 RTM (NDIS6)
+// 0.1.0.710  -->  Npcap  0.01 beta (NDIS6)
+// 0.2.0.718  -->  Npcap  0.02 beta
+// 0.3.0.727  -->  Npcap  0.03 beta
 
 #define WINPCAP_MAJOR	0
-#define WINPCAP_MINOR	1
+#define WINPCAP_MINOR	3
 #define WINPCAP_REV		0
-#define WINPCAP_BUILD	710
-#define WINPCAP_VER_STRING	"0.01"
-#define WINPCAP_PACKET9x_STRING_VERSION	"0.01"
-#define WINPCAP_WPCAP_STRING_VERSION "0.01"
+#define WINPCAP_BUILD	727
+#define WINPCAP_VER_STRING	"0.03"
+#define WINPCAP_PACKET9x_STRING_VERSION	WINPCAP_VER_STRING
+#define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
 
 #define WINPCAP_COMPANY_NAME 			"Insecure.Com LLC."
 

@@ -62,7 +62,7 @@ signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\x64\wpcap.dll
 "C:\Program Files (x86)\NSIS\makensis.exe" .\NPcap-for-nmap.nsi
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: Sign npcap-nmap-0.01.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\npcap-nmap-0.01.exe
+:: Sign the installer
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\npcap-nmap-0.03.exe
 
 pause
