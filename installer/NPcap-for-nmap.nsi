@@ -399,12 +399,12 @@ FunctionEnd
 
 Function registerServiceAPI_win7
   ; delete the npf service to avoid an error message later if it already exists
-  ; create the Npcap Loopback Adapter, used for capturing loopback packets
-  ExecWait '"$INSTDIR\NPFInstall.exe" -il' $0
   ; install the WFP callout driver
   ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
   ; install the NDIS filter driver
   ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
+  ; create the Npcap Loopback Adapter, used for capturing loopback packets
+  ExecWait '"$INSTDIR\NPFInstall.exe" -il'
   StrCmp $0 "0" register_win7_success register_win7_fail
 
   register_win7_fail:
@@ -629,12 +629,11 @@ Section "WinPcap" SecWinPcap
         File win7_above\x64\Packet.dll ; x64 NT6.1 and above version
 	  ${EndIf}
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
+      ; Packet.dll will read this option
       ${If} $admin_only == "yes"
         WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
-        WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 1
       ${Else}
         WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 0 ;
-        WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
       ${EndIf}
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -665,6 +664,13 @@ Section "WinPcap" SecWinPcap
 
     ; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
     WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
+
+    ; Npcap driver will read this option
+    ${If} $admin_only == "yes"
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
+    ${Else}
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
+    ${Endif}
 
     nsExec::Exec "net start $driver_name"
 

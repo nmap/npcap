@@ -296,7 +296,7 @@ BOOL AddFlagToRegistry_Service(wchar_t strDeviceName[])
 
 	wchar_t strFullDeviceName[BUF_SIZE];
 	wsprintf(strFullDeviceName, L"\\Device\\%s", strDeviceName);
-	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_SERVICE_REG_KEY_NAME, 0, KEY_WRITE | KEY_WOW64_32KEY, &hNpcapKey);
+	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_SERVICE_REG_KEY_NAME, 0, KEY_WRITE, &hNpcapKey);
 	if (Status == ERROR_SUCCESS)
 	{
 		Status = RegSetValueExW(hNpcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof (wchar_t));
