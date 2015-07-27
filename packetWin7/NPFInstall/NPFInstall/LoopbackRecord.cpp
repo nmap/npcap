@@ -27,6 +27,7 @@ Abstract:
 #define			NPCAP_LOOPBACK_ADAPTER_NAME				NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
 #define			NPCAP_LOOPBACK_APP_NAME					NPF_DRIVER_NAME_NORMAL_WIDECHAR L"_Loopback"
 #define			NPCAP_REG_KEY_NAME						L"SOFTWARE\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR
+#define			NPCAP_SERVICE_REG_KEY_NAME				L"SYSTEM\\CurrentControlSet\\Services\\" NPF_DRIVER_NAME_SMALL_WIDECHAR
 #define			NPCAP_REG_LOOPBACK_VALUE_NAME			L"Loopback"
 
 #define			BUF_SIZE 255
@@ -216,6 +217,11 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 				bFailed = TRUE;
 			}
 
+			if (!AddFlagToRegistry_Service(pszBindName))
+			{
+				bFailed = TRUE;
+			}
+
 			if (!RenameLoopbackNetwork(pszBindName))
 			{
 				bFailed = TRUE;
@@ -277,6 +283,34 @@ BOOL AddFlagToRegistry(wchar_t strDeviceName[])
 	else
 	{
 		printf("AddFlagToRegistry: 0x%08x\n", GetLastError());
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL AddFlagToRegistry_Service(wchar_t strDeviceName[])
+{
+	LONG Status;
+	HKEY hNpcapKey;
+
+	wchar_t strFullDeviceName[BUF_SIZE];
+	wsprintf(strFullDeviceName, L"\\Device\\%s", strDeviceName);
+	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_SERVICE_REG_KEY_NAME, 0, KEY_WRITE | KEY_WOW64_32KEY, &hNpcapKey);
+	if (Status == ERROR_SUCCESS)
+	{
+		Status = RegSetValueExW(hNpcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof (wchar_t));
+		if (Status != ERROR_SUCCESS)
+		{
+			printf("AddFlagToRegistry_Service: 0x%08x\n", GetLastError());
+			RegCloseKey(hNpcapKey);
+			return FALSE;
+		}
+		RegCloseKey(hNpcapKey);
+	}
+	else
+	{
+		printf("AddFlagToRegistry_Service: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
