@@ -139,7 +139,7 @@ DEFINE_GUID(
 // Callout driver global variables
 //
 
-HANDLE gWFPEngineHandle;
+HANDLE gWFPEngineHandle = INVALID_HANDLE_VALUE;
 UINT32 gOutboundIPPacketV4 = 0;
 UINT32 gOutboundIPPacketV6 = 0;
 UINT32 gInboundIPPacketV4 = 0;
@@ -701,7 +701,7 @@ Exit:
 		if (engineOpened)
 		{
 			FwpmEngineClose(gWFPEngineHandle);
-			gWFPEngineHandle = NULL;
+			gWFPEngineHandle = INVALID_HANDLE_VALUE;
 		}
 	}
 
@@ -715,27 +715,27 @@ NPF_UnregisterCallouts(
 {
 	TRACE_ENTER();
 
-	if (gWFPEngineHandle)
+	if (gWFPEngineHandle != INVALID_HANDLE_VALUE)
 	{
 		FwpmEngineClose(gWFPEngineHandle);
-		gWFPEngineHandle = NULL;
-	}
+		gWFPEngineHandle = INVALID_HANDLE_VALUE;
 
-	if (gOutboundIPPacketV4)
-	{
-		FwpsCalloutUnregisterById(gOutboundIPPacketV4);
-	}
-	if (gOutboundIPPacketV6)
-	{
-		FwpsCalloutUnregisterById(gOutboundIPPacketV6);
-	}
-	if (gInboundIPPacketV4)
-	{
-		FwpsCalloutUnregisterById(gInboundIPPacketV4);
-	}
-	if (gInboundIPPacketV6)
-	{
-		FwpsCalloutUnregisterById(gInboundIPPacketV6);
+		if (gOutboundIPPacketV4)
+		{
+			FwpsCalloutUnregisterById(gOutboundIPPacketV4);
+		}
+		if (gOutboundIPPacketV6)
+		{
+			FwpsCalloutUnregisterById(gOutboundIPPacketV6);
+		}
+		if (gInboundIPPacketV4)
+		{
+			FwpsCalloutUnregisterById(gInboundIPPacketV4);
+		}
+		if (gInboundIPPacketV6)
+		{
+			FwpsCalloutUnregisterById(gInboundIPPacketV6);
+		}
 	}
 
 	TRACE_EXIT();

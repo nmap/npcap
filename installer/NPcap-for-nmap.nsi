@@ -332,14 +332,6 @@ Function doAdminOnlyOptions
 FunctionEnd
 
 Function optionsPage
-  ${If} $os_ver == "win7"
-    ; Npcap driver with WFP feature lose the ability to start from boot, if SERVICE_SYSTEM_START (1) is set, you will get a "System 2" error when starting the driver.
-    WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "State" 0
-    WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "Flags" "DISABLED"
-    ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 1" "Text"
-    WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "Text" "$0 (not supported in Windows 7 and later systems)"
-  ${EndIf}
-
   !insertmacro MUI_HEADER_TEXT "Driver Options" ""
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options.ini"
 FunctionEnd
@@ -634,8 +626,10 @@ Section "WinPcap" SecWinPcap
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       ${If} $admin_only == "yes"
         WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
+        WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 1
       ${Else}
         WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 0 ;
+        WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
       ${EndIf}
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -664,13 +658,9 @@ Section "WinPcap" SecWinPcap
       ${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$SYSDIR\Npcap"
 	${EndIf}
 
-    ${If} $os_ver == "win7"
-      ; Npcap driver with WFP feature lose the ability to start from boot, if SERVICE_SYSTEM_START (1) is set, you will get a "System 2" error when starting the driver.
-      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 3
-    ${Else}
-      ; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
-      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
-    ${EndIf}
+    ; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
+    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
+
     nsExec::Exec "net start $driver_name"
 
     ; automatically start the service if performing a silent install, unless

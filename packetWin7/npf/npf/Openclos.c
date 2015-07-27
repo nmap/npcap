@@ -39,10 +39,16 @@
 
 #include "debug.h"
 #include "packet.h"
+#include "Loopback.h"
 #include "..\..\..\Common\WpcapNames.h"
 
 extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING devicePrefix;
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	extern HANDLE gWFPEngineHandle;
+	extern PDEVICE_OBJECT g_LoopbackDevObj;
+#endif
 
 static
 VOID
@@ -254,6 +260,25 @@ NPF_OpenAdapter(
 		TRACE_EXIT();
 		return STATUS_UNSUCCESSFUL;
 	}
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (gWFPEngineHandle == INVALID_HANDLE_VALUE))
+	{
+		Status = NPF_RegisterCallouts(g_LoopbackDevObj);
+		if (!NT_SUCCESS(Status))
+		{
+			if (gWFPEngineHandle != INVALID_HANDLE_VALUE)
+			{
+				NPF_UnregisterCallouts();
+			}
+
+			Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+			IoCompleteRequest(Irp, IO_NO_INCREMENT);
+			TRACE_EXIT();
+			return STATUS_UNSUCCESSFUL;
+		}
+	}
+#endif
 
 	Open->DeviceExtension = DeviceExtension;
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,

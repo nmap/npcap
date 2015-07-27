@@ -75,13 +75,8 @@ POPEN_INSTANCE g_arrOpen = NULL; //Adapter open_instance list head, each list it
 // Global variables used by WFP
 //
 POPEN_INSTANCE g_LoopbackOpenGroupHead = NULL; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
-#ifdef _X86_
-NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software"
-	L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
-#else
-NDIS_STRING g_NpcapSoftwareKey = NDIS_STRING_CONST("\\Registry\\Machine\\Software\\Wow6432Node"
-	L"\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR);
-#endif
+PDEVICE_OBJECT g_LoopbackDevObj = NULL;
+
 NDIS_STRING g_LoopbackAdapterName;
 NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("Loopback");
 
@@ -213,10 +208,10 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
-	NPF_GetAdminOnlyOption();
+	NPF_GetAdminOnlyOption(RegistryPath);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	NPF_GetLoopbackAdapterName();
+	NPF_GetLoopbackAdapterName(RegistryPath);
 #endif
 
 	bindP = getAdaptersList();
@@ -258,23 +253,23 @@ DriverEntry(
 		return Status;
 	}
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (DriverObject->DeviceObject)
-	{
-		Status = NPF_RegisterCallouts(DriverObject->DeviceObject);
-		if (!NT_SUCCESS(Status))
-		{
-			if (gWFPEngineHandle != NULL)
-			{
-				NPF_UnregisterCallouts();
-
-				NdisFDeregisterFilterDriver(FilterDriverHandle);
-			}
-			TRACE_EXIT();
-			return Status;
-		}
-	}
-#endif
+// #ifdef HAVE_WFP_LOOPBACK_SUPPORT
+// 	if (DriverObject->DeviceObject)
+// 	{
+// 		Status = NPF_RegisterCallouts(DriverObject->DeviceObject);
+// 		if (!NT_SUCCESS(Status))
+// 		{
+// 			if (gWFPEngineHandle != NULL)
+// 			{
+// 				NPF_UnregisterCallouts();
+// 
+// 				NdisFDeregisterFilterDriver(FilterDriverHandle);
+// 			}
+// 			TRACE_EXIT();
+// 			return Status;
+// 		}
+// 	}
+// #endif
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
@@ -540,7 +535,8 @@ getTcpBindings(
 //-------------------------------------------------------------------
 VOID
 NPF_GetAdminOnlyOption(
-)
+	PUNICODE_STRING RegistryPath
+	)
 {
 	OBJECT_ATTRIBUTES objAttrs;
 	NTSTATUS status;
@@ -548,11 +544,11 @@ NPF_GetAdminOnlyOption(
 
 	TRACE_ENTER();
 
-	InitializeObjectAttributes(&objAttrs, &g_NpcapSoftwareKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	InitializeObjectAttributes(&objAttrs, RegistryPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
 	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
 	if (!NT_SUCCESS(status))
 	{
-		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, g_NpcapSoftwareKey.Buffer);)
+		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
 	}
 	else //OK
 	{
@@ -615,8 +611,9 @@ NPF_GetAdminOnlyOption(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 VOID
-	NPF_GetLoopbackAdapterName(
-)
+NPF_GetLoopbackAdapterName(
+	PUNICODE_STRING RegistryPath
+	)
 {
 	OBJECT_ATTRIBUTES objAttrs;
 	NTSTATUS status;
@@ -624,11 +621,11 @@ VOID
 
 	TRACE_ENTER();
 
-	InitializeObjectAttributes(&objAttrs, &g_NpcapSoftwareKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	InitializeObjectAttributes(&objAttrs, RegistryPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
 	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
 	if (!NT_SUCCESS(status))
 	{
-		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, g_NpcapSoftwareKey.Buffer);)
+		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
 	}
 	else //OK
 	{
@@ -770,6 +767,7 @@ BOOLEAN
 			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, amacNameP->Buffer, amacNameP->Length) == amacNameP->Length)
 			{
 				devExtP->Loopback = TRUE;
+				g_LoopbackDevObj = devObjP;
 			}
 		}
 #endif
