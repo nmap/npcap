@@ -399,12 +399,12 @@ FunctionEnd
 
 Function registerServiceAPI_win7
   ; delete the npf service to avoid an error message later if it already exists
+  ; create the Npcap Loopback Adapter, used for capturing loopback packets
+  ExecWait '"$INSTDIR\NPFInstall.exe" -il'
   ; install the WFP callout driver
   ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
   ; install the NDIS filter driver
   ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
-  ; create the Npcap Loopback Adapter, used for capturing loopback packets
-  ExecWait '"$INSTDIR\NPFInstall.exe" -il'
   StrCmp $0 "0" register_win7_success register_win7_fail
 
   register_win7_fail:
@@ -671,6 +671,10 @@ Section "WinPcap" SecWinPcap
     ${Else}
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
     ${Endif}
+
+    ; Copy the "Loopback" option from software key to services key
+    ReadRegStr $0 HKLM "Software\Npcap" "Loopback"
+    WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Loopback" $0
 
     nsExec::Exec "net start $driver_name"
 
