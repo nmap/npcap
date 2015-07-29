@@ -677,6 +677,8 @@ Section "WinPcap" SecWinPcap
     WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Loopback" $0
 
     nsExec::Exec "net start $driver_name"
+    nsExec::Exec "net stop $driver_name"
+    nsExec::Exec "net start $driver_name"
 
     ; automatically start the service if performing a silent install, unless
     ; /NPFSTARTUP=NO was given.
