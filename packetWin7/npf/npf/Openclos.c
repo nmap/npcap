@@ -258,7 +258,7 @@ NPF_OpenAdapter(
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
-		return STATUS_UNSUCCESSFUL;
+		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -275,7 +275,7 @@ NPF_OpenAdapter(
 			Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 			IoCompleteRequest(Irp, IO_NO_INCREMENT);
 			TRACE_EXIT();
-			return STATUS_UNSUCCESSFUL;
+			return STATUS_INSUFFICIENT_RESOURCES;
 		}
 	}
 #endif
@@ -318,7 +318,7 @@ NPF_OpenAdapter(
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
-		return STATUS_UNSUCCESSFUL;
+		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	else
 	{
