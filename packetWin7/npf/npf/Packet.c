@@ -1760,21 +1760,37 @@ NPF_IoControl(
 			//  submit the request
 			//
 			pRequest->Request.RequestId = (PVOID) NPF_REQUEST_ID;
-			ASSERT(Open->AdapterHandle != NULL);
+			// ASSERT(Open->AdapterHandle != NULL);
 
 			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
 			{
-				ASSERT(Open->GroupHead != NULL);
-				Open->GroupHead->MyPacketFilter = *(ULONG*) OidData->Data;
-				if (Open->GroupHead->MyPacketFilter == NDIS_PACKET_TYPE_ALL_LOCAL)
+				// ASSERT(Open->GroupHead != NULL);
+				if (Open->GroupHead)
 				{
-					Open->GroupHead->MyPacketFilter = 0;
+					Open->GroupHead->MyPacketFilter = *(ULONG*)OidData->Data;
+					if (Open->GroupHead->MyPacketFilter == NDIS_PACKET_TYPE_ALL_LOCAL)
+					{
+						Open->GroupHead->MyPacketFilter = 0;
+					}
+					combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
+					pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 				}
-				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
-				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
+				else
+				{
+					SET_FAILURE_NOMEM();
+					break;
+				}
 			}
 
-			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
+			if (Open->AdapterHandle)
+			{
+				Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
+			}
+			else
+			{
+				SET_FAILURE_NOMEM();
+				break;
+			}
 		}
 		else
 		{
