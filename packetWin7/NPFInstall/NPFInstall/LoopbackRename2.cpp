@@ -52,22 +52,52 @@ wstring getNpcapLoopbackAdapterName()
 	return L"";
 }
 
+wstring ANSIToUnicode(const string& str)
+{
+	int len = 0;
+	len = str.length();
+	int unicodeLen = ::MultiByteToWideChar(CP_ACP,
+		0,
+		str.c_str(),
+		-1,
+		NULL,
+		0);
+	wchar_t * pUnicode;
+	pUnicode = new wchar_t[unicodeLen + 1];
+	memset(pUnicode, 0, (unicodeLen + 1)*sizeof(wchar_t));
+	::MultiByteToWideChar(CP_ACP,
+		0,
+		str.c_str(),
+		-1,
+		(LPWSTR) pUnicode,
+		unicodeLen);
+	wstring rt;
+	rt = (wchar_t*) pUnicode;
+	delete pUnicode;
+	return rt;
+}
+
 wstring executeCommand(wchar_t* cmd)
 {
+	char buffer[128];
+	string tmp = "";
+	wstring result;
+
 	FILE* pipe = _wpopen(cmd, L"r");
 	if (!pipe)
 	{
 		return L"";
 	}
 
-	wchar_t buffer[128];
-	wstring result = L"";
 	while (!feof(pipe))
 	{
-		if (fgetws(buffer, 128, pipe) != NULL)
-			result += buffer;
+		if (fgets(buffer, 128, pipe) != NULL)
+			tmp += buffer;
 	}
 	_pclose(pipe);
+
+	result = ANSIToUnicode(tmp);
+
 	return result;
 }
 
