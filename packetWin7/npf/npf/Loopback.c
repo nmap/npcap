@@ -209,6 +209,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	PETHER_HEADER		pContiguousData = NULL;
 	NET_BUFFER*			pNetBuffer = 0;
 	UCHAR				pPacketData[ETHER_HDR_LEN];
+	PNET_BUFFER_LIST	pNetBufferList = (NET_BUFFER_LIST*) layerData;
 
 	UNREFERENCED_PARAMETER(classifyContext);
 	UNREFERENCED_PARAMETER(filter);
@@ -255,7 +256,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	// Inbound: Initial offset is at the Transport Header, so retreat the size of the Ethernet Header and IP Header.
 	// Outbound: Initial offset is at the IP Header, so just retreat the size of the Ethernet Header.
 	bytesRetreated = iDrection ? ETHER_HDR_LEN + ipHeaderSize : ETHER_HDR_LEN;
-	status = NdisRetreatNetBufferListDataStart((NET_BUFFER_LIST*) layerData,
+	status = NdisRetreatNetBufferListDataStart(pNetBufferList,
 		bytesRetreated,
 		0,
 		0,
@@ -272,7 +273,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		return;
 	}
 
-	pNetBuffer = NET_BUFFER_LIST_FIRST_NB((NET_BUFFER_LIST*) layerData);
+	pNetBuffer = NET_BUFFER_LIST_FIRST_NB(pNetBufferList);
 	while (pNetBuffer)
 	{
 		pContiguousData = NdisGetDataBuffer(pNetBuffer,
@@ -318,7 +319,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
 		{
 			//let every group adapter receive the packets
-			NPF_TapExForEachOpen(TempOpen, (PNET_BUFFER_LIST) layerData);
+			NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 		}
 
 		GroupOpen = TempOpen->GroupNext;
@@ -326,7 +327,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 
 Exit:
 	// Advance the offset back to the original position.
-	NdisAdvanceNetBufferListDataStart((NET_BUFFER_LIST*) layerData,
+	NdisAdvanceNetBufferListDataStart(pNetBufferList,
 		bytesRetreated,
 		FALSE,
 		0);
