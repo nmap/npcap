@@ -296,9 +296,17 @@ NPF_OpenAdapter(
 	// This is used for timestamp conversion.
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
-	returnStatus = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
-	//returnStatus = NDIS_STATUS_SUCCESS;
-	//Open->MaxFrameSize = 1514;	
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (Open->Loopback)
+	{
+		returnStatus = NDIS_STATUS_SUCCESS;
+		Open->MaxFrameSize = 1514;
+	}
+	else
+#endif
+	{
+		returnStatus = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
+	}
 
 	if (!NT_SUCCESS(returnStatus))
 	{
