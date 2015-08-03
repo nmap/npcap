@@ -24,11 +24,11 @@ NPcapHelper.exe          packetWin7\Helper        the helper program for `Admin-
 ## Build
 
 * wpcap.dll, packet.dll, NPFInstall.exe and NPcapHelper.exe need to be built using **Visual Studio 2005**.
-* npcap.sys needs to be built using **Visual Studio 2013** with **Windows Driver Kit 8.1**.
+* npf.sys (npcap.sys) needs to be built using **Visual Studio 2015** with **Windows Software Development Kit 10** and **Windows Driver Kit 10**.
 
 ## Packaging
 
-Use **installer\Build.bat** to build all Visual Studio projects via MSBuild, make sure you installed Visual Studio 2005 and Visual Studio 2013 Non-Express Editions.
+Use **installer\Build.bat** to build all Visual Studio projects via MSBuild, make sure you installed Visual Studio 2005 and Visual Studio 2015 Non-Express Editions.
 
 Use **installer\Deploy.bat** to copy and sign the files for "Non-WinPcap Mode", installer will be generated.
 
