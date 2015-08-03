@@ -204,6 +204,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	NTSTATUS			status = STATUS_SUCCESS;
 	UINT32				ipHeaderSize = 0;
 	UINT32				bytesRetreated = 0;
+	UINT32				bytesRetreatedEthernet = 0;
 	INT32				iProtocol = -1;
 	INT32				iDrection = -1;
 	PETHER_HEADER		pContiguousData = NULL;
@@ -255,25 +256,53 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 
 	// Inbound: Initial offset is at the Transport Header, so retreat the size of the Ethernet Header and IP Header.
 	// Outbound: Initial offset is at the IP Header, so just retreat the size of the Ethernet Header.
-	bytesRetreated = iDrection ? ETHER_HDR_LEN + ipHeaderSize : ETHER_HDR_LEN;
+	// We retreated the packet in two phases: 1) retreat the IP Header (if has), 2) clone the packet and retreat the Ethernet Header.
+	// We must NOT retreat the Ethernet Header on the original packet, or this will lead to BAD_POOL_CALLER Bluescreen.
+	bytesRetreated = iDrection ? ipHeaderSize : 0;
+
 	status = NdisRetreatNetBufferListDataStart(pNetBufferList,
 		bytesRetreated,
 		0,
-		0,
-		0);
+		NULL,
+		NULL);
+
 	if (status != STATUS_SUCCESS)
 	{
 		bytesRetreated = 0;
-
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_NetworkClassify: NdisRetreatNetBufferListDataStart() [status: %#x]\n",
-			status);
 
 		TRACE_EXIT();
 		return;
 	}
 
-	pNetBuffer = NET_BUFFER_LIST_FIRST_NB(pNetBufferList);
+	PNET_BUFFER_LIST pClonedNetBufferList;
+	status = FwpsAllocateCloneNetBufferList(pNetBufferList, NULL, NULL, 0, &pClonedNetBufferList);
+	if (status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_NetworkClassify: FwpsAllocateCloneNetBufferList() [status: %#x]\n",
+			status);
+
+		goto Exit_IP_Retreated;
+	}
+
+	bytesRetreatedEthernet = ETHER_HDR_LEN;
+	status = NdisRetreatNetBufferListDataStart(pClonedNetBufferList,
+		bytesRetreatedEthernet,
+		0,
+		0,
+		0);
+	if (status != STATUS_SUCCESS)
+	{
+		bytesRetreatedEthernet = 0;
+
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_NetworkClassify: NdisRetreatNetBufferListDataStart() [status: %#x]\n",
+			status);
+
+		goto Exit_Packet_Cloned;
+	}
+
+	pNetBuffer = NET_BUFFER_LIST_FIRST_NB(pClonedNetBufferList);
 	while (pNetBuffer)
 	{
 		pContiguousData = NdisGetDataBuffer(pNetBuffer,
@@ -290,7 +319,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 
 				status);
 
-			goto Exit;
+			goto Exit_Ethernet_Retreated;
 		}
 		else
 		{
@@ -319,14 +348,23 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
 		{
 			//let every group adapter receive the packets
-			NPF_TapExForEachOpen(TempOpen, pNetBufferList);
+			NPF_TapExForEachOpen(TempOpen, pClonedNetBufferList);
 		}
 
 		GroupOpen = TempOpen->GroupNext;
 	}
 
-Exit:
+Exit_Ethernet_Retreated:
 	// Advance the offset back to the original position.
+	NdisAdvanceNetBufferListDataStart(pClonedNetBufferList,
+		bytesRetreatedEthernet,
+		FALSE,
+		0);
+
+Exit_Packet_Cloned:
+	FwpsFreeCloneNetBufferList(pClonedNetBufferList, 0);
+
+Exit_IP_Retreated:
 	NdisAdvanceNetBufferListDataStart(pNetBufferList,
 		bytesRetreated,
 		FALSE,
