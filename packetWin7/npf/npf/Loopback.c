@@ -48,6 +48,8 @@
 
 #define NPCAP_CALLOUT_DRIVER_TAG (UINT32) 'NPCA'
 
+#pragma pack (1)
+
 /*
 * The number of bytes in an Ethernet (MAC) address.
 */
@@ -66,7 +68,8 @@
 /*
 * Structure of a 10Mb/s Ethernet header.
 */
-typedef struct _ETHER_HEADER {
+typedef struct _ETHER_HEADER
+{
 	UCHAR	ether_dhost[ETHER_ADDR_LEN];
 	UCHAR	ether_shost[ETHER_ADDR_LEN];
 	USHORT	ether_type;
@@ -82,6 +85,55 @@ typedef struct _ETHER_HEADER {
 #define	ETHERTYPE_VLAN		0x8100	/* IEEE 802.1Q VLAN tagging */
 #define ETHERTYPE_IPV6		0x86dd	/* IPv6 */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* used to test interfaces */
+
+/*
+* Structure of a IPv4 header, based on netinet/ip.h
+* http://openhip.sourceforge.net/doxygen/ip_8h_source.html
+*/
+typedef struct _IP_HEADER
+{
+	UCHAR     ip_hVerLen;			/* Version (4 bits) + Internet header length (4 bits) */
+	UCHAR     ip_TOS;				/* TOS Type of service */
+	USHORT    ip_Length;			/* Total length */
+	USHORT    ip_ID;				/* Identification */
+	USHORT    ip_Flags;				/* Flags (3 bits) + Fragment offset (13 bits) */
+	UCHAR     ip_TTL;				/* Time to live */
+	UCHAR     ip_Protocol;			/* Protocol */
+	USHORT    ip_Checksum;			/* Header checksum */
+	ULONG     ip_Src;				/* Source address */
+	ULONG     ip_Dst;				/* Destination address */
+} IP_HEADER, *PIP_HEADER;
+
+/*
+* The length of the IPv4 header.
+*/
+#define	IP_HDR_LEN		sizeof(IP_HEADER)
+
+/*
+* Structure of a IPv6 header, based on netinet/ip6.h
+* http://openhip.sourceforge.net/doxygen/ip_8h_source.html
+*/
+typedef struct _IPV6_HEADER
+{
+	union
+	{
+		struct _ip6_HeaderCtl
+		{
+			ULONG ip6_VerFlow;		/* 4 bits version, 8 bits TC, 20 bits flow-ID */
+			USHORT ip6_PLength;		/* Payload length */
+			UCHAR ip6_NextHeader;	/* Next header */
+			UCHAR ip6_HopLimit;		/* Hop limit */
+		} ip6_HeaderCtl;
+		UCHAR ip6_VFC;				/* 4 bits version, top 4 bits tclass */
+	} ip6_CTL;
+	struct in6_addr ip6_Src;		/* Source address */
+	struct in6_addr ip6_Dst;		/* Destination address */
+} IPV6_HEADER, *PIPV6_HEADER;
+
+/*
+* The length of the IPv6 header.
+*/
+#define	IPV6_HDR_LEN		sizeof(IPV6_HEADER)
 
 // 
 // Global variables
@@ -159,6 +211,60 @@ typedef struct CLASSIFY_DATA_
 	UINT32                               numChainedNBLs;
 }CLASSIFY_DATA, *PCLASSIFY_DATA;
 
+BOOLEAN
+NPF_IsPacketSelfSent(
+	_In_ PNET_BUFFER_LIST pNetBufferList,
+	_In_ BOOLEAN bIPv4
+	)
+{
+	NTSTATUS			status = STATUS_SUCCESS;
+	NET_BUFFER*			pNetBuffer = 0;
+	PVOID				pContiguousData = NULL;
+	UCHAR				pPacketData[IPV6_HDR_LEN];
+	UCHAR				iProtocol;
+
+	TRACE_ENTER();
+
+	pNetBuffer = NET_BUFFER_LIST_FIRST_NB(pNetBufferList);
+	while (pNetBuffer)
+	{
+		pContiguousData = NdisGetDataBuffer(pNetBuffer,
+			bIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN,
+			pPacketData,
+			1,
+			0);
+		if (!pContiguousData)
+		{
+			status = STATUS_UNSUCCESSFUL;
+
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_IsPacketSelfSent: NdisGetDataBuffer() [status: %#x]\n",
+				status);
+
+			TRACE_EXIT();
+			return FALSE;
+		}
+		else
+		{
+			iProtocol = bIPv4 ? ((PIP_HEADER) pContiguousData)->ip_Protocol : ((PIPV6_HEADER) pContiguousData)->ip6_CTL.ip6_HeaderCtl.ip6_NextHeader;
+			if (iProtocol == 250)
+			{
+				TRACE_EXIT();
+				return TRUE;
+			}
+			else
+			{
+				TRACE_EXIT();
+				return FALSE;
+			}
+		}
+
+		pNetBuffer = pNetBuffer->Next;
+	}
+
+	TRACE_EXIT();
+	return FALSE;
+}
 
 // 
 // Callout driver functions
@@ -175,26 +281,26 @@ by the worker thread.
 -- */
 void
 NPF_NetworkClassify(
-_In_ const FWPS_INCOMING_VALUES* inFixedValues,
-_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
-_Inout_opt_ void* layerData,
-_In_opt_ const void* classifyContext,
-_In_ const FWPS_FILTER* filter,
-_In_ UINT64 flowContext,
-_Inout_ FWPS_CLASSIFY_OUT* classifyOut
-)
+	_In_ const FWPS_INCOMING_VALUES* inFixedValues,
+	_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
+	_Inout_opt_ void* layerData,
+	_In_opt_ const void* classifyContext,
+	_In_ const FWPS_FILTER* filter,
+	_In_ UINT64 flowContext,
+	_Inout_ FWPS_CLASSIFY_OUT* classifyOut
+	)
 
 #else
 
 void
 NPF_NetworkClassify(
-_In_ const FWPS_INCOMING_VALUES* inFixedValues,
-_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
-_Inout_opt_ void* layerData,
-_In_ const FWPS_FILTER* filter,
-_In_ UINT64 flowContext,
-_Inout_ FWPS_CLASSIFY_OUT* classifyOut
-)
+	_In_ const FWPS_INCOMING_VALUES* inFixedValues,
+	_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
+	_Inout_opt_ void* layerData,
+	_In_ const FWPS_FILTER* filter,
+	_In_ UINT64 flowContext,
+	_Inout_ FWPS_CLASSIFY_OUT* classifyOut
+	)
 
 #endif
 
@@ -205,8 +311,9 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	UINT32				ipHeaderSize = 0;
 	UINT32				bytesRetreated = 0;
 	UINT32				bytesRetreatedEthernet = 0;
-	INT32				iProtocol = -1;
+	INT32				iIPv4 = -1;
 	INT32				iDrection = -1;
+	BOOLEAN				bSelfSent = FALSE;
 	PETHER_HEADER		pContiguousData = NULL;
 	NET_BUFFER*			pNetBuffer = 0;
 	UCHAR				pPacketData[ETHER_HDR_LEN];
@@ -234,11 +341,11 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	// Get the packet protocol (IPv4 or IPv6) and the direction (Inbound or Outbound).
 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
 	{
-		iProtocol = 0;
+		iIPv4 = 1;
 	}
 	else // if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
 	{
-		iProtocol = 1;
+		iIPv4 = 0;
 	}
 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
 	{
@@ -273,6 +380,8 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		TRACE_EXIT();
 		return;
 	}
+
+	bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN) iIPv4);
 
 	PNET_BUFFER_LIST pClonedNetBufferList;
 	status = FwpsAllocateCloneNetBufferList(pNetBufferList, NULL, NULL, 0, &pClonedNetBufferList);
@@ -316,7 +425,6 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 
 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 				"NPF_NetworkClassify: NdisGetDataBuffer() [status: %#x]\n",
-
 				status);
 
 			goto Exit_Ethernet_Retreated;
@@ -324,7 +432,7 @@ _Inout_ FWPS_CLASSIFY_OUT* classifyOut
 		else
 		{
 			RtlZeroMemory(pContiguousData, ETHER_ADDR_LEN * 2);
-			pContiguousData->ether_type = iProtocol ? RtlUshortByteSwap(ETHERTYPE_IPV6) : RtlUshortByteSwap(ETHERTYPE_IP);
+			pContiguousData->ether_type = iIPv4 ? RtlUshortByteSwap(ETHERTYPE_IP) : RtlUshortByteSwap(ETHERTYPE_IPV6);
 		}
 
 		pNetBuffer = pNetBuffer->Next;
@@ -400,10 +508,10 @@ Exit_IP_Retreated:
 
 NTSTATUS
 NPF_NetworkNotify(
-_In_ FWPS_CALLOUT_NOTIFY_TYPE notifyType,
-_In_ const GUID* filterKey,
-_Inout_ const FWPS_FILTER* filter
-)
+	_In_ FWPS_CALLOUT_NOTIFY_TYPE notifyType,
+	_In_ const GUID* filterKey,
+	_Inout_ const FWPS_FILTER* filter
+	)
 {
 	UNREFERENCED_PARAMETER(notifyType);
 	UNREFERENCED_PARAMETER(filterKey);
@@ -421,10 +529,10 @@ _Inout_ const FWPS_FILTER* filter
 
 NTSTATUS
 NPF_AddFilter(
-_In_ const GUID* layerKey,
-_In_ const GUID* calloutKey,
-_In_ const int iFlag
-)
+	_In_ const GUID* layerKey,
+	_In_ const GUID* calloutKey,
+	_In_ const int iFlag
+	)
 {
 	TRACE_ENTER();
 	NTSTATUS status = STATUS_SUCCESS;
@@ -509,11 +617,11 @@ _In_ const int iFlag
 
 NTSTATUS
 NPF_RegisterCallout(
-_In_ const GUID* layerKey,
-_In_ const GUID* calloutKey,
-_Inout_ void* deviceObject,
-_Out_ UINT32* calloutId
-)
+	_In_ const GUID* layerKey,
+	_In_ const GUID* calloutKey,
+	_Inout_ void* deviceObject,
+	_Out_ UINT32* calloutId
+	)
 /* ++
 
 This function registers callouts and filters that intercept transport
@@ -750,7 +858,7 @@ Exit:
 
 void
 NPF_UnregisterCallouts(
-)
+	)
 {
 	TRACE_ENTER();
 
