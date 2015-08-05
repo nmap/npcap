@@ -46,7 +46,7 @@ extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING devicePrefix;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	extern HANDLE gWFPEngineHandle;
+	extern HANDLE g_WFPEngineHandle;
 	extern PDEVICE_OBJECT g_LoopbackDevObj;
 #endif
 
@@ -262,7 +262,7 @@ NPF_OpenAdapter(
 	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (gWFPEngineHandle == INVALID_HANDLE_VALUE))
+	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
 	{
 		Status = NPF_InitInjectionHandles();
 		if (!NT_SUCCESS(Status))
@@ -276,7 +276,7 @@ NPF_OpenAdapter(
 		Status = NPF_RegisterCallouts(g_LoopbackDevObj);
 		if (!NT_SUCCESS(Status))
 		{
-			if (gWFPEngineHandle != INVALID_HANDLE_VALUE)
+			if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
 			{
 				NPF_UnregisterCallouts();
 			}

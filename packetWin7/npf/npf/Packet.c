@@ -80,7 +80,7 @@ PDEVICE_OBJECT g_LoopbackDevObj = NULL;
 NDIS_STRING g_LoopbackAdapterName;
 NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("Loopback");
 
-extern HANDLE gWFPEngineHandle;
+extern HANDLE g_WFPEngineHandle;
 #endif
 
 ULONG g_AdminOnlyMode = 0;

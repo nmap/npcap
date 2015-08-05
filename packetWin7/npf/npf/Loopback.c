@@ -193,11 +193,11 @@ DEFINE_GUID(
 // Callout driver global variables
 //
 
-HANDLE gWFPEngineHandle = INVALID_HANDLE_VALUE;
-UINT32 gOutboundIPPacketV4 = 0;
-UINT32 gOutboundIPPacketV6 = 0;
-UINT32 gInboundIPPacketV4 = 0;
-UINT32 gInboundIPPacketV6 = 0;
+HANDLE g_WFPEngineHandle = INVALID_HANDLE_VALUE;
+UINT32 g_OutboundIPPacketV4 = 0;
+UINT32 g_OutboundIPPacketV6 = 0;
+UINT32 g_InboundIPPacketV4 = 0;
+UINT32 g_InboundIPPacketV6 = 0;
 HANDLE g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
 HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 
@@ -713,7 +713,7 @@ NPF_AddFilter(
 	filter.numFilterConditions = conditionIndex;
 
 	status = FwpmFilterAdd(
-		gWFPEngineHandle,
+		g_WFPEngineHandle,
 		&filter,
 		NULL,
 		NULL);
@@ -774,7 +774,7 @@ FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
 	mCallout.applicableLayer = *layerKey;
 
 	status = FwpmCalloutAdd(
-		gWFPEngineHandle,
+		g_WFPEngineHandle,
 		&mCallout,
 		NULL,
 		NULL
@@ -854,7 +854,7 @@ Callouts and filters will be removed during DriverUnload.
 		RPC_C_AUTHN_WINNT,
 		NULL,
 		&session,
-		&gWFPEngineHandle
+		&g_WFPEngineHandle
 		);
 	if (!NT_SUCCESS(status))
 	{
@@ -862,7 +862,7 @@ Callouts and filters will be removed during DriverUnload.
 	}
 	engineOpened = TRUE;
 
-	status = FwpmTransactionBegin(gWFPEngineHandle, 0);
+	status = FwpmTransactionBegin(g_WFPEngineHandle, 0);
 	if (!NT_SUCCESS(status))
 	{
 		goto Exit;
@@ -880,7 +880,7 @@ Callouts and filters will be removed during DriverUnload.
 	// compatible with Vista's IpSec
 	// implementation.
 
-	status = FwpmSubLayerAdd(gWFPEngineHandle, &NPFSubLayer, NULL);
+	status = FwpmSubLayerAdd(g_WFPEngineHandle, &NPFSubLayer, NULL);
 	if (!NT_SUCCESS(status))
 	{
 		goto Exit;
@@ -892,7 +892,7 @@ Callouts and filters will be removed during DriverUnload.
 			&FWPM_LAYER_OUTBOUND_IPPACKET_V4,
 			&NPF_OUTBOUND_IPPACKET_CALLOUT_V4,
 			deviceObject,
-			&gOutboundIPPacketV4
+			&g_OutboundIPPacketV4
 			);
 		if (!NT_SUCCESS(status))
 		{
@@ -903,7 +903,7 @@ Callouts and filters will be removed during DriverUnload.
 			&FWPM_LAYER_INBOUND_IPPACKET_V4,
 			&NPF_INBOUND_IPPACKET_CALLOUT_V4,
 			deviceObject,
-			&gInboundIPPacketV4
+			&g_InboundIPPacketV4
 			);
 		if (!NT_SUCCESS(status))
 		{
@@ -916,7 +916,7 @@ Callouts and filters will be removed during DriverUnload.
 			&FWPM_LAYER_OUTBOUND_IPPACKET_V6,
 			&NPF_OUTBOUND_IPPACKET_CALLOUT_V6,
 			deviceObject,
-			&gOutboundIPPacketV6
+			&g_OutboundIPPacketV6
 			);
 		if (!NT_SUCCESS(status))
 		{
@@ -927,7 +927,7 @@ Callouts and filters will be removed during DriverUnload.
 			&FWPM_LAYER_INBOUND_IPPACKET_V6,
 			&NPF_INBOUND_IPPACKET_CALLOUT_V6,
 			deviceObject,
-			&gInboundIPPacketV6
+			&g_InboundIPPacketV6
 			);
 		if (!NT_SUCCESS(status))
 		{
@@ -935,7 +935,7 @@ Callouts and filters will be removed during DriverUnload.
 		}
 	}
 
-	status = FwpmTransactionCommit(gWFPEngineHandle);
+	status = FwpmTransactionCommit(g_WFPEngineHandle);
 	if (!NT_SUCCESS(status))
 	{
 		goto Exit;
@@ -949,13 +949,13 @@ Exit:
 		IF_LOUD(DbgPrint("NPF_RegisterCallouts: failed to register callouts\n");)
 			if (inTransaction)
 			{
-				FwpmTransactionAbort(gWFPEngineHandle);
-				_Analysis_assume_lock_not_held_(gWFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
+				FwpmTransactionAbort(g_WFPEngineHandle);
+				_Analysis_assume_lock_not_held_(g_WFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
 			}
 		if (engineOpened)
 		{
-			FwpmEngineClose(gWFPEngineHandle);
-			gWFPEngineHandle = INVALID_HANDLE_VALUE;
+			FwpmEngineClose(g_WFPEngineHandle);
+			g_WFPEngineHandle = INVALID_HANDLE_VALUE;
 		}
 	}
 
@@ -969,26 +969,26 @@ NPF_UnregisterCallouts(
 {
 	TRACE_ENTER();
 
-	if (gWFPEngineHandle != INVALID_HANDLE_VALUE)
+	if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
 	{
-		FwpmEngineClose(gWFPEngineHandle);
-		gWFPEngineHandle = INVALID_HANDLE_VALUE;
+		FwpmEngineClose(g_WFPEngineHandle);
+		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
 
-		if (gOutboundIPPacketV4)
+		if (g_OutboundIPPacketV4)
 		{
-			FwpsCalloutUnregisterById(gOutboundIPPacketV4);
+			FwpsCalloutUnregisterById(g_OutboundIPPacketV4);
 		}
-		if (gOutboundIPPacketV6)
+		if (g_OutboundIPPacketV6)
 		{
-			FwpsCalloutUnregisterById(gOutboundIPPacketV6);
+			FwpsCalloutUnregisterById(g_OutboundIPPacketV6);
 		}
-		if (gInboundIPPacketV4)
+		if (g_InboundIPPacketV4)
 		{
-			FwpsCalloutUnregisterById(gInboundIPPacketV4);
+			FwpsCalloutUnregisterById(g_InboundIPPacketV4);
 		}
-		if (gInboundIPPacketV6)
+		if (g_InboundIPPacketV6)
 		{
-			FwpsCalloutUnregisterById(gInboundIPPacketV6);
+			FwpsCalloutUnregisterById(g_InboundIPPacketV6);
 		}
 	}
 
