@@ -148,7 +148,7 @@ NPF_IsPacketSelfSent(
 		}
 		else
 		{
-			iProtocol = bIPv4 ? ((PIP_HEADER) pContiguousData)->ip_Protocol : ((PIPV6_HEADER) pContiguousData)->ip6_CTL.ip6_HeaderCtl.ip6_NextHeader;
+			iProtocol = bIPv4 ? ((PIP_HEADER) pContiguousData)->ip_Protocol : ((PIP6_HEADER) pContiguousData)->ip6_CTL.ip6_HeaderCtl.ip6_NextHeader;
 			if (iProtocol == IPPROTO_NPCAP_LOOPBACK)
 			{
 				TRACE_EXIT();
@@ -1004,4 +1004,4 @@ Free injection handles (IPv4 and IPv6).
 	return status;
 }
 
-#endif
+#endif // HAVE_WFP_LOOPBACK_SUPPORT

@@ -38,6 +38,7 @@
 #include <ndis.h>
 
 #include "Loopback.h"
+#include "Lo_send.h"
 #include "debug.h"
 #include "packet.h"
 #include "win_bpf.h"
@@ -852,8 +853,12 @@ Return Value:
 		g_LoopbackAdapterName.Buffer = NULL;
 	}
 
-	NPF_FreeInjectionHandles();
+	// Release WSK resources.
+	NPF_WSKFreeSockets();
+	NPF_WSKCleanup();
 
+	// Release WFP resources.
+	NPF_FreeInjectionHandles();
 	NPF_UnregisterCallouts();
 #endif
 

@@ -42,6 +42,7 @@
 #define __LOOPBACK
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
+
 #pragma warning(push)
 #pragma warning(disable:4201)       // unnamed struct/union
 
@@ -130,7 +131,7 @@ typedef struct _IP_HEADER
 * Structure of a IPv6 header, based on netinet/ip6.h
 * http://openhip.sourceforge.net/doxygen/ip_8h_source.html
 */
-typedef struct _IPV6_HEADER
+typedef struct _IP6_HEADER
 {
 	union
 	{
@@ -145,12 +146,12 @@ typedef struct _IPV6_HEADER
 	} ip6_CTL;
 	struct in6_addr ip6_Src;		/* Source address */
 	struct in6_addr ip6_Dst;		/* Destination address */
-} IPV6_HEADER, *PIPV6_HEADER;
+} IP6_HEADER, *PIP6_HEADER;
 
 /*
 * The length of the IPv6 header.
 */
-#define	IPV6_HDR_LEN		sizeof(IPV6_HEADER)
+#define	IPV6_HDR_LEN		sizeof(IP6_HEADER)
 
 #pragma pack(pop)
 

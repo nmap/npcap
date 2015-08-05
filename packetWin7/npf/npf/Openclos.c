@@ -40,6 +40,7 @@
 #include "debug.h"
 #include "packet.h"
 #include "Loopback.h"
+#include "Lo_send.h"
 #include "..\..\..\Common\WpcapNames.h"
 
 extern NDIS_STRING g_LoopbackAdapterName;
@@ -264,6 +265,20 @@ NPF_OpenAdapter(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
 	{
+		// Use Winsock Kernel (WSK) to send loopback packets.
+		Status = NPF_WSKStartup();
+		if (!NT_SUCCESS(Status))
+		{
+			return Status;
+		}
+
+		Status = NPF_WSKInitSockets();
+		if (!NT_SUCCESS(Status))
+		{
+			return Status;
+		}
+
+		// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
 		Status = NPF_InitInjectionHandles();
 		if (!NT_SUCCESS(Status))
 		{
