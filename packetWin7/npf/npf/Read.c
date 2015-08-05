@@ -877,8 +877,22 @@ NPF_TapExForEachOpen(
 							}
 							else
 							{
-								DbgPrint("next MDL %d not added\n", BufferLength);
-								break;
+								//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
+								//two copies!!
+								ToCopy = Open->Size - LocalData->P;
+								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, ToCopy);
+								NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pEthHeader + ToCopy, BufferLength - ToCopy);
+								LocalData->P = BufferLength - ToCopy;
+
+								increment += BufferLength;
+								TotalLength -= BufferLength;
+
+								Header->header.bh_caplen += BufferLength;
+								Header->header.bh_datalen += BufferLength;
+
+								DbgPrint("next MDL %d added (two copies)\n", BufferLength);
+
+								pMdl = pNextMdl;
 							}
 						}
 						else
