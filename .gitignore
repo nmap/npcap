@@ -11,6 +11,7 @@
 *.cat
 *.sys
 *.dll
+*.vcxproj.filters
 Debug/
 Release/
 Debug(WinPcap Mode)/
