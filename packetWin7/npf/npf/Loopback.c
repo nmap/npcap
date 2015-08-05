@@ -196,6 +196,8 @@ UINT32 gOutboundIPPacketV4 = 0;
 UINT32 gOutboundIPPacketV6 = 0;
 UINT32 gInboundIPPacketV4 = 0;
 UINT32 gInboundIPPacketV6 = 0;
+HANDLE g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
+HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 
 typedef struct CLASSIFY_DATA_
 {
@@ -919,6 +921,104 @@ NPF_UnregisterCallouts(
 	}
 
 	TRACE_EXIT();
+}
+
+NTSTATUS
+NPF_InitInjectionHandles(
+)
+/* ++
+
+Open injection handles (IPv4 and IPv6) for use with the various injection APIs.
+
+injection handles will be removed during DriverUnload.
+
+-- */
+{
+	NTSTATUS status = STATUS_SUCCESS;
+
+	TRACE_ENTER();
+
+	status = FwpsInjectionHandleCreate(AF_INET,
+		FWPS_INJECTION_TYPE_NETWORK,
+		&g_InjectionHandle_IPv4);
+
+	if (status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_InitInjectionHandles: FwpsInjectionHandleCreate(AF_INET) [status: %#x]\n",
+			status);
+
+		TRACE_EXIT();
+		return status;
+	}
+
+	status = FwpsInjectionHandleCreate(AF_INET6,
+		FWPS_INJECTION_TYPE_NETWORK,
+		&g_InjectionHandle_IPv6);
+
+	if (status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_InitInjectionHandles: FwpsInjectionHandleCreate(AF_INET6) [status: %#x]\n",
+			status);
+
+		TRACE_EXIT();
+		return status;
+	}
+
+	TRACE_EXIT();
+	return status;
+}
+
+NTSTATUS
+NPF_FreeInjectionHandles(
+	)
+/* ++
+
+Free injection handles (IPv4 and IPv6).
+
+-- */
+{
+	NTSTATUS status = STATUS_SUCCESS;
+
+	TRACE_ENTER();
+
+	if (g_InjectionHandle_IPv4 != INVALID_HANDLE_VALUE)
+	{
+		status = FwpsInjectionHandleDestroy(g_InjectionHandle_IPv4);
+
+		if (status != STATUS_SUCCESS)
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_InitInjectionHandles: FwpsInjectionHandleDestroy(AF_INET) [status: %#x]\n",
+				status);
+
+			TRACE_EXIT();
+			return status;
+		}
+
+		g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
+	}
+
+	if (g_InjectionHandle_IPv6 != INVALID_HANDLE_VALUE)
+	{
+		status = FwpsInjectionHandleDestroy(g_InjectionHandle_IPv6);
+
+		if (status != STATUS_SUCCESS)
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_InitInjectionHandles: FwpsInjectionHandleDestroy(AF_INET6) [status: %#x]\n",
+				status);
+
+			TRACE_EXIT();
+			return status;
+		}
+
+		g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
+	}
+
+	TRACE_EXIT();
+	return status;
 }
 
 #endif

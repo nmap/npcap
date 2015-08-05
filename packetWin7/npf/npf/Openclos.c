@@ -264,6 +264,15 @@ NPF_OpenAdapter(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (gWFPEngineHandle == INVALID_HANDLE_VALUE))
 	{
+		Status = NPF_InitInjectionHandles();
+		if (!NT_SUCCESS(Status))
+		{
+			Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+			IoCompleteRequest(Irp, IO_NO_INCREMENT);
+			TRACE_EXIT();
+			return STATUS_INSUFFICIENT_RESOURCES;
+		}
+
 		Status = NPF_RegisterCallouts(g_LoopbackDevObj);
 		if (!NT_SUCCESS(Status))
 		{

@@ -852,6 +852,8 @@ Return Value:
 		g_LoopbackAdapterName.Buffer = NULL;
 	}
 
+	NPF_FreeInjectionHandles();
+
 	NPF_UnregisterCallouts();
 #endif
 
