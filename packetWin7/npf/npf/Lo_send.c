@@ -43,8 +43,18 @@
 
 #include "stdafx.h"
 
-#include "lo_send.h"
+#include "Loopback.h"
+#include "Lo_send.h"
 #include "debug.h"
+
+#define NPF_LOOPBACK_SEND_TYPE_IPV4		1
+#define NPF_LOOPBACK_SEND_TYPE_IPV6		0
+
+#define LOG_PORT						3000
+#define HTON_SHORT(n)					(((((unsigned short)(n) & 0xFFu  )) << 8) | \
+										(((unsigned short)(n) & 0xFF00u) >> 8))
+#define HTON_LONG(x)					(((((x)& 0xff)<<24) | ((x)>>24) & 0xff) | \
+										(((x) & 0xff0000)>>8) | (((x) & 0xff00)<<8))
 
 static WSK_REGISTRATION         g_WskRegistration;
 static WSK_PROVIDER_NPI         g_WskProvider;
@@ -57,44 +67,6 @@ PWSK_SOCKET						g_IPv6Socket = NULL;
 SOCKADDR_IN6					g_IPv6LocalAddress = { 0, };
 SOCKADDR_IN6					g_IPv6RemoteAddress = { 0, };
 
-#define NPF_LOOPBACK_SEND_TYPE_IPV4		1
-#define NPF_LOOPBACK_SEND_TYPE_IPV6		0
-
-/*
-* The number of bytes in an Ethernet (MAC) address.
-*/
-#define	ETHER_ADDR_LEN		6
-
-/*
-* The number of bytes in the type field.
-*/
-#define	ETHER_TYPE_LEN		2
-
-/*
-* The length of the combined header.
-*/
-#define	ETHER_HDR_LEN		(ETHER_ADDR_LEN * 2 + ETHER_TYPE_LEN)
-
-/*
-* Structure of a 10Mb/s Ethernet header.
-*/
-typedef struct _ETHER_HEADER {
-	UCHAR	ether_dhost[ETHER_ADDR_LEN];
-	UCHAR	ether_shost[ETHER_ADDR_LEN];
-	USHORT	ether_type;
-} ETHER_HEADER, *PETHER_HEADER;
-
-/*
-* Types in an Ethernet (MAC) header.
-*/
-#define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
-#define	ETHERTYPE_IP		0x0800	/* IP protocol */
-#define ETHERTYPE_ARP		0x0806	/* Addr. resolution protocol */
-#define ETHERTYPE_REVARP	0x8035	/* reverse Addr. resolution protocol */
-#define	ETHERTYPE_VLAN		0x8100	/* IEEE 802.1Q VLAN tagging */
-#define ETHERTYPE_IPV6		0x86dd	/* IPv6 */
-#define	ETHERTYPE_LOOPBACK	0x9000	/* used to test interfaces */
-
 enum
 {
 	DEINITIALIZED,
@@ -103,14 +75,8 @@ enum
 	INITIALIZED
 };
 
-#define IPPROTO_NPCAP_LOOPBACK		250
-#define LOG_PORT					3000
-#define HTON_SHORT(n)				(((((unsigned short)(n) & 0xFFu  )) << 8) | \
-									(((unsigned short)(n) & 0xFF00u) >> 8))
-#define HTON_LONG(x)				(((((x)& 0xff)<<24) | ((x)>>24) & 0xff) | \
-									(((x) & 0xff0000)>>8) | (((x) & 0xff00)<<8))
-
 static LONG g_SocketsState = DEINITIALIZED;
+
 
 NTSTATUS
 NTAPI
