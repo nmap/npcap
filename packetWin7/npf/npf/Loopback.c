@@ -48,6 +48,8 @@
 
 #define NPCAP_CALLOUT_DRIVER_TAG (UINT32) 'NPCA'
 
+#define IPPROTO_NPCAP_LOOPBACK		250
+
 #pragma pack (1)
 
 /*
@@ -199,19 +201,6 @@ UINT32 gInboundIPPacketV6 = 0;
 HANDLE g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
 HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 
-typedef struct CLASSIFY_DATA_
-{
-	const FWPS_INCOMING_VALUES*          pClassifyValues;
-	const FWPS_INCOMING_METADATA_VALUES* pMetadataValues;
-	VOID*                                pPacket;               /// NET_BUFFER_LIST | FWPS_STREAM_CALLOUT_IO_PACKET
-	const VOID*                          pClassifyContext;
-	const FWPS_FILTER*                   pFilter;
-	UINT64                               flowContext;
-	FWPS_CLASSIFY_OUT*                   pClassifyOut;
-	UINT64                               classifyContextHandle;
-	BOOLEAN                              chainedNBL;
-	UINT32                               numChainedNBLs;
-}CLASSIFY_DATA, *PCLASSIFY_DATA;
 
 BOOLEAN
 NPF_IsPacketSelfSent(
@@ -249,7 +238,7 @@ NPF_IsPacketSelfSent(
 		else
 		{
 			iProtocol = bIPv4 ? ((PIP_HEADER) pContiguousData)->ip_Protocol : ((PIPV6_HEADER) pContiguousData)->ip6_CTL.ip6_HeaderCtl.ip6_NextHeader;
-			if (iProtocol == 250)
+			if (iProtocol == IPPROTO_NPCAP_LOOPBACK)
 			{
 				TRACE_EXIT();
 				return TRUE;
@@ -266,6 +255,30 @@ NPF_IsPacketSelfSent(
 
 	TRACE_EXIT();
 	return FALSE;
+}
+
+VOID
+NPF_NetworkInjectionComplete(
+	_In_ VOID* pContext,
+	_Inout_ NET_BUFFER_LIST* pNetBufferList,
+	_In_ BOOLEAN dispatchLevel
+	)
+{
+	UNREFERENCED_PARAMETER(dispatchLevel);
+
+	TRACE_ENTER();
+
+	if (pNetBufferList->Status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_NetworkInjectionComplete: pNetBufferList->Status [status: %#x]\n",
+			pNetBufferList->Status);
+	}
+
+	FwpsFreeCloneNetBufferList(pNetBufferList, 0);
+
+	TRACE_EXIT();
+	return;
 }
 
 // 
@@ -320,6 +333,8 @@ NPF_NetworkClassify(
 	NET_BUFFER*			pNetBuffer = 0;
 	UCHAR				pPacketData[ETHER_HDR_LEN];
 	PNET_BUFFER_LIST	pNetBufferList = (NET_BUFFER_LIST*) layerData;
+	COMPARTMENT_ID		compartmentID = UNSPECIFIED_COMPARTMENT_ID;
+	FWPS_PACKET_INJECTION_STATE injectionState = FWPS_PACKET_INJECTION_STATE_MAX;
 
 	UNREFERENCED_PARAMETER(classifyContext);
 	UNREFERENCED_PARAMETER(filter);
@@ -338,6 +353,7 @@ NPF_NetworkClassify(
 	{
 		return;
 	}
+
 	TRACE_ENTER();
 
 	// Get the packet protocol (IPv4 or IPv6) and the direction (Inbound or Outbound).
@@ -361,6 +377,19 @@ NPF_NetworkClassify(
 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_IP_HEADER_SIZE)
 	{
 		ipHeaderSize = inMetaValues->ipHeaderSize;
+	}
+
+	injectionState = FwpsQueryPacketInjectionState(iIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+		pNetBufferList,
+		NULL);
+	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
+		injectionState == FWPS_PACKET_PREVIOUSLY_INJECTED_BY_SELF)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+			"NPF_NetworkClassify: this packet is injected by ourself, let it go\n");
+
+		TRACE_EXIT();
+		return;
 	}
 
 	// Inbound: Initial offset is at the Transport Header, so retreat the size of the Ethernet Header and IP Header.
@@ -399,6 +428,49 @@ NPF_NetworkClassify(
 			0);
 	}
 
+	// Here if this NBL is sent by ourself, we will clone it starting from IP header and inject it into Network Layer send path.
+	if (bSelfSent)
+	{
+		PNET_BUFFER_LIST pClonedNetBufferList_Injection;
+		status = FwpsAllocateCloneNetBufferList(pNetBufferList, NULL, NULL, 0, &pClonedNetBufferList_Injection);
+		if (status != STATUS_SUCCESS)
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_NetworkClassify: FwpsAllocateCloneNetBufferList(pClonedNetBufferList_Injection) [status: %#x]\n",
+				status);
+
+			goto Exit_WSK_IP_Retreated;
+		}
+
+		if (FWPS_IS_METADATA_FIELD_PRESENT(inMetaValues,
+			FWPS_METADATA_FIELD_COMPARTMENT_ID))
+			compartmentID = (COMPARTMENT_ID)inMetaValues->compartmentId;
+
+		// This cloned NBL will be freed in NPF_NetworkInjectionComplete function.
+		status = FwpsInjectNetworkSendAsync(iIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+			NULL,
+			0,
+			compartmentID,
+			pClonedNetBufferList_Injection,
+			NPF_NetworkInjectionComplete,
+			NULL);
+		if (status != STATUS_SUCCESS)
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_NetworkClassify: FwpsInjectNetworkSendAsync() [status: %#x]\n",
+				status);
+
+			FwpsFreeCloneNetBufferList(pClonedNetBufferList_Injection, 0);
+			goto Exit_WSK_IP_Retreated;
+		}
+
+		// We have successfully re-inject the cloned NBL, so remove this one.
+		classifyOut->actionType = FWP_ACTION_BLOCK;
+		classifyOut->flags |= FWPS_CLASSIFY_OUT_FLAG_ABSORB;
+		classifyOut->rights ^= FWPS_RIGHT_ACTION_WRITE;
+	}
+
+	// We clone this NBL again, for packet reading operation.
 	PNET_BUFFER_LIST pClonedNetBufferList;
 	status = FwpsAllocateCloneNetBufferList(pNetBufferList, NULL, NULL, 0, &pClonedNetBufferList);
 	if (status != STATUS_SUCCESS)
