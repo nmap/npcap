@@ -12,6 +12,7 @@
 *.sys
 *.dll
 *.vcxproj.filters
+*.ipch
 Debug/
 Release/
 Debug(WinPcap Mode)/
