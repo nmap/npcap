@@ -375,13 +375,27 @@ NPF_NetworkClassify(
 
 	if (status != STATUS_SUCCESS)
 	{
-		bytesRetreated = 0;
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_NetworkClassify: NdisRetreatNetBufferListDataStart(bytesRetreated) [status: %#x]\n",
+			status);
 
 		TRACE_EXIT();
 		return;
 	}
 
-	bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN) iIPv4);
+	//bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN)iIPv4);
+	bSelfSent = (iDrection == 0) ? FALSE : NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN) iIPv4);
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+		"NPF_NetworkClassify: NPF_IsPacketSelfSent() [bSelfSent: %#x]\n",
+		bSelfSent);
+
+	if (bSelfSent)
+	{
+		NdisAdvanceNetBufferListDataStart(pNetBufferList,
+			iIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN,
+			FALSE,
+			0);
+	}
 
 	PNET_BUFFER_LIST pClonedNetBufferList;
 	status = FwpsAllocateCloneNetBufferList(pNetBufferList, NULL, NULL, 0, &pClonedNetBufferList);
@@ -391,7 +405,7 @@ NPF_NetworkClassify(
 			"NPF_NetworkClassify: FwpsAllocateCloneNetBufferList() [status: %#x]\n",
 			status);
 
-		goto Exit_IP_Retreated;
+		goto Exit_WSK_IP_Retreated;
 	}
 
 	bytesRetreatedEthernet = ETHER_HDR_LEN;
@@ -405,7 +419,7 @@ NPF_NetworkClassify(
 		bytesRetreatedEthernet = 0;
 
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_NetworkClassify: NdisRetreatNetBufferListDataStart() [status: %#x]\n",
+			"NPF_NetworkClassify: NdisRetreatNetBufferListDataStart(bytesRetreatedEthernet) [status: %#x]\n",
 			status);
 
 		goto Exit_Packet_Cloned;
@@ -472,7 +486,26 @@ Exit_Ethernet_Retreated:
 Exit_Packet_Cloned:
 	FwpsFreeCloneNetBufferList(pClonedNetBufferList, 0);
 
-Exit_IP_Retreated:
+Exit_WSK_IP_Retreated:
+	if (bSelfSent)
+	{
+		status = NdisRetreatNetBufferListDataStart(pNetBufferList,
+			iIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN,
+			0,
+			NULL,
+			NULL);
+
+// 		if (status != STATUS_SUCCESS)
+// 		{
+// 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+// 				"NPF_NetworkClassify: NdisRetreatNetBufferListDataStart(IP_HDR_LEN) [status: %#x]\n",
+// 				status);
+//
+// 			goto Exit_IP_Retreated;
+// 		}
+	}
+
+/*Exit_IP_Retreated:*/
 	NdisAdvanceNetBufferListDataStart(pNetBufferList,
 		bytesRetreated,
 		FALSE,
