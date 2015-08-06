@@ -59,96 +59,100 @@
 
 NTSTATUS
 NTAPI
-NPF_WSKInitSockets();
+NPF_WSKInitSockets(
+	);
 
 VOID
 NTAPI
-NPF_WSKFreeSockets();
+NPF_WSKFreeSockets(
+	);
 
 NTSTATUS
 NTAPI
-NPF_WSKStartup();
+NPF_WSKStartup(
+	);
 
 VOID
 NTAPI
-NPF_WSKCleanup();
+NPF_WSKCleanup(
+	);
 
 NTSTATUS
 NTAPI
 NPF_WSKSendPacket(
-__in PCHAR PacketBuff,
-__in ULONG BuffSize
-);
+	IN PCHAR PacketBuff,
+	IN ULONG BuffSize
+	);
 
 NTSTATUS
 NTAPI
 WSKSendPacketInternal(
-__in BOOLEAN bIPv4,
-__in PCHAR PacketBuff,
-__in ULONG BuffSize
-);
+	IN BOOLEAN bIPv4,
+	IN PCHAR PacketBuff,
+	IN ULONG BuffSize
+	);
 
 NTSTATUS
 NTAPI
 NPF_WSKSendPacket_NBL(
-	__in PNET_BUFFER_LIST NetBufferList
+	IN PNET_BUFFER_LIST NetBufferList
 	);
 
 NTSTATUS
 NTAPI
 WSKSendPacketInternal_NBL(
-	__in BOOLEAN bIPv4,
-	__in PNET_BUFFER_LIST NetBufferList
+	IN BOOLEAN bIPv4,
+	IN PNET_BUFFER_LIST NetBufferList
 	);
 
 PWSK_SOCKET
 NTAPI
 WSKCreateSocket(
-__in ADDRESS_FAMILY AddressFamily,
-__in USHORT                 SocketType,
-__in ULONG                  Protocol,
-__in ULONG                  Flags
-);
+	IN ADDRESS_FAMILY AddressFamily,
+	IN USHORT SocketType,
+	IN ULONG Protocol,
+	IN ULONG Flags
+	);
 
 NTSTATUS
 NTAPI
 WSKCloseSocket(
-__in PWSK_SOCKET WskSocket
-);
+	IN PWSK_SOCKET WskSocket
+	);
 
 LONG
 NTAPI
 WSKSend(
-__in PWSK_SOCKET        WskSocket,
-__in PVOID                      Buffer,
-__in ULONG                      BufferSize,
-__in ULONG                      Flags
-);
+	IN PWSK_SOCKET WskSocket,
+	IN PVOID Buffer,
+	IN ULONG BufferSize,
+	IN ULONG Flags
+	);
 
 LONG
 NTAPI
 WSKSendTo(
-__in PWSK_SOCKET        WskSocket,
-__in PVOID                      Buffer,
-__in ULONG                      BufferSize,
-__in_opt PSOCKADDR      RemoteAddress
-);
+	IN PWSK_SOCKET WskSocket,
+	IN PVOID Buffer,
+	IN ULONG BufferSize,
+	__in_opt PSOCKADDR RemoteAddress
+	);
 
 LONG
 NTAPI
 WSKSendTo_NBL(
-	__in PWSK_SOCKET        WskSocket,
-	__in PNET_BUFFER_LIST	NetBufferList,
-	__in ULONG				BufferOffset,
-	__in_opt PSOCKADDR      RemoteAddress
-);
+	IN PWSK_SOCKET WskSocket,
+	IN PNET_BUFFER_LIST NetBufferList,
+	IN ULONG BufferOffset,
+	__in_opt PSOCKADDR RemoteAddress
+	);
 
 NTSTATUS
 NTAPI
 WSKBind(
-__in PWSK_SOCKET        WskSocket,
-__in PSOCKADDR          LocalAddress
-);
+	IN PWSK_SOCKET WskSocket,
+	IN PSOCKADDR LocalAddress
+	);
 
 #endif // HAVE_WFP_LOOPBACK_SUPPORT
 
