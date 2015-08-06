@@ -37,6 +37,7 @@
 #include <ntddk.h>
 #include <ndis.h>
 
+#include "Lo_send.h"
 #include "debug.h"
 #include "packet.h"
 
@@ -861,4 +862,23 @@ NPF_SendCompleteExForEachOpen(
 		//TRACE_EXIT();
 	}
 
+}
+
+//-------------------------------------------------------------------
+
+VOID
+NPF_LoopbackSendNetBufferLists(
+	IN POPEN_INSTANCE Open,
+	IN PNET_BUFFER_LIST NetBufferList
+	)
+{
+	TRACE_ENTER();
+
+	// Use Winsock Kernel to send this NBL.
+	NPF_WSKSendPacket_NBL(NetBufferList);
+
+	// Call complete function manually just like NDIS callback.
+	NPF_SendCompleteEx(Open, NetBufferList, 0);
+
+	TRACE_EXIT();
 }

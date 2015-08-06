@@ -1021,6 +1021,19 @@ NPF_SendCompleteExForEachOpen(
 	BOOLEAN FreeBufAfterWrite
 	);
 
+/*!
+  \brief Send a loopback NBL.
+  \param NetBufferList Pointer to NBL.
+
+  Alternative to NdisFSendNetBufferLists, use the same NBL parameter, but it calls Winsock Kernel to send packet instead
+  of NDIS functions.
+*/
+VOID
+NPF_LoopbackSendNetBufferLists(
+	IN POPEN_INSTANCE Open,
+	IN PNET_BUFFER_LIST NetBufferList
+	);
+
 
 /*!
   \brief Callback for NDIS StatusHandler. Not used by NPF

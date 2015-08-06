@@ -51,6 +51,7 @@
 #pragma once
 #include <ntddk.h>
 #include <wsk.h>
+#include <ndis.h>
 
 #pragma warning(pop)
 
@@ -81,11 +82,24 @@ __in ULONG BuffSize
 
 NTSTATUS
 NTAPI
-NPF_WSKSendPacketInternal(
+WSKSendPacketInternal(
 __in BOOLEAN bIPv4,
 __in PCHAR PacketBuff,
 __in ULONG BuffSize
 );
+
+NTSTATUS
+NTAPI
+NPF_WSKSendPacket_NBL(
+	__in PNET_BUFFER_LIST NetBufferList
+	);
+
+NTSTATUS
+NTAPI
+WSKSendPacketInternal_NBL(
+	__in BOOLEAN bIPv4,
+	__in PNET_BUFFER_LIST NetBufferList
+	);
 
 PWSK_SOCKET
 NTAPI
@@ -118,6 +132,15 @@ __in PWSK_SOCKET        WskSocket,
 __in PVOID                      Buffer,
 __in ULONG                      BufferSize,
 __in_opt PSOCKADDR      RemoteAddress
+);
+
+LONG
+NTAPI
+WSKSendTo_NBL(
+	__in PWSK_SOCKET        WskSocket,
+	__in PNET_BUFFER_LIST	NetBufferList,
+	__in ULONG				BufferOffset,
+	__in_opt PSOCKADDR      RemoteAddress
 );
 
 NTSTATUS

@@ -239,8 +239,6 @@ NPF_WSKCleanup(
 	TRACE_EXIT();
 }
 
-
-
 NTSTATUS
 NTAPI
 NPF_WSKSendPacket(
@@ -258,11 +256,11 @@ __in ULONG BuffSize
 	
 	if (pEthernetHdr->ether_type == RtlUshortByteSwap(ETHERTYPE_IP))
 	{
-		status = NPF_WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV4, PacketBuff, BuffSize);
+		status = WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV4, PacketBuff, BuffSize);
 	}
 	else if (pEthernetHdr->ether_type == RtlUshortByteSwap(ETHERTYPE_IPV6))
 	{
-		status = NPF_WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV6, PacketBuff, BuffSize);
+		status = WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV6, PacketBuff, BuffSize);
 	}
 	else
 	{
@@ -275,7 +273,7 @@ __in ULONG BuffSize
 
 NTSTATUS
 NTAPI
-NPF_WSKSendPacketInternal(
+WSKSendPacketInternal(
 __in BOOLEAN bIPv4,
 __in PCHAR PacketBuff,
 __in ULONG BuffSize
@@ -292,13 +290,96 @@ __in ULONG BuffSize
 
 	if (SentBytes != BuffSize)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacketInternal()::WSKSendTo() failed with SentBytes 0x%08X\n", SentBytes);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSendPacketInternal()::WSKSendTo() failed with SentBytes 0x%08X\n", SentBytes);
 	}
 
 	TRACE_EXIT();
 	return status;
 }
 
+NTSTATUS
+NTAPI
+NPF_WSKSendPacket_NBL(
+	__in PNET_BUFFER_LIST NetBufferList
+	)
+{
+	PMDL			pMdl = NULL;
+	ULONG			BuffSize;
+	PETHER_HEADER	pEthernetHdr;
+	NTSTATUS		status = STATUS_UNSUCCESSFUL;
+
+	TRACE_ENTER();
+
+	pMdl = NetBufferList->FirstNetBuffer->CurrentMdl;
+	if (pMdl)
+	{
+		NdisQueryMdl(
+			pMdl,
+			&pEthernetHdr,
+			&BuffSize,
+			NormalPagePriority);
+	}
+	else
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket_NBL()::NetBufferList->FirstNetBuffer->CurrentMdl failed with pMdl 0x%08X\n", pMdl);
+
+		TRACE_EXIT();
+		return status;
+	}
+
+	if (pEthernetHdr == NULL)
+	{
+		//
+		//  The system is low on resources. Set up to handle failure
+		//  below.
+		//
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket_NBL()::NdisQueryMdl() failed with pEthernetHdr 0x%08X\n", pEthernetHdr);
+
+		TRACE_EXIT();
+		return status;
+	}
+
+	if (pEthernetHdr->ether_type == RtlUshortByteSwap(ETHERTYPE_IP))
+	{
+		status = WSKSendPacketInternal_NBL(NPF_LOOPBACK_SEND_TYPE_IPV4, NetBufferList);
+	}
+	else if (pEthernetHdr->ether_type == RtlUshortByteSwap(ETHERTYPE_IPV6))
+	{
+		status = WSKSendPacketInternal_NBL(NPF_LOOPBACK_SEND_TYPE_IPV6, NetBufferList);
+	}
+	else
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket_NBL() failed with status 0x%08X, not valid loopback IPv4 or IPv6 packet\n", status);
+	}
+
+	TRACE_EXIT();
+	return status;
+}
+
+NTSTATUS
+NTAPI
+WSKSendPacketInternal_NBL(
+	__in BOOLEAN bIPv4,
+	__in PNET_BUFFER_LIST NetBufferList
+	)
+{
+	NTSTATUS		status = STATUS_SUCCESS;
+	ULONG			SentBytes;
+
+	TRACE_ENTER();
+
+	SentBytes = bIPv4 ?
+		WSKSendTo_NBL(g_IPv4Socket, NetBufferList, IP_HDR_LEN, (PSOCKADDR)& g_IPv4RemoteAddress) :
+		WSKSendTo_NBL(g_IPv6Socket, NetBufferList, IPV6_HDR_LEN, (PSOCKADDR)& g_IPv6RemoteAddress);
+
+	if (SentBytes != NetBufferList->FirstNetBuffer->DataLength - (bIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN))
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSendPacketInternal_NBL()::WSKSendTo_NBL() failed with SentBytes 0x%08X\n", SentBytes);
+	}
+
+	TRACE_EXIT();
+	return status;
+}
 
 static
 NTSTATUS
@@ -403,6 +484,60 @@ __in PWSK_BUF WskBuffer
 	TRACE_EXIT();
 }
 
+static
+NTSTATUS
+InitWskBuffer_NBL(
+	__in  PNET_BUFFER_LIST  NetBufferList,
+	__in  ULONG  BufferOffset,
+	__out PWSK_BUF  WskBuffer
+	)
+{
+	NTSTATUS Status = STATUS_SUCCESS;
+
+	TRACE_ENTER();
+
+	ASSERT(NetBufferList);
+	ASSERT(WskBuffer);
+
+	WskBuffer->Offset = BufferOffset;
+	WskBuffer->Length = NetBufferList->FirstNetBuffer->DataLength - BufferOffset;
+
+	WskBuffer->Mdl = NetBufferList->FirstNetBuffer->CurrentMdl;
+	if (!WskBuffer->Mdl)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "InitWskBuffer_NBL()::NetBufferList->FirstNetBuffer->CurrentMdl failed with status 0x%08X\n", STATUS_INSUFFICIENT_RESOURCES);
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	__try
+	{
+		MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, IoWriteAccess);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "InitWskBuffer_NBL()::MmProbeAndLockPages(%p) failed with status 0x%08X\n", Buffer, STATUS_ACCESS_VIOLATION);
+		Status = STATUS_ACCESS_VIOLATION;
+	}
+
+	TRACE_EXIT();
+	return Status;
+}
+
+static
+VOID
+FreeWskBuffer_NBL(
+	__in PWSK_BUF WskBuffer
+	)
+{
+	ASSERT(WskBuffer);
+
+	TRACE_ENTER();
+
+	MmUnlockPages(WskBuffer->Mdl);
+	TRACE_EXIT();
+}
+
 PWSK_SOCKET
 NTAPI
 WSKCreateSocket(
@@ -428,7 +563,7 @@ __in ULONG                  Flags
 	Status = InitWskData(&Irp, &CompletionEvent);
 	if (!NT_SUCCESS(Status))
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKCreateSocket()::InitWskData() failed with status 0x%08X\n", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKCreateSocket()::InitWskData() failed with status 0x%08X\n", Status);
 		TRACE_EXIT();
 		return NULL;
 	}
@@ -479,7 +614,7 @@ __in PWSK_SOCKET WskSocket
 	Status = InitWskData(&Irp, &CompletionEvent);
 	if (!NT_SUCCESS(Status))
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKCloseSocket()::InitWskData() failed with status 0x%08X\n", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKCloseSocket()::InitWskData() failed with status 0x%08X\n", Status);
 		TRACE_EXIT();
 		return Status;
 	}
@@ -522,7 +657,7 @@ __in ULONG				Flags
 	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer);
 	if (!NT_SUCCESS(Status))
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSend()::InitWskBuffer() failed with status 0x%08X\n", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSend()::InitWskBuffer() failed with status 0x%08X\n", Status);
 		TRACE_EXIT();
 		return SOCKET_ERROR;
 	}
@@ -530,7 +665,7 @@ __in ULONG				Flags
 	Status = InitWskData(&Irp, &CompletionEvent);
 	if (!NT_SUCCESS(Status))
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSend()::InitWskData() failed with status 0x%08X\n", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSend()::InitWskData() failed with status 0x%08X\n", Status);
 		FreeWskBuffer(&WskBuffer);
 		TRACE_EXIT();
 		return SOCKET_ERROR;
@@ -581,7 +716,7 @@ __in_opt PSOCKADDR      RemoteAddress
 	Status = InitWskBuffer(Buffer, BufferSize, &WskBuffer);
 	if (!NT_SUCCESS(Status))
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendTo()::InitWskBuffer() failed with status 0x%08X\n", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSendTo()::InitWskBuffer() failed with status 0x%08X\n", Status);
 		TRACE_EXIT();
 		return SOCKET_ERROR;
 	}
@@ -589,7 +724,7 @@ __in_opt PSOCKADDR      RemoteAddress
 	Status = InitWskData(&Irp, &CompletionEvent);
 	if (!NT_SUCCESS(Status))
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendTo()::InitWskData() failed with status 0x%08X\n", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSendTo()::InitWskData() failed with status 0x%08X\n", Status);
 		FreeWskBuffer(&WskBuffer);
 		TRACE_EXIT();
 		return SOCKET_ERROR;
@@ -617,6 +752,68 @@ __in_opt PSOCKADDR      RemoteAddress
 	return BytesSent;
 }
 
+LONG
+NTAPI
+WSKSendTo_NBL(
+	__in PWSK_SOCKET        WskSocket,
+	__in PNET_BUFFER_LIST	NetBufferList,
+	__in ULONG				BufferOffset,
+	__in_opt PSOCKADDR      RemoteAddress
+	)
+{
+	KEVENT          CompletionEvent = { 0 };
+	PIRP            Irp = NULL;
+	WSK_BUF         WskBuffer = { 0 };
+	LONG            BytesSent = SOCKET_ERROR;
+	NTSTATUS        Status = STATUS_UNSUCCESSFUL;
+
+	TRACE_ENTER();
+
+	if (g_SocketsState != INITIALIZED || !WskSocket || !NetBufferList)
+	{
+		TRACE_EXIT();
+		return SOCKET_ERROR;
+	}
+
+	Status = InitWskBuffer_NBL(NetBufferList, BufferOffset, &WskBuffer);
+	if (!NT_SUCCESS(Status))
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSendTo_NBL()::InitWskBuffer_NBL() failed with status 0x%08X\n", Status);
+		TRACE_EXIT();
+		return SOCKET_ERROR;
+	}
+
+	Status = InitWskData(&Irp, &CompletionEvent);
+	if (!NT_SUCCESS(Status))
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSendTo_NBL()::InitWskData() failed with status 0x%08X\n", Status);
+		FreeWskBuffer_NBL(&WskBuffer);
+		TRACE_EXIT();
+		return SOCKET_ERROR;
+	}
+
+	Status = ((PWSK_PROVIDER_DATAGRAM_DISPATCH)WskSocket->Dispatch)->WskSendTo(
+		WskSocket,
+		&WskBuffer,
+		0,
+		RemoteAddress,
+		0,
+		NULL,
+		Irp);
+	if (Status == STATUS_PENDING)
+	{
+		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
+		Status = Irp->IoStatus.Status;
+	}
+
+	BytesSent = NT_SUCCESS(Status) ? (LONG)Irp->IoStatus.Information : SOCKET_ERROR;
+
+	IoFreeIrp(Irp);
+	FreeWskBuffer_NBL(&WskBuffer);
+	TRACE_EXIT();
+	return BytesSent;
+}
+
 NTSTATUS
 NTAPI
 WSKBind(
@@ -639,7 +836,7 @@ __in PSOCKADDR          LocalAddress
 	Status = InitWskData(&Irp, &CompletionEvent);
 	if (!NT_SUCCESS(Status))
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKBind()::InitWskData() failed with status 0x%08X\n", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKBind()::InitWskData() failed with status 0x%08X\n", Status);
 		TRACE_EXIT();
 		return Status;
 	}
