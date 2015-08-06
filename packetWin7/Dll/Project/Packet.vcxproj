@@ -1110,6 +1110,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDIS6X;_AMD64_;NDEBUG;_WINDOWS;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1313,6 +1314,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NPF_NPCAP_RUN_IN_WINPCAP_MODE;NDIS6X;_AMD64_;NDEBUG;_WINDOWS;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
