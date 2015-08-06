@@ -6,8 +6,9 @@ Npcap is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-
 
 1. **NDIS 6 Support**: Npcap makes use of new LWF driver in Windows 7 and later (the legacy driver is used on XP and Vista), it's faster than the old [**NDIS 5 Intermediate**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff557012(v=vs.85).aspx) technique, One reason is that packet data stucture has changed (from **NDIS_PACKET** to **NET_BUFFER_LIST**) since Vista and NDIS 5 needs to handle extra packet structure conversion.
 2. **"Admin-only Mode" Support**: Npcap supports to restrict its use to Administrators for safety purpose. If Npcap is installed with the option **Restrict Npcap driver's access to Administrators only** checked, when a non-Admin user tries to start a user software (Nmap, Wireshark, etc), the [**User Account Control (UAC)**](http://windows.microsoft.com/en-us/windows/what-is-user-account-control#1TC=windows-7) dialog will prompt asking for Administrator privilege, only when the end user chooses **Yes**, the driver can be accessed. This is similar to UNIX where you need root access to capture packets.
-3. **Coexist With WinPcap**: Using "Non-WinPcap Mode", Npcap can coexist with WinPcap and share the DLL binary interface with WinPcap. So the applications unaware of Npcap **SHOULD** be able to use Npcap automatically if WinPcap is unavailable. The applications who knows Npcap's existence can choose to use Npcap or WinPcap first. The key about which is loaded first is [**DLL Search Path**](https://msdn.microsoft.com/en-us/library/windows/desktop/ms682586(v=vs.85).aspx). In "Non-WinPcap Mode", Npcap installs its DLLs into **C:\System32\Npcap\** instead of WinPcap's **C:\System32\**, so applications who want to load Npcap first must make **C:\System32\Npcap\** precedent to other paths in ways such as calling [**SetDllDirectory**](https://msdn.microsoft.com/en-us/library/ms686203.aspx), etc. Another point is Npcap uses service name **"npcap"** instead of WinPcap's **"npf"** in "Non-WinPcap Mode", so if applications using **"net start npf"** for starting service must use **"net start npcap"** instead. If you want 100% compatibility with WinPcap, you should install Npcap choosing "WinPcap Mode" (Install Npcap in WinPcap API-compatible Mode). In this mode, Npcap will install its Dlls in WinPcap's **C:\System32\** and use the **"npf"** service name. Remember, before installing in this mode, you must uninstall WinPcap first (the installer wizard will prompt you that).
+3. **"WinPcap Compatible Mode" Support**: "WinPcap Compatible Mode" is used to decide whether Npcap should coexist With WinPcap or be compatible with WinPcap. With "WinPcap Compatible Mode" **OFF**, Npcap can coexist with WinPcap and share the DLL binary interface with WinPcap. So the applications unaware of Npcap **SHOULD** be able to use Npcap automatically if WinPcap is unavailable. The applications who knows Npcap's existence can choose to use Npcap or WinPcap first. The key about which is loaded first is [**DLL Search Path**](https://msdn.microsoft.com/en-us/library/windows/desktop/ms682586(v=vs.85).aspx). With "WinPcap Compatible Mode" **OFF**, Npcap installs its DLLs into **C:\System32\Npcap\** instead of WinPcap's **C:\System32\**, so applications who want to load Npcap first must make **C:\System32\Npcap\** precedent to other paths in ways such as calling [**SetDllDirectory**](https://msdn.microsoft.com/en-us/library/ms686203.aspx), etc. Another point is Npcap uses service name **"npcap"** instead of WinPcap's **"npf"** with "WinPcap Compatible Mode" **OFF**, so if applications using **"net start npf"** for starting service must use **"net start npcap"** instead. If you want 100% compatibility with WinPcap, you should install Npcap choosing "WinPcap Compatible Mode" (Install Npcap in WinPcap API-compatible Mode). In this mode, Npcap will install its Dlls in WinPcap's **C:\System32\** and use the **"npf"** service name. Remember, before installing in this mode, you must uninstall WinPcap first (the installer wizard will prompt you that).
 4. **Loopback Packets Capture Support**: Now Npcap is able to see Windows loopback packets using [**Windows Filtering Platform (WFP)**](https://msdn.microsoft.com/en-us/library/windows/desktop/aa366510(v=vs.85).aspx) technique, after installation, Npcap will create an adapter named **"Npcap Loopback Adapter"** for you. If you are a Wireshark user, choose this adapter to capture, you will see all loopback traffic the same way as other non-loopback adapters. Try it by typing in commands like "ping 127.0.0.1" (IPv4) or "ping ::1" (IPv6).
+5. **Loopback Packets Send Support**: Besides loopback packets capturing, Npcap can also send out loopback packets based on [**Winsock Kernel (WSK)**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff556958(v=vs.85).aspx) technique. A user software (e.g. Nmap) can just send packets out using **"Npcap Loopback Adapter"** like other adapters, **"Npcap Loopback Adapter"** will automatically remove the packet's Ethernet header and inject the payload into Windows TCP/IP stack, so this kind of loopback packet never go out of the machine.
 
 ## Architecture
 
@@ -23,12 +24,13 @@ NPcapHelper.exe          packetWin7\Helper        the helper program for `Admin-
 
 ## Build
 
-* wpcap.dll, packet.dll, NPFInstall.exe and NPcapHelper.exe need to be built using **Visual Studio 2005**.
+* wpcap.dll needs to be built using **Visual Studio 2005**.
+* packet.dll, NPFInstall.exe and NPcapHelper.exe need to be built using **Visual Studio 2010**.
 * npf.sys (npcap.sys) needs to be built using **Visual Studio 2015** with **Windows Software Development Kit 10** and **Windows Driver Kit 10**.
 
 ## Packaging
 
-Use **installer\Build.bat** to build all Visual Studio projects via MSBuild, make sure you installed Visual Studio 2005 and Visual Studio 2015 Non-Express Editions.
+Use **installer\Build.bat** to build all Visual Studio projects via MSBuild, make sure you installed Visual Studio 2005, Visual Studio 2010 and Visual Studio 2015 Non-Express Editions.
 
 Use **installer\Deploy.bat** to copy and sign the files for "Non-WinPcap Mode", installer will be generated.
 
@@ -103,12 +105,12 @@ Win7 and later (with "WinPcap Compatible Mode" ON, this is the DEFAULT option):
 
 ## Run
 
-1. Run and install the Npcap installer: **npcap-nmap-%VERSION%.exe**.
+1. Run and install the Npcap installer: **npcap-nmap-%VERSION%-%REVISION%.exe**.
 2. Use Nmap or Wireshark to test Npcap.
 
 ## Try
 
-The latest installers can always be found here: https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/, the latest installer for now is: **npcap-nmap-0.01.exe**.
+The latest installers can always be found here: https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/.
 
 ## License
 

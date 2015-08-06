@@ -1,10 +1,14 @@
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: Use VS2010's MSBuild to build wpcap.dll, Packet.dll, NPFInstall.exe and NPcapHelper.exe
-call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat"
+:: Use VS2005's MSBuild to build wpcap.dll
+call "C:\Program Files (x86)\Microsoft Visual Studio 8\VC\vcvarsall.bat"
 
 msbuild "..\wpcap\PRJ\wpcap.sln" /t:Build /p:Configuration="Release - No AirPcap" /p:Platform="Win32"
 msbuild "..\wpcap\PRJ\wpcap.sln" /t:Build /p:Configuration="Release - No AirPcap" /p:Platform="x64"
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Use VS2010's MSBuild to build Packet.dll, NPFInstall.exe and NPcapHelper.exe
+call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat"
 
 msbuild "..\packetWin7\Dll\Project\Packet.sln" /t:Build /p:Configuration="Release No NetMon and AirPcap" /p:Platform="Win32"
 msbuild "..\packetWin7\Dll\Project\Packet.sln" /t:Build /p:Configuration="Release No NetMon and AirPcap" /p:Platform="x64"
