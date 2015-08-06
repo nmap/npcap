@@ -251,10 +251,20 @@ NPF_Write(
 			//
 			//  Call the MAC
 			//
-			NdisFSendNetBufferLists(Open->AdapterHandle,
-				pNetBufferList,
-				NDIS_DEFAULT_PORT_NUMBER,
-				SendFlags);
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+			if (Open->Loopback == TRUE)
+			{
+				NPF_LoopbackSendNetBufferLists(Open->GroupHead,
+					pNetBufferList);
+			}
+			else
+#endif
+			{
+				NdisFSendNetBufferLists(Open->AdapterHandle,
+					pNetBufferList,
+					NDIS_DEFAULT_PORT_NUMBER,
+					SendFlags);
+			}
 
 			numSentPackets ++;
 		}
@@ -532,7 +542,20 @@ NPF_BufferedWrite(
 		//
 		// Call the MAC
 		//
-		NdisFSendNetBufferLists(Open->AdapterHandle, pNetBufferList, NDIS_DEFAULT_PORT_NUMBER, SendFlags);
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		if (Open->Loopback == TRUE)
+		{
+			NPF_LoopbackSendNetBufferLists(Open->GroupHead,
+				pNetBufferList);
+		}
+		else
+#endif
+		{
+			NdisFSendNetBufferLists(Open->AdapterHandle,
+				pNetBufferList,
+				NDIS_DEFAULT_PORT_NUMBER,
+				SendFlags);
+		}
 
 		if (Sync)
 		{
