@@ -591,11 +591,18 @@ NPF_GetDeviceMTU(
 
 	// submit the request
 	MaxSizeReq->Request.RequestId = (PVOID) NPF_REQUEST_ID;
-	ReqStatus = NdisFOidRequest(pOpen->AdapterHandle, &MaxSizeReq->Request);
+	if (pOpen->AdapterHandle)
+	{
+		ReqStatus = NdisFOidRequest(pOpen->AdapterHandle, &MaxSizeReq->Request);
+	}
+	else
+	{
+		ReqStatus = STATUS_UNSUCCESSFUL;
+	}
 
 	if (ReqStatus == NDIS_STATUS_PENDING)
 	{
-		NdisWaitEvent(&MaxSizeReq->InternalRequestCompletedEvent, 1000);
+		NdisWaitEvent(&MaxSizeReq->InternalRequestCompletedEvent, 0);
 		ReqStatus = MaxSizeReq->RequestStatus;
 	}
 
@@ -1118,35 +1125,35 @@ NPF_RemoveUnclosedAdapters(
 	BOOLEAN NoDirectedBindedRemaining = TRUE;
 	TRACE_ENTER();
 
-// 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
-// 	{
-// 		if (CurOpen->DirectBinded)
-// 		{
-// 			NoDirectedBindedRemaining = FALSE;
-// 		}
-// 	}
-//
-// 	if (NoDirectedBindedRemaining)
-// 	{
-// 		for (CurOpen = g_arrOpen; CurOpen != NULL;)
-// 		{
-// 			TempOpen = CurOpen->Next;
-// 			NPF_CleanupForUnclosed(CurOpen);
-// 			NPF_CloseAdapterForUnclosed(CurOpen);
-// 			CurOpen = TempOpen;
-// 		}
-// 	}
-
-	for (CurOpen = g_arrOpen; CurOpen != NULL;)
+	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
-		TempOpen = CurOpen->Next;
 		if (CurOpen->DirectBinded)
 		{
+			NoDirectedBindedRemaining = FALSE;
+		}
+	}
+
+	if (NoDirectedBindedRemaining)
+	{
+		for (CurOpen = g_arrOpen; CurOpen != NULL;)
+		{
+			TempOpen = CurOpen->Next;
 			NPF_CleanupForUnclosed(CurOpen);
 			NPF_CloseAdapterForUnclosed(CurOpen);
+			CurOpen = TempOpen;
 		}
-		CurOpen = TempOpen;
 	}
+
+// 	for (CurOpen = g_arrOpen; CurOpen != NULL;)
+// 	{
+// 		TempOpen = CurOpen->Next;
+// 		if (CurOpen->DirectBinded)
+// 		{
+// 			NPF_CleanupForUnclosed(CurOpen);
+// 			NPF_CloseAdapterForUnclosed(CurOpen);
+// 		}
+// 		CurOpen = TempOpen;
+// 	}
 
 	TRACE_EXIT();
 }
@@ -1613,18 +1620,20 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
+	// 	if (Open->ReadEvent != NULL)
+	// 		KeSetEvent(Open->ReadEvent,0,FALSE);
 	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
 	{
 		if (GroupOpen->ReadEvent != NULL)
 			KeSetEvent(GroupOpen->ReadEvent, 0, FALSE);
 	}
 
-	//NPF_RemoveFromOpenArray(Open);
+	NPF_RemoveFromOpenArray(Open);
 	NPF_CloseBindingAndAdapter(Open);
 	//NPF_ReleaseOpenInstanceResources(Open);
 	//ExFreePool(Open);
 
-	//NPF_RemoveUnclosedAdapters(); //if there are any unclosed adapter objects, just close them
+	NPF_RemoveUnclosedAdapters(); //if there are any unclosed adapter objects, just close them
 
 	TRACE_EXIT();
 	return;
