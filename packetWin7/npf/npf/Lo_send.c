@@ -369,10 +369,10 @@ WSKSendPacketInternal_NBL(
 	TRACE_ENTER();
 
 	SentBytes = bIPv4 ?
-		WSKSendTo_NBL(g_IPv4Socket, NetBufferList, IP_HDR_LEN, (PSOCKADDR)& g_IPv4RemoteAddress) :
-		WSKSendTo_NBL(g_IPv6Socket, NetBufferList, IPV6_HDR_LEN, (PSOCKADDR)& g_IPv6RemoteAddress);
+		WSKSendTo_NBL(g_IPv4Socket, NetBufferList, ETHER_HDR_LEN, (PSOCKADDR)& g_IPv4RemoteAddress) :
+		WSKSendTo_NBL(g_IPv6Socket, NetBufferList, ETHER_HDR_LEN, (PSOCKADDR)& g_IPv6RemoteAddress);
 
-	if (SentBytes != NetBufferList->FirstNetBuffer->DataLength - (bIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN))
+	if (SentBytes != NetBufferList->FirstNetBuffer->DataLength - ETHER_HDR_LEN)
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSendPacketInternal_NBL()::WSKSendTo_NBL() failed with SentBytes 0x%08X\n", SentBytes);
 	}
