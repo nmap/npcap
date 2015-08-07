@@ -1628,7 +1628,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 			KeSetEvent(GroupOpen->ReadEvent, 0, FALSE);
 	}
 
-	NPF_RemoveFromOpenArray(Open);
+	//NPF_RemoveFromOpenArray(Open);
 	NPF_CloseBindingAndAdapter(Open);
 	//NPF_ReleaseOpenInstanceResources(Open);
 	//ExFreePool(Open);
