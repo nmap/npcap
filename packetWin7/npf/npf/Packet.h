@@ -1021,6 +1021,7 @@ NPF_SendCompleteExForEachOpen(
 	BOOLEAN FreeBufAfterWrite
 	);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
   \brief Send a loopback NBL.
   \param NetBufferList Pointer to NBL.
@@ -1033,7 +1034,7 @@ NPF_LoopbackSendNetBufferLists(
 	IN POPEN_INSTANCE Open,
 	IN PNET_BUFFER_LIST NetBufferList
 	);
-
+#endif
 
 /*!
   \brief Callback for NDIS StatusHandler. Not used by NPF

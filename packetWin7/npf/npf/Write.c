@@ -889,6 +889,7 @@ NPF_SendCompleteExForEachOpen(
 
 //-------------------------------------------------------------------
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 VOID
 NPF_LoopbackSendNetBufferLists(
 	IN POPEN_INSTANCE Open,
@@ -905,3 +906,4 @@ NPF_LoopbackSendNetBufferLists(
 
 	TRACE_EXIT();
 }
+#endif
