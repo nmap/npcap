@@ -320,17 +320,7 @@ NPF_OpenAdapter(
 	// This is used for timestamp conversion.
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (Open->Loopback)
-	{
-		returnStatus = NDIS_STATUS_SUCCESS;
-		Open->MaxFrameSize = 1514;
-	}
-	else
-#endif
-	{
-		returnStatus = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
-	}
+	returnStatus = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
 
 	if (!NT_SUCCESS(returnStatus))
 	{
@@ -1125,35 +1115,35 @@ NPF_RemoveUnclosedAdapters(
 	BOOLEAN NoDirectedBindedRemaining = TRUE;
 	TRACE_ENTER();
 
-	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
-	{
-		if (CurOpen->DirectBinded)
-		{
-			NoDirectedBindedRemaining = FALSE;
-		}
-	}
-
-	if (NoDirectedBindedRemaining)
-	{
-		for (CurOpen = g_arrOpen; CurOpen != NULL;)
-		{
-			TempOpen = CurOpen->Next;
-			NPF_CleanupForUnclosed(CurOpen);
-			NPF_CloseAdapterForUnclosed(CurOpen);
-			CurOpen = TempOpen;
-		}
-	}
-
-// 	for (CurOpen = g_arrOpen; CurOpen != NULL;)
+// 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 // 	{
-// 		TempOpen = CurOpen->Next;
 // 		if (CurOpen->DirectBinded)
 // 		{
+// 			NoDirectedBindedRemaining = FALSE;
+// 		}
+// 	}
+//
+// 	if (NoDirectedBindedRemaining)
+// 	{
+// 		for (CurOpen = g_arrOpen; CurOpen != NULL;)
+// 		{
+// 			TempOpen = CurOpen->Next;
 // 			NPF_CleanupForUnclosed(CurOpen);
 // 			NPF_CloseAdapterForUnclosed(CurOpen);
+// 			CurOpen = TempOpen;
 // 		}
-// 		CurOpen = TempOpen;
 // 	}
+
+	for (CurOpen = g_arrOpen; CurOpen != NULL;)
+	{
+		TempOpen = CurOpen->Next;
+		if (CurOpen->DirectBinded)
+		{
+			NPF_CleanupForUnclosed(CurOpen);
+			NPF_CloseAdapterForUnclosed(CurOpen);
+		}
+		CurOpen = TempOpen;
+	}
 
 	TRACE_EXIT();
 }
@@ -1633,7 +1623,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	//NPF_ReleaseOpenInstanceResources(Open);
 	//ExFreePool(Open);
 
-	NPF_RemoveUnclosedAdapters(); //if there are any unclosed adapter objects, just close them
+	//NPF_RemoveUnclosedAdapters(); //if there are any unclosed adapter objects, just close them
 
 	TRACE_EXIT();
 	return;

@@ -890,7 +890,7 @@ Return Value:
 
 	NdisFDeregisterFilterDriver(FilterDriverHandle);
 
-/*	NPF_RemoveUnclosedAdapters();*/
+	NPF_RemoveUnclosedAdapters();
 
 	// Free the adapters names
 	if (bindP != NULL)
