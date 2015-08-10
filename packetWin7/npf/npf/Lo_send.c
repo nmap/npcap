@@ -516,7 +516,7 @@ InitWskBuffer_NBL(
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "InitWskBuffer_NBL()::MmProbeAndLockPages(%p) failed with status 0x%08X\n", Buffer, STATUS_ACCESS_VIOLATION);
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "InitWskBuffer_NBL()::MmProbeAndLockPages(%p) failed with status 0x%08X\n", WskBuffer->Mdl, STATUS_ACCESS_VIOLATION);
 		Status = STATUS_ACCESS_VIOLATION;
 	}
 
