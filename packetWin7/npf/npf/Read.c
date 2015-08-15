@@ -572,6 +572,7 @@ NPF_TapExForEachOpen(
 	ULONG					i;
 	BOOLEAN					ShouldReleaseBufferLock;
 
+	PUCHAR					TmpBuffer = NULL;
 	PUCHAR					HeaderBuffer;
 	UINT					HeaderBufferSize;
 	PUCHAR					LookaheadBuffer;
@@ -645,6 +646,30 @@ NPF_TapExForEachOpen(
 			// As for single MDL (as we assume) condition, we always have BufferLength == TotalLength
 			if (BufferLength > TotalLength)
 				BufferLength = TotalLength;
+
+			// Handle multiple MDLs situation here, if there's only 20 bytes in the first MDL, then the IP header is in the second MDL.
+			if (BufferLength == sizeof(NDISPROT_ETH_HEADER) && pMdl->Next != NULL)
+			{
+				TmpBuffer = ExAllocatePoolWithTag(NonPagedPool, pNetBufList->FirstNetBuffer->DataLength, 'NPCA');
+				pEthHeader = NdisGetDataBuffer(pNetBufList->FirstNetBuffer,
+					pNetBufList->FirstNetBuffer->DataLength,
+					TmpBuffer,
+					1,
+					0);
+				if (!pEthHeader)
+				{
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+						"NPF_TapExForEachOpen: NdisGetDataBuffer() [status: %#x]\n",
+						STATUS_UNSUCCESSFUL);
+
+					NdisReleaseSpinLock(&Open->MachineLock);
+					break;
+				}
+				else
+				{
+					BufferLength = pNetBufList->FirstNetBuffer->DataLength;
+				}
+			}
 
 // 			if (BufferLength < sizeof(NDISPROT_ETH_HEADER))
 // 			{
@@ -945,6 +970,11 @@ NPF_TapExForEachOpen(
 
 NPF_TapEx_ForEachOpen_End:;
 		pNetBufList = pNextNetBufList;
+		if (TmpBuffer)
+		{
+			ExFreePool(TmpBuffer);
+			TmpBuffer = NULL;
+		}
 	} // end of the for loop
 
 	//TRACE_EXIT();
