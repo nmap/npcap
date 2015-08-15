@@ -24,7 +24,10 @@
 ;; Updated to 0.02, July 2015
 
 ;; Yang Luo
-;; Updated to 0.02, July 2015
+;; Updated to 0.03, July 2015
+
+;; Yang Luo
+;; Updated to 0.04, August 2015
 
 SetCompressor /SOLID /FINAL lzma
 
@@ -40,8 +43,8 @@ SetCompressor /SOLID /FINAL lzma
 ;General
 
 ; The version of Npcap
-!define VERSION "0.03"
-!define WIN_VERSION "0.3.0.727"
+!define VERSION "0.04"
+!define WIN_VERSION "0.4.0.815"
 
 ; The name of the installer
 Name "Npcap ${VERSION} for Nmap (beta)"
