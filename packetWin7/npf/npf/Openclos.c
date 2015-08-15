@@ -241,7 +241,6 @@ NPF_OpenAdapter(
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
 	NDIS_STATUS				Status;
-	NTSTATUS				returnStatus;
 	ULONG					localNumOpenedInstances;
 
 	TRACE_ENTER();
@@ -262,48 +261,6 @@ NPF_OpenAdapter(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
-	{
-		// Use Winsock Kernel (WSK) to send loopback packets.
-		Status = NPF_WSKStartup();
-		if (!NT_SUCCESS(Status))
-		{
-			return Status;
-		}
-
-		Status = NPF_WSKInitSockets();
-		if (!NT_SUCCESS(Status))
-		{
-			return Status;
-		}
-
-		// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
-		Status = NPF_InitInjectionHandles();
-		if (!NT_SUCCESS(Status))
-		{
-			Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
-			IoCompleteRequest(Irp, IO_NO_INCREMENT);
-			TRACE_EXIT();
-			return STATUS_INSUFFICIENT_RESOURCES;
-		}
-
-		Status = NPF_RegisterCallouts(g_LoopbackDevObj);
-		if (!NT_SUCCESS(Status))
-		{
-			if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
-			{
-				NPF_UnregisterCallouts();
-			}
-
-			Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
-			IoCompleteRequest(Irp, IO_NO_INCREMENT);
-			TRACE_EXIT();
-			return STATUS_INSUFFICIENT_RESOURCES;
-		}
-	}
-#endif
-
 	Open->DeviceExtension = DeviceExtension;
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
 		"Opening the device %ws, BindingContext=%p",
@@ -320,9 +277,46 @@ NPF_OpenAdapter(
 	// This is used for timestamp conversion.
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
-	returnStatus = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
+	{
+		// Use Winsock Kernel (WSK) to send loopback packets.
+		Status = NPF_WSKStartup();
+		if (!NT_SUCCESS(Status))
+		{
+			goto NPF_OpenAdapter_End;
+		}
 
-	if (!NT_SUCCESS(returnStatus))
+		Status = NPF_WSKInitSockets();
+		if (!NT_SUCCESS(Status))
+		{
+			goto NPF_OpenAdapter_End;
+		}
+
+		// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
+		Status = NPF_InitInjectionHandles();
+		if (!NT_SUCCESS(Status))
+		{
+			goto NPF_OpenAdapter_End;
+		}
+
+		Status = NPF_RegisterCallouts(g_LoopbackDevObj);
+		if (!NT_SUCCESS(Status))
+		{
+			if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+			{
+				NPF_UnregisterCallouts();
+			}
+
+			goto NPF_OpenAdapter_End;
+		}
+	}
+#endif
+
+	Status = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
+
+NPF_OpenAdapter_End:;
+	if (!NT_SUCCESS(Status))
 	{
 		// Close the binding
 		NPF_CloseBinding(Open);
@@ -337,10 +331,10 @@ NPF_OpenAdapter(
 			Open = NULL;
 		}
 
-		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+		Irp->IoStatus.Status = Status;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
-		return STATUS_INSUFFICIENT_RESOURCES;
+		return Status;
 	}
 	else
 	{
@@ -351,12 +345,12 @@ NPF_OpenAdapter(
 	NPF_AddToOpenArray(Open);
 	NPF_AddToGroupOpenArray(Open);
 
-	Irp->IoStatus.Status = returnStatus;
+	Irp->IoStatus.Status = Status;
 	Irp->IoStatus.Information = 0;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 	TRACE_EXIT();
-	return returnStatus;
+	return Status;
 }
 
 //-------------------------------------------------------------------
