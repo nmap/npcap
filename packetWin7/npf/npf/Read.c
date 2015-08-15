@@ -104,6 +104,7 @@ NPF_Read(
 	{
 		NPF_StopUsingOpenInstance(Open);
 		// The Network adapter has been removed or diasabled
+		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
 	NPF_StopUsingBinding(Open);
@@ -111,6 +112,7 @@ NPF_Read(
 	if (Open->Size == 0)
 	{
 		NPF_StopUsingOpenInstance(Open);
+		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
 
@@ -118,6 +120,7 @@ NPF_Read(
 	{
 		// this instance is in dump mode, but the dump file has still not been opened
 		NPF_StopUsingOpenInstance(Open);
+		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
 
@@ -152,6 +155,7 @@ NPF_Read(
 			if (CurrBuff == NULL)
 			{
 				NPF_StopUsingOpenInstance(Open);
+				TRACE_EXIT();
 				EXIT_FAILURE(0);
 			}
 
@@ -162,6 +166,7 @@ NPF_Read(
 					NPF_StopUsingOpenInstance(Open);
 					Irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
 					IoCompleteRequest(Irp, IO_NO_INCREMENT);
+					TRACE_EXIT();
 					return STATUS_BUFFER_TOO_SMALL;
 				}
 			}
@@ -172,6 +177,7 @@ NPF_Read(
 					NPF_StopUsingOpenInstance(Open);
 					Irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
 					IoCompleteRequest(Irp, IO_NO_INCREMENT);
+					TRACE_EXIT();
 					return STATUS_BUFFER_TOO_SMALL;
 				}
 			}
@@ -209,6 +215,7 @@ NPF_Read(
 			Irp->IoStatus.Status = STATUS_SUCCESS;
 			IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
+			TRACE_EXIT();
 			return STATUS_SUCCESS;
 		}
 
@@ -234,12 +241,14 @@ NPF_Read(
 			if (UserPointer == NULL)
 			{
 				NPF_StopUsingOpenInstance(Open);
+				TRACE_EXIT();
 				EXIT_FAILURE(0);
 			}
 
 			if ((!IS_VALIDATED(Open->tme.validated_blocks, Open->tme.active_read)) || (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr)))
 			{
 				NPF_StopUsingOpenInstance(Open);
+				TRACE_EXIT();
 				EXIT_FAILURE(0);
 			}
 
@@ -288,6 +297,7 @@ NPF_Read(
 			header->bh_datalen = header->bh_caplen;
 
 			NPF_StopUsingOpenInstance(Open);
+			TRACE_EXIT();
 			EXIT_SUCCESS(bytecopy + sizeof(struct bpf_hdr));
 		}
 
@@ -302,6 +312,7 @@ NPF_Read(
 							// We must awake the application, returning an empty buffer.
 		{
 			NPF_StopUsingOpenInstance(Open);
+			TRACE_EXIT();
 			EXIT_SUCCESS(0);
 		}
 
@@ -309,6 +320,7 @@ NPF_Read(
 		if (Open->mode == MODE_MON)   //this capture instance is in monitor mode
 		{
 			NPF_StopUsingOpenInstance(Open);
+			TRACE_EXIT();
 			EXIT_FAILURE(0);
 		}
 #endif // HAVE_BUGGY_TME_SUPPORT
@@ -328,6 +340,7 @@ NPF_Read(
 	if (packp == NULL)
 	{
 		NPF_StopUsingOpenInstance(Open);
+		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
 
@@ -339,6 +352,7 @@ NPF_Read(
 		if (available == copied)
 		{
 			NPF_StopUsingOpenInstance(Open);
+			TRACE_EXIT();
 			EXIT_SUCCESS(copied);
 		}
 
@@ -357,6 +371,7 @@ NPF_Read(
 				{
 					//if the packet does not fit into the user buffer, we've ended copying packets
 					NPF_StopUsingOpenInstance(Open);
+					TRACE_EXIT();
 					EXIT_SUCCESS(copied);
 				}
 
@@ -417,6 +432,7 @@ NPF_Read(
 	}
 	{
 		NPF_StopUsingOpenInstance(Open);
+		TRACE_EXIT();
 		EXIT_SUCCESS(copied);
 	}
 
@@ -741,7 +757,7 @@ NPF_TapExForEachOpen(
 				{
 					// Packet not accepted by the filter, ignore it.
 					// return NDIS_STATUS_NOT_ACCEPTED;
-					goto NPF_TapEx_ForEachOpen_End;
+					goto NPF_TapExForEachOpen_End;
 				}
 
 				//if the filter returns -1 the whole packet must be accepted
@@ -768,7 +784,7 @@ NPF_TapExForEachOpen(
 					if (!(Open->mode & MODE_DUMP))
 					{
 						//return NDIS_STATUS_NOT_ACCEPTED;
-						goto NPF_TapEx_ForEachOpen_End;
+						goto NPF_TapExForEachOpen_End;
 					}
 				}
 
@@ -776,7 +792,7 @@ NPF_TapExForEachOpen(
 				{
 					LocalData->Dropped++;
 					//return NDIS_STATUS_NOT_ACCEPTED;
-					goto NPF_TapEx_ForEachOpen_End;
+					goto NPF_TapExForEachOpen_End;
 				}
 
 				if (Open->mode & MODE_DUMP && Open->MaxDumpPacks)
@@ -797,7 +813,7 @@ NPF_TapExForEachOpen(
 							KeSetEvent(Open->ReadEvent, 0, FALSE);
 
 						//return NDIS_STATUS_NOT_ACCEPTED;
-						goto NPF_TapEx_ForEachOpen_End;
+						goto NPF_TapExForEachOpen_End;
 					}
 				}
 
@@ -972,7 +988,7 @@ NPF_TapExForEachOpen(
 
 			} while (FALSE);
 
-		NPF_TapEx_ForEachOpen_End:;
+NPF_TapExForEachOpen_End:;
 			if (TmpBuffer)
 			{
 				ExFreePool(TmpBuffer);
