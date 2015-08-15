@@ -585,397 +585,405 @@ NPF_TapExForEachOpen(
 	PNDISPROT_ETH_HEADER    pEthHeader = NULL;
 	PNET_BUFFER_LIST        pNetBufList;
 	PNET_BUFFER_LIST        pNextNetBufList;
+	PNET_BUFFER             pNetBuf;
+	PNET_BUFFER             pNextNetBuf;
 	ULONG                   Offset;
 
 	//TRACE_ENTER();
 
 	pNetBufList = pNetBufferLists;
-
 	while (pNetBufList != NULL)
 	{
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
 
-		Cpu = KeGetCurrentProcessorNumber();
-		LocalData = &Open->CpuData[Cpu];
-
-		LocalData->Received++;
-
-		IF_LOUD(DbgPrint("Received on CPU %d \t%d\n", Cpu, LocalData->Received);)
-
-		NdisAcquireSpinLock(&Open->MachineLock);
-
-		//
-		// Get first MDL and data length in the list
-		//
-		pMdl = pNetBufList->FirstNetBuffer->CurrentMdl;
-		TotalLength = pNetBufList->FirstNetBuffer->DataLength;
-		Offset = pNetBufList->FirstNetBuffer->CurrentMdlOffset;
-		BufferLength = 0;
-
-		do
+		pNetBuf = pNetBufList->FirstNetBuffer;
+		while (pNetBuf != NULL)
 		{
-			if (pMdl)
-			{
-				NdisQueryMdl(
-					pMdl,
-					&pEthHeader,
-					&BufferLength,
-					NormalPagePriority);
-			}
+			pNextNetBuf = NET_BUFFER_NEXT_NB(pNetBuf);
 
-			if (pEthHeader == NULL)
-			{
-				//
-				//  The system is low on resources. Set up to handle failure
-				//  below.
-				//
-				BufferLength = 0;
-				NdisReleaseSpinLock(&Open->MachineLock);
-				break;
-			}
+			Cpu = KeGetCurrentProcessorNumber();
+			LocalData = &Open->CpuData[Cpu];
 
-			if (BufferLength == 0)
-			{
-				NdisReleaseSpinLock(&Open->MachineLock);
-				break;
-			}
+			LocalData->Received++;
 
-			BufferLength -= Offset;
-			pEthHeader = (PNDISPROT_ETH_HEADER)((PUCHAR)pEthHeader + Offset);
+			IF_LOUD(DbgPrint("Received on CPU %d \t%d\n", Cpu, LocalData->Received);)
 
-			// As for single MDL (as we assume) condition, we always have BufferLength == TotalLength
-			if (BufferLength > TotalLength)
-				BufferLength = TotalLength;
-
-			// Handle multiple MDLs situation here, if there's only 20 bytes in the first MDL, then the IP header is in the second MDL.
-			if (BufferLength == sizeof(NDISPROT_ETH_HEADER) && pMdl->Next != NULL)
-			{
-				TmpBuffer = ExAllocatePoolWithTag(NonPagedPool, pNetBufList->FirstNetBuffer->DataLength, 'NPCA');
-				pEthHeader = NdisGetDataBuffer(pNetBufList->FirstNetBuffer,
-					pNetBufList->FirstNetBuffer->DataLength,
-					TmpBuffer,
-					1,
-					0);
-				if (!pEthHeader)
-				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-						"NPF_TapExForEachOpen: NdisGetDataBuffer() [status: %#x]\n",
-						STATUS_UNSUCCESSFUL);
-
-					NdisReleaseSpinLock(&Open->MachineLock);
-					break;
-				}
-				else
-				{
-					BufferLength = pNetBufList->FirstNetBuffer->DataLength;
-				}
-			}
-
-// 			if (BufferLength < sizeof(NDISPROT_ETH_HEADER))
-// 			{
-// 				IF_LOUD(DbgPrint("ReceiveNetBufferList: Open %p, runt nbl %p, first buffer length %d\n",
-// 					Open, pNetBufList, BufferLength);)
-// 				NdisReleaseSpinLock(&Open->MachineLock);
-// 				break;
-// 			}
-
-			//bAcceptedReceive = TRUE;
-			//IF_LOUD(DbgPrint("ReceiveNetBufferList: Open %p, interesting nbl %p\n",
-			//	Open, pNetBufList);)
+				NdisAcquireSpinLock(&Open->MachineLock);
 
 			//
-			//  If the miniport is out of resources, we can't queue
-			//  this list of net buffer list - make a copy if this is so.
+			// Get first MDL and data length in the list
 			//
-			//DispatchLevel = NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags);
-
-			HeaderBuffer = (PUCHAR) pEthHeader;
-			HeaderBufferSize = sizeof(NDISPROT_ETH_HEADER);
-			LookaheadBuffer = (PUCHAR) pEthHeader + sizeof(NDISPROT_ETH_HEADER);
-			LookaheadBufferSize = BufferLength - HeaderBufferSize;
-			PacketSize = LookaheadBufferSize;
-
-			//
-			// the jit filter is available on x86 (32 bit) only
-			//
-#ifdef _X86_
-
-			if (Open->Filter != NULL)
-			{
-				if (Open->bpfprogram != NULL && Open->Filter->Function != NULL)
-				{
-					fres = Open->Filter->Function(
-						(PVOID) HeaderBuffer,
-						PacketSize + HeaderBufferSize,
-						LookaheadBufferSize + HeaderBufferSize);
-				}
-				else
-				{
-					fres = -1;
-				}
-			}
-			else
-#endif //_X86_
-			{
-				fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
-				HeaderBuffer,
-				PacketSize + HeaderBufferSize,
-				LookaheadBufferSize + HeaderBufferSize);
-			}
-
-
-			NdisReleaseSpinLock(&Open->MachineLock);
-
-			//
-			// The MONITOR_MODE (aka TME extensions) is not supported on 
-			// 64 bit architectures
-			//
-
-			if (fres == 0)
-			{
-				// Packet not accepted by the filter, ignore it.
-				// return NDIS_STATUS_NOT_ACCEPTED;
-				goto NPF_TapEx_ForEachOpen_End;
-			}
-
-			//if the filter returns -1 the whole packet must be accepted
-			if (fres == -1 || fres > PacketSize + HeaderBufferSize)
-				fres = PacketSize + HeaderBufferSize; 
-
-			if (Open->mode & MODE_STAT)
-			{
-				// we are in statistics mode
-				NdisAcquireSpinLock(&Open->CountersLock);
-
-				Open->Npackets.QuadPart++;
-
-				if (PacketSize + HeaderBufferSize < 60)
-					Open->Nbytes.QuadPart += 60;
-				else
-					Open->Nbytes.QuadPart += PacketSize + HeaderBufferSize;
-				// add preamble+SFD+FCS to the packet
-				// these values must be considered because are not part of the packet received from NDIS
-				Open->Nbytes.QuadPart += 12;
-
-				NdisReleaseSpinLock(&Open->CountersLock);
-
-				if (!(Open->mode & MODE_DUMP))
-				{
-					//return NDIS_STATUS_NOT_ACCEPTED;
-					goto NPF_TapEx_ForEachOpen_End;
-				}
-			}
-
-			if (Open->Size == 0)
-			{
-				LocalData->Dropped++;
-				//return NDIS_STATUS_NOT_ACCEPTED;
-				goto NPF_TapEx_ForEachOpen_End;
-			}
-
-			if (Open->mode & MODE_DUMP && Open->MaxDumpPacks)
-			{
-				ULONG Accepted = 0;
-				for (i = 0; i < g_NCpu; i++)
-					Accepted += Open->CpuData[i].Accepted;
-
-				if (Accepted > Open->MaxDumpPacks)
-				{
-					// Reached the max number of packets to save in the dump file. Discard the packet and stop the dump thread.
-					Open->DumpLimitReached = TRUE; // This stops the thread
-					// Awake the dump thread
-					NdisSetEvent(&Open->DumpEvent);
-
-					// Awake the application
-					if (Open->ReadEvent != NULL)
-						KeSetEvent(Open->ReadEvent, 0, FALSE);
-
-					//return NDIS_STATUS_NOT_ACCEPTED;
-					goto NPF_TapEx_ForEachOpen_End;
-				}
-			}
-
-			//////////////////////////////COPIA.C//////////////////////////////////////////77
-
-			ShouldReleaseBufferLock = TRUE;
-			//NdisDprAcquireSpinLock(&LocalData->BufferLock);
-			NdisAcquireSpinLock(&LocalData->BufferLock);
+			pMdl = pNetBuf->CurrentMdl;
+			TotalLength = pNetBuf->DataLength;
+			Offset = pNetBuf->CurrentMdlOffset;
+			BufferLength = 0;
 
 			do
 			{
-				if (fres + sizeof(struct PacketHeader) > LocalData->Free)
+				if (pMdl)
 				{
-					LocalData->Dropped++;
+					NdisQueryMdl(
+						pMdl,
+						&pEthHeader,
+						&BufferLength,
+						NormalPagePriority);
+				}
+
+				if (pEthHeader == NULL)
+				{
+					//
+					//  The system is low on resources. Set up to handle failure
+					//  below.
+					//
+					BufferLength = 0;
+					NdisReleaseSpinLock(&Open->MachineLock);
 					break;
 				}
 
-				if (LocalData->TransferMdl1 != NULL)
+				if (BufferLength == 0)
 				{
-					//
-					//if TransferMdl is not NULL, there is some TransferData pending (i.e. not having called TransferDataComplete, yet)
-					//in order to avoid buffer corruption, we drop the packet
-					//
-					LocalData->Dropped++;
+					NdisReleaseSpinLock(&Open->MachineLock);
 					break;
 				}
 
-				/* always true */
-				if (LookaheadBufferSize + HeaderBufferSize >= fres)
+				BufferLength -= Offset;
+				pEthHeader = (PNDISPROT_ETH_HEADER)((PUCHAR)pEthHeader + Offset);
+
+				// As for single MDL (as we assume) condition, we always have BufferLength == TotalLength
+				if (BufferLength > TotalLength)
+					BufferLength = TotalLength;
+
+				// Handle multiple MDLs situation here, if there's only 20 bytes in the first MDL, then the IP header is in the second MDL.
+				if (BufferLength == sizeof(NDISPROT_ETH_HEADER) && pMdl->Next != NULL)
 				{
-					//
-					// we do not need to call NdisTransferData, either because we need only the HeaderBuffer, or because the LookaheadBuffer
-					// contains what we need
-					//
-
-					Header = (struct PacketHeader *)(LocalData->Buffer + LocalData->P);
-					LocalData->Accepted++;
-					GET_TIME(&Header->header.bh_tstamp, &G_Start_Time);
-					Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
-
-					DbgPrint("MDL %d\n", fres);
-
-					Header->header.bh_caplen = fres;
-					Header->header.bh_datalen = PacketSize + HeaderBufferSize;
-					Header->header.bh_hdrlen = sizeof(struct bpf_hdr);
-
-					LocalData->P += sizeof(struct PacketHeader);
-					if (LocalData->P == Open->Size)
-						LocalData->P = 0;
-
-					//
-					//we can consider the buffer contiguous, either because we use only the data 
-					//present in the HeaderBuffer, or because HeaderBuffer and LookaheadBuffer are contiguous
-					// ;-))))))
-					//
-					if (Open->Size - LocalData->P < fres)
+					TmpBuffer = ExAllocatePoolWithTag(NonPagedPool, pNetBuf->DataLength, 'NPCA');
+					pEthHeader = NdisGetDataBuffer(pNetBuf,
+						pNetBuf->DataLength,
+						TmpBuffer,
+						1,
+						0);
+					if (!pEthHeader)
 					{
-						//the packet will be fragmented in the buffer (aka, it will skip the buffer boundary)
-						//two copies!!
-						ToCopy = Open->Size - LocalData->P;
-						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, HeaderBuffer, ToCopy);
-						NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)HeaderBuffer + ToCopy, fres - ToCopy);
-						LocalData->P = fres - ToCopy;
+						TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+							"NPF_TapExForEachOpen: NdisGetDataBuffer() [status: %#x]\n",
+							STATUS_UNSUCCESSFUL);
+
+						NdisReleaseSpinLock(&Open->MachineLock);
+						break;
 					}
 					else
 					{
-						//the packet does not need to be fragmented in the buffer (aka, it doesn't skip the buffer boundary)
-						// ;-)))))) only ONE copy
-						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, HeaderBuffer, fres);
-						LocalData->P += fres;
+						BufferLength = pNetBuf->DataLength;
+					}
+				}
+
+				// 			if (BufferLength < sizeof(NDISPROT_ETH_HEADER))
+				// 			{
+				// 				IF_LOUD(DbgPrint("ReceiveNetBufferList: Open %p, runt nbl %p, first buffer length %d\n",
+				// 					Open, pNetBufList, BufferLength);)
+				// 				NdisReleaseSpinLock(&Open->MachineLock);
+				// 				break;
+				// 			}
+
+				//bAcceptedReceive = TRUE;
+				//IF_LOUD(DbgPrint("ReceiveNetBufferList: Open %p, interesting nbl %p\n",
+				//	Open, pNetBufList);)
+
+				//
+				//  If the miniport is out of resources, we can't queue
+				//  this list of net buffer list - make a copy if this is so.
+				//
+				//DispatchLevel = NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags);
+
+				HeaderBuffer = (PUCHAR)pEthHeader;
+				HeaderBufferSize = sizeof(NDISPROT_ETH_HEADER);
+				LookaheadBuffer = (PUCHAR)pEthHeader + sizeof(NDISPROT_ETH_HEADER);
+				LookaheadBufferSize = BufferLength - HeaderBufferSize;
+				PacketSize = LookaheadBufferSize;
+
+				//
+				// the jit filter is available on x86 (32 bit) only
+				//
+#ifdef _X86_
+
+				if (Open->Filter != NULL)
+				{
+					if (Open->bpfprogram != NULL && Open->Filter->Function != NULL)
+					{
+						fres = Open->Filter->Function(
+							(PVOID)HeaderBuffer,
+							PacketSize + HeaderBufferSize,
+							LookaheadBufferSize + HeaderBufferSize);
+					}
+					else
+					{
+						fres = -1;
+					}
+				}
+				else
+#endif //_X86_
+				{
+					fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
+						HeaderBuffer,
+						PacketSize + HeaderBufferSize,
+						LookaheadBufferSize + HeaderBufferSize);
+				}
+
+
+				NdisReleaseSpinLock(&Open->MachineLock);
+
+				//
+				// The MONITOR_MODE (aka TME extensions) is not supported on 
+				// 64 bit architectures
+				//
+
+				if (fres == 0)
+				{
+					// Packet not accepted by the filter, ignore it.
+					// return NDIS_STATUS_NOT_ACCEPTED;
+					goto NPF_TapEx_ForEachOpen_End;
+				}
+
+				//if the filter returns -1 the whole packet must be accepted
+				if (fres == -1 || fres > PacketSize + HeaderBufferSize)
+					fres = PacketSize + HeaderBufferSize;
+
+				if (Open->mode & MODE_STAT)
+				{
+					// we are in statistics mode
+					NdisAcquireSpinLock(&Open->CountersLock);
+
+					Open->Npackets.QuadPart++;
+
+					if (PacketSize + HeaderBufferSize < 60)
+						Open->Nbytes.QuadPart += 60;
+					else
+						Open->Nbytes.QuadPart += PacketSize + HeaderBufferSize;
+					// add preamble+SFD+FCS to the packet
+					// these values must be considered because are not part of the packet received from NDIS
+					Open->Nbytes.QuadPart += 12;
+
+					NdisReleaseSpinLock(&Open->CountersLock);
+
+					if (!(Open->mode & MODE_DUMP))
+					{
+						//return NDIS_STATUS_NOT_ACCEPTED;
+						goto NPF_TapEx_ForEachOpen_End;
+					}
+				}
+
+				if (Open->Size == 0)
+				{
+					LocalData->Dropped++;
+					//return NDIS_STATUS_NOT_ACCEPTED;
+					goto NPF_TapEx_ForEachOpen_End;
+				}
+
+				if (Open->mode & MODE_DUMP && Open->MaxDumpPacks)
+				{
+					ULONG Accepted = 0;
+					for (i = 0; i < g_NCpu; i++)
+						Accepted += Open->CpuData[i].Accepted;
+
+					if (Accepted > Open->MaxDumpPacks)
+					{
+						// Reached the max number of packets to save in the dump file. Discard the packet and stop the dump thread.
+						Open->DumpLimitReached = TRUE; // This stops the thread
+													   // Awake the dump thread
+						NdisSetEvent(&Open->DumpEvent);
+
+						// Awake the application
+						if (Open->ReadEvent != NULL)
+							KeSetEvent(Open->ReadEvent, 0, FALSE);
+
+						//return NDIS_STATUS_NOT_ACCEPTED;
+						goto NPF_TapEx_ForEachOpen_End;
+					}
+				}
+
+				//////////////////////////////COPIA.C//////////////////////////////////////////77
+
+				ShouldReleaseBufferLock = TRUE;
+				//NdisDprAcquireSpinLock(&LocalData->BufferLock);
+				NdisAcquireSpinLock(&LocalData->BufferLock);
+
+				do
+				{
+					if (fres + sizeof(struct PacketHeader) > LocalData->Free)
+					{
+						LocalData->Dropped++;
+						break;
 					}
 
-					increment = fres + sizeof(struct PacketHeader);
-					TotalLength -= fres;
-
-					// add next MDLs
-					while (TotalLength)
+					if (LocalData->TransferMdl1 != NULL)
 					{
-						PMDL pNextMdl = NULL;
+						//
+						//if TransferMdl is not NULL, there is some TransferData pending (i.e. not having called TransferDataComplete, yet)
+						//in order to avoid buffer corruption, we drop the packet
+						//
+						LocalData->Dropped++;
+						break;
+					}
 
-						NdisGetNextMdl(pMdl, &pNextMdl);
+					/* always true */
+					if (LookaheadBufferSize + HeaderBufferSize >= fres)
+					{
+						//
+						// we do not need to call NdisTransferData, either because we need only the HeaderBuffer, or because the LookaheadBuffer
+						// contains what we need
+						//
 
-						if (pNextMdl)
+						Header = (struct PacketHeader *)(LocalData->Buffer + LocalData->P);
+						LocalData->Accepted++;
+						GET_TIME(&Header->header.bh_tstamp, &G_Start_Time);
+						Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
+
+						DbgPrint("MDL %d\n", fres);
+
+						Header->header.bh_caplen = fres;
+						Header->header.bh_datalen = PacketSize + HeaderBufferSize;
+						Header->header.bh_hdrlen = sizeof(struct bpf_hdr);
+
+						LocalData->P += sizeof(struct PacketHeader);
+						if (LocalData->P == Open->Size)
+							LocalData->P = 0;
+
+						//
+						//we can consider the buffer contiguous, either because we use only the data 
+						//present in the HeaderBuffer, or because HeaderBuffer and LookaheadBuffer are contiguous
+						// ;-))))))
+						//
+						if (Open->Size - LocalData->P < fres)
 						{
-							NdisQueryMdl(
-								pNextMdl,
-								&pEthHeader,
-								&BufferLength,
-								NormalPagePriority);
-							
-							if (BufferLength >= TotalLength)
-								BufferLength = TotalLength;
-							
-							if (Open->Size - LocalData->P >= BufferLength)
+							//the packet will be fragmented in the buffer (aka, it will skip the buffer boundary)
+							//two copies!!
+							ToCopy = Open->Size - LocalData->P;
+							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, HeaderBuffer, ToCopy);
+							NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)HeaderBuffer + ToCopy, fres - ToCopy);
+							LocalData->P = fres - ToCopy;
+						}
+						else
+						{
+							//the packet does not need to be fragmented in the buffer (aka, it doesn't skip the buffer boundary)
+							// ;-)))))) only ONE copy
+							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, HeaderBuffer, fres);
+							LocalData->P += fres;
+						}
+
+						increment = fres + sizeof(struct PacketHeader);
+						TotalLength -= fres;
+
+						// add next MDLs
+						while (TotalLength)
+						{
+							PMDL pNextMdl = NULL;
+
+							NdisGetNextMdl(pMdl, &pNextMdl);
+
+							if (pNextMdl)
 							{
-								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, BufferLength);
-								LocalData->P += BufferLength;
-								
-								increment += BufferLength;
-								TotalLength -= BufferLength;
-								
-								Header->header.bh_caplen += BufferLength;
-								Header->header.bh_datalen += BufferLength;
-								
-								DbgPrint("next MDL %d and added\n", BufferLength);
-								
-								pMdl = pNextMdl;
+								NdisQueryMdl(
+									pNextMdl,
+									&pEthHeader,
+									&BufferLength,
+									NormalPagePriority);
+
+								if (BufferLength >= TotalLength)
+									BufferLength = TotalLength;
+
+								if (Open->Size - LocalData->P >= BufferLength)
+								{
+									NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, BufferLength);
+									LocalData->P += BufferLength;
+
+									increment += BufferLength;
+									TotalLength -= BufferLength;
+
+									Header->header.bh_caplen += BufferLength;
+									Header->header.bh_datalen += BufferLength;
+
+									DbgPrint("next MDL %d and added\n", BufferLength);
+
+									pMdl = pNextMdl;
+								}
+								else
+								{
+									//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
+									//two copies!!
+									ToCopy = Open->Size - LocalData->P;
+									NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, ToCopy);
+									NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pEthHeader + ToCopy, BufferLength - ToCopy);
+									LocalData->P = BufferLength - ToCopy;
+
+									increment += BufferLength;
+									TotalLength -= BufferLength;
+
+									Header->header.bh_caplen += BufferLength;
+									Header->header.bh_datalen += BufferLength;
+
+									DbgPrint("next MDL %d added (two copies)\n", BufferLength);
+
+									pMdl = pNextMdl;
+								}
 							}
 							else
 							{
-								//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
-								//two copies!!
-								ToCopy = Open->Size - LocalData->P;
-								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, ToCopy);
-								NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pEthHeader + ToCopy, BufferLength - ToCopy);
-								LocalData->P = BufferLength - ToCopy;
-
-								increment += BufferLength;
-								TotalLength -= BufferLength;
-
-								Header->header.bh_caplen += BufferLength;
-								Header->header.bh_datalen += BufferLength;
-
-								DbgPrint("next MDL %d added (two copies)\n", BufferLength);
-
-								pMdl = pNextMdl;
+								break;
 							}
 						}
-						else
+
+						if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
 						{
-							break;
+							//the NewHeader structure, at least, otherwise we skip the producer
+							increment += Open->Size - LocalData->P;				   //at the beginning of the buffer (p = 0), and decrement the free bytes appropriately
+							LocalData->P = 0;
 						}
-					}
 
-					if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
-					{
-						//the NewHeader structure, at least, otherwise we skip the producer
-						increment += Open->Size - LocalData->P;				   //at the beginning of the buffer (p = 0), and decrement the free bytes appropriately
-						LocalData->P = 0;
-					}
-
-					InterlockedExchangeAdd(&LocalData->Free, (ULONG)(-(LONG)increment));
-					if (Open->Size - LocalData->Free >= Open->MinToCopy)
-					{
-						if (Open->mode & MODE_DUMP)
-							NdisSetEvent(&Open->DumpEvent);
-						else
+						InterlockedExchangeAdd(&LocalData->Free, (ULONG)(-(LONG)increment));
+						if (Open->Size - LocalData->Free >= Open->MinToCopy)
 						{
-							if (Open->ReadEvent != NULL)
+							if (Open->mode & MODE_DUMP)
+								NdisSetEvent(&Open->DumpEvent);
+							else
 							{
-								KeSetEvent(Open->ReadEvent, 0, FALSE);
+								if (Open->ReadEvent != NULL)
+								{
+									KeSetEvent(Open->ReadEvent, 0, FALSE);
+								}
 							}
 						}
+
+						break;
 					}
+					else // never comes here.
+					{
+						IF_LOUD(DbgPrint("NPF_tapExForEachOpen: This is an error !!!!\n");)
+							//ndisTransferData required
+							//This is an error !!
+							break;
+					}
+				} while (FALSE);
 
-					break;
-				}
-				else // never comes here.
+				if (ShouldReleaseBufferLock)
 				{
-					IF_LOUD(DbgPrint("NPF_tapExForEachOpen: This is an error !!!!\n");)
-					//ndisTransferData required
-					//This is an error !!
-					break;
+					//NdisDprReleaseSpinLock(&LocalData->BufferLock);
+					NdisReleaseSpinLock(&LocalData->BufferLock);
 				}
-			}
-			while (FALSE);
 
-			if (ShouldReleaseBufferLock)
+			} while (FALSE);
+
+		NPF_TapEx_ForEachOpen_End:;
+			if (TmpBuffer)
 			{
-				//NdisDprReleaseSpinLock(&LocalData->BufferLock);
-				NdisReleaseSpinLock(&LocalData->BufferLock);
+				ExFreePool(TmpBuffer);
+				TmpBuffer = NULL;
 			}
 
-		}
-		while (FALSE);
+			pNetBuf = pNextNetBuf;
+		} // while (pNetBuf != NULL)
 
-NPF_TapEx_ForEachOpen_End:;
 		pNetBufList = pNextNetBufList;
-		if (TmpBuffer)
-		{
-			ExFreePool(TmpBuffer);
-			TmpBuffer = NULL;
-		}
-	} // end of the for loop
+	} // while (pNetBufList != NULL)
 
 	//TRACE_EXIT();
 }
