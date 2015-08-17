@@ -585,6 +585,10 @@ WSKCreateSocket(
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		Status = Irp->IoStatus.Status;
 	}
+	else if (Status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKCreateSocket()::Dispatch::WskSocket() failed with status 0x%08X\n", Status);
+	}
 
 	WskSocket = NT_SUCCESS(Status) ? (PWSK_SOCKET)Irp->IoStatus.Information : NULL;
 
@@ -624,6 +628,10 @@ WSKCloseSocket(
 	{
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		Status = Irp->IoStatus.Status;
+	}
+	else if (Status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKCloseSocket()::Dispatch::WskSocket() failed with status 0x%08X\n", Status);
 	}
 
 	IoFreeIrp(Irp);
@@ -680,6 +688,10 @@ WSKSend(
 	{
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		Status = Irp->IoStatus.Status;
+	}
+	else if (Status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSend()::Dispatch::WskSend() failed with status 0x%08X\n", Status);
 	}
 
 	BytesSent = NT_SUCCESS(Status) ? (LONG)Irp->IoStatus.Information : SOCKET_ERROR;
@@ -742,6 +754,10 @@ WSKSendTo(
 	{
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		Status = Irp->IoStatus.Status;
+	}
+	else if (Status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKSendTo()::Dispatch::WskSendTo() failed with status 0x%08X\n", Status);
 	}
 
 	BytesSent = NT_SUCCESS(Status) ? (LONG)Irp->IoStatus.Information : SOCKET_ERROR;
