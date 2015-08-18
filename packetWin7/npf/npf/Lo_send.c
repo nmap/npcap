@@ -585,7 +585,8 @@ WSKCreateSocket(
 		KeWaitForSingleObject(&CompletionEvent, Executive, KernelMode, FALSE, NULL);
 		Status = Irp->IoStatus.Status;
 	}
-	else if (Status != STATUS_SUCCESS)
+
+	if (!NT_SUCCESS(Status))
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "WSKCreateSocket()::Dispatch::WskSocket() failed with status 0x%08X\n", Status);
 	}
