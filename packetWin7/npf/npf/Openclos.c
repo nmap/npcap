@@ -280,19 +280,6 @@ NPF_OpenAdapter(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
 	{
-		// Use Winsock Kernel (WSK) to send loopback packets.
-		Status = NPF_WSKStartup();
-		if (!NT_SUCCESS(Status))
-		{
-			goto NPF_OpenAdapter_End;
-		}
-
-		Status = NPF_WSKInitSockets();
-		if (!NT_SUCCESS(Status))
-		{
-			goto NPF_OpenAdapter_End;
-		}
-
 		// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
 		Status = NPF_InitInjectionHandles();
 		if (!NT_SUCCESS(Status))

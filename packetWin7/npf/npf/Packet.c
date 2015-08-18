@@ -272,6 +272,23 @@ DriverEntry(
 // 	}
 // #endif
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// Use Winsock Kernel (WSK) to send loopback packets.
+	Status = NPF_WSKStartup();
+	if (!NT_SUCCESS(Status))
+	{
+		TRACE_EXIT();
+		return Status;
+	}
+
+	Status = NPF_WSKInitSockets();
+	if (!NT_SUCCESS(Status))
+	{
+		TRACE_EXIT();
+		return Status;
+	}
+#endif
+
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
 
