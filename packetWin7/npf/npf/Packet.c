@@ -1748,6 +1748,34 @@ NPF_IoControl(
 		{
 			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCSETOID|BIOCQUERYOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+			if (Open->Loopback && OidData->Oid == OID_GEN_MAXIMUM_TOTAL_SIZE)
+			{
+				if (FunctionCode == BIOCSETOID)
+				{
+					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCSETOID, fail it");
+					SET_FAILURE_UNSUCCESSFUL();
+				}
+				else
+				{
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
+					*((PUINT)OidData->Data) = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
+					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+				}
+
+				//
+				// Release ownership of the Ndis Handle
+				//
+				NPF_StopUsingBinding(Open);
+
+				ExInterlockedInsertTailList(&Open->RequestList,
+					&pRequest->ListElement,
+					&Open->RequestSpinLock);
+
+				break;
+			}
+#endif
+
 			//
 			//  The buffer is valid
 			//
@@ -1801,20 +1829,21 @@ NPF_IoControl(
 				}
 				else
 				{
+					//
+					// Release ownership of the Ndis Handle
+					//
+					NPF_StopUsingBinding(Open);
+
+					ExInterlockedInsertTailList(&Open->RequestList,
+						&pRequest->ListElement,
+						&Open->RequestSpinLock);
+
 					SET_FAILURE_NOMEM();
 					break;
 				}
 			}
 
-			if (Open->AdapterHandle)
-			{
-				Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
-			}
-			else
-			{
-				SET_FAILURE_NOMEM();
-				break;
-			}
+			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
 		}
 		else
 		{
@@ -1822,6 +1851,10 @@ NPF_IoControl(
 			// Release ownership of the Ndis Handle
 			//
 			NPF_StopUsingBinding(Open);
+
+			ExInterlockedInsertTailList(&Open->RequestList,
+				&pRequest->ListElement,
+				&Open->RequestSpinLock);
 
 			//
 			//  buffer too small

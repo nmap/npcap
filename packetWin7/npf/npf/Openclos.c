@@ -300,7 +300,15 @@ NPF_OpenAdapter(
 	}
 #endif
 
-	Status = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (Open->Loopback)
+	{
+		Open->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
+		Status = STATUS_SUCCESS;
+	}
+	else
+#endif
+		Status = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
 
 NPF_OpenAdapter_End:;
 	if (!NT_SUCCESS(Status))

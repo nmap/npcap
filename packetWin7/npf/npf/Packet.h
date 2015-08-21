@@ -108,6 +108,9 @@ extern NDIS_HANDLE         FilterDriverObject;
 // Admin only mode definition
 //#define NPF_ADMIN_ONLY_MODE			///< Tells the driver to restrict its access only to Administrators. This is used to support "Admin-only Mode" for Npcap.
 
+// Loopback interface MTU definition
+#define NPF_LOOPBACK_INTERFACR_MTU		65536	///< The MTU of the "Npcap Loopback Adapter", this value adopts Linux's "lo" MTU and can't be modified.
+
 /*!
   \brief Header of a libpcap dump file.
 
