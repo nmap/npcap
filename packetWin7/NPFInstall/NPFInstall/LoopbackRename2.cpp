@@ -19,8 +19,9 @@ using namespace std;
 
 #include "LoopbackRename2.h"
 
-#define			NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR			NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
-#define			BUF_SIZE								255
+#define			NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR		NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
+#define			NPCAP_LOOPBACK_INTERFACE_MTU				65536
+#define			BUF_SIZE									255
 
 vector<wstring> g_InterfaceNameList1;
 vector<wstring> g_InterfaceNameList2;
@@ -213,6 +214,22 @@ void PrepareRenameLoopbackNetwork2()
 	snapshotInterfaceListBeforeInstall();
 }
 
+void changeLoopbackInterfaceMTU(wstring strInterfaceName)
+{
+	wchar_t renameCmd[MAX_PATH];
+	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface ipv4 set subinterface \"%s\" mtu=%d store=persistent", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
+	executeCommand(renameCmd);
+	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface ipv6 set subinterface \"%s\" mtu=%d store=persistent", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
+	executeCommand(renameCmd);
+}
+
+void renameLoopbackInterface(wstring strInterfaceName)
+{
+	wchar_t renameCmd[MAX_PATH];
+	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface set interface name=\"%s\" newname=\"%s\"", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
+	executeCommand(renameCmd);
+}
+
 BOOL DoRenameLoopbackNetwork2()
 {
 	snapshotInterfaceListAfterInstall();
@@ -222,9 +239,8 @@ BOOL DoRenameLoopbackNetwork2()
 		return FALSE;
 	}
 
-	wchar_t renameCmd[MAX_PATH];
-	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface set interface name=\"%s\" newname=\"%s\"", strOriginalInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
-	executeCommand(renameCmd);
+	changeLoopbackInterfaceMTU(strOriginalInterfaceName);
+	renameLoopbackInterface(strOriginalInterfaceName);
 	return TRUE;
 }
 
