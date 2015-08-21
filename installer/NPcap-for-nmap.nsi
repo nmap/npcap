@@ -638,6 +638,12 @@ Section "WinPcap" SecWinPcap
       ${Else}
         WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 0 ;
       ${EndIf}
+      ; Wireshark will read this option
+      ${If} $winpcap_mode == "yes"
+        WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
+      ${Else}
+        WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 0 ;
+      ${EndIf}
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
