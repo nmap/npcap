@@ -22,6 +22,26 @@ NPFInstall.exe           packetWin7\NPFInstall    a lwf driver installation tool
 NPcapHelper.exe          packetWin7\Helper        the helper program for `Admin-only mode`, will run under Administrator rights
 ```
 
+## For softwares that uses Npcap loopback feature
+
+Npcap's loopback adapter device is based on **Microsoft KM-TEST Loopback Adapter (Microsoft Loopback Adapter)**, it is an Ethernet adapter, and Npcap has changed its behavior and rename it to **"Npcap Loopback Adapter"**, to make it see the real loopback traffic only, the traffic captured by original WinPcap will not appear here. 
+
+The IP address of "Npcap Loopback Adapter" is usually like **169.254.x.x**, however, this is totally meaningless, softwares using Npcap should view this interface's IP address as **127.0.0.1** (IPv4) and **::1** (IPv6). This work can't be done by Npcap because Windows forbids any IP address to be configured as 127.0.0.1, it's reserved.
+
+The MAC address of "Npcap Loopback Adapter" is usually like **02:00:4C:4F:4F:50**, however, this is meaningless too, softwares using Npcap should think this interface doesn't own a MAC address, as the loopback traffic never goes to link layer. For softwares using Npcap to capture loopback traffic, the MAC addresses in captured data will be all zeros. For softwares using Npcap to send loopback traffic, any MAC addresses can be specified as they will be ignored. But notice that ether_type in Ethernet header should be set correctly, only **IPv4** and **IPv6** are accepted, other values like ARP will be ignored. (You don't need an ARP request for loopback interface)
+
+The MTU of "Npcap Loopback Adapter" is hard-coded to **65536** by Npcap, softwares using Npcap should get this value automatically and no special handling needed. This value is determined by myself and doesn't mean Windows loopback stack can only support packet size as large as **65536**. So don't feel weird if you have captured packets whose size are larger than it.
+
+Don't try to make OID requests to "Npcap Loopback Adapter" except **OID_GEN_MAXIMUM_TOTAL_SIZE** (MTU), these requests will succeed as other adapters, but they are only meaningful for NDIS adapters and Npcap doesn't even use the NDIS way to handle the loopback traffic. The only handled OID request by Npcap is **OID_GEN_MAXIMUM_TOTAL_SIZE**: If you query its value, you will always get **65550 (65536 + 14)**, if you try to set its value, the operation will always fail.
+
+To conclude, a software that wants to support Npcap loopback feature should do these steps:
+
+* Detect "Npcap Loopback Adapter"'s presence, by reading registry value at: . If "Npcap Loopback Adapter" exsits, then perform the following steps.
+* Modify the IP address of "Npcap Loopback Adapter" to **127.0.0.1** (IPv4) and **::1** (IPv6).
+* Modify the MAC address of "Npcap Loopback Adapter" to all zeros.
+* If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like **"Loopback Pseudo-Interface 1"**, this interface is a dummy interface by Microsoft and can't be seen in NDIS layer. It also takes the 127.0.0.1 IP address. A good practise for softwares is that merge the "Npcap Loopback Adapter" and "Loopback Pseudo-Interface 1" into one, like what I have implemented for Nmap.
+* Don't make use of OID requests for "Npcap Loopback Adapter" except **OID_GEN_MAXIMUM_TOTAL_SIZE** requests.
+
 ## Build
 
 * wpcap.dll needs to be built using **Visual Studio 2005**.
@@ -110,7 +130,13 @@ Win7 and later (with "WinPcap Compatible Mode" ON, this is the DEFAULT option):
 
 ## Try
 
-The latest installers can always be found here: https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/.
+The latest installer can always be found here: https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/.
+
+Previous installers can be found here: https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/.
+
+The changes of Nmap to use Npcap's loopback feature can be found here: https://svn.nmap.org/nmap-exp/yang/nmap-npcap/.
+
+The compiled Nmap binaries after above changes can be found here: https://svn.nmap.org/nmap-exp/yang/nmap-npcap_compiled_binaries/.
 
 ## License
 
