@@ -56,6 +56,8 @@
 #define HTON_LONG(x)					(((((x)& 0xff)<<24) | ((x)>>24) & 0xff) | \
 										(((x) & 0xff0000)>>8) | (((x) & 0xff00)<<8))
 
+extern ULONG					g_DltNullMode;
+
 static WSK_REGISTRATION         g_WskRegistration;
 static WSK_PROVIDER_NPI         g_WskProvider;
 static WSK_CLIENT_DISPATCH      g_WskDispatch = { MAKE_WSK_VERSION(1, 0), 0, NULL };
@@ -246,25 +248,41 @@ NPF_WSKSendPacket(
 	IN ULONG BuffSize
 	)
 {
-	PETHER_HEADER	pEthernetHdr = (PETHER_HEADER) PacketBuff;
-	NTSTATUS		status = STATUS_UNSUCCESSFUL;
+	PETHER_HEADER		pEthernetHdr = (PETHER_HEADER) PacketBuff;
+	PDLT_NULL_HEADER	pDltNullHdr = (PDLT_NULL_HEADER) PacketBuff;
+	NTSTATUS			status = STATUS_UNSUCCESSFUL;
 
 	TRACE_ENTER();
-
-	PacketBuff = PacketBuff + ETHER_HDR_LEN;
-	BuffSize = BuffSize - ETHER_HDR_LEN;
 	
-	if (pEthernetHdr->ether_type == RtlUshortByteSwap(ETHERTYPE_IP))
+	if (g_DltNullMode)
 	{
-		status = WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV4, PacketBuff, BuffSize);
-	}
-	else if (pEthernetHdr->ether_type == RtlUshortByteSwap(ETHERTYPE_IPV6))
-	{
-		status = WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV6, PacketBuff, BuffSize);
+		if (pDltNullHdr->null_type == DLTNULLTYPE_IP)
+		{
+			status = WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV4, PacketBuff + DLT_NULL_HDR_LEN, BuffSize - DLT_NULL_HDR_LEN);
+		}
+		else if (pDltNullHdr->null_type == DLTNULLTYPE_IPV6)
+		{
+			status = WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV6, PacketBuff + DLT_NULL_HDR_LEN, BuffSize - DLT_NULL_HDR_LEN);
+		}
+		else
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket() failed with status 0x%08X, not valid loopback IPv4 or IPv6 packet (DLT_NULL)\n", status);
+		}
 	}
 	else
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket() failed with status 0x%08X, not valid loopback IPv4 or IPv6 packet\n", status);
+		if (pEthernetHdr->ether_type == RtlUshortByteSwap(ETHERTYPE_IP))
+		{
+			status = WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV4, PacketBuff + ETHER_HDR_LEN, BuffSize - ETHER_HDR_LEN);
+		}
+		else if (pEthernetHdr->ether_type == RtlUshortByteSwap(ETHERTYPE_IPV6))
+		{
+			status = WSKSendPacketInternal(NPF_LOOPBACK_SEND_TYPE_IPV6, PacketBuff + ETHER_HDR_LEN, BuffSize - ETHER_HDR_LEN);
+		}
+		else
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket() failed with status 0x%08X, not valid loopback IPv4 or IPv6 packet (Ethernet)\n", status);
+		}
 	}
 
 	TRACE_EXIT();

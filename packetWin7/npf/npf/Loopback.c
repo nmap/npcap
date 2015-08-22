@@ -52,6 +52,7 @@
 // Global variables
 //
 extern POPEN_INSTANCE g_LoopbackOpenGroupHead; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
+extern ULONG g_DltNullMode;
 
 // 
 // Callout and sublayer GUIDs
@@ -240,7 +241,7 @@ NPF_NetworkClassify(
 	INT32				iIPv4 = -1;
 	INT32				iDrection = -1;
 	BOOLEAN				bSelfSent = FALSE;
-	PETHER_HEADER		pContiguousData = NULL;
+	PVOID				pContiguousData = NULL;
 	NET_BUFFER*			pNetBuffer = 0;
 	UCHAR				pPacketData[ETHER_HDR_LEN];
 	PNET_BUFFER_LIST	pNetBufferList = (NET_BUFFER_LIST*) layerData;
@@ -393,7 +394,7 @@ NPF_NetworkClassify(
 		goto Exit_WSK_IP_Retreated;
 	}
 
-	bytesRetreatedEthernet = ETHER_HDR_LEN;
+	bytesRetreatedEthernet = g_DltNullMode ? DLT_NULL_HDR_LEN : ETHER_HDR_LEN;
 	status = NdisRetreatNetBufferListDataStart(pClonedNetBufferList,
 		bytesRetreatedEthernet,
 		0,
@@ -414,7 +415,7 @@ NPF_NetworkClassify(
 	while (pNetBuffer)
 	{
 		pContiguousData = NdisGetDataBuffer(pNetBuffer,
-			ETHER_HDR_LEN,
+			bytesRetreatedEthernet,
 			pPacketData,
 			1,
 			0);
@@ -430,8 +431,15 @@ NPF_NetworkClassify(
 		}
 		else
 		{
-			RtlZeroMemory(pContiguousData, ETHER_ADDR_LEN * 2);
-			pContiguousData->ether_type = iIPv4 ? RtlUshortByteSwap(ETHERTYPE_IP) : RtlUshortByteSwap(ETHERTYPE_IPV6);
+			if (g_DltNullMode)
+			{
+				((PDLT_NULL_HEADER) pContiguousData)->null_type = iIPv4 ? DLTNULLTYPE_IP : DLTNULLTYPE_IPV6;
+			}
+			else
+			{
+				RtlZeroMemory(pContiguousData, ETHER_ADDR_LEN * 2);
+				((PETHER_HEADER) pContiguousData)->ether_type = iIPv4 ? RtlUshortByteSwap(ETHERTYPE_IP) : RtlUshortByteSwap(ETHERTYPE_IPV6);
+			}
 		}
 
 		pNetBuffer = pNetBuffer->Next;

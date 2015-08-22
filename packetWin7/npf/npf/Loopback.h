@@ -105,6 +105,25 @@ typedef struct _ETHER_HEADER
 #define	ETHERTYPE_LOOPBACK	0x9000	/* used to test interfaces */
 
 /*
+* Structure of a DLT_NULL header.
+*/
+typedef struct _DLT_NULL_HEADER
+{
+	UINT	null_type;
+} DLT_NULL_HEADER, *PDLT_NULL_HEADER;
+
+/*
+* The length of the combined header.
+*/
+#define	DLT_NULL_HDR_LEN	sizeof(DLT_NULL_HEADER)
+
+/*
+* Types in a DLT_NULL (Loopback) header.
+*/
+#define	DLTNULLTYPE_IP		0x0002	/* IP protocol */
+#define	DLTNULLTYPE_IPV6	0x0017	/* IPv6 */
+
+/*
 * Structure of a IPv4 header, based on netinet/ip.h
 * http://openhip.sourceforge.net/doxygen/ip_8h_source.html
 */
