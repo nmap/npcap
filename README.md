@@ -50,17 +50,18 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 
 ## Packaging
 
-Use **installer\Build.bat** to build all Visual Studio projects via MSBuild, make sure you installed Visual Studio 2005, Visual Studio 2010 and Visual Studio 2015 Non-Express Editions.
+Packaging steps:
 
-Use **installer\Deploy.bat** to copy and sign the files for "Non-WinPcap Mode", installer will be generated.
-
-Use **installer\Deploy_WinPcap.bat** to copy and sign the files for "WinPcap Mode", installer will be generated.
+* Run **installer\Build.bat**: build non-driver projects via MSBuild, make sure you installed Visual Studio 2005, Visual Studio 2010 Non-Express Editions.
+* Build **packetWin7\npf**: build driver projects npf.sln and npcap.sln via Visual Studio 2015, I forbid the use of the script build for the driver, because it has signature issue (the compiled binaries are not well signed).
+* Run **installer\Deploy.bat**: copy and sign the files for "Non-WinPcap Compatible Mode", installer will be generated.
+* Run **installer\Deploy_WinPcap.bat**: copy and sign the files for "WinPcap Compatible Mode", installer will be generated.
 
 Npcap uses NSIS script to package itself. The script location is: **installer\NPcap-for-nmap.nsi**. Compiling this script will generate the installer named **npcap-nmap-%VERSION%.exe**. The prebuilt installer is in [**my SVN repository**](https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/), which can be used to test without building it.
 
 **installer\Deploy.bat** and **installer\Deploy_WinPcap.bat** will help you copy the files from build directories into right deployment folders (you need to manually create these folders before deployment):
 ```
-XP: (the same with WinPcap)
+XP: (the same with original WinPcap)
   x86:
     installer\npf.sys
     installer\rpcapd.exe
@@ -130,13 +131,17 @@ Win7 and later (with "WinPcap Compatible Mode" ON, this is the DEFAULT option):
 
 ## Try
 
-The latest installer can always be found here: https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/.
+* The latest installer can always be found here:
+https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/.
 
-Previous installers can be found here: https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/.
+* Previous installers can be found here:
+https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/.
 
-The changes of Nmap to use Npcap's loopback feature can be found here: https://svn.nmap.org/nmap-exp/yang/nmap-npcap/.
+* The changes of Nmap to use Npcap's loopback feature can be found here:
+https://svn.nmap.org/nmap-exp/yang/nmap-npcap/.
 
-The compiled Nmap binaries after above changes can be found here: https://svn.nmap.org/nmap-exp/yang/nmap-npcap_compiled_binaries/.
+* The compiled Nmap binaries after above changes can be found here:
+https://svn.nmap.org/nmap-exp/yang/nmap-npcap_compiled_binaries/.
 
 ## License
 
