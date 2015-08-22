@@ -56,6 +56,7 @@ Var /GLOBAL os_ver
 Var /GLOBAL admin_only
 Var /GLOBAL winpcap_mode
 Var /GLOBAL driver_name
+Var /GLOBAL dlt_null
 
 RequestExecutionLevel admin
 
@@ -314,9 +315,9 @@ FunctionEnd
 Function adminOnlyOptionsPage
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
   winpcap_exist:
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 0
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "Flags" "DISABLED"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 0
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "Flags" "DISABLED"
   no_winpcap_exist:
   !insertmacro MUI_HEADER_TEXT "Security and API Options" ""
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
@@ -324,19 +325,27 @@ FunctionEnd
 
 Function doAdminOnlyOptions
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State"
-  StrCpy $admin_only "yes"
-  StrCmp $0 "0" do_admin_only_options_start do_admin_only_options_end
-  do_admin_only_options_start:
-  StrCpy $admin_only "no"
-  do_admin_only_options_end:
+  ${If} $0 == "0"
+    StrCpy $admin_only "no"
+  ${Else}
+    StrCpy $admin_only "yes"
+  ${EndIf}
+
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State"
-  StrCpy $winpcap_mode "yes"
-  StrCpy $driver_name "npf"
-  StrCmp $0 "0" do_winpcap_mode_options_start do_winpcap_mode_options_end
-  do_winpcap_mode_options_start:
-  StrCpy $winpcap_mode "no"
-  StrCpy $driver_name "npcap"
-  do_winpcap_mode_options_end:
+  ${If} $0 == "0"
+    StrCpy $dlt_null "no"
+  ${Else}
+    StrCpy $dlt_null "yes"
+  ${EndIf}
+
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State"
+  ${If} $0 == "0"
+    StrCpy $winpcap_mode "no"
+    StrCpy $driver_name "npcap"
+  ${Else}
+    StrCpy $winpcap_mode "yes"
+    StrCpy $driver_name "npf"
+  ${EndIf}
 FunctionEnd
 
 Function optionsPage
@@ -679,6 +688,13 @@ Section "WinPcap" SecWinPcap
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
     ${Else}
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
+    ${Endif}
+
+    ; Npcap driver will read this option
+    ${If} $dlt_null == "yes"
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 1 ; make "DltNull" = 1 only when "dlt null" is chosen
+    ${Else}
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 0
     ${Endif}
 
     ; Copy the "Loopback" option from software key to services key

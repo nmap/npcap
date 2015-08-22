@@ -788,6 +788,15 @@ VOID
 NPF_GetAdminOnlyOption(
 	);
 
+/*!
+\brief read Npcap software's registry, get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
+
+If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
+*/
+VOID
+NPF_GetDltNullOption(
+	);
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
   \brief read Npcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.

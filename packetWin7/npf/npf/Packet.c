@@ -86,6 +86,8 @@ extern HANDLE g_WFPEngineHandle;
 
 ULONG g_AdminOnlyMode = 0;
 
+ULONG g_DltNullMode = 0;
+
 NDIS_STRING g_NPF_Prefix;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
 NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
@@ -96,6 +98,8 @@ NDIS_STRING AdapterListKey = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
 
 NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
+
+NDIS_STRING g_DltNullRegValueName = NDIS_STRING_CONST("DltNull");
 
 /// Global variable that points to the names of the bound adapters
 WCHAR* bindP = NULL;
@@ -210,6 +214,8 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
 	NPF_GetAdminOnlyOption(RegistryPath);
+
+	NPF_GetDltNullOption(RegistryPath);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetLoopbackAdapterName(RegistryPath);
@@ -609,6 +615,81 @@ NPF_GetAdminOnlyOption(
 					{
 						g_AdminOnlyMode = *((DWORD *) valueInfoP->Data);
 					}
+				}
+
+				ExFreePool(valueInfoP);
+			}
+			else
+			{
+				IF_LOUD(DbgPrint("Error Allocating the buffer for the admin only option\n");)
+			}
+		}
+
+		ZwClose(keyHandle);
+	}
+
+	TRACE_EXIT();
+}
+
+//-------------------------------------------------------------------
+VOID
+NPF_GetDltNullOption(
+	PUNICODE_STRING RegistryPath
+	)
+{
+	OBJECT_ATTRIBUTES objAttrs;
+	NTSTATUS status;
+	HANDLE keyHandle;
+
+	TRACE_ENTER();
+
+	InitializeObjectAttributes(&objAttrs, RegistryPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
+	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
+	if (!NT_SUCCESS(status))
+	{
+		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
+	}
+	else //OK
+	{
+		ULONG resultLength;
+		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
+		NDIS_STRING DltNullValueName = g_DltNullRegValueName;
+		status = ZwQueryValueKey(keyHandle,
+			&DltNullValueName,
+			KeyValuePartialInformation,
+			&valueInfo,
+			sizeof(valueInfo),
+			&resultLength);
+
+		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
+		{
+			IF_LOUD(DbgPrint("\n\nStatus of %x querying key value for size\n", status);)
+		}
+		else
+		{
+			// We know how big it needs to be.
+			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
+			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '1PWA');
+			if (valueInfoP != NULL)
+			{
+				status = ZwQueryValueKey(keyHandle,
+					&DltNullValueName,
+					KeyValuePartialInformation,
+					valueInfoP,
+					valueInfoLength,
+					&resultLength);
+				if (!NT_SUCCESS(status))
+				{
+					IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
+				}
+				else
+				{
+					IF_LOUD(DbgPrint("Dlt Null Key = %ws\n", valueInfoP->Data);)
+
+						if (valueInfoP->DataLength == 4)
+						{
+							g_DltNullMode = *((DWORD *)valueInfoP->Data);
+						}
 				}
 
 				ExFreePool(valueInfoP);
