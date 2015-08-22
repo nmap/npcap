@@ -1,6 +1,6 @@
 Npcap
 ==========
-Npcap is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-Weight Filter (LWF)**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx) technique. It is sponsored but not officially supported by the [**Nmap Project**](http://nmap.org/) and [**Google Summer of Code (2013 and 2015)**](https://developers.google.com/open-source/gsoc/).
+Npcap is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-Weight Filter (LWF)**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx) technique. It is sponsored but not officially supported by the [**Nmap Project**](http://nmap.org/) and finished by [**Yang Luo**](http://www.veotax.com/) under [**Google Summer of Code 2013**](https://www.google-melange.com/gsoc/homepage/google/gsoc2013) and [**Google Summer of Code 2015**](https://www.google-melange.com/gsoc/homepage/google/gsoc2015). It also received many helpful tests from [**Wireshark Project**](https://www.wireshark.org/) and [**NetScanTools**](http://www.netscantools.com/).
 
 ## Features
 
@@ -149,5 +149,5 @@ Npcap is published under [**The MIT License (MIT)**](http://opensource.org/licen
 
 ## Contact
 
-* dev@nmap.org (Nmap Dev List)
-* hsluoyz at gmail.com
+* dev@nmap.org (Nmap development list)
+* hsluoyz@gmail.com (Yang Luo's mail)
