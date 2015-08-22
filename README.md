@@ -16,10 +16,10 @@ Npcap tries to **keep the original WinPcap architecture as much as possible**. A
 ```
 File                     Src Directory            Description
 wpcap.dll                wpcap                    the same with WinPcap
-packet.dll               packetWin7\Dll           changed driver name, add `Admin-only mode` here
-npf.sys (or npcap.sys)   packetWin7\npf           port from NDIS 5 to NDIS 6, we support two names: npf or npcap, based on whether Npcap is installed in "WinPcap Mode"
+packet.dll               packetWin7\Dll           changed driver name, add "Admin-only Mode" here
+npf.sys (or npcap.sys)   packetWin7\npf           port from NDIS 5 to NDIS 6, we support two names: npf or npcap, based on whether Npcap is installed in "WinPcap Compatible Mode"
 NPFInstall.exe           packetWin7\NPFInstall    a lwf driver installation tool we added to Npcap
-NPcapHelper.exe          packetWin7\Helper        the helper program for `Admin-only mode`, will run under Administrator rights
+NPcapHelper.exe          packetWin7\Helper        the helper program for "Admin-only Mode", will run under Administrator rights
 ```
 
 ## For softwares that uses Npcap loopback feature
@@ -28,15 +28,15 @@ Npcap's loopback adapter device is based on **Microsoft KM-TEST Loopback Adapter
 
 The IP address of "Npcap Loopback Adapter" is usually like **169.254.x.x**, however, this is totally meaningless, softwares using Npcap should view this interface's IP address as **127.0.0.1** (IPv4) and **::1** (IPv6). This work can't be done by Npcap because Windows forbids any IP address to be configured as 127.0.0.1, it's reserved.
 
-The MAC address of "Npcap Loopback Adapter" is usually like **02:00:4C:4F:4F:50**, however, this is meaningless too, softwares using Npcap should think this interface doesn't own a MAC address, as the loopback traffic never goes to link layer. For softwares using Npcap to capture loopback traffic, the MAC addresses in captured data will be all zeros. For softwares using Npcap to send loopback traffic, any MAC addresses can be specified as they will be ignored. But notice that ether_type in Ethernet header should be set correctly, only **IPv4** and **IPv6** are accepted, other values like ARP will be ignored. (You don't need an ARP request for loopback interface)
+The MAC address of "Npcap Loopback Adapter" is usually like **02:00:4C:4F:4F:50**, however, this is meaningless too, softwares using Npcap should think this interface doesn't own a MAC address, as the loopback traffic never goes to link layer. For softwares using Npcap to capture loopback traffic, the MAC addresses in captured data will be all zeros. For softwares using Npcap to send loopback traffic, any MAC addresses can be specified as they will be ignored. But notice that ether_type in Ethernet header should be set correctly, only **IPv4** and **IPv6** are accepted, other values like **ARP** will be ignored. (You don't need an ARP request for loopback interface)
 
-The MTU of "Npcap Loopback Adapter" is hard-coded to **65536** by Npcap, softwares using Npcap should get this value automatically and no special handling needed. This value is determined by myself and doesn't mean Windows loopback stack can only support packet size as large as **65536**. So don't feel weird if you have captured packets whose size are larger than it.
+The MTU of "Npcap Loopback Adapter" is hard-coded to **65536** by Npcap, softwares using Npcap should get this value automatically and no special handling is needed. This value is determined manually and doesn't mean Windows loopback stack can only support packet size as large as **65536**. So don't feel weird if you have captured packets whose size are larger than it.
 
 Don't try to make OID requests to "Npcap Loopback Adapter" except **OID_GEN_MAXIMUM_TOTAL_SIZE** (MTU), these requests will succeed as other adapters, but they are only meaningful for NDIS adapters and Npcap doesn't even use the NDIS way to handle the loopback traffic. The only handled OID request by Npcap is **OID_GEN_MAXIMUM_TOTAL_SIZE**: If you query its value, you will always get **65550 (65536 + 14)**, if you try to set its value, the operation will always fail.
 
 To conclude, a software that wants to support Npcap loopback feature should do these steps:
 
-* Detect "Npcap Loopback Adapter"'s presence, by reading registry value at: . If "Npcap Loopback Adapter" exsits, then perform the following steps.
+* Detect "Npcap Loopback Adapter"'s presence, by reading registry value **Loopback** at key **Computer\HKEY_LOCAL_MACHINE\SOFTWARE(\Wow6432Node)\Npcap**. If "Npcap Loopback Adapter" exsits, then perform the following steps.
 * Modify the IP address of "Npcap Loopback Adapter" to **127.0.0.1** (IPv4) and **::1** (IPv6).
 * Modify the MAC address of "Npcap Loopback Adapter" to all zeros.
 * If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like **"Loopback Pseudo-Interface 1"**, this interface is a dummy interface by Microsoft and can't be seen in NDIS layer. It also takes the 127.0.0.1 IP address. A good practise for softwares is that merge the "Npcap Loopback Adapter" and "Loopback Pseudo-Interface 1" into one, like what I have implemented for Nmap.
