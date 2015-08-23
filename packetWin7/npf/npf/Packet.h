@@ -111,6 +111,9 @@ extern NDIS_HANDLE         FilterDriverObject;
 // Loopback interface MTU definition
 #define NPF_LOOPBACK_INTERFACR_MTU		65536	///< The MTU of the "Npcap Loopback Adapter", this value adopts Linux's "lo" MTU and can't be modified.
 
+// Custom link type, used by "Npcap Loopback Adapter", NDIS doesn't provide an equivalent
+#define NdisMediumNull					-1		///< The link type of the "Npcap Loopback Adapter", this value will be recognized by packet.dll code.
+
 /*!
   \brief Header of a libpcap dump file.
 

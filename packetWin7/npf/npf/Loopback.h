@@ -120,8 +120,8 @@ typedef struct _DLT_NULL_HEADER
 /*
 * Types in a DLT_NULL (Loopback) header.
 */
-#define	DLTNULLTYPE_IP		0x0002	/* IP protocol */
-#define	DLTNULLTYPE_IPV6	0x0017	/* IPv6 */
+#define	DLTNULLTYPE_IP		0x00000002	/* IP protocol */
+#define	DLTNULLTYPE_IPV6	0x00000018	/* IPv6 */
 
 /*
 * Structure of a IPv4 header, based on netinet/ip.h

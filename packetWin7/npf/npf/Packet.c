@@ -1880,6 +1880,32 @@ NPF_IoControl(
 
 				break;
 			}
+			else if (Open->Loopback && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
+			{
+				if (FunctionCode == BIOCSETOID)
+				{
+					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it");
+					SET_FAILURE_UNSUCCESSFUL();
+				}
+				else
+				{
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", NdisMediumNull);
+					*((PUINT)OidData->Data) = NdisMediumNull;
+					OidData->Length = sizeof(UINT);
+					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+				}
+
+				//
+				// Release ownership of the Ndis Handle
+				//
+				NPF_StopUsingBinding(Open);
+
+				ExInterlockedInsertTailList(&Open->RequestList,
+					&pRequest->ListElement,
+					&Open->RequestSpinLock);
+
+				break;
+			}
 #endif
 
 			//
