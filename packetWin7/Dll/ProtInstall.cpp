@@ -96,7 +96,7 @@ VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...)
 	}
 
 	//_tprintf( buf );
-	TRACE_PRINT(buf);
+	TRACE_PRINT_WIDECHAR(buf);
 
 	return;
 }

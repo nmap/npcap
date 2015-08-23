@@ -115,6 +115,23 @@ static VOID OutputDebugStringVA(LPCSTR Format, ...)
 
 	SetLastError(dwLastError);
 }
+
+static VOID OutputDebugStringVW(LPCWSTR Format, ...)
+{
+	va_list Marker;
+	wchar_t string[1024];
+	DWORD dwLastError = GetLastError();
+
+	va_start( Marker, Format );     /* Initialize variable arguments. */
+
+	StringCchVPrintfW(string, sizeof(string), Format, Marker);
+
+	OutputDebugStringW(string);
+
+	va_end(Marker);
+
+	SetLastError(dwLastError);
+}
 #endif
 
 
@@ -133,6 +150,8 @@ static VOID OutputDebugStringVA(LPCSTR Format, ...)
 #define TRACE_PRINT2(_x, _p1, _p2)		OutputDebugStringVA("    " _x "\n", _p1, _p2)   		
 #define TRACE_PRINT4(_x, _p1, _p2, _p3, _p4) OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4) 
 #define TRACE_PRINT6(_x, _p1, _p2, _p3, _p4, _p5, _p6) OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4, _p5, _p6 )
+
+#define TRACE_PRINT_WIDECHAR(_x)		OutputDebugStringVW (L"    %ws\n", _x)
 
 static __forceinline void TRACE_PRINT_OS_INFO()
 {
@@ -220,6 +239,7 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 #define TRACE_PRINT2(_x, _p1, _p2)
 #define TRACE_PRINT4(_x, _p1, _p2, _p3, _p4) 
 #define TRACE_PRINT6(_x, _p1, _p2, _p3, _p4, _p5, _p6) 
+#define TRACE_PRINT_WIDECHAR(_x)
 #define TRACE_PRINT_OS_INFO()
 
 #endif
