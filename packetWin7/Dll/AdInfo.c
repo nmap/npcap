@@ -75,7 +75,8 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA);
 #endif
 
 PADAPTER_INFO g_AdaptersInfoList = NULL;	///< Head of the adapter information list. This list is populated when packet.dll is linked by the application.
-HANDLE g_AdaptersInfoMutex = NULL;		///< Mutex that protects the adapter information list. NOTE: every API that takes an ADAPTER_INFO as parameter assumes that it has been called with the mutex acquired.
+HANDLE g_AdaptersInfoMutex = NULL;			///< Mutex that protects the adapter information list. NOTE: every API that takes an ADAPTER_INFO as parameter assumes that it has been called with the mutex acquired.
+CHAR g_LoopbackAdapterName[100] = "";		///< The name of "Npcap Loopback Adapter", used for recording the NdisMediumNull link type for this adapter.
 
 extern FARPROC g_GetAdaptersAddressesPointer;
 
@@ -965,6 +966,12 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 		// NdisWan adapter
 		TmpAdInfo->Flags = INFO_FLAG_NDISWAN_ADAPTER;
 	}
+
+	// Set the NdisMediumNull value for "Npcap Loopback Adapter".
+	if (strcmp(g_LoopbackAdapterName, TmpAdInfo->Name) == 0)
+	{
+		TmpAdInfo->LinkLayer.LinkType = NdisMediumNull;
+	}
 	
 	// Update the AdaptersInfo list
 	TmpAdInfo->Next = g_AdaptersInfoList;
@@ -1162,6 +1169,12 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		//the memory for TmpAdInfo was zeroed upon allocation
 		
 		Status = PacketGetLinkLayerFromRegistry(adapter, &(TmpAdInfo->LinkLayer));
+
+		// Record the name of "Npcap Loopback adapter", as we need it to set NdisMediumNull value for IPHelper version add adapter function.
+		if (TmpAdInfo->LinkLayer.LinkType == (UINT) NdisMediumNull)
+		{
+			strncpy(g_LoopbackAdapterName, TmpAdInfo->Name, sizeof(g_LoopbackAdapterName)/ sizeof(g_LoopbackAdapterName[0]) - 1);
+		}
 
 		if (Status == FALSE)
 		{
