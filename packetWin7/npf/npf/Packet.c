@@ -213,9 +213,12 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
-	NPF_GetAdminOnlyOption(RegistryPath);
-
-	NPF_GetDltNullOption(RegistryPath);
+	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
+	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
+	g_AdminOnlyMode = NPF_GetRegistryOption(RegistryPath, &g_AdminOnlyRegValueName);
+	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
+	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
+	g_DltNullMode = NPF_GetRegistryOption(RegistryPath, &g_DltNullRegValueName);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetLoopbackAdapterName(RegistryPath);
@@ -557,11 +560,13 @@ getTcpBindings(
 }
 
 //-------------------------------------------------------------------
-VOID
-NPF_GetAdminOnlyOption(
-	PUNICODE_STRING RegistryPath
+ULONG
+NPF_GetRegistryOption(
+	PUNICODE_STRING RegistryPath,
+	PUNICODE_STRING RegValueName
 	)
 {
+	ULONG returnValue = 0;
 	OBJECT_ATTRIBUTES objAttrs;
 	NTSTATUS status;
 	HANDLE keyHandle;
@@ -578,9 +583,9 @@ NPF_GetAdminOnlyOption(
 	{
 		ULONG resultLength;
 		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
-		NDIS_STRING AdminOnlyValueName = g_AdminOnlyRegValueName;
+		NDIS_STRING ValueName = *RegValueName;
 		status = ZwQueryValueKey(keyHandle,
-			&AdminOnlyValueName,
+			&ValueName,
 			KeyValuePartialInformation,
 			&valueInfo,
 			sizeof(valueInfo),
@@ -598,7 +603,7 @@ NPF_GetAdminOnlyOption(
 			if (valueInfoP != NULL)
 			{
 				status = ZwQueryValueKey(keyHandle,
-					&AdminOnlyValueName,
+					&ValueName,
 					KeyValuePartialInformation,
 					valueInfoP,
 					valueInfoLength,
@@ -609,11 +614,11 @@ NPF_GetAdminOnlyOption(
 				}
 				else
 				{
-					IF_LOUD(DbgPrint("Admin Only Key = %ws\n", valueInfoP->Data);)
+					IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, valueInfoP->Data);)
 
 					if (valueInfoP->DataLength == 4)
 					{
-						g_AdminOnlyMode = *((DWORD *) valueInfoP->Data);
+						returnValue = *((DWORD *) valueInfoP->Data);
 					}
 				}
 
@@ -628,81 +633,7 @@ NPF_GetAdminOnlyOption(
 		ZwClose(keyHandle);
 	}
 
-	TRACE_EXIT();
-}
-
-//-------------------------------------------------------------------
-VOID
-NPF_GetDltNullOption(
-	PUNICODE_STRING RegistryPath
-	)
-{
-	OBJECT_ATTRIBUTES objAttrs;
-	NTSTATUS status;
-	HANDLE keyHandle;
-
-	TRACE_ENTER();
-
-	InitializeObjectAttributes(&objAttrs, RegistryPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
-	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
-	if (!NT_SUCCESS(status))
-	{
-		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
-	}
-	else //OK
-	{
-		ULONG resultLength;
-		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
-		NDIS_STRING DltNullValueName = g_DltNullRegValueName;
-		status = ZwQueryValueKey(keyHandle,
-			&DltNullValueName,
-			KeyValuePartialInformation,
-			&valueInfo,
-			sizeof(valueInfo),
-			&resultLength);
-
-		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
-		{
-			IF_LOUD(DbgPrint("\n\nStatus of %x querying key value for size\n", status);)
-		}
-		else
-		{
-			// We know how big it needs to be.
-			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
-			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '1PWA');
-			if (valueInfoP != NULL)
-			{
-				status = ZwQueryValueKey(keyHandle,
-					&DltNullValueName,
-					KeyValuePartialInformation,
-					valueInfoP,
-					valueInfoLength,
-					&resultLength);
-				if (!NT_SUCCESS(status))
-				{
-					IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
-				}
-				else
-				{
-					IF_LOUD(DbgPrint("Dlt Null Key = %ws\n", valueInfoP->Data);)
-
-						if (valueInfoP->DataLength == 4)
-						{
-							g_DltNullMode = *((DWORD *)valueInfoP->Data);
-						}
-				}
-
-				ExFreePool(valueInfoP);
-			}
-			else
-			{
-				IF_LOUD(DbgPrint("Error Allocating the buffer for the admin only option\n");)
-			}
-		}
-
-		ZwClose(keyHandle);
-	}
-
+	return returnValue;
 	TRACE_EXIT();
 }
 

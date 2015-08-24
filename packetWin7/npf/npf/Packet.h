@@ -783,21 +783,14 @@ getTcpBindings(
 	);
 
 /*!
-  \brief read Npcap software's registry, get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
+  \brief read Npcap software's registry, get the option.
 
-  If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
+  If the registry key doesn't exist, we view the result as 0.
 */
-VOID
-NPF_GetAdminOnlyOption(
-	);
-
-/*!
-\brief read Npcap software's registry, get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
-
-If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
-*/
-VOID
-NPF_GetDltNullOption(
+ULONG
+NPF_GetRegistryOption(
+	PUNICODE_STRING RegistryPath,
+	PUNICODE_STRING RegValueName
 	);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
