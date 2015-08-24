@@ -84,10 +84,6 @@ NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("Loopback");
 extern HANDLE g_WFPEngineHandle;
 #endif
 
-ULONG g_AdminOnlyMode = 0;
-
-ULONG g_DltNullMode = 0;
-
 NDIS_STRING g_NPF_Prefix;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
 NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
@@ -98,8 +94,12 @@ NDIS_STRING AdapterListKey = NDIS_STRING_CONST("\\Registry\\Machine\\System"
 NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
 
 NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
-
 NDIS_STRING g_DltNullRegValueName = NDIS_STRING_CONST("DltNull");
+NDIS_STRING g_VlanSupportRegValueName = NDIS_STRING_CONST("VlanSupport");
+
+ULONG g_AdminOnlyMode = 0;
+ULONG g_DltNullMode = 0;
+ULONG g_VlanSupportMode = 0;
 
 /// Global variable that points to the names of the bound adapters
 WCHAR* bindP = NULL;
@@ -219,6 +219,9 @@ DriverEntry(
 	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
 	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
 	g_DltNullMode = NPF_GetRegistryOption(RegistryPath, &g_DltNullRegValueName);
+	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
+	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
+	g_VlanSupportMode = NPF_GetRegistryOption(RegistryPath, &g_VlanSupportRegValueName);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetLoopbackAdapterName(RegistryPath);

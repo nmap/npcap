@@ -57,6 +57,7 @@ Var /GLOBAL admin_only
 Var /GLOBAL winpcap_mode
 Var /GLOBAL driver_name
 Var /GLOBAL dlt_null
+Var /GLOBAL vlan_support
 
 RequestExecutionLevel admin
 
@@ -315,9 +316,9 @@ FunctionEnd
 Function adminOnlyOptionsPage
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
   winpcap_exist:
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 0
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "Flags" "DISABLED"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "Flags" "DISABLED"
   no_winpcap_exist:
   !insertmacro MUI_HEADER_TEXT "Security and API Options" ""
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
@@ -339,6 +340,13 @@ Function doAdminOnlyOptions
   ${EndIf}
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State"
+  ${If} $0 == "0"
+    StrCpy $vlan_support "no"
+  ${Else}
+    StrCpy $vlan_support "yes"
+  ${EndIf}
+
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
   ${If} $0 == "0"
     StrCpy $winpcap_mode "no"
     StrCpy $driver_name "npcap"
@@ -695,6 +703,13 @@ Section "WinPcap" SecWinPcap
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 1 ; make "DltNull" = 1 only when "dlt null" is chosen
     ${Else}
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 0
+    ${Endif}
+
+    ; Npcap driver will read this option
+    ${If} $vlan_support == "yes"
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 1 ; make "VlanSupport" = 1 only when "vlan support" is chosen
+    ${Else}
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 0
     ${Endif}
 
     ; Copy the "Loopback" option from software key to services key
