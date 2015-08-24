@@ -1880,7 +1880,7 @@ NPF_IoControl(
 
 				break;
 			}
-			else if (Open->Loopback && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
+			else if (Open->Loopback && g_DltNullMode && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
