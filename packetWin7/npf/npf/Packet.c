@@ -1880,6 +1880,30 @@ NPF_IoControl(
 
 				break;
 			}
+// 			else if (Open->Loopback && g_DltNullMode && (OidData->Oid == OID_802_3_PERMANENT_ADDRESS || OidData->Oid == OID_802_3_CURRENT_ADDRESS))
+// 			{
+// 				if (FunctionCode == BIOCSETOID)
+// 				{
+// 					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_802_3_PERMANENT_ADDRESS & BIOCSETOID, fail it");
+// 					SET_FAILURE_UNSUCCESSFUL();
+// 				}
+// 				else
+// 				{
+// 					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_802_3_PERMANENT_ADDRESS & BIOCGETOID, fail it");
+// 					SET_FAILURE_UNSUCCESSFUL();
+// 				}
+//
+// 				//
+// 				// Release ownership of the Ndis Handle
+// 				//
+// 				NPF_StopUsingBinding(Open);
+//
+// 				ExInterlockedInsertTailList(&Open->RequestList,
+// 					&pRequest->ListElement,
+// 					&Open->RequestSpinLock);
+//
+// 				break;
+// 			}
 			else if (Open->Loopback && g_DltNullMode && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
 			{
 				if (FunctionCode == BIOCSETOID)
