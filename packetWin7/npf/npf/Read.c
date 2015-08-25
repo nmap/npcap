@@ -877,6 +877,7 @@ NPF_TapExForEachOpen(
 
 						if (withVlanTag)
 						{
+							// Insert a tag in the case of IEEE802.1Q packet
 							pHeaderBuffer = ExAllocatePoolWithTag(NonPagedPool, fres + 4, 'NPCA');
 							NdisMoveMappedMemory(pHeaderBuffer, HeaderBuffer, 12);
 							pHeaderBuffer[12] = 0x81;
