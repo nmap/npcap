@@ -68,6 +68,8 @@ BOOL g_IsRunByAdmin = FALSE;
 BOOL g_NPcapHelperTried = FALSE;
 // The handle to this DLL.
 HANDLE g_DllHandle = NULL;
+// The name of "Npcap Loopback Adapter".
+CHAR g_LoopbackAdapterName[BUFSIZE] = "";
 
 #ifdef _WINNT4
 #if (defined(HAVE_NPFIM_API) || defined(HAVE_WANPACKET_API) || defined (HAVE_AIRPCAP_API) || defined(HAVE_IPHELPER_API))
@@ -455,6 +457,32 @@ HANDLE NPcapRequestHandle(char *sMsg, DWORD *pdwError)
 #else // AMD64
 	#define NPCAP_SOFTWARE_REGISTRY_KEY "SOFTWARE\\Wow6432Node\\" NPF_SOFT_REGISTRY_NAME
 #endif
+
+void NPcapGetLoopbackInterfaceName()
+{
+	HKEY hKey;
+	DWORD type;
+	char buffer[BUFSIZE];
+	int size = sizeof(buffer);
+
+#ifndef _X86_
+	Wow64EnableWow64FsRedirection(FALSE);
+#endif
+
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+	{
+		if (RegQueryValueExA(hKey, "Loopback", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
+		{
+			strncpy(g_LoopbackAdapterName, buffer, sizeof(g_LoopbackAdapterName)/ sizeof(g_LoopbackAdapterName[0]) - 1);
+		}
+
+		RegCloseKey(hKey);
+	}
+
+#ifndef _X86_
+	Wow64EnableWow64FsRedirection(TRUE);
+#endif
+}
 
 BOOL NPcapIsAdminOnlyMode()
 {
@@ -846,6 +874,9 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 		// XXX We want to replace this with a constant. We leave it out for the moment
 		// TODO fixme. Those hardcoded strings are terrible...
 		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
+
+		// Get the name for "Npcap Loopback Adapter"
+		NPcapGetLoopbackInterfaceName();
 		
 		break;
 		
@@ -4592,6 +4623,32 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	ReleaseMutex(g_AdaptersInfoMutex);
 
 	TRACE_EXIT("PacketGetNetType");
+	return ret;
+}
+
+/*! 
+  \brief Returns whether an adapter is a loopback adapter (like Npcap loopback adapter).
+  \param AdapterObject The adapter on which information is needed.
+  \return TRUE if yes, FALSE if no.
+*/
+BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject)
+{
+	PADAPTER_INFO TAdInfo;
+	BOOLEAN ret;
+	TRACE_ENTER("PacketIsLoopbackAdapter");
+
+	// Set the return value to TRUE for "Npcap Loopback Adapter".
+	if (strcmp(g_LoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
+		AdapterObject->Name + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1) == 0)
+	{
+		ret = TRUE;
+	}
+	else
+	{
+		ret = FALSE;
+	}
+
+	TRACE_EXIT("PacketIsLoopbackAdapter");
 	return ret;
 }
 

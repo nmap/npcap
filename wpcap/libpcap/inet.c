@@ -207,22 +207,10 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 			return (0);
 		}
 		else {
-			NetType type;
 			/*
 			 * Set PCAP_IF_LOOPBACK for "Npcap Loopback Adapter".
 			*/
-			if (PacketGetNetType(p->adapter, &type) == FALSE) {
-				(void)snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
-					"Cannot determine the network type: %s", pcap_win32strerror());
-			}
-			else {
-				if (type.LinkType == NdisMediumNull) {
-					npcap_loopback = 1;
-				}
-				else {
-					npcap_loopback = 0;
-				}
-			}
+			npcap_loopback = PacketIsLoopbackAdapter(p->adapter);
 		}
 		pcap_close(p);
 

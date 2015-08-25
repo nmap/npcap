@@ -21,6 +21,7 @@ EXPORTS
 		PacketGetStats
 		PacketGetStatsEx
 		PacketGetNetType
+		PacketIsLoopbackAdapter
 		PacketSetReadTimeout
 		PacketSetMode
 		PacketSetNumWrites
