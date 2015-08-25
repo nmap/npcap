@@ -133,6 +133,7 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 	pcap_t *p;
 	pcap_if_t *curdev, *prevdev, *nextdev;
 	int this_instance;
+	int npcap_loopback = 0;
 
 	/*
 	 * Is there already an entry in the list for this interface?
@@ -205,6 +206,24 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 			*curdev_ret = NULL;
 			return (0);
 		}
+		else {
+			NetType type;
+			/*
+			 * Set PCAP_IF_LOOPBACK for "Npcap Loopback Adapter".
+			*/
+			if (PacketGetNetType(p->adapter, &type) == FALSE) {
+				(void)snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
+					"Cannot determine the network type: %s", pcap_win32strerror());
+			}
+			else {
+				if (type.LinkType == NdisMediumNull) {
+					npcap_loopback = 1;
+				}
+				else {
+					npcap_loopback = 0;
+				}
+			}
+		}
 		pcap_close(p);
 
 		/*
@@ -250,6 +269,8 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 		curdev->addresses = NULL;	/* list starts out as empty */
 		curdev->flags = 0;
 		if (ISLOOPBACK(name, flags))
+			curdev->flags |= PCAP_IF_LOOPBACK;
+		if (npcap_loopback)
 			curdev->flags |= PCAP_IF_LOOPBACK;
 
 		/*
