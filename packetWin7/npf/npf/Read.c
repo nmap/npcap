@@ -46,6 +46,11 @@
 #include "tme.h"
 #endif //HAVE_BUGGY_TME_SUPPORT
 
+ //
+ // Global variables
+ //
+extern ULONG g_VlanSupportMode;
+
 //-------------------------------------------------------------------
 
 NTSTATUS
@@ -610,6 +615,29 @@ NPF_TapExForEachOpen(
 	pNetBufList = pNetBufferLists;
 	while (pNetBufList != NULL)
 	{
+		BOOLEAN withVlanTag = FALSE;
+		UCHAR pVlanTag[2];
+
+		// Handle IEEE802.1Q VLAN tag here, the tag in OOB field will be copied to the packet data, currently only Ethernet supported.
+		// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
+		if (g_VlanSupportMode && (NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo) != 0))
+		{
+			NDIS_NET_BUFFER_LIST_8021Q_INFO qInfo;
+			qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
+			if (qInfo.TagHeader.VlanId != 0)
+			{
+				USHORT pTmpVlanTag;
+				withVlanTag = TRUE;
+
+				pTmpVlanTag = (qInfo.TagHeader.UserPriority & 0x07 << 13) |
+					(qInfo.TagHeader.CanonicalFormatId & 0x01 << 12) |
+					(qInfo.TagHeader.VlanId & 0x0FFF);
+
+				pVlanTag[0] = ((UCHAR *)(&pTmpVlanTag))[1];
+				pVlanTag[1] = ((UCHAR *)(&pTmpVlanTag))[0];
+			}
+		}
+
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
 
 		pNetBuf = pNetBufList->FirstNetBuffer;
@@ -844,6 +872,20 @@ NPF_TapExForEachOpen(
 					/* always true */
 					if (LookaheadBufferSize + HeaderBufferSize >= fres)
 					{
+						PUCHAR pHeaderBuffer = HeaderBuffer;
+						UINT iFres = fres;
+
+						if (withVlanTag)
+						{
+							pHeaderBuffer = ExAllocatePoolWithTag(NonPagedPool, fres + 4, 'NPCA');
+							NdisMoveMappedMemory(pHeaderBuffer, HeaderBuffer, 12);
+							pHeaderBuffer[12] = 0x81;
+							pHeaderBuffer[13] = 0x00;
+							NdisMoveMappedMemory(&pHeaderBuffer[14], pVlanTag, 2);
+							NdisMoveMappedMemory(&pHeaderBuffer[16], &HeaderBuffer[12], fres - 12);
+							iFres += 4;
+						}
+
 						//
 						// we do not need to call NdisTransferData, either because we need only the HeaderBuffer, or because the LookaheadBuffer
 						// contains what we need
@@ -854,9 +896,9 @@ NPF_TapExForEachOpen(
 						GET_TIME(&Header->header.bh_tstamp, &G_Start_Time);
 						Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
 
-						DbgPrint("MDL %d\n", fres);
+						DbgPrint("MDL %d\n", iFres);
 
-						Header->header.bh_caplen = fres;
+						Header->header.bh_caplen = iFres;
 						Header->header.bh_datalen = PacketSize + HeaderBufferSize;
 						Header->header.bh_hdrlen = sizeof(struct bpf_hdr);
 
@@ -869,25 +911,34 @@ NPF_TapExForEachOpen(
 						//present in the HeaderBuffer, or because HeaderBuffer and LookaheadBuffer are contiguous
 						// ;-))))))
 						//
-						if (Open->Size - LocalData->P < fres)
+						if (Open->Size - LocalData->P < iFres)
 						{
 							//the packet will be fragmented in the buffer (aka, it will skip the buffer boundary)
 							//two copies!!
 							ToCopy = Open->Size - LocalData->P;
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, HeaderBuffer, ToCopy);
-							NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)HeaderBuffer + ToCopy, fres - ToCopy);
-							LocalData->P = fres - ToCopy;
+							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pHeaderBuffer, ToCopy);
+							NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pHeaderBuffer + ToCopy, iFres - ToCopy);
+							LocalData->P = iFres - ToCopy;
 						}
 						else
 						{
 							//the packet does not need to be fragmented in the buffer (aka, it doesn't skip the buffer boundary)
 							// ;-)))))) only ONE copy
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, HeaderBuffer, fres);
-							LocalData->P += fres;
+							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pHeaderBuffer, iFres);
+							LocalData->P += iFres;
 						}
 
-						increment = fres + sizeof(struct PacketHeader);
-						TotalLength -= fres;
+						increment = iFres + sizeof(struct PacketHeader);
+						TotalLength -= iFres;
+
+						if (withVlanTag)
+						{
+							if (pHeaderBuffer)
+							{
+								ExFreePool(pHeaderBuffer);
+								pHeaderBuffer = NULL;
+							}
+						}
 
 						// add next MDLs
 						while (TotalLength)
