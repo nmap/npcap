@@ -1403,8 +1403,8 @@ NPF_AttachAdapter(
 			break;
 		}
 
-		IF_LOUD (DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%c-%c-%c-%c-%c-%c\n",
-			AttachParameters->BaseMiniportName,
+		IF_LOUD (DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X\n",
+			AttachParameters->BaseMiniportName->Buffer,
 			AttachParameters->CurrentMacAddress[0], 
 			AttachParameters->CurrentMacAddress[1], 
 			AttachParameters->CurrentMacAddress[2], 
@@ -1436,12 +1436,17 @@ NPF_AttachAdapter(
 				}
 			}
 		}
+		else
+		{
+			IF_LOUD(DbgPrint("NPF_Attach: g_LoopbackAdapterName.Buffer=NULL\n");)
+		}
 #endif
 
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-			"Opening the device %ws, BindingContext=%p",
-			AttachParameters->BaseMiniportName,
-			Open);
+		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+			"Opening the device %ws, BindingContext=%p, Loopback=%d",
+			AttachParameters->BaseMiniportName->Buffer,
+			Open,
+			Open->Loopback? 1 : 0);
 
 		returnStatus = STATUS_SUCCESS;
 

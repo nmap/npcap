@@ -580,7 +580,7 @@ NPF_GetRegistryOption(
 	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
 	if (!NT_SUCCESS(status))
 	{
-		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
+		IF_LOUD(DbgPrint("\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
 	}
 	else //OK
 	{
@@ -596,7 +596,7 @@ NPF_GetRegistryOption(
 
 		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
 		{
-			IF_LOUD(DbgPrint("\n\nStatus of %x querying key value for size\n", status);)
+			IF_LOUD(DbgPrint("\nStatus of %x querying key value for size\n", status);)
 		}
 		else
 		{
@@ -636,8 +636,8 @@ NPF_GetRegistryOption(
 		ZwClose(keyHandle);
 	}
 
-	return returnValue;
 	TRACE_EXIT();
+	return returnValue;
 }
 
 //-------------------------------------------------------------------
@@ -658,7 +658,7 @@ NPF_GetLoopbackAdapterName(
 	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
 	if (!NT_SUCCESS(status))
 	{
-		IF_LOUD(DbgPrint("\n\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
+		IF_LOUD(DbgPrint("\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
 	}
 	else //OK
 	{
@@ -674,7 +674,7 @@ NPF_GetLoopbackAdapterName(
 
 		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
 		{
-			IF_LOUD(DbgPrint("\n\nStatus of %x querying key value for size\n", status);)
+			IF_LOUD(DbgPrint("\nStatus of %x querying key value for size\n", status);)
 		}
 		else
 		{
