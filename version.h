@@ -24,12 +24,13 @@
 // 0.2.0.718  -->  Npcap  0.02 beta
 // 0.3.0.727  -->  Npcap  0.03 beta
 // 0.4.0.815  -->  Npcap  0.04 beta
+// 1.0.0.901  -->  Npcap  1.00 RTM
 
-#define WINPCAP_MAJOR	0
-#define WINPCAP_MINOR	4
+#define WINPCAP_MAJOR	1
+#define WINPCAP_MINOR	0
 #define WINPCAP_REV		0
-#define WINPCAP_BUILD	815
-#define WINPCAP_VER_STRING	"0.04"
+#define WINPCAP_BUILD	901
+#define WINPCAP_VER_STRING	"1.00"
 #define WINPCAP_PACKET9x_STRING_VERSION	WINPCAP_VER_STRING
 #define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
 

@@ -29,6 +29,9 @@
 ;; Yang Luo
 ;; Updated to 0.04, August 2015
 
+;; Yang Luo
+;; Updated to 1.00 RTM, September 2015
+
 SetCompressor /SOLID /FINAL lzma
 
 ;--------------------------------
@@ -43,11 +46,11 @@ SetCompressor /SOLID /FINAL lzma
 ;General
 
 ; The version of Npcap
-!define VERSION "0.04"
-!define WIN_VERSION "0.4.0.815"
+!define VERSION "1.00"
+!define WIN_VERSION "1.0.0.901"
 
 ; The name of the installer
-Name "Npcap ${VERSION} for Nmap (beta)"
+Name "Npcap ${VERSION}"
 
 ; The file to write
 OutFile "npcap-nmap-${VERSION}.exe"
@@ -163,7 +166,7 @@ Function .onInit
   var /GLOBAL inst_ver
   var /GLOBAL my_ver
   var /GLOBAL npf_startup
-  StrCpy $my_ver "${VERSION}"
+  StrCpy $my_ver "${WIN_VERSION}"
   StrCpy $npf_startup "YES"
 
   ; Always use the requested /D= $INSTDIR if given.
