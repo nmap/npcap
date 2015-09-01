@@ -262,10 +262,11 @@ NPF_OpenAdapter(
 	}
 
 	Open->DeviceExtension = DeviceExtension;
-	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-		"Opening the device %ws, BindingContext=%p",
+	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+		"Opening the device %ws, BindingContext=%p, Loopback=%u",
 		DeviceExtension->AdapterName.Buffer,
-		Open);
+		Open,
+		Open->Loopback);
 
 	//
 	// complete the open
@@ -278,24 +279,32 @@ NPF_OpenAdapter(
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if ((Open->Loopback) && (g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
+	if (Open->Loopback)
 	{
-		// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
-		Status = NPF_InitInjectionHandles();
-		if (!NT_SUCCESS(Status))
+		if ((g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
 		{
-			goto NPF_OpenAdapter_End;
-		}
-
-		Status = NPF_RegisterCallouts(g_LoopbackDevObj);
-		if (!NT_SUCCESS(Status))
-		{
-			if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, init WSK injection handles and register callouts", g_LoopbackDevObj);
+			// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
+			Status = NPF_InitInjectionHandles();
+			if (!NT_SUCCESS(Status))
 			{
-				NPF_UnregisterCallouts();
+				goto NPF_OpenAdapter_End;
 			}
 
-			goto NPF_OpenAdapter_End;
+			Status = NPF_RegisterCallouts(g_LoopbackDevObj);
+			if (!NT_SUCCESS(Status))
+			{
+				if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+				{
+					NPF_UnregisterCallouts();
+				}
+
+				goto NPF_OpenAdapter_End;
+			}
+		}
+		else
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, NO need to init WSK code", g_LoopbackDevObj);
 		}
 	}
 #endif
@@ -303,6 +312,7 @@ NPF_OpenAdapter(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (Open->Loopback)
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "This is loopback adapter, set MTU to: %u", NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
 		Open->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
 		Status = STATUS_SUCCESS;
 	}
@@ -1429,11 +1439,12 @@ NPF_AttachAdapter(
 			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
 				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
 			{
-				if (g_LoopbackOpenGroupHead == NULL)
-				{
+				// Commented this check because when system recovers from sleep, all adapters will be reattached, but g_LoopbackOpenGroupHead != NULL, so no adapter will be tagged as loopback.
+// 				if (g_LoopbackOpenGroupHead == NULL)
+// 				{
 					Open->Loopback = TRUE;
 					g_LoopbackOpenGroupHead = Open;
-				}
+//				}
 			}
 		}
 		else
