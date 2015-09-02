@@ -119,6 +119,13 @@ VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2015 Insecure.Com LLC, Nm
   !define MUI_ABORTWARNING
 
 ;--------------------------------
+;Logo
+
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "logo.bmp"
+!define MUI_HEADERIMAGE_UNBITMAP "logo.bmp"
+
+;--------------------------------
 ;Pages
 
 !insertmacro MUI_PAGE_LICENSE "LICENSE"
@@ -323,7 +330,7 @@ Function adminOnlyOptionsPage
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "Flags" "DISABLED"
   no_winpcap_exist:
-  !insertmacro MUI_HEADER_TEXT "Security and API Options" ""
+  !insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
 FunctionEnd
 
@@ -431,13 +438,13 @@ Function registerServiceAPI_win7
   StrCmp $0 "0" register_win7_success register_win7_fail
 
   register_win7_fail:
-    DetailPrint "Failed to create the npf service for Win7 and Win8"
+    DetailPrint "Failed to create the npf service for Win7, Win8 and Win10"
     IfSilent register_win7_done register_win7_fail_messagebox
     register_win7_fail_messagebox:
-      MessageBox MB_OK "Failed to create the npcap service for Win7 and Win8. Please try installing Npcap again, or use the official Npcap installer from www.nmap.org"
+      MessageBox MB_OK "Failed to create the npcap service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from www.nmap.org"
     Goto register_win7_done
   register_win7_success:
-    DetailPrint "The npf service for Win7 and Win8 was successfully created"
+    DetailPrint "The npf service for Win7, Win8 and Win10 was successfully created"
   register_win7_done:
 FunctionEnd
 
@@ -448,10 +455,10 @@ Function un.registerServiceAPI_win7
   StrCmp $0 "0" unregister_win7_success unregister_win7_fail
   
   unregister_win7_fail:
-    DetailPrint "Failed to delete the npf service for Win7 and Win8"
+    DetailPrint "Failed to delete the npf service for Win7, Win8 and Win10"
     Goto unregister_win7_done
   unregister_win7_success:
-    DetailPrint "The npf service for Win7 and Win8 was successfully deleted"
+    DetailPrint "The npf service for Win7, Win8 and Win10 was successfully deleted"
   unregister_win7_done:
 FunctionEnd
 
@@ -563,7 +570,7 @@ Section "WinPcap" SecWinPcap
       ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
-      DetailPrint "Installing NDIS6.x x86 driver for Win7 and Win8"
+      DetailPrint "Installing NDIS6.x x86 driver for Win7, Win8 and Win10"
       SetOutPath $SYSDIR\drivers
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
@@ -630,7 +637,7 @@ Section "WinPcap" SecWinPcap
       ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
-      DetailPrint "Installing NDIS6.x x64 driver for Win7 and Win8"
+      DetailPrint "Installing NDIS6.x x64 driver for Win7, Win8 and Win10"
       SetOutPath $SYSDIR\drivers
       ; disable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
@@ -645,7 +652,7 @@ Section "WinPcap" SecWinPcap
       File win7_above\x64\NPcapHelper.exe
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
-      ; install the NT6.1 above version (for Win7 and Win8)
+      ; install the NT6.1 above version (for Win7, Win8 and Win10)
 	  ${If} $winpcap_mode == "yes"
 	    File win7_above_winpcap\x64\Packet.dll ; x64 NT6.1 and above version
 	  ${Else}
