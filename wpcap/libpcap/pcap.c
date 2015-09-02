@@ -1316,7 +1316,7 @@ pcap_offline_filter(struct bpf_program *fp, const struct pcap_pkthdr *h,
  * from the library but being truncated).
  */
 #include "..\..\version.h"
-static const char pcap_version_string[] = "WinPcap version 4.1.3 (packet.dll version 4.1.0.3001), based on libpcap version 1.0 branch 1_0_rel0b (20091008)";
+static const char pcap_version_string[] = "WinPcap version 4.1.3 (packet.dll version 4.1.0.2980), based on libpcap version 1.0 branch 1_0_rel0b (20091008)";
 
 #ifdef WIN32
 /*
