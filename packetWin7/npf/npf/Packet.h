@@ -114,6 +114,9 @@ extern NDIS_HANDLE         FilterDriverObject;
 // Custom link type, used by "Npcap Loopback Adapter", NDIS doesn't provide an equivalent
 #define NdisMediumNull					-1		///< The link type of the "Npcap Loopback Adapter", this value will be recognized by packet.dll code.
 
+// Maximum CPU core number, the original value is sizeof(KAFFINITY) * 8, but Amazon instance can return 128 cores, so we make NPF_MAX_CPU_NUMBER to 256 for safe.
+#define NPF_MAX_CPU_NUMBER		sizeof(KAFFINITY) * 32
+
 /*!
   \brief Header of a libpcap dump file.
 
@@ -340,7 +343,7 @@ typedef struct _OPEN_INSTANCE
 	// KAFFINITY is used as a bit mask for the affinity in the system. So on every supported OS is big enough for all the CPUs on the system (32 bits on x86, 64 on x64?).
 	// We use its size to compute the max number of CPUs.
 	//
-	CpuPrivateData			CpuData[sizeof(KAFFINITY) * 8];	///< Pool of kernel buffer structures, one for each CPU.
+	CpuPrivateData			CpuData[NPF_MAX_CPU_NUMBER];	///< Pool of kernel buffer structures, one for each CPU.
 	ULONG					ReaderSN;		///< Sequence number of the next packet to be read from the pool of kernel buffers.
 	ULONG					WriterSN;		///< Sequence number of the next packet to be written in the pool of kernel buffers.
 											///< These two sequence numbers are unique for each capture instance.

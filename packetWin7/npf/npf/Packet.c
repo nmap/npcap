@@ -140,24 +140,30 @@ DriverEntry(
 	FilterDriverObject = DriverObject;
 
 	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
-	TRACE_MESSAGE2(PACKET_DEBUG_INIT, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
+	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
 
 	//
 	// Set timestamp gathering method getting it from the registry
 	//
 	ReadTimeStampModeFromRegistry(RegistryPath);
-	TRACE_MESSAGE1(PACKET_DEBUG_INIT, "%ws", RegistryPath->Buffer);
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "%ws", RegistryPath->Buffer);
 
 	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
 
 	//
 	// Get number of CPUs and save it
 	//
-// #ifdef NDIS620
-// 	g_NCpu = NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
+/*#ifdef NDIS620*/
+/*	g_NCpu = NdisSystemProcessorCount();*/
+	g_NCpu = NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
+	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_NCpu (NdisGroupMaxProcessorCount): %d, NPF_MAX_CPU_NUMBER: %d\n", g_NCpu, NPF_MAX_CPU_NUMBER);
+	if (g_NCpu > NPF_MAX_CPU_NUMBER)
+	{
+		g_NCpu = NPF_MAX_CPU_NUMBER;
+	}
 // #else
-	g_NCpu = NdisSystemProcessorCount();
-/*#endif*/
+// 	g_NCpu = NdisSystemProcessorCount();
+// #endif
 
 
 	//
@@ -231,13 +237,13 @@ DriverEntry(
 
 	if (bindP == NULL)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_INIT, "Adapters not found in the registry, try to copy the bindings of TCP-IP.");
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Adapters not found in the registry, try to copy the bindings of TCP-IP.");
 
 		tcpBindingsP = getTcpBindings();
 
 		if (tcpBindingsP == NULL)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_INIT, "TCP-IP not found, quitting.");
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "TCP-IP not found, quitting.");
 			goto RegistryError;
 		}
 
@@ -261,7 +267,7 @@ DriverEntry(
 		&FilterDriverHandle);
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_INIT, "Failed to register filter with NDIS.");
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to register filter with NDIS.");
 		TRACE_EXIT();
 		return Status;
 	}
@@ -467,6 +473,13 @@ getAdaptersList(
 	return DeviceNames;
 }
 
+#define ABSOLUTE(wait)				(wait)
+#define RELATIVE(wait)				(-(wait))
+#define NANOSECONDS(nanos)			(((signed __int64)(nanos)) / 100L)
+#define MICROSECONDS(micros)		(((signed __int64)(micros)) * NANOSECONDS(1000L))
+#define MILLISECONDS(milli)			(((signed __int64)(milli)) * MICROSECONDS(1000L))
+#define SECONDS(seconds)			(((signed __int64)(seconds)) * MILLISECONDS(1000L))
+
 //-------------------------------------------------------------------
 
 PKEY_VALUE_PARTIAL_INFORMATION
@@ -584,15 +597,28 @@ NPF_GetRegistryOption(
 	}
 	else //OK
 	{
+		BOOLEAN bTried = FALSE;
 		ULONG resultLength;
 		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
 		NDIS_STRING ValueName = *RegValueName;
+		IF_LOUD(DbgPrint("\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
+REGISTRY_QUERY_VALUE_KEY:
 		status = ZwQueryValueKey(keyHandle,
 			&ValueName,
 			KeyValuePartialInformation,
 			&valueInfo,
 			sizeof(valueInfo),
 			&resultLength);
+
+		if (status == STATUS_OBJECT_NAME_NOT_FOUND && bTried == FALSE)
+		{
+			LARGE_INTEGER delayTime;
+			delayTime.QuadPart = RELATIVE(MILLISECONDS(500));
+			IF_LOUD(DbgPrint("\nCalled KeDelayExecutionThread() to delay 500ms\n"););
+			KeDelayExecutionThread(KernelMode, FALSE, &delayTime);
+			bTried = TRUE;
+			goto REGISTRY_QUERY_VALUE_KEY;
+		}
 
 		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
 		{
@@ -617,7 +643,7 @@ NPF_GetRegistryOption(
 				}
 				else
 				{
-					IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, valueInfoP->Data);)
+					IF_LOUD(DbgPrint("\"%ws\" Key = %08X\n", RegValueName->Buffer, *((DWORD *)valueInfoP->Data));)
 
 					if (valueInfoP->DataLength == 4)
 					{

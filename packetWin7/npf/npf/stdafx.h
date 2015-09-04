@@ -8,6 +8,8 @@
 //#define NDIS620 1 //NDIS 6.2 version (for Windows 7 above) 
 #define NDIS60 1 //NDIS 6.0 version (for Windows Vista above) is currently used
 
+#define NDIS_SUPPORT_NDIS620 1
+
 // Specify which version of the NDIS contract you will use here.
 // In many cases, 6.0 is the best choice.  You only need to select a later
 // version if you need a feature that is not available in 6.0.
