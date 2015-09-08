@@ -127,6 +127,9 @@ DriverEntry(
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars;
 	NTSTATUS Status = STATUS_SUCCESS;
 
+	// Use NonPaged Pool instead of No-Execute (NX) Nonpaged Pool for Win8 and later, this is for security purpose.
+	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
+
 	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR); //display name
 	NDIS_STRING UniqueName = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME); //unique name, quid name
 	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR); //this to match the service name in the INF

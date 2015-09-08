@@ -97,7 +97,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;DBG=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;POOL_NX_OPTIN=1;DBG=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
     </ClCompile>
@@ -108,7 +108,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;DBG=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;POOL_NX_OPTIN=1;DBG=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IntrinsicFunctions>false</IntrinsicFunctions>
     </ClCompile>
     <Link>
@@ -118,7 +118,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;POOL_NX_OPTIN=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -126,7 +126,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;POOL_NX_OPTIN=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
