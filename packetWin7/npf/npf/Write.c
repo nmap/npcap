@@ -233,7 +233,7 @@ NPF_Write(
 				while (GroupOpen != NULL)
 				{
 					TempOpen = GroupOpen;
-					if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+					if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
 					{
 						NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 					}
@@ -568,7 +568,7 @@ NPF_BufferedWrite(
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
 			{
 				NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 			}
