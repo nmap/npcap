@@ -262,11 +262,18 @@ NPF_OpenAdapter(
 	}
 
 	Open->DeviceExtension = DeviceExtension;
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
 		"Opening the device %ws, BindingContext=%p, Loopback=%u",
 		DeviceExtension->AdapterName.Buffer,
 		Open,
 		Open->Loopback);
+#else
+	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+		"Opening the device %ws, BindingContext=%p, Loopback=<Not supported>",
+		DeviceExtension->AdapterName.Buffer,
+		Open);
+#endif
 
 	//
 	// complete the open
@@ -320,7 +327,9 @@ NPF_OpenAdapter(
 #endif
 		Status = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 NPF_OpenAdapter_End:;
+#endif
 	if (!NT_SUCCESS(Status))
 	{
 		// Close the binding
@@ -1453,11 +1462,18 @@ NPF_AttachAdapter(
 		}
 #endif
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
 			"Opening the device %ws, BindingContext=%p, Loopback=%d",
 			AttachParameters->BaseMiniportName->Buffer,
 			Open,
 			Open->Loopback? 1 : 0);
+#else
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+			"Opening the device %ws, BindingContext=%p, Loopback=<Not supported>",
+			AttachParameters->BaseMiniportName->Buffer,
+			Open);
+#endif
 
 		returnStatus = STATUS_SUCCESS;
 
