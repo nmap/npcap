@@ -96,7 +96,7 @@ BPF_filter_function BPFtoX86(struct bpf_insn* prog, UINT nins, INT* mem)
 
 	// Allocate the reference table for the jumps
 #ifdef NTKERNEL
-	stream.refs = (UINT *)ExAllocatePoolWithTag(NonPagedPool, (nins + 1) * sizeof(UINT), '0JWA');
+	stream.refs = (UINT *)ExAllocatePoolWithTag(NonPagedPoolExecute, (nins + 1) * sizeof(UINT), '0JWA');
 #else
 	stream.refs = (UINT *)malloc((nins + 1) * sizeof(UINT));
 #endif
@@ -543,7 +543,7 @@ BPF_filter_function BPFtoX86(struct bpf_insn* prog, UINT nins, INT* mem)
 			break;
 
 #ifdef NTKERNEL
-		stream.ibuf = (CHAR *)ExAllocatePoolWithTag(NonPagedPool, stream.cur_ip, '1JWA');
+		stream.ibuf = (CHAR *)ExAllocatePoolWithTag(NonPagedPoolExecute, stream.cur_ip, '1JWA');
 #else
 		stream.ibuf = (CHAR *)malloc(stream.cur_ip);
 #endif
@@ -585,7 +585,7 @@ JIT_BPF_Filter* BPF_jitter(struct bpf_insn* fp, INT nins)
 
 	// Allocate the filter structure
 #ifdef NTKERNEL
-	Filter = (struct JIT_BPF_Filter *)ExAllocatePoolWithTag(NonPagedPool, sizeof(struct JIT_BPF_Filter), '2JWA');
+	Filter = (struct JIT_BPF_Filter *)ExAllocatePoolWithTag(NonPagedPoolExecute, sizeof(struct JIT_BPF_Filter), '2JWA');
 #else
 	Filter = (struct JIT_BPF_Filter *)malloc(sizeof(struct JIT_BPF_Filter));
 #endif
@@ -596,7 +596,7 @@ JIT_BPF_Filter* BPF_jitter(struct bpf_insn* fp, INT nins)
 
 	// Allocate the filter's memory
 #ifdef NTKERNEL
-	Filter->mem = (INT *)ExAllocatePoolWithTag(NonPagedPool, BPF_MEMWORDS * sizeof(INT), '3JWA');
+	Filter->mem = (INT *)ExAllocatePoolWithTag(NonPagedPoolExecute, BPF_MEMWORDS * sizeof(INT), '3JWA');
 #else
 	Filter->mem = (INT *)malloc(BPF_MEMWORDS * sizeof(INT));
 #endif
