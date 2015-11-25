@@ -248,7 +248,9 @@ NPF_NetworkClassify(
 	COMPARTMENT_ID		compartmentID = UNSPECIFIED_COMPARTMENT_ID;
 	FWPS_PACKET_INJECTION_STATE injectionState = FWPS_PACKET_INJECTION_STATE_MAX;
 
+#if(NTDDI_VERSION >= NTDDI_WIN7)
 	UNREFERENCED_PARAMETER(classifyContext);
+#endif
 	UNREFERENCED_PARAMETER(filter);
 	UNREFERENCED_PARAMETER(flowContext);
 
@@ -256,6 +258,7 @@ NPF_NetworkClassify(
 	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
 		classifyOut->actionType = FWP_ACTION_CONTINUE;
 
+#if(NTDDI_VERSION >= NTDDI_WIN7)
 	// Filter out fragment packets and reassembled packets.
 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_FRAGMENT_DATA)
 	{
@@ -265,6 +268,7 @@ NPF_NetworkClassify(
 	{
 		return;
 	}
+#endif
 
 	TRACE_ENTER();
 
@@ -599,6 +603,7 @@ NPF_AddFilter(
 		filterConditions[conditionIndex].conditionValue.uint32 = FWPS_METADATA_FIELD_FRAGMENT_DATA;
 		conditionIndex++;
 	}
+#if(NTDDI_VERSION >= NTDDI_WIN7)
 	else if (iFlag == 2)
 	{
 		filter.action.type = FWP_ACTION_PERMIT;
@@ -610,6 +615,7 @@ NPF_AddFilter(
 		filterConditions[conditionIndex].conditionValue.uint32 = FWP_CONDITION_FLAG_IS_REASSEMBLED;
 		conditionIndex++;
 	}
+#endif
 	else if (iFlag == 3)
 	{
 		filter.action.type = FWP_ACTION_CALLOUT_INSPECTION;
@@ -628,6 +634,11 @@ NPF_AddFilter(
 	// 		filterConditions[conditionIndex].conditionValue.uint32 = FWPS_METADATA_FIELD_FRAGMENT_DATA | FWP_CONDITION_FLAG_IS_REASSEMBLED;
 	// 		conditionIndex++;
 	// 	}
+	else
+	{
+		TRACE_EXIT();
+		return status;
+	}
 
 	filter.numFilterConditions = conditionIndex;
 

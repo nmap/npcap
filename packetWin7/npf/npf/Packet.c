@@ -114,6 +114,11 @@ ULONG TimestampMode;
 NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
 NDIS_HANDLE         FilterDriverObject; // Driver object for filter driver
 
+typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
+	USHORT Group
+	);
+NDISGROUPMAXPROCESSORCOUNT MyNdisGroupMaxProcessorCount;
+
 //
 //  Packet Driver's entry routine.
 //
@@ -137,6 +142,7 @@ DriverEntry(
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
 	ULONG OsMajorVersion, OsMinorVersion;
+	NDIS_STRING GroupMaxProcessorCount;
 	UNREFERENCED_PARAMETER(RegistryPath);
 
 	TRACE_ENTER();
@@ -156,18 +162,21 @@ DriverEntry(
 	//
 	// Get number of CPUs and save it
 	//
-/*#ifdef NDIS620*/
-/*	g_NCpu = NdisSystemProcessorCount();*/
-	g_NCpu = NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
-	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_NCpu (NdisGroupMaxProcessorCount): %d, NPF_MAX_CPU_NUMBER: %d\n", g_NCpu, NPF_MAX_CPU_NUMBER);
-	if (g_NCpu > NPF_MAX_CPU_NUMBER)
+	RtlInitUnicodeString(&GroupMaxProcessorCount, L"NdisGroupMaxProcessorCount");
+	MyNdisGroupMaxProcessorCount = (NDISGROUPMAXPROCESSORCOUNT) NdisGetRoutineAddress(&GroupMaxProcessorCount);
+	if (MyNdisGroupMaxProcessorCount) // for NDIS620 and later (Win7 and later).
 	{
-		g_NCpu = NPF_MAX_CPU_NUMBER;
+		g_NCpu = MyNdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_NCpu (NdisGroupMaxProcessorCount): %d, NPF_MAX_CPU_NUMBER: %d\n", g_NCpu, NPF_MAX_CPU_NUMBER);
+		if (g_NCpu > NPF_MAX_CPU_NUMBER)
+		{
+			g_NCpu = NPF_MAX_CPU_NUMBER;
+		}
 	}
-// #else
-// 	g_NCpu = NdisSystemProcessorCount();
-// #endif
-
+	else // for NDIS6 (Vista)
+	{
+		g_NCpu = NdisSystemProcessorCount();
+	}
 
 	//
 	// Register as a service with NDIS
