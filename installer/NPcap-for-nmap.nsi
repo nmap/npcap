@@ -401,13 +401,13 @@ Function registerServiceAPI_xp_vista
   System::Call 'advapi32::CreateServiceA(i R0,t "npf",t "NetGroup Packet Filter Driver",i ${SERVICE_ALL_ACCESS},i ${SERVICE_KERNEL_DRIVER}, i ${SERVICE_DEMAND_START},i ${SERVICE_ERROR_NORMAL}, t "system32\drivers\npf.sys",,,,,) i.r1'
   StrCmp $1 "0" register_xp_vista_fail register_xp_vista_success
   register_xp_vista_fail:
-    DetailPrint "Failed to create the npf service for XP and Vista"
+    DetailPrint "Failed to create the npf service for XP"
     IfSilent close_register_xp_vista_handle register_xp_vista_fail_messagebox
     register_xp_vista_fail_messagebox:
-      MessageBox MB_OK "Failed to create the npf service for XP and Vista. Please try installing Npcap again, or use the official Npcap installer from www.nmap.org"
+      MessageBox MB_OK "Failed to create the npf service for XP. Please try installing Npcap again, or use the official Npcap installer from www.nmap.org"
     Goto close_register_xp_vista_handle
   register_xp_vista_success:
-    DetailPrint "The npf service for XP and Vista was successfully created"
+    DetailPrint "The npf service for XP was successfully created"
   close_register_xp_vista_handle:
   System::Call 'advapi32::CloseServiceHandle(i R0) n'
 FunctionEnd
@@ -418,10 +418,10 @@ Function un.registerServiceAPI_xp_vista
   System::Call 'advapi32::DeleteService(i r1) i.r6'
   StrCmp $6 "0" unregister_xp_vista_fail unregister_xp_vista_success
   unregister_xp_vista_fail:
-    DetailPrint "Failed to delete the npf service for XP and Vista"
+    DetailPrint "Failed to delete the npf service for XP"
     Goto close_unregister_xp_vista_handle
   unregister_xp_vista_success:
-    DetailPrint "The npf service for XP and Vista was successfully deleted"
+    DetailPrint "The npf service for XP was successfully deleted"
   close_unregister_xp_vista_handle:
   System::Call 'advapi32::CloseServiceHandle(i r1) n'
   System::Call 'advapi32::CloseServiceHandle(i r0) n'
@@ -438,13 +438,13 @@ Function registerServiceAPI_win7
   StrCmp $0 "0" register_win7_success register_win7_fail
 
   register_win7_fail:
-    DetailPrint "Failed to create the npf service for Win7, Win8 and Win10"
+    DetailPrint "Failed to create the npf service for Vista, Win7, Win8 and Win10"
     IfSilent register_win7_done register_win7_fail_messagebox
     register_win7_fail_messagebox:
-      MessageBox MB_OK "Failed to create the npcap service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from www.nmap.org"
+      MessageBox MB_OK "Failed to create the npcap service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from www.nmap.org"
     Goto register_win7_done
   register_win7_success:
-    DetailPrint "The npf service for Win7, Win8 and Win10 was successfully created"
+    DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully created"
   register_win7_done:
 FunctionEnd
 
@@ -455,10 +455,10 @@ Function un.registerServiceAPI_win7
   StrCmp $0 "0" unregister_win7_success unregister_win7_fail
   
   unregister_win7_fail:
-    DetailPrint "Failed to delete the npf service for Win7, Win8 and Win10"
+    DetailPrint "Failed to delete the npf service for Vista, Win7, Win8 and Win10"
     Goto unregister_win7_done
   unregister_win7_success:
-    DetailPrint "The npf service for Win7, Win8 and Win10 was successfully deleted"
+    DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully deleted"
   unregister_win7_done:
 FunctionEnd
 
@@ -502,12 +502,16 @@ Section "WinPcap" SecWinPcap
   ; xp_files:
   StrCpy $os_ver 'xp' 5
   File nt5\x86\Packet.dll
-  Goto install_xp_vista
+  Goto install_xp
 
   vista_files:
     StrCpy $os_ver 'vista' 5
-    File vista\x86\Packet.dll
-    Goto install_xp_vista
+    ${If} $winpcap_mode == "yes"
+	  File win7_above_winpcap\x86\Packet.dll
+	${Else}
+	  File win7_above\x86\Packet.dll
+	${EndIf}
+    Goto install_win7
 
   win7_files:
     StrCpy $os_ver 'win7' 5
@@ -518,9 +522,9 @@ Section "WinPcap" SecWinPcap
 	${EndIf}
     Goto install_win7
 
-  install_xp_vista:
+  install_xp:
     Call is64bit
-    StrCmp $0 "0" install_xp_vista_32bit install_xp_vista_64bit
+    StrCmp $0 "0" install_xp_32bit install_xp_64bit
     
   install_win7:
     Call is64bit
@@ -533,12 +537,12 @@ Section "WinPcap" SecWinPcap
     ; DisplayIcon doesn't usually have quotes (even on Microsoft installations) and
     ; HKLM Software\PackageName doesn't usually have quotes either.
 
-    install_xp_vista_32bit:
+    install_xp_32bit:
       SetOutPath $INSTDIR
       File rpcapd.exe
       File LICENSE
       WriteUninstaller "$INSTDIR\uninstall.exe"
-      DetailPrint "Installing NDIS5.0 x86 driver for XP and Vista"
+      DetailPrint "Installing NDIS5.0 x86 driver for XP"
       SetOutPath $SYSDIR\drivers
       File npf.sys ; x86 NT5/NT6.0 version
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
@@ -557,20 +561,34 @@ Section "WinPcap" SecWinPcap
 	    File win7_above\x86\NPFInstall.exe
 	  ${EndIf}
 
-      ${If} $winpcap_mode == "yes"
-        File win7_above_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
-        File win7_above_winpcap\x86\npf.inf
-        File win7_above_winpcap\x86\npf_wfp.inf
-        File win7_above_winpcap\x86\npf.cat
-      ${Else}
-        File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
-        File win7_above\x86\npcap.inf
-        File win7_above\x86\npcap_wfp.inf
-        File win7_above\x86\npcap.cat
-      ${EndIf}
+	  ${If} $os_ver == "vista"
+        ${If} $winpcap_mode == "yes"
+          File vista_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
+          File vista_winpcap\x86\npf.inf
+          File vista_winpcap\x86\npf_wfp.inf
+          File vista_winpcap\x86\npf.cat
+        ${Else}
+          File vista\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+          File vista\x86\npcap.inf
+          File vista\x86\npcap_wfp.inf
+          File vista\x86\npcap.cat
+        ${EndIf}
+	  ${Else}
+	    ${If} $winpcap_mode == "yes"
+          File win7_above_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
+          File win7_above_winpcap\x86\npf.inf
+          File win7_above_winpcap\x86\npf_wfp.inf
+          File win7_above_winpcap\x86\npf.cat
+        ${Else}
+          File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+          File win7_above\x86\npcap.inf
+          File win7_above\x86\npcap_wfp.inf
+          File win7_above\x86\npcap.cat
+        ${EndIf}
+	  ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
-      DetailPrint "Installing NDIS6.x x86 driver for Win7, Win8 and Win10"
+      DetailPrint "Installing NDIS6.x x86 driver for Vista, Win7, Win8 and Win10"
       SetOutPath $SYSDIR\drivers
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
@@ -578,12 +596,12 @@ Section "WinPcap" SecWinPcap
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
       Goto npfdone
 
-    install_xp_vista_64bit:
+    install_xp_64bit:
       SetOutPath $INSTDIR
       File rpcapd.exe
       File LICENSE
       WriteUninstaller "$INSTDIR\uninstall.exe"
-      DetailPrint "Installing NDIS5.x x64 driver for XP and Vista"
+      DetailPrint "Installing NDIS5.x x64 driver for XP"
       SetOutPath $SYSDIR\drivers
       ; disable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
@@ -598,14 +616,7 @@ Section "WinPcap" SecWinPcap
 	  ${EndIf}
       File x64\wpcap.dll ; x64 NT5/NT6.0 version
       ; install the 64-bit version of packet.dll into System32
-      ; check for vista, otherwise install the NT5 version (for XP and 2003)
-      StrCpy $R0 $R0 2
-      StrCmp $R0 '6.' vista_x64_packet
       File nt5\x64\Packet.dll ; x64 XP/2003 version
-      Goto nt5_x64_packet_done
-      vista_x64_packet:
-      File vista\x64\Packet.dll ; x64 Vista version
-      nt5_x64_packet_done:
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -624,20 +635,34 @@ Section "WinPcap" SecWinPcap
         File win7_above\x64\NPFInstall.exe
 	  ${EndIf}
 
-      ${If} $winpcap_mode == "yes"
-        File win7_above_winpcap\x64\npf.sys ; x64 NT6.1 and above version
-        File win7_above_winpcap\x64\npf.inf
-        File win7_above_winpcap\x64\npf_wfp.inf
-        File win7_above_winpcap\x64\npf.cat
-      ${Else}
-        File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
-        File win7_above\x64\npcap.inf
-        File win7_above\x64\npcap_wfp.inf
-        File win7_above\x64\npcap.cat
-      ${EndIf}
+	  ${If} $os_ver == "vista"
+	    ${If} $winpcap_mode == "yes"
+          File vista_winpcap\x64\npf.sys ; x64 NT6.1 and above version
+          File vista_winpcap\x64\npf.inf
+          File vista_winpcap\x64\npf_wfp.inf
+          File vista_winpcap\x64\npf.cat
+        ${Else}
+          File vista\x64\npcap.sys ; x64 NT6.1 and above version
+          File vista\x64\npcap.inf
+          File vista\x64\npcap_wfp.inf
+          File vista\x64\npcap.cat
+        ${EndIf}
+	  ${Else}
+        ${If} $winpcap_mode == "yes"
+          File win7_above_winpcap\x64\npf.sys ; x64 NT6.1 and above version
+          File win7_above_winpcap\x64\npf.inf
+          File win7_above_winpcap\x64\npf_wfp.inf
+          File win7_above_winpcap\x64\npf.cat
+        ${Else}
+          File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
+          File win7_above\x64\npcap.inf
+          File win7_above\x64\npcap_wfp.inf
+          File win7_above\x64\npcap.cat
+        ${EndIf}
+	  ${EndIf}
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
-      DetailPrint "Installing NDIS6.x x64 driver for Win7, Win8 and Win10"
+      DetailPrint "Installing NDIS6.x x64 driver for Vista, Win7, Win8 and Win10"
       SetOutPath $SYSDIR\drivers
       ; disable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
@@ -652,9 +677,9 @@ Section "WinPcap" SecWinPcap
       File win7_above\x64\NPcapHelper.exe
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
-      ; install the NT6.1 above version (for Win7, Win8 and Win10)
+      ; install the NT6.0 above version (for Vista, Win7, Win8 and Win10)
 	  ${If} $winpcap_mode == "yes"
-	    File win7_above_winpcap\x64\Packet.dll ; x64 NT6.1 and above version
+	    File win7_above_winpcap\x64\Packet.dll ; x64 NT6.0 and above version
 	  ${Else}
         File win7_above\x64\Packet.dll ; x64 NT6.1 and above version
 	  ${EndIf}
@@ -681,7 +706,8 @@ Section "WinPcap" SecWinPcap
 
     ; register the driver as a system service using Windows API calls
     ; this will work on Windows 2000 (that lacks sc.exe) and higher
-    StrCmp $os_ver 'win7' register_service_win7
+    StrCmp $os_ver 'vista' register_service_win7
+	StrCmp $os_ver 'win7' register_service_win7
     ;registerService_xp_vista:
     Call registerServiceAPI_xp_vista
     Goto registerdone
@@ -807,6 +833,7 @@ Section "Uninstall"
   check_windows_done:
     
   ; unregister the driver as a system service using Windows API calls, so it works on Windows 2000
+  StrCmp $os_ver 'vista' unregister_service_win7
   StrCmp $os_ver 'win7' unregister_service_win7
   
   ;unregisterService_xp_vista:

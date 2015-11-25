@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npf", "npf\npf.vcxproj", "{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}"
 EndProject
@@ -11,12 +11,26 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npf Package", "npf Package\
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Vista Debug|Win32 = Vista Debug|Win32
+		Vista Debug|x64 = Vista Debug|x64
+		Vista Release|Win32 = Vista Release|Win32
+		Vista Release|x64 = Vista Release|x64
 		Win7 Debug|Win32 = Win7 Debug|Win32
 		Win7 Debug|x64 = Win7 Debug|x64
 		Win7 Release|Win32 = Win7 Release|Win32
 		Win7 Release|x64 = Win7 Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Debug|Win32.ActiveCfg = Vista Debug|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Debug|Win32.Build.0 = Vista Debug|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Debug|Win32.Deploy.0 = Vista Debug|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Debug|x64.ActiveCfg = Vista Debug|x64
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Debug|x64.Build.0 = Vista Debug|x64
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Release|Win32.ActiveCfg = Vista Release|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Release|Win32.Build.0 = Vista Release|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Release|Win32.Deploy.0 = Vista Release|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Release|x64.ActiveCfg = Vista Release|x64
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Vista Release|x64.Build.0 = Vista Release|x64
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Debug|Win32.ActiveCfg = Win7 Debug|Win32
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Debug|Win32.Build.0 = Win7 Debug|Win32
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Debug|Win32.Deploy.0 = Win7 Debug|Win32
@@ -29,6 +43,16 @@ Global
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release|x64.ActiveCfg = Win7 Release|x64
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release|x64.Build.0 = Win7 Release|x64
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release|x64.Deploy.0 = Win7 Release|x64
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Debug|Win32.ActiveCfg = Vista Debug|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Debug|Win32.Build.0 = Vista Debug|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Debug|Win32.Deploy.0 = Vista Debug|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Debug|x64.ActiveCfg = Vista Debug|x64
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Debug|x64.Build.0 = Vista Debug|x64
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Release|Win32.ActiveCfg = Vista Release|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Release|Win32.Build.0 = Vista Release|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Release|Win32.Deploy.0 = Vista Release|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Release|x64.ActiveCfg = Vista Release|x64
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Vista Release|x64.Build.0 = Vista Release|x64
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Debug|Win32.ActiveCfg = Win7 Debug|Win32
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Debug|Win32.Build.0 = Win7 Debug|Win32
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Debug|Win32.Deploy.0 = Win7 Debug|Win32

@@ -17,11 +17,17 @@ Debug/
 Release/
 Debug(WinPcap Mode)/
 Release(WinPcap Mode)/
+VistaDebug/
+VistaRelease/
 Win7Debug/
 Win7Release/
 Win7DebugAdmin-onlyMode/
 Win7ReleaseAdmin-onlyMode/
 sdv/
+/installer/vista/x86/
+/installer/vista/x64/
+/installer/vista_winpcap/x86/
+/installer/vista_winpcap/x64/
 /installer/win7_above/x86/
 /installer/win7_above/x64/
 /installer/win7_above_winpcap/x86/
