@@ -195,6 +195,11 @@ Function .onInit
 
   do_silent:
     SetSilent silent
+    StrCpy $admin_only "no"
+    StrCpy $dlt_null "no"
+    StrCpy $vlan_support "yes"
+    StrCpy $winpcap_mode "yes"
+    StrCpy $driver_name "npf"
     IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
     return
     silent_checks:
@@ -337,14 +342,14 @@ FunctionEnd
 Function doAdminOnlyOptions
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State"
   ${If} $0 == "0"
-    StrCpy $admin_only "no"
+    StrCpy $admin_only "no" ; by default
   ${Else}
     StrCpy $admin_only "yes"
   ${EndIf}
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State"
   ${If} $0 == "0"
-    StrCpy $dlt_null "no"
+    StrCpy $dlt_null "no" ; by default
   ${Else}
     StrCpy $dlt_null "yes"
   ${EndIf}
@@ -353,7 +358,7 @@ Function doAdminOnlyOptions
   ${If} $0 == "0"
     StrCpy $vlan_support "no"
   ${Else}
-    StrCpy $vlan_support "yes"
+    StrCpy $vlan_support "yes" ; by default
   ${EndIf}
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
@@ -361,8 +366,8 @@ Function doAdminOnlyOptions
     StrCpy $winpcap_mode "no"
     StrCpy $driver_name "npcap"
   ${Else}
-    StrCpy $winpcap_mode "yes"
-    StrCpy $driver_name "npf"
+    StrCpy $winpcap_mode "yes" ; by default
+    StrCpy $driver_name "npf" ; by default
   ${EndIf}
 FunctionEnd
 
