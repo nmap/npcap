@@ -4,6 +4,8 @@ Npcap
 ![Environment](https://img.shields.io/badge/Windows-Vista, 7, 8, 10-yellow.svg)
 ![Release](https://img.shields.io/github/release/nmap/npcap.svg)
 ![License](https://img.shields.io/github/license/nmap/npcap.svg)
+![Downloads](https://img.shields.io/github/downloads/nmap/npcap/latest/total.svg)
+![TotalDownloads](https://img.shields.io/github/downloads/nmap/npcap/total.svg)
 
 Npcap is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-Weight Filter (LWF)**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx) technique. It supports **Windows Vista, 7, 8 and 10**. It is sponsored but not officially supported by the [**Nmap Project**](http://nmap.org/) and finished by [**Yang Luo**](http://www.veotax.com/) under [**Google Summer of Code 2013**](https://www.google-melange.com/gsoc/homepage/google/gsoc2013) and [**Google Summer of Code 2015**](https://www.google-melange.com/gsoc/homepage/google/gsoc2015). It also received many helpful tests from [**Wireshark**](https://www.wireshark.org/) and [**NetScanTools**](http://www.netscantools.com/).
 
