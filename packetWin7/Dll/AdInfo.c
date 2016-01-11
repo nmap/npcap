@@ -135,8 +135,10 @@ extern WCHAR *WinPcapKeyBuffer;
 static BOOLEAN PacketGetLinkLayerFromRegistry(LPADAPTER AdapterObject, NetType *type)
 {
 	BOOLEAN    Status;
-	ULONG      IoCtlBufferLength=(sizeof(PACKET_OID_DATA)+sizeof(ULONG)-1);
+	BOOLEAN    Status2;
+	ULONG      IoCtlBufferLength=(sizeof(PACKET_OID_DATA)+sizeof(NDIS_LINK_SPEED)-1);
 	PPACKET_OID_DATA  OidData;
+	PNDIS_LINK_SPEED LinkSpeed;
 
 	TRACE_ENTER("PacketGetLinkLayerFromRegistry");
 
@@ -153,13 +155,16 @@ static BOOLEAN PacketGetLinkLayerFromRegistry(LPADAPTER AdapterObject, NetType *
 	type->LinkType=*((UINT*)OidData->Data);
 
 	//get the link-layer speed
-	OidData->Oid = OID_GEN_LINK_SPEED;
-	OidData->Length = sizeof (ULONG);
-	Status = PacketRequest(AdapterObject,FALSE,OidData);
+	//the new OID_GEN_LINK_SPEED_EX OID is not mandatory any more in NDIS 6 like the old OID_GEN_LINK_SPEED
+	//so we can't expect it to succeed every time, and don't let it impact the return value.
+	OidData->Oid = OID_GEN_LINK_SPEED_EX;
+	OidData->Length = sizeof (NDIS_LINK_SPEED);
+	Status2 = PacketRequest(AdapterObject,FALSE,OidData);
 
-	if (Status == TRUE)
+	if (Status2 == TRUE)
 	{
-		type->LinkSpeed=*((UINT*)OidData->Data)*100;
+		LinkSpeed = (NDIS_LINK_SPEED*)OidData->Data;
+		type->LinkSpeed=(LinkSpeed->XmitLinkSpeed + LinkSpeed->RcvLinkSpeed) / 2;
 	}
 
 	GlobalFreePtr (OidData);
