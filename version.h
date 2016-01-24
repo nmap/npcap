@@ -38,10 +38,10 @@
 
 #define WINPCAP_PRODUCT_NAME 			"Npcap"
 
-#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2015, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright (c) 2015, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2015, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2015, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2016, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright (c) 2016, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2016, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2016, Insecure.Com LLC.  All rights reserved."
 
 #define WINPCAP_BUILD_DESCRIPTION 		""
 #define WINPCAP_PRIVATE_BUILD			""
