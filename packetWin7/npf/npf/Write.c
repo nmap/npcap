@@ -715,15 +715,11 @@ Return Value:
 	POPEN_INSTANCE		GroupOpen;
 	POPEN_INSTANCE		TempOpen;
 	BOOLEAN				FreeBufAfterWrite;
-
 	PNET_BUFFER_LIST    pNetBufList;
 	PNET_BUFFER_LIST    pNextNetBufList;
-	PNET_BUFFER_LIST    CurrNbl,nextNbl= NULL;
 	PNET_BUFFER         Currbuff;
 	PMDL                pMdl;
-	int					Count = 0;
-
-	POPEN_INSTANCE     Open = (POPEN_INSTANCE) FilterModuleContext;
+	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
 
 	TRACE_ENTER();
 
@@ -737,7 +733,6 @@ Return Value:
 
 	while (pNetBufList != NULL)
 	{
-		Count ++;
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
 		NET_BUFFER_LIST_NEXT_NBL(pNetBufList) = NULL;
 
