@@ -1475,10 +1475,19 @@ NPF_AttachAdapter(
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
 		if (g_SendToRxAdapterName.Buffer != NULL)
 		{
-			if (RtlCompareMemory(g_SendToRxAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
-				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+			int iAdapterCnt = (g_SendToRxAdapterName.Length / 2 + 1) / 47;
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+				"g_SendToRxAdapterName.Length=%d, iAdapterCnt=%d",
+				g_SendToRxAdapterName.Length,
+				iAdapterCnt);
+			for (int i = 0; i < iAdapterCnt; i++)
 			{
-				Open->SendToRxPath = TRUE;
+				if (RtlCompareMemory(g_SendToRxAdapterName.Buffer + devicePrefix.Length / 2 + 47 * i , AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
+					AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+				{
+					Open->SendToRxPath = TRUE;
+					break;
+				}
 			}
 		}
 #endif

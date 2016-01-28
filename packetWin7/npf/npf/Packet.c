@@ -743,8 +743,8 @@ NPF_GetRegistryOption_String(
 				{
 					IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, valueInfoP->Data);)
 
-					g_OutputString->Length = 0;
-					g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength + sizeof(UNICODE_NULL));
+					g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
+					g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
 					g_OutputString->Buffer = ExAllocatePoolWithTag(PagedPool, g_OutputString->MaximumLength, '3PWA');
 
 					RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
