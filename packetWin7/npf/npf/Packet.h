@@ -595,6 +595,13 @@ NPF_ReturnEx(
 	ULONG               ReturnFlags
 	);
 
+/*!
+  \brief Function to free the Net Buffer Lists initiated by ourself.
+*/
+VOID
+NPF_FreePackets(
+	PNET_BUFFER_LIST    NetBufferLists
+	);
 
 /*!
   \brief Callback for NDIS SendNetBufferListsCompleteHandler.

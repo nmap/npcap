@@ -682,6 +682,67 @@ NPF_WaitEndOfBufferedWrite(
 
 _Use_decl_annotations_
 VOID
+NPF_FreePackets(
+	PNET_BUFFER_LIST    NetBufferLists
+	)
+	/*++
+
+	Routine Description:
+
+	Free our own initiated Net Buffer Lists.
+
+	Arguments:
+
+	NetBufferLists          - a chain of NBLs that are being freed
+
+	Return Value:
+
+	NONE
+
+	--*/
+{
+	BOOLEAN				FreeBufAfterWrite;
+	PNET_BUFFER_LIST    pNetBufList = NetBufferLists;
+	PNET_BUFFER         Currbuff;
+	PMDL                pMdl;
+
+/*	TRACE_ENTER();*/
+
+	FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
+
+	if (FreeBufAfterWrite)
+	{
+		//
+		// Packet sent by NPF_BufferedWrite()
+		//
+
+		//Free the NBL allocate by myself
+		Currbuff = NET_BUFFER_LIST_FIRST_NB(pNetBufList);
+		while (Currbuff)
+		{
+			pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
+			NdisFreeMdl(pMdl); //Free MDL
+			Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
+		}
+		NdisFreeNetBufferList(pNetBufList); //Free NBL
+	}
+	else
+	{
+		//
+		// Packet sent by NPF_Write()
+		//
+
+		//Free the NBL allocate by myself
+		NdisFreeNetBufferList(pNetBufList); //Free NBL
+	}
+
+/*	TRACE_EXIT();*/
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
 NPF_SendCompleteEx(
 	NDIS_HANDLE         FilterModuleContext,
 	PNET_BUFFER_LIST    NetBufferLists,
@@ -741,31 +802,7 @@ Return Value:
 			ChildOpen = NPFGetNBLChildOpen(pNetBufList); //get the child open object that sends these packets
 			FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
 
-			if (FreeBufAfterWrite)
-			{
-				//
-				// Packet sent by NPF_BufferedWrite()
-				//
-
-				//Free the NBL allocate by myself
-				Currbuff = NET_BUFFER_LIST_FIRST_NB(pNetBufList);
-				while (Currbuff)
-				{
-					pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
-					NdisFreeMdl(pMdl); //Free MDL
-					Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
-				}
-				NdisFreeNetBufferList(pNetBufList); //Free NBL
-			}
-			else
-			{
-				//
-				// Packet sent by NPF_Write()
-				//
-
-				//Free the NBL allocate by myself
-				NdisFreeNetBufferList(pNetBufList); //Free NBL
-			}
+			NPF_FreePackets(pNetBufList);
 
 			// this if should always be false, as Open is always the GroupHead itself, only GroupHead is known by NDIS and get invoked in NPF_SendCompleteEx() function.
 			if (Open->GroupHead != NULL)
@@ -800,70 +837,6 @@ Return Value:
 
 		pNetBufList = pNextNetBufList;
 	}
-
-//////////// this is another SendComplete handling method, view the buffer lists as a whole
-// 	if (NetBufferLists->SourceHandle != NULL && NetBufferLists->SourceHandle == Open->AdapterHandle)
-// 	{
-// 		ChildOpen = NPFGetNBLChildOpen(NetBufferLists);
-// 		FreeBufAfterWrite = RESERVED(NetBufferLists)->FreeBufAfterWrite;
-// 
-// 		if (FreeBufAfterWrite)
-// 		{
-// 			//
-// 			// Packet sent by NPF_BufferedWrite()
-// 			//
-// 
-// 			//Free all the NBLs allocate by myself
-// 			CurrNbl = NetBufferLists;
-// 			while (CurrNbl)
-// 			{
-// 				Currbuff = NET_BUFFER_LIST_FIRST_NB(CurrNbl);
-// 				while (Currbuff)
-// 				{
-// 					pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
-// 					NdisFreeMdl(pMdl); //Free MDL
-// 					Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
-// 				}
-// 				nextNbl = NET_BUFFER_LIST_NEXT_NBL(CurrNbl); //get Next MBL
-// 				NdisFreeNetBufferList(CurrNbl); //Free CurrentNBL
-// 				CurrNbl = nextNbl;
-// 			}
-// 		}
-// 		else
-// 		{
-// 			//
-// 			// Packet sent by NPF_Write()
-// 			//
-// 
-// 			//Free all the NBLs allocate by myself
-// 			CurrNbl = NetBufferLists;
-// 			while (CurrNbl)
-// 			{
-// 				nextNbl = NET_BUFFER_LIST_NEXT_NBL(CurrNbl); //get Next MBL
-// 				NdisFreeNetBufferList(CurrNbl); //Free CurrentNBL
-// 				CurrNbl = nextNbl;
-// 			}
-// 		}
-// 
-// 		GroupOpen = Open->GroupNext;
-// 		while (GroupOpen != NULL)
-// 		{
-// 			TempOpen = GroupOpen;
-// 			if (ChildOpen == TempOpen)
-// 			{
-// 				NPF_SendCompleteExForEachOpen(TempOpen, FreeBufAfterWrite);
-// 				break;
-// 			}
-// 
-// 			GroupOpen = TempOpen->GroupNext;
-// 		}
-// 	}
-// 	else
-// 	{
-// 		// Send complete the NBLs.  If you removed any NBLs from the chain, make
-// 		// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
-// 		NdisFSendNetBufferListsComplete(Open->AdapterHandle, NetBufferLists, SendCompleteFlags);
-// 	}
 
 	TRACE_EXIT();
 }
