@@ -839,25 +839,11 @@ BOOLEAN
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is our loopback adapter for the device.
-		devExtP->Loopback = FALSE;
 		if (g_LoopbackAdapterName.Buffer != NULL)
 		{
 			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, amacNameP->Buffer, amacNameP->Length) == amacNameP->Length)
 			{
-				devExtP->Loopback = TRUE;
 				g_LoopbackDevObj = devObjP;
-			}
-		}
-#endif
-
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
-		// Determine whether this is our send-to-Rx adapter for the device.
-		devExtP->SendToRxPath = FALSE;
-		if (g_SendToRxAdapterName.Buffer != NULL)
-		{
-			if (RtlCompareMemory(g_SendToRxAdapterName.Buffer, amacNameP->Buffer, amacNameP->Length) == amacNameP->Length)
-			{
-				devExtP->SendToRxPath = TRUE;
 			}
 		}
 #endif

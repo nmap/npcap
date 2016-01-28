@@ -220,8 +220,6 @@ typedef struct _DEVICE_EXTENSION
 {
 	NDIS_STRING	AdapterName;			///< Name of the adapter.
 	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
-	BOOLEAN		Loopback;
-	BOOLEAN		SendToRxPath;
 										///< to open this adapter through WinPcap.
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
