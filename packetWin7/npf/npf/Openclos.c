@@ -44,6 +44,7 @@
 #include "..\..\..\Common\WpcapNames.h"
 
 extern NDIS_STRING g_LoopbackAdapterName;
+extern NDIS_STRING g_SendToRxAdapterName;
 extern NDIS_STRING devicePrefix;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -1174,6 +1175,10 @@ NPF_DuplicateOpenObject(
 	Open->Loopback = OriginalOpen->Loopback;
 #endif
 
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+	Open->SendToRxPath = OriginalOpen->SendToRxPath;
+#endif
+
 	TRACE_EXIT();
 	return Open;
 }
@@ -1208,6 +1213,10 @@ NPF_CreateOpenObject(
 	Open->DirectBinded = TRUE;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	Open->Loopback = FALSE;
+#endif
+
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+	Open->SendToRxPath = FALSE;
 #endif
 
 	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
@@ -1459,6 +1468,18 @@ NPF_AttachAdapter(
 		else
 		{
 			IF_LOUD(DbgPrint("NPF_Attach: g_LoopbackAdapterName.Buffer=NULL\n");)
+		}
+#endif
+
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+		// Determine whether this is our send-to-Rx adapter for the open_instance.
+		if (g_SendToRxAdapterName.Buffer != NULL)
+		{
+			if (RtlCompareMemory(g_SendToRxAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
+				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+			{
+				Open->SendToRxPath = TRUE;
+			}
 		}
 #endif
 

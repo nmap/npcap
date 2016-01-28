@@ -84,6 +84,13 @@ NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("Loopback");
 extern HANDLE g_WFPEngineHandle;
 #endif
 
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+
+NDIS_STRING g_SendToRxAdapterName;
+NDIS_STRING g_SendToRxRegValueName = NDIS_STRING_CONST("SendToRx");
+
+#endif
+
 NDIS_STRING g_NPF_Prefix;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
 NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
@@ -243,6 +250,9 @@ DriverEntry(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
+#endif
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+	NPF_GetRegistryOption_String(RegistryPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
 #endif
 
 	bindP = getAdaptersList();
@@ -840,6 +850,18 @@ BOOLEAN
 		}
 #endif
 
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+		// Determine whether this is our send-to-Rx adapter for the device.
+		devExtP->SendToRxPath = FALSE;
+		if (g_SendToRxAdapterName.Buffer != NULL)
+		{
+			if (RtlCompareMemory(g_SendToRxAdapterName.Buffer, amacNameP->Buffer, amacNameP->Length) == amacNameP->Length)
+			{
+				devExtP->SendToRxPath = TRUE;
+			}
+		}
+#endif
+
 		devObjP->Flags |= DO_DIRECT_IO;
 		RtlInitUnicodeString(&devExtP->AdapterName, amacNameP->Buffer);   
 
@@ -927,6 +949,15 @@ Return Value:
 	// Release WFP resources.
 	NPF_FreeInjectionHandles();
 	NPF_UnregisterCallouts();
+#endif
+
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+	// Free the send-to-Rx adapter name
+	if (g_SendToRxAdapterName.Buffer != NULL)
+	{
+		ExFreePool(g_SendToRxAdapterName.Buffer);
+		g_SendToRxAdapterName.Buffer = NULL;
+	}
 #endif
 
 	DeviceObject = DriverObject->DeviceObject;

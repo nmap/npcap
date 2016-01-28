@@ -221,6 +221,7 @@ typedef struct _DEVICE_EXTENSION
 	NDIS_STRING	AdapterName;			///< Name of the adapter.
 	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
 	BOOLEAN		Loopback;
+	BOOLEAN		SendToRxPath;
 										///< to open this adapter through WinPcap.
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
@@ -267,6 +268,9 @@ typedef struct _OPEN_INSTANCE
 	BOOLEAN					DirectBinded;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	BOOLEAN					Loopback;
+#endif
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+	BOOLEAN					SendToRxPath;
 #endif
 	struct _OPEN_INSTANCE	*Next;
 	struct _OPEN_INSTANCE	*GroupNext;
