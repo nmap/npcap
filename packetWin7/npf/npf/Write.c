@@ -54,7 +54,7 @@ NPF_Write(
 	POPEN_INSTANCE		TempOpen;
 	PIO_STACK_LOCATION	IrpSp;
 	ULONG				SendFlags = 0;
-	PNET_BUFFER_LIST	pNetBufferList;
+	PNET_BUFFER_LIST	pNetBufferList = NULL;
 	NDIS_STATUS			Status;
 	ULONG				NumSends;
 	ULONG				numSentPackets;
@@ -300,12 +300,26 @@ NPF_Write(
 			}
 			else
 #endif
-			{
-				NdisFSendNetBufferLists(Open->AdapterHandle,
-					pNetBufferList,
-					NDIS_DEFAULT_PORT_NUMBER,
-					SendFlags);
-			}
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+				if (Open->SendToRxPath == TRUE)
+				{
+					IF_LOUD(DbgPrint("hahahahahahahahahahahaha:: SendToRxPath, Open->AdapterHandle=%p, pNetBufferList=%u\n", Open->AdapterHandle, pNetBufferList);)
+					// pretend to receive these packets from network and indicate them to upper layers
+					NdisFIndicateReceiveNetBufferLists(
+						Open->AdapterHandle,
+						pNetBufferList,
+						NDIS_DEFAULT_PORT_NUMBER,
+						1,
+						NDIS_RECEIVE_FLAGS_RESOURCES);
+				}
+				else
+#endif
+				{
+					NdisFSendNetBufferLists(Open->AdapterHandle,
+						pNetBufferList,
+						NDIS_DEFAULT_PORT_NUMBER,
+						SendFlags);
+				}
 
 			numSentPackets ++;
 		}
@@ -325,7 +339,15 @@ NPF_Write(
 	// we just need to wait for all the packets to be completed by the SendComplete
 	// (if any of the NdisSend requests returned STATUS_PENDING)
 	//
-	NdisWaitEvent(&Open->NdisWriteCompleteEvent, 0);
+	
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+	if (Open->SendToRxPath && pNetBufferList)
+	{
+		NPF_FreePackets(pNetBufferList);
+	}
+	else
+#endif
+		NdisWaitEvent(&Open->NdisWriteCompleteEvent, 0);
 
 	//
 	// all the packets have been transmitted, release the use of the adapter binding
@@ -366,7 +388,7 @@ NPF_BufferedWrite(
 	POPEN_INSTANCE			GroupOpen;
 	POPEN_INSTANCE			TempOpen;
 	PIO_STACK_LOCATION		IrpSp;
-	PNET_BUFFER_LIST		pNetBufferList;
+	PNET_BUFFER_LIST		pNetBufferList = NULL;
 	PNET_BUFFER				pNetBuffer;
 	ULONG					SendFlags = 0;
 	UINT					i;
@@ -591,12 +613,26 @@ NPF_BufferedWrite(
 		}
 		else
 #endif
-		{
-			NdisFSendNetBufferLists(Open->AdapterHandle,
-				pNetBufferList,
-				NDIS_DEFAULT_PORT_NUMBER,
-				SendFlags);
-		}
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+			if (Open->SendToRxPath == TRUE)
+			{
+				IF_LOUD(DbgPrint("hahahahahahahahahahahaha:: SendToRxPath, Open->AdapterHandle=%p, pNetBufferList=%u\n", Open->AdapterHandle, pNetBufferList);)
+				// pretend to receive these packets from network and indicate them to upper layers
+				NdisFIndicateReceiveNetBufferLists(
+					Open->AdapterHandle,
+					pNetBufferList,
+					NDIS_DEFAULT_PORT_NUMBER,
+					1,
+					NDIS_RECEIVE_FLAGS_RESOURCES);
+			}
+			else
+#endif
+			{
+				NdisFSendNetBufferLists(Open->AdapterHandle,
+					pNetBufferList,
+					NDIS_DEFAULT_PORT_NUMBER,
+					SendFlags);
+			}
 
 		if (Sync)
 		{
@@ -645,7 +681,14 @@ NPF_BufferedWrite(
 	}
 
 	// Wait the completion of pending sends
-	NPF_WaitEndOfBufferedWrite(Open);
+#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+	if (Open->SendToRxPath && pNetBufferList)
+	{
+		NPF_FreePackets(pNetBufferList);
+	}
+	else
+#endif
+		NPF_WaitEndOfBufferedWrite(Open);
 
 	// 
 	// release ownership of the NdisAdapter binding
