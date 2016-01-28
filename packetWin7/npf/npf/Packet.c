@@ -233,16 +233,16 @@ DriverEntry(
 
 	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
 	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
-	g_AdminOnlyMode = NPF_GetRegistryOption(RegistryPath, &g_AdminOnlyRegValueName);
+	g_AdminOnlyMode = NPF_GetRegistryOption_Boolean(RegistryPath, &g_AdminOnlyRegValueName);
 	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
 	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
-	g_DltNullMode = NPF_GetRegistryOption(RegistryPath, &g_DltNullRegValueName);
+	g_DltNullMode = NPF_GetRegistryOption_Boolean(RegistryPath, &g_DltNullRegValueName);
 	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
 	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
-	g_VlanSupportMode = NPF_GetRegistryOption(RegistryPath, &g_VlanSupportRegValueName);
+	g_VlanSupportMode = NPF_GetRegistryOption_Boolean(RegistryPath, &g_VlanSupportRegValueName);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	NPF_GetLoopbackAdapterName(RegistryPath);
+	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
 #endif
 
 	bindP = getAdaptersList();
@@ -589,7 +589,7 @@ getTcpBindings(
 
 //-------------------------------------------------------------------
 ULONG
-NPF_GetRegistryOption(
+NPF_GetRegistryOption_Boolean(
 	PUNICODE_STRING RegistryPath,
 	PUNICODE_STRING RegValueName
 	)
@@ -612,11 +612,10 @@ NPF_GetRegistryOption(
 		BOOLEAN bTried = FALSE;
 		ULONG resultLength;
 		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
-		NDIS_STRING ValueName = *RegValueName;
 		IF_LOUD(DbgPrint("\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
 REGISTRY_QUERY_VALUE_KEY:
 		status = ZwQueryValueKey(keyHandle,
-			&ValueName,
+			RegValueName,
 			KeyValuePartialInformation,
 			&valueInfo,
 			sizeof(valueInfo),
@@ -644,7 +643,7 @@ REGISTRY_QUERY_VALUE_KEY:
 			if (valueInfoP != NULL)
 			{
 				status = ZwQueryValueKey(keyHandle,
-					&ValueName,
+					RegValueName,
 					KeyValuePartialInformation,
 					valueInfoP,
 					valueInfoLength,
@@ -679,11 +678,11 @@ REGISTRY_QUERY_VALUE_KEY:
 }
 
 //-------------------------------------------------------------------
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 VOID
-NPF_GetLoopbackAdapterName(
-	PUNICODE_STRING RegistryPath
+NPF_GetRegistryOption_String(
+	PUNICODE_STRING RegistryPath,
+	PUNICODE_STRING RegValueName,
+	PNDIS_STRING g_OutputString
 	)
 {
 	OBJECT_ATTRIBUTES objAttrs;
@@ -702,9 +701,8 @@ NPF_GetLoopbackAdapterName(
 	{
 		ULONG resultLength;
 		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
-		NDIS_STRING LoopbackValueName = g_LoopbackRegValueName;
 		status = ZwQueryValueKey(keyHandle,
-			&LoopbackValueName,
+			RegValueName,
 			KeyValuePartialInformation,
 			&valueInfo,
 			sizeof(valueInfo),
@@ -722,7 +720,7 @@ NPF_GetLoopbackAdapterName(
 			if (valueInfoP != NULL)
 			{
 				status = ZwQueryValueKey(keyHandle,
-					&LoopbackValueName,
+					RegValueName,
 					KeyValuePartialInformation,
 					valueInfoP,
 					valueInfoLength,
@@ -733,13 +731,13 @@ NPF_GetLoopbackAdapterName(
 				}
 				else
 				{
-					IF_LOUD(DbgPrint("Loopback Device Key = %ws\n", valueInfoP->Data);)
+					IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, valueInfoP->Data);)
 
-					g_LoopbackAdapterName.Length = 0;
-					g_LoopbackAdapterName.MaximumLength = (USHORT)(valueInfoP->DataLength + sizeof(UNICODE_NULL));
-					g_LoopbackAdapterName.Buffer = ExAllocatePoolWithTag(PagedPool, g_LoopbackAdapterName.MaximumLength, '3PWA');
+					g_OutputString->Length = 0;
+					g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength + sizeof(UNICODE_NULL));
+					g_OutputString->Buffer = ExAllocatePoolWithTag(PagedPool, g_OutputString->MaximumLength, '3PWA');
 
-					RtlCopyMemory(g_LoopbackAdapterName.Buffer, valueInfoP->Data, valueInfoP->DataLength);
+					RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
 				}
 
 				ExFreePool(valueInfoP);
@@ -755,7 +753,6 @@ NPF_GetLoopbackAdapterName(
 
 	TRACE_EXIT();
 }
-#endif
 
 //-------------------------------------------------------------------
 

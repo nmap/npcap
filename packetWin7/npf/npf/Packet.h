@@ -798,7 +798,7 @@ getTcpBindings(
   If the registry key doesn't exist, we view the result as 0.
 */
 ULONG
-NPF_GetRegistryOption(
+NPF_GetRegistryOption_Boolean(
 	PUNICODE_STRING RegistryPath,
 	PUNICODE_STRING RegValueName
 	);
@@ -810,7 +810,7 @@ NPF_GetRegistryOption(
   If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
 */
 VOID
-NPF_GetLoopbackAdapterName(
+NPF_GetRegistryOption_String(
 	);
 #endif
 
