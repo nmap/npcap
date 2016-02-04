@@ -103,17 +103,17 @@ NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
 NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
 NDIS_STRING g_DltNullRegValueName = NDIS_STRING_CONST("DltNull");
 NDIS_STRING g_VlanSupportRegValueName = NDIS_STRING_CONST("VlanSupport");
+NDIS_STRING g_TimestampRegValueName = NDIS_STRING_CONST("TimestampMode");
 
 ULONG g_AdminOnlyMode = 0;
 ULONG g_DltNullMode = 0;
 ULONG g_VlanSupportMode = 0;
+ULONG g_TimestampMode = 0;
 
 /// Global variable that points to the names of the bound adapters
 WCHAR* bindP = NULL;
 
 ULONG g_NCpu;
-
-ULONG TimestampMode;
 
 //
 // Global variables
@@ -157,12 +157,6 @@ DriverEntry(
 
 	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
-
-	//
-	// Set timestamp gathering method getting it from the registry
-	//
-	ReadTimeStampModeFromRegistry(RegistryPath);
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "%ws", RegistryPath->Buffer);
 
 	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
 
@@ -240,13 +234,16 @@ DriverEntry(
 
 	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
 	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
-	g_AdminOnlyMode = NPF_GetRegistryOption_Boolean(RegistryPath, &g_AdminOnlyRegValueName);
+	g_AdminOnlyMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_AdminOnlyRegValueName);
 	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
 	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
-	g_DltNullMode = NPF_GetRegistryOption_Boolean(RegistryPath, &g_DltNullRegValueName);
+	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
 	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
 	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
-	g_VlanSupportMode = NPF_GetRegistryOption_Boolean(RegistryPath, &g_VlanSupportRegValueName);
+	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
+	// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
+	// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
+	g_TimestampMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_TimestampRegValueName);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
@@ -599,7 +596,7 @@ getTcpBindings(
 
 //-------------------------------------------------------------------
 ULONG
-NPF_GetRegistryOption_Boolean(
+NPF_GetRegistryOption_Integer(
 	PUNICODE_STRING RegistryPath,
 	PUNICODE_STRING RegValueName
 	)
@@ -676,7 +673,7 @@ REGISTRY_QUERY_VALUE_KEY:
 			}
 			else
 			{
-				IF_LOUD(DbgPrint("Error Allocating the buffer for the admin only option\n");)
+				IF_LOUD(DbgPrint("Error Allocating the buffer for the NPF_GetRegistryOption_Integer function\n");)
 			}
 		}
 
@@ -754,7 +751,7 @@ NPF_GetRegistryOption_String(
 			}
 			else
 			{
-				IF_LOUD(DbgPrint("Error Allocating the buffer for the device name\n");)
+				IF_LOUD(DbgPrint("Error Allocating the buffer for the NPF_GetRegistryOption_String function\n");)
 			}
 		}
 

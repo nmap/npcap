@@ -800,7 +800,7 @@ getTcpBindings(
   If the registry key doesn't exist, we view the result as 0.
 */
 ULONG
-NPF_GetRegistryOption_Boolean(
+NPF_GetRegistryOption_Integer(
 	PUNICODE_STRING RegistryPath,
 	PUNICODE_STRING RegValueName
 	);
