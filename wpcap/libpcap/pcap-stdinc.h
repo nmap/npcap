@@ -60,11 +60,12 @@
 
 #define caddr_t char*
 
-#if _MSC_VER < 1500
+// These definitions should have no limitation for Visual Studio versions, otherwise Wireshark will crash.
+/*#if _MSC_VER < 1500*/
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
 #define strdup _strdup
-#endif
+/*#endif*/
 
 #define inline __inline 
 
