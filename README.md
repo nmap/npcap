@@ -33,7 +33,7 @@ NPcapHelper.exe          packetWin7\Helper        the helper program for "Admin-
 
 Npcap's loopback adapter device is based on ``Microsoft KM-TEST Loopback Adapter`` (Win8 and Win10) or ``Microsoft Loopback Adapter`` (Vista, Win7). It is an Ethernet adapter, and Npcap has changed its behavior and rename it to ``Npcap Loopback Adapter``, to make it see the real loopback traffic only. The traffic captured by original WinPcap will not appear here. 
 
-The IP address of "Npcap Loopback Adapter" is usually like ``169.254.x.x``. However, this IP is totally meaningless. Softwares using Npcap should regard this interface's IP address as ``127.0.0.1`` (IPv4) and ``::1`` (IPv6). This work can't be done by Npcap because Windows forbids any IP address to be configured as ``127.0.0.1`` or ``::1`` as they're reserved.
+The IP address of ``Npcap Loopback Adapter`` is usually like ``169.254.x.x``. However, this IP is totally meaningless. Softwares using Npcap should regard this interface's IP address as ``127.0.0.1`` (IPv4) and ``::1`` (IPv6). This work can't be done by Npcap because Windows forbids any IP address to be configured as ``127.0.0.1`` or ``::1`` as they're reserved.
 
 The MAC address of ``Npcap Loopback Adapter`` is usually like ``02:00:4C:4F:4F:50``. However, this address is meaningless too. Softwares using Npcap should think this interface doesn't own a MAC address, as the loopback traffic never goes to link layer. For softwares using Npcap to capture loopback traffic, the MAC addresses in captured data will be all zeros (aka ``00:00:00:00:00:00``). For softwares using Npcap to send loopback traffic, any MAC addresses can be specified as they will be ignored. But notice that ``ether_type`` in Ethernet header should be set correctly. Only ``IPv4`` and ``IPv6`` are accepted. Other values like ``ARP`` will be ignored. (You don't need an ARP request for loopback interface)
 
@@ -43,10 +43,10 @@ Don't try to make OID requests to ``Npcap Loopback Adapter`` except ``OID_GEN_MA
 
 To conclude, a software that wants to support Npcap loopback feature should do these steps:
 
-* Detect ``Npcap Loopback Adapte``'s presence, by reading registry value ``Loopback`` at key ``HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npf`` (or ``npcap`` if you installed Npcap With "WinPcap Compatible Mode" ``OFF`). If ``Npcap Loopback Adapter`` exsits, then perform the following steps.
+* Detect ``Npcap Loopback Adapte``'s presence, by reading registry value ``Loopback`` at key ``HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npf`` (or ``npcap`` if you installed Npcap With "WinPcap Compatible Mode" ``OFF``). If ``Loopback`` value exsits, it means ``Npcap Loopback Adapter`` is OK. Then perform the following steps.
 * Regard the IP address of ``Npcap Loopback Adapter`` as ``127.0.0.1`` (IPv4) and ``::1`` (IPv6).
 * Regard the MAC address of ``Npcap Loopback Adapter`` as ``00:00:00:00:00:00``.
-* If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like ``Loopback Pseudo-Interface 1``. This interface is a dummy interface by Microsoft and can't be seen in NDIS layer. And tt also takes the ``127.0.0.1`` IP address. A good practise for softwares is that merge the ``Npcap Loopback Adapter`` and ``Loopback Pseudo-Interface 1`` into one, like what I have implemented for Nmap (see the code).
+* If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like ``Loopback Pseudo-Interface 1``. This interface is a **DUMMY** interface by Microsoft and can't be seen in NDIS layer. And tt also takes the ``127.0.0.1`` IP address. A good practise for softwares is that merge the ``Npcap Loopback Adapter`` and ``Loopback Pseudo-Interface 1`` into one, like what I have implemented for Nmap (see the code).
 * Don't make use of OID requests for ``Npcap Loopback Adapter`` except ``OID_GEN_MAXIMUM_TOTAL_SIZE`` requests.
 
 ## Build
@@ -59,14 +59,14 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 
 Packaging steps:
 
-* Run ``installer\Build.bat``: build non-driver projects via MSBuild, make sure you installed Visual Studio 2005, Visual Studio 2010 Non-Express Editions.
-* Build ``packetWin7\npf``: build driver projects npf.sln and npcap.sln via Visual Studio 2015, I forbid the use of the script build for the driver, because it has signature issue (the compiled binaries are not well signed).
-* Run ``installer\Deploy.bat``: copy and sign the files for "Non-WinPcap Compatible Mode", installer will be generated.
-* Run ``installer\Deploy_WinPcap.bat``: copy and sign the files for "WinPcap Compatible Mode", installer will be generated.
+* Run ``installer\Build.bat``: build non-driver projects via MSBuild. Make sure you installed **Visual Studio 2005** and **Visual Studio 2010**.
+* Build ``packetWin7\npf``: build driver projects ``npf.sln`` and ``npcap.sln`` respectively via **Visual Studio 2015**.
+* Run ``installer\Deploy.bat``: copy and sign the files for ``Non-WinPcap Compatible Mode``, also the installer will be generated.
+* Run ``installer\Deploy_WinPcap.bat``: copy and sign the files for ``WinPcap Compatible Mode``, also the installer will be generated.
 
-Npcap uses NSIS script to package itself. The script location is: ``installer\NPcap-for-nmap.nsi``. Compiling this script will generate the installer named ``npcap-nmap-%VERSION%.exe``.
+Npcap uses NSIS script to package itself. The script is located in: ``installer\NPcap-for-nmap.nsi``. Compiling this script will generate the installer named ``npcap-nmap-%VERSION%.exe``.
 
-``installer\Deploy.bat`` and ``installer\Deploy_WinPcap.bat`` will help you copy the files from build directories into right deployment folders (you need to manually create these folders before deployment):
+``installer\Deploy.bat`` and ``installer\Deploy_WinPcap.bat`` will help you copy the files from build directories into correct deployment folders (you need to **manually** create these folders before deployment):
 ```
 XP (the same with original WinPcap):
   x86:
