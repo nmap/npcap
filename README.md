@@ -7,7 +7,7 @@ Npcap
 ![Downloads](https://img.shields.io/github/downloads/nmap/npcap/latest/total.svg)
 ![TotalDownloads](https://img.shields.io/github/downloads/nmap/npcap/total.svg)
 
-Npcap is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-Weight Filter (LWF)**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx) technique. It supports **Windows Vista, 7, 8 and 10**. It is sponsored but not officially supported by the [**Nmap Project**](http://nmap.org/) and finished by [**Yang Luo**](http://www.veotax.com/) under [**Google Summer of Code 2013**](https://www.google-melange.com/gsoc/homepage/google/gsoc2013) and [**Google Summer of Code 2015**](https://www.google-melange.com/gsoc/homepage/google/gsoc2015). It also received many helpful tests from [**Wireshark**](https://www.wireshark.org/) and [**NetScanTools**](http://www.netscantools.com/).
+Npcap is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-Weight Filter (LWF)**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx) technique. It supports **Windows Vista, 7, 8 and 10**. It is sponsored but not officially supported by the [**Nmap Project**](http://nmap.org/) and finished by [**Yang Luo**](http://www.veotax.com/) under [**Google Summer of Code 2013**](https://www.google-melange.com/gsoc/project/details/google/gsoc2013/hsluoyz/5727390428823552) and [**2015**](https://www.google-melange.com/gsoc/project/details/google/gsoc2015/hsluoyz/5723971634855936). It also received many helpful tests from [**Wireshark**](https://www.wireshark.org/) and [**NetScanTools**](http://www.netscantools.com/).
 
 ## Features
 
@@ -22,10 +22,10 @@ Npcap is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-
 Npcap tries to **keep the original WinPcap architecture as much as possible**. As the table shows, you will find it very similar with WinPcap.
 ```
 File                     Src Directory            Description
-wpcap.dll                wpcap                    the same with WinPcap
-packet.dll               packetWin7\Dll           changed driver name, add "Admin-only Mode" here
-npf.sys (or npcap.sys)   packetWin7\npf           port from NDIS 5 to NDIS 6, we support two names: npf or npcap, based on whether Npcap is installed in "WinPcap Compatible Mode"
-NPFInstall.exe           packetWin7\NPFInstall    a lwf driver installation tool we added to Npcap
+wpcap.dll                wpcap                    the libpcap API, added "loopback support" to original WinPcap
+packet.dll               packetWin7\Dll           the Packet API for Windows, added "Admin-only Mode" to original WinPcap
+npf.sys (or npcap.sys)   packetWin7\npf           the driver, ported from NDIS 5 to NDIS 6, we support two names: npf or npcap, based on whether Npcap is installed in "WinPcap Compatible Mode"
+NPFInstall.exe           packetWin7\NPFInstall    a LWF & WFP driver installation tool we added to Npcap
 NPcapHelper.exe          packetWin7\Helper        the helper program for "Admin-only Mode", will run under Administrator rights
 ```
 
@@ -52,7 +52,7 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 ## Build
 
 * ``wpcap.dll``, ``packet.dll``, ``NPFInstall.exe`` and ``NPcapHelper.exe`` need to be built using **Visual Studio 2013**.
-* ``npf.sys (npcap.sys)`` needs to be built using **Visual Studio 2015** with **Windows Software Development Kit 10** and **Windows Driver Kit 10**.
+* ``npf.sys (npcap.sys)`` needs to be built using **Visual Studio 2015** with **Windows Driver Kit 10**.
 
 ## Packaging
 
