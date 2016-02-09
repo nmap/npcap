@@ -31,7 +31,9 @@
  *
  */
 
+#ifndef _WINDLL
 #include "stdafx.h"
+#endif
 
 #ifndef WIN_NT_DRIVER 
 #include <windows.h>
