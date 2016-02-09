@@ -41,35 +41,45 @@ xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x86\wpcap.dll"								.
 xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: First need to add "signtool.exe" to PATH, then put the cert file (e.g. C:\xxx.pfx) to environment variable %NPF_CERT_PATH%,
-:: put the private key string (e.g. 123456) to environment variable %NPF_SIGN_PK%
+:: 1. Add "signtool.exe" to PATH
+:: 2. Put the MS CVR cert of DigiCert to "C:\DigiCert High Assurance EV Root CA.crt"
+:: 3. Get the hash of your cert, make it the value of option "/sha1" below
 
-:: Sign the driver
-signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
-signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
-signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
-signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
-
+:: Sign Npcap driver for Vista
 signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
 signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
 signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
 signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
 
+:: Sign Npcap driver for Win7 and later
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
+
 :: Sign Packet.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\Packet.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\Packet.dll
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%DEPLOY_FOLDER_NAME%\x86\Packet.dll
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /as /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\Packet.dll
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%DEPLOY_FOLDER_NAME%\x64\Packet.dll
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /as /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\Packet.dll
 
 :: Sign NPFInstall.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\NPFInstall.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\NPFInstall.exe
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%DEPLOY_FOLDER_NAME%\x86\NPFInstall.exe
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /as /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\NPFInstall.exe
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%DEPLOY_FOLDER_NAME%\x64\NPFInstall.exe
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /as /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\NPFInstall.exe
 
 :: Sign NPcapHelper.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\NPcapHelper.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%DEPLOY_FOLDER_NAME%\x86\NPcapHelper.exe
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /as /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\NPcapHelper.exe
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /as /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
 
 :: Sign wpcap.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\wpcap.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\x64\wpcap.dll
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\wpcap.dll
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /as /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\wpcap.dll
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /fd sha1 /tr http://timestamp.digicert.com /td sha1 .\x64\wpcap.dll
+signtool sign /ac "C:\DigiCert High Assurance EV Root CA.crt" /sha1 "684d2e7df5b275515e703e6f42d962712b512da7" /as /fd sha256 /tr http://timestamp.digicert.com /td sha256 .\x64\wpcap.dll
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: First need to add "makensis.exe" to PATH
