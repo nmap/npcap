@@ -45,35 +45,27 @@ xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64
 :: put the private key string (e.g. 123456) to environment variable %NPF_SIGN_PK%
 
 :: Sign the driver
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /fd sha1 /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /as /fd sha256 /tr http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /fd sha1 /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /as /fd sha256 /tr http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /fd sha1 /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /as /fd sha256 /tr http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /fd sha1 /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /as /fd sha256 /tr http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
 
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /fd sha1 /t http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /as /fd sha256 /tr http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /fd sha1 /t http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /as /fd sha256 /tr http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /fd sha1 /t http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /as /fd sha256 /tr http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /fd sha1 /t http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /as /fd sha256 /tr http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
 
 :: Sign Packet.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\Packet.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\Packet.dll
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\Packet.dll
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\Packet.dll
 
 :: Sign NPFInstall.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\NPFInstall.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\NPFInstall.exe
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\NPFInstall.exe
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\NPFInstall.exe
 
 :: Sign NPcapHelper.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\NPcapHelper.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x86\NPcapHelper.exe
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% /t http://timestamp.digicert.com /v .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
 
 :: Sign wpcap.dll
 signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\wpcap.dll
