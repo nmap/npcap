@@ -159,15 +159,13 @@ Win7 and later (with "WinPcap Compatible Mode" ON, this is the DEFAULT option):
     installer\x64\wpcap.dll
 ```
 
-## Run
+## Downloads & Run (for Users)
 
-1. Run and install the Npcap installer: ``npcap-nmap-%VERSION%-%REVISION%.exe``.
+1. Download and install the latest Npcap installer: https://github.com/nmap/npcap/releases
 2. Use Nmap or Wireshark to test Npcap.
+3. Vista and Win7 users may have a driver signing problem when installing, please refer to https://github.com/nmap/npcap/releases/tag/v0.05-r8 and https://ask.wireshark.org/tags/npcap/ for solutions.
 
-## Download
-
-#### The latest installer:
-https://github.com/nmap/npcap/releases
+## Other Code (for Developers)
 
 #### Previous installers before Npcap 0.05:
 https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/

@@ -291,6 +291,10 @@ Function .onInit
     IfFileExists "$0" uninstaller_exists no_uninstallstring
     uninstaller_exists:
     ExecWait '$0 _?=$INSTDIR'
+    ; If the uninstaller fails, then quit the installation.
+    ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+        quit
+    ${EndIf}
     return
 
     no_uninstallstring:
@@ -301,6 +305,10 @@ Function .onInit
     old_uninstaller_exists:
     MessageBox MB_OK "Using our old UninstallString, file exists"
     ExecWait '$0 _?=$INSTDIR'
+    ; If the uninstaller fails, then quit the installation.
+    ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+        quit
+    ${EndIf}
     return
 
     still_no_uninstallstring:
@@ -322,6 +330,10 @@ Function .onInit
     IfFileExists "$0\uninstall.exe" run_last_uninstaller no_uninstall_exe
     run_last_uninstaller:
     ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
+    ; If the uninstaller fails, then quit the installation.
+    ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+        quit
+    ${EndIf}
     no_uninstall_exe:
     ; give up now, we've tried our hardest to determine a valid uninstaller!
     return
@@ -409,7 +421,7 @@ Function registerServiceAPI_xp_vista
     DetailPrint "Failed to create the npf service for XP"
     IfSilent close_register_xp_vista_handle register_xp_vista_fail_messagebox
     register_xp_vista_fail_messagebox:
-      MessageBox MB_OK "Failed to create the npf service for XP. Please try installing Npcap again, or use the official Npcap installer from www.nmap.org"
+      MessageBox MB_OK "Failed to create the npf service for XP. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
     Goto close_register_xp_vista_handle
   register_xp_vista_success:
     DetailPrint "The npf service for XP was successfully created"
@@ -446,7 +458,7 @@ Function registerServiceAPI_win7
     DetailPrint "Failed to create the npf service for Vista, Win7, Win8 and Win10"
     IfSilent register_win7_done register_win7_fail_messagebox
     register_win7_fail_messagebox:
-      MessageBox MB_OK "Failed to create the npcap service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from www.nmap.org"
+      MessageBox MB_OK "Failed to create the npcap service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
     Goto register_win7_done
   register_win7_success:
     DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully created"
@@ -807,7 +819,7 @@ Section "Uninstall"
   ${If} $0 == "0"
     MessageBox MB_OK "Failed to stop the npf service, stop uninstallation now. Please stop using Npcap first"
     DetailPrint "Failed to stop the npf service, stop uninstallation now"
-    Goto uninstall_fail
+	Goto uninstall_fail
   ${EndIf}
 
   ${If} $winpcap_mode == "no"
@@ -961,5 +973,5 @@ Section "Uninstall"
     RMDir "$INSTDIR"
 	
   uninstall_fail:
-
+    quit
 SectionEnd
