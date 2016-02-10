@@ -12,9 +12,9 @@
 * 2. Redistributions in binary form must reproduce the above copyright
 * notice, this list of conditions and the following disclaimer in the
 * documentation and/or other materials provided with the distribution.
-* 3. Neither the name of the Politecnico di Torino, CACE Technologies 
-* nor the names of its contributors may be used to endorse or promote 
-* products derived from this software without specific prior written 
+* 3. Neither the name of the Politecnico di Torino, CACE Technologies
+* nor the names of its contributors may be used to endorse or promote
+* products derived from this software without specific prior written
 * permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -51,44 +51,76 @@ NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN
 	NTSTATUS ntStatus;
 	IO_STATUS_BLOCK IoStatus;
 	OBJECT_ATTRIBUTES ObjectAttributes;
-	PWCHAR PathPrefix;
-	USHORT PathLen;
-	UNICODE_STRING FullFileName;
-	ULONG FullFileNameLength;
 	PDEVICE_OBJECT fsdDevice;
-
 	FILE_STANDARD_INFORMATION StandardInfo;
 
-	PathPrefix = NULL; //akisn0w: to surpress error C4703: potentially uninitialized local pointer variable
+  ASSERT(Open);
+  ASSERT(fileName);
 
-	IF_LOUD (DbgPrint("NPF: OpenDumpFile.\n");)if(fileName->Buffer[0] == L'\\' && fileName->Buffer[1] == L'?' && fileName->Buffer[2] == L'?' && fileName->Buffer[3] == L'\\')
-	{
-		PathLen = 0;
-	}
-	else
-	{
-		PathPrefix = L"\\??\\";
-		PathLen = 8;
-	}
+  IF_LOUD(DbgPrint("NPF: OpenDumpFile.\n");)
 
-	// Insert the correct path prefix.
-	FullFileNameLength = PathLen + fileName->MaximumLength;
+  // Check the instance parameter is non-null
+  if (Open == NULL)
+  {
+    IF_LOUD(DbgPrint("NPF: OpenDumpFile, NULL Open parameter.\n");)
+    return STATUS_INVALID_PARAMETER_1;
+  }
 
-	FullFileName.Buffer = ExAllocatePoolWithTag(NonPagedPool, FullFileNameLength, '0DWA');
+  // Check the filename is non-null
+  if (fileName == NULL)
+  {
+    IF_LOUD(DbgPrint("NPF: OpenDumpFile, NULL fileName parameter.\n");)
+    return STATUS_INVALID_PARAMETER_2;
+  }
 
-	if (FullFileName.Buffer == NULL)
-	{
-		ntStatus = STATUS_INSUFFICIENT_RESOURCES;
-		return ntStatus;
-	}
+  // Check the filename is valid
+  ntStatus = RtlUnicodeStringValidate(fileName);
+  if (!NT_SUCCESS(ntStatus))
+  {
+    IF_LOUD(DbgPrint("NPF: OpenDumpFile, fileName parameter invalid, status=%x\n", ntStatus);)
+    return ntStatus;
+  }
 
-	FullFileName.Length = PathLen;
-	FullFileName.MaximumLength = (USHORT)FullFileNameLength;
+  // Make sure the FullFileName has enough space for the filename and a prefix if required
+  UNICODE_STRING FullFileName;
+  DECLARE_CONST_UNICODE_STRING(filePrefix, L"\\\\?\\");
+  FullFileName.Length = 0;
+  FullFileName.MaximumLength = fileName->Length + filePrefix.Length;
+  FullFileName.Buffer = ExAllocatePoolWithTag(NonPagedPool, FullFileName.MaximumLength * sizeof(WCHAR), '0DWA');
+  if (FullFileName.Buffer == NULL)
+  {
+    ntStatus = STATUS_INSUFFICIENT_RESOURCES;
+    IF_LOUD(DbgPrint("NPF: Error allocating dump file name.\n");)
+    return ntStatus;
+  }
 
-	if (PathLen)
-		RtlMoveMemory(FullFileName.Buffer, PathPrefix, PathLen);
-
-	RtlAppendUnicodeStringToString(&FullFileName, fileName);
+  // Add the extended path prefix if required
+  if(RtlPrefixUnicodeString(&filePrefix, fileName, FALSE))
+  {
+    // No string extension required, set FullfileName to be the same as fileName
+    ntStatus = RtlUnicodeStringCopy(&FullFileName, fileName);
+    if (!NT_SUCCESS(ntStatus))
+    {
+      IF_LOUD(DbgPrint("NPF: Error copying dump file name, status=%x\n", ntStatus);)
+      return ntStatus;
+    }
+  }
+  else
+  {
+    // Concat the extended path prefix and the filename
+    ntStatus = RtlUnicodeStringCopy(&FullFileName, &filePrefix);
+    if (!NT_SUCCESS(ntStatus))
+    {
+      IF_LOUD(DbgPrint("NPF: Error copying dump file prefix, status=%x\n", ntStatus);)
+        return ntStatus;
+    }
+    ntStatus = RtlUnicodeStringCat(&FullFileName, fileName);
+    if (!NT_SUCCESS(ntStatus))
+    {
+      IF_LOUD(DbgPrint("NPF: Error appending dump file name, status=%x\n", ntStatus);)
+        return ntStatus;
+    }
+  }
 
 	IF_LOUD(DbgPrint("Packet: Attempting to open %wZ\n", &FullFileName);)
 
@@ -127,7 +159,7 @@ NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN
 	IF_LOUD(DbgPrint("NPF: Dump: write file created succesfully, status=%d \n", ntStatus);)
 
 	return ntStatus;
-}   
+}
 
 //-------------------------------------------------------------------
 
@@ -166,7 +198,7 @@ NTSTATUS NPF_StartDump(POPEN_INSTANCE Open)
 		break;
 
 	case NdisMedium802_5:
-		hdr.linktype = DLT_IEEE802;   
+		hdr.linktype = DLT_IEEE802;
 		break;
 
 	case NdisMediumArcnet878_2:
@@ -209,7 +241,7 @@ NTSTATUS NPF_StartDump(POPEN_INSTANCE Open)
 		Open->DumpFileHandle = NULL;
 
 		return ntStatus;
-	}  
+	}
 
 	ntStatus = ObReferenceObjectByHandle(Open->DumpThreadHandle, THREAD_ALL_ACCESS, *PsThreadType, KernelMode, &Open->DumpThreadObject, 0);
 
@@ -222,7 +254,7 @@ NTSTATUS NPF_StartDump(POPEN_INSTANCE Open)
 		Open->DumpFileHandle = NULL;
 
 		return ntStatus;
-	}  
+	}
 
 
 	return ntStatus;
@@ -239,7 +271,7 @@ VOID NPF_DumpThread(POPEN_INSTANCE Open)
 	IF_LOUD (DbgPrint("NPF: In the work routine.  Parameter = 0x%p\n", Open);)while(TRUE)
 	{
 		// Wait until some packets arrive or the timeout expires
-		NdisWaitEvent(&Open->DumpEvent, 5000);  
+		NdisWaitEvent(&Open->DumpEvent, 5000);
 
 		IF_LOUD (DbgPrint("NPF: Worker Thread - event signalled\n");)if(Open->DumpLimitReached || Open->Size == 0)
 		{
@@ -414,7 +446,7 @@ NTSTATUS NPF_SaveCurrentBuffer(POPEN_INSTANCE Open)
 		}
 
 		// Update the packet buffer
-		Open->DumpOffset.QuadPart+=(Ttail-Thead);   	  
+		Open->DumpOffset.QuadPart+=(Ttail-Thead);
 		Open->Bhead=Ttail;
 
 	}
@@ -454,7 +486,7 @@ NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open)
 
 	NPF_OpenDumpFile(Open,&Open->DumpFileName, TRUE);
 
-	// Flush the buffer to file 
+	// Flush the buffer to file
 	NPF_SaveCurrentBuffer(Open);
 
 	// Close The file
@@ -473,14 +505,14 @@ NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open)
 static NTSTATUS PacketDumpCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp, PVOID Context)
 {
 	//
-	// From Sebastian Gottschalk, 
+	// From Sebastian Gottschalk,
 	// Wednesday, May 07, 2008 4:55 PM
 	//
-	// The issue is within dump.c!PacketDumpCompletion. As an I/O completion 
-	// routine it is bound to the contract that every pending IRP passed to this 
-	// routine has to be marked as pending in case that is wasn't yet. Since the 
-	// device returning this IRP is a filesystem device (PacketDumpCompletion is 
-	// setup by WriteDumpFile), such cases might happen and would then hang the 
+	// The issue is within dump.c!PacketDumpCompletion. As an I/O completion
+	// routine it is bound to the contract that every pending IRP passed to this
+	// routine has to be marked as pending in case that is wasn't yet. Since the
+	// device returning this IRP is a filesystem device (PacketDumpCompletion is
+	// setup by WriteDumpFile), such cases might happen and would then hang the
 	// filesystem, soon hanging up then entire system.
 	//
 	// Solution: (TO BE TESTED)
@@ -526,11 +558,11 @@ VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Len
 	irp->UserEvent = &event;
 	irp->UserIosb = IoStatusBlock;
 	irp->Tail.Overlay.Thread = PsGetCurrentThread();
-	irp->Tail.Overlay.OriginalFileObject = FileObject;    
+	irp->Tail.Overlay.OriginalFileObject = FileObject;
 	irp->RequestorMode = KernelMode;
 
 	// Indicate that this is a WRITE operation
-	irp->Flags = IRP_WRITE_OPERATION;    
+	irp->Flags = IRP_WRITE_OPERATION;
 
 	// Set up the next I/O stack location
 	ioStackLocation = IoGetNextIrpStackLocation(irp);
@@ -538,8 +570,8 @@ VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Len
 	ioStackLocation->MinorFunction = 0;
 	ioStackLocation->DeviceObject = fsdDevice;
 	ioStackLocation->FileObject = FileObject;
-	IoSetCompletionRoutine(irp, PacketDumpCompletion, 0, TRUE, TRUE, TRUE);    
-	ioStackLocation->Parameters.Write.Length = Length;    
+	IoSetCompletionRoutine(irp, PacketDumpCompletion, 0, TRUE, TRUE, TRUE);
+	ioStackLocation->Parameters.Write.Length = Length;
 	ioStackLocation->Parameters.Write.ByteOffset = *Offset;
 
 
