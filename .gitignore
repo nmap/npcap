@@ -15,12 +15,16 @@
 *.ipch
 Debug/
 Release/
-Debug(WinPcap Mode)/
-Release(WinPcap Mode)/
+Debug(*)/
+Release(*)/
 VistaDebug/
 VistaRelease/
+VistaDebug(*)/
+VistaRelease(*)/
 Win7Debug/
 Win7Release/
+Win7Debug(*)/
+Win7Release(*)/
 Win7DebugAdmin-onlyMode/
 Win7ReleaseAdmin-onlyMode/
 sdv/
