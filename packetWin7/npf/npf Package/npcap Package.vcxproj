@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}</ProjectGuid>
+    <ProjectGuid>{CEC78B3A-9EFD-4FF4-8DD1-22F2A0289971}</ProjectGuid>
     <TemplateGuid>{4605da2c-74a5-4865-98e1-152ef136825f}</TemplateGuid>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
@@ -192,7 +192,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\npf\npcap.vcxproj">
-      <Project>{3556f5bc-f8ec-437e-93e3-7cf2dc63ff61}</Project>
+      <Project>{2D791862-D9C9-4C62-ADAB-FBFFB88C1949}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
