@@ -122,13 +122,14 @@ NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN
 		}
 	}
 
-
 	IF_LOUD(DbgPrint("Packet: Attempting to open %wZ\n", &FullFileName);)
 
 	InitializeObjectAttributes(&ObjectAttributes, &FullFileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
 	// Create the dump file
-	ntStatus = ZwCreateFile(&Open->DumpFileHandle, SYNCHRONIZE | FILE_WRITE_DATA, &ObjectAttributes, &IoStatus, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, (Append) ? FILE_OPEN_IF : FILE_SUPERSEDE, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+	ntStatus = ZwCreateFile(&Open->DumpFileHandle, SYNCHRONIZE | FILE_WRITE_DATA, &ObjectAttributes,
+		                    &IoStatus, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ,
+		                    (Append) ? FILE_OPEN_IF : FILE_SUPERSEDE, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
 
 	if (!NT_SUCCESS(ntStatus))
 	{
