@@ -23,7 +23,7 @@ Npcap tries to **keep the original WinPcap architecture as much as possible**. A
 ```
 File                     Src Directory            Description
 wpcap.dll                wpcap                    the libpcap API, added "loopback support" to original WinPcap
-packet.dll               packetWin7\Dll           the Packet API for Windows, added "Admin-only Mode" to original WinPcap
+Packet.dll               packetWin7\Dll           the Packet API for Windows, added "Admin-only Mode" to original WinPcap
 npf.sys (or npcap.sys)   packetWin7\npf           the driver, ported from NDIS 5 to NDIS 6, we support two names: npf or npcap, based on whether Npcap is installed in "WinPcap Compatible Mode"
 NPFInstall.exe           packetWin7\NPFInstall    a LWF & WFP driver installation tool we added to Npcap
 NPcapHelper.exe          packetWin7\Helper        the helper program for "Admin-only Mode", will run under Administrator rights
@@ -51,17 +51,15 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 
 ## Build
 
-* ``wpcap.dll``, ``packet.dll``, ``NPFInstall.exe`` and ``NPcapHelper.exe`` need to be built using **Visual Studio 2013**.
-* ``npf.sys (npcap.sys)`` needs to be built using **Visual Studio 2015** with **Windows Driver Kit 10**.
+* ``wpcap.dll``, ``Packet.dll``, ``NPFInstall.exe`` and ``NPcapHelper.exe`` need to be built using **Visual Studio 2013** (by running ``installer\Build.bat``).
+* ``npf.sys (npcap.sys)`` needs to be built using **Visual Studio 2015** with **Windows SDK 10** & **Windows Driver Kit 10** (by launching ``packetWin7\npf\npf.sln``).
 
 ## Packaging
 
 Packaging steps:
 
-* Run ``installer\Build.bat``: build non-driver projects via MSBuild. Make sure you installed **Visual Studio 2013**.
-* Build ``packetWin7\npf``: build driver projects ``npf.sln`` and ``npcap.sln`` respectively via **Visual Studio 2015**.
-* Run ``installer\Deploy.bat``: copy and sign the files for ``Non-WinPcap Compatible Mode``, also the installer will be generated.
-* Run ``installer\Deploy_WinPcap.bat``: copy and sign the files for ``WinPcap Compatible Mode``, also the installer will be generated.
+* Run ``installer\Deploy.bat`` or ``installer\Deploy_WithTimeStamp.bat``: copy and sign the files for ``Non-WinPcap Compatible Mode``. The installer will be generated.
+* Run ``installer\Deploy_WinPcap.bat`` or ``installer\Deploy_WinPcap_WithTimeStamp.bat``: copy and sign the files for ``WinPcap Compatible Mode``. The installer will be generated.
 
 Npcap uses NSIS script to package itself. The script is located in: ``installer\NPcap-for-nmap.nsi``. Compiling this script will generate the installer named ``npcap-nmap-%VERSION%.exe``.
 
