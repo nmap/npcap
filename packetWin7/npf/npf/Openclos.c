@@ -45,6 +45,7 @@
 
 extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING g_SendToRxAdapterName;
+extern NDIS_STRING g_BlockRxAdapterName;
 extern NDIS_STRING devicePrefix;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -1178,6 +1179,7 @@ NPF_DuplicateOpenObject(
 #ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
 	Open->SendToRxPath = OriginalOpen->SendToRxPath;
 #endif
+	Open->BlockRxPath = OriginalOpen->BlockRxPath;
 
 	TRACE_EXIT();
 	return Open;
@@ -1218,6 +1220,7 @@ NPF_CreateOpenObject(
 #ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
 	Open->SendToRxPath = FALSE;
 #endif
+	Open->BlockRxPath = FALSE;
 
 	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
 	PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
@@ -1491,6 +1494,24 @@ NPF_AttachAdapter(
 			}
 		}
 #endif
+		// Determine whether this is our block-Rx adapter for the open_instance.
+		if (g_BlockRxAdapterName.Buffer != NULL)
+		{
+			int iAdapterCnt = (g_BlockRxAdapterName.Length / 2 + 1) / 47;
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+				"g_BlockRxAdapterName.Length=%d, iAdapterCnt=%d",
+				g_BlockRxAdapterName.Length,
+				iAdapterCnt);
+			for (int i = 0; i < iAdapterCnt; i++)
+			{
+				if (RtlCompareMemory(g_BlockRxAdapterName.Buffer + devicePrefix.Length / 2 + 47 * i, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
+					AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+				{
+					Open->BlockRxPath = TRUE;
+					break;
+				}
+			}
+		}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,

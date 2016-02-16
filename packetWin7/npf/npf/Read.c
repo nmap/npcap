@@ -557,13 +557,27 @@ NPF_TapEx(
 	}
 #endif
 
-	//return the packets immediately
-	NdisFIndicateReceiveNetBufferLists(
-		Open->AdapterHandle,
-		NetBufferLists,
-		PortNumber,
-		NumberOfNetBufferLists,
-		ReceiveFlags);
+	if (Open->BlockRxPath)
+	{
+		if (NDIS_TEST_RECEIVE_CAN_PEND(ReceiveFlags))
+		{
+			// no NDIS_RECEIVE_FLAGS_RESOURCES in ReceiveFlags
+			NdisFReturnNetBufferLists(
+				Open->AdapterHandle,
+				NetBufferLists,
+				ReturnFlags);
+		}
+	}
+	else
+	{
+		//return the packets immediately
+		NdisFIndicateReceiveNetBufferLists(
+			Open->AdapterHandle,
+			NetBufferLists,
+			PortNumber,
+			NumberOfNetBufferLists,
+			ReceiveFlags);
+	}
 
 	TRACE_EXIT();
 }

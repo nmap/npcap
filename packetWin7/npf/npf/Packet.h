@@ -270,6 +270,8 @@ typedef struct _OPEN_INSTANCE
 #ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
 	BOOLEAN					SendToRxPath;
 #endif
+	BOOLEAN					BlockRxPath;
+
 	struct _OPEN_INSTANCE	*Next;
 	struct _OPEN_INSTANCE	*GroupNext;
 	struct _OPEN_INSTANCE	*GroupHead;

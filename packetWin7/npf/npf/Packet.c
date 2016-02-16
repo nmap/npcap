@@ -91,6 +91,9 @@ NDIS_STRING g_SendToRxRegValueName = NDIS_STRING_CONST("SendToRx");
 
 #endif
 
+NDIS_STRING g_BlockRxAdapterName;
+NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRx");
+
 NDIS_STRING g_NPF_Prefix;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
 NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
@@ -251,6 +254,7 @@ DriverEntry(
 #ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
 #endif
+	NPF_GetRegistryOption_String(RegistryPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
 
 	bindP = getAdaptersList();
 
@@ -942,6 +946,11 @@ Return Value:
 		g_SendToRxAdapterName.Buffer = NULL;
 	}
 #endif
+	if (g_BlockRxAdapterName.Buffer != NULL)
+	{
+		ExFreePool(g_BlockRxAdapterName.Buffer);
+		g_BlockRxAdapterName.Buffer = NULL;
+	}
 
 	DeviceObject = DriverObject->DeviceObject;
 
