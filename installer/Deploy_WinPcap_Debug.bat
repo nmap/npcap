@@ -5,23 +5,23 @@ set VISTA_DEPLOY_FOLDER_NAME=vista_winpcap
 set VS_CONFIG_MODE=(WinPcap Mode)
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Copy Npcap driver files
-xcopy /Y	"..\packetWin7\npf\Win7Debug%VS_CONFIG_MODE%\npf\%DRIVER_NAME%.cat"						.\%DEPLOY_FOLDER_NAME%\x86
-xcopy /Y	"..\packetWin7\npf\Win7Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"						.\%DEPLOY_FOLDER_NAME%\x86
-xcopy /Y	"..\packetWin7\npf\Win7Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"					.\%DEPLOY_FOLDER_NAME%\x86
-xcopy /Y	"..\packetWin7\npf\Win7Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"						.\%DEPLOY_FOLDER_NAME%\x86
-xcopy /Y	"..\packetWin7\npf\x64\Win7Debug%VS_CONFIG_MODE%\%DRIVER_NAME%\%DRIVER_NAME%.cat"					.\%DEPLOY_FOLDER_NAME%\x64
-xcopy /Y	"..\packetWin7\npf\x64\Win7Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"					.\%DEPLOY_FOLDER_NAME%\x64
-xcopy /Y	"..\packetWin7\npf\x64\Win7Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"				.\%DEPLOY_FOLDER_NAME%\x64
-xcopy /Y	"..\packetWin7\npf\x64\Win7Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"					.\%DEPLOY_FOLDER_NAME%\x64
+xcopy /Y	"..\packetWin7\npf\Win7 Debug%VS_CONFIG_MODE%\npf\%DRIVER_NAME%.cat"						.\%DEPLOY_FOLDER_NAME%\x86
+xcopy /Y	"..\packetWin7\npf\Win7 Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"						.\%DEPLOY_FOLDER_NAME%\x86
+xcopy /Y	"..\packetWin7\npf\Win7 Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"					.\%DEPLOY_FOLDER_NAME%\x86
+xcopy /Y	"..\packetWin7\npf\Win7 Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"						.\%DEPLOY_FOLDER_NAME%\x86
+xcopy /Y	"..\packetWin7\npf\x64\Win7 Debug%VS_CONFIG_MODE%\%DRIVER_NAME%\%DRIVER_NAME%.cat"					.\%DEPLOY_FOLDER_NAME%\x64
+xcopy /Y	"..\packetWin7\npf\x64\Win7 Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"					.\%DEPLOY_FOLDER_NAME%\x64
+xcopy /Y	"..\packetWin7\npf\x64\Win7 Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"				.\%DEPLOY_FOLDER_NAME%\x64
+xcopy /Y	"..\packetWin7\npf\x64\Win7 Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"					.\%DEPLOY_FOLDER_NAME%\x64
 
-xcopy /Y	"..\packetWin7\npf\VistaDebug%VS_CONFIG_MODE%\npf\%DRIVER_NAME%.cat"						.\%VISTA_DEPLOY_FOLDER_NAME%\x86
-xcopy /Y	"..\packetWin7\npf\VistaDebug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"						.\%VISTA_DEPLOY_FOLDER_NAME%\x86
-xcopy /Y	"..\packetWin7\npf\VistaDebug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"					.\%VISTA_DEPLOY_FOLDER_NAME%\x86
-xcopy /Y	"..\packetWin7\npf\VistaDebug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"						.\%VISTA_DEPLOY_FOLDER_NAME%\x86
-xcopy /Y	"..\packetWin7\npf\x64\VistaDebug%VS_CONFIG_MODE%\%DRIVER_NAME%\%DRIVER_NAME%.cat"					.\%VISTA_DEPLOY_FOLDER_NAME%\x64
-xcopy /Y	"..\packetWin7\npf\x64\VistaDebug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"					.\%VISTA_DEPLOY_FOLDER_NAME%\x64
-xcopy /Y	"..\packetWin7\npf\x64\VistaDebug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"				.\%VISTA_DEPLOY_FOLDER_NAME%\x64
-xcopy /Y	"..\packetWin7\npf\x64\VistaDebug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"					.\%VISTA_DEPLOY_FOLDER_NAME%\x64
+xcopy /Y	"..\packetWin7\npf\Vista Debug%VS_CONFIG_MODE%\npf\%DRIVER_NAME%.cat"						.\%VISTA_DEPLOY_FOLDER_NAME%\x86
+xcopy /Y	"..\packetWin7\npf\Vista Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"						.\%VISTA_DEPLOY_FOLDER_NAME%\x86
+xcopy /Y	"..\packetWin7\npf\Vista Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"					.\%VISTA_DEPLOY_FOLDER_NAME%\x86
+xcopy /Y	"..\packetWin7\npf\Vista Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"						.\%VISTA_DEPLOY_FOLDER_NAME%\x86
+xcopy /Y	"..\packetWin7\npf\x64\Vista Debug%VS_CONFIG_MODE%\%DRIVER_NAME%\%DRIVER_NAME%.cat"					.\%VISTA_DEPLOY_FOLDER_NAME%\x64
+xcopy /Y	"..\packetWin7\npf\x64\Vista Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"					.\%VISTA_DEPLOY_FOLDER_NAME%\x64
+xcopy /Y	"..\packetWin7\npf\x64\Vista Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"				.\%VISTA_DEPLOY_FOLDER_NAME%\x64
+xcopy /Y	"..\packetWin7\npf\x64\Vista Debug%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"					.\%VISTA_DEPLOY_FOLDER_NAME%\x64
 
 :: Copy Packet.dll
 xcopy /Y	"..\packetWin7\Dll\Project\Release No NetMon and AirPcap%VS_CONFIG_MODE%\Packet.dll"		.\%DEPLOY_FOLDER_NAME%\x86
