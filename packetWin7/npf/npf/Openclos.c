@@ -1178,10 +1178,10 @@ NPF_DuplicateOpenObject(
 	Open->Loopback = OriginalOpen->Loopback;
 #endif
 
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	Open->SendToRxPath = OriginalOpen->SendToRxPath;
-#endif
 	Open->BlockRxPath = OriginalOpen->BlockRxPath;
+#endif
 
 	TRACE_EXIT();
 	return Open;
@@ -1219,10 +1219,10 @@ NPF_CreateOpenObject(
 	Open->Loopback = FALSE;
 #endif
 
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	Open->SendToRxPath = FALSE;
-#endif
 	Open->BlockRxPath = FALSE;
+#endif
 
 	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
 	PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
@@ -1476,7 +1476,7 @@ NPF_AttachAdapter(
 		}
 #endif
 
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
 		if (g_SendToRxAdapterName.Buffer != NULL)
 		{
@@ -1497,7 +1497,6 @@ NPF_AttachAdapter(
 				}
 			}
 		}
-#endif
 		// Determine whether this is our block-Rx adapter for the open_instance.
 		if (g_BlockRxAdapterName.Buffer != NULL)
 		{
@@ -1518,6 +1517,7 @@ NPF_AttachAdapter(
 				}
 			}
 		}
+#endif
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,

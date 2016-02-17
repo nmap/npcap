@@ -84,15 +84,14 @@ NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("Loopback");
 extern HANDLE g_WFPEngineHandle;
 #endif
 
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 
 NDIS_STRING g_SendToRxAdapterName;
 NDIS_STRING g_SendToRxRegValueName = NDIS_STRING_CONST("SendToRx");
-
-#endif
-
 NDIS_STRING g_BlockRxAdapterName;
 NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRx");
+
+#endif
 
 NDIS_STRING g_NPF_Prefix;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
@@ -251,10 +250,10 @@ DriverEntry(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
 #endif
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
-#endif
 	NPF_GetRegistryOption_String(RegistryPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
+#endif
 
 	bindP = getAdaptersList();
 
@@ -938,19 +937,19 @@ Return Value:
 	NPF_UnregisterCallouts();
 #endif
 
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	// Free the send-to-Rx adapter name
 	if (g_SendToRxAdapterName.Buffer != NULL)
 	{
 		ExFreePool(g_SendToRxAdapterName.Buffer);
 		g_SendToRxAdapterName.Buffer = NULL;
 	}
-#endif
 	if (g_BlockRxAdapterName.Buffer != NULL)
 	{
 		ExFreePool(g_BlockRxAdapterName.Buffer);
 		g_BlockRxAdapterName.Buffer = NULL;
 	}
+#endif
 
 	DeviceObject = DriverObject->DeviceObject;
 

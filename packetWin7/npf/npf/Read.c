@@ -557,6 +557,7 @@ NPF_TapEx(
 	}
 #endif
 
+#ifdef HAVE_RX_SUPPORT
 	if (Open->BlockRxPath)
 	{
 		if (NDIS_TEST_RECEIVE_CAN_PEND(ReceiveFlags))
@@ -569,6 +570,7 @@ NPF_TapEx(
 		}
 	}
 	else
+#endif
 	{
 		//return the packets immediately
 		NdisFIndicateReceiveNetBufferLists(

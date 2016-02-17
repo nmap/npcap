@@ -300,7 +300,7 @@ NPF_Write(
 			}
 			else
 #endif
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 				if (Open->SendToRxPath == TRUE)
 				{
 					IF_LOUD(DbgPrint("NPF_Write::SendToRxPath, Open->AdapterHandle=%p, pNetBufferList=%u\n", Open->AdapterHandle, pNetBufferList);)
@@ -340,7 +340,7 @@ NPF_Write(
 	// (if any of the NdisSend requests returned STATUS_PENDING)
 	//
 	
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	if (Open->SendToRxPath && pNetBufferList)
 	{
 		NPF_FreePackets(pNetBufferList);
@@ -613,7 +613,7 @@ NPF_BufferedWrite(
 		}
 		else
 #endif
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 			if (Open->SendToRxPath == TRUE)
 			{
 				IF_LOUD(DbgPrint("NPF_BufferedWrite::SendToRxPath, Open->AdapterHandle=%p, pNetBufferList=%u\n", Open->AdapterHandle, pNetBufferList);)
@@ -681,7 +681,7 @@ NPF_BufferedWrite(
 	}
 
 	// Wait the completion of pending sends
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	if (Open->SendToRxPath && pNetBufferList)
 	{
 		NPF_FreePackets(pNetBufferList);

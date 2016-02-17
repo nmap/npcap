@@ -267,10 +267,10 @@ typedef struct _OPEN_INSTANCE
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	BOOLEAN					Loopback;
 #endif
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	BOOLEAN					SendToRxPath;
-#endif
 	BOOLEAN					BlockRxPath;
+#endif
 
 	struct _OPEN_INSTANCE	*Next;
 	struct _OPEN_INSTANCE	*GroupNext;
