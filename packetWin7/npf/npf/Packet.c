@@ -13,9 +13,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Politecnico di Torino, CACE Technologies 
- * nor the names of its contributors may be used to endorse or promote 
- * products derived from this software without specific prior written 
+ * 3. Neither the name of the Politecnico di Torino, CACE Technologies
+ * nor the names of its contributors may be used to endorse or promote
+ * products derived from this software without specific prior written
  * permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -202,7 +202,7 @@ DriverEntry(
 	FChars.FriendlyName = FriendlyName;
 	FChars.UniqueName = UniqueName;
 	FChars.ServiceName = ServiceName;
-	
+
 	FChars.SetOptionsHandler = NPF_RegisterOptions;
 	FChars.AttachHandler = NPF_AttachAdapter;
 	FChars.DetachHandler = NPF_DetachAdapter;
@@ -224,12 +224,12 @@ DriverEntry(
 
 	DriverObject->DriverUnload = NPF_Unload;
 
-	// 
+	//
 	// Standard device driver entry points stuff.
 	//
 	DriverObject->MajorFunction[IRP_MJ_CREATE] = NPF_OpenAdapter;
 	DriverObject->MajorFunction[IRP_MJ_CLOSE] = NPF_CloseAdapter;
-	DriverObject->MajorFunction[IRP_MJ_CLEANUP] = NPF_Cleanup; 
+	DriverObject->MajorFunction[IRP_MJ_CLEANUP] = NPF_Cleanup;
 	DriverObject->MajorFunction[IRP_MJ_READ] = NPF_Read;
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
@@ -282,7 +282,7 @@ DriverEntry(
 		RtlInitUnicodeString(&macName, bindT);
 		NPF_CreateDevice(DriverObject, &macName);
 	}
-	
+
 	Status = NdisFRegisterFilterDriver(DriverObject,
 		(NDIS_HANDLE) FilterDriverObject,
 		&FChars,
@@ -303,7 +303,7 @@ DriverEntry(
 // 			if (gWFPEngineHandle != NULL)
 // 			{
 // 				NPF_UnregisterCallouts();
-// 
+//
 // 				NdisFDeregisterFilterDriver(FilterDriverHandle);
 // 			}
 // 			TRACE_EXIT();
@@ -454,7 +454,7 @@ getAdaptersList(
 								ExFreePool(DeviceNames);
 								DeviceNames = DeviceNames2;
 							}
-						} 
+						}
 						if (BufPos + valueInfoP->DataLength < BufLen)
 						{
 							RtlCopyMemory((PCHAR)DeviceNames + BufPos,
@@ -849,7 +849,7 @@ BOOLEAN
 #endif
 
 		devObjP->Flags |= DO_DIRECT_IO;
-		RtlInitUnicodeString(&devExtP->AdapterName, amacNameP->Buffer);   
+		RtlInitUnicodeString(&devExtP->AdapterName, amacNameP->Buffer);
 
 		IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
 
@@ -990,7 +990,7 @@ Return Value:
 
 	TRACE_EXIT();
 
-	// Free the device names string that was allocated in the DriverEntry 
+	// Free the device names string that was allocated in the DriverEntry
 	// NdisFreeString(g_NPF_Prefix);
 }
 
@@ -1072,7 +1072,7 @@ NPF_IoControl(
 
 	if (NPF_StartUsingOpenInstance(Open) == FALSE)
 	{
-		// 
+		//
 		// an IRP_MJ_CLEANUP was received, just fail the request
 		//
 		Irp->IoStatus.Information = 0;
@@ -1255,7 +1255,7 @@ NPF_IoControl(
 
 			//
 			// Jitted filters are supported on x86 (32bit) only
-			// 
+			//
 #ifdef _X86_
 			if (Open->Filter != NULL)
 			{
@@ -1312,7 +1312,7 @@ NPF_IoControl(
 #endif //HAVE_BUGGY_TME_SUPPORT
 				{
 					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error validating program");
-					//FIXME: the machine has been initialized(?), but the operative code is wrong. 
+					//FIXME: the machine has been initialized(?), but the operative code is wrong.
 					//we have to reset the machine!
 					//something like: reallocate the mem_ex, and reset the tme_core
 					SET_FAILURE_INVALID_REQUEST();
@@ -1365,7 +1365,7 @@ NPF_IoControl(
 
 		NPF_ResetBufferContents(Open);
 
-		break;		
+		break;
 
 	case BIOCSMODE:
 		//set the capture mode
@@ -1398,7 +1398,7 @@ NPF_IoControl(
 		else if (mode == MODE_MON)
 		{
 			//
-			// The MONITOR_MODE (aka TME extensions) is not supported on 
+			// The MONITOR_MODE (aka TME extensions) is not supported on
 			// 64 bit architectures
 			//
 
@@ -1429,7 +1429,7 @@ NPF_IoControl(
 			{
 				Open->mode |= MODE_DUMP;
 				// Open->MinToCopy=(Open->BufSize<2000000)?Open->BufSize/2:1000000;
-			}	
+			}
 
 			SET_RESULT_SUCCESS(0);
 			break;
@@ -1449,40 +1449,40 @@ NPF_IoControl(
 
 		//if(Open->mode & MODE_DUMP)
 		//{
-		//	
+		//
 		//	// Close current dump file
 		//	if(Open->DumpFileHandle != NULL)
 		//	{
 		//		NPF_CloseDumpFile(Open);
 		//		Open->DumpFileHandle = NULL;
 		//	}
-		//	
+		//
 		//	if(IrpSp->Parameters.DeviceIoControl.InputBufferLength == 0){
 		//		EXIT_FAILURE(0);
 		//	}
-		//	
+		//
 		//	// Allocate the buffer that will contain the string
 		//	DumpNameBuff=ExAllocatePoolWithTag(NonPagedPool, IrpSp->Parameters.DeviceIoControl.InputBufferLength, '5PWA');
 		//	if(DumpNameBuff==NULL || Open->DumpFileName.Buffer!=NULL){
 		//		IF_LOUD(DbgPrint("NPF: unable to allocate the dump filename: not enough memory or name already set\n");)
 		//			EXIT_FAILURE(0);
 		//	}
-		//	
+		//
 		//	// Copy the buffer
-		//	RtlCopyBytes((PVOID)DumpNameBuff, 
-		//		Irp->AssociatedIrp.SystemBuffer, 
+		//	RtlCopyBytes((PVOID)DumpNameBuff,
+		//		Irp->AssociatedIrp.SystemBuffer,
 		//		IrpSp->Parameters.DeviceIoControl.InputBufferLength);
-		//	
-		//	// Force a \0 at the end of the filename to avoid that malformed strings cause RtlInitUnicodeString to crash the system 
+		//
+		//	// Force a \0 at the end of the filename to avoid that malformed strings cause RtlInitUnicodeString to crash the system
 		//	((PSHORT)DumpNameBuff)[IrpSp->Parameters.DeviceIoControl.InputBufferLength/2-1]=0;
-		//	
+		//
 		//	// Create the unicode string
 		//	RtlInitUnicodeString(&Open->DumpFileName, DumpNameBuff);
-		//	
+		//
 		//	IF_LOUD(DbgPrint("NPF: dump file name set to %ws, len=%d\n",
 		//		Open->DumpFileName.Buffer,
 		//		IrpSp->Parameters.DeviceIoControl.InputBufferLength);)
-		//		
+		//
 		//	// Try to create the file
 		//	if ( NT_SUCCESS( NPF_OpenDumpFile(Open,&Open->DumpFileName,FALSE)) &&
 		//		NT_SUCCESS( NPF_StartDump(Open)))
@@ -1526,7 +1526,7 @@ NPF_IoControl(
 		///////kernel dump does not work at the moment//////////////////////////////////////////
 
 		//if(IrpSp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(UINT))
-		//{			
+		//{
 		//	EXIT_FAILURE(0);
 		//}
 
@@ -1611,7 +1611,7 @@ NPF_IoControl(
 			*ExEventObjectType,
 			Irp->RequestorMode,
 			(PVOID *) &pKernelEvent,
-			NULL);	
+			NULL);
 
 		if (!NT_SUCCESS(Status))
 		{
@@ -1741,7 +1741,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Read timeout set to %I64d", Open->TimeOut.QuadPart);
 
-		SET_RESULT_SUCCESS(0);		
+		SET_RESULT_SUCCESS(0);
 		break;
 
 	case BIOCSWRITEREP:
@@ -1778,7 +1778,7 @@ NPF_IoControl(
 
 	case BIOCQUERYOID:
 	case BIOCSETOID:
-		
+
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID - BIOCQUERYOID");
 
 		//
@@ -2041,7 +2041,7 @@ NPF_IoControl(
 					// check for the stupid bug of the Nortel driver ipsecw2k.sys v. 4.10.0.0 that doesn't set the BytesWritten correctly
 					// The driver is the one shipped with Nortel client Contivity VPN Client V04_65.18, and the MD5 for the buggy (unsigned) driver
 					// is 3c2ff8886976214959db7d7ffaefe724 *ipsecw2k.sys (there are multiple copies of this binary with the same exact version info!)
-					// 
+					//
 					// The (certified) driver shipped with Nortel client Contivity VPN Client V04_65.320 doesn't seem affected by the bug.
 					//
 					if (pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten > pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength)
@@ -2132,7 +2132,7 @@ NPF_ResetBufferContents(
 		Open->CpuData[i].Received = 0;
 	}
 
-	// 
+	//
 	// release the locks in reverse order
 	//
 	i = g_NCpu;

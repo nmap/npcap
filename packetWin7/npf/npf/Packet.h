@@ -13,9 +13,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Politecnico di Torino, CACE Technologies 
- * nor the names of its contributors may be used to endorse or promote 
- * products derived from this software without specific prior written 
+ * 3. Neither the name of the Politecnico di Torino, CACE Technologies
+ * nor the names of its contributors may be used to endorse or promote
+ * products derived from this software without specific prior written
  * permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -32,11 +32,11 @@
  *
  */
 
-/** @addtogroup NPF 
+/** @addtogroup NPF
  *  @{
  */
 
-/** @defgroup NPF_include NPF structures and definitions 
+/** @defgroup NPF_include NPF structures and definitions
  *  @{
  */
 #include "stdafx.h"
@@ -45,7 +45,7 @@
 #define __PACKET_INCLUDE______
 
 #ifdef _X86_
-#define NTKERNEL	///< Forces the compilation of the jitter with kernel calls 
+#define NTKERNEL	///< Forces the compilation of the jitter with kernel calls
 #include "jitter.h"
 #endif
 
@@ -80,8 +80,8 @@ extern NDIS_HANDLE         FilterDriverObject;
 #define  MAX_REQUESTS   128 ///< Maximum number of simultaneous IOCTL requests.
 
 #define Packet_ALIGNMENT sizeof(int) ///< Alignment macro. Defines the alignment size.
-#define Packet_WORDALIGN(x) (((x)+(Packet_ALIGNMENT-1))&~(Packet_ALIGNMENT-1))	///< Alignment macro. Rounds up to the next 
-///< even multiple of Packet_ALIGNMENT. 
+#define Packet_WORDALIGN(x) (((x)+(Packet_ALIGNMENT-1))&~(Packet_ALIGNMENT-1))	///< Alignment macro. Rounds up to the next
+///< even multiple of Packet_ALIGNMENT.
 
 
 // Working modes
@@ -95,7 +95,7 @@ extern NDIS_HANDLE         FilterDriverObject;
 
 #define NDIS_FLAGS_SKIP_LOOPBACK_W2K	0x400 ///< This is an undocumented flag for NdisSetPacketFlags() that allows to disable loopback reception.
 
-// The following definitions are used to provide compatibility 
+// The following definitions are used to provide compatibility
 // of the dump files with the ones of libpcap
 #define TCPDUMP_MAGIC		0xa1b2c3d4	///< Libpcap magic number. Used by programs like tcpdump to recognize a driver's generated dump file.
 #define PCAP_VERSION_MAJOR	2			///< Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
@@ -140,9 +140,9 @@ struct packet_file_header
 struct sf_pkthdr
 {
 	struct timeval	ts;			///< time stamp
-	UINT			caplen;		///< Length of captured portion. The captured portion can be different from 
-								///< the original packet, because it is possible (with a proper filter) to 
-								///< instruct the driver to capture only a portion of the packets. 
+	UINT			caplen;		///< Length of captured portion. The captured portion can be different from
+								///< the original packet, because it is possible (with a proper filter) to
+								///< instruct the driver to capture only a portion of the packets.
 	UINT			len;		///< Length of the original packet (off wire).
 };
 
@@ -156,8 +156,8 @@ struct sf_pkthdr
 /*!
   \brief Structure containing an OID request.
 
-  It is used by the PacketRequest() function to send an OID to the interface card driver. 
-  It can be used, for example, to retrieve the status of the error counters on the adapter, its MAC address, 
+  It is used by the PacketRequest() function to send an OID to the interface card driver.
+  It can be used, for example, to retrieve the status of the error counters on the adapter, its MAC address,
   the list of the multicast groups defined on it, and so on.
 */
 typedef struct _PACKET_OID_DATA
@@ -165,7 +165,7 @@ typedef struct _PACKET_OID_DATA
 	ULONG Oid;					///< OID code. See the Microsoft DDK documentation or the file ntddndis.h
 								///< for a complete list of valid codes.
 	ULONG Length;				///< Length of the data field
-	UCHAR Data[1];				///< variable-lenght field that contains the information passed to or received 
+	UCHAR Data[1];				///< variable-lenght field that contains the information passed to or received
 								///< from the adapter.
 }
 PACKET_OID_DATA, * PPACKET_OID_DATA;
@@ -174,9 +174,9 @@ C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
 
 /*!
   \brief Stores an OID request.
-  
-  This structure is used by the driver to perform OID query or set operations on the underlying NIC driver. 
-  The OID operations be performed usually only by network drivers, but NPF exports this mechanism to user-level 
+
+  This structure is used by the driver to perform OID query or set operations on the underlying NIC driver.
+  The OID operations be performed usually only by network drivers, but NPF exports this mechanism to user-level
   applications through an IOCTL interface. The driver uses this structure to wrap a NDIS_REQUEST structure.
   This allows to handle correctly the callback structure of NdisRequest(), handling multiple requests and
   maintaining information about the IRPs to complete.
@@ -193,7 +193,7 @@ typedef struct _INTERNAL_REQUEST
 
 /*!
   \brief Contains a NDIS packet.
-  
+
   The driver uses this structure to wrap a NDIS_PACKET  structure.
   This allows to handle correctly the callback structure of NdisTransferData(), handling multiple requests and
   maintaining information about the IRPs to complete.
@@ -213,7 +213,7 @@ typedef struct _PACKET_RESERVED
 
 /*!
   \brief Port device extension.
-  
+
   Structure containing some data relative to every adapter on which NPF is bound.
 */
 typedef struct _DEVICE_EXTENSION
@@ -234,28 +234,28 @@ typedef struct __CPU_Private_Data
 	ULONG			C;				///< Zero-based index of the consumer in the buffer. It indicates the first free byte to be read.
 	ULONG			Free;			///< Number of the free bytes in the buffer
 	PUCHAR			Buffer;			///< Pointer to the kernel buffer used to capture packets.
-	ULONG			Accepted;		///< Number of packet that current capture instance acepted, from its opening. A packet 
+	ULONG			Accepted;		///< Number of packet that current capture instance acepted, from its opening. A packet
 									///< is accepted if it passes the filter and fits in the buffer. Accepted packets are the
-									///< ones that reach the application. 
+									///< ones that reach the application.
 									///< This number is related to the particular CPU this structure is referring to.
-	ULONG			Received;		///< Number of packets received by current instance from its opening, i.e. number of 
-									///< packet received by the network adapter since the beginning of the 
-									///< capture/monitoring/dump session. 
+	ULONG			Received;		///< Number of packets received by current instance from its opening, i.e. number of
+									///< packet received by the network adapter since the beginning of the
+									///< capture/monitoring/dump session.
 									///< This number is related to the particular CPU this structure is referring to.
-	ULONG			Dropped;		///< Number of packet that current instance had to drop, from its opening. A packet 
-									///< is dropped if there is no more space to store it in the circular buffer that the 
-									///< driver associates to current instance. 
+	ULONG			Dropped;		///< Number of packet that current instance had to drop, from its opening. A packet
+									///< is dropped if there is no more space to store it in the circular buffer that the
+									///< driver associates to current instance.
 									///< This number is related to the particular CPU this structure is referring to.
 	NDIS_SPIN_LOCK	BufferLock;		///< It protects the buffer associated with this CPU.
-	PMDL			TransferMdl1;	///< MDL used to map the portion of the buffer that will contain an incoming packet. 
-	PMDL			TransferMdl2;	///< Second MDL used to map the portion of the buffer that will contain an incoming packet. 
+	PMDL			TransferMdl1;	///< MDL used to map the portion of the buffer that will contain an incoming packet.
+	PMDL			TransferMdl2;	///< Second MDL used to map the portion of the buffer that will contain an incoming packet.
 	ULONG			NewP;			///< Used by NdisTransferData() (when we call NdisTransferData, p index must be updated only in the TransferDataComplete.
 } CpuPrivateData;
 
 
 /*!
   \brief Contains the state of a running instance of the NPF driver.
-  
+
   This is the most important structure of NPF: it is used by almost all the functions of the driver. An
   _OPEN_INSTANCE structure is associated with every user-level session, allowing concurrent access
   to the driver.
@@ -296,26 +296,26 @@ typedef struct _OPEN_INSTANCE
 	PUCHAR					bpfprogram;		///< Pointer to the filtering pseudo-code associated with current instance of the driver.
 											///< This code is used only in particular situations (for example when the packet received
 											///< from the NIC driver is stored in two non-consecutive buffers. In normal situations
-											///< the filtering routine created by the JIT compiler and pointed by the next field 
+											///< the filtering routine created by the JIT compiler and pointed by the next field
 											///< is used. See \ref NPF for details on the filtering process.
 #ifdef _X86_
-	JIT_BPF_Filter*			Filter;			///< Pointer to the native filtering function created by the jitter. 
+	JIT_BPF_Filter*			Filter;			///< Pointer to the native filtering function created by the jitter.
 	///< See BPF_jitter() for details.
 #endif //_X86_
 	UINT					MinToCopy;		///< Minimum amount of data in the circular buffer that unlocks a read. Set with the
-											///< BIOCSMINTOCOPY IOCTL. 
-	LARGE_INTEGER			TimeOut;		///< Timeout after which a read is released, also if the amount of data in the buffer is 
+											///< BIOCSMINTOCOPY IOCTL.
+	LARGE_INTEGER			TimeOut;		///< Timeout after which a read is released, also if the amount of data in the buffer is
 											///< less than MinToCopy. Set with the BIOCSRTIMEOUT IOCTL.
 
 	int						mode;			///< Working mode of the driver. See PacketSetMode() for details.
 	LARGE_INTEGER			Nbytes;			///< Amount of bytes accepted by the filter when this instance is in statistical mode.
 	LARGE_INTEGER			Npackets;		///< Number of packets accepted by the filter when this instance is in statistical mode.
 	NDIS_SPIN_LOCK			CountersLock;	///< SpinLock that protects the statistical mode counters.
-	UINT					Nwrites;		///< Number of times a single write must be physically repeated. See \ref NPF for an 
+	UINT					Nwrites;		///< Number of times a single write must be physically repeated. See \ref NPF for an
 											///< explanation
 	ULONG					Multiple_Write_Counter;	///< Counts the number of times a single write has already physically repeated.
 	NDIS_EVENT				WriteEvent;		///< Event used to synchronize the multiple write process.
-	BOOLEAN					WriteInProgress;///< True if a write is currently in progress. NPF currently allows a single wite on 
+	BOOLEAN					WriteInProgress;///< True if a write is currently in progress. NPF currently allows a single wite on
 											///< the same open instance.
 	NDIS_SPIN_LOCK			WriteLock;		///< SpinLock that protects the WriteInProgress variable.
 	NDIS_EVENT				NdisRequestEvent;	///< Event used to synchronize I/O requests with the callback structure of NDIS.
@@ -328,12 +328,12 @@ typedef struct _OPEN_INSTANCE
 	NDIS_EVENT				DumpEvent;		///< Event used to synchronize the dump thread with the tap when the instance is in dump mode.
 	LARGE_INTEGER			DumpOffset;		///< Current offset in the dump file.
 	UNICODE_STRING			DumpFileName;	///< String containing the name of the dump file.
-	UINT					MaxDumpBytes;	///< Maximum dimension in bytes of the dump file. If the dump file reaches this size it 
+	UINT					MaxDumpBytes;	///< Maximum dimension in bytes of the dump file. If the dump file reaches this size it
 											///< will be closed. A value of 0 means unlimited size.
-	UINT					MaxDumpPacks;	///< Maximum number of packets that will be saved in the dump file. If this number of 
-											///< packets is reached the dump will be closed. A value of 0 means unlimited number of 
+	UINT					MaxDumpPacks;	///< Maximum number of packets that will be saved in the dump file. If this number of
+											///< packets is reached the dump will be closed. A value of 0 means unlimited number of
 											///< packets.
-	BOOLEAN					DumpLimitReached;	///< TRUE if the maximum dimension of the dump file (MaxDumpBytes or MaxDumpPacks) is 
+	BOOLEAN					DumpLimitReached;	///< TRUE if the maximum dimension of the dump file (MaxDumpBytes or MaxDumpPacks) is
 											///< reached.
 #ifdef HAVE_BUGGY_TME_SUPPORT
 	MEM_TYPE				mem_ex;			///< Memory used by the TME virtual co-processor
@@ -341,7 +341,7 @@ typedef struct _OPEN_INSTANCE
 #endif//HAVE_BUGGY_TME_SUPPORT
 
 	NDIS_SPIN_LOCK			MachineLock;	///< SpinLock that protects the BPF filter and the TME engine, if in use.
-	UINT					MaxFrameSize;	///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the 
+	UINT					MaxFrameSize;	///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the
 											///< size of the frames sent with NPF_Write() or NPF_BufferedWrite().
 	//
 	// KAFFINITY is used as a bit mask for the affinity in the system. So on every supported OS is big enough for all the CPUs on the system (32 bits on x86, 64 on x64?).
@@ -354,14 +354,14 @@ typedef struct _OPEN_INSTANCE
 	ULONG					Size;			///< Size of each kernel buffer contained in the CpuData field.
 	ULONG					AdapterHandleUsageCounter;
 	NDIS_SPIN_LOCK			AdapterHandleLock;
-	ULONG					AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.	
+	ULONG					AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.
 
 	NDIS_EVENT				NdisOpenCloseCompleteEvent;
 	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
 	NTSTATUS				OpenCloseStatus;
 	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
 	ULONG					NumPendingIrps;
-	BOOLEAN					ClosePending; 
+	BOOLEAN					ClosePending;
 	NDIS_SPIN_LOCK			OpenInUseLock;
 }
 OPEN_INSTANCE, *POPEN_INSTANCE;
@@ -375,8 +375,8 @@ enum ADAPTER_BINDING_STATUS
 
 /*!
   \brief Structure prepended to each packet in the kernel buffer pool.
-  
-  Each packet in one of the kernel buffers is prepended by this header. It encapsulates the bpf_header, 
+
+  Each packet in one of the kernel buffers is prepended by this header. It encapsulates the bpf_header,
   which will be passed to user level programs, as well as the sequence number of the packet, set by the producer (the tap function),
   and used by the consumer (the read function) to "reorder" the packets contained in the various kernel buffers.
 */
@@ -414,7 +414,7 @@ extern struct time_conv G_Start_Time; // from openclos.c
 /*  	 Prototypes 	   */
 /***************************/
 
-/** @defgroup NPF_code NPF functions 
+/** @defgroup NPF_code NPF functions
  *  @{
  */
 
@@ -444,7 +444,7 @@ NPF_AttachAdapter(
 /*!
   \brief Callback for NDIS DetachHandler.
   \param FilterModuleContext Pointer to the filter context area.
-  
+
   Function called by NDIS when a new adapter is removed from the machine without shutting it down.
   NPF_DetachAdapter closes the adapter calling NdisCloseAdapter() and frees the memory and the structures
   associated with it. It also releases the waiting user-level app and closes the dump thread if the instance
@@ -495,10 +495,10 @@ NPF_Restart(
    Complete all the outstanding sends and queued sends,
    wait for all the outstanding recvs to be returned
    and return all the queued receives.
-   N.B.: When the filter is in Pausing state, it can still process OID requests, 
+   N.B.: When the filter is in Pausing state, it can still process OID requests,
    complete sending, and returning packets to NDIS, and also indicate status.
-   After this function completes, the filter must not attempt to send or 
-   receive packets, but it may still process OID requests and status 
+   After this function completes, the filter must not attempt to send or
+   receive packets, but it may still process OID requests and status
    indications.
 */
 NDIS_STATUS
@@ -563,7 +563,7 @@ NPF_NetPnPEvent(
   This function is an optional function for filter drivers. If provided, NDIS
   will call this function to transmit a linked list of NetBuffers, described by a
   NetBufferList, over the network. If this handler is NULL, NDIS will skip calling
-  this filter when sending a NetBufferList and will call the next lower 
+  this filter when sending a NetBufferList and will call the next lower
   driver in the stack.  A filter that doesn't provide a FilerSendNetBufferList
   handler can not originate a send on its own.
 */
@@ -579,8 +579,8 @@ NPF_SendEx(
 /*!
   \brief Callback for NDIS ReturnNetBufferListsHandler.
   \param FilterModuleContext Pointer to the filter context structure.
-  \param NetBufferLists A linked list of NetBufferLists that this 
-						filter driver indicated in a previous call to 
+  \param NetBufferLists A linked list of NetBufferLists that this
+						filter driver indicated in a previous call to
 						NdisFIndicateReceiveNetBufferLists.
   \param ReturnFlags Flags specifying if the caller is at DISPATCH_LEVEL.
 
@@ -613,10 +613,10 @@ NPF_FreePackets(
   \param NetBufferLists A chain of NBLs that are being returned to you.
   \param SendCompleteFlags Flags (see documentation).
 
-  This routine is invoked whenever the lower layer is finished processing 
+  This routine is invoked whenever the lower layer is finished processing
   sent NET_BUFFER_LISTs.  If the filter does not need to be involved in the
   send path, you should remove this routine and the FilterSendNetBufferLists
-  routine.  NDIS will pass along send packets on behalf of your filter more 
+  routine.  NDIS will pass along send packets on behalf of your filter more
   efficiently than the filter can.
 */
 VOID
@@ -642,10 +642,10 @@ NPF_SendCompleteEx(
   filter when processing a receive indication and will call the next higher
   driver in the stack. A filter that doesn't provide a
   FilterReceiveNetBufferLists handler cannot provide a
-  FilterReturnNetBufferLists handler and cannot a initiate an original receive 
+  FilterReturnNetBufferLists handler and cannot a initiate an original receive
   indication on its own.
   N.B.: It is important to check the ReceiveFlags in NDIS_TEST_RECEIVE_CANNOT_PEND.
-  This controls whether the receive indication is an synchronous or 
+  This controls whether the receive indication is an synchronous or
   asynchronous function call.
 */
 VOID
@@ -665,7 +665,7 @@ NPF_TapEx(
 
   This function cancels any NET_BUFFER_LISTs pended in the filter and then
   calls the NdisFCancelSendNetBufferLists to propagate the cancel operation.
-  If your driver does not queue any send NBLs, you may omit this routine.  
+  If your driver does not queue any send NBLs, you may omit this routine.
   NDIS will propagate the cancelation on your behalf more efficiently.
 */
 VOID
@@ -761,10 +761,10 @@ NPF_InternalRequestComplete(
 		  STATUS_UNSUCCESSFUL.
 
   DriverEntry is a mandatory function in a device driver. Like the main() of a user level program, it is called
-  by the system when the driver is loaded in memory and started. Its purpose is to initialize the driver, 
+  by the system when the driver is loaded in memory and started. Its purpose is to initialize the driver,
   performing all the allocations and the setup. In particular, DriverEntry registers all the driver's I/O
   callbacks, creates the devices, defines NPF as a protocol inside NDIS.
-*/ 
+*/
 NTSTATUS
 DriverEntry(
 	IN PDRIVER_OBJECT DriverObject,
@@ -776,8 +776,8 @@ DriverEntry(
   \brief Returns the list of the MACs available on the system.
   \return A string containing a list of network adapters.
 
-  The list of adapters is retrieved from the 
-  SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318} registry key. 
+  The list of adapters is retrieved from the
+  SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318} registry key.
   NPF tries to create its bindings from this list. In this way it is possible to be loaded
   and unloaded dynamically without passing from the control panel.
 */
@@ -841,9 +841,9 @@ NPF_CreateDevice(
   \param Irp Pointer to the IRP containing the user request.
   \return The status of the operation. See ntstatus.h in the DDK.
 
-  This function is called by the OS when a new instance of the driver is opened, i.e. when a user application 
+  This function is called by the OS when a new instance of the driver is opened, i.e. when a user application
   performs a CreateFile on a device created by NPF. NPF_Open allocates and initializes variables, objects
-  and buffers needed by the new instance, fills the OPEN_INSTANCE structure associated with it and opens the 
+  and buffers needed by the new instance, fills the OPEN_INSTANCE structure associated with it and opens the
   adapter with a call to NdisOpenAdapter.
 */
 NTSTATUS
@@ -861,8 +861,8 @@ NPF_OpenAdapter(
 
   This function is called when a running instance of the driver is closed by the user with a CloseHandle().
   Used together with NPF_CloseAdapter().
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
-  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter. 
+  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
+  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
 NTSTATUS
 NPF_Cleanup(
@@ -878,7 +878,7 @@ NPF_Cleanup(
 
   This function is called by NPF_RemoveUnclosedAdapters().
   Used together with NPF_CloseAdapterForUnclosed().
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
+  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
 NTSTATUS
@@ -895,8 +895,8 @@ NPF_CleanupForUnclosed(
 
   This function is called when a running instance of the driver is closed by the user with a CloseHandle().
   Used together with NPF_Cleanup().
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
-  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter. 
+  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
+  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
 NTSTATUS
 NPF_CloseAdapter(
@@ -913,8 +913,8 @@ NPF_CloseAdapter(
 
   This function is called by NPF_RemoveUnclosedAdapters().
   Used together with NPF_CleanupForUnclosed().
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the 
-  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter. 
+  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
+  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
 NTSTATUS
 NPF_CloseAdapterForUnclosed(
@@ -927,10 +927,10 @@ NPF_CloseAdapterForUnclosed(
   \param Open Pointer to an OPEN_INSTANCE structure to which the packets are destined.
   \param pNetBufferLists A List of NetBufferLists to receive.
 
-  NPF_TapExForEachOpen() is called by the underlying NIC for every incoming packet. It is the most important and one of 
-  the most complex functions of NPF: it executes the filter, runs the statistical engine (if the instance is in 
+  NPF_TapExForEachOpen() is called by the underlying NIC for every incoming packet. It is the most important and one of
+  the most complex functions of NPF: it executes the filter, runs the statistical engine (if the instance is in
   statistical mode), gathers the timestamp, moves the packet in the buffer. NPF_tap() is the only function,
-  along with the filtering ones, that is executed for every incoming packet, therefore it is carefully 
+  along with the filtering ones, that is executed for every incoming packet, therefore it is carefully
   optimized.
 */
 VOID
@@ -948,16 +948,16 @@ NPF_TapExForEachOpen(
 
   Once the packet capture driver is opened it can be configured from user-level applications with IOCTL commands
   using the DeviceIoControl() system call. NPF_IoControl receives and serves all the IOCTL calls directed to NPF.
-  The following commands are recognized: 
-  - #BIOCSETBUFFERSIZE 
-  - #BIOCSETF 
-  - #BIOCGSTATS 
+  The following commands are recognized:
+  - #BIOCSETBUFFERSIZE
+  - #BIOCSETF
+  - #BIOCGSTATS
   - #BIOCSRTIMEOUT
-  - #BIOCSMODE 
-  - #BIOCSWRITEREP 
-  - #BIOCSMINTOCOPY 
-  - #BIOCSETOID 
-  - #BIOCQUERYOID 
+  - #BIOCSMODE
+  - #BIOCSWRITEREP
+  - #BIOCSMINTOCOPY
+  - #BIOCSETOID
+  - #BIOCQUERYOID
   - #BIOCSETDUMPFILENAME
   - #BIOCGEVNAME
   -	#BIOCSENDPACKETSSYNC
@@ -978,7 +978,7 @@ NPF_IoControl(
 
   This function is called by the OS in consequence of user WriteFile() call, with the data of the packet that must
   be sent on the net. The data is contained in the buffer associated with Irp, NPF_Write takes it and
-  delivers it to the NIC driver via the NdisSend() function. The Nwrites field of the OPEN_INSTANCE structure 
+  delivers it to the NIC driver via the NdisSend() function. The Nwrites field of the OPEN_INSTANCE structure
   associated with Irp indicates the number of copies of the packet that will be sent: more than one copy of the
   packet can be sent for performance reasons.
 */
@@ -1003,7 +1003,7 @@ NPF_Write(
   The buffer received as input parameter contains an arbitrary number of packets, each of which preceded by a
   sf_pkthdr structure. NPF_BufferedWrite() scans the buffer and sends every packet via the NdisSend() function.
   When Sync is set to TRUE, the packets are synchronized with the KeQueryPerformanceCounter() function.
-  This requires a remarkable amount of CPU, but allows to respect the timestamps associated with packets with a precision 
+  This requires a remarkable amount of CPU, but allows to respect the timestamps associated with packets with a precision
   of some microseconds (depending on the precision of the performance counter of the machine).
   If Sync is false, the timestamps are ignored and the packets are sent as fat as possible.
 */
@@ -1032,9 +1032,9 @@ NPF_WaitEndOfBufferedWrite(
 /*!
   \brief Ends a send operation.
   \param Open Pointer to open context structure.
-  \param FreeBufAfterWrite Whether the buffer should be freed. 
+  \param FreeBufAfterWrite Whether the buffer should be freed.
 
-  Callback function associated with the NdisFSend() NDIS function. It is invoked by NPF_SendCompleteEx() when the NIC 
+  Callback function associated with the NdisFSend() NDIS function. It is invoked by NPF_SendCompleteEx() when the NIC
   driver has finished an OID request operation that was previously started by NPF_Write().
 */
 VOID
@@ -1085,14 +1085,14 @@ NPF_StatusComplete(
 
   This function is called by the OS in consequence of user ReadFile() call. It moves the data present in the
   kernel buffer to the user buffer associated with Irp.
-  First of all, NPF_Read checks the amount of data in kernel buffer associated with current NPF instance. 
+  First of all, NPF_Read checks the amount of data in kernel buffer associated with current NPF instance.
   - If the instance is in capture mode and the buffer contains more than OPEN_INSTANCE::MinToCopy bytes,
   NPF_Read moves the data in the user buffer and returns immediately. In this way, the read performed by the
   user is not blocking.
-  - If the buffer contains less than MinToCopy bytes, the application's request isn't 
-  satisfied immediately, but it's blocked until at least MinToCopy bytes arrive from the net 
+  - If the buffer contains less than MinToCopy bytes, the application's request isn't
+  satisfied immediately, but it's blocked until at least MinToCopy bytes arrive from the net
   or the timeout on this read expires. The timeout is kept in the OPEN_INSTANCE::TimeOut field.
-  - If the instance is in statistical mode or in dump mode, the application's request is blocked until the 
+  - If the instance is in statistical mode or in dump mode, the application's request is blocked until the
   timeout kept in OPEN_INSTANCE::TimeOut expires.
 */
 NTSTATUS
@@ -1192,7 +1192,7 @@ NPF_GetCopyFromOpenArray(
 
 /*!
   \brief Check whether there are still unclosed open instances and close them if any.
-  
+
   This function is used by NPF_DetachAdapter().
 */
 void
@@ -1257,7 +1257,7 @@ NTSTATUS NPF_StartDump(POPEN_INSTANCE Open);
   \brief The dump thread.
   \param Open The NPF instance that creates the thread.
 
-  This function moves the content of the NPF kernel buffer to file. It runs in the user context, so at lower 
+  This function moves the content of the NPF kernel buffer to file. It runs in the user context, so at lower
   priority than the TAP.
 */
 VOID NPF_DumpThread(PVOID Open);
