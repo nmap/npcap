@@ -43,8 +43,11 @@
 #include "Lo_send.h"
 #include "..\..\..\Common\WpcapNames.h"
 
+#define ADAPTER_NAME_SIZE_WITH_SEPARATOR 47 //An example is: \Device\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF};
+
 extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING g_SendToRxAdapterName;
+extern NDIS_STRING g_BlockRxAdapterName;
 extern NDIS_STRING devicePrefix;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -1175,8 +1178,9 @@ NPF_DuplicateOpenObject(
 	Open->Loopback = OriginalOpen->Loopback;
 #endif
 
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	Open->SendToRxPath = OriginalOpen->SendToRxPath;
+	Open->BlockRxPath = OriginalOpen->BlockRxPath;
 #endif
 
 	TRACE_EXIT();
@@ -1215,8 +1219,9 @@ NPF_CreateOpenObject(
 	Open->Loopback = FALSE;
 #endif
 
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 	Open->SendToRxPath = FALSE;
+	Open->BlockRxPath = FALSE;
 #endif
 
 	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
@@ -1471,21 +1476,43 @@ NPF_AttachAdapter(
 		}
 #endif
 
-#ifdef HAVE_SEND_TO_RECEIVE_PATH_SUPPORT
+#ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
 		if (g_SendToRxAdapterName.Buffer != NULL)
 		{
-			int iAdapterCnt = (g_SendToRxAdapterName.Length / 2 + 1) / 47;
+			int iAdapterCnt = (g_SendToRxAdapterName.Length / 2 + 1) / ADAPTER_NAME_SIZE_WITH_SEPARATOR;
 			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
 				"g_SendToRxAdapterName.Length=%d, iAdapterCnt=%d",
 				g_SendToRxAdapterName.Length,
 				iAdapterCnt);
 			for (int i = 0; i < iAdapterCnt; i++)
 			{
-				if (RtlCompareMemory(g_SendToRxAdapterName.Buffer + devicePrefix.Length / 2 + 47 * i , AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
-					AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+				if (RtlCompareMemory(g_SendToRxAdapterName.Buffer + devicePrefix.Length / 2 + ADAPTER_NAME_SIZE_WITH_SEPARATOR * i,
+					AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
+					AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+					== AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
 				{
 					Open->SendToRxPath = TRUE;
+					break;
+				}
+			}
+		}
+		// Determine whether this is our block-Rx adapter for the open_instance.
+		if (g_BlockRxAdapterName.Buffer != NULL)
+		{
+			int iAdapterCnt = (g_BlockRxAdapterName.Length / 2 + 1) / ADAPTER_NAME_SIZE_WITH_SEPARATOR;
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+				"g_BlockRxAdapterName.Length=%d, iAdapterCnt=%d",
+				g_BlockRxAdapterName.Length,
+				iAdapterCnt);
+			for (int i = 0; i < iAdapterCnt; i++)
+			{
+				if (RtlCompareMemory(g_BlockRxAdapterName.Buffer + devicePrefix.Length / 2 + ADAPTER_NAME_SIZE_WITH_SEPARATOR * i,
+					AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
+					AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+					== AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+				{
+					Open->BlockRxPath = TRUE;
 					break;
 				}
 			}

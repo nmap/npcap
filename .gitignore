@@ -17,14 +17,14 @@ Debug/
 Release/
 Debug(*)/
 Release(*)/
-VistaDebug/
-VistaRelease/
-VistaDebug(*)/
-VistaRelease(*)/
-Win7Debug/
-Win7Release/
-Win7Debug(*)/
-Win7Release(*)/
+Vista Debug/
+Vista Release/
+Vista Debug(*)/
+Vista Release(*)/
+Win7 Debug/
+Win7 Release/
+Win7 Debug(*)/
+Win7 Release(*)/
 Win7DebugAdmin-onlyMode/
 Win7ReleaseAdmin-onlyMode/
 sdv/
