@@ -13,9 +13,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Politecnico di Torino, CACE Technologies 
- * nor the names of its contributors may be used to endorse or promote 
- * products derived from this software without specific prior written 
+ * 3. Neither the name of the Politecnico di Torino, CACE Technologies
+ * nor the names of its contributors may be used to endorse or promote
+ * products derived from this software without specific prior written
  * permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -88,7 +88,7 @@ NPF_Read(
 
 	if (NPF_StartUsingOpenInstance(Open) == FALSE)
 	{
-		// 
+		//
 		// an IRP_MJ_CLEANUP was received, just fail the request
 		//
 		Irp->IoStatus.Information = 0;
@@ -141,7 +141,7 @@ NPF_Read(
 	{
 		if (Open->ReadEvent != NULL)
 		{
-			//wait until some packets arrive or the timeout expires		
+			//wait until some packets arrive or the timeout expires
 			if (Open->TimeOut.QuadPart != (LONGLONG)IMMEDIATE)
 				KeWaitForSingleObject(Open->ReadEvent,
 				UserRequest,
@@ -150,7 +150,7 @@ NPF_Read(
 				(Open->TimeOut.QuadPart == (LONGLONG)0) ? NULL : &(Open->TimeOut));
 
 			KeClearEvent(Open->ReadEvent);
-		}		
+		}
 
 		if (Open->mode & MODE_STAT)
 		{
@@ -225,7 +225,7 @@ NPF_Read(
 		}
 
 		//
-		// The MONITOR_MODE (aka TME extensions) is not supported on 
+		// The MONITOR_MODE (aka TME extensions) is not supported on
 		// 64 bit architectures
 		//
 #ifdef HAVE_BUGGY_TME_SUPPORT
@@ -793,7 +793,7 @@ NPF_TapExForEachOpen(
 				NdisReleaseSpinLock(&Open->MachineLock);
 
 				//
-				// The MONITOR_MODE (aka TME extensions) is not supported on 
+				// The MONITOR_MODE (aka TME extensions) is not supported on
 				// 64 bit architectures
 				//
 
@@ -924,7 +924,7 @@ NPF_TapExForEachOpen(
 							LocalData->P = 0;
 
 						//
-						//we can consider the buffer contiguous, either because we use only the data 
+						//we can consider the buffer contiguous, either because we use only the data
 						//present in the HeaderBuffer, or because HeaderBuffer and LookaheadBuffer are contiguous
 						// ;-))))))
 						//

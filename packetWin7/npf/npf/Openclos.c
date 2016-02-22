@@ -13,9 +13,9 @@
 * 2. Redistributions in binary form must reproduce the above copyright
 * notice, this list of conditions and the following disclaimer in the
 * documentation and/or other materials provided with the distribution.
-* 3. Neither the name of the Politecnico di Torino, CACE Technologies 
-* nor the names of its contributors may be used to endorse or promote 
-* products derived from this software without specific prior written 
+* 3. Neither the name of the Politecnico di Torino, CACE Technologies
+* nor the names of its contributors may be used to endorse or promote
+* products derived from this software without specific prior written
 * permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -103,8 +103,8 @@ NPF_StopUsingBinding(
 {
 	ASSERT(pOpen != NULL);
 	//
-	//  There is no risk in calling this function from abobe passive level 
-	//  (i.e. DISPATCH, in this driver) as we acquire a spinlock and decrement a 
+	//  There is no risk in calling this function from abobe passive level
+	//  (i.e. DISPATCH, in this driver) as we acquire a spinlock and decrement a
 	//  counter.
 	//
 	//	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
@@ -338,7 +338,7 @@ NPF_OpenAdapter_End:;
 	{
 		// Close the binding
 		NPF_CloseBinding(Open);
-		
+
 		// Free the open instance' resources
 		NPF_ReleaseOpenInstanceResources(Open);
 
@@ -480,7 +480,7 @@ NPF_ReleaseOpenInstanceResources(
 
 	//
 	// Jitted filters are supported on x86 (32bit) only
-	// 
+	//
 #ifdef _X86_
 	// Free the jitted filter if it's present
 	if (pOpen->Filter != NULL)
@@ -566,7 +566,7 @@ NPF_GetDeviceMTU(
 		//
 		// Assume Ethernet
 		//
-		*pMtu = 1514;	
+		*pMtu = 1514;
 		TRACE_EXIT();
 		return STATUS_SUCCESS;
 	}
@@ -627,7 +627,7 @@ NPF_GetDeviceMTU(
 		//
 		// Assume Ethernet
 		//
-		*pMtu = 1514;	
+		*pMtu = 1514;
 
 		TRACE_EXIT();
 		return STATUS_SUCCESS;
@@ -729,9 +729,9 @@ NPF_Cleanup(
 	//if (AdapterAlreadyClosing == FALSE)
 	//{
 
-	//	
+	//
 	//	 Unfreeze the consumer
-	//	
+	//
 	//	if(Open->mode & MODE_DUMP)
 	//		NdisSetEvent(&Open->DumpEvent);
 	//	else
@@ -833,9 +833,9 @@ NPF_CleanupForUnclosed(
 	//if (AdapterAlreadyClosing == FALSE)
 	//{
 
-	//	
+	//
 	//	 Unfreeze the consumer
-	//	
+	//
 	//	if(Open->mode & MODE_DUMP)
 	//		NdisSetEvent(&Open->DumpEvent);
 	//	else
@@ -1326,7 +1326,7 @@ NPF_CreateOpenObject(
 
 	NdisResetEvent(&Open->NdisOpenCloseCompleteEvent);
 
-	// 
+	//
 	// set the proper binding flags before trying to open the MAC
 	//
 	Open->AdapterBindingStatus = ADAPTER_BOUND;
@@ -1416,7 +1416,7 @@ NPF_AttachAdapter(
 		// Verify the media type is supported.  This is a last resort; the
 		// the filter should never have been bound to an unsupported miniport
 		// to begin with.  If this driver is marked as a Mandatory filter (which
-		// is the default for this sample; see the INF file), failing to attach 
+		// is the default for this sample; see the INF file), failing to attach
 		// here will leave the network adapter in an unusable state.
 		//
 		// Your setup/install code should not bind the filter to unsupported
@@ -1431,18 +1431,18 @@ NPF_AttachAdapter(
 				&& (AttachParameters->MiniportMediaType != NdisMedium802_5))
 		{
 			IF_LOUD(DbgPrint("Unsupported media type.\n");)
-			
+
 			Status = NDIS_STATUS_INVALID_PARAMETER;
 			break;
 		}
 
 		IF_LOUD (DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X\n",
 			AttachParameters->BaseMiniportName->Buffer,
-			AttachParameters->CurrentMacAddress[0], 
-			AttachParameters->CurrentMacAddress[1], 
-			AttachParameters->CurrentMacAddress[2], 
-			AttachParameters->CurrentMacAddress[3], 
-			AttachParameters->CurrentMacAddress[4], 
+			AttachParameters->CurrentMacAddress[0],
+			AttachParameters->CurrentMacAddress[1],
+			AttachParameters->CurrentMacAddress[2],
+			AttachParameters->CurrentMacAddress[3],
+			AttachParameters->CurrentMacAddress[4],
 			AttachParameters->CurrentMacAddress[5]);
 		)
 
@@ -1605,13 +1605,13 @@ NPF_Restart(
 	)
 {
 // 	NDIS_STATUS Status;
-// 
+//
 // 	UNREFERENCED_PARAMETER(FilterModuleContext);
 // 	TRACE_ENTER();
-// 
+//
 // 	TIME_DESYNCHRONIZE(&G_Start_Time);
 // 	TIME_SYNCHRONIZE(&G_Start_Time);
-// 
+//
 // 	Status = NDIS_STATUS_SUCCESS;
 // 	TRACE_EXIT();
 // 	return Status;
@@ -1631,7 +1631,7 @@ NPF_Restart(
 	{
 		NDIS_STATUS_INDICATION indication;
 		NDIS_OFFLOAD offload;
-		
+
 		NdisZeroMemory(&indication, sizeof(indication));
 		indication.Header.Type = NDIS_OBJECT_TYPE_STATUS_INDICATION;
 		indication.Header.Revision = NDIS_STATUS_INDICATION_REVISION_1;
@@ -1640,14 +1640,14 @@ NPF_Restart(
 		indication.StatusCode = NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG;
 		indication.StatusBuffer = &offload;
 		indication.StatusBufferSize = sizeof(offload);
-		
+
 		NdisZeroMemory(&offload, sizeof(offload));
 		offload.Header.Type = NDIS_OBJECT_TYPE_OFFLOAD;
 		offload.Header.Revision = NDIS_OFFLOAD_REVISION_1;
 		offload.Header.Size = sizeof(offload);
-		
+
 		DbgPrint("NDIS_OBJECT_TYPE_OFFLOAD signaled\n");
-		
+
 		NdisFIndicateStatus(Open->AdapterHandle, &indication);
 	}
 
@@ -1837,8 +1837,8 @@ Routine Description:
 	If your filter driver does not intercept and hold onto any OID requests,
 	then you do not need to implement this routine.  You may simply omit it.
 	Furthermore, if the filter only holds onto OID requests so it can pass
-	down a clone (the most common case) the filter does not need to implement 
-	this routine; NDIS will then automatically request that the lower-level 
+	down a clone (the most common case) the filter does not need to implement
+	this routine; NDIS will then automatically request that the lower-level
 	filter/miniport cancel your cloned OID.
 
 	Most filters do not need to implement this routine.
@@ -1931,7 +1931,7 @@ Arguments:
 		TRACE_EXIT();
 		return;
 	}
-	
+
 
 	FILTER_ACQUIRE_LOCK(&Open->OIDLock, bFalse);
 
@@ -1997,7 +1997,7 @@ Arguments:
 
 NOTE: called at <= DISPATCH_LEVEL
 
-  FILTER driver may call NdisFIndicateStatus to generate a status indication to 
+  FILTER driver may call NdisFIndicateStatus to generate a status indication to
   all higher layer modules.
 
 --*/
@@ -2012,12 +2012,12 @@ NOTE: called at <= DISPATCH_LEVEL
 	{
 		PNDIS_OFFLOAD offload = StatusIndication->StatusBuffer;
 		DbgPrint("status NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG!!!\n");
-		
+
 		if (StatusIndication->StatusBufferSize == sizeof(NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG) && (offload->Header.Type = NDIS_OBJECT_TYPE_OFFLOAD))
 		{
 			memset(&offload->Checksum, 0, sizeof(NDIS_TCP_IP_CHECKSUM_OFFLOAD));
 			memset(&offload->LsoV1, 0, sizeof(NDIS_TCP_LARGE_SEND_OFFLOAD_V1));
-			
+
 			DbgPrint("status NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG disabled\n");
 		}
 	}
@@ -2029,8 +2029,8 @@ NOTE: called at <= DISPATCH_LEVEL
 	//
 	// The filter may do processing on the status indication here, including
 	// intercepting and dropping it entirely.  However, the sample does nothing
-	// with status indications except pass them up to the higher layer.  It is 
-	// more efficient to omit the FilterStatus handler entirely if it does 
+	// with status indications except pass them up to the higher layer.  It is
+	// more efficient to omit the FilterStatus handler entirely if it does
 	// nothing, but it is included in this sample for illustrative purposes.
 	//
 	NdisFIndicateStatus(Open->AdapterHandle, StatusIndication);
@@ -2129,7 +2129,7 @@ NOTE: called at PASSIVE_LEVEL
 	TRACE_ENTER();
 
 	//
-	// The filter may do processing on the event here, including intercepting 
+	// The filter may do processing on the event here, including intercepting
 	// and dropping it entirely.  However, the sample does nothing with Net PNP
 	// events, except pass them up to the next higher layer.  It is more
 	// efficient to omit the FilterNetPnPEvent handler entirely if it does
@@ -2167,8 +2167,8 @@ Routine Description:
 Arguments:
 
 	FilterInstanceContext       - our filter context area
-	NetBufferLists              - a linked list of NetBufferLists that this 
-								  filter driver indicated in a previous call to 
+	NetBufferLists              - a linked list of NetBufferLists that this
+								  filter driver indicated in a previous call to
 								  NdisFIndicateReceiveNetBufferLists
 	ReturnFlags                 - flags specifying if the caller is at DISPATCH_LEVEL
 
@@ -2181,7 +2181,7 @@ Arguments:
 	ULONG               Ref;
 
 /*	TRACE_ENTER();*/
-	
+
 	// Return the received NBLs.  If you removed any NBLs from the chain, make
 	// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
 	NdisFReturnNetBufferLists(Open->AdapterHandle, NetBufferLists, ReturnFlags);
@@ -2204,7 +2204,7 @@ Routine Description:
 	This function cancels any NET_BUFFER_LISTs pended in the filter and then
 	calls the NdisFCancelSendNetBufferLists to propagate the cancel operation.
 
-	If your driver does not queue any send NBLs, you may omit this routine.  
+	If your driver does not queue any send NBLs, you may omit this routine.
 	NDIS will propagate the cancelation on your behalf more efficiently.
 
 Arguments:
