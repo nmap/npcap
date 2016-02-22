@@ -37,7 +37,7 @@
 #ifndef lib_pcap_pcap_h
 #define lib_pcap_pcap_h
 
-#if defined(WIN32)
+#if defined(WIN32) && _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
 
