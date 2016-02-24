@@ -187,6 +187,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
+    <TargetName>npf</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -194,6 +195,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug(WinPcap Mode)|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
+    <TargetName>npf</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -201,6 +203,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|x64'">
     <EnableInf2cat>false</EnableInf2cat>
+    <TargetName>npf</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -208,6 +211,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug(WinPcap Mode)|x64'">
     <EnableInf2cat>false</EnableInf2cat>
+    <TargetName>npf</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -247,6 +251,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
+    <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -254,6 +259,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
+    <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -261,6 +267,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
     <EnableInf2cat>false</EnableInf2cat>
+    <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -268,6 +275,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug|x64'">
     <EnableInf2cat>false</EnableInf2cat>
+    <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>

@@ -20,13 +20,18 @@ msbuild "..\packetWin7\Helper\NPcapHelper.sln" /t:Build /p:Configuration="Releas
 msbuild "..\packetWin7\Helper\NPcapHelper.sln" /t:Build /p:Configuration="Release" /p:Platform="x64"
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: Use VS2015's MSBuild to build npf.sys (npcap.sys)
-::call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
+:: Use VS2015's MSBuild to build npf.sys (and npcap.sys)
+call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
 
-::msbuild "..\packetWin7\npf\npcap.sln" /t:Build /p:Configuration="Win7 Release" /p:Platform="Win32"
-::msbuild "..\packetWin7\npf\npcap.sln" /t:Build /p:Configuration="Win7 Release" /p:Platform="x64"
-::msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Win7 Release" /p:Platform="Win32"
-::msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Win7 Release" /p:Platform="x64"
+:: "%28" is the escape for "(", "%29" is the escape for ")", and "%%" is the escape for "%" itself. Not using escape will cause target error of MSBuild.
+msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Vista Release%%28WinPcap Mode%%29" /p:Platform="Win32"
+msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Vista Release%%28WinPcap Mode%%29" /p:Platform="x64"
+msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Win7 Release%%28WinPcap Mode%%29" /p:Platform="Win32"
+msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Win7 Release%%28WinPcap Mode%%29" /p:Platform="x64"
+msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Vista Release" /p:Platform="Win32"
+msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Vista Release" /p:Platform="x64"
+msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Win7 Release" /p:Platform="Win32"
+msbuild "..\packetWin7\npf\npf.sln" /t:Build /p:Configuration="Win7 Release" /p:Platform="x64"
 
 pause
 
