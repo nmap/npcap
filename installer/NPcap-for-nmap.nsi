@@ -128,7 +128,7 @@ VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2015 Insecure.Com LLC, Nm
 ;--------------------------------
 ;Pages
 
-!insertmacro MUI_PAGE_LICENSE "LICENSE"
+!insertmacro MUI_PAGE_LICENSE "..\LICENSE"
 Page custom adminOnlyOptionsPage doAdminOnlyOptions
 ; Don't let user choose where to install the files. WinPcap doesn't let people, and it's one less thing for us to worry about.
 !insertmacro MUI_PAGE_INSTFILES
@@ -557,7 +557,7 @@ Section "WinPcap" SecWinPcap
     install_xp_32bit:
       SetOutPath $INSTDIR
       File rpcapd.exe
-      File LICENSE
+      File ..\LICENSE
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS5.0 x86 driver for XP"
       SetOutPath $SYSDIR\drivers
@@ -571,7 +571,7 @@ Section "WinPcap" SecWinPcap
     install_win7_32bit:
       SetOutPath $INSTDIR
       File rpcapd.exe
-      File LICENSE
+      File ..\LICENSE
 	  ${If} $winpcap_mode == "yes"
 	    File win7_above_winpcap\x86\NPFInstall.exe
 	  ${Else}
@@ -616,7 +616,7 @@ Section "WinPcap" SecWinPcap
     install_xp_64bit:
       SetOutPath $INSTDIR
       File rpcapd.exe
-      File LICENSE
+      File ..\LICENSE
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS5.x x64 driver for XP"
       SetOutPath $SYSDIR\drivers
@@ -645,7 +645,7 @@ Section "WinPcap" SecWinPcap
     install_win7_64bit:
       SetOutPath $INSTDIR
       File rpcapd.exe
-      File LICENSE
+      File ..\LICENSE
 	  ${If} $winpcap_mode == "yes"
 	    File win7_above_winpcap\x64\NPFInstall.exe
 	  ${Else}
