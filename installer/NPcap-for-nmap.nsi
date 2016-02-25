@@ -513,6 +513,7 @@ Section "WinPcap" SecWinPcap
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
   DetailPrint "Windows CurrentVersion: $R0"
   StrCmp $R0 '6.0' vista_files
+  StrCmp $R0 '6.1' vista_files
   StrCpy $R0 $R0 2
   StrCmp $R0 '6.' win7_files
 
