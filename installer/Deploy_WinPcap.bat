@@ -44,11 +44,17 @@ xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64\
 :: First need to add "signtool.exe" to PATH, then put the cert file (e.g. C:\xxx.pfx) to environment variable %NPF_CERT_PATH%,
 :: put the private key string (e.g. 123456) to environment variable %NPF_SIGN_PK%
 
-:: Sign the driver
-:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
-:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
-:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
-:: signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
+:: Sign Npcap driver for Vista
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
+
+:: Sign Npcap driver for Win7 and later
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
+signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
 
 :: Sign Packet.dll
 signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\Packet.dll
