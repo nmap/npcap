@@ -66,7 +66,6 @@ Packaging steps:
 
 1. Download and install the latest Npcap installer: https://github.com/nmap/npcap/releases
 2. Use ``Nmap`` or ``Wireshark`` to test Npcap.
-3. **Win7** users may have a driver signing problem when installing, please install the patch ``KB3033929`` for Win7: https://technet.microsoft.com/en-us/library/security/3033929.aspx. Then reboot the system. Npcap should be able to install now.
 
 ## Other Code (for Developers)
 
