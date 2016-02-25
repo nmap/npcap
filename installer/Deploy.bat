@@ -3,6 +3,10 @@ set DRIVER_NAME=npcap
 set DEPLOY_FOLDER_NAME=win7_above
 set VISTA_DEPLOY_FOLDER_NAME=vista
 set VS_CONFIG_MODE=
+
+set CERT_SIGN_TOOL="C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe"
+set CERT_SIGNING_CERT="C:\insecurecom-digicert-codesigning-cert.p12"
+:: set CERT_SIGNING_PK=THE_SIGNING_CERT_PRIVATE_KEY
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Copy Npcap driver files
 xcopy /Y	"..\packetWin7\npf\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.cat"						.\%DEPLOY_FOLDER_NAME%\x86\
@@ -45,31 +49,31 @@ xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64\
 :: put the private key string (e.g. 123456) to environment variable %NPF_SIGN_PK%
 
 :: Sign Npcap driver for Vista
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
 
 :: Sign Npcap driver for Win7 and later
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
 
 :: Sign Packet.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\Packet.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\Packet.dll
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x86\Packet.dll
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x64\Packet.dll
 
 :: Sign NPFInstall.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\NPFInstall.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\NPFInstall.exe
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x86\NPFInstall.exe
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x64\NPFInstall.exe
 
 :: Sign NPcapHelper.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x86\NPcapHelper.exe
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x86\NPcapHelper.exe
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
 
 :: Sign wpcap.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\wpcap.dll
-signtool sign /f %NPF_CERT_PATH% /p %NPF_SIGN_PK% .\x64\wpcap.dll
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\wpcap.dll
+%CERT_SIGN_TOOL% sign /f %CERT_SIGNING_CERT% /p %CERT_SIGNING_PK% .\x64\wpcap.dll
 
 pause
