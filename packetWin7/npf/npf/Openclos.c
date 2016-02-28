@@ -1067,8 +1067,8 @@ NPF_CompareAdapterName(
 	//\Device\NdisWanIp
 	//\DEVICE\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}
 	//\DEVICE\NdisWanIp
-	wcscpy(buf1, s1->Buffer);
-	wcscpy(buf2, s2->Buffer);
+	wcscpy_s(buf1, 255, s1->Buffer);
+	wcscpy_s(buf2, 255, s2->Buffer);
 	if (wcslen(buf1) < 7 || wcslen(buf2) < 7)
 	{
 		IF_LOUD(DbgPrint("NPF_CompareAdapterName: never should be here.\n");)
