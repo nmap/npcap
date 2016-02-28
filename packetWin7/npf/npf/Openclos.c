@@ -948,7 +948,7 @@ NPF_AddToGroupOpenArray(
 
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
-		if (NPF_CompareAdapterName(&CurOpen->AdapterName, &Open->AdapterName) == 0 && CurOpen->DirectBinded)
+		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_CompareAdapterName(&CurOpen->AdapterName, &Open->AdapterName) == 0 && CurOpen->DirectBinded)
 		{
 			GroupRear = CurOpen;
 			while (GroupRear->GroupNext != NULL)
@@ -1062,16 +1062,23 @@ NPF_CompareAdapterName(
 	WCHAR buf2[255];
 	//TRACE_ENTER();
 
-	//Example
-	//\Device\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}
-	//\Device\NdisWanIp
-	//\DEVICE\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}
-	//\DEVICE\NdisWanIp
+	// Examples of s1, s2:
+	// "\Device\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}"
+	// "\Device\NdisWanIp"
+
+	if (s1->Buffer == NULL || s2->Buffer == NULL)
+	{
+		IF_LOUD(DbgPrint("NPF_CompareAdapterName: Either adapter name is NULL.\n");)
+		TRACE_EXIT();
+		return -1;
+	}
+
 	wcscpy_s(buf1, 255, s1->Buffer);
 	wcscpy_s(buf2, 255, s2->Buffer);
+
 	if (wcslen(buf1) < 7 || wcslen(buf2) < 7)
 	{
-		IF_LOUD(DbgPrint("NPF_CompareAdapterName: never should be here.\n");)
+		IF_LOUD(DbgPrint("NPF_CompareAdapterName: length of either adapter name is not long enough (< 7).\n");)
 		TRACE_EXIT();
 		return -1;
 	}
@@ -1105,7 +1112,7 @@ NPF_GetCopyFromOpenArray(
 
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
-		if (NPF_CompareAdapterName(&CurOpen->AdapterName, pAdapterName) == 0)
+		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_CompareAdapterName(&CurOpen->AdapterName, pAdapterName) == 0)
 		{
 			return NPF_DuplicateOpenObject(CurOpen, DeviceExtension);
 		}
