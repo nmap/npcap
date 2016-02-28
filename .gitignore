@@ -5,6 +5,7 @@
 *.aps
 *.pdb
 *.exe
+*.zip
 *.ilk
 *.obj
 *.user
