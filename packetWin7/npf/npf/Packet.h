@@ -362,6 +362,7 @@ typedef struct _OPEN_INSTANCE
 	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
 	ULONG					NumPendingIrps;
 	BOOLEAN					ClosePending;
+	BOOLEAN					PausePending;
 	NDIS_SPIN_LOCK			OpenInUseLock;
 }
 OPEN_INSTANCE, *POPEN_INSTANCE;

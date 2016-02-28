@@ -131,7 +131,7 @@ NPF_Write(
 
 		TRACE_EXIT();
 		return STATUS_INVALID_DEVICE_REQUEST;
-	} 
+	}
 
 	NdisAcquireSpinLock(&Open->WriteLock);
 	if (Open->WriteInProgress)
@@ -209,7 +209,34 @@ NPF_Write(
 
 			// Attach the writes buffer to the packet
 
-			InterlockedIncrement(&Open->TransmitPendingPackets);
+			NdisAcquireSpinLock(&Open->OpenInUseLock);
+			if (Open->PausePending)
+			{
+				Status = NDIS_STATUS_PAUSED;
+			}
+			else
+			{
+				Status = NDIS_STATUS_SUCCESS;
+				InterlockedIncrement(&Open->TransmitPendingPackets);
+			}
+			NdisReleaseSpinLock(&Open->OpenInUseLock);
+
+			if (Status == NDIS_STATUS_PAUSED)
+			{
+				// The adapter is pending to pause, so we don't send the packets.
+				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "The adapter is pending to pause, unable to send the packets.");
+
+				NPF_FreePackets(pNetBufferList);
+				NPF_StopUsingBinding(Open);
+				NPF_StopUsingOpenInstance(Open);
+
+				Irp->IoStatus.Information = 0;
+				Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+				IoCompleteRequest(Irp, IO_NO_INCREMENT);
+				TRACE_EXIT();
+				return STATUS_UNSUCCESSFUL;
+			}
+			
 
 			NdisResetEvent(&Open->NdisWriteCompleteEvent);
 
@@ -416,7 +443,7 @@ NPF_BufferedWrite(
 		// The Network adapter was removed. 
 		TRACE_EXIT();
 		return 0;
-	} 
+	}
 
 	// Sanity check on the user buffer
 	if (UserBuff == NULL)
@@ -432,7 +459,7 @@ NPF_BufferedWrite(
 	// Check that the MaxFrameSize is correctly initialized
 	if (Open->MaxFrameSize == 0)
 	{
-		IF_LOUD(DbgPrint("BufferedWrite: Open->MaxFrameSize not initialized, probably because of a problem in the OID query\n");)
+		IF_LOUD(DbgPrint("NPF_BufferedWrite: Open->MaxFrameSize not initialized, probably because of a problem in the OID query\n");)
 
 		// 
 		// release ownership of the NdisAdapter binding
@@ -572,8 +599,27 @@ NPF_BufferedWrite(
 
 		TmpMdl->Next = NULL;
 
-		// Increment the number of pending sends
-		InterlockedIncrement(&Open->Multiple_Write_Counter);
+		NdisAcquireSpinLock(&Open->OpenInUseLock);
+		if (Open->PausePending)
+		{
+			Status = NDIS_STATUS_PAUSED;
+		}
+		else
+		{
+			Status = NDIS_STATUS_SUCCESS;
+			// Increment the number of pending sends
+			InterlockedIncrement(&Open->Multiple_Write_Counter);
+		}
+		NdisReleaseSpinLock(&Open->OpenInUseLock);
+
+		if (Status == NDIS_STATUS_PAUSED)
+		{
+			// The adapter is pending to pause, so we don't send the packets.
+			IF_LOUD(DbgPrint("NPF_BufferedWrite: the adapter is pending to pause, unable to send the packets.\n");)
+
+			result = -1;
+			break;
+		}
 
 		//receive the packets before sending them
 		ASSERT(Open->GroupHead != NULL);
@@ -892,7 +938,10 @@ NPF_SendCompleteExForEachOpen(
 	IN BOOLEAN FreeBufAfterWrite
 	)
 {
+	BOOLEAN CompletePause = FALSE;
 	//TRACE_ENTER();
+
+	NdisAcquireSpinLock(&Open->OpenInUseLock);
 
 	if (FreeBufAfterWrite)
 	{
@@ -937,6 +986,17 @@ NPF_SendCompleteExForEachOpen(
 		//TRACE_EXIT();
 	}
 
+	if (Open->Multiple_Write_Counter == 0 && Open->TransmitPendingPackets == 0 && Open->PausePending)
+	{
+		CompletePause = TRUE;
+	}
+
+	NdisReleaseSpinLock(&Open->OpenInUseLock);
+
+	if (CompletePause)
+	{
+		NdisFPauseComplete(Open->AdapterHandle);
+	}
 }
 
 //-------------------------------------------------------------------

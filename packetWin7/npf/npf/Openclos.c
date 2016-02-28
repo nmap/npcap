@@ -1302,6 +1302,7 @@ NPF_CreateOpenObject(
 	//
 	Open->NumPendingIrps = 0;
 	Open->ClosePending = FALSE;
+	Open->PausePending = FALSE;
 	NdisAllocateSpinLock(&Open->OpenInUseLock);
 
 	//
@@ -1583,14 +1584,26 @@ NPF_Pause(
 	PNDIS_FILTER_PAUSE_PARAMETERS   PauseParameters
 	)
 {
-	NDIS_STATUS Status;
+	POPEN_INSTANCE          Open = (POPEN_INSTANCE)FilterModuleContext;
+	NDIS_STATUS             Status;
 
-	UNREFERENCED_PARAMETER(FilterModuleContext);
 	UNREFERENCED_PARAMETER(PauseParameters);
 	TRACE_ENTER();
 
-	// Do nothing here
-	Status = NDIS_STATUS_SUCCESS;
+	NdisAcquireSpinLock(&Open->OpenInUseLock);
+
+	if (Open->Multiple_Write_Counter > 0 || Open->TransmitPendingPackets > 0)
+	{
+		Open->PausePending = TRUE;
+		Status = NDIS_STATUS_PENDING;
+	}
+	else
+	{
+		Status = NDIS_STATUS_SUCCESS;
+	}
+
+	NdisReleaseSpinLock(&Open->OpenInUseLock);
+	
 	TRACE_EXIT();
 	return Status;
 }
