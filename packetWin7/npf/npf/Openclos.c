@@ -1671,6 +1671,10 @@ NPF_Restart(
 		NdisFIndicateStatus(Open->AdapterHandle, &indication);
 	}
 
+	NdisAcquireSpinLock(&Open->OpenInUseLock);
+	Open->PausePending = FALSE;
+	NdisReleaseSpinLock(&Open->OpenInUseLock);
+
 	Status = NDIS_STATUS_SUCCESS;
 	TRACE_EXIT();
 	return Status;

@@ -209,8 +209,10 @@ NPF_Write(
 
 			// Attach the writes buffer to the packet
 
+			// ASSERT(Open->GroupHead != NULL);
+
 			NdisAcquireSpinLock(&Open->OpenInUseLock);
-			if (Open->PausePending)
+			if (!Open->GroupHead || Open->GroupHead->AdapterBindingStatus != ADAPTER_BOUND || Open->GroupHead->PausePending)
 			{
 				Status = NDIS_STATUS_PAUSED;
 			}
@@ -241,7 +243,6 @@ NPF_Write(
 			NdisResetEvent(&Open->NdisWriteCompleteEvent);
 
 			//receive the packets before sending them
-			ASSERT(Open->GroupHead != NULL);
 			if (Open->GroupHead != NULL)
 			{
 				GroupOpen = Open->GroupHead->GroupNext;
@@ -599,8 +600,10 @@ NPF_BufferedWrite(
 
 		TmpMdl->Next = NULL;
 
+		// ASSERT(Open->GroupHead != NULL);
+
 		NdisAcquireSpinLock(&Open->OpenInUseLock);
-		if (Open->PausePending)
+		if (!Open->GroupHead || Open->GroupHead->AdapterBindingStatus != ADAPTER_BOUND || Open->GroupHead->PausePending)
 		{
 			Status = NDIS_STATUS_PAUSED;
 		}
@@ -622,7 +625,6 @@ NPF_BufferedWrite(
 		}
 
 		//receive the packets before sending them
-		ASSERT(Open->GroupHead != NULL);
 		if (Open->GroupHead != NULL)
 		{
 			GroupOpen = Open->GroupHead->GroupNext;
