@@ -1,6 +1,6 @@
 
 set PDB_FOLDER_NAME=npcap-DebugSymbols
-set PDB_ZIP_NAME=npcap-nmap-0.05-DebugSymbols.zip
+set PDB_ZIP_NAME=npcap-nmap-0.06-DebugSymbols.zip
 set ARCHIVE_7ZIP_TOOL="C:\Program Files\7-Zip\7z.exe"
 
 set DRIVER_NAME=npcap

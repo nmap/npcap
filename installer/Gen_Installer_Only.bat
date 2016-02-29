@@ -1,5 +1,5 @@
 
-set INSTALLER_NAME=npcap-nmap-0.05.exe
+set INSTALLER_NAME=npcap-nmap-0.06.exe
 
 set CERT_SIGN_TOOL="C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe"
 set CERT_MS_CROSS_CERT="C:\DigiCert High Assurance EV Root CA.crt"
