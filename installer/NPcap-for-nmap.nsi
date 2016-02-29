@@ -49,6 +49,9 @@ SetCompressor /SOLID /FINAL lzma
 !define VERSION "0.05"
 !define WIN_VERSION "0.5.0.912"
 
+; The system restore point name created by Npcap installer
+!define RESTORE_POINT_NAME "Before installing Npcap"
+
 ; The name of the installer
 Name "Npcap ${VERSION} for Nmap (beta)"
 
@@ -61,6 +64,8 @@ Var /GLOBAL winpcap_mode
 Var /GLOBAL driver_name
 Var /GLOBAL dlt_null
 Var /GLOBAL vlan_support
+Var /GLOBAL restore_point_support
+Var /GLOBAL restore_point_success
 
 RequestExecutionLevel admin
 
@@ -198,6 +203,7 @@ Function .onInit
     StrCpy $admin_only "no"
     StrCpy $dlt_null "no"
     StrCpy $vlan_support "yes"
+    StrCpy $restore_point_support "no"
     StrCpy $winpcap_mode "yes"
     StrCpy $driver_name "npf"
     IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
@@ -343,9 +349,9 @@ FunctionEnd
 Function adminOnlyOptionsPage
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
   winpcap_exist:
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "Flags" "DISABLED"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "Flags" "DISABLED"
   no_winpcap_exist:
   !insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
@@ -374,6 +380,13 @@ Function doAdminOnlyOptions
   ${EndIf}
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
+  ${If} $0 == "0"
+    StrCpy $restore_point_support "no" ; by default
+  ${Else}
+    StrCpy $restore_point_support "yes"
+  ${EndIf}
+
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
   ${If} $0 == "0"
     StrCpy $winpcap_mode "no"
     StrCpy $driver_name "npcap"
@@ -498,6 +511,19 @@ Section "WinPcap" SecWinPcap
   ; while and try the check again. This might help prevent any race
   ; conditions during a silent install (and potentially during the
   ; slower GUI installation.
+
+  ; Create the system restore point
+  StrCpy $restore_point_success "no"
+  ${If} $restore_point_support == "yes"
+    DetailPrint "Start setting system restore point: ${RESTORE_POINT_NAME}"
+    SysRestore::StartRestorePoint /NOUNLOAD "${RESTORE_POINT_NAME}"
+    Pop $0
+    ${If} $0 != 0
+      DetailPrint "Error occured when starting setting system restore point, return value=|$0|"
+    ${Else}
+      StrCpy $restore_point_success "yes"
+    ${Endif}
+  ${Endif}
 
   ; These x86 files are automatically redirected to the right place on x64
   ${If} $winpcap_mode == "yes"
@@ -797,6 +823,16 @@ Section "WinPcap" SecWinPcap
   ; delete our legacy winpcap-nmap keys if they still exist (e.g. official 4.0.2 force installed over our 4.0.2):
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
 
+  ; Close the system restore point
+  ${If} $restore_point_success == "yes"
+    DetailPrint "Finish setting system restore point: ${RESTORE_POINT_NAME}"
+    SysRestore::FinishRestorePoint /NOUNLOAD
+    Pop $0
+    ${If} $0 != 0
+      DetailPrint "Error occured when finishing setting system restore point, return value=|$0|"
+    ${EndIf}
+  ${EndIf}
+
 SectionEnd ; end the section
 
 
@@ -804,6 +840,14 @@ SectionEnd ; end the section
 ;Uninstaller Section
 
 Section "Uninstall"
+
+  ; Delete the system restore point
+  DetailPrint "Delete system restore point: ${RESTORE_POINT_NAME}"
+  SysRestore::RemoveRestorePoint /NOUNLOAD
+  Pop $0
+  ${If} $0 != 0
+    DetailPrint "Error occured when deleting system restore point, return value=|$0|"
+  ${EndIf}
 
   StrCpy $winpcap_mode "yes"
   StrCpy $driver_name "npf"
