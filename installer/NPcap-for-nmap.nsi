@@ -65,6 +65,7 @@ Var /GLOBAL os_ver
 Var /GLOBAL admin_only
 Var /GLOBAL winpcap_mode
 Var /GLOBAL driver_name
+Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
 Var /GLOBAL vlan_support
 Var /GLOBAL restore_point_support
@@ -204,6 +205,7 @@ Function .onInit
   do_silent:
     SetSilent silent
     StrCpy $admin_only "no"
+    StrCpy $loopback_support "yes"
     StrCpy $dlt_null "no"
     StrCpy $vlan_support "yes"
     StrCpy $restore_point_support "no"
@@ -352,15 +354,28 @@ FunctionEnd
 Function adminOnlyOptionsPage
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
   winpcap_exist:
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "Flags" "DISABLED"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Flags" "DISABLED"
   no_winpcap_exist:
   !insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
 FunctionEnd
 
 Function doAdminOnlyOptions
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Settings" "State"
+  ${If} $0 == 2
+    ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State"
+    ${If} $0 == "0"
+      ReadINIStr $1 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "HWND"
+      EnableWindow $1 0
+    ${Else}
+      ReadINIStr $1 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "HWND"
+      EnableWindow $1 1
+    ${EndIf}
+	abort
+  ${EndIf}
+
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State"
   ${If} $0 == "0"
     StrCpy $admin_only "no" ; by default
@@ -370,26 +385,34 @@ Function doAdminOnlyOptions
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State"
   ${If} $0 == "0"
+    StrCpy $loopback_support "no"
+    StrCpy $dlt_null "no" ; if even loopback feature is not enabled, there's no need to care whether it's DLT_NULL or not
+  ${Else}
+    StrCpy $loopback_support "yes" ; by default
+  ${EndIf}
+
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State"
+  ${If} $0 == "0"
     StrCpy $dlt_null "no" ; by default
   ${Else}
     StrCpy $dlt_null "yes"
   ${EndIf}
 
-  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State"
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
   ${If} $0 == "0"
     StrCpy $vlan_support "no"
   ${Else}
     StrCpy $vlan_support "yes" ; by default
   ${EndIf}
 
-  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
   ${If} $0 == "0"
     StrCpy $restore_point_support "no" ; by default
   ${Else}
     StrCpy $restore_point_support "yes"
   ${EndIf}
 
-  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State"
   ${If} $0 == "0"
     StrCpy $winpcap_mode "no"
     StrCpy $driver_name "npcap"
@@ -462,8 +485,12 @@ FunctionEnd
 
 Function registerServiceAPI_win7
   ; delete the npf service to avoid an error message later if it already exists
-  ; create the Npcap Loopback Adapter, used for capturing loopback packets
-  ExecWait '"$INSTDIR\NPFInstall.exe" -il'
+
+  ${If} $loopback_support == "yes"
+    ; create the Npcap Loopback Adapter, used for capturing loopback packets
+    ExecWait '"$INSTDIR\NPFInstall.exe" -il'
+  ${Endif}
+
   ; install the WFP callout driver
   ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
   ; install the NDIS filter driver
