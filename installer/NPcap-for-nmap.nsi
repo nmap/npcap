@@ -53,7 +53,7 @@ SetCompressor /SOLID /FINAL lzma
 !define WIN_VERSION "0.6.0.301"
 
 ; The system restore point name created by Npcap installer
-!define RESTORE_POINT_NAME "Before installing Npcap"
+!define RESTORE_POINT_NAME "Before Npcap ${VERSION} installs"
 
 ; The name of the installer
 Name "Npcap ${VERSION} for Nmap (beta)"
