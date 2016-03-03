@@ -860,13 +860,14 @@ SectionEnd ; end the section
 
 Section "Uninstall"
 
-  ; Delete the system restore point
-  DetailPrint "Delete system restore point: ${RESTORE_POINT_NAME}"
-  SysRestore::RemoveRestorePoint /NOUNLOAD
-  Pop $0
-  ${If} $0 != 0
-    DetailPrint "Error occured when deleting system restore point, return value=|$0|"
-  ${EndIf}
+  ; Delete the system restore point, disabled for now.
+  ; This is because not many softwares delete restore points, this job should be done by users themselves.
+  ; DetailPrint "Delete system restore point: ${RESTORE_POINT_NAME}"
+  ; SysRestore::RemoveRestorePoint /NOUNLOAD
+  ; Pop $0
+  ; ${If} $0 != 0
+  ;   DetailPrint "Error occured when deleting system restore point, return value=|$0|"
+  ; ${EndIf}
 
   StrCpy $winpcap_mode "yes"
   StrCpy $driver_name "npf"
