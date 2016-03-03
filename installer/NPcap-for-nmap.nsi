@@ -68,7 +68,6 @@ Var /GLOBAL driver_name
 Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
 Var /GLOBAL vlan_support
-Var /GLOBAL restore_point_support
 Var /GLOBAL restore_point_success
 
 RequestExecutionLevel admin
@@ -208,7 +207,6 @@ Function .onInit
     StrCpy $loopback_support "yes"
     StrCpy $dlt_null "no"
     StrCpy $vlan_support "yes"
-    StrCpy $restore_point_support "yes"
     StrCpy $winpcap_mode "yes"
     StrCpy $driver_name "npf"
     IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
@@ -354,9 +352,9 @@ FunctionEnd
 Function adminOnlyOptionsPage
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
   winpcap_exist:
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Flags" "DISABLED"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "Flags" "DISABLED"
   no_winpcap_exist:
   !insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
@@ -406,13 +404,6 @@ Function doAdminOnlyOptions
   ${EndIf}
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
-  ${If} $0 == "0"
-    StrCpy $restore_point_support "no"
-  ${Else}
-    StrCpy $restore_point_support "yes" ; by default
-  ${EndIf}
-
-  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State"
   ${If} $0 == "0"
     StrCpy $winpcap_mode "no"
     StrCpy $driver_name "npcap"
@@ -544,15 +535,13 @@ Section "WinPcap" SecWinPcap
 
   ; Create the system restore point
   StrCpy $restore_point_success "no"
-  ${If} $restore_point_support == "yes"
-    DetailPrint "Start setting system restore point: ${RESTORE_POINT_NAME}"
-    SysRestore::StartRestorePoint /NOUNLOAD "${RESTORE_POINT_NAME}"
-    Pop $0
-    ${If} $0 != 0
-      DetailPrint "Error occured when starting setting system restore point, return value=|$0|"
-    ${Else}
-      StrCpy $restore_point_success "yes"
-    ${Endif}
+  DetailPrint "Start setting system restore point: ${RESTORE_POINT_NAME}"
+  SysRestore::StartRestorePoint /NOUNLOAD "${RESTORE_POINT_NAME}"
+  Pop $0
+  ${If} $0 != 0
+    DetailPrint "Error occured when starting setting system restore point, return value=|$0|"
+  ${Else}
+    StrCpy $restore_point_success "yes"
   ${Endif}
 
   ; These x86 files are automatically redirected to the right place on x64
