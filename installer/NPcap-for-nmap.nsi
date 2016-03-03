@@ -53,7 +53,8 @@ SetCompressor /SOLID /FINAL lzma
 !define WIN_VERSION "0.6.0.301"
 
 ; The system restore point name created by Npcap installer
-!define RESTORE_POINT_NAME "Before Npcap ${VERSION} installs"
+!define RESTORE_POINT_NAME_INSTALL "Before Npcap ${VERSION} installs"
+!define RESTORE_POINT_NAME_UNINSTALL "Before Npcap ${VERSION} uninstalls"
 
 ; The name of the installer
 Name "Npcap ${VERSION} for Nmap (beta)"
@@ -535,8 +536,8 @@ Section "WinPcap" SecWinPcap
 
   ; Create the system restore point
   StrCpy $restore_point_success "no"
-  DetailPrint "Start setting system restore point: ${RESTORE_POINT_NAME}"
-  SysRestore::StartRestorePoint /NOUNLOAD "${RESTORE_POINT_NAME}"
+  DetailPrint "Start setting system restore point: ${RESTORE_POINT_NAME_INSTALL}"
+  SysRestore::StartRestorePoint /NOUNLOAD "${RESTORE_POINT_NAME_INSTALL}"
   Pop $0
   ${If} $0 != 0
     DetailPrint "Error occured when starting setting system restore point, return value=|$0|"
@@ -844,7 +845,7 @@ Section "WinPcap" SecWinPcap
 
   ; Close the system restore point
   ${If} $restore_point_success == "yes"
-    DetailPrint "Finish setting system restore point: ${RESTORE_POINT_NAME}"
+    DetailPrint "Finish setting system restore point: ${RESTORE_POINT_NAME_INSTALL}"
     SysRestore::FinishRestorePoint /NOUNLOAD
     Pop $0
     ${If} $0 != 0
@@ -862,12 +863,23 @@ Section "Uninstall"
 
   ; Delete the system restore point, disabled for now.
   ; This is because not many softwares delete restore points, this job should be done by users themselves.
-  ; DetailPrint "Delete system restore point: ${RESTORE_POINT_NAME}"
+  ; DetailPrint "Delete system restore point: ${RESTORE_POINT_NAME_INSTALL}"
   ; SysRestore::RemoveRestorePoint /NOUNLOAD
   ; Pop $0
   ; ${If} $0 != 0
   ;   DetailPrint "Error occured when deleting system restore point, return value=|$0|"
   ; ${EndIf}
+  
+  ; Create the system restore point
+  StrCpy $restore_point_success "no"
+  DetailPrint "Start setting system restore point: ${RESTORE_POINT_NAME_UNINSTALL}"
+  SysRestore::StartUnRestorePoint /NOUNLOAD "${RESTORE_POINT_NAME_UNINSTALL}"
+  Pop $0
+  ${If} $0 != 0
+    DetailPrint "Error occured when starting setting system restore point, return value=|$0|"
+  ${Else}
+    StrCpy $restore_point_success "yes"
+  ${Endif}
 
   StrCpy $winpcap_mode "yes"
   StrCpy $driver_name "npf"
@@ -1036,6 +1048,16 @@ Section "Uninstall"
 
   npfdeleted:
     RMDir "$INSTDIR"
+	
+    ; Close the system restore point
+    ${If} $restore_point_success == "yes"
+      DetailPrint "Finish setting system restore point: ${RESTORE_POINT_NAME_UNINSTALL}"
+      SysRestore::FinishRestorePoint /NOUNLOAD
+      Pop $0
+      ${If} $0 != 0
+        DetailPrint "Error occured when finishing setting system restore point, return value=|$0|"
+      ${EndIf}
+    ${EndIf}
 	
   uninstall_fail:
     quit
