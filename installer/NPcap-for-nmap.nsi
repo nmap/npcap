@@ -208,7 +208,7 @@ Function .onInit
     StrCpy $loopback_support "yes"
     StrCpy $dlt_null "no"
     StrCpy $vlan_support "yes"
-    StrCpy $restore_point_support "no"
+    StrCpy $restore_point_support "yes"
     StrCpy $winpcap_mode "yes"
     StrCpy $driver_name "npf"
     IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
@@ -407,9 +407,9 @@ Function doAdminOnlyOptions
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
   ${If} $0 == "0"
-    StrCpy $restore_point_support "no" ; by default
+    StrCpy $restore_point_support "no"
   ${Else}
-    StrCpy $restore_point_support "yes"
+    StrCpy $restore_point_support "yes" ; by default
   ${EndIf}
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State"
