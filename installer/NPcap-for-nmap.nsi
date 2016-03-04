@@ -33,7 +33,7 @@
 ;; Updated to 0.05, September 2015
 
 ;; Yang Luo
-;; Updated to 0.06, March 2015
+;; Updated to 0.06, March 2016
 
 SetCompressor /SOLID /FINAL lzma
 
@@ -871,15 +871,15 @@ Section "Uninstall"
   ; ${EndIf}
   
   ; Create the system restore point
-  StrCpy $restore_point_success "no"
-  DetailPrint "Start setting system restore point: ${RESTORE_POINT_NAME_UNINSTALL}"
-  SysRestore::StartUnRestorePoint /NOUNLOAD "${RESTORE_POINT_NAME_UNINSTALL}"
-  Pop $0
-  ${If} $0 != 0
-    DetailPrint "Error occured when starting setting system restore point, return value=|$0|"
-  ${Else}
-    StrCpy $restore_point_success "yes"
-  ${Endif}
+  ; StrCpy $restore_point_success "no"
+  ; DetailPrint "Start setting system restore point: ${RESTORE_POINT_NAME_UNINSTALL}"
+  ; SysRestore::StartUnRestorePoint /NOUNLOAD "${RESTORE_POINT_NAME_UNINSTALL}"
+  ; Pop $0
+  ; ${If} $0 != 0
+    ; DetailPrint "Error occured when starting setting system restore point, return value=|$0|"
+  ; ${Else}
+    ; StrCpy $restore_point_success "yes"
+  ; ${Endif}
 
   StrCpy $winpcap_mode "yes"
   StrCpy $driver_name "npf"
@@ -896,7 +896,7 @@ Section "Uninstall"
   ${If} $0 == "0"
     MessageBox MB_OK "Failed to stop the npf service, stop uninstallation now. Please stop using Npcap first"
     DetailPrint "Failed to stop the npf service, stop uninstallation now"
-	Goto uninstall_fail
+    Goto uninstall_fail
   ${EndIf}
 
   ${If} $winpcap_mode == "no"
@@ -1050,15 +1050,15 @@ Section "Uninstall"
     RMDir "$INSTDIR"
 	
     ; Close the system restore point
-    ${If} $restore_point_success == "yes"
-      DetailPrint "Finish setting system restore point: ${RESTORE_POINT_NAME_UNINSTALL}"
-      SysRestore::FinishRestorePoint /NOUNLOAD
-      Pop $0
-      ${If} $0 != 0
-        DetailPrint "Error occured when finishing setting system restore point, return value=|$0|"
-      ${EndIf}
-    ${EndIf}
+    ; ${If} $restore_point_success == "yes"
+      ; DetailPrint "Finish setting system restore point: ${RESTORE_POINT_NAME_UNINSTALL}"
+      ; SysRestore::FinishRestorePoint /NOUNLOAD
+      ; Pop $0
+      ; ${If} $0 != 0
+        ; DetailPrint "Error occured when finishing setting system restore point, return value=|$0|"
+      ; ${EndIf}
+    ; ${EndIf}
 	
   uninstall_fail:
-    quit
+
 SectionEnd
