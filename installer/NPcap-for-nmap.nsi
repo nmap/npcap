@@ -894,8 +894,8 @@ Section "Uninstall"
   
   ExecWait '"$INSTDIR\NPFInstall.exe" -d' $0
   ${If} $0 == "0"
-    MessageBox MB_OK "Failed to stop the npf service, stop uninstallation now. Please stop using Npcap first"
-    DetailPrint "Failed to stop the npf service, stop uninstallation now"
+    MessageBox MB_OK "Failed to stop the npf service, uninstallation quits now. Please stop using Npcap first"
+    DetailPrint "Failed to stop the npf service, uninstallation quits now. Please stop using Npcap first"
     Goto uninstall_fail
   ${EndIf}
 
