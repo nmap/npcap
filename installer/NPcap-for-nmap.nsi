@@ -302,9 +302,9 @@ Function .onInit
     uninstaller_exists:
     ExecWait '$0 _?=$INSTDIR'
     ; If the uninstaller fails, then quit the installation.
-    ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-        quit
-    ${EndIf}
+    ; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+        ; quit
+    ; ${EndIf}
     return
 
     no_uninstallstring:
@@ -316,9 +316,9 @@ Function .onInit
     MessageBox MB_OK "Using our old UninstallString, file exists"
     ExecWait '$0 _?=$INSTDIR'
     ; If the uninstaller fails, then quit the installation.
-    ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-        quit
-    ${EndIf}
+    ; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+        ; quit
+    ; ${EndIf}
     return
 
     still_no_uninstallstring:
@@ -341,9 +341,9 @@ Function .onInit
     run_last_uninstaller:
     ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
     ; If the uninstaller fails, then quit the installation.
-    ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-        quit
-    ${EndIf}
+    ; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+        ; quit
+    ; ${EndIf}
     no_uninstall_exe:
     ; give up now, we've tried our hardest to determine a valid uninstaller!
     return
