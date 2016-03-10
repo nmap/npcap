@@ -67,8 +67,9 @@ struct time_conv G_Start_Time =
 
 ULONG g_NumOpenedInstances = 0;
 
-extern POPEN_INSTANCE g_arrOpen; //Adapter open_instance list head, each list item is a group head.
-extern POPEN_INSTANCE g_LoopbackOpenGroupHead; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
+extern POPEN_INSTANCE g_arrOpen; //Adapter OPEN_INSTANCE list head, each list item is a group head.
+extern NDIS_SPIN_LOCK g_OpenArrayLock; //The lock for adapter OPEN_INSTANCE list.
+extern POPEN_INSTANCE g_LoopbackOpenGroupHead; // Loopback adapter OPEN_INSTANCE group head, this pointer points to one item in g_arrOpen list.
 //-------------------------------------------------------------------
 
 BOOLEAN
@@ -911,6 +912,7 @@ NPF_AddToOpenArray(
 	POPEN_INSTANCE CurOpen;
 	TRACE_ENTER();
 
+	NdisAcquireSpinLock(&g_OpenArrayLock);
 	if (g_arrOpen == NULL)
 	{
 		g_arrOpen = Open;
@@ -924,6 +926,7 @@ NPF_AddToOpenArray(
 		}
 		CurOpen->Next = Open;
 	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
 
 	TRACE_EXIT();
 }
@@ -935,8 +938,8 @@ NPF_AddToGroupOpenArray(
 	POPEN_INSTANCE Open
 	)
 {
-	POPEN_INSTANCE CurOpen;
-	POPEN_INSTANCE GroupRear;
+	POPEN_INSTANCE CurOpen = NULL;
+	POPEN_INSTANCE GroupRear = NULL;
 	TRACE_ENTER();
 
 	if (Open->DirectBinded)
@@ -946,6 +949,7 @@ NPF_AddToGroupOpenArray(
 		return;
 	}
 
+	NdisAcquireSpinLock(&g_OpenArrayLock);
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
 		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_CompareAdapterName(&CurOpen->AdapterName, &Open->AdapterName) == 0 && CurOpen->DirectBinded)
@@ -957,13 +961,15 @@ NPF_AddToGroupOpenArray(
 			}
 			GroupRear->GroupNext = Open;
 			Open->GroupHead = CurOpen;
-
-			TRACE_EXIT();
-			return;
+			break;
 		}
 	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
 
-	IF_LOUD(DbgPrint("NPF_AddToGroupOpenArray: never should be here.\n");)
+	if (!GroupRear)
+	{
+		IF_LOUD(DbgPrint("NPF_AddToGroupOpenArray: never should be here.\n");)
+	}
 	TRACE_EXIT();
 }
 
@@ -983,6 +989,7 @@ NPF_RemoveFromOpenArray(
 		return;
 	}
 
+	NdisAcquireSpinLock(&g_OpenArrayLock);
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
 		if (CurOpen == Open)
@@ -999,6 +1006,7 @@ NPF_RemoveFromOpenArray(
 		}
 		PrevOpen = CurOpen;
 	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
 
 	TRACE_EXIT();
 }
@@ -1022,6 +1030,7 @@ NPF_RemoveFromGroupOpenArray(
 		return;
 	}
 
+	NdisAcquireSpinLock(&g_OpenArrayLock);
 	GroupOpen = Open->GroupHead;
 	while (GroupOpen)
 	{
@@ -1030,13 +1039,12 @@ NPF_RemoveFromGroupOpenArray(
 			if (GroupPrev == NULL)
 			{
 				ASSERT(GroupPrev != NULL);
-				IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: never should be here.\n");)
-				TRACE_EXIT();
-				return;
+				break;
 			}
 			else
 			{
 				GroupPrev->GroupNext = GroupOpen->GroupNext;
+				NdisReleaseSpinLock(&g_OpenArrayLock);
 				TRACE_EXIT();
 				return;
 			}
@@ -1044,6 +1052,7 @@ NPF_RemoveFromGroupOpenArray(
 		GroupPrev = GroupOpen;
 		GroupOpen = GroupOpen->GroupNext;
 	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
 
 	IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: never should be here.\n");)
 	TRACE_EXIT();
@@ -1110,13 +1119,16 @@ NPF_GetCopyFromOpenArray(
 	POPEN_INSTANCE CurOpen;
 	TRACE_ENTER();
 
+	NdisAcquireSpinLock(&g_OpenArrayLock);
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
 		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_CompareAdapterName(&CurOpen->AdapterName, pAdapterName) == 0)
 		{
+			NdisReleaseSpinLock(&g_OpenArrayLock);
 			return NPF_DuplicateOpenObject(CurOpen, DeviceExtension);
 		}
 	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
 
 	TRACE_EXIT();
 	return NULL;
@@ -1153,6 +1165,7 @@ NPF_RemoveUnclosedAdapters(
 // 		}
 // 	}
 
+	NdisAcquireSpinLock(&g_OpenArrayLock);
 	for (CurOpen = g_arrOpen; CurOpen != NULL;)
 	{
 		TempOpen = CurOpen->Next;
@@ -1163,6 +1176,7 @@ NPF_RemoveUnclosedAdapters(
 		}
 		CurOpen = TempOpen;
 	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
 
 	TRACE_EXIT();
 }
