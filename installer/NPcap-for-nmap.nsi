@@ -501,7 +501,7 @@ Function registerServiceAPI_win7
 FunctionEnd
 
 Function un.registerServiceAPI_win7
-  ;ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
+  ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
   ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
   ExecWait '"$INSTDIR\NPFInstall.exe" -ul' $0
   StrCmp $0 "0" unregister_win7_success unregister_win7_fail
