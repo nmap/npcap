@@ -51,12 +51,9 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 
 ## Build
 
-* ``wpcap.dll``, ``Packet.dll``, ``NPFInstall.exe`` and ``NPcapHelper.exe`` need to be built using **Visual Studio 2013** (by running ``installer\Build.bat``).
-* ``npf.sys (npcap.sys)`` needs to be built using **Visual Studio 2015** with **Windows SDK 10** & **Windows Driver Kit 10** (by launching ``packetWin7\npf\npf.sln``).
+1. Run ``installer\Build.bat``: build all DLLs and the driver. The DLLs need to be built using **Visual Studio 2013**. And the driver needs to be built using **Visual Studio 2015** with **Windows SDK 10 10586** & **Windows Driver Kit 10 10586**.
 
 ## Packaging
-
-Packaging steps:
 
 1. Run ``installer\Deploy.bat`` (or ``installer\Deploy_WithTimeStamp.bat``): copy the files from build directories, and sign the files for ``Non-WinPcap Compatible Mode``.
 2. Run ``installer\Deploy_WinPcap.bat`` (or ``installer\Deploy_WinPcap_WithTimeStamp.bat``): copy the files from build directories, and sign the files for ``WinPcap Compatible Mode``.
