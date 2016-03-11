@@ -44,6 +44,7 @@ SetCompressor /SOLID /FINAL lzma
   !include "FileFunc.nsh"
   !include "EnvVarUpdate.nsh"
   !include "LogicLib.nsh"
+  !include "FileFunc.nsh"
 
 ;--------------------------------
 ;General
@@ -63,6 +64,7 @@ Name "Npcap ${VERSION} for Nmap (beta)"
 OutFile "npcap-nmap-${VERSION}.exe"
 
 Var /GLOBAL os_ver
+Var /GLOBAL cmd_line
 Var /GLOBAL admin_only
 Var /GLOBAL winpcap_mode
 Var /GLOBAL driver_name
@@ -209,7 +211,45 @@ Function .onInit
     StrCpy $dlt_null "no"
     StrCpy $vlan_support "yes"
     StrCpy $winpcap_mode "yes"
-    StrCpy $driver_name "npf"
+
+    ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=yes /winpcap_mode=yes'
+
+    ${GetOptions} $cmd_line "/admin_only=" $R0
+    ${If} $R0 S== "yes"
+    ${OrIf} $R0 S== "no"
+      StrCpy $admin_only $R0
+    ${EndIf}
+
+    ${GetOptions} $cmd_line "/loopback_support=" $R0
+    ${If} $R0 S== "yes"
+    ${OrIf} $R0 S== "no"
+      StrCpy $loopback_support $R0
+    ${EndIf}
+
+    ${GetOptions} $cmd_line "/dlt_null=" $R0
+    ${If} $R0 S== "yes"
+    ${OrIf} $R0 S== "no"
+      StrCpy $dlt_null $R0
+    ${EndIf}
+
+    ${GetOptions} $cmd_line "/vlan_support=" $R0
+    ${If} $R0 S== "yes"
+    ${OrIf} $R0 S== "no"
+      StrCpy $vlan_support $R0
+    ${EndIf}
+
+    ${GetOptions} $cmd_line "/winpcap_mode=" $R0
+    ${If} $R0 S== "yes"
+    ${OrIf} $R0 S== "no"
+      StrCpy $winpcap_mode $R0
+    ${EndIf}
+
+    ${If} $winpcap_mode == "no"
+      StrCpy $driver_name "npcap"
+    ${Else}
+      StrCpy $driver_name "npf"
+    ${EndIf}
+
     IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
     return
     silent_checks:
@@ -522,7 +562,7 @@ FunctionEnd
 
 ;--------------------------------
 ; The stuff to install
-Section "WinPcap" SecWinPcap
+Section "WinPcap" SecWinPcap	
 
   ; stop the service, in case it's still registered, so files can be
   ; safely overwritten and the service can be deleted.
