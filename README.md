@@ -82,7 +82,7 @@ https://svn.nmap.org/nmap-exp/yang/nmap-npcap_compiled_binaries/
 
 ## License
 
-[**The MIT License (MIT)**](http://opensource.org/licenses/MIT).
+See: [LICENSE](https://github.com/nmap/npcap/blob/master/LICENSE)
 
 ## Contact
 
