@@ -58,15 +58,18 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 1. Run ``installer\Deploy.bat`` (or ``installer\Deploy_WithTimeStamp.bat``): copy the files from build directories, and sign the files for ``Non-WinPcap Compatible Mode``.
 2. Run ``installer\Deploy_WinPcap.bat`` (or ``installer\Deploy_WinPcap_WithTimeStamp.bat``): copy the files from build directories, and sign the files for ``WinPcap Compatible Mode``.
 3. Run ``installer\Gen_Installer_Only.bat``: Generate an installer named ``npcap-nmap-%VERSION%.exe`` using [NSIS](https://sourceforge.net/projects/nsis/) (make sure you installed latest NSIS), and sign the installer.
-4. (Optional) Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from build directories for ``Non-WinPcap Compatible Mode``, and generate an zip package named ``npcap-nmap-<VERSION>-DebugSymbols.zip``.
-5. (Optional) Run ``installer\Deploy_Symbols_WinPcap.bat``: copy the debug symbol files (.PDB) from build directories for ``WinPcap Compatible Mode``, and generate an zip package named ``npcap-nmap-<VERSION>-DebugSymbols.zip``.
 
-## Downloads & Run (for Users)
+## Generating debug symbols (optional)
+
+1. Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from build directories for ``Non-WinPcap Compatible Mode``, and generate an zip package named ``npcap-nmap-<VERSION>-DebugSymbols.zip``.
+2. Run ``installer\Deploy_Symbols_WinPcap.bat``: copy the debug symbol files (.PDB) from build directories for ``WinPcap Compatible Mode``, and generate an zip package named ``npcap-nmap-<VERSION>-DebugSymbols.zip``.
+
+## Downloads & Run (for users)
 
 1. Download and install the latest Npcap installer: https://github.com/nmap/npcap/releases
 2. Use ``Nmap`` or ``Wireshark`` to test Npcap.
 
-## Other Code (for Developers)
+## Other code (for developers)
 
 #### Previous installers before Npcap 0.05:
 https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/
