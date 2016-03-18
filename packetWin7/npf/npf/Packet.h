@@ -1310,7 +1310,7 @@ VOID NPF_StopUsingOpenInstance(IN POPEN_INSTANCE pOpen);
 
 VOID NPF_CloseOpenInstance(IN POPEN_INSTANCE pOpen);
 
-NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, IN PIRP	pIrp, OUT PUINT  pMtu);
+NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, OUT PUINT  pMtu);
 
 /*!
   \brief Returns the amount of bytes present in the packet buffer.

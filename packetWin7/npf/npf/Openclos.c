@@ -330,7 +330,7 @@ NPF_OpenAdapter(
 	}
 	else
 #endif
-		Status = NPF_GetDeviceMTU(Open, Irp, &Open->MaxFrameSize);
+		Status = NPF_GetDeviceMTU(Open, &Open->MaxFrameSize);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 NPF_OpenAdapter_End:;
@@ -541,7 +541,6 @@ NPF_ReleaseOpenInstanceResources(
 NTSTATUS
 NPF_GetDeviceMTU(
 	IN POPEN_INSTANCE pOpen,
-	IN PIRP	pIrp,
 	OUT PUINT pMtu
 	)
 {
@@ -1156,6 +1155,7 @@ NPF_DuplicateOpenObject(
 	Open = NPF_CreateOpenObject(&OriginalOpen->AdapterName, OriginalOpen->Medium, DeviceExtension);
 	Open->AdapterHandle = OriginalOpen->AdapterHandle;
 	Open->DirectBinded = FALSE;
+	Open->MaxFrameSize = OriginalOpen->MaxFrameSize;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	Open->Loopback = OriginalOpen->Loopback;
 #endif
