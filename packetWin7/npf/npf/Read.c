@@ -787,6 +787,7 @@ NPF_TapExForEachOpen(
 						HeaderBuffer,
 						PacketSize + HeaderBufferSize,
 						LookaheadBufferSize + HeaderBufferSize);
+					DbgPrint("fres (from bpf_filter) = %d\n", fres);
 				}
 
 
@@ -872,6 +873,7 @@ NPF_TapExForEachOpen(
 					if (fres + sizeof(struct PacketHeader) > LocalData->Free)
 					{
 						LocalData->Dropped++;
+						DbgPrint("LocalData->Dropped++, fres = %d, LocalData->Free = %d\n", fres, LocalData->Free);
 						break;
 					}
 
@@ -882,6 +884,7 @@ NPF_TapExForEachOpen(
 						//in order to avoid buffer corruption, we drop the packet
 						//
 						LocalData->Dropped++;
+						DbgPrint("LocalData->Dropped++, LocalData->TransferMdl1 = %d\n", LocalData->TransferMdl1);
 						break;
 					}
 
@@ -1015,6 +1018,8 @@ NPF_TapExForEachOpen(
 								break;
 							}
 						}
+
+						DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);
 
 						if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
 						{
