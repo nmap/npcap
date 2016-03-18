@@ -782,8 +782,8 @@ NPF_TapExForEachOpen(
 						HeaderBuffer,
 						PacketSize + HeaderBufferSize,
 						LookaheadBufferSize + HeaderBufferSize);
-					DbgPrint("\n");
-					DbgPrint("HeaderBufferSize = %d, LookaheadBufferSize (PacketSize) = %d, fres = %d\n", HeaderBufferSize, LookaheadBufferSize, fres);
+					IF_LOUD(DbgPrint("\n");)
+					IF_LOUD(DbgPrint("HeaderBufferSize = %d, LookaheadBufferSize (PacketSize) = %d, fres = %d\n", HeaderBufferSize, LookaheadBufferSize, fres);)
 				}
 
 
@@ -896,7 +896,7 @@ NPF_TapExForEachOpen(
 					if (fres + sizeof(struct PacketHeader) > LocalData->Free)
 					{
 						LocalData->Dropped++;
-						DbgPrint("LocalData->Dropped++, fres = %d, LocalData->Free = %d\n", fres, LocalData->Free);
+						IF_LOUD(DbgPrint("LocalData->Dropped++, fres = %d, LocalData->Free = %d\n", fres, LocalData->Free);)
 						break;
 					}
 
@@ -907,7 +907,7 @@ NPF_TapExForEachOpen(
 						//in order to avoid buffer corruption, we drop the packet
 						//
 						LocalData->Dropped++;
-						DbgPrint("LocalData->Dropped++, LocalData->TransferMdl1 = %d\n", LocalData->TransferMdl1);
+						IF_LOUD(DbgPrint("LocalData->Dropped++, LocalData->TransferMdl1 = %d\n", LocalData->TransferMdl1);)
 						break;
 					}
 
@@ -1007,7 +1007,7 @@ NPF_TapExForEachOpen(
 								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, CopyLengthForMDL);
 								LocalData->P += CopyLengthForMDL;
 
-								DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);
+								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
 							}
 							else
 							{
@@ -1018,7 +1018,7 @@ NPF_TapExForEachOpen(
 								NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pEthHeader + ToCopy, CopyLengthForMDL - ToCopy);
 								LocalData->P = CopyLengthForMDL - ToCopy;
 
-								DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);
+								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
 							}
 
 							increment += CopyLengthForMDL;
@@ -1035,7 +1035,7 @@ NPF_TapExForEachOpen(
 						NdisGetNextMdl(pPreMdl, &pCurMdl);
 					}
 
-					DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);
+					IF_LOUD(DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);)
 
 					if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
 					{

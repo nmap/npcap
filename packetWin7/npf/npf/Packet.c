@@ -379,7 +379,7 @@ getAdaptersList(
 		CHAR AdapInfo[1024];
 		UINT i = 0;
 
-		IF_LOUD (DbgPrint("getAdaptersList: scanning the list of the adapters in the registry, DeviceNames=%p\n", DeviceNames);)
+		IF_LOUD(DbgPrint("getAdaptersList: scanning the list of the adapters in the registry, DeviceNames=%p\n", DeviceNames);)
 
 		// Scan the list of the devices
 		while((status = ZwEnumerateKey(keyHandle, i, KeyBasicInformation, AdapInfo, sizeof(AdapInfo), &resultLength)) == STATUS_SUCCESS)

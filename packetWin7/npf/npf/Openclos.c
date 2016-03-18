@@ -1428,7 +1428,7 @@ NPF_AttachAdapter(
 			break;
 		}
 
-		IF_LOUD (DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X\n",
+		IF_LOUD(DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X\n",
 			AttachParameters->BaseMiniportName->Buffer,
 			AttachParameters->CurrentMacAddress[0],
 			AttachParameters->CurrentMacAddress[1],
@@ -1650,7 +1650,7 @@ NPF_Restart(
 		offload.Header.Revision = NDIS_OFFLOAD_REVISION_1;
 		offload.Header.Size = sizeof(offload);
 
-		DbgPrint("NDIS_OBJECT_TYPE_OFFLOAD signaled\n");
+		IF_LOUD(DbgPrint("NDIS_OBJECT_TYPE_OFFLOAD signaled\n");)
 
 		NdisFIndicateStatus(Open->AdapterHandle, &indication);
 	}
@@ -2019,19 +2019,19 @@ NOTE: called at <= DISPATCH_LEVEL
 	if (StatusIndication->StatusCode == NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG)
 	{
 		PNDIS_OFFLOAD offload = StatusIndication->StatusBuffer;
-		DbgPrint("status NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG!!!\n");
+		IF_LOUD(DbgPrint("status NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG!!!\n");)
 
 		if (StatusIndication->StatusBufferSize == sizeof(NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG) && (offload->Header.Type = NDIS_OBJECT_TYPE_OFFLOAD))
 		{
 			memset(&offload->Checksum, 0, sizeof(NDIS_TCP_IP_CHECKSUM_OFFLOAD));
 			memset(&offload->LsoV1, 0, sizeof(NDIS_TCP_LARGE_SEND_OFFLOAD_V1));
 
-			DbgPrint("status NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG disabled\n");
+			IF_LOUD(DbgPrint("status NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG disabled\n");)
 		}
 	}
 	else
 	{
-		DbgPrint("status %x\n", StatusIndication->StatusCode);
+		IF_LOUD(DbgPrint("status %x\n", StatusIndication->StatusCode);)
 	}
 
 	//
