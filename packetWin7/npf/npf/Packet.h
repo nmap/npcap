@@ -1169,8 +1169,8 @@ NPF_RemoveFromGroupOpenArray(
 
   This function is used to help decide whether two adapter names are the same.
 */
-int
-NPF_CompareAdapterName(
+BOOLEAN
+NPF_EqualAdapterName(
 	PNDIS_STRING s1,
 	PNDIS_STRING s2
 	);

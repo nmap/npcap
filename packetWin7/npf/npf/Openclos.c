@@ -952,7 +952,7 @@ NPF_AddToGroupOpenArray(
 	NdisAcquireSpinLock(&g_OpenArrayLock);
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
-		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_CompareAdapterName(&CurOpen->AdapterName, &Open->AdapterName) == 0 && CurOpen->DirectBinded)
+		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_EqualAdapterName(&CurOpen->AdapterName, &Open->AdapterName) == TRUE && CurOpen->DirectBinded)
 		{
 			GroupRear = CurOpen;
 			while (GroupRear->GroupNext != NULL)
@@ -1060,52 +1060,13 @@ NPF_RemoveFromGroupOpenArray(
 
 //-------------------------------------------------------------------
 
-int
-NPF_CompareAdapterName(
+BOOLEAN
+NPF_EqualAdapterName(
 	PNDIS_STRING s1,
 	PNDIS_STRING s2
 	)
 {
-	int i;
-	WCHAR buf1[255];
-	WCHAR buf2[255];
-	//TRACE_ENTER();
-
-	// Examples of s1, s2:
-	// "\Device\{C0EF51E2-3E9E-4FFA-92D3-53FE1969E6C2}"
-	// "\Device\NdisWanIp"
-
-	if (s1->Buffer == NULL || s2->Buffer == NULL)
-	{
-		IF_LOUD(DbgPrint("NPF_CompareAdapterName: Either adapter name is NULL.\n");)
-		TRACE_EXIT();
-		return -1;
-	}
-
-	wcscpy_s(buf1, 255, s1->Buffer);
-	wcscpy_s(buf2, 255, s2->Buffer);
-
-	if (wcslen(buf1) < 7 || wcslen(buf2) < 7)
-	{
-		IF_LOUD(DbgPrint("NPF_CompareAdapterName: length of either adapter name is not long enough (< 7).\n");)
-		TRACE_EXIT();
-		return -1;
-	}
-
-	for (i = 1; i < 7; i ++)
-	{
-		if (buf1[i] >= L'A' && buf1[i] <= L'Z')
-		{
-			buf1[i] += ('a' - 'A');
-		}
-		if (buf2[i] >= L'A' && buf2[i] <= L'Z')
-		{
-			buf2[i] += ('a' - 'A');
-		}
-	}
-
-	//TRACE_EXIT();
-	return wcscmp(buf1, buf2);
+	return RtlEqualUnicodeString(s1, s2, TRUE);
 }
 
 //-------------------------------------------------------------------
@@ -1122,7 +1083,7 @@ NPF_GetCopyFromOpenArray(
 	NdisAcquireSpinLock(&g_OpenArrayLock);
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
-		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_CompareAdapterName(&CurOpen->AdapterName, pAdapterName) == 0)
+		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_EqualAdapterName(&CurOpen->AdapterName, pAdapterName) == TRUE)
 		{
 			NdisReleaseSpinLock(&g_OpenArrayLock);
 			return NPF_DuplicateOpenObject(CurOpen, DeviceExtension);
