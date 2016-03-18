@@ -787,7 +787,8 @@ NPF_TapExForEachOpen(
 						HeaderBuffer,
 						PacketSize + HeaderBufferSize,
 						LookaheadBufferSize + HeaderBufferSize);
-					DbgPrint("fres (from bpf_filter) = %d\n", fres);
+					DbgPrint("\n");
+					DbgPrint("HeaderBufferSize = %d, LookaheadBufferSize (PacketSize) = %d, fres = %d\n", HeaderBufferSize, LookaheadBufferSize, fres);
 				}
 
 
@@ -961,10 +962,9 @@ NPF_TapExForEachOpen(
 						}
 
 						// add next MDLs
-						while (TotalLength)
+						while (TRUE)
 						{
 							PMDL pNextMdl = NULL;
-
 							NdisGetNextMdl(pMdl, &pNextMdl);
 
 							if (pNextMdl)
