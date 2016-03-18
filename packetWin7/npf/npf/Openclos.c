@@ -558,7 +558,6 @@ NPF_GetDeviceMTU(
 	TRACE_ENTER();
 
 	ASSERT(pOpen != NULL);
-	ASSERT(pIrp != NULL);
 	ASSERT(pMtu != NULL);
 
 	// Extract a request from the list of free ones
