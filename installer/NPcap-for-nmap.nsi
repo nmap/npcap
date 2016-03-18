@@ -209,10 +209,10 @@ Function .onInit
     StrCpy $admin_only "no"
     StrCpy $loopback_support "yes"
     StrCpy $dlt_null "no"
-    StrCpy $vlan_support "yes"
+    StrCpy $vlan_support "no"
     StrCpy $winpcap_mode "yes"
 
-    ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=yes /winpcap_mode=yes'
+    ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes'
 
     ${GetOptions} $cmd_line "/admin_only=" $R0
     ${If} $R0 S== "yes"
@@ -439,9 +439,9 @@ Function doAdminOnlyOptions
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
   ${If} $0 == "0"
-    StrCpy $vlan_support "no"
+    StrCpy $vlan_support "no" ; by default
   ${Else}
-    StrCpy $vlan_support "yes" ; by default
+    StrCpy $vlan_support "yes"
   ${EndIf}
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
