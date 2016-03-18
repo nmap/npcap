@@ -5,6 +5,7 @@
 *.aps
 *.pdb
 *.exe
+*.msi
 *.zip
 *.ilk
 *.obj
@@ -12,8 +13,8 @@
 *.cat
 *.sys
 *.dll
-*.vcxproj.filters
 *.ipch
+*.VC.db
 Debug/
 Release/
 Debug(*)/
