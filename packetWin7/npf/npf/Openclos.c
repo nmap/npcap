@@ -1272,7 +1272,7 @@ NPF_CreateOpenObject(
 	Open->SkipSentPackets = FALSE;
 	Open->ReadEvent = NULL;
 
-	Open->AdapterName.Buffer = ExAllocatePool(NonPagedPool, 255 * sizeof(WCHAR));
+	Open->AdapterName.Buffer = ExAllocatePoolWithTag(NonPagedPool, 255 * sizeof(WCHAR), 'NPCA');
 	Open->AdapterName.MaximumLength = 255 * sizeof(WCHAR);
 	Open->AdapterName.Length = 0;
 	RtlCopyUnicodeString(&Open->AdapterName, AdapterName);
