@@ -1066,7 +1066,7 @@ NPF_EqualAdapterName(
 	PNDIS_STRING s2
 	)
 {
-	return RtlEqualUnicodeString(s1, s2, TRUE);
+	return RtlEqualMemory(s1->Buffer, s2->Buffer, s2->Length);
 }
 
 //-------------------------------------------------------------------
