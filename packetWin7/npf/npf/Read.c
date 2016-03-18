@@ -615,7 +615,7 @@ NPF_TapExForEachOpen(
 	PUCHAR					LookaheadBuffer;
 	UINT					LookaheadBufferSize;
 	UINT					PacketSize;
-	ULONG                   TotalLength;
+	UINT					TotalPacketSize;
 
 	PMDL                    pMdl = NULL;
 	UINT                    BufferLength;
@@ -674,7 +674,6 @@ NPF_TapExForEachOpen(
 			// Get first MDL and data length in the list
 			//
 			pMdl = pNetBuf->CurrentMdl;
-			TotalLength = pNetBuf->DataLength;
 			Offset = pNetBuf->CurrentMdlOffset;
 			BufferLength = 0;
 
@@ -708,10 +707,6 @@ NPF_TapExForEachOpen(
 
 				BufferLength -= Offset;
 				pEthHeader = (PNDISPROT_ETH_HEADER)((PUCHAR)pEthHeader + Offset);
-
-				// As for single MDL (as we assume) condition, we always have BufferLength == TotalLength
-				if (BufferLength > TotalLength)
-					BufferLength = TotalLength;
 
 				// Handle multiple MDLs situation here, if there's only 20 bytes in the first MDL, then the IP header is in the second MDL.
 				if (BufferLength == sizeof(NDISPROT_ETH_HEADER) && pMdl->Next != NULL)
@@ -807,8 +802,8 @@ NPF_TapExForEachOpen(
 				}
 
 				//if the filter returns -1 the whole packet must be accepted
-				if (fres == -1 || fres > PacketSize + HeaderBufferSize)
-					fres = PacketSize + HeaderBufferSize;
+				// if (fres == -1 || fres > PacketSize + HeaderBufferSize)
+				//	fres = PacketSize + HeaderBufferSize;
 
 				if (Open->mode & MODE_STAT)
 				{
@@ -871,6 +866,33 @@ NPF_TapExForEachOpen(
 
 				do
 				{
+					// Get the whole packet length.
+					TotalPacketSize = PacketSize + HeaderBufferSize;
+					PMDL pCurMdl = pMdl;
+					PMDL pPreMdl;
+					while (TRUE)
+					{
+						pPreMdl = pCurMdl;
+						NdisGetNextMdl(pPreMdl, &pCurMdl);
+
+						if (pCurMdl)
+						{
+							NdisQueryMdl(
+								pCurMdl,
+								&pEthHeader,
+								&BufferLength,
+								NormalPagePriority);
+							TotalPacketSize += BufferLength;
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					if (fres > TotalPacketSize)
+						fres = TotalPacketSize;
+
 					if (fres + sizeof(struct PacketHeader) > LocalData->Free)
 					{
 						LocalData->Dropped++;
@@ -889,167 +911,151 @@ NPF_TapExForEachOpen(
 						break;
 					}
 
-					/* always true */
-					if (LookaheadBufferSize + HeaderBufferSize >= fres)
+					PUCHAR pHeaderBuffer = HeaderBuffer;
+					UINT iFres = fres;
+
+					// Disable the IEEE802.1Q VLAN feature for now.
+// 					if (withVlanTag)
+// 					{
+// 						// Insert a tag in the case of IEEE802.1Q packet
+// 						pHeaderBuffer = ExAllocatePoolWithTag(NonPagedPool, fres + 4, 'NPCA');
+// 						NdisMoveMappedMemory(pHeaderBuffer, HeaderBuffer, 12);
+// 						pHeaderBuffer[12] = 0x81;
+// 						pHeaderBuffer[13] = 0x00;
+// 						NdisMoveMappedMemory(&pHeaderBuffer[14], pVlanTag, 2);
+// 						NdisMoveMappedMemory(&pHeaderBuffer[16], &HeaderBuffer[12], fres - 12);
+// 						iFres += 4;
+// 					}
+
+					Header = (struct PacketHeader *)(LocalData->Buffer + LocalData->P);
+					LocalData->Accepted++;
+					GET_TIME(&Header->header.bh_tstamp, &G_Start_Time);
+					Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
+
+					// DbgPrint("MDL %d\n", BufferLength);
+
+					Header->header.bh_caplen = 0;
+					Header->header.bh_datalen = TotalPacketSize;
+					Header->header.bh_hdrlen = sizeof(struct bpf_hdr);
+
+					LocalData->P += sizeof(struct PacketHeader);
+					if (LocalData->P == Open->Size)
+						LocalData->P = 0;
+
+					increment = sizeof(struct PacketHeader);
+
+					//
+					//we can consider the buffer contiguous, either because we use only the data
+					//present in the HeaderBuffer, or because HeaderBuffer and LookaheadBuffer are contiguous
+					// ;-))))))
+					//
+// 					if (Open->Size - LocalData->P < iFres)
+// 					{
+// 						//the packet will be fragmented in the buffer (aka, it will skip the buffer boundary)
+// 						//two copies!!
+// 						ToCopy = Open->Size - LocalData->P;
+// 						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pHeaderBuffer, ToCopy);
+// 						NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pHeaderBuffer + ToCopy, iFres - ToCopy);
+// 						LocalData->P = iFres - ToCopy;
+// 					}
+// 					else
+// 					{
+// 						//the packet does not need to be fragmented in the buffer (aka, it doesn't skip the buffer boundary)
+// 						// ;-)))))) only ONE copy
+// 						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pHeaderBuffer, iFres);
+// 						LocalData->P += iFres;
+// 					}	
+
+					// Disable the IEEE802.1Q VLAN feature for now.
+// 					if (withVlanTag)
+// 					{
+// 						if (pHeaderBuffer)
+// 						{
+// 							ExFreePool(pHeaderBuffer);
+// 							pHeaderBuffer = NULL;
+// 						}
+// 					}
+
+					// Add MDLs
+					pCurMdl = pMdl;
+					pPreMdl;
+					while (iFres > 0 || iFres == -1)
 					{
-						PUCHAR pHeaderBuffer = HeaderBuffer;
-						UINT iFres = fres;
-
-						if (withVlanTag)
+						UINT CopyLengthForMDL = 0;
+						if (pCurMdl)
 						{
-							// Insert a tag in the case of IEEE802.1Q packet
-							pHeaderBuffer = ExAllocatePoolWithTag(NonPagedPool, fres + 4, 'NPCA');
-							NdisMoveMappedMemory(pHeaderBuffer, HeaderBuffer, 12);
-							pHeaderBuffer[12] = 0x81;
-							pHeaderBuffer[13] = 0x00;
-							NdisMoveMappedMemory(&pHeaderBuffer[14], pVlanTag, 2);
-							NdisMoveMappedMemory(&pHeaderBuffer[16], &HeaderBuffer[12], fres - 12);
-							iFres += 4;
-						}
+							NdisQueryMdl(
+								pCurMdl,
+								&pEthHeader,
+								&BufferLength,
+								NormalPagePriority);
 
-						//
-						// we do not need to call NdisTransferData, either because we need only the HeaderBuffer, or because the LookaheadBuffer
-						// contains what we need
-						//
+							// The first MDL, need to handle the offset.
+							if (pCurMdl == pMdl)
+							{
+								BufferLength -= Offset;
+								pEthHeader = (PNDISPROT_ETH_HEADER)((PUCHAR)pEthHeader + Offset);
+							}
 
-						Header = (struct PacketHeader *)(LocalData->Buffer + LocalData->P);
-						LocalData->Accepted++;
-						GET_TIME(&Header->header.bh_tstamp, &G_Start_Time);
-						Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
+							if (iFres != -1)
+								CopyLengthForMDL = min(iFres, BufferLength);
+							else
+								CopyLengthForMDL = BufferLength;
 
-						DbgPrint("MDL %d\n", iFres);
+							if (Open->Size - LocalData->P >= BufferLength)
+							{
+								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, CopyLengthForMDL);
+								LocalData->P += CopyLengthForMDL;
 
-						Header->header.bh_caplen = iFres;
-						Header->header.bh_datalen = PacketSize + HeaderBufferSize;
-						Header->header.bh_hdrlen = sizeof(struct bpf_hdr);
+								DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);
+							}
+							else
+							{
+								//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
+								//two copies!!
+								ToCopy = Open->Size - LocalData->P;
+								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, ToCopy);
+								NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pEthHeader + ToCopy, CopyLengthForMDL - ToCopy);
+								LocalData->P = CopyLengthForMDL - ToCopy;
 
-						LocalData->P += sizeof(struct PacketHeader);
-						if (LocalData->P == Open->Size)
-							LocalData->P = 0;
+								DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);
+							}
 
-						//
-						//we can consider the buffer contiguous, either because we use only the data
-						//present in the HeaderBuffer, or because HeaderBuffer and LookaheadBuffer are contiguous
-						// ;-))))))
-						//
-						if (Open->Size - LocalData->P < iFres)
-						{
-							//the packet will be fragmented in the buffer (aka, it will skip the buffer boundary)
-							//two copies!!
-							ToCopy = Open->Size - LocalData->P;
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pHeaderBuffer, ToCopy);
-							NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pHeaderBuffer + ToCopy, iFres - ToCopy);
-							LocalData->P = iFres - ToCopy;
+							increment += CopyLengthForMDL;
+							Header->header.bh_caplen += CopyLengthForMDL;
+							if (iFres != -1)
+								iFres -= CopyLengthForMDL;
 						}
 						else
 						{
-							//the packet does not need to be fragmented in the buffer (aka, it doesn't skip the buffer boundary)
-							// ;-)))))) only ONE copy
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pHeaderBuffer, iFres);
-							LocalData->P += iFres;
-						}
-
-						increment = iFres + sizeof(struct PacketHeader);
-						TotalLength -= iFres;
-
-						if (withVlanTag)
-						{
-							if (pHeaderBuffer)
-							{
-								ExFreePool(pHeaderBuffer);
-								pHeaderBuffer = NULL;
-							}
-						}
-
-						// add next MDLs
-						while (TRUE)
-						{
-							PMDL pNextMdl = NULL;
-							NdisGetNextMdl(pMdl, &pNextMdl);
-
-							if (pNextMdl)
-							{
-								NdisQueryMdl(
-									pNextMdl,
-									&pEthHeader,
-									&BufferLength,
-									NormalPagePriority);
-
-								if (BufferLength >= TotalLength)
-									BufferLength = TotalLength;
-
-								if (Open->Size - LocalData->P >= BufferLength)
-								{
-									NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, BufferLength);
-									LocalData->P += BufferLength;
-
-									increment += BufferLength;
-									TotalLength -= BufferLength;
-
-									Header->header.bh_caplen += BufferLength;
-									Header->header.bh_datalen += BufferLength;
-
-									DbgPrint("next MDL %d and added\n", BufferLength);
-
-									pMdl = pNextMdl;
-								}
-								else
-								{
-									//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
-									//two copies!!
-									ToCopy = Open->Size - LocalData->P;
-									NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, ToCopy);
-									NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pEthHeader + ToCopy, BufferLength - ToCopy);
-									LocalData->P = BufferLength - ToCopy;
-
-									increment += BufferLength;
-									TotalLength -= BufferLength;
-
-									Header->header.bh_caplen += BufferLength;
-									Header->header.bh_datalen += BufferLength;
-
-									DbgPrint("next MDL %d added (two copies)\n", BufferLength);
-
-									pMdl = pNextMdl;
-								}
-							}
-							else
-							{
-								break;
-							}
-						}
-
-						DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);
-
-						if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
-						{
-							//the NewHeader structure, at least, otherwise we skip the producer
-							increment += Open->Size - LocalData->P;				   //at the beginning of the buffer (p = 0), and decrement the free bytes appropriately
-							LocalData->P = 0;
-						}
-
-						InterlockedExchangeAdd(&LocalData->Free, (ULONG)(-(LONG)increment));
-						if (Open->Size - LocalData->Free >= Open->MinToCopy)
-						{
-							if (Open->mode & MODE_DUMP)
-								NdisSetEvent(&Open->DumpEvent);
-							else
-							{
-								if (Open->ReadEvent != NULL)
-								{
-									KeSetEvent(Open->ReadEvent, 0, FALSE);
-								}
-							}
-						}
-
-						break;
-					}
-					else // never comes here.
-					{
-						IF_LOUD(DbgPrint("NPF_tapExForEachOpen: This is an error !!!!\n");)
-							//ndisTransferData required
-							//This is an error !!
 							break;
+						}
+
+						pPreMdl = pCurMdl;
+						NdisGetNextMdl(pPreMdl, &pCurMdl);
+					}
+
+					DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);
+
+					if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
+					{
+						//the NewHeader structure, at least, otherwise we skip the producer
+						increment += Open->Size - LocalData->P;				   //at the beginning of the buffer (p = 0), and decrement the free bytes appropriately
+						LocalData->P = 0;
+					}
+
+					InterlockedExchangeAdd(&LocalData->Free, (ULONG)(-(LONG)increment));
+					if (Open->Size - LocalData->Free >= Open->MinToCopy)
+					{
+						if (Open->mode & MODE_DUMP)
+							NdisSetEvent(&Open->DumpEvent);
+						else
+						{
+							if (Open->ReadEvent != NULL)
+							{
+								KeSetEvent(Open->ReadEvent, 0, FALSE);
+							}
+						}
 					}
 				} while (FALSE);
 
