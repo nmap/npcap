@@ -330,7 +330,14 @@ NPF_OpenAdapter(
 	}
 	else
 #endif
-		Status = NPF_GetDeviceMTU(Open, &Open->MaxFrameSize);
+	{
+		Open->MaxFrameSize = 1514;
+		Status = STATUS_SUCCESS;
+		// This call will cause SYSTEM_SERVICE_EXCEPTION BSoD sometimes.
+		// I didn't figure out the reason, I threw an ask on Stackoverflow: http://stackoverflow.com/questions/31869373/get-system-service-exception-bluescreen-when-starting-wireshark-on-win10-vmware
+		// But no replies, so I just workaround by hard-coding it as 1514 for now.
+		// Status = NPF_GetDeviceMTU(Open, &Open->MaxFrameSize);
+	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 NPF_OpenAdapter_End:;
