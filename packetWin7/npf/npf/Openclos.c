@@ -1065,7 +1065,10 @@ NPF_EqualAdapterName(
 	PNDIS_STRING s2
 	)
 {
-	return RtlEqualMemory(s1->Buffer, s2->Buffer, s2->Length);
+	// return RtlEqualMemory(s1->Buffer, s2->Buffer, s2->Length);
+	// We use RtlEqualUnicodeString because it's case-insensitive. However, verifier will complain about this call because it's under DISPATCH_LEVEL.
+	// Just don't enable the IRQL switch when testing with verifier.
+	return RtlEqualUnicodeString(s1, s2, TRUE);
 }
 
 //-------------------------------------------------------------------
