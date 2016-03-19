@@ -1071,10 +1071,33 @@ NPF_EqualAdapterName(
 	PNDIS_STRING s2
 	)
 {
-	// return RtlEqualMemory(s1->Buffer, s2->Buffer, s2->Length);
-	// We use RtlEqualUnicodeString because it's case-insensitive. However, verifier will complain about this call because it's under DISPATCH_LEVEL.
-	// Just don't enable the IRQL switch when testing with verifier.
-	return RtlEqualUnicodeString(s1, s2, TRUE);
+	int i;
+	BOOLEAN bResult;
+	TRACE_ENTER();
+
+	if (s1->Length != s2->Length)
+	{
+		IF_LOUD(DbgPrint("NPF_EqualAdapterName: length not the same, s1->Length = %d, s2->Length = %d\n", s1->Length, s2->Length);)
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	for (i = 0; i < s2->Length / 2; i ++)
+	{
+		if (s1->Buffer[i] >= L'A' && s1->Buffer[i] <= L'Z')
+		{
+			s1->Buffer[i] += (L'a' - L'A');
+		}
+		if (s2->Buffer[i] >= L'A' && s2->Buffer[i] <= L'Z')
+		{
+			s2->Buffer[i] += (L'a' - L'A');
+		}
+	}
+
+	bResult = RtlEqualMemory(s1->Buffer, s2->Buffer, s2->Length);
+	IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);)
+	TRACE_EXIT();
+	return bResult;
 }
 
 //-------------------------------------------------------------------
