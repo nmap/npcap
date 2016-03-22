@@ -1002,7 +1002,7 @@ NPF_TapExForEachOpen(
 							else
 								CopyLengthForMDL = BufferLength;
 
-							if (Open->Size - LocalData->P >= BufferLength)
+							if (Open->Size - LocalData->P >= CopyLengthForMDL)
 							{
 								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, CopyLengthForMDL);
 								LocalData->P += CopyLengthForMDL;
