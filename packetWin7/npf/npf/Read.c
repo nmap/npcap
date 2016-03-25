@@ -1002,14 +1002,12 @@ NPF_TapExForEachOpen(
 							else
 								CopyLengthForMDL = BufferLength;
 
-							if (Open->Size - LocalData->P >= CopyLengthForMDL)
+							if (LocalData->P == Open->Size)
 							{
-								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, CopyLengthForMDL);
-								LocalData->P += CopyLengthForMDL;
-
-								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
+								LocalData->P = 0;
 							}
-							else
+
+							if (Open->Size - LocalData->P < CopyLengthForMDL)
 							{
 								//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
 								//two copies!!
@@ -1019,6 +1017,13 @@ NPF_TapExForEachOpen(
 								LocalData->P = CopyLengthForMDL - ToCopy;
 
 								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
+							}
+							else
+							{
+								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, CopyLengthForMDL);
+								LocalData->P += CopyLengthForMDL;
+
+								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
 							}
 
 							increment += CopyLengthForMDL;
