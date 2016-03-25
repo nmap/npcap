@@ -355,7 +355,7 @@ getAdaptersList(
 	UINT BufPos = 0;
 	UINT BufLen = 4096;
 
-	PWCHAR DeviceNames = (PWCHAR)ExAllocatePoolWithTag(PagedPool, BufLen, '0PWA');
+	PWCHAR DeviceNames = (PWCHAR)ExAllocatePoolWithTag(NonPagedPool, BufLen, '0PWA');
 
 	TRACE_ENTER();
 
@@ -430,7 +430,7 @@ getAdaptersList(
 			{
 				// We know how big it needs to be.
 				ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
-				PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '1PWA');
+				PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(NonPagedPool, valueInfoLength, '1PWA');
 				if (valueInfoP != NULL)
 				{
 					status = ZwQueryValueKey(ExportKeyHandle,
@@ -449,7 +449,7 @@ getAdaptersList(
 						if(BufPos + valueInfoP->DataLength > BufLen)
 						{
 							// double the buffer size
-							PWCHAR DeviceNames2 = (PWCHAR)ExAllocatePoolWithTag(PagedPool, BufLen << 1, '0PWA');
+							PWCHAR DeviceNames2 = (PWCHAR)ExAllocatePoolWithTag(NonPagedPool, BufLen << 1, '0PWA');
 							if (DeviceNames2)
 							{
 								RtlCopyMemory((PCHAR)DeviceNames2, (PCHAR)DeviceNames, BufLen);
@@ -544,7 +544,7 @@ getTcpBindings(
 		{
 			// We know how big it needs to be.
 			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
-			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '2PWA');
+			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(NonPagedPool, valueInfoLength, '2PWA');
 
 			if (valueInfoP != NULL)
 			{
