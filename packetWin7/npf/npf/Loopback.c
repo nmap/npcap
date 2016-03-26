@@ -258,12 +258,12 @@ NPF_NetworkClassify(
 	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
 		classifyOut->actionType = FWP_ACTION_CONTINUE;
 
-#if(NTDDI_VERSION >= NTDDI_WIN7)
 	// Filter out fragment packets and reassembled packets.
-	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_FRAGMENT_DATA)
+	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_FRAGMENT)
 	{
 		return;
 	}
+#if(NTDDI_VERSION >= NTDDI_WIN7)
 	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_REASSEMBLED)
 	{
 		return;
@@ -600,7 +600,7 @@ NPF_AddFilter(
 		filterConditions[conditionIndex].fieldKey = FWPM_CONDITION_FLAGS;
 		filterConditions[conditionIndex].matchType = FWP_MATCH_FLAGS_ALL_SET;
 		filterConditions[conditionIndex].conditionValue.type = FWP_UINT32;
-		filterConditions[conditionIndex].conditionValue.uint32 = FWPS_METADATA_FIELD_FRAGMENT_DATA;
+		filterConditions[conditionIndex].conditionValue.uint32 = FWP_CONDITION_FLAG_IS_FRAGMENT;
 		conditionIndex++;
 	}
 #if(NTDDI_VERSION >= NTDDI_WIN7)
@@ -725,13 +725,13 @@ FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
 	{
 		goto Exit;
 	}
-
+#if(NTDDI_VERSION >= NTDDI_WIN7)
 	status = NPF_AddFilter(layerKey, calloutKey, 2);
 	if (!NT_SUCCESS(status))
 	{
 		goto Exit;
 	}
-
+#endif
 	status = NPF_AddFilter(layerKey, calloutKey, 3);
 	if (!NT_SUCCESS(status))
 	{
