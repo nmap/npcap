@@ -1072,7 +1072,7 @@ NPF_EqualAdapterName(
 	)
 {
 	int i;
-	BOOLEAN bResult;
+	BOOLEAN bResult = TRUE;
 	TRACE_ENTER();
 
 	if (s1->Length != s2->Length)
@@ -1084,17 +1084,29 @@ NPF_EqualAdapterName(
 
 	for (i = 0; i < s2->Length / 2; i ++)
 	{
-		if (s1->Buffer[i] >= L'A' && s1->Buffer[i] <= L'Z')
+		if (L'A' <= s1->Buffer[i] && s1->Buffer[i] <= L'Z')
 		{
-			s1->Buffer[i] += (L'a' - L'A');
+			if (s2->Buffer[i] - s1->Buffer[i] != 0 && s2->Buffer[i] - s1->Buffer[i] != L'a' - L'A')
+			{
+				bResult = FALSE;
+				break;
+			}
 		}
-		if (s2->Buffer[i] >= L'A' && s2->Buffer[i] <= L'Z')
+		else if (L'a' <= s1->Buffer[i] && s1->Buffer[i] <= L'z')
 		{
-			s2->Buffer[i] += (L'a' - L'A');
+			if (s2->Buffer[i] - s1->Buffer[i] != 0 && s2->Buffer[i] - s1->Buffer[i] != L'A' - L'a')
+			{
+				bResult = FALSE;
+				break;
+			}
+		}
+		else if (s2->Buffer[i] - s1->Buffer[i] != 0)
+		{
+			bResult = FALSE;
+			break;
 		}
 	}
 
-	bResult = RtlEqualMemory(s1->Buffer, s2->Buffer, s2->Length);
 	IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);)
 	TRACE_EXIT();
 	return bResult;
