@@ -1,6 +1,7 @@
 
 set DRIVER_NAME=npf
-set DEPLOY_FOLDER_NAME=win7_above_winpcap
+set DEPLOY_FOLDER_NAME=win8_above_winpcap
+set WIN7_DEPLOY_FOLDER_NAME=win7_winpcap
 set VISTA_DEPLOY_FOLDER_NAME=vista_winpcap
 set VS_CONFIG_MODE=(WinPcap Mode)
 
@@ -19,6 +20,15 @@ xcopy /Y	"..\packetWin7\npf\x64\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER
 xcopy /Y	"..\packetWin7\npf\x64\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"					.\%DEPLOY_FOLDER_NAME%\x64\
 xcopy /Y	"..\packetWin7\npf\x64\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"				.\%DEPLOY_FOLDER_NAME%\x64\
 xcopy /Y	"..\packetWin7\npf\x64\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"					.\%DEPLOY_FOLDER_NAME%\x64\
+
+xcopy /Y	"..\packetWin7\npf\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.cat"						.\%WIN7_DEPLOY_FOLDER_NAME%\x86\
+xcopy /Y	"..\packetWin7\npf\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"						.\%WIN7_DEPLOY_FOLDER_NAME%\x86\
+xcopy /Y	"..\packetWin7\npf\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"					.\%WIN7_DEPLOY_FOLDER_NAME%\x86\
+xcopy /Y	"..\packetWin7\npf\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"						.\%WIN7_DEPLOY_FOLDER_NAME%\x86\
+xcopy /Y	"..\packetWin7\npf\x64\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.cat"					.\%WIN7_DEPLOY_FOLDER_NAME%\x64\
+xcopy /Y	"..\packetWin7\npf\x64\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"					.\%WIN7_DEPLOY_FOLDER_NAME%\x64\
+xcopy /Y	"..\packetWin7\npf\x64\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%_wfp.inf"				.\%WIN7_DEPLOY_FOLDER_NAME%\x64\
+xcopy /Y	"..\packetWin7\npf\x64\Win7 Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.sys"					.\%WIN7_DEPLOY_FOLDER_NAME%\x64\
 
 xcopy /Y	"..\packetWin7\npf\Vista Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.cat"						.\%VISTA_DEPLOY_FOLDER_NAME%\x86\
 xcopy /Y	"..\packetWin7\npf\Vista Release%VS_CONFIG_MODE%\npf Package\%DRIVER_NAME%.inf"						.\%VISTA_DEPLOY_FOLDER_NAME%\x86\
@@ -57,7 +67,13 @@ xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64\
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_VISTA% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_VISTA% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%VISTA_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
 
-:: Sign Npcap driver for Win7 and later
+:: Sign Npcap driver for Win7
+%CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_VISTA% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%WIN7_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
+%CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_VISTA% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%WIN7_DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
+%CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_VISTA% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%WIN7_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
+%CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_VISTA% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%WIN7_DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.cat
+
+:: Sign Npcap driver for Win8 and later
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /fd sha256 /tr %CERT_TIMESTAMP_SERVER% /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.sys
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /fd sha256 /tr %CERT_TIMESTAMP_SERVER% /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\%DRIVER_NAME%.cat
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /fd sha256 /tr %CERT_TIMESTAMP_SERVER% /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\%DRIVER_NAME%.sys
