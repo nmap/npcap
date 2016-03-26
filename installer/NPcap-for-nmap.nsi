@@ -593,46 +593,37 @@ Section "WinPcap" SecWinPcap
   ${EndIf}
   File pthreadVC.dll
   File wpcap.dll
-  File win7_above\x86\NPcapHelper.exe
+  File win8_above\x86\NPcapHelper.exe
 
   ; Check windows version
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
-  DetailPrint "Windows CurrentVersion: $R0"
-  StrCmp $R0 '6.0' vista_files
-  StrCmp $R0 '6.1' vista_files
-  StrCpy $R0 $R0 2
-  StrCmp $R0 '6.' win7_files
+  StrCpy $R1 $R0 2
+  ${If} $R1 == "6."
+    ${If} $R0 == "6.0"
+      StrCpy $os_ver 'vista'
+    ${OrIf} $R0 == "6.1"
+      StrCpy $os_ver 'win7'
+    ${Else}
+      StrCpy $os_ver 'win8_above'
+    ${EndIf}
 
-  ; xp_files:
-  StrCpy $os_ver 'xp' 5
-  File nt5\x86\Packet.dll
-  Goto install_xp
-
-  vista_files:
-    StrCpy $os_ver 'vista' 5
     ${If} $winpcap_mode == "yes"
-	  File win7_above_winpcap\x86\Packet.dll
-	${Else}
-	  File win7_above\x86\Packet.dll
-	${EndIf}
-    Goto install_win7
+      File win8_above_winpcap\x86\Packet.dll
+    ${Else}
+      File win8_above\x86\Packet.dll
+    ${EndIf}
+    DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
-  win7_files:
-    StrCpy $os_ver 'win7' 5
-	${If} $winpcap_mode == "yes"
-	  File win7_above_winpcap\x86\Packet.dll
-	${Else}
-	  File win7_above\x86\Packet.dll
-	${EndIf}
-    Goto install_win7
-
-  install_xp:
-    Call is64bit
-    StrCmp $0 "0" install_xp_32bit install_xp_64bit
-    
-  install_win7:
     Call is64bit
     StrCmp $0 "0" install_win7_32bit install_win7_64bit
+  ${Else} ; xp_files:
+    StrCpy $os_ver 'xp'
+    File nt5\x86\Packet.dll
+    DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
+
+    Call is64bit
+    StrCmp $0 "0" install_xp_32bit install_xp_64bit
+  ${EndIf}
 
     ; Note, NSIS states: "You should always quote the path to make sure spaces
     ; in the path will not disrupt Windows to find the uninstaller."
@@ -660,34 +651,46 @@ Section "WinPcap" SecWinPcap
       File rpcapd.exe
       File ..\LICENSE
 	  ${If} $winpcap_mode == "yes"
-	    File win7_above_winpcap\x86\NPFInstall.exe
+	    File win8_above_winpcap\x86\NPFInstall.exe
 	  ${Else}
-	    File win7_above\x86\NPFInstall.exe
+	    File win8_above\x86\NPFInstall.exe
 	  ${EndIf}
 
 	  ${If} $os_ver == "vista"
         ${If} $winpcap_mode == "yes"
-          File vista_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
+          File vista_winpcap\x86\npf.sys
           File vista_winpcap\x86\npf.inf
           File vista_winpcap\x86\npf_wfp.inf
           File vista_winpcap\x86\npf.cat
         ${Else}
-          File vista\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
+          File vista\x86\npcap.sys
           File vista\x86\npcap.inf
           File vista\x86\npcap_wfp.inf
           File vista\x86\npcap.cat
         ${EndIf}
-	  ${Else}
-	    ${If} $winpcap_mode == "yes"
-          File win7_above_winpcap\x86\npf.sys ; x86 NT6.1/NT6.2/NT6.3 version
-          File win7_above_winpcap\x86\npf.inf
-          File win7_above_winpcap\x86\npf_wfp.inf
-          File win7_above_winpcap\x86\npf.cat
+	  ${OrIf} $os_ver == "win7"
+        ${If} $winpcap_mode == "yes"
+          File win7_winpcap\x86\npf.sys
+          File win7_winpcap\x86\npf.inf
+          File win7_winpcap\x86\npf_wfp.inf
+          File win7_winpcap\x86\npf.cat
         ${Else}
-          File win7_above\x86\npcap.sys ; x86 NT6.1/NT6.2/NT6.3 version
-          File win7_above\x86\npcap.inf
-          File win7_above\x86\npcap_wfp.inf
-          File win7_above\x86\npcap.cat
+          File win7\x86\npcap.sys
+          File win7\x86\npcap.inf
+          File win7\x86\npcap_wfp.inf
+          File win7\x86\npcap.cat
+        ${EndIf}
+	  ${Else} ; $os_ver == "win8_above"
+	    ${If} $winpcap_mode == "yes"
+          File win8_above_winpcap\x86\npf.sys
+          File win8_above_winpcap\x86\npf.inf
+          File win8_above_winpcap\x86\npf_wfp.inf
+          File win8_above_winpcap\x86\npf.cat
+        ${Else}
+          File win8_above\x86\npcap.sys
+          File win8_above\x86\npcap.inf
+          File win8_above\x86\npcap_wfp.inf
+          File win8_above\x86\npcap.cat
         ${EndIf}
 	  ${EndIf}
 
@@ -734,34 +737,46 @@ Section "WinPcap" SecWinPcap
       File rpcapd.exe
       File ..\LICENSE
 	  ${If} $winpcap_mode == "yes"
-	    File win7_above_winpcap\x64\NPFInstall.exe
+	    File win8_above_winpcap\x64\NPFInstall.exe
 	  ${Else}
-        File win7_above\x64\NPFInstall.exe
+        File win8_above\x64\NPFInstall.exe
 	  ${EndIf}
 
 	  ${If} $os_ver == "vista"
 	    ${If} $winpcap_mode == "yes"
-          File vista_winpcap\x64\npf.sys ; x64 NT6.1 and above version
+          File vista_winpcap\x64\npf.sys
           File vista_winpcap\x64\npf.inf
           File vista_winpcap\x64\npf_wfp.inf
           File vista_winpcap\x64\npf.cat
         ${Else}
-          File vista\x64\npcap.sys ; x64 NT6.1 and above version
+          File vista\x64\npcap.sys
           File vista\x64\npcap.inf
           File vista\x64\npcap_wfp.inf
           File vista\x64\npcap.cat
         ${EndIf}
-	  ${Else}
-        ${If} $winpcap_mode == "yes"
-          File win7_above_winpcap\x64\npf.sys ; x64 NT6.1 and above version
-          File win7_above_winpcap\x64\npf.inf
-          File win7_above_winpcap\x64\npf_wfp.inf
-          File win7_above_winpcap\x64\npf.cat
+	  ${OrIf} $os_ver == "win7"
+	    ${If} $winpcap_mode == "yes"
+          File win7_winpcap\x64\npf.sys
+          File win7_winpcap\x64\npf.inf
+          File win7_winpcap\x64\npf_wfp.inf
+          File win7_winpcap\x64\npf.cat
         ${Else}
-          File win7_above\x64\npcap.sys ; x64 NT6.1 and above version
-          File win7_above\x64\npcap.inf
-          File win7_above\x64\npcap_wfp.inf
-          File win7_above\x64\npcap.cat
+          File win7\x64\npcap.sys
+          File win7\x64\npcap.inf
+          File win7\x64\npcap_wfp.inf
+          File win7\x64\npcap.cat
+        ${EndIf}
+	  ${Else} ; $os_ver == "win8_above"
+        ${If} $winpcap_mode == "yes"
+          File win8_above_winpcap\x64\npf.sys
+          File win8_above_winpcap\x64\npf.inf
+          File win8_above_winpcap\x64\npf_wfp.inf
+          File win8_above_winpcap\x64\npf.cat
+        ${Else}
+          File win8_above\x64\npcap.sys
+          File win8_above\x64\npcap.inf
+          File win8_above\x64\npcap_wfp.inf
+          File win8_above\x64\npcap.cat
         ${EndIf}
 	  ${EndIf}
 
@@ -778,14 +793,14 @@ Section "WinPcap" SecWinPcap
 	  ${Else}
         SetOutPath $SYSDIR\Npcap
 	  ${EndIf}
-      File win7_above\x64\NPcapHelper.exe
+      File win8_above\x64\NPcapHelper.exe
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.0 above version (for Vista, Win7, Win8 and Win10)
 	  ${If} $winpcap_mode == "yes"
-	    File win7_above_winpcap\x64\Packet.dll ; x64 NT6.0 and above version
+	    File win8_above_winpcap\x64\Packet.dll
 	  ${Else}
-        File win7_above\x64\Packet.dll ; x64 NT6.1 and above version
+        File win8_above\x64\Packet.dll
 	  ${EndIf}
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       ; Packet.dll will read this option
@@ -811,7 +826,8 @@ Section "WinPcap" SecWinPcap
     ; register the driver as a system service using Windows API calls
     ; this will work on Windows 2000 (that lacks sc.exe) and higher
     StrCmp $os_ver 'vista' register_service_win7
-	StrCmp $os_ver 'win7' register_service_win7
+    StrCmp $os_ver 'win7' register_service_win7
+    StrCmp $os_ver 'win8_above' register_service_win7
     ;registerService_xp_vista:
     Call registerServiceAPI_xp_vista
     Goto registerdone
@@ -1022,14 +1038,14 @@ Section "Uninstall"
   del64bitnpf:
     ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
     DetailPrint "Windows CurrentVersion: $R0"
-    StrCmp $R0 '6.0'   del64bitnpf_xp_vista
+    ; StrCmp $R0 '6.0'   del64bitnpf_xp_vista
     StrCpy $R0 $R0 2
     StrCmp $R0 '6.' del64bitnpf_win7 del64bitnpf_xp_vista
   
   del32bitnpf:
     ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
     DetailPrint "Windows CurrentVersion: $R0"
-    StrCmp $R0 '6.0'   del32bitnpf_xp_vista
+    ; StrCmp $R0 '6.0'   del32bitnpf_xp_vista
     StrCpy $R0 $R0 2
     StrCmp $R0 '6.' del32bitnpf_win7 del32bitnpf_xp_vista
   
