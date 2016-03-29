@@ -111,8 +111,13 @@ extern NDIS_HANDLE         FilterDriverObject;
 // Loopback interface MTU definition
 #define NPF_LOOPBACK_INTERFACR_MTU		65536	///< The MTU of the "Npcap Loopback Adapter", this value adopts Linux's "lo" MTU and can't be modified.
 
-// Custom link type, used by "Npcap Loopback Adapter", NDIS doesn't provide an equivalent
+// Custom link type, originally defined in Packet32.h, NDIS doesn't provide an equivalent for some of values
 #define NdisMediumNull					-1		///< The link type of the "Npcap Loopback Adapter", this value will be recognized by packet.dll code.
+#define NdisMediumCHDLC					-2		///< Custom linktype: NDIS doesn't provide an equivalent
+#define NdisMediumPPPSerial				-3		///< Custom linktype: NDIS doesn't provide an equivalent
+#define NdisMediumBare80211				-4		///< The link type of the Native WiFi adapters, Npcap versions with Native WiFi feature enabled will support this value.
+#define NdisMediumRadio80211			-5		///< Custom linktype: NDIS doesn't provide an equivalent
+#define NdisMediumPpi					-6		///< Custom linktype: NDIS doesn't provide an equivalent
 
 // Maximum CPU core number, the original value is sizeof(KAFFINITY) * 8, but Amazon instance can return 128 cores, so we make NPF_MAX_CPU_NUMBER to 256 for safe.
 #define NPF_MAX_CPU_NUMBER		sizeof(KAFFINITY) * 32
