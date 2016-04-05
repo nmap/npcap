@@ -1424,7 +1424,7 @@ NPF_AttachAdapter(
 	)
 {
 	POPEN_INSTANCE			Open = NULL;
-	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
+	NDIS_STATUS             Status;
 	NDIS_STATUS				returnStatus;
 	NDIS_FILTER_ATTRIBUTES  FilterAttributes;
 	BOOLEAN               bFalse = FALSE;
@@ -1459,7 +1459,7 @@ NPF_AttachAdapter(
 		{
 			IF_LOUD(DbgPrint("Unsupported media type.\n");)
 
-			Status = NDIS_STATUS_INVALID_PARAMETER;
+			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
 			break;
 		}
 
