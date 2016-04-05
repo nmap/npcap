@@ -1463,13 +1463,14 @@ NPF_AttachAdapter(
 			break;
 		}
 
-		if (AttachParameters->LowerIfIndex != AttachParameters->BaseMiniportIfIndex)
-		{
-			IF_LOUD(DbgPrint("Don't bind to other altitudes than exactly over the miniport.\n");)
-
-			returnStatus = NDIS_STATUS_NOT_SUPPORTED;
-			break;
-		}
+		// Disable this code for now, because it invalidates most adapters to be bound, reason needs to be clarified.
+// 		if (AttachParameters->LowerIfIndex != AttachParameters->BaseMiniportIfIndex)
+// 		{
+// 			IF_LOUD(DbgPrint("Don't bind to other altitudes than exactly over the miniport.\n");)
+// 
+// 			returnStatus = NDIS_STATUS_NOT_SUPPORTED;
+// 			break;
+// 		}
 
 		IF_LOUD(DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X\n",
 			AttachParameters->BaseMiniportName->Buffer,
