@@ -1457,7 +1457,7 @@ NPF_AttachAdapter(
 				&& (AttachParameters->MiniportMediaType != NdisMediumAtm)
 				&& (AttachParameters->MiniportMediaType != NdisMedium802_5))
 		{
-			IF_LOUD(DbgPrint("Unsupported media type.\n");)
+			IF_LOUD(DbgPrint("Unsupported media type: MiniportMediaType = %d.\n", AttachParameters->MiniportMediaType);)
 
 			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
 			break;
@@ -1466,7 +1466,7 @@ NPF_AttachAdapter(
 		// Disable this code for now, because it invalidates most adapters to be bound, reason needs to be clarified.
 // 		if (AttachParameters->LowerIfIndex != AttachParameters->BaseMiniportIfIndex)
 // 		{
-// 			IF_LOUD(DbgPrint("Don't bind to other altitudes than exactly over the miniport.\n");)
+// 			IF_LOUD(DbgPrint("Don't bind to other altitudes than exactly over the miniport: LowerIfIndex = %d, BaseMiniportIfIndex = %d.\n", AttachParameters->LowerIfIndex, AttachParameters->BaseMiniportIfIndex);)
 // 
 // 			returnStatus = NDIS_STATUS_NOT_SUPPORTED;
 // 			break;
