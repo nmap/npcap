@@ -1073,12 +1073,13 @@ NPF_EqualAdapterName(
 {
 	int i;
 	BOOLEAN bResult = TRUE;
-	TRACE_ENTER();
+	// TRACE_ENTER();
 
 	if (s1->Length != s2->Length)
 	{
-		IF_LOUD(DbgPrint("NPF_EqualAdapterName: length not the same, s1->Length = %d, s2->Length = %d\n", s1->Length, s2->Length);)
-		TRACE_EXIT();
+		IF_LOUD(DbgPrint("NPF_EqualAdapterName: length not the same\n");)
+		// IF_LOUD(DbgPrint("NPF_EqualAdapterName: length not the same, s1->Length = %d, s2->Length = %d\n", s1->Length, s2->Length);)
+		// TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -1109,8 +1110,11 @@ NPF_EqualAdapterName(
 
 	// Print unicode strings using %ws will cause page fault blue screen with IRQL = DISPATCH_LEVEL, so we disable the string print for now.
 	// IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);)
-	IF_LOUD(DbgPrint("NPF_EqualAdapterName: i = %d, bResult = %d\n", i, bResult);)
-	TRACE_EXIT();
+	if (bResult)
+	{
+		IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult == TRUE\n");)
+	}
+	// TRACE_EXIT();
 	return bResult;
 }
 
