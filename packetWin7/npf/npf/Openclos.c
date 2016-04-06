@@ -1107,7 +1107,9 @@ NPF_EqualAdapterName(
 		}
 	}
 
-	IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);)
+	// Print unicode strings using %ws will cause page fault blue screen with IRQL = DISPATCH_LEVEL, so we disable the string print for now.
+	// IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);)
+	IF_LOUD(DbgPrint("NPF_EqualAdapterName: i = %d, bResult = %d\n", i, bResult);)
 	TRACE_EXIT();
 	return bResult;
 }
