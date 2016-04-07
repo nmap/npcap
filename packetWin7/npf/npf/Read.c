@@ -615,6 +615,7 @@ NPF_TapExForEachOpen(
 	PUCHAR					LookaheadBuffer;
 	UINT					LookaheadBufferSize;
 	UINT					PacketSize;
+	ULONG					TotalLength;
 	UINT					TotalPacketSize;
 
 	PMDL                    pMdl = NULL;
@@ -674,6 +675,7 @@ NPF_TapExForEachOpen(
 			// Get first MDL and data length in the list
 			//
 			pMdl = pNetBuf->CurrentMdl;
+			TotalLength = pNetBuf->DataLength;
 			Offset = pNetBuf->CurrentMdlOffset;
 			BufferLength = 0;
 
@@ -707,6 +709,10 @@ NPF_TapExForEachOpen(
 
 				BufferLength -= Offset;
 				pEthHeader = (PNDISPROT_ETH_HEADER)((PUCHAR)pEthHeader + Offset);
+
+				// As for single MDL (as we assume) condition, we always have BufferLength == TotalLength
+				if (BufferLength > TotalLength)
+					BufferLength = TotalLength;
 
 				// Handle multiple MDLs situation here, if there's only 20 bytes in the first MDL, then the IP header is in the second MDL.
 				if (BufferLength == sizeof(NDISPROT_ETH_HEADER) && pMdl->Next != NULL)
