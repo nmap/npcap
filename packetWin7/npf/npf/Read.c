@@ -993,6 +993,7 @@ NPF_TapExForEachOpen(
 							// The first MDL, need to handle the offset.
 							if (pCurMdl == pMdl)
 							{
+								IF_LOUD(DbgPrint("The 1st MDL, (Original) MdlSize = %d, Offset = %d\n", BufferLength, Offset);)
 								BufferLength -= Offset;
 								pEthHeader = (PNDISPROT_ETH_HEADER)((PUCHAR)pEthHeader + Offset);
 							}
