@@ -76,6 +76,9 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 #### Previous installers before Npcap 0.05:
 https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/
 
+#### The changes of Nmap to use Npcap (**NOT** in ``WinPcap Compatible Mode``):
+https://github.com/hsluoyz/nmap/
+
 #### The changes of Nmap to use Npcap's loopback feature:
 https://svn.nmap.org/nmap-exp/yang/nmap-npcap/
 
