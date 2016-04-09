@@ -1937,8 +1937,8 @@ NPF_IoControl(
 				}
 				else
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Npcap 802.11: OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", NdisMediumBare80211);
-					*((PUINT)OidData->Data) = NdisMediumBare80211;
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Npcap 802.11: OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", NdisMediumRadio80211);
+					*((PUINT)OidData->Data) = NdisMediumRadio80211;
 					OidData->Length = sizeof(UINT);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 				}
