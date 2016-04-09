@@ -41,6 +41,7 @@
 #include "packet.h"
 #include "win_bpf.h"
 #include "time_calls.h"
+#include "ieee80211_radiotap.h"
 
 #ifdef HAVE_BUGGY_TME_SUPPORT
 #include "tme.h"
@@ -627,6 +628,9 @@ NPF_TapExForEachOpen(
 	PNET_BUFFER             pNextNetBuf;
 	ULONG                   Offset;
 
+	UCHAR					Dot11RadiotapHeader[256] = { 0 };
+	UINT					Dot11RadiotapHeaderSize;
+
 	//TRACE_ENTER();
 
 	pNetBufList = pNetBufferLists;
@@ -653,6 +657,126 @@ NPF_TapExForEachOpen(
 				pVlanTag[0] = ((UCHAR *)(&pTmpVlanTag))[1];
 				pVlanTag[1] = ((UCHAR *)(&pTmpVlanTag))[0];
 			}
+		}
+
+		// Handle native 802.11 media specific OOB data here.
+		// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
+		if (Open->Medium == NdisMediumNative802_11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
+		{
+			PDOT11_EXTSTA_RECV_CONTEXT  pwInfo;
+			PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) Dot11RadiotapHeader;
+			UINT cur = 0;
+
+			// The radiotap header is also placed in the buffer.
+			cur += sizeof(IEEE80211_RADIOTAP_HEADER) / sizeof(UCHAR);
+
+			pwInfo = NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation);
+
+			// [Radiotap] "TSFT" field.
+			if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP) == DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP)
+			{
+				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_TSFT;
+				RtlCopyMemory(Dot11RadiotapHeader + cur, &pwInfo->ullTimestamp, sizeof(INT64) / sizeof(UCHAR));
+				cur += sizeof(INT64) / sizeof(UCHAR);
+			}
+
+			// [Radiotap] "Flags" field.
+			if (TRUE) // The packet doesn't have FCS. We always have no FCS for all packets currently.
+			{
+				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_FLAGS;
+				*((UCHAR*)Dot11RadiotapHeader + cur) = 0x0; // 0x0: none
+				cur += sizeof(UCHAR) / sizeof(UCHAR);
+			}
+			else // The packet has FCS.
+			{
+				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_FLAGS;
+				*((UCHAR*)Dot11RadiotapHeader + cur) = 0x10; // 0x10: frame includes FCS
+
+				// FCS check fails.
+				if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_FCS_FAILURE) == DOT11_RECV_FLAG_RAW_PACKET_FCS_FAILURE)
+				{
+					*((UCHAR*)Dot11RadiotapHeader + cur) |= 0x40; // 0x40: frame failed FCS check
+				}
+
+				cur += sizeof(UCHAR) / sizeof(UCHAR);
+			}
+
+			// [Radiotap] "Rate" field.
+			// Not finished.
+			if (TRUE) // looking up the ucDataRate field's value in the data rate mapping table
+			{
+				// pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_RATE;
+				// RtlCopyMemory(buf + cur, &pwInfo->ullTimestamp, sizeof(INT64) / sizeof(UCHAR));
+				// cur += sizeof(INT64) / sizeof(UCHAR);
+			}
+
+			// [Radiotap] "Channel" field.
+			if (TRUE)
+			{
+				USHORT flags = 0;
+				if (pwInfo->uPhyId == dot11_phy_type_fhss)
+				{
+					flags = IEEE80211_CHAN_GFSK; // 0x0800
+				}
+				else if (pwInfo->uPhyId == dot11_phy_type_ofdm)
+				{
+					flags = IEEE80211_CHAN_OFDM; // 0x0040
+				}
+				else if (pwInfo->uPhyId == dot11_phy_type_hrdsss)
+				{
+					flags = IEEE80211_CHAN_CCK; // 0x0020
+				}
+				else if (pwInfo->uPhyId == dot11_phy_type_erp)
+				{
+					flags = IEEE80211_CHAN_OFDM; // 0x0040
+				}
+				else if (pwInfo->uPhyId != dot11_phy_type_irbaseband)
+				{
+					if (pwInfo->uChCenterFrequency == 5000) // 5 GHz
+					{
+						flags = IEEE80211_CHAN_5GHZ; // 0x0100
+					}
+					else if (pwInfo->uChCenterFrequency == 2400) // 2.4 GHz
+					{
+						flags = IEEE80211_CHAN_2GHZ; // 0x0080
+					}
+					else
+					{
+						// should be a else here?
+					}
+				}
+
+				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_CHANNEL;
+				*((USHORT*)Dot11RadiotapHeader + cur) = flags;
+				cur += sizeof(USHORT) / sizeof(UCHAR);
+				*((USHORT*)Dot11RadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
+				cur += sizeof(USHORT) / sizeof(UCHAR);
+			}
+
+			// [Radiotap] "Antenna signal" field.
+			if (TRUE)
+			{
+				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_DBM_ANTSIGNAL;
+				RtlCopyMemory(Dot11RadiotapHeader + cur, &pwInfo->lRSSI, sizeof(UCHAR) / sizeof(UCHAR));
+				cur += sizeof(UCHAR) / sizeof(UCHAR);
+			}
+
+			// [Radiotap] "MCS" field.
+			if (pwInfo->uPhyId == dot11_phy_type_ht)
+			{
+				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_MCS;
+				RtlZeroMemory(Dot11RadiotapHeader + cur, 3 * sizeof(UCHAR) / sizeof(UCHAR));
+				cur += 3 * sizeof(UCHAR) / sizeof(UCHAR);
+			}
+			// [Radiotap] "VHT" field.
+			else if (pwInfo->uPhyId == dot11_phy_type_vht)
+			{
+				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_VHT;
+				RtlZeroMemory(Dot11RadiotapHeader + cur, 12 * sizeof(UCHAR) / sizeof(UCHAR));
+				cur += 12 * sizeof(UCHAR) / sizeof(UCHAR);
+			}
+
+			Dot11RadiotapHeaderSize = cur;
 		}
 
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);

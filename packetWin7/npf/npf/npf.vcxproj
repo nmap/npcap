@@ -469,6 +469,7 @@
     <ClInclude Include="count_packets.h" />
     <ClInclude Include="DEBUG.H" />
     <ClInclude Include="functions.h" />
+    <ClInclude Include="ieee80211_radiotap.h" />
     <ClInclude Include="ioctls.h" />
     <ClInclude Include="jitter.h" />
     <ClInclude Include="Loopback.h" />
