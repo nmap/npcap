@@ -629,7 +629,7 @@ NPF_TapExForEachOpen(
 	ULONG                   Offset;
 
 	UCHAR					Dot11RadiotapHeader[256] = { 0 };
-	UINT					Dot11RadiotapHeaderSize;
+	UINT					Dot11RadiotapHeaderSize = 0;
 
 	//TRACE_ENTER();
 
@@ -675,7 +675,7 @@ NPF_TapExForEachOpen(
 			// [Radiotap] "TSFT" field.
 			if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP) == DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP)
 			{
-				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_TSFT;
+				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_TSFT);
 				RtlCopyMemory(Dot11RadiotapHeader + cur, &pwInfo->ullTimestamp, sizeof(INT64) / sizeof(UCHAR));
 				cur += sizeof(INT64) / sizeof(UCHAR);
 			}
@@ -683,13 +683,13 @@ NPF_TapExForEachOpen(
 			// [Radiotap] "Flags" field.
 			if (TRUE) // The packet doesn't have FCS. We always have no FCS for all packets currently.
 			{
-				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_FLAGS;
+				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
 				*((UCHAR*)Dot11RadiotapHeader + cur) = 0x0; // 0x0: none
 				cur += sizeof(UCHAR) / sizeof(UCHAR);
 			}
 			else // The packet has FCS.
 			{
-				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_FLAGS;
+				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
 				*((UCHAR*)Dot11RadiotapHeader + cur) = 0x10; // 0x10: frame includes FCS
 
 				// FCS check fails.
@@ -705,7 +705,7 @@ NPF_TapExForEachOpen(
 			// Not finished.
 			if (TRUE) // looking up the ucDataRate field's value in the data rate mapping table
 			{
-				// pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_RATE;
+				// pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
 				// RtlCopyMemory(buf + cur, &pwInfo->ullTimestamp, sizeof(INT64) / sizeof(UCHAR));
 				// cur += sizeof(INT64) / sizeof(UCHAR);
 			}
@@ -746,7 +746,7 @@ NPF_TapExForEachOpen(
 					}
 				}
 
-				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_CHANNEL;
+				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_CHANNEL);
 				*((USHORT*)Dot11RadiotapHeader + cur) = flags;
 				cur += sizeof(USHORT) / sizeof(UCHAR);
 				*((USHORT*)Dot11RadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
@@ -756,7 +756,7 @@ NPF_TapExForEachOpen(
 			// [Radiotap] "Antenna signal" field.
 			if (TRUE)
 			{
-				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_DBM_ANTSIGNAL;
+				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
 				RtlCopyMemory(Dot11RadiotapHeader + cur, &pwInfo->lRSSI, sizeof(UCHAR) / sizeof(UCHAR));
 				cur += sizeof(UCHAR) / sizeof(UCHAR);
 			}
@@ -764,19 +764,21 @@ NPF_TapExForEachOpen(
 			// [Radiotap] "MCS" field.
 			if (pwInfo->uPhyId == dot11_phy_type_ht)
 			{
-				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_MCS;
+				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_MCS);
 				RtlZeroMemory(Dot11RadiotapHeader + cur, 3 * sizeof(UCHAR) / sizeof(UCHAR));
 				cur += 3 * sizeof(UCHAR) / sizeof(UCHAR);
 			}
 			// [Radiotap] "VHT" field.
 			else if (pwInfo->uPhyId == dot11_phy_type_vht)
 			{
-				pRadiotapHeader->it_present |= IEEE80211_RADIOTAP_VHT;
+				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_VHT);
 				RtlZeroMemory(Dot11RadiotapHeader + cur, 12 * sizeof(UCHAR) / sizeof(UCHAR));
 				cur += 12 * sizeof(UCHAR) / sizeof(UCHAR);
 			}
 
 			Dot11RadiotapHeaderSize = cur;
+			pRadiotapHeader->it_version = 0x0;
+			pRadiotapHeader->it_len = (USHORT) Dot11RadiotapHeaderSize;
 		}
 
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
@@ -1073,6 +1075,25 @@ NPF_TapExForEachOpen(
 						LocalData->P = 0;
 
 					increment = sizeof(struct PacketHeader);
+
+					if (Dot11RadiotapHeaderSize)
+					{
+						Header->header.bh_caplen += Dot11RadiotapHeaderSize;
+						Header->header.bh_datalen += Dot11RadiotapHeaderSize;
+
+						if (Open->Size - LocalData->P < Dot11RadiotapHeaderSize) //we check that the available, AND contiguous, space in the buffer will fit
+						{
+							// the NewHeader structure, at least, otherwise we skip the producer
+							increment += Open->Size - LocalData->P; // at the beginning of the buffer (p = 0), and decrement the free bytes appropriately
+							LocalData->P = 0;
+						}
+
+						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, Dot11RadiotapHeaderSize);
+						LocalData->P += Dot11RadiotapHeaderSize;
+						if (LocalData->P == Open->Size)
+							LocalData->P = 0;
+						increment += Dot11RadiotapHeaderSize;
+					}
 
 					//
 					//we can consider the buffer contiguous, either because we use only the data

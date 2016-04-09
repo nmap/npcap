@@ -217,6 +217,8 @@ enum ieee80211_radiotap_type
 	IEEE80211_RADIOTAP_VHT = 21,
 };
 
+#define BIT(n)	(1U << n)
+
 #ifndef _KERNEL
 /* Channel flags. */
 #define IEEE80211_CHAN_TURBO    0x0010  /* Turbo channel */
