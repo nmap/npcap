@@ -701,6 +701,9 @@ NPF_TapExForEachOpen(
 				cur += sizeof(UCHAR) / sizeof(UCHAR);
 			}
 
+			// Padding 1 byte here.
+			cur += sizeof(UCHAR) / sizeof(UCHAR);
+
 			// [Radiotap] "Rate" field.
 			// Not finished.
 			if (TRUE) // looking up the ucDataRate field's value in the data rate mapping table
@@ -732,24 +735,30 @@ NPF_TapExForEachOpen(
 				}
 				else if (pwInfo->uPhyId != dot11_phy_type_irbaseband)
 				{
-					if (pwInfo->uChCenterFrequency == 5000) // 5 GHz
+					// 2484 is cutoff value used by Wireshark for CommView files, we follow this design here.
+					if (pwInfo->uChCenterFrequency > 2484) // 5 GHz
 					{
 						flags = IEEE80211_CHAN_5GHZ; // 0x0100
 					}
-					else if (pwInfo->uChCenterFrequency == 2400) // 2.4 GHz
+					else // 2.4 GHz
 					{
 						flags = IEEE80211_CHAN_2GHZ; // 0x0080
 					}
-					else
-					{
-						// should be a else here?
-					}
 				}
+
+				// If the frequency is higher than 65535, radiotap can't hold this value because it's only 16 bits, we just leave it blank.
+				if (pwInfo->uChCenterFrequency <= 65535)
+				{
+					*((USHORT*)Dot11RadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
+				}
+				else
+				{
+					*((USHORT*)Dot11RadiotapHeader + cur) = 0;
+				}
+				cur += sizeof(USHORT) / sizeof(UCHAR);
 
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_CHANNEL);
 				*((USHORT*)Dot11RadiotapHeader + cur) = flags;
-				cur += sizeof(USHORT) / sizeof(UCHAR);
-				*((USHORT*)Dot11RadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
 				cur += sizeof(USHORT) / sizeof(UCHAR);
 			}
 
@@ -757,7 +766,8 @@ NPF_TapExForEachOpen(
 			if (TRUE)
 			{
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
-				RtlCopyMemory(Dot11RadiotapHeader + cur, &pwInfo->lRSSI, sizeof(UCHAR) / sizeof(UCHAR));
+				// We don't need to worry about that lRSSI value doesn't fit in 8 bits based on practical use.
+				*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) pwInfo->lRSSI;
 				cur += sizeof(UCHAR) / sizeof(UCHAR);
 			}
 
@@ -771,6 +781,11 @@ NPF_TapExForEachOpen(
 			// [Radiotap] "VHT" field.
 			else if (pwInfo->uPhyId == dot11_phy_type_vht)
 			{
+				// Before putting the VHT field into the packet, because the VHT field has to be aligned on a 2-byte boundary,
+				// and the antenna field is on a 2-byte boundary but is only 1 byte long.
+				// (The MCS field, however, doesn't have to be aligned on a 2-byte boundary, so you *don't* need to pad anything for HT frames.)
+				cur += sizeof(UCHAR) / sizeof(UCHAR);
+
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_VHT);
 				RtlZeroMemory(Dot11RadiotapHeader + cur, 12 * sizeof(UCHAR) / sizeof(UCHAR));
 				cur += 12 * sizeof(UCHAR) / sizeof(UCHAR);
