@@ -1323,9 +1323,9 @@ NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, OUT PUINT  pMtu);
 
 #ifdef HAVE_DOT11_SUPPORT
 NTSTATUS NPF_GetDataRateMappingTable(IN POPEN_INSTANCE pOpen, OUT PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable);
-#endif
 
-USHORT NPF_LookUpDataRateMappingTable(IN PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable, IN UCHAR ucDataRate);
+USHORT NPF_LookUpDataRateMappingTable(IN POPEN_INSTANCE pOpen, IN UCHAR ucDataRate);
+#endif
 
 /*!
   \brief Returns the amount of bytes present in the packet buffer.

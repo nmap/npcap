@@ -737,17 +737,40 @@ NPF_GetDataRateMappingTable(
 		return STATUS_UNSUCCESSFUL;
 	}
 }
-#endif
+
 //-------------------------------------------------------------------
 
 USHORT
 NPF_LookUpDataRateMappingTable(
-	IN PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable,
+	IN POPEN_INSTANCE pOpen,
 	IN UCHAR ucDataRate
 )
 {
-	return 0;
+	UINT i;
+	PDOT11_DATA_RATE_MAPPING_TABLE pTable = &pOpen->DataRateMappingTable;
+	USHORT usRetDataRateValue = 0;
+	TRACE_ENTER();
+
+	if (!pOpen->HasDataRateMappingTable)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Data rate mapping table not found, Open = %p\n", pOpen);
+		TRACE_EXIT();
+		return usRetDataRateValue;
+	}
+
+	for (i = 0; i < pTable->uDataRateMappingLength; i ++)
+	{
+		if (pTable->DataRateMappingEntries[i].ucDataRateIndex == ucDataRate)
+		{
+			usRetDataRateValue = pTable->DataRateMappingEntries[i].usDataRateValue;
+			break;
+		}
+	}
+
+	TRACE_EXIT();
+	return usRetDataRateValue;
 }
+#endif
 
 //-------------------------------------------------------------------
 
@@ -1361,6 +1384,10 @@ NPF_CreateOpenObject(
 #ifdef HAVE_RX_SUPPORT
 	Open->SendToRxPath = FALSE;
 	Open->BlockRxPath = FALSE;
+#endif
+
+#ifdef HAVE_DOT11_SUPPORT
+	Open->HasDataRateMappingTable = FALSE;
 #endif
 
 	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));

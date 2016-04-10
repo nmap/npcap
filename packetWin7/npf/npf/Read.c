@@ -708,13 +708,14 @@ NPF_TapExForEachOpen(
 			}
 
 			// Padding 1 byte here.
-			cur += sizeof(UCHAR) / sizeof(UCHAR);
+			// cur += sizeof(UCHAR) / sizeof(UCHAR);
 
 			// [Radiotap] "Rate" field.
 			// Looking up the ucDataRate field's value in the data rate mapping table.
+			// If not found, return 0.
 			USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open, pwInfo->ucDataRate);
 			pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
-			*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR)usDataRateValue;
+			*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) usDataRateValue;
 			cur += sizeof(UCHAR) / sizeof(UCHAR);
 
 			// [Radiotap] "Channel" field.
