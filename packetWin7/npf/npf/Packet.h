@@ -276,6 +276,10 @@ typedef struct _OPEN_INSTANCE
 	BOOLEAN					SendToRxPath;
 	BOOLEAN					BlockRxPath;
 #endif
+#ifdef HAVE_DOT11_SUPPORT
+	BOOLEAN					HasDataRateMappingTable;
+	DOT11_DATA_RATE_MAPPING_TABLE	DataRateMappingTable;
+#endif
 
 	struct _OPEN_INSTANCE	*Next;
 	struct _OPEN_INSTANCE	*GroupNext;
@@ -1316,6 +1320,12 @@ VOID NPF_StopUsingOpenInstance(IN POPEN_INSTANCE pOpen);
 VOID NPF_CloseOpenInstance(IN POPEN_INSTANCE pOpen);
 
 NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, OUT PUINT  pMtu);
+
+#ifdef HAVE_DOT11_SUPPORT
+NTSTATUS NPF_GetDataRateMappingTable(IN POPEN_INSTANCE pOpen, OUT PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable);
+#endif
+
+USHORT NPF_LookUpDataRateMappingTable(IN PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable, IN UCHAR ucDataRate);
 
 /*!
   \brief Returns the amount of bytes present in the packet buffer.

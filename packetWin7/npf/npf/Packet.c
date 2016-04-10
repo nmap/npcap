@@ -1928,6 +1928,7 @@ NPF_IoControl(
 			}
 #endif
 
+#ifdef HAVE_DOT11_SUPPORT
 			if (Open->Medium == NdisMediumNative802_11 && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
 			{
 				if (FunctionCode == BIOCSETOID)
@@ -1954,6 +1955,7 @@ NPF_IoControl(
 
 				break;
 			}
+#endif
 
 			//
 			//  The buffer is valid

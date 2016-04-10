@@ -41,7 +41,10 @@
 #include "packet.h"
 #include "win_bpf.h"
 #include "time_calls.h"
+
+#ifdef HAVE_DOT11_SUPPORT
 #include "ieee80211_radiotap.h"
+#endif
 
 #ifdef HAVE_BUGGY_TME_SUPPORT
 #include "tme.h"
@@ -628,8 +631,10 @@ NPF_TapExForEachOpen(
 	PNET_BUFFER             pNextNetBuf;
 	ULONG                   Offset;
 
+#ifdef HAVE_DOT11_SUPPORT
 	UCHAR					Dot11RadiotapHeader[256] = { 0 };
 	UINT					Dot11RadiotapHeaderSize = 0;
+#endif
 
 	//TRACE_ENTER();
 
@@ -659,6 +664,7 @@ NPF_TapExForEachOpen(
 			}
 		}
 
+#ifdef HAVE_DOT11_SUPPORT
 		// Handle native 802.11 media specific OOB data here.
 		// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
 		if (Open->Medium == NdisMediumNative802_11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
@@ -705,13 +711,11 @@ NPF_TapExForEachOpen(
 			cur += sizeof(UCHAR) / sizeof(UCHAR);
 
 			// [Radiotap] "Rate" field.
-			// Not finished.
-			if (TRUE) // looking up the ucDataRate field's value in the data rate mapping table
-			{
-				// pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
-				// RtlCopyMemory(buf + cur, &pwInfo->ullTimestamp, sizeof(INT64) / sizeof(UCHAR));
-				// cur += sizeof(INT64) / sizeof(UCHAR);
-			}
+			// Looking up the ucDataRate field's value in the data rate mapping table.
+			USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open, pwInfo->ucDataRate);
+			pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
+			*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR)usDataRateValue;
+			cur += sizeof(UCHAR) / sizeof(UCHAR);
 
 			// [Radiotap] "Channel" field.
 			if (TRUE)
@@ -795,6 +799,7 @@ NPF_TapExForEachOpen(
 			pRadiotapHeader->it_version = 0x0;
 			pRadiotapHeader->it_len = (USHORT) Dot11RadiotapHeaderSize;
 		}
+#endif
 
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
 
@@ -1091,6 +1096,7 @@ NPF_TapExForEachOpen(
 
 					increment = sizeof(struct PacketHeader);
 
+#ifdef HAVE_DOT11_SUPPORT
 					if (Dot11RadiotapHeaderSize)
 					{
 						Header->header.bh_caplen += Dot11RadiotapHeaderSize;
@@ -1109,6 +1115,7 @@ NPF_TapExForEachOpen(
 							LocalData->P = 0;
 						increment += Dot11RadiotapHeaderSize;
 					}
+#endif
 
 					//
 					//we can consider the buffer contiguous, either because we use only the data

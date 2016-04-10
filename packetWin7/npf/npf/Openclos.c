@@ -339,6 +339,11 @@ NPF_OpenAdapter(
 		// Status = NPF_GetDeviceMTU(Open, &Open->MaxFrameSize);
 	}
 
+#ifdef HAVE_DOT11_SUPPORT
+	// Fetch the device's data rate mapping table with the OID_DOT11_DATA_RATE_MAPPING_TABLE OID.
+	NPF_GetDataRateMappingTable(Open, &Open->DataRateMappingTable);
+#endif
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 NPF_OpenAdapter_End:;
 #endif
@@ -640,6 +645,108 @@ NPF_GetDeviceMTU(
 
 		// return ReqStatus;
 	}
+}
+
+//-------------------------------------------------------------------
+#ifdef HAVE_DOT11_SUPPORT
+NTSTATUS
+NPF_GetDataRateMappingTable(
+	IN POPEN_INSTANCE pOpen,
+	OUT PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable
+)
+{
+	PLIST_ENTRY RequestListEntry;
+	PINTERNAL_REQUEST pInternalReq;
+	NDIS_STATUS ReqStatus;
+
+	TRACE_ENTER();
+
+	ASSERT(pOpen != NULL);
+	ASSERT(pMtu != NULL);
+
+	// Extract a request from the list of free ones
+	RequestListEntry = ExInterlockedRemoveHeadList(&pOpen->RequestList, &pOpen->RequestSpinLock);
+
+	if (RequestListEntry == NULL)
+	{
+		//
+		// THIS IS WRONG
+		//
+
+		pOpen->HasDataRateMappingTable = FALSE;
+		TRACE_EXIT();
+		return STATUS_UNSUCCESSFUL;
+	}
+
+	pInternalReq = CONTAINING_RECORD(RequestListEntry, INTERNAL_REQUEST, ListElement);
+
+	NdisZeroMemory(&pInternalReq->Request, sizeof(NDIS_OID_REQUEST));
+	pInternalReq->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
+	pInternalReq->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
+	pInternalReq->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
+
+	pInternalReq->Request.RequestType = NdisRequestQueryInformation;
+	pInternalReq->Request.DATA.QUERY_INFORMATION.Oid = OID_DOT11_DATA_RATE_MAPPING_TABLE;
+
+	pInternalReq->Request.DATA.QUERY_INFORMATION.InformationBuffer = pDataRateMappingTable;
+	pInternalReq->Request.DATA.QUERY_INFORMATION.InformationBufferLength = sizeof(*pDataRateMappingTable);
+
+	NdisResetEvent(&pInternalReq->InternalRequestCompletedEvent);
+
+	if (*((PVOID *)pInternalReq->Request.SourceReserved) != NULL)
+	{
+		*((PVOID *)pInternalReq->Request.SourceReserved) = NULL;
+	}
+
+	// submit the request
+	pInternalReq->Request.RequestId = (PVOID)NPF_REQUEST_ID;
+	if (pOpen->AdapterHandle)
+	{
+		ReqStatus = NdisFOidRequest(pOpen->AdapterHandle, &pInternalReq->Request);
+	}
+	else
+	{
+		ReqStatus = STATUS_UNSUCCESSFUL;
+	}
+
+	if (ReqStatus == NDIS_STATUS_PENDING)
+	{
+		NdisWaitEvent(&pInternalReq->InternalRequestCompletedEvent, 0);
+		ReqStatus = pInternalReq->RequestStatus;
+	}
+
+	//
+	// Put the request in the list of the free ones
+	//
+	ExInterlockedInsertTailList(&pOpen->RequestList, &pInternalReq->ListElement, &pOpen->RequestSpinLock);
+
+	if (ReqStatus == NDIS_STATUS_SUCCESS)
+	{
+		pOpen->HasDataRateMappingTable = TRUE;
+		TRACE_EXIT();
+		return STATUS_SUCCESS;
+	}
+	else
+	{
+		//
+		// THIS IS WRONG
+		//
+
+		pOpen->HasDataRateMappingTable = FALSE;
+		TRACE_EXIT();
+		return STATUS_UNSUCCESSFUL;
+	}
+}
+#endif
+//-------------------------------------------------------------------
+
+USHORT
+NPF_LookUpDataRateMappingTable(
+	IN PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable,
+	IN UCHAR ucDataRate
+)
+{
+	return 0;
 }
 
 //-------------------------------------------------------------------
