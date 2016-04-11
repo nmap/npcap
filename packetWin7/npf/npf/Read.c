@@ -715,6 +715,12 @@ NPF_TapExForEachOpen(
 			// If not found, return 0.
 			USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open, pwInfo->ucDataRate);
 			pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
+			// The miniport might be providing data rate values > 127.5 Mb/s, but radiotap's "Rate" field is only 8 bits,
+			// so we at least make it the maximum value instead of overflowing it.
+			if (usDataRateValue > 255)
+			{
+				usDataRateValue = 255;
+			}
 			*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) usDataRateValue;
 			cur += sizeof(UCHAR) / sizeof(UCHAR);
 
