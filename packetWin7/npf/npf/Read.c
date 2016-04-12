@@ -696,12 +696,12 @@ NPF_TapExForEachOpen(
 			else // The packet has FCS.
 			{
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
-				*((UCHAR*)Dot11RadiotapHeader + cur) = 0x10; // 0x10: frame includes FCS
+				*((UCHAR*)Dot11RadiotapHeader + cur) = IEEE80211_RADIOTAP_F_FCS; // 0x10: frame includes FCS
 
 				// FCS check fails.
 				if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_FCS_FAILURE) == DOT11_RECV_FLAG_RAW_PACKET_FCS_FAILURE)
 				{
-					*((UCHAR*)Dot11RadiotapHeader + cur) |= 0x40; // 0x40: frame failed FCS check
+					*((UCHAR*)Dot11RadiotapHeader + cur) |= IEEE80211_RADIOTAP_F_BADFCS; // 0x40: frame failed FCS check
 				}
 
 				cur += sizeof(UCHAR) / sizeof(UCHAR);

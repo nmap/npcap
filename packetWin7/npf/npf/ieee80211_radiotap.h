@@ -247,5 +247,10 @@ enum ieee80211_radiotap_type
 * with fragmentation
 */
 #define	IEEE80211_RADIOTAP_F_FCS	0x10	/* frame includes FCS */
+#define	IEEE80211_RADIOTAP_F_DATAPAD	0x20	/* frame has padding between
+* 802.11 header and payload
+* (to 32-bit boundary)
+*/
+#define IEEE80211_RADIOTAP_F_BADFCS	0x40	/* frame failed FCS check */
 
 #endif /* _NET_IF_IEEE80211RADIOTAP_H_ */
