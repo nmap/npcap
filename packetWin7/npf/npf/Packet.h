@@ -286,6 +286,9 @@ typedef struct _OPEN_INSTANCE
 	struct _OPEN_INSTANCE	*GroupHead;
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
+#ifdef HAVE_DOT11_SUPPORT
+	ULONG					Dot11PacketFilter;
+#endif
 
 	NDIS_SPIN_LOCK			OIDLock;		///< Lock for protection of state and outstanding sends and recvs
 	PNDIS_OID_REQUEST		PendingOidRequest;
@@ -713,6 +716,23 @@ ULONG
 NPF_GetPacketFilter(
 	NDIS_HANDLE FilterModuleContext
 	);
+
+/*!
+  \brief Set the packet filter of the adapter.
+  \param FilterModuleContext Pointer to the filter context structure.
+  \param packet filter The packet filter
+  \return Status of the set/query request.
+
+This function is used to get the original adapter packet filter with
+a NPF_AttachAdapter(), it is stored in the HigherPacketFilter, the combination
+of HigherPacketFilter and MyPacketFilter will be the final packet filter
+the low-level adapter sees.
+*/
+NDIS_STATUS
+NPF_SetPacketFilter(
+	NDIS_HANDLE FilterModuleContext,
+	ULONG PacketFilter
+);
 
 
 /*!

@@ -1740,6 +1740,21 @@ NPF_AttachAdapter(
 				Status,
 				Open->HigherPacketFilter);
 
+#ifdef HAVE_DOT11_SUPPORT
+			if (Open->Medium == NdisMediumNative802_11)
+			{
+				// Handling raw 802.11 packets need to set NDIS_PACKET_TYPE_802_11_RAW_DATA and NDIS_PACKET_TYPE_802_11_RAW_MGMT in the packet filter.
+				Open->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
+				ULONG combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
+				Status = NPF_SetPacketFilter(Open, combinedPacketFilter);
+			}
+
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+				"NPF_SetPacketFilter, Status=%x, Dot11PacketFilter=%x",
+				Status,
+				Open->Dot11PacketFilter);
+#endif
+
 			returnStatus = STATUS_SUCCESS;
 			NPF_AddToOpenArray(Open);
 		}
@@ -1955,7 +1970,11 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 		if (Request->RequestType == NdisRequestSetInformation && Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER)
 		{
 			Open->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
+#ifdef HAVE_DOT11_SUPPORT
+			combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
+#else
 			combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter;
+#endif
 			ClonedRequest->DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 		}
 
@@ -2474,6 +2493,40 @@ NPF_GetPacketFilter(
 	else
 	{
 		return PacketFilter;
+	}
+}
+
+//-------------------------------------------------------------------
+
+NDIS_STATUS
+NPF_SetPacketFilter(
+	NDIS_HANDLE FilterModuleContext,
+	ULONG PacketFilter
+)
+{
+	NDIS_STATUS Status;
+	ULONG BytesProcessed = 0;
+
+	// get the PacketFilter when filter driver loads
+	NPF_DoInternalRequest(FilterModuleContext,
+		NdisRequestQueryInformation,
+		OID_GEN_CURRENT_PACKET_FILTER,
+		&PacketFilter,
+		sizeof(PacketFilter),
+		0,
+		0,
+		&BytesProcessed
+	);
+
+	if (BytesProcessed != sizeof(PacketFilter))
+	{
+		Status = NDIS_STATUS_SUCCESS;
+		return Status;
+	}
+	else
+	{
+		Status = NDIS_STATUS_FAILURE;
+		return TRUE;
 	}
 }
 

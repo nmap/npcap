@@ -2005,7 +2005,11 @@ NPF_IoControl(
 					{
 						Open->GroupHead->MyPacketFilter = 0;
 					}
+#ifdef HAVE_DOT11_SUPPORT
+					combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter; | Open->GroupHead->Dot11PacketFilter;
+#else
 					combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
+#endif
 					pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 				}
 				else
