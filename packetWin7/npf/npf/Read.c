@@ -679,6 +679,7 @@ NPF_TapExForEachOpen(
 			pwInfo = NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation);
 
 			// [Radiotap] "TSFT" field.
+			// Size: 8 bytes, Alignment: 8 bytes.
 			if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP) == DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP)
 			{
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_TSFT);
@@ -687,6 +688,7 @@ NPF_TapExForEachOpen(
 			}
 
 			// [Radiotap] "Flags" field.
+			// Size: 1 byte, Alignment: 1 byte.
 			if (TRUE) // The packet doesn't have FCS. We always have no FCS for all packets currently.
 			{
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
@@ -711,6 +713,7 @@ NPF_TapExForEachOpen(
 			// cur += sizeof(UCHAR) / sizeof(UCHAR);
 
 			// [Radiotap] "Rate" field.
+			// Size: 1 byte, Alignment: 1 byte.
 			// Looking up the ucDataRate field's value in the data rate mapping table.
 			// If not found, return 0.
 			USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open, pwInfo->ucDataRate);
@@ -725,6 +728,7 @@ NPF_TapExForEachOpen(
 			cur += sizeof(UCHAR) / sizeof(UCHAR);
 
 			// [Radiotap] "Channel" field.
+			// Size: 2 bytes + 2 bytes, Alignment: 2 bytes.
 			if (TRUE)
 			{
 				USHORT flags = 0;
@@ -773,7 +777,8 @@ NPF_TapExForEachOpen(
 				cur += sizeof(USHORT) / sizeof(UCHAR);
 			}
 
-			// [Radiotap] "Antenna signal" field.
+			// [Radiotap] "Antenna signal" field, 1 byte.
+			// Size: 1 byte, Alignment: 1 byte.
 			if (TRUE)
 			{
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
@@ -783,13 +788,16 @@ NPF_TapExForEachOpen(
 			}
 
 			// [Radiotap] "MCS" field.
+			// Size: 1 byte + 1 byte + 1 byte, Alignment: 1 byte.
 			if (pwInfo->uPhyId == dot11_phy_type_ht)
 			{
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_MCS);
 				RtlZeroMemory(Dot11RadiotapHeader + cur, 3 * sizeof(UCHAR) / sizeof(UCHAR));
 				cur += 3 * sizeof(UCHAR) / sizeof(UCHAR);
 			}
-			// [Radiotap] "VHT" field.
+
+			// [Radiotap] "VHT" field, 12 bytes.
+			// Size: 2 bytes + 1 byte + 1 byte + 4 * 1 byte + 1 byte + 1 byte + 2 bytes, Alignment: 2 bytes.
 			else if (pwInfo->uPhyId == dot11_phy_type_vht)
 			{
 				// Before putting the VHT field into the packet, because the VHT field has to be aligned on a 2-byte boundary,
