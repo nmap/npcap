@@ -591,6 +591,18 @@ NPF_TapEx(
 //-------------------------------------------------------------------
 
 VOID
+NPF_AlignProtocolField(
+	IN UINT Alignment,
+	IN PUINT pCur
+)
+{
+	*pCur = (*pCur + Alignment - 1);
+	*pCur = *pCur - *pCur % Alignment;
+}
+
+//-------------------------------------------------------------------
+
+VOID
 NPF_TapExForEachOpen(
 	IN POPEN_INSTANCE Open,
 	IN PNET_BUFFER_LIST pNetBufferLists
@@ -709,9 +721,6 @@ NPF_TapExForEachOpen(
 				cur += sizeof(UCHAR) / sizeof(UCHAR);
 			}
 
-			// Padding 1 byte here.
-			// cur += sizeof(UCHAR) / sizeof(UCHAR);
-
 			// [Radiotap] "Rate" field.
 			// Size: 1 byte, Alignment: 1 byte.
 			// Looking up the ucDataRate field's value in the data rate mapping table.
@@ -727,6 +736,7 @@ NPF_TapExForEachOpen(
 			*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) usDataRateValue;
 			cur += sizeof(UCHAR) / sizeof(UCHAR);
 
+			NPF_AlignProtocolField(2, &cur);
 			// [Radiotap] "Channel" field.
 			// Size: 2 bytes + 2 bytes, Alignment: 2 bytes.
 			if (TRUE)
@@ -795,7 +805,6 @@ NPF_TapExForEachOpen(
 				RtlZeroMemory(Dot11RadiotapHeader + cur, 3 * sizeof(UCHAR) / sizeof(UCHAR));
 				cur += 3 * sizeof(UCHAR) / sizeof(UCHAR);
 			}
-
 			// [Radiotap] "VHT" field, 12 bytes.
 			// Size: 2 bytes + 1 byte + 1 byte + 4 * 1 byte + 1 byte + 1 byte + 2 bytes, Alignment: 2 bytes.
 			else if (pwInfo->uPhyId == dot11_phy_type_vht)
@@ -803,7 +812,8 @@ NPF_TapExForEachOpen(
 				// Before putting the VHT field into the packet, because the VHT field has to be aligned on a 2-byte boundary,
 				// and the antenna field is on a 2-byte boundary but is only 1 byte long.
 				// (The MCS field, however, doesn't have to be aligned on a 2-byte boundary, so you *don't* need to pad anything for HT frames.)
-				cur += sizeof(UCHAR) / sizeof(UCHAR);
+				// cur += sizeof(UCHAR) / sizeof(UCHAR);
+				NPF_AlignProtocolField(2, &cur);
 
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_VHT);
 				RtlZeroMemory(Dot11RadiotapHeader + cur, 12 * sizeof(UCHAR) / sizeof(UCHAR));
