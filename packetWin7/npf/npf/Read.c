@@ -771,14 +771,14 @@ NPF_TapExForEachOpen(
 					}
 				}
 
-				// If the frequency is higher than 65535, radiotap can't hold this value because it's only 16 bits, we just leave it blank.
+				// If the frequency is higher than 65535, radiotap can't hold this value because "Frequency" field is only 16 bits, we just leave it the maximum value 65535.
 				if (pwInfo->uChCenterFrequency <= 65535)
 				{
 					*((USHORT*)Dot11RadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
 				}
 				else
 				{
-					*((USHORT*)Dot11RadiotapHeader + cur) = 0;
+					*((USHORT*)Dot11RadiotapHeader + cur) = 65535;
 				}
 				cur += sizeof(USHORT) / sizeof(UCHAR);
 
