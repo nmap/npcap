@@ -701,7 +701,7 @@ NPF_TapExForEachOpen(
 
 			// [Radiotap] "Flags" field.
 			// Size: 1 byte, Alignment: 1 byte.
-			if (TRUE) // The packet doesn't have FCS. We always have no FCS for all packets currently.
+			if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET) != DOT11_RECV_FLAG_RAW_PACKET) // The packet doesn't have FCS. We always have no FCS for all packets currently.
 			{
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
 				*((UCHAR*)Dot11RadiotapHeader + cur) = 0x0; // 0x0: none
