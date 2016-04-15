@@ -398,31 +398,31 @@ FunctionEnd
 Function adminOnlyOptionsPage
   ${If} $admin_only == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State" 0
-  ${OrIf} $admin_only == "yes"
+  ${ElseIf} $admin_only == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State" 1
   ${EndIf}
 
   ${If} $loopback_support == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 0
-  ${OrIf} $loopback_support == "yes"
+  ${ElseIf} $loopback_support == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 1
   ${EndIf}
 
   ${If} $dlt_null == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 0
-  ${OrIf} $dlt_null == "yes"
+  ${ElseIf} $dlt_null == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 1
   ${EndIf}
 
   ${If} $vlan_support == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
-  ${OrIf} $vlan_support == "yes"
+  ${ElseIf} $vlan_support == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 1
   ${EndIf}
 
   ${If} $winpcap_mode == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
-  ${OrIf} $winpcap_mode == "yes"
+  ${ElseIf} $winpcap_mode == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 1
   ${EndIf}
 
@@ -636,7 +636,7 @@ Section "WinPcap" SecWinPcap
   ${If} $R1 == "6."
     ${If} $R0 == "6.0"
       StrCpy $os_ver 'vista'
-    ${OrIf} $R0 == "6.1"
+    ${ElseIf} $R0 == "6.1"
       StrCpy $os_ver 'win7'
     ${Else}
       StrCpy $os_ver 'win8_above'
@@ -703,7 +703,7 @@ Section "WinPcap" SecWinPcap
           File vista\x86\npcap_wfp.inf
           File vista\x86\npcap.cat
         ${EndIf}
-	  ${OrIf} $os_ver == "win7"
+	  ${ElseIf} $os_ver == "win7"
         ${If} $winpcap_mode == "yes"
           File win7_winpcap\x86\npf.sys
           File win7_winpcap\x86\npf.inf
@@ -789,7 +789,7 @@ Section "WinPcap" SecWinPcap
           File vista\x64\npcap_wfp.inf
           File vista\x64\npcap.cat
         ${EndIf}
-	  ${OrIf} $os_ver == "win7"
+	  ${ElseIf} $os_ver == "win7"
 	    ${If} $winpcap_mode == "yes"
           File win7_winpcap\x64\npf.sys
           File win7_winpcap\x64\npf.inf
