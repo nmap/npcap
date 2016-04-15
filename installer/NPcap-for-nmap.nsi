@@ -252,7 +252,6 @@ Function .onInit
 
   do_silent:
     SetSilent silent
-
     Call getInstallOptions
 
     IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
@@ -318,6 +317,7 @@ Function .onInit
 
   no_silent:
     IfFileExists "$INSTDIR\NPFInstall.exe" do_version_check
+    Call getInstallOptions
     return
 
   do_version_check:
@@ -396,6 +396,36 @@ Function .onInit
 FunctionEnd
 
 Function adminOnlyOptionsPage
+  ${If} $admin_only == "no"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State" 0
+  ${Else}
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State" 1
+  ${EndIf}
+
+  ${If} $loopback_support == "no"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 0
+  ${Else}
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 1
+  ${EndIf}
+
+  ${If} $dlt_null == "no"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 0
+  ${Else}
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 1
+  ${EndIf}
+
+  ${If} $vlan_support == "no"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
+  ${Else}
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 1
+  ${EndIf}
+
+  ${If} $winpcap_mode == "no"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
+  ${Else}
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 1
+  ${EndIf}
+
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
   winpcap_exist:
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
