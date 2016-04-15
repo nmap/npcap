@@ -46,9 +46,9 @@ Don't try to make OID requests to ``Npcap Loopback Adapter`` except ``OID_GEN_MA
 To conclude, a software that wants to support Npcap loopback feature should do these steps:
 
 * Detect ``Npcap Loopback Adapte``'s presence, by reading registry value ``Loopback`` at key ``HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npf`` (or ``npcap`` if you installed Npcap With "WinPcap Compatible Mode" ``OFF``). If ``Loopback`` value exsits, it means ``Npcap Loopback Adapter`` is OK. Then perform the following steps.
-* Regard the IP address of ``Npcap Loopback Adapter`` as ``127.0.0.1`` (IPv4) and ``::1`` (IPv6).
-* Regard the MAC address of ``Npcap Loopback Adapter`` as ``00:00:00:00:00:00``.
-* If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like ``Loopback Pseudo-Interface 1``. This interface is a **DUMMY** interface by Microsoft and can't be seen in NDIS layer. And tt also takes the ``127.0.0.1`` IP address. A good practise for softwares is that merge the ``Npcap Loopback Adapter`` and ``Loopback Pseudo-Interface 1`` into one, like what I have implemented for Nmap (see the code).
+* Treat the IP address of ``Npcap Loopback Adapter`` as ``127.0.0.1`` (IPv4) and ``::1`` (IPv6).
+* Treat the MAC address of ``Npcap Loopback Adapter`` as ``00:00:00:00:00:00``.
+* If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like ``Loopback Pseudo-Interface 1``. This interface is a **DUMMY** interface by Microsoft and can't be seen in NDIS layer. And tt also takes the ``127.0.0.1``/``::1`` IP address. A good practise for softwares is merging the entry of ``Npcap Loopback Adapter`` and the entry of ``Loopback Pseudo-Interface 1`` into one entry, like what I have implemented for Nmap (see the ``Other code (for developers)`` part).
 * Don't make use of OID requests for ``Npcap Loopback Adapter`` except ``OID_GEN_MAXIMUM_TOTAL_SIZE`` requests.
 
 ## Build
