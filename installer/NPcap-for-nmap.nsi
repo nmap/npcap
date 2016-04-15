@@ -166,6 +166,52 @@ ReserveFile "final.ini"
 !insertmacro GetParameters
 !insertmacro GetOptions
 
+Function getInstallOptions
+  StrCpy $admin_only "no"
+  StrCpy $loopback_support "yes"
+  StrCpy $dlt_null "no"
+  StrCpy $vlan_support "no"
+  StrCpy $winpcap_mode "yes"
+
+  ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes'
+
+  ${GetOptions} $cmd_line "/admin_only=" $R0
+  ${If} $R0 S== "yes"
+  ${OrIf} $R0 S== "no"
+    StrCpy $admin_only $R0
+  ${EndIf}
+
+  ${GetOptions} $cmd_line "/loopback_support=" $R0
+  ${If} $R0 S== "yes"
+  ${OrIf} $R0 S== "no"
+    StrCpy $loopback_support $R0
+  ${EndIf}
+
+  ${GetOptions} $cmd_line "/dlt_null=" $R0
+  ${If} $R0 S== "yes"
+  ${OrIf} $R0 S== "no"
+    StrCpy $dlt_null $R0
+  ${EndIf}
+
+  ${GetOptions} $cmd_line "/vlan_support=" $R0
+  ${If} $R0 S== "yes"
+  ${OrIf} $R0 S== "no"
+    StrCpy $vlan_support $R0
+  ${EndIf}
+
+  ${GetOptions} $cmd_line "/winpcap_mode=" $R0
+  ${If} $R0 S== "yes"
+  ${OrIf} $R0 S== "no"
+    StrCpy $winpcap_mode $R0
+  ${EndIf}
+
+  ${If} $winpcap_mode == "no"
+    StrCpy $driver_name "npcap"
+  ${Else}
+    StrCpy $driver_name "npf"
+  ${EndIf}
+FunctionEnd
+
 ; This function is called on startup. IfSilent checks
 ; if the flag /S was specified. If so, it sets the installer
 ; to run in "silent mode" which displays no windows and accepts
@@ -206,49 +252,8 @@ Function .onInit
 
   do_silent:
     SetSilent silent
-    StrCpy $admin_only "no"
-    StrCpy $loopback_support "yes"
-    StrCpy $dlt_null "no"
-    StrCpy $vlan_support "no"
-    StrCpy $winpcap_mode "yes"
 
-    ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes'
-
-    ${GetOptions} $cmd_line "/admin_only=" $R0
-    ${If} $R0 S== "yes"
-    ${OrIf} $R0 S== "no"
-      StrCpy $admin_only $R0
-    ${EndIf}
-
-    ${GetOptions} $cmd_line "/loopback_support=" $R0
-    ${If} $R0 S== "yes"
-    ${OrIf} $R0 S== "no"
-      StrCpy $loopback_support $R0
-    ${EndIf}
-
-    ${GetOptions} $cmd_line "/dlt_null=" $R0
-    ${If} $R0 S== "yes"
-    ${OrIf} $R0 S== "no"
-      StrCpy $dlt_null $R0
-    ${EndIf}
-
-    ${GetOptions} $cmd_line "/vlan_support=" $R0
-    ${If} $R0 S== "yes"
-    ${OrIf} $R0 S== "no"
-      StrCpy $vlan_support $R0
-    ${EndIf}
-
-    ${GetOptions} $cmd_line "/winpcap_mode=" $R0
-    ${If} $R0 S== "yes"
-    ${OrIf} $R0 S== "no"
-      StrCpy $winpcap_mode $R0
-    ${EndIf}
-
-    ${If} $winpcap_mode == "no"
-      StrCpy $driver_name "npcap"
-    ${Else}
-      StrCpy $driver_name "npf"
-    ${EndIf}
+    Call getInstallOptions
 
     IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
     return
