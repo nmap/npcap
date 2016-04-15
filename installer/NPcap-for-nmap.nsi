@@ -398,31 +398,31 @@ FunctionEnd
 Function adminOnlyOptionsPage
   ${If} $admin_only == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State" 0
-  ${Else}
+  ${OrIf} $admin_only == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State" 1
   ${EndIf}
 
   ${If} $loopback_support == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 0
-  ${Else}
+  ${OrIf} $loopback_support == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 1
   ${EndIf}
 
   ${If} $dlt_null == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 0
-  ${Else}
+  ${OrIf} $dlt_null == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 1
   ${EndIf}
 
   ${If} $vlan_support == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
-  ${Else}
+  ${OrIf} $vlan_support == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 1
   ${EndIf}
 
   ${If} $winpcap_mode == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
-  ${Else}
+  ${OrIf} $winpcap_mode == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 1
   ${EndIf}
 
