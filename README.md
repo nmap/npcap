@@ -58,7 +58,7 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 
 1. Install the latest ``-wifi`` version Npcap (``npcap-nmap-%VERSION%-wifi.exe``): We separate the releases into two versions: ``normal`` version and ``-wifi`` version. Their only difference is: ``normal`` version Npcap will see packets with ``fake Ethernet`` headers for wireless adapters, but ``-wifi`` version Npcap will see packets with Radiotap + ``802.11`` headers for wireless adapters.
 
-2. Run ``WlanHelper.exe`` with **Administrator** privilege. Type in the index of your wireless adapter (usually ``0``) and press ``Enter``. Then type in ``1`` and press ``Enter`` to  to switch on the **Monitor Mode**.
+2. Run ``WlanHelper.exe`` with **Administrator** privilege. Type in the index of your wireless adapter (usually ``0``) and press ``Enter``. Then type in ``1`` and press ``Enter`` to  to switch on the **Monitor Mode**. ``WlanHelper.exe`` also supports parameters to be used in an API manner, run ``WlanHelper.exe -h`` for details.
 
 3. An example: launch ``Wireshark`` and capture on the wireless adapter, you will see **all 802.11 packets (data + control + management)**. Here you should make your software interact with Npcap using the WinPcap API (open the adapter, read packets, send packets, etc).
 
@@ -70,8 +70,7 @@ You need to use ``WlanHelper.exe`` tool to switch on the **Monitor Mode** in ord
 
 Switching on the **Monitor Mode** will disconnect your wireless network from the AP, you can switch back to **Managed Mode** using the same ``WlanHelper.exe`` tool.
 
-The source code of ``WlanHelper.exe`` tool is published at:
-https://github.com/hsluoyz/WlanHelper
+The ``WlanHelper.exe`` tool is released at: https://github.com/hsluoyz/WlanHelper/releases
 
 ### A known cleanup issue
 
