@@ -51,6 +51,33 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 * If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like ``Loopback Pseudo-Interface 1``. This interface is a **DUMMY** interface by Microsoft and can't be seen in NDIS layer. And tt also takes the ``127.0.0.1``/``::1`` IP address. A good practise for softwares is merging the entry of ``Npcap Loopback Adapter`` and the entry of ``Loopback Pseudo-Interface 1`` into one entry, like what I have implemented for Nmap (see the ``Other code (for developers)`` part).
 * Don't make use of OID requests for ``Npcap Loopback Adapter`` except ``OID_GEN_MAXIMUM_TOTAL_SIZE`` requests.
 
+## For softwares that uses Npcap raw 802.11 feature
+
+### Usage
+
+1. Install the latest ``-wifi`` version Npcap (``npcap-nmap-%VERSION%-wifi.exe``): We separate the releases into two versions: ``normal`` version and ``-wifi`` version. Their only difference is: ``normal`` version Npcap will see packets with ``fake Ethernet`` headers for wireless adapters, but ``-wifi`` version Npcap will see packets with Radiotap + ``802.11`` headers for wireless adapters.
+
+2. Run ``WlanHelper.exe`` with **Administrator** privilege. Type in the index of your wireless adapter (usually ``0``) and press ``Enter``. Then type in ``1`` and press ``Enter`` to  to switch on the **Monitor Mode**.
+
+3. An example: launch ``Wireshark`` and capture on the wireless adapter, you will see **all 802.11 packets (data + control + management)**. Here you should make your software interact with Npcap using the WinPcap API (open the adapter, read packets, send packets, etc).
+
+4. If you need to return to **Managed Mode**, run ``WlanHelper.exe`` again and input the index of the adapter, then type in ``0`` and press ``Enter`` to  to switch off the **Monitor Mode**.
+
+### Notice
+
+You need to use ``WlanHelper.exe`` tool to switch on the **Monitor Mode** in order to see ``802.11 control and management packets`` in Wireshark (also ``encrypted 802.11 data packets``, you need to specify the ``decipher key`` in Wireshark in order to decrypt those packets), otherwise you will only see ``802.11 data packets``.
+
+Switching on the **Monitor Mode** will disconnect your wireless network from the AP, you can switch back to **Managed Mode** using the same ``WlanHelper.exe`` tool.
+
+The source code of ``WlanHelper.exe`` tool is published at:
+https://github.com/hsluoyz/WlanHelper
+
+### Terminology
+
+**Managed Mode** (for ``Linux``) = **Extensible Station Mode** (aka **ExtSTA**, for ``Windows``)
+
+**Monitor Mode** (for ``Linux``) = **Network Monitor Mode** (aka **NetMon**, for ``Windows``)
+
 ## Build
 
 1. Run ``installer\Build.bat``: build all DLLs and the driver. The DLLs need to be built using **Visual Studio 2013**. And the driver needs to be built using **Visual Studio 2015** with **Windows SDK 10 10586** & **Windows Driver Kit 10 10586**.
