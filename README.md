@@ -101,6 +101,41 @@ The solution is:
 2. Run ``installer\Deploy_WinPcap_WithTimeStamp.bat``: copy the files from build directories, and sign the files for ``WinPcap Compatible Mode``.
 3. Run ``installer\Gen_Installer_Only.bat``: Generate an installer named ``npcap-nmap-%VERSION%.exe`` using [NSIS large strings build](http://nsis.sourceforge.net/Special_Builds) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore), and sign the installer.
 
+## Redistribution
+
+(You need to first notice our [LICENSE](https://github.com/nmap/npcap/blob/master/LICENSE) before distributing Npcap)
+
+The Npcap installer is friendly for redistribution by supporting two installation ways: ``GUI Mode`` (direct run) and ``Silent Mode`` (run with ``/s`` paramter).
+
+### How to change default options for ``GUI Mode`` installation
+
+Default options for Npcap installer GUI can be changed. An example is:
+
+``npcap-nmap-0.06.exe /admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=no``
+
+or even simpler:
+
+``npcap-nmap-0.06.exe /winpcap_mode=no``
+
+As the default option of ``/winpcap_mode`` is ``yes``. Running the installer directly without options will see ``Install Npcap in WinPcap API-compatible Mode`` **CHECKED** by default in the ``Installation Options`` page. However, the above two commands will launch the installer GUI, and in the ``Installation Options`` page, the ``Install Npcap in WinPcap API-compatible Mode`` option will be **UNCHECKED** by default.
+
+### How to change options for ``Silent Mode`` installation
+
+An example of changing option feature for silent installation is:
+
+``npcap-nmap-0.06.exe /S /admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes``
+
+1. The above example shows the default value. e.g., if you doesn't specify the key ``/admin_only``, it will take the default value ``no``. This is the same with the GUI.
+
+2. The keys are **case-insensitive**.
+
+3. The values are **case-sensitive**, only two values are permitted: ``yes`` or ``no``.
+
+### All installation options
+
+The current installation options by default are (for both GUI and silent mode):
+``/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes``
+
 ## Generating debug symbols (optional)
 
 1. Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from build directories for ``Non-WinPcap Compatible Mode``, and generate an zip package named ``npcap-nmap-<VERSION>-DebugSymbols.zip``.
