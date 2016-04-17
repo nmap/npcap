@@ -629,6 +629,7 @@ Section "WinPcap" SecWinPcap
   File pthreadVC.dll
   File wpcap.dll
   File win8_above\x86\NPcapHelper.exe
+  File win8_above\x86\WlanHelper.exe
 
   ; Check windows version
   ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
@@ -829,6 +830,7 @@ Section "WinPcap" SecWinPcap
         SetOutPath $SYSDIR\Npcap
 	  ${EndIf}
       File win8_above\x64\NPcapHelper.exe
+      File win8_above\x64\WlanHelper.exe
       File x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.0 above version (for Vista, Win7, Win8 and Win10)
@@ -1058,11 +1060,13 @@ Section "Uninstall"
     Delete $SYSDIR\pthreadVC.dll
     Delete $SYSDIR\wpcap.dll
     Delete $SYSDIR\NPcapHelper.exe
+    Delete $SYSDIR\WlanHelper.exe
   ${Else}
     Delete $SYSDIR\Npcap\Packet.dll
     Delete $SYSDIR\Npcap\pthreadVC.dll
     Delete $SYSDIR\Npcap\wpcap.dll
     Delete $SYSDIR\Npcap\NPcapHelper.exe
+    Delete $SYSDIR\Npcap\WlanHelper.exe
     RMDir "$SYSDIR\Npcap"
   ${EndIf}
 
@@ -1114,12 +1118,14 @@ Section "Uninstall"
       Delete $SYSDIR\wpcap.dll
       Delete $SYSDIR\Packet.dll
 	  Delete $SYSDIR\NPcapHelper.exe
+	  Delete $SYSDIR\WlanHelper.exe
 	${Else}
       Delete $SYSDIR\drivers\npcap.sys
       ; Also delete the x64 files in System32
       Delete $SYSDIR\Npcap\wpcap.dll
       Delete $SYSDIR\Npcap\Packet.dll
 	  Delete $SYSDIR\Npcap\NPcapHelper.exe
+	  Delete $SYSDIR\Npcap\WlanHelper.exe
       RMDir "$SYSDIR\Npcap"
 	${EndIf}
     

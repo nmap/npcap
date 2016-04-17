@@ -51,6 +51,10 @@ xcopy /Y	"..\packetWin7\NPFInstall\x64\Release%VS_CONFIG_MODE%\NPFInstall.exe"		
 xcopy /Y	"..\packetWin7\Helper\release\NPcapHelper.exe"								.\%DEPLOY_FOLDER_NAME%\x86\
 xcopy /Y	"..\packetWin7\Helper\x64\release\NPcapHelper.exe"							.\%DEPLOY_FOLDER_NAME%\x64\
 
+:: Copy WlanHelper.exe
+xcopy /Y	"..\packetWin7\WlanHelper\release\WlanHelper.exe"								.\%DEPLOY_FOLDER_NAME%\x86\
+xcopy /Y	"..\packetWin7\WlanHelper\x64\release\WlanHelper.exe"							.\%DEPLOY_FOLDER_NAME%\x64\
+
 :: Npcap uses the original WinPcap wpcap.dll with exactly the same code, we just changed the version number.
 :: Copy wpcap.dll
 xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x86\wpcap.dll"								.\
@@ -96,6 +100,12 @@ xcopy /Y	"..\wpcap\PRJ\Release No AirPcap\x64\wpcap.dll"								.\x64\
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /as /fd sha256 /tr %CERT_TIMESTAMP_SERVER% /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\NPcapHelper.exe
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /as /fd sha256 /tr %CERT_TIMESTAMP_SERVER% /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\NPcapHelper.exe
+
+:: Sign WlanHelper.exe
+%CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%DEPLOY_FOLDER_NAME%\x86\WlanHelper.exe
+%CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /as /fd sha256 /tr %CERT_TIMESTAMP_SERVER% /td sha256 .\%DEPLOY_FOLDER_NAME%\x86\WlanHelper.exe
+%CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\%DEPLOY_FOLDER_NAME%\x64\WlanHelper.exe
+%CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /as /fd sha256 /tr %CERT_TIMESTAMP_SERVER% /td sha256 .\%DEPLOY_FOLDER_NAME%\x64\WlanHelper.exe
 
 :: Sign wpcap.dll
 %CERT_SIGN_TOOL% sign /ac %CERT_MS_CROSS_CERT% /sha1 %CERT_HASH_WIN7_ABOVE% /fd sha1 /t %CERT_TIMESTAMP_SERVER% .\wpcap.dll
