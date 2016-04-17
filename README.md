@@ -70,7 +70,7 @@ You need to use ``WlanHelper.exe`` tool to switch on the **Monitor Mode** in ord
 
 Switching on the **Monitor Mode** will disconnect your wireless network from the AP, you can switch back to **Managed Mode** using the same ``WlanHelper.exe`` tool.
 
-The ``WlanHelper.exe`` tool is released at: https://github.com/hsluoyz/WlanHelper/releases
+The ``WlanHelper.exe`` tool automatically installed to your system path after installing Npcap.
 
 ### A known cleanup issue
 
