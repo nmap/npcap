@@ -1775,23 +1775,26 @@ NPF_Pause(
 	)
 {
 	POPEN_INSTANCE          Open = (POPEN_INSTANCE)FilterModuleContext;
+	POPEN_INSTANCE			GroupOpen;
 	NDIS_STATUS             Status;
 
 	UNREFERENCED_PARAMETER(PauseParameters);
 	TRACE_ENTER();
 
-	NdisAcquireSpinLock(&Open->OpenInUseLock);
-
-	if (Open->Multiple_Write_Counter > 0 || Open->TransmitPendingPackets > 0)
+	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
 	{
-		Open->PausePending = TRUE;
-		Status = NDIS_STATUS_PENDING;
+		NdisAcquireSpinLock(&GroupOpen->OpenInUseLock);
+		if (GroupOpen->Multiple_Write_Counter > 0 || GroupOpen->TransmitPendingPackets > 0)
+		{
+			GroupOpen->PausePending = TRUE;
+			Status = NDIS_STATUS_PENDING;
+		}
+		else
+		{
+			Status = NDIS_STATUS_SUCCESS;
+		}
 	}
-	else
-	{
-		Status = NDIS_STATUS_SUCCESS;
-	}
-
+	
 	NdisReleaseSpinLock(&Open->OpenInUseLock);
 	
 	TRACE_EXIT();
@@ -1823,6 +1826,7 @@ NPF_Restart(
 	// below is the "disable offload" version of NPF_Restart() function.
 
 	POPEN_INSTANCE	Open = (POPEN_INSTANCE) FilterModuleContext;
+	POPEN_INSTANCE	GroupOpen;
 	NDIS_STATUS		Status;
 
 	TRACE_ENTER();
@@ -1854,9 +1858,12 @@ NPF_Restart(
 		NdisFIndicateStatus(Open->AdapterHandle, &indication);
 	}
 
-	NdisAcquireSpinLock(&Open->OpenInUseLock);
-	Open->PausePending = FALSE;
-	NdisReleaseSpinLock(&Open->OpenInUseLock);
+	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
+	{
+		NdisAcquireSpinLock(&GroupOpen->OpenInUseLock);
+		GroupOpen->PausePending = FALSE;
+		NdisReleaseSpinLock(&GroupOpen->OpenInUseLock);
+	}
 
 	Status = NDIS_STATUS_SUCCESS;
 	TRACE_EXIT();
@@ -1901,10 +1908,10 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	{
 		if (GroupOpen->ReadEvent != NULL)
 			KeSetEvent(GroupOpen->ReadEvent, 0, FALSE);
+		NPF_CloseBindingAndAdapter(GroupOpen);
 	}
 
 	NPF_RemoveFromOpenArray(Open); //Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
-	NPF_CloseBindingAndAdapter(Open);
 	//NPF_ReleaseOpenInstanceResources(Open);
 	//ExFreePool(Open);
 
