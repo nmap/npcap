@@ -96,8 +96,8 @@ The solution is:
 
 ## Packaging
 
-1. Run ``installer\Deploy_WithTimeStamp.bat``: copy the files from build directories, and sign the files for ``Non-WinPcap Compatible Mode``.
-2. Run ``installer\Deploy_WinPcap_WithTimeStamp.bat``: copy the files from build directories, and sign the files for ``WinPcap Compatible Mode``.
+1. Run ``installer\Deploy.bat``: copy the files from build directories, and sign the files for ``Non-WinPcap Compatible Mode``.
+2. Run ``installer\Deploy_WinPcap.bat``: copy the files from build directories, and sign the files for ``WinPcap Compatible Mode``.
 3. Run ``installer\Gen_Installer_Only.bat``: Generate an installer named ``npcap-nmap-%VERSION%.exe`` using [NSIS large strings build](http://nsis.sourceforge.net/Special_Builds) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore), and sign the installer.
 
 ## Redistribution
