@@ -558,6 +558,9 @@ Function registerServiceAPI_win7
     ExecWait '"$INSTDIR\NPFInstall.exe" -il'
   ${Endif}
 
+  ; clear the driver cache in Driver Store
+  ExecWait '"$INSTDIR\NPFInstall.exe" -c' $0
+  DetailPrint "The cache in driver store was cleared"
   ; install the WFP callout driver
   ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
   ; install the NDIS filter driver

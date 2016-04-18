@@ -6,6 +6,7 @@
 #include "ProtInstall.h"
 #include "LoopbackInstall.h"
 #include "CalloutInstall.h"
+#include "DriverStoreClear.h"
 
 BOOL PacketInstallDriver60();
 BOOL PacketStopDriver60();
@@ -21,7 +22,7 @@ BOOL PacketIsServiceStopPending()
 	DWORD dwStartTime = GetTickCount();
 	DWORD dwBytesNeeded;
 	DWORD dwTimeout = 30000; // 30-second time-out
-	DWORD dwWaitTime;
+	// DWORD dwWaitTime;
 
 	// Get a handle to the SCM database.
 
@@ -343,6 +344,20 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				_tprintf(_T("Npcap service is not pending to stop."));
+				return -1;
+			}
+		}
+		else if (_tcscmp(_T("-c"), argv[1]) == 0)
+		{
+			bSuccess = ClearDriverStore();
+			if (bSuccess)
+			{
+				_tprintf(_T("Npcap driver cache in Driver Store has been successfully cleaned up!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Npcap driver cache in Driver Store has failed the cleanning up."));
 				return -1;
 			}
 		}
