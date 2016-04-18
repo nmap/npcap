@@ -13,10 +13,6 @@ Abstract:
 This code is based on the Windows built-in netsh.exe tool.
 --*/
 
-#include <windows.h>
-#include <vector>
-using namespace std;
-
 #include "LoopbackRename2.h"
 
 #define			NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR		NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
@@ -55,7 +51,7 @@ wstring getNpcapLoopbackAdapterName()
 
 wstring ANSIToUnicode(const string& str)
 {
-	int len = 0;
+	size_t len = 0;
 	len = str.length();
 	int unicodeLen = ::MultiByteToWideChar(CP_ACP,
 		0,

@@ -15,6 +15,12 @@ This code is based on the Windows built-in netsh.exe tool.
 
 #include "..\..\Common\WpcapNames.h"
 
+#include <windows.h>
+#include <vector>
+using namespace std;
+
+wstring executeCommand(wchar_t* cmd);
+
 void PrepareRenameLoopbackNetwork2();
 
 BOOL DoRenameLoopbackNetwork2();
