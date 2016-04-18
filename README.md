@@ -73,18 +73,6 @@ Switching on the **Monitor Mode** will disconnect your wireless network from the
 
 The ``WlanHelper.exe`` tool automatically installed to your system path after installing Npcap.
 
-### A known cleanup issue
-
-If you have installed a ``-wifi`` version Npcap before, installing a ``normal`` version again will probably still give you ``802.11`` packets instead of ``fake Ethernet`` packets. The cause is **Windows cached some driver configurations about the old version Npcap** (like the ``-wifi`` version).
-
-The solution is:
-
-1. Download the ``DriverStore Explorer [RAPR]`` tool from Microsoft: http://driverstoreexplorer.codeplex.com/ and run ``Rapr.exe`` (you may need to install the correct ``.Net framework`` to run this program).
-
-2. Click on ``Enumerate``, select all the drivers the ``Pkg Provider`` of which are ``Nmap Project`` and click on ``Delete Package``. (Nmap doesn't have another Windows driver except Npcap, so you can feel safe to clear all Nmap driver's cache)
-
-3. Reinstall the ``normal`` version Npcap, this time Npcap will behave correctly for wireless adapters by providing ``fake Ethernet`` headers.
-
 ### Terminology
 
 **Managed Mode** (for ``Linux``) = **Extensible Station Mode** (aka **ExtSTA**, for ``Windows``)
