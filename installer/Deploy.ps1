@@ -249,12 +249,15 @@ function sign_file_sha256($file_path_name)
 	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
 }
 
-function generate_installer($install_script, $installer_name)
+function generate_installer($install_script, $installer_name, $has_check=1)
 {
-	if ((Test-Path $installer_name) -and !$has_file_updated)
+	if ($has_check)
 	{
-		Write-Host ("Info: no deployment change, installer not generated.")
-		return
+		if ((Test-Path $installer_name) -and !$has_file_updated)
+		{
+			Write-Host ("Info: no deployment change, installer not generated.")
+			return
+		}
 	}
 
 	&$nsis_compiler_tool $install_script
@@ -275,6 +278,30 @@ function do_deploy
 	generate_installer (".\" + $install_script) (".\" + $installer_name)
 }
 
-do_deploy
+if ($args.count -eq 0)
+{
+	do_deploy
+}
+elseif ($args.count -eq 1)
+{
+	if ($args[0] -eq "deploy")
+	{
+		do_deploy
+	}
+	elseif ($args[0] -eq "debug-deploy")
+	{
+		$driver_init_from_path_array = $driver_init_from_path_array.replace("Release", "Debug")
+		do_deploy
+	}
+	elseif ($args[0] -eq "installer")
+	{
+		generate_installer (".\" + $install_script) (".\" + $installer_name) 0
+	}
+}
+else
+{
+	Write-Warning "Error: too many parameters."
+}
+
 
 pause
