@@ -303,5 +303,3 @@ else
 	Write-Warning "Error: too many parameters."
 }
 
-
-pause
