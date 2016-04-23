@@ -146,13 +146,15 @@ Error: invalid parameter, type in "WlanHelper -h" for help.
 
 ## Build
 
-1. Run ``installer\Build.bat``: build all DLLs and the driver. The DLLs need to be built using **Visual Studio 2013**. And the driver needs to be built using **Visual Studio 2015** with **Windows SDK 10 10586** & **Windows Driver Kit 10 10586**.
+Run ``installer\Build.bat``: build all DLLs and the driver. The DLLs need to be built using **Visual Studio 2013**. And the driver needs to be built using **Visual Studio 2015** with **Windows SDK 10 10586** & **Windows Driver Kit 10 10586**.
 
 ## Packaging
 
-1. Run ``installer\Deploy.bat``: copy the files from build directories, and sign the files for ``Non-WinPcap Compatible Mode``.
-2. Run ``installer\Deploy_WinPcap.bat``: copy the files from build directories, and sign the files for ``WinPcap Compatible Mode``.
-3. Run ``installer\Gen_Installer_Only.bat``: Generate an installer named ``npcap-nmap-%VERSION%.exe`` using [NSIS large strings build](http://nsis.sourceforge.net/Special_Builds) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore), and sign the installer.
+Run ``installer\Deploy.bat``: copy the files from build directories to deployment directories and sign the files. Generate an installer named ``npcap-nmap-%VERSION%.exe`` using [NSIS large strings build](http://nsis.sourceforge.net/Special_Builds) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore) and sign the installer.
+
+## Generating debug symbols (optional)
+
+Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from build directories to deployment directories and package them into a zip file named ``npcap-nmap-<VERSION>-DebugSymbols.zip`` using [7-Zip](http://www.7-zip.org/).
 
 ## Redistribution
 
@@ -188,11 +190,6 @@ An example of changing option feature for silent installation is:
 
 The current installation options by default are (for both GUI and silent mode):
 ``/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes``
-
-## Generating debug symbols (optional)
-
-1. Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from build directories for ``Non-WinPcap Compatible Mode``, and generate an zip package named ``npcap-nmap-<VERSION>-DebugSymbols.zip``.
-2. Run ``installer\Deploy_Symbols_WinPcap.bat``: copy the debug symbol files (.PDB) from build directories for ``WinPcap Compatible Mode``, and generate an zip package named ``npcap-nmap-<VERSION>-DebugSymbols.zip``.
 
 ## Downloads & Run (for users)
 
