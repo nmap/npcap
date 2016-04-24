@@ -258,14 +258,14 @@ function sign_file_sha256($file_path_name)
 
 function generate_installer($install_script, $installer_name)
 {
-	Write-Host (&$nsis_compiler_tool $install_script)
+	&$nsis_compiler_tool $install_script
 	sign_driver_sha1 $installer_name
 	sign_file_sha256 $installer_name
 }
 
 function generate_symbols($symbols_folder, $symbols_zip_name)
 {
-	Write-Host (&$archive_7zip_tool "a" $symbols_zip_name $symbols_folder)
+	&$archive_7zip_tool "a" $symbols_zip_name $symbols_folder
 }
 
 function do_deploy($installer_or_symbols = 1)
