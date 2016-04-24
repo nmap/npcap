@@ -35,6 +35,9 @@
 ;; Yang Luo
 ;; Updated to 0.06, March 2016
 
+;; Yang Luo
+;; Updated to 0.07, April 2016
+
 SetCompressor /SOLID /FINAL lzma
 
 ;--------------------------------
@@ -50,8 +53,8 @@ SetCompressor /SOLID /FINAL lzma
 ;General
 
 ; The version of Npcap
-!define VERSION "0.06"
-!define WIN_VERSION "0.6.0.301"
+!define VERSION "0.07"
+!define WIN_VERSION "0.7.0.424"
 
 ; The system restore point name created by Npcap installer
 !define RESTORE_POINT_NAME_INSTALL "Before installation of Npcap ${VERSION}"
