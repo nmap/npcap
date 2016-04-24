@@ -1528,7 +1528,7 @@ BOOLEAN PacketInstallDriver60()
 	BOOLEAN result = FALSE;
 	TRACE_ENTER("PacketInstallDriver60");
 
-	result = (BOOLEAN) InstallDriver();
+	result = (BOOLEAN) InstallDriver(FALSE);
 
 	TRACE_EXIT("PacketInstallDriver60");
 	return result;
