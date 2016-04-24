@@ -503,6 +503,14 @@
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Vista Debug'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 Release'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Vista Release'" />
+    <Inf Include="npf_wifi.inf" Condition="'$(Configuration)'=='Win7 Debug(WinPcap Mode)'" />
+    <Inf Include="npf_wifi.inf" Condition="'$(Configuration)'=='Vista Debug(WinPcap Mode)'" />
+    <Inf Include="npf_wifi.inf" Condition="'$(Configuration)'=='Win7 Release(WinPcap Mode)'" />
+    <Inf Include="npf_wifi.inf" Condition="'$(Configuration)'=='Vista Release(WinPcap Mode)'" />
+    <Inf Include="npcap_wifi.inf" Condition="'$(Configuration)'=='Win7 Debug'" />
+    <Inf Include="npcap_wifi.inf" Condition="'$(Configuration)'=='Vista Debug'" />
+    <Inf Include="npcap_wifi.inf" Condition="'$(Configuration)'=='Win7 Release'" />
+    <Inf Include="npcap_wifi.inf" Condition="'$(Configuration)'=='Vista Release'" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="npf.rc" Condition="'$(Configuration)'=='Win7 Debug(WinPcap Mode)'" />

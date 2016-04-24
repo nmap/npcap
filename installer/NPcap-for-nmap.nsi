@@ -700,11 +700,13 @@ Section "WinPcap" SecWinPcap
           File vista_winpcap\x86\npf.sys
           File vista_winpcap\x86\npf.inf
           File vista_winpcap\x86\npf_wfp.inf
+          File vista_winpcap\x86\npf_wifi.inf
           File vista_winpcap\x86\npf.cat
         ${Else}
           File vista\x86\npcap.sys
           File vista\x86\npcap.inf
           File vista\x86\npcap_wfp.inf
+          File vista\x86\npcap_wifi.inf
           File vista\x86\npcap.cat
         ${EndIf}
 	  ${ElseIf} $os_ver == "win7"
@@ -712,11 +714,13 @@ Section "WinPcap" SecWinPcap
           File win7_winpcap\x86\npf.sys
           File win7_winpcap\x86\npf.inf
           File win7_winpcap\x86\npf_wfp.inf
+          File win7_winpcap\x86\npf_wifi.inf
           File win7_winpcap\x86\npf.cat
         ${Else}
           File win7\x86\npcap.sys
           File win7\x86\npcap.inf
           File win7\x86\npcap_wfp.inf
+          File win7\x86\npcap_wifi.inf
           File win7\x86\npcap.cat
         ${EndIf}
 	  ${Else} ; $os_ver == "win8_above"
@@ -724,11 +728,13 @@ Section "WinPcap" SecWinPcap
           File win8_above_winpcap\x86\npf.sys
           File win8_above_winpcap\x86\npf.inf
           File win8_above_winpcap\x86\npf_wfp.inf
+          File win8_above_winpcap\x86\npf_wifi.inf
           File win8_above_winpcap\x86\npf.cat
         ${Else}
           File win8_above\x86\npcap.sys
           File win8_above\x86\npcap.inf
           File win8_above\x86\npcap_wfp.inf
+          File win8_above\x86\npcap_wifi.inf
           File win8_above\x86\npcap.cat
         ${EndIf}
 	  ${EndIf}
@@ -786,11 +792,13 @@ Section "WinPcap" SecWinPcap
           File vista_winpcap\x64\npf.sys
           File vista_winpcap\x64\npf.inf
           File vista_winpcap\x64\npf_wfp.inf
+          File vista_winpcap\x64\npf_wifi.inf
           File vista_winpcap\x64\npf.cat
         ${Else}
           File vista\x64\npcap.sys
           File vista\x64\npcap.inf
           File vista\x64\npcap_wfp.inf
+          File vista\x64\npcap_wifi.inf
           File vista\x64\npcap.cat
         ${EndIf}
 	  ${ElseIf} $os_ver == "win7"
@@ -798,11 +806,13 @@ Section "WinPcap" SecWinPcap
           File win7_winpcap\x64\npf.sys
           File win7_winpcap\x64\npf.inf
           File win7_winpcap\x64\npf_wfp.inf
+          File win7_winpcap\x64\npf_wifi.inf
           File win7_winpcap\x64\npf.cat
         ${Else}
           File win7\x64\npcap.sys
           File win7\x64\npcap.inf
           File win7\x64\npcap_wfp.inf
+          File win7\x64\npcap_wifi.inf
           File win7\x64\npcap.cat
         ${EndIf}
 	  ${Else} ; $os_ver == "win8_above"
@@ -810,11 +820,13 @@ Section "WinPcap" SecWinPcap
           File win8_above_winpcap\x64\npf.sys
           File win8_above_winpcap\x64\npf.inf
           File win8_above_winpcap\x64\npf_wfp.inf
+          File win8_above_winpcap\x64\npf_wifi.inf
           File win8_above_winpcap\x64\npf.cat
         ${Else}
           File win8_above\x64\npcap.sys
           File win8_above\x64\npcap.inf
           File win8_above\x64\npcap_wfp.inf
+          File win8_above\x64\npcap_wifi.inf
           File win8_above\x64\npcap.cat
         ${EndIf}
 	  ${EndIf}
