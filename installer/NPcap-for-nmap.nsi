@@ -70,6 +70,7 @@ Var /GLOBAL winpcap_mode
 Var /GLOBAL driver_name
 Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
+Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
 Var /GLOBAL restore_point_success
 
@@ -170,10 +171,11 @@ Function getInstallOptions
   StrCpy $admin_only "no"
   StrCpy $loopback_support "yes"
   StrCpy $dlt_null "no"
+  StrCpy $dot11_support "no"
   StrCpy $vlan_support "no"
   StrCpy $winpcap_mode "yes"
 
-  ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes'
+  ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=yes'
 
   ${GetOptions} $cmd_line "/admin_only=" $R0
   ${If} $R0 S== "yes"
@@ -191,6 +193,12 @@ Function getInstallOptions
   ${If} $R0 S== "yes"
   ${OrIf} $R0 S== "no"
     StrCpy $dlt_null $R0
+  ${EndIf}
+
+  ${GetOptions} $cmd_line "/dot11_support=" $R0
+  ${If} $R0 S== "yes"
+  ${OrIf} $R0 S== "no"
+    StrCpy $dot11_support $R0
   ${EndIf}
 
   ${GetOptions} $cmd_line "/vlan_support=" $R0
@@ -414,23 +422,29 @@ Function adminOnlyOptionsPage
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 1
   ${EndIf}
 
-  ${If} $vlan_support == "no"
+  ${If} $dot11_support == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
-  ${ElseIf} $vlan_support == "yes"
+  ${ElseIf} $dot11_support == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 1
   ${EndIf}
 
-  ${If} $winpcap_mode == "no"
+  ${If} $vlan_support == "no"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
-  ${ElseIf} $winpcap_mode == "yes"
+  ${ElseIf} $vlan_support == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 1
+  ${EndIf}
+
+  ${If} $winpcap_mode == "no"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
+  ${ElseIf} $winpcap_mode == "yes"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 1
   ${EndIf}
 
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
   winpcap_exist:
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "Flags" "DISABLED"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Flags" "DISABLED"
   no_winpcap_exist:
   !insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
@@ -474,12 +488,19 @@ Function doAdminOnlyOptions
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
   ${If} $0 == "0"
+    StrCpy $dot11_support "no" ; by default
+  ${Else}
+    StrCpy $dot11_support "yes"
+  ${EndIf}
+
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
+  ${If} $0 == "0"
     StrCpy $vlan_support "no" ; by default
   ${Else}
     StrCpy $vlan_support "yes"
   ${EndIf}
 
-  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
+  ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State"
   ${If} $0 == "0"
     StrCpy $winpcap_mode "no"
     StrCpy $driver_name "npcap"
@@ -564,7 +585,11 @@ Function registerServiceAPI_win7
   ; install the WFP callout driver
   ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
   ; install the NDIS filter driver
-  ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
+  ${If} $dot11_support == "yes"
+    ExecWait '"$INSTDIR\NPFInstall.exe" -i2' $0
+  ${Else}
+    ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
+  ${EndIf}
   StrCmp $0 "0" register_win7_success register_win7_fail
 
   register_win7_fail:
