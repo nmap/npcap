@@ -216,11 +216,11 @@ function copy_and_sign($file_name, $from_path, $to_path)
 	{
 		if ($to_path -match ".\win8_above")
 		{
-			sign_driver_sha256 ($to_path + $file_name)
+			$null = sign_driver_sha256 ($to_path + $file_name)
 		}
 		else
 		{
-			sign_driver_sha1 ($to_path + $file_name)
+			$null = sign_driver_sha1 ($to_path + $file_name)
 		}
 	}
 	elseif ($file_name -match ".inf" -or $file_name -match ".pdb")
@@ -229,8 +229,8 @@ function copy_and_sign($file_name, $from_path, $to_path)
 	}
 	else
 	{
-		sign_file_sha1 ($to_path + $file_name)
-		sign_file_sha256 ($to_path + $file_name)
+		$null = sign_file_sha1 ($to_path + $file_name)
+		$null = sign_file_sha256 ($to_path + $file_name)
 	}
 
 	return 1
@@ -238,22 +238,22 @@ function copy_and_sign($file_name, $from_path, $to_path)
 
 function sign_driver_sha1($file_path_name)
 {
-	Write-Host (&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name)
+	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name
 }
 
 function sign_driver_sha256($file_path_name)
 {
-	Write-Host (&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name)
+	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
 }
 
 function sign_file_sha1($file_path_name)
 {
-	Write-Host (&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name)
+	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name
 }
 
 function sign_file_sha256($file_path_name)
 {
-	Write-Host (&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name)
+	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
 }
 
 function generate_installer($install_script, $installer_name)
