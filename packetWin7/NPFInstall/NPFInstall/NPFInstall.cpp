@@ -8,7 +8,7 @@
 #include "CalloutInstall.h"
 #include "DriverStoreClear.h"
 
-BOOL PacketInstallDriver60();
+BOOL PacketInstallDriver60(BOOL bWifiOrNormal);
 BOOL PacketStopDriver60();
 BOOL PacketInstallDriver40();
 BOOL PacketStopDriver40();
@@ -83,11 +83,11 @@ stop_cleanup:
 	return bResult;
 }
 
-BOOL PacketInstallDriver60()
+BOOL PacketInstallDriver60(BOOL bWifiOrNormal)
 {
 	BOOL result = FALSE;
 
-	result = (BOOL) InstallDriver();
+	result = (BOOL) InstallDriver(bWifiOrNormal);
 
 	return result;
 }
@@ -209,15 +209,29 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		if (_tcscmp(_T("-i"), argv[1]) == 0)
 		{
-			bSuccess = PacketInstallDriver60();
+			bSuccess = PacketInstallDriver60(FALSE);
 			if (bSuccess)
 			{
-				_tprintf(_T("Npcap LWF driver has been successfully installed!\n"));
+				_tprintf(_T("Npcap LWF driver (standard version) has been successfully installed!\n"));
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("Npcap LWF driver has failed the installation."));
+				_tprintf(_T("Npcap LWF driver (standard version) has failed the installation."));
+				return -1;
+			}
+		}
+		else if (_tcscmp(_T("-i2"), argv[1]) == 0)
+		{
+			bSuccess = PacketInstallDriver60(TRUE);
+			if (bSuccess)
+			{
+				_tprintf(_T("Npcap LWF driver (WiFi version) has been successfully installed!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Npcap LWF driver (WiFi version) has failed the installation."));
 				return -1;
 			}
 		}

@@ -76,10 +76,12 @@
 #ifdef UNICODE
 #define NDISLWF_SERVICE_PNP_DEVICE_ID  	  NDISLWF_SERVICE_PNP_DEVICE_ID_W
 #define NDISLWF_SERVICE_INF_FILE   		  NDISLWF_SERVICE_INF_FILE_W
+#define NDISLWF_SERVICE_INF_FILE_WIFI	  NDISLWF_SERVICE_INF_FILE_W L"_wifi"
 #define WFP_CALLOUT_INF_FILE   		      WFP_CALLOUT_INF_FILE_W
 #else
 #define NDISLWF_SERVICE_PNP_DEVICE_ID  	  NDISLWF_SERVICE_PNP_DEVICE_ID_A
 #define NDISLWF_SERVICE_INF_FILE   		  NDISLWF_SERVICE_INF_FILE_A
+#define NDISLWF_SERVICE_INF_FILE_WIFI	  NDISLWF_SERVICE_INF_FILE_A "_wifi"
 #define WFP_CALLOUT_INF_FILE   		      WFP_CALLOUT_INF_FILE_A
 #endif
 
@@ -90,7 +92,7 @@ extern "C"
 {
 #endif
 
-	DWORD InstallDriver();
+	DWORD InstallDriver(BOOL bWifiOrNormal);
 	DWORD UninstallDriver();
 	BOOL RenableBindings();
 
@@ -102,7 +104,7 @@ extern "C"
 //// Registry Key Strings
 //
 
-DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize);
+DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize, BOOL bWifiOrNormal);
 DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize);
 DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize);
 

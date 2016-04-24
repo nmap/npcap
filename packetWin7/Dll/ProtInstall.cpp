@@ -101,7 +101,7 @@ VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...)
 	return;
 }
 
-DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
+DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize, BOOL bWifiOrNormal)
 {
 	// Get Path to This Module
 	DWORD nResult;
@@ -117,7 +117,14 @@ DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
 
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
-	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
+	if (bWifiOrNormal)
+	{
+		_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE_WIFI, _T(".inf"));
+	}
+	else
+	{
+		_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
+	}
 
 	return (DWORD)_tcslen(lpFilename);
 }
@@ -225,7 +232,7 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, const GU
 	return hr;
 }
 
-DWORD InstallDriver()
+DWORD InstallDriver(BOOL bWifiOrNormal)
 {
 	DWORD nResult;
 	TRACE_ENTER("InstallDriver");
@@ -235,7 +242,7 @@ DWORD InstallDriver()
 	// The INF file is assumed to be in the same folder as this application...
 	TCHAR szFileFullPath[_MAX_PATH];
 
-	nResult = GetServiceInfFilePath(szFileFullPath, MAX_PATH);
+	nResult = GetServiceInfFilePath(szFileFullPath, MAX_PATH, bWifiOrNormal);
 
 	if (nResult == 0)
 	{
