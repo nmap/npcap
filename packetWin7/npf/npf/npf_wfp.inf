@@ -54,46 +54,6 @@ npf.copyfiles.sys=12
 HKR, Ndi,Service,,%NPF_DriverName%
 HKR, Ndi,CoServices,0x00010000,%NPF_DriverName%
 HKR, Ndi,HelpText,,%NPF_HelpText%
-HKR, Ndi,FilterClass,, compression
-
-
-; For a Monitoring filter, use this:
-;     HKR, Ndi,FilterType,0x00010001, 1 ; Monitoring filter
-; For a Modifying filter, use this:
-;     HKR, Ndi,FilterType,0x00010001, 2 ; Modifying filter
-HKR, Ndi,FilterType,0x00010001,2
-
-
-HKR, Ndi\Interfaces,UpperRange,,"noupper"
-HKR, Ndi\Interfaces,LowerRange,,"nolower"
-
-
-; TODO: Ensure that the list of media types below is correct.  Typically,
-; filters include "ethernet".  Filters may also include "ppip" to include
-; native WWAN stacks, but you must be prepared to handle the packet framing.
-; Possible values are listed on MSDN, but common values include:
-;     ethernet, wan, ppip, wlan
-HKR, Ndi\Interfaces, FilterMediaTypes,,"ethernet, wan, ppip, wlan, bluetooth, ndis5, vwifi, nolower"
-
-
-; For a Mandatory filter, use this:
-;     HKR, Ndi,FilterRunType,0x00010001, 1 ; Mandatory filter
-; For an Optional filter, use this:
-;     HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter
-HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter
-
-
-; By default, Mandatory filters unbind all protocols when they are
-; installed/uninstalled, while Optional filters merely pause the stack.  If you
-; would like to override this behavior, you can include these options.  These
-; options only take effect with 6.30 filters on Windows "8" or later.
-; To prevent a full unbind, and merely pause/restart protocols:
-;     HKR, Ndi,UnbindOnAttach,0x00010001, 0 ; Do not unbind during FilterAttach
-;     HKR, Ndi,UnbindOnDetach,0x00010001, 0 ; Do not unbind during FilterDetach
-; To force a full unbind/bind (which includes pause/restart, of course):
-;     HKR, Ndi,UnbindOnAttach,0x00010001, 1 ; Unbind during FilterAttach
-;     HKR, Ndi,UnbindOnDetach,0x00010001, 1 ; Unbind during FilterDetach
-;
 
 ;-------------------------------------------------------------------------
 ; Service installation support
@@ -109,49 +69,9 @@ ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
 ServiceBinary   = %12%\%NPF_DriverName%.sys
 LoadOrderGroup  = NDIS
 Description     = %NPF_Desc%
-AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
-
-[Install.Remove.Services]
-DelService=%NPF_DriverName%,0x200 ; SPSVCINST_STOPSERVICE
+AddReg          = Common.Params.reg
 
 [Common.Params.reg]
-
-[NdisImPlatformBindingOptions.reg]
-; By default, when an LBFO team or Bridge is created, all filters will be
-; unbound from the underlying members and bound to the TNic(s). This keyword
-; allows a component to opt out of the default behavior
-; To prevent binding this filter to the TNic(s):
-;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,1 ; Do not bind to TNic
-; To prevent unbinding this filter from underlying members:
-;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,2 ; Do not unbind from Members
-; To prevent both binding to TNic and unbinding from members:
-;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,3 ; Do not bind to TNic or unbind from Members
-HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to default behavior
-
-[DefaultInstall]
-    OptionDesc = %NPF_Desc%
-    CopyFiles  = LBTest.DriverFiles
-
-[DefaultInstall.Services]
-    AddService = %NPF_DriverName%,,LBTest.Service
-
-[DefaultUninstall]
-    DelFiles = LBTest.DriverFiles
-
-[DefaultUninstall.Services]
-    DelService = %NPF_DriverName%,0x200                                ; SPSVCINST_STOPSERVICE
-
-[LBTest.DriverFiles]
-    %NPF_DriverName%.sys,,,2 ; 0x00000040                                               ; COPYFLG_OVERWRITE_OLDER_ONLY
-
-[LBTest.Service]
-    DisplayName   = %NPF_DriverName%
-    Description   = %NPF_Desc%
-    ServiceType   = 1                                                      ; SERVICE_KERNEL_DRIVER
-    StartType     = 1                                                      ; SERVICE_SYSTEM_START
-    ErrorControl  = 1                                                      ; SERVICE_ERROR_NORMAL
-    ServiceBinary = %12%\%NPF_DriverName%.sys                                       ; %WinDir%\System32\Drivers\lbtest.sys
-;    AddReg        = LBTest.AddRegistry
 
 [Strings]
 NPF_DriverName = "npf"
