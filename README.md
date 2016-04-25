@@ -162,15 +162,28 @@ Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from bu
 
 The Npcap installer is friendly for redistribution by supporting two installation ways: ``GUI Mode`` (direct run) and ``Silent Mode`` (run with ``/s`` paramter).
 
+### Installation options
+
+The current Npcap installation options by default are (for both ``GUI Mode`` and ``Silent Mode``):
+
+``/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=yes``
+
+1. ``/admin_only=yes``: Restrict Npcap driver's access to Administrators only
+2. ``/loopback_support=yes``: Support **loopback** traffic (``Npcap Loopback Adapter`` will be created)
+3. ``/dlt_null=yes``: Use ``DLT_NULL`` as the loopback interface' link layer protocol instead of ``DLT_EN10MB``
+4. ``/dot11_support=yes``: Support **raw 802.11** traffic (and **Monitor Mode**) for wireless adapters
+5. ``/vlan_support=yes``: Support **802.1Q VLAN** tag when capturing and sending data
+6. ``/winpcap_mode=yes``: Install Npcap in ``WinPcap API-compatible Mode``
+
 ### How to change default options for ``GUI Mode`` installation
 
 Default options for Npcap installer GUI can be changed. An example is:
 
-``npcap-nmap-0.06.exe /admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=no``
+``npcap-nmap-0.07.exe /admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no``
 
 or even simpler:
 
-``npcap-nmap-0.06.exe /winpcap_mode=no``
+``npcap-nmap-0.07.exe /winpcap_mode=no``
 
 As the default option of ``/winpcap_mode`` is ``yes``. Running the installer directly without options will see ``Install Npcap in WinPcap API-compatible Mode`` **CHECKED** by default in the ``Installation Options`` page. However, the above two commands will launch the installer GUI, and in the ``Installation Options`` page, the ``Install Npcap in WinPcap API-compatible Mode`` option will be **UNCHECKED** by default.
 
@@ -178,18 +191,13 @@ As the default option of ``/winpcap_mode`` is ``yes``. Running the installer dir
 
 An example of changing option feature for silent installation is:
 
-``npcap-nmap-0.06.exe /S /admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes``
+``npcap-nmap-0.07.exe /S /admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=yes``
 
 1. The above example shows the default value. e.g., if you doesn't specify the key ``/admin_only``, it will take the default value ``no``. This is the same with the GUI.
 
 2. The keys are **case-insensitive**.
 
 3. The values are **case-sensitive**, only two values are permitted: ``yes`` or ``no``.
-
-### All installation options
-
-The current installation options by default are (for both GUI and silent mode):
-``/admin_only=no /loopback_support=yes /dlt_null=no /vlan_support=no /winpcap_mode=yes``
 
 ## Downloads & Run (for users)
 
