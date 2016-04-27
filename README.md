@@ -218,6 +218,15 @@ https://svn.nmap.org/nmap-exp/yang/nmap-npcap/
 #### The compiled Nmap binaries after above changes:
 https://svn.nmap.org/nmap-exp/yang/nmap-npcap_compiled_binaries/
 
+## The list of incompatible softwares
+The LWF technique Npcap used is usually a cause of conflicts between the programs using network drivers. The incompatible result can be **bluescreen**, **not see traffic**, **not see adapter**, etc. The reason can **either be Npcap's bug or the incompatible software's bug**. If the latter is the case, there's nothing much can be done by Npcap but for youself to remove the incompatible software.
+
+The commonly seen sources of the incompatble softwares are ``anti-virus``, ``network firewall``, ``VPN``, ``traffic capture``, etc. To help you identify those softwares, We have collected the programs that have trouble with Npcap according to user's report, so what you need to do is to remove them if your Npcap doesn't work normally.
+
+- Avaya Collaboration Services
+- Avaya Collaboration Services x64
+- Avaya UCA Type Library
+
 ## License
 
 See: [LICENSE](https://github.com/nmap/npcap/blob/master/LICENSE)
