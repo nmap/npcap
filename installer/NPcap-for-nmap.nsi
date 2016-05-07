@@ -176,9 +176,9 @@ Function getInstallOptions
   StrCpy $dlt_null "no"
   StrCpy $dot11_support "no"
   StrCpy $vlan_support "no"
-  StrCpy $winpcap_mode "yes"
+  StrCpy $winpcap_mode "no"
 
-  ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=yes'
+  ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
 
   ${GetOptions} $cmd_line "/admin_only=" $R0
   ${If} $R0 S== "yes"
@@ -505,11 +505,11 @@ Function doAdminOnlyOptions
 
   ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State"
   ${If} $0 == "0"
-    StrCpy $winpcap_mode "no"
-    StrCpy $driver_name "npcap"
+    StrCpy $winpcap_mode "no" ; by default
+    StrCpy $driver_name "npcap" ; by default
   ${Else}
-    StrCpy $winpcap_mode "yes" ; by default
-    StrCpy $driver_name "npf" ; by default
+    StrCpy $winpcap_mode "yes"
+    StrCpy $driver_name "npf"
   ${EndIf}
 FunctionEnd
 
