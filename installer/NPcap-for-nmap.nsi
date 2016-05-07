@@ -61,10 +61,10 @@ SetCompressor /SOLID /FINAL lzma
 !define RESTORE_POINT_NAME_UNINSTALL "Before uninstallation of Npcap ${VERSION}"
 
 ; The name of the installer
-Name "Npcap ${VERSION} for Nmap (beta)"
+Name "Npcap ${VERSION} (beta)"
 
 ; The file to write
-OutFile "npcap-nmap-${VERSION}.exe"
+OutFile "npcap-${VERSION}.exe"
 
 Var /GLOBAL os_ver
 Var /GLOBAL cmd_line
@@ -93,7 +93,7 @@ VIProductVersion "${WIN_VERSION}"
 VIAddVersionKey /LANG=1033 "FileVersion" "${VERSION}"
 VIAddVersionKey /LANG=1033 "ProductName" "Npcap"
 VIAddVersionKey /LANG=1033 "ProductVersion" "${VERSION}"
-VIAddVersionKey /LANG=1033 "FileDescription" "Npcap ${VERSION} for Nmap installer"
+VIAddVersionKey /LANG=1033 "FileDescription" "Npcap ${VERSION} installer"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2016 Insecure.Com LLC ($\"The Nmap Project$\")"
 
 ;--------------------------------
