@@ -94,7 +94,7 @@ VIAddVersionKey /LANG=1033 "FileVersion" "${VERSION}"
 VIAddVersionKey /LANG=1033 "ProductName" "Npcap"
 VIAddVersionKey /LANG=1033 "ProductVersion" "${VERSION}"
 VIAddVersionKey /LANG=1033 "FileDescription" "Npcap ${VERSION} for Nmap installer"
-VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2015 Insecure.Com LLC, Nmap Project"
+VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2016 Insecure.Com LLC ($\"The Nmap Project$\")"
 
 ;--------------------------------
 ; Windows API Definitions
