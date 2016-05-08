@@ -126,7 +126,7 @@ void initAdapterList()
 	}
 }
 
-tstring getGuidFromAdapterName(TCHAR *pszAdapterName)
+tstring getGuidFromAdapterName(tstring strAdapterName)
 {
 	if (g_strAdapterNames.size() == 0)
 	{
@@ -135,7 +135,7 @@ tstring getGuidFromAdapterName(TCHAR *pszAdapterName)
 
 	for (size_t i = 0; i < g_strAdapterNames.size(); i++)
 	{
-		if (compareNoCase(g_strAdapterNames[i], pszAdapterName))
+		if (compareNoCase(g_strAdapterNames[i], strAdapterName))
 		{
 			return g_strAdapterGUIDs[i];
 		}

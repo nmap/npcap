@@ -374,10 +374,10 @@ int MainInteractive()
 	return 0;
 }
 
-BOOL GetWlanOperationMode(TCHAR *strGUID, TCHAR *strMode)
+BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
 {
 	TCHAR buf[256];
-	if (_tcslen(strGUID) == _tcslen(_T("42dfd47a-2764-43ac-b58e-3df569c447da")) && strGUID[8] == _T('-') && strGUID[13] == _T('-') && strGUID[18] == _T('-') && strGUID[23] == _T('-'))
+	if (_tcslen(strGUID.c_str()) == _tcslen(_T("42dfd47a-2764-43ac-b58e-3df569c447da")) && strGUID[8] == _T('-') && strGUID[13] == _T('-') && strGUID[18] == _T('-') && strGUID[23] == _T('-'))
 	{
 		_stprintf_s(buf, 256, _T("{%s}"), strGUID);
 	}
@@ -418,28 +418,28 @@ BOOL GetWlanOperationMode(TCHAR *strGUID, TCHAR *strMode)
 
 	if (ulOperationMode == DOT11_OPERATION_MODE_EXTENSIBLE_STATION)
 	{
-		_tcscpy_s(strMode, 256, _T("managed"));
+		strMode = _T("managed");
 	}
 	else if (ulOperationMode == DOT11_OPERATION_MODE_NETWORK_MONITOR)
 	{
-		_tcscpy_s(strMode, 256, _T("monitor"));
+		strMode = _T("monitor");
 	}
 	else if (ulOperationMode == DOT11_OPERATION_MODE_EXTENSIBLE_AP)
 	{
-		_tcscpy_s(strMode, 256, _T("master"));
+		strMode = _T("master");
 	}
 	else
 	{
-		_tcscpy_s(strMode, 256, _T("unknown mode"));
+		strMode = _T("unknown mode");
 	}
 	
 	return TRUE;
 }
 
-BOOL SetWlanOperationMode(TCHAR *strGUID, TCHAR *strMode)
+BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 {
 	TCHAR buf[256];
-	if (_tcslen(strGUID) == _tcslen(_T("42dfd47a-2764-43ac-b58e-3df569c447da")) && strGUID[8] == _T('-') && strGUID[13] == _T('-') && strGUID[18] == _T('-') && strGUID[23] == _T('-'))
+	if (_tcslen(strGUID.c_str()) == _tcslen(_T("42dfd47a-2764-43ac-b58e-3df569c447da")) && strGUID[8] == _T('-') && strGUID[13] == _T('-') && strGUID[18] == _T('-') && strGUID[23] == _T('-'))
 	{
 		_stprintf_s(buf, 256, _T("{%s}"), strGUID);
 	}
@@ -465,11 +465,11 @@ BOOL SetWlanOperationMode(TCHAR *strGUID, TCHAR *strMode)
 	}
 
 	ULONG ulOperationMode;
-	if (_tcscmp(_T("managed"), strMode) == 0)
+	if (strMode == _T("managed"))
 	{
 		ulOperationMode = DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
 	}
-	else if (_tcscmp(_T("monitor"), strMode) == 0)
+	else if (strMode == _T("monitor"))
 	{
 		ulOperationMode = DOT11_OPERATION_MODE_NETWORK_MONITOR;
 	}
@@ -492,10 +492,16 @@ BOOL SetWlanOperationMode(TCHAR *strGUID, TCHAR *strMode)
 }
 
 #define STR_COMMAND_USAGE _T("Command Usage:\nWlanHelper {Interface Name} mode [*null*|managed|monitor]\n*null* - get interface mode\nmanaged - set interface mode to managed mode (aka ExtSTA)\nmonitor - set interface mode to monitor mode (aka NetMon)\n")
+#define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n")
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	SetConsoleTitle(_T("WlanHelper Tool for Npcap [www.npcap.org]"));
+	vector<tstring> strArgs;
+	for (int i = 0; i < argc; i++)
+	{
+		strArgs.push_back(argv[i]);
+	}
 	
 	if (argc == 1)
 	{
@@ -504,30 +510,30 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else if (argc == 2)
 	{
-		if (_tcscmp(_T("-h"), argv[1]) == 0)
+		if (strArgs[1] ==_T("-h"))
 		{
 			_tprintf(STR_COMMAND_USAGE);
 			return -1;
 		}
 		else
 		{
-			_tprintf(_T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n"));
+			_tprintf(STR_INVALID_PARAMETER);
 			return -1;
 		}
 	}
 	else if (argc == 3)
 	{
-		if (_tcscmp(_T("mode"), argv[2]) != 0)
+		if (strArgs[2] != _T("mode"))
 		{
-			_tprintf(_T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n"));
+			_tprintf(STR_INVALID_PARAMETER);
 			return -1;
 		}
 		else
 		{
-			TCHAR buf[256];
-			if (GetWlanOperationMode(argv[1], buf))
+			tstring buf;
+			if (GetWlanOperationMode(strArgs[1], buf))
 			{
-				_tprintf(("%s\n", buf));
+				_tprintf(("%s\n", buf.c_str()));
 				return 0;
 			}
 			else
@@ -539,21 +545,21 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else if (argc == 4)
 	{
-		if (_tcscmp(_T("mode"), argv[2]) != 0)
+		if (strArgs[2] != _T("mode"))
 		{
-			_tprintf(_T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n"));
+			_tprintf(STR_INVALID_PARAMETER);
 			return -1;
 		}
 		else
 		{
-			if (_tcscmp(_T("managed"), argv[3]) != 0 && _tcscmp(_T("monitor"), argv[3]) != 0)
+			if (strArgs[3] != _T("managed") && strArgs[3] != _T("monitor"))
 			{
-				_tprintf(_T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n"));
+				_tprintf(STR_INVALID_PARAMETER);
 				return -1;
 			}
 			else
 			{
-				if (SetWlanOperationMode(argv[1], argv[3]))
+				if (SetWlanOperationMode(strArgs[1], strArgs[3]))
 				{
 					_tprintf(_T("Success\n"));
 					return 0;

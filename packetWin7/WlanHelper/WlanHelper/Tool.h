@@ -10,7 +10,7 @@ tstring executeCommand(TCHAR* cmd);
 
 void initAdapterList();
 
-tstring getGuidFromAdapterName(TCHAR *pszAdapterName);
+tstring getGuidFromAdapterName(tstring strAdapterName);
 
 BOOL makeOIDRequest_ULONG(TCHAR *pszAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag);
 
