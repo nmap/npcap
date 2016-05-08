@@ -150,10 +150,10 @@ tstring getGuidFromAdapterName(tstring strAdapterName)
 
 //DOT11_OPERATION_MODE_EXTENSIBLE_STATION
 
-BOOL makeOIDRequest_ULONG(TCHAR *pszAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag)
+BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag)
 {
 	TCHAR strAdapterName[256];
-	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), pszAdapterGUID);
+	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), strAdapterGUID.c_str());
 
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
@@ -190,10 +190,10 @@ BOOL makeOIDRequest_ULONG(TCHAR *pszAdapterGUID, ULONG iOid, BOOL bSet, ULONG *p
 	return Status;
 }
 
-BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(TCHAR *pszAdapterGUID, ULONG iOid, BOOL bSet, DOT11_CURRENT_OPERATION_MODE *pFlag)
+BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG iOid, BOOL bSet, DOT11_CURRENT_OPERATION_MODE *pFlag)
 {
 	TCHAR strAdapterName[256];
-	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), pszAdapterGUID);
+	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), strAdapterGUID.c_str());
 
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
