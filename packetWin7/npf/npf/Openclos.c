@@ -556,94 +556,35 @@ NPF_GetDeviceMTU(
 	OUT PUINT pMtu
 	)
 {
-	PLIST_ENTRY RequestListEntry;
-	PINTERNAL_REQUEST MaxSizeReq;
-	NDIS_STATUS ReqStatus;
-
 	TRACE_ENTER();
-
 	ASSERT(pOpen != NULL);
 	ASSERT(pMtu != NULL);
 
-	// Extract a request from the list of free ones
-	RequestListEntry = ExInterlockedRemoveHeadList(&pOpen->RequestList, &pOpen->RequestSpinLock);
+	UINT Mtu = 0;
+	ULONG BytesProcessed = 0;
 
-	if (RequestListEntry == NULL)
+	// get the PacketFilter when filter driver loads
+	NPF_DoInternalRequest(pOpen,
+		NdisRequestQueryInformation,
+		OID_GEN_MAXIMUM_TOTAL_SIZE,
+		&Mtu,
+		sizeof(Mtu),
+		0,
+		0,
+		&BytesProcessed
+	);
+
+	if (BytesProcessed != sizeof(Mtu) || Mtu == 0)
 	{
-		//
-		// THIS IS WRONG
-		//
-
-		//
-		// Assume Ethernet
-		//
 		*pMtu = 1514;
-		TRACE_EXIT();
-		return STATUS_SUCCESS;
-	}
-
-	MaxSizeReq = CONTAINING_RECORD(RequestListEntry, INTERNAL_REQUEST, ListElement);
-
-	NdisZeroMemory(&MaxSizeReq->Request, sizeof(NDIS_OID_REQUEST));
-	MaxSizeReq->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
-	MaxSizeReq->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
-	MaxSizeReq->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
-
-	MaxSizeReq->Request.RequestType = NdisRequestQueryInformation;
-	MaxSizeReq->Request.DATA.QUERY_INFORMATION.Oid = OID_GEN_MAXIMUM_TOTAL_SIZE;
-
-	MaxSizeReq->Request.DATA.QUERY_INFORMATION.InformationBuffer = pMtu;
-	MaxSizeReq->Request.DATA.QUERY_INFORMATION.InformationBufferLength = sizeof(*pMtu);
-
-	NdisResetEvent(&MaxSizeReq->InternalRequestCompletedEvent);
-
-	if (*((PVOID *) MaxSizeReq->Request.SourceReserved) != NULL)
-	{
-		*((PVOID *) MaxSizeReq->Request.SourceReserved) = NULL;
-	}
-
-	// submit the request
-	MaxSizeReq->Request.RequestId = (PVOID) NPF_REQUEST_ID;
-	if (pOpen->AdapterHandle)
-	{
-		ReqStatus = NdisFOidRequest(pOpen->AdapterHandle, &MaxSizeReq->Request);
-	}
-	else
-	{
-		ReqStatus = STATUS_UNSUCCESSFUL;
-	}
-
-	if (ReqStatus == NDIS_STATUS_PENDING)
-	{
-		NdisWaitEvent(&MaxSizeReq->InternalRequestCompletedEvent, 0);
-		ReqStatus = MaxSizeReq->RequestStatus;
-	}
-
-	//
-	// Put the request in the list of the free ones
-	//
-	ExInterlockedInsertTailList(&pOpen->RequestList, &MaxSizeReq->ListElement, &pOpen->RequestSpinLock);
-
-	if (ReqStatus == NDIS_STATUS_SUCCESS)
-	{
 		TRACE_EXIT();
 		return STATUS_SUCCESS;
 	}
 	else
 	{
-		//
-		// THIS IS WRONG
-		//
-
-		//
-		// Assume Ethernet
-		//
-		*pMtu = 1514;
-
+		*pMtu = Mtu;
 		TRACE_EXIT();
 		return STATUS_SUCCESS;
-
-		// return ReqStatus;
 	}
 }
 
@@ -655,86 +596,36 @@ NPF_GetDataRateMappingTable(
 	OUT PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable
 )
 {
-	PLIST_ENTRY RequestListEntry;
-	PINTERNAL_REQUEST pInternalReq;
-	NDIS_STATUS ReqStatus;
-
 	TRACE_ENTER();
-
 	ASSERT(pOpen != NULL);
-	ASSERT(pMtu != NULL);
+	ASSERT(pDataRateMappingTable != NULL);
 
-	// Extract a request from the list of free ones
-	RequestListEntry = ExInterlockedRemoveHeadList(&pOpen->RequestList, &pOpen->RequestSpinLock);
+	DOT11_DATA_RATE_MAPPING_TABLE DataRateMappingTable;
+	ULONG BytesProcessed = 0;
 
-	if (RequestListEntry == NULL)
+	// get the PacketFilter when filter driver loads
+	NPF_DoInternalRequest(pOpen,
+		NdisRequestQueryInformation,
+		OID_DOT11_DATA_RATE_MAPPING_TABLE,
+		&DataRateMappingTable,
+		sizeof(DataRateMappingTable),
+		0,
+		0,
+		&BytesProcessed
+	);
+
+	if (BytesProcessed != sizeof(DataRateMappingTable))
 	{
-		//
-		// THIS IS WRONG
-		//
-
 		pOpen->HasDataRateMappingTable = FALSE;
 		TRACE_EXIT();
 		return STATUS_UNSUCCESSFUL;
 	}
-
-	pInternalReq = CONTAINING_RECORD(RequestListEntry, INTERNAL_REQUEST, ListElement);
-
-	NdisZeroMemory(&pInternalReq->Request, sizeof(NDIS_OID_REQUEST));
-	pInternalReq->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
-	pInternalReq->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
-	pInternalReq->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
-
-	pInternalReq->Request.RequestType = NdisRequestQueryInformation;
-	pInternalReq->Request.DATA.QUERY_INFORMATION.Oid = OID_DOT11_DATA_RATE_MAPPING_TABLE;
-
-	pInternalReq->Request.DATA.QUERY_INFORMATION.InformationBuffer = pDataRateMappingTable;
-	pInternalReq->Request.DATA.QUERY_INFORMATION.InformationBufferLength = sizeof(*pDataRateMappingTable);
-
-	NdisResetEvent(&pInternalReq->InternalRequestCompletedEvent);
-
-	if (*((PVOID *)pInternalReq->Request.SourceReserved) != NULL)
-	{
-		*((PVOID *)pInternalReq->Request.SourceReserved) = NULL;
-	}
-
-	// submit the request
-	pInternalReq->Request.RequestId = (PVOID)NPF_REQUEST_ID;
-	if (pOpen->AdapterHandle)
-	{
-		ReqStatus = NdisFOidRequest(pOpen->AdapterHandle, &pInternalReq->Request);
-	}
 	else
 	{
-		ReqStatus = STATUS_UNSUCCESSFUL;
-	}
-
-	if (ReqStatus == NDIS_STATUS_PENDING)
-	{
-		NdisWaitEvent(&pInternalReq->InternalRequestCompletedEvent, 0);
-		ReqStatus = pInternalReq->RequestStatus;
-	}
-
-	//
-	// Put the request in the list of the free ones
-	//
-	ExInterlockedInsertTailList(&pOpen->RequestList, &pInternalReq->ListElement, &pOpen->RequestSpinLock);
-
-	if (ReqStatus == NDIS_STATUS_SUCCESS)
-	{
+		*pDataRateMappingTable = DataRateMappingTable;
 		pOpen->HasDataRateMappingTable = TRUE;
 		TRACE_EXIT();
 		return STATUS_SUCCESS;
-	}
-	else
-	{
-		//
-		// THIS IS WRONG
-		//
-
-		pOpen->HasDataRateMappingTable = FALSE;
-		TRACE_EXIT();
-		return STATUS_UNSUCCESSFUL;
 	}
 }
 
