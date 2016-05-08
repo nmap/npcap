@@ -45,26 +45,23 @@ wstring ANSIToUnicode(const string& str)
 	return rt;
 }
 
-wstring executeCommand(wchar_t* cmd)
+tstring executeCommand(TCHAR* cmd)
 {
-	char buffer[128];
-	string tmp = "";
-	wstring result;
+	TCHAR buffer[128];
+	tstring result;
 
-	FILE* pipe = _wpopen(cmd, L"r");
+	FILE* pipe = _tpopen(cmd, _T("r"));
 	if (!pipe)
 	{
-		return L"";
+		return _T("");
 	}
 
 	while (!feof(pipe))
 	{
-		if (fgets(buffer, 128, pipe) != NULL)
-			tmp += buffer;
+		if (_fgetts(buffer, 128, pipe) != NULL)
+			result += buffer;
 	}
 	_pclose(pipe);
-
-	result = ANSIToUnicode(tmp);
 
 	return result;
 }
@@ -95,34 +92,34 @@ void initAdapterList()
 {
 	size_t iStart = -1;
 	size_t iEnd;
-	wstring strAdapterName;
-	wstring strGUID;
+	tstring strAdapterName;
+	tstring strGUID;
 
-	wstring strOutput = executeCommand(L"netsh wlan show interfaces");
+	tstring strOutput = executeCommand(_T("netsh wlan show interfaces"));
 	
-	iStart = strOutput.find(L"\n\n", iStart + 1);
-	if (iStart == wstring::npos) return;
-	while ((iStart = strOutput.find(L": ", iStart + 1)) != wstring::npos)
+	iStart = strOutput.find(_T("\n\n"), iStart + 1);
+	if (iStart == tstring::npos) return;
+	while ((iStart = strOutput.find(_T(": "), iStart + 1)) != tstring::npos)
 	{
 		iStart += 2;
-		iEnd = strOutput.find(L'\n', iStart + 1);
-		if (iEnd == wstring::npos) return;
+		iEnd = strOutput.find(_T('\n'), iStart + 1);
+		if (iEnd == tstring::npos) return;
 		strAdapterName = strOutput.substr(iStart, iEnd - iStart);
 		
-		iStart = strOutput.find(L": ", iStart + 1);
-		if (iStart == wstring::npos) return;
-		iStart = strOutput.find(L": ", iStart + 1);
-		if (iStart == wstring::npos) return;
+		iStart = strOutput.find(_T(": "), iStart + 1);
+		if (iStart == tstring::npos) return;
+		iStart = strOutput.find(_T(": "), iStart + 1);
+		if (iStart == tstring::npos) return;
 		iStart += 2;
-		iEnd = strOutput.find(L'\n', iStart + 1);
-		if (iEnd == wstring::npos) return;
+		iEnd = strOutput.find(_T('\n'), iStart + 1);
+		if (iEnd == tstring::npos) return;
 		strGUID = strOutput.substr(iStart, iEnd - iStart);
 
 		g_strAdapterNames.push_back(strAdapterName);
 		g_strAdapterGUIDs.push_back(strGUID);
 
-		iStart = strOutput.find(L"\n\n", iStart + 1);
-		if (iStart == wstring::npos) return;
+		iStart = strOutput.find(_T("\n\n"), iStart + 1);
+		if (iStart == tstring::npos) return;
 	}
 }
 

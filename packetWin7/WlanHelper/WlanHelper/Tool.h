@@ -5,7 +5,7 @@ using namespace std;
 
 typedef std::basic_string<TCHAR> tstring;
 
-wstring executeCommand(wchar_t* cmd);
+tstring executeCommand(TCHAR* cmd);
 
 void initAdapterList();
 
