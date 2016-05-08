@@ -374,29 +374,24 @@ int MainInteractive()
 	return 0;
 }
 
-BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
+tstring getGuidFromAdapterName_Wrapper(tstring strGUID)
 {
-	TCHAR buf[256];
 	if (_tcslen(strGUID.c_str()) == _tcslen(_T("42dfd47a-2764-43ac-b58e-3df569c447da")) && strGUID[8] == _T('-') && strGUID[13] == _T('-') && strGUID[18] == _T('-') && strGUID[23] == _T('-'))
 	{
-		_stprintf_s(buf, 256, _T("{%s}"), strGUID);
+		return strGUID;
 	}
 	else
 	{
-		tstring strTmp = getGuidFromAdapterName(strGUID);
-		if (strTmp == _T(""))
-		{
-			_tprintf(_T("Error: getGuidFromAdapterName error\n"), -1);
-			return FALSE;
-		}
-		else
-		{
-			_stprintf_s(buf, 256, _T("{%s}"), strTmp.c_str());
-		}
+		return getGuidFromAdapterName(strGUID);
 	}
+}
+
+BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
+{
+	strGUID = _T("{") + strGUID + _T("}");
 
 	GUID ChoiceGUID;
-	if (myGUIDFromString(buf, &ChoiceGUID) != TRUE)
+	if (myGUIDFromString(strGUID.c_str(), &ChoiceGUID) != TRUE)
 	{
 		_tprintf(_T("Error: UuidFromString error, error code = %d\n"), -1);
 		return FALSE;
@@ -438,27 +433,10 @@ BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
 
 BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 {
-	TCHAR buf[256];
-	if (_tcslen(strGUID.c_str()) == _tcslen(_T("42dfd47a-2764-43ac-b58e-3df569c447da")) && strGUID[8] == _T('-') && strGUID[13] == _T('-') && strGUID[18] == _T('-') && strGUID[23] == _T('-'))
-	{
-		_stprintf_s(buf, 256, _T("{%s}"), strGUID);
-	}
-	else
-	{
-		tstring strTmp = getGuidFromAdapterName(strGUID);
-		if (strTmp == _T(""))
-		{
-			_tprintf(_T("Error: getGuidFromAdapterName error\n"), -1);
-			return FALSE;
-		}
-		else
-		{
-			_stprintf_s(buf, 256, _T("{%s}"), strTmp.c_str());
-		}
-	}
+	strGUID = _T("{") + strGUID + _T("}");
 
 	GUID ChoiceGUID;
-	if (myGUIDFromString(buf, &ChoiceGUID) != TRUE)
+	if (myGUIDFromString(strGUID.c_str(), &ChoiceGUID) != TRUE)
 	{
 		_tprintf(_T("Error: UuidFromString error, error code = %d\n"), -1);
 		return FALSE;
@@ -531,7 +509,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		else
 		{
 			tstring buf;
-			if (GetWlanOperationMode(strArgs[1], buf))
+			if (GetWlanOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), buf))
 			{
 				_tprintf(("%s\n", buf.c_str()));
 				return 0;
@@ -559,7 +537,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				if (SetWlanOperationMode(strArgs[1], strArgs[3]))
+				if (SetWlanOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strArgs[3]))
 				{
 					_tprintf(_T("Success\n"));
 					return 0;
