@@ -451,6 +451,10 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 	{
 		ulOperationMode = DOT11_OPERATION_MODE_NETWORK_MONITOR;
 	}
+	else if (strMode == _T("master"))
+	{
+		ulOperationMode = DOT11_OPERATION_MODE_EXTENSIBLE_AP;
+	}
 	else
 	{
 		_tprintf(_T("Error: SetWlanOperationMode error, unknown mode: %s\n"), strMode);
@@ -509,7 +513,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		else
 		{
 			tstring buf;
-			if (GetWlanOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), buf))
+			if (GetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), buf))
 			{
 				_tprintf(("%s\n", buf.c_str()));
 				return 0;
@@ -537,7 +541,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				if (SetWlanOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strArgs[3]))
+				if (SetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strArgs[3]))
 				{
 					_tprintf(_T("Success\n"));
 					return 0;

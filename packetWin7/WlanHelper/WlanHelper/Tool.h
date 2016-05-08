@@ -15,3 +15,7 @@ tstring getGuidFromAdapterName(tstring strAdapterName);
 BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag);
 
 BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG iOid, BOOL bSet, DOT11_CURRENT_OPERATION_MODE *pFlag);
+
+BOOL GetCurrentOperationMode(tstring strGUID, tstring &strMode);
+
+BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode);

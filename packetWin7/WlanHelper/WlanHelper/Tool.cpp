@@ -144,16 +144,10 @@ tstring getGuidFromAdapterName(tstring strAdapterName)
 	return _T("");
 }
 
-#define OID_DOT11_NDIS_START                        0x0D010300
-#define OID_DOT11_CURRENT_OPERATION_MODE            (OID_DOT11_NDIS_START + 8)
-#define OID_GEN_MAXIMUM_LOOKAHEAD               0x00010105
-
-//DOT11_OPERATION_MODE_EXTENSIBLE_STATION
-
 BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag)
 {
 	TCHAR strAdapterName[256];
-	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), strAdapterGUID.c_str());
+	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_{%s}"), strAdapterGUID.c_str());
 
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
@@ -193,7 +187,7 @@ BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *
 BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG iOid, BOOL bSet, DOT11_CURRENT_OPERATION_MODE *pFlag)
 {
 	TCHAR strAdapterName[256];
-	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), strAdapterGUID.c_str());
+	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_{%s}"), strAdapterGUID.c_str());
 
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
@@ -228,5 +222,66 @@ BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG i
 	GlobalFreePtr(OidData);
 	PacketCloseAdapter(pAdapter);
 	return Status;
+}
+
+BOOL GetCurrentOperationMode(tstring strGUID, tstring &strMode)
+{
+	BOOL bResult;
+	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode;
+
+	bResult = makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(strGUID, OID_DOT11_CURRENT_OPERATION_MODE, FALSE, &CurrentOperationMode);
+	if (bResult)
+	{
+		if (CurrentOperationMode.uCurrentOpMode == DOT11_OPERATION_MODE_EXTENSIBLE_STATION)
+		{
+			strMode = _T("managed");
+		}
+		else if (CurrentOperationMode.uCurrentOpMode == DOT11_OPERATION_MODE_NETWORK_MONITOR)
+		{
+			strMode = _T("monitor");
+		}
+		else if (CurrentOperationMode.uCurrentOpMode == DOT11_OPERATION_MODE_EXTENSIBLE_AP)
+		{
+			strMode = _T("master");
+		}
+		else
+		{
+			strMode = _T("unknown mode");
+		}
+	}
+	else
+	{
+		strMode = _T("unknown mode (call failed)");
+	}
+
+	return bResult;
+}
+
+BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode)
+{
+	BOOL bResult;
+	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode;
+
+	CurrentOperationMode.uReserved = 0;
+	if (strMode == _T("managed"))
+	{
+		CurrentOperationMode.uCurrentOpMode = DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
+	}
+	else if (strMode == _T("monitor"))
+	{
+		CurrentOperationMode.uCurrentOpMode = DOT11_OPERATION_MODE_NETWORK_MONITOR;
+	}
+	else if (strMode == _T("master"))
+	{
+		CurrentOperationMode.uCurrentOpMode = DOT11_OPERATION_MODE_EXTENSIBLE_AP;
+	}
+	else
+	{
+		_tprintf(_T("Error: SetCurrentOperationMode error, unknown mode: %s\n"), strMode);
+		return FALSE;
+	}
+
+	bResult = makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(strGUID, OID_DOT11_CURRENT_OPERATION_MODE, TRUE, &CurrentOperationMode);
+	return bResult;
 }
 
