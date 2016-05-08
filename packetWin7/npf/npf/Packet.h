@@ -1345,6 +1345,10 @@ NTSTATUS NPF_GetDeviceMTU(IN POPEN_INSTANCE pOpen, OUT PUINT  pMtu);
 NTSTATUS NPF_GetDataRateMappingTable(IN POPEN_INSTANCE pOpen, OUT PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable);
 
 USHORT NPF_LookUpDataRateMappingTable(IN POPEN_INSTANCE pOpen, IN UCHAR ucDataRate);
+
+NTSTATUS NPF_GetCurrentOperationMode(IN POPEN_INSTANCE pOpen, OUT PDOT11_CURRENT_OPERATION_MODE pCurrentOperationMode);
+
+ULONG NPF_GetCurrentOperationMode_Wrapper(IN POPEN_INSTANCE pOpen);
 #endif
 
 /*!

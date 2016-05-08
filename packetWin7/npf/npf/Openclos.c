@@ -563,7 +563,6 @@ NPF_GetDeviceMTU(
 	UINT Mtu = 0;
 	ULONG BytesProcessed = 0;
 
-	// get the PacketFilter when filter driver loads
 	NPF_DoInternalRequest(pOpen,
 		NdisRequestQueryInformation,
 		OID_GEN_MAXIMUM_TOTAL_SIZE,
@@ -603,7 +602,6 @@ NPF_GetDataRateMappingTable(
 	DOT11_DATA_RATE_MAPPING_TABLE DataRateMappingTable;
 	ULONG BytesProcessed = 0;
 
-	// get the PacketFilter when filter driver loads
 	NPF_DoInternalRequest(pOpen,
 		NdisRequestQueryInformation,
 		OID_DOT11_DATA_RATE_MAPPING_TABLE,
@@ -661,8 +659,67 @@ NPF_LookUpDataRateMappingTable(
 	TRACE_EXIT();
 	return usRetDataRateValue;
 }
-#endif
 
+//-------------------------------------------------------------------
+
+NTSTATUS
+NPF_GetCurrentOperationMode(
+	IN POPEN_INSTANCE pOpen,
+	OUT PDOT11_CURRENT_OPERATION_MODE pCurrentOperationMode
+)
+{
+	TRACE_ENTER();
+	ASSERT(pOpen != NULL);
+	ASSERT(pCurrentOperationMode != NULL);
+
+	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode;
+	ULONG BytesProcessed = 0;
+
+	NPF_DoInternalRequest(pOpen,
+		NdisRequestQueryInformation,
+		OID_DOT11_CURRENT_OPERATION_MODE,
+		&CurrentOperationMode,
+		sizeof(CurrentOperationMode),
+		0,
+		0,
+		&BytesProcessed
+	);
+
+	if (BytesProcessed != sizeof(CurrentOperationMode))
+	{
+		TRACE_EXIT();
+		return STATUS_UNSUCCESSFUL;
+	}
+	else
+	{
+		*pCurrentOperationMode = CurrentOperationMode;
+		TRACE_EXIT();
+		return STATUS_SUCCESS;
+	}
+}
+
+//-------------------------------------------------------------------
+
+ULONG
+NPF_GetCurrentOperationMode_Wrapper(
+	IN POPEN_INSTANCE pOpen
+)
+{
+	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode;
+	if (NPF_GetCurrentOperationMode(pOpen, &CurrentOperationMode) != STATUS_SUCCESS)
+	{
+		return DOT11_OPERATION_MODE_UNKNOWN;
+	}
+	else
+	{
+		// Possible return values are:
+		// 1: DOT11_OPERATION_MODE_EXTENSIBLE_STATION
+		// 2: DOT11_OPERATION_MODE_EXTENSIBLE_AP
+		// 3: DOT11_OPERATION_MODE_NETWORK_MONITOR
+		return CurrentOperationMode.uCurrentOpMode;
+	}
+}
+#endif
 //-------------------------------------------------------------------
 
 NTSTATUS
