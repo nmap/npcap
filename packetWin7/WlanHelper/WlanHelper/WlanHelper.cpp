@@ -11,6 +11,8 @@
 #include <windows.h>
 #include <wlanapi.h>
 
+#include "Tool.h"
+
 // MAKEINTRESOURCE() returns an LPTSTR, but GetProcAddress()
 // expects LPSTR even in UNICODE, so using MAKEINTRESOURCEA()...
 #ifdef UNICODE
@@ -375,7 +377,23 @@ int MainInteractive()
 BOOL GetWlanOperationMode(TCHAR *strGUID, TCHAR *strMode)
 {
 	TCHAR buf[256];
-	_stprintf_s(buf, 256, _T("{%s}"), strGUID);
+	if (_tcslen(strGUID) == _tcslen(_T("42dfd47a-2764-43ac-b58e-3df569c447da")) && strGUID[8] == _T('-') && strGUID[13] == _T('-') && strGUID[18] == _T('-') && strGUID[23] == _T('-'))
+	{
+		_stprintf_s(buf, 256, _T("{%s}"), strGUID);
+	}
+	else
+	{
+		tstring strTmp = getGuidFromAdapterName(strGUID);
+		if (strTmp == _T(""))
+		{
+			_tprintf(_T("Error: getGuidFromAdapterName error\n"), -1);
+			return FALSE;
+		}
+		else
+		{
+			_stprintf_s(buf, 256, _T("{%s}"), strTmp.c_str());
+		}
+	}
 
 	GUID ChoiceGUID;
 	if (myGUIDFromString(buf, &ChoiceGUID) != TRUE)
@@ -421,7 +439,23 @@ BOOL GetWlanOperationMode(TCHAR *strGUID, TCHAR *strMode)
 BOOL SetWlanOperationMode(TCHAR *strGUID, TCHAR *strMode)
 {
 	TCHAR buf[256];
-	_stprintf_s(buf, 256, _T("{%s}"), strGUID);
+	if (_tcslen(strGUID) == _tcslen(_T("42dfd47a-2764-43ac-b58e-3df569c447da")) && strGUID[8] == _T('-') && strGUID[13] == _T('-') && strGUID[18] == _T('-') && strGUID[23] == _T('-'))
+	{
+		_stprintf_s(buf, 256, _T("{%s}"), strGUID);
+	}
+	else
+	{
+		tstring strTmp = getGuidFromAdapterName(strGUID);
+		if (strTmp == _T(""))
+		{
+			_tprintf(_T("Error: getGuidFromAdapterName error\n"), -1);
+			return FALSE;
+		}
+		else
+		{
+			_stprintf_s(buf, 256, _T("{%s}"), strTmp.c_str());
+		}
+	}
 
 	GUID ChoiceGUID;
 	if (myGUIDFromString(buf, &ChoiceGUID) != TRUE)
