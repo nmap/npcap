@@ -12,4 +12,6 @@ void initAdapterList();
 
 tstring getGuidFromAdapterName(TCHAR *pszAdapterName);
 
-BOOL makeOIDRequest(TCHAR *pszAdapterGUID, BOOL bSet, ULONG *pFlag);
+BOOL makeOIDRequest_ULONG(TCHAR *pszAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag);
+
+BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(TCHAR *pszAdapterGUID, ULONG iOid, BOOL bSet, DOT11_CURRENT_OPERATION_MODE *pFlag);

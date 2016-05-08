@@ -1,6 +1,7 @@
 
 #include "..\..\..\Common\Packet32.h"
 
+#include <windot11.h>
 #include <tchar.h>
 #include <algorithm>
 #include "Tool.h"
@@ -145,10 +146,11 @@ tstring getGuidFromAdapterName(TCHAR *pszAdapterName)
 
 #define OID_DOT11_NDIS_START                        0x0D010300
 #define OID_DOT11_CURRENT_OPERATION_MODE            (OID_DOT11_NDIS_START + 8)
+#define OID_GEN_MAXIMUM_LOOKAHEAD               0x00010105
 
 //DOT11_OPERATION_MODE_EXTENSIBLE_STATION
 
-BOOL makeOIDRequest(TCHAR *pszAdapterGUID, BOOL bSet, ULONG *pFlag)
+BOOL makeOIDRequest_ULONG(TCHAR *pszAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag)
 {
 	TCHAR strAdapterName[256];
 	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), pszAdapterGUID);
@@ -170,7 +172,7 @@ BOOL makeOIDRequest(TCHAR *pszAdapterGUID, BOOL bSet, ULONG *pFlag)
 		return FALSE;
 	}
 
-	OidData->Oid = OID_DOT11_CURRENT_OPERATION_MODE;
+	OidData->Oid = iOid;
 	OidData->Length = sizeof(ULONG);
 
 	if (bSet)
@@ -187,3 +189,44 @@ BOOL makeOIDRequest(TCHAR *pszAdapterGUID, BOOL bSet, ULONG *pFlag)
 	PacketCloseAdapter(pAdapter);
 	return Status;
 }
+
+BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(TCHAR *pszAdapterGUID, ULONG iOid, BOOL bSet, DOT11_CURRENT_OPERATION_MODE *pFlag)
+{
+	TCHAR strAdapterName[256];
+	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), pszAdapterGUID);
+
+	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
+	if (pAdapter == NULL)
+	{
+		_tprintf(_T("Error: makeOIDRequest::PacketOpenAdapter error\n"), -1);
+		return FALSE;
+	}
+
+	BOOL Status;
+	ULONG IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1);
+	PPACKET_OID_DATA OidData;
+	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
+	if (OidData == NULL)
+	{
+		_tprintf(_T("Error: makeOIDRequest::GlobalAllocPtr error\n"), -1);
+		return FALSE;
+	}
+
+	OidData->Oid = iOid;
+	OidData->Length = sizeof(DOT11_CURRENT_OPERATION_MODE);
+
+	if (bSet)
+	{
+		*((DOT11_CURRENT_OPERATION_MODE*)OidData->Data) = *pFlag;
+	}
+	Status = PacketRequest(pAdapter, bSet, OidData);
+	if (!bSet)
+	{
+		*pFlag = *((DOT11_CURRENT_OPERATION_MODE*)OidData->Data);
+	}
+
+	GlobalFreePtr(OidData);
+	PacketCloseAdapter(pAdapter);
+	return Status;
+}
+
