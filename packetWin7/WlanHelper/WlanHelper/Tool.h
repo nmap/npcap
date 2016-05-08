@@ -1,5 +1,6 @@
 
 #include <windows.h>
+#include <windowsx.h>
 #include <vector>
 using namespace std;
 
@@ -10,3 +11,5 @@ tstring executeCommand(TCHAR* cmd);
 void initAdapterList();
 
 tstring getGuidFromAdapterName(TCHAR *pszAdapterName);
+
+BOOL makeOIDRequest(TCHAR *pszAdapterGUID, BOOL bSet, ULONG *pFlag);

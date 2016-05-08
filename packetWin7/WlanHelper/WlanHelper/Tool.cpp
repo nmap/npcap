@@ -1,5 +1,7 @@
 
-#include "tchar.h"
+#include "..\..\..\Common\Packet32.h"
+
+#include <tchar.h>
 #include <algorithm>
 #include "Tool.h"
 
@@ -139,4 +141,49 @@ tstring getGuidFromAdapterName(TCHAR *pszAdapterName)
 	}
 
 	return _T("");
+}
+
+#define OID_DOT11_NDIS_START                        0x0D010300
+#define OID_DOT11_CURRENT_OPERATION_MODE            (OID_DOT11_NDIS_START + 8)
+
+//DOT11_OPERATION_MODE_EXTENSIBLE_STATION
+
+BOOL makeOIDRequest(TCHAR *pszAdapterGUID, BOOL bSet, ULONG *pFlag)
+{
+	TCHAR strAdapterName[256];
+	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_%s"), pszAdapterGUID);
+
+	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
+	if (pAdapter == NULL)
+	{
+		_tprintf(_T("Error: makeOIDRequest::PacketOpenAdapter error\n"), -1);
+		return FALSE;
+	}
+
+	BOOL Status;
+	ULONG IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1);
+	PPACKET_OID_DATA OidData;
+	OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
+	if (OidData == NULL)
+	{
+		_tprintf(_T("Error: makeOIDRequest::GlobalAllocPtr error\n"), -1);
+		return FALSE;
+	}
+
+	OidData->Oid = OID_DOT11_CURRENT_OPERATION_MODE;
+	OidData->Length = sizeof(ULONG);
+
+	if (bSet)
+	{
+		*((ULONG*)OidData->Data) = *pFlag;
+	}
+	Status = PacketRequest(pAdapter, bSet, OidData);
+	if (!bSet)
+	{
+		*pFlag = *((ULONG*) OidData->Data);
+	}
+
+	GlobalFreePtr(OidData);
+	PacketCloseAdapter(pAdapter);
+	return Status;
 }
