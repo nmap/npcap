@@ -1349,6 +1349,10 @@ USHORT NPF_LookUpDataRateMappingTable(IN POPEN_INSTANCE pOpen, IN UCHAR ucDataRa
 NTSTATUS NPF_GetCurrentOperationMode(IN POPEN_INSTANCE pOpen, OUT PDOT11_CURRENT_OPERATION_MODE pCurrentOperationMode);
 
 ULONG NPF_GetCurrentOperationMode_Wrapper(IN POPEN_INSTANCE pOpen);
+
+NTSTATUS NPF_GetCurrentChannel(IN POPEN_INSTANCE pOpen, OUT PULONG pCurrentChannel);
+
+ULONG NPF_GetCurrentOperationMode_Wrapper(IN POPEN_INSTANCE pOpen);
 #endif
 
 /*!

@@ -726,6 +726,63 @@ NPF_GetCurrentOperationMode_Wrapper(
 		return CurrentOperationMode.uCurrentOpMode;
 	}
 }
+
+//-------------------------------------------------------------------
+
+NTSTATUS
+NPF_GetCurrentChannel(
+	IN POPEN_INSTANCE pOpen,
+	OUT PULONG pCurrentChannel
+)
+{
+	TRACE_ENTER();
+	ASSERT(pOpen != NULL);
+	ASSERT(pCurrentChannel != NULL);
+
+	ULONG CurrentChannel;
+	ULONG BytesProcessed = 0;
+
+	NPF_DoInternalRequest(pOpen,
+		NdisRequestQueryInformation,
+		OID_DOT11_CURRENT_CHANNEL,
+		&CurrentChannel,
+		sizeof(CurrentChannel),
+		0,
+		0,
+		&BytesProcessed
+	);
+
+	if (BytesProcessed != sizeof(CurrentChannel))
+	{
+		TRACE_EXIT();
+		return STATUS_UNSUCCESSFUL;
+	}
+	else
+	{
+		*pCurrentChannel = CurrentChannel;
+		TRACE_EXIT();
+		return STATUS_SUCCESS;
+	}
+}
+
+//-------------------------------------------------------------------
+
+ULONG
+NPF_GetCurrentChannel_Wrapper(
+	IN POPEN_INSTANCE pOpen
+)
+{
+	ULONG CurrentChannel;
+	if (NPF_GetCurrentChannel(pOpen, &CurrentChannel) != STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		// Possible return values are: 1 - 14
+		return CurrentChannel;
+	}
+}
 #endif
 //-------------------------------------------------------------------
 
