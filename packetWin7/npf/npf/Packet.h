@@ -1353,6 +1353,10 @@ ULONG NPF_GetCurrentOperationMode_Wrapper(IN POPEN_INSTANCE pOpen);
 NTSTATUS NPF_GetCurrentChannel(IN POPEN_INSTANCE pOpen, OUT PULONG pCurrentChannel);
 
 ULONG NPF_GetCurrentOperationMode_Wrapper(IN POPEN_INSTANCE pOpen);
+
+NTSTATUS NPF_GetCurrentFrequency(IN POPEN_INSTANCE pOpen, OUT PULONG pCurrentFrequency);
+
+ULONG NPF_GetCurrentFrequency_Wrapper(IN POPEN_INSTANCE pOpen);
 #endif
 
 /*!

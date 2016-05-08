@@ -783,6 +783,63 @@ NPF_GetCurrentChannel_Wrapper(
 		return CurrentChannel;
 	}
 }
+
+//-------------------------------------------------------------------
+
+NTSTATUS
+NPF_GetCurrentFrequency(
+	IN POPEN_INSTANCE pOpen,
+	OUT PULONG pCurrentFrequency
+)
+{
+	TRACE_ENTER();
+	ASSERT(pOpen != NULL);
+	ASSERT(pCurrentFrequency != NULL);
+
+	ULONG CurrentFrequency;
+	ULONG BytesProcessed = 0;
+
+	NPF_DoInternalRequest(pOpen,
+		NdisRequestQueryInformation,
+		OID_DOT11_CURRENT_FREQUENCY,
+		&CurrentFrequency,
+		sizeof(CurrentFrequency),
+		0,
+		0,
+		&BytesProcessed
+	);
+
+	if (BytesProcessed != sizeof(CurrentFrequency))
+	{
+		TRACE_EXIT();
+		return STATUS_UNSUCCESSFUL;
+	}
+	else
+	{
+		*pCurrentFrequency = CurrentFrequency;
+		TRACE_EXIT();
+		return STATUS_SUCCESS;
+	}
+}
+
+//-------------------------------------------------------------------
+
+ULONG
+NPF_GetCurrentFrequency_Wrapper(
+	IN POPEN_INSTANCE pOpen
+)
+{
+	ULONG CurrentFrequency;
+	if (NPF_GetCurrentFrequency(pOpen, &CurrentFrequency) != STATUS_SUCCESS)
+	{
+		return 0;
+	}
+	else
+	{
+		// Possible return values are: 0 - 200
+		return CurrentFrequency;
+	}
+}
 #endif
 //-------------------------------------------------------------------
 
