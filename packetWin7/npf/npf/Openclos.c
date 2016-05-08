@@ -336,12 +336,22 @@ NPF_OpenAdapter(
 		// This call will cause SYSTEM_SERVICE_EXCEPTION BSoD sometimes.
 		// I didn't figure out the reason, I threw an ask on Stackoverflow: http://stackoverflow.com/questions/31869373/get-system-service-exception-bluescreen-when-starting-wireshark-on-win10-vmware
 		// But no replies, so I just workaround by hard-coding it as 1514 for now.
-		// Status = NPF_GetDeviceMTU(Open, &Open->MaxFrameSize);
+// 		if (NPF_GetDeviceMTU(Open, &Open->MaxFrameSize) != STATUS_SUCCESS)
+// 		{
+// 			Open->MaxFrameSize = 1514;
+// 		}
 	}
 
 #ifdef HAVE_DOT11_SUPPORT
 	// Fetch the device's data rate mapping table with the OID_DOT11_DATA_RATE_MAPPING_TABLE OID.
-	NPF_GetDataRateMappingTable(Open, &Open->DataRateMappingTable);
+	if (NPF_GetDataRateMappingTable(Open, &Open->DataRateMappingTable) != STATUS_SUCCESS)
+	{
+		Open->HasDataRateMappingTable = FALSE;
+	}
+	else
+	{
+		Open->HasDataRateMappingTable = TRUE;
+	}
 #endif
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -575,9 +585,8 @@ NPF_GetDeviceMTU(
 
 	if (BytesProcessed != sizeof(Mtu) || Mtu == 0)
 	{
-		*pMtu = 1514;
 		TRACE_EXIT();
-		return STATUS_SUCCESS;
+		return STATUS_UNSUCCESSFUL;
 	}
 	else
 	{
@@ -614,14 +623,12 @@ NPF_GetDataRateMappingTable(
 
 	if (BytesProcessed != sizeof(DataRateMappingTable))
 	{
-		pOpen->HasDataRateMappingTable = FALSE;
 		TRACE_EXIT();
 		return STATUS_UNSUCCESSFUL;
 	}
 	else
 	{
 		*pDataRateMappingTable = DataRateMappingTable;
-		pOpen->HasDataRateMappingTable = TRUE;
 		TRACE_EXIT();
 		return STATUS_SUCCESS;
 	}
