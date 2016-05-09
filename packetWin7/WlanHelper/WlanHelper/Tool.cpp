@@ -216,7 +216,7 @@ BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest::PacketOpenAdapter error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_ULONG::PacketOpenAdapter error\n"), -1);
 		return FALSE;
 	}
 
@@ -226,7 +226,7 @@ BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *
 	OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
 	if (OidData == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest::GlobalAllocPtr error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_ULONG::GlobalAllocPtr error\n"), -1);
 		return FALSE;
 	}
 
@@ -256,7 +256,7 @@ BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG i
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest::PacketOpenAdapter error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_DOT11_CURRENT_OPERATION_MODE::PacketOpenAdapter error\n"), -1);
 		return FALSE;
 	}
 
@@ -266,7 +266,7 @@ BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG i
 	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
 	if (OidData == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest::GlobalAllocPtr error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_DOT11_CURRENT_OPERATION_MODE::GlobalAllocPtr error\n"), -1);
 		return FALSE;
 	}
 
@@ -281,6 +281,46 @@ BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG i
 	if (!bSet)
 	{
 		*pFlag = *((DOT11_CURRENT_OPERATION_MODE*)OidData->Data);
+	}
+
+	GlobalFreePtr(OidData);
+	PacketCloseAdapter(pAdapter);
+	return Status;
+}
+
+BOOL makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY(tstring strAdapterGUID, ULONG iOid, BOOL bSet, DOT11_OPERATION_MODE_CAPABILITY *pFlag)
+{
+	TCHAR strAdapterName[256];
+	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_{%s}"), strAdapterGUID.c_str());
+
+	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
+	if (pAdapter == NULL)
+	{
+		_tprintf(_T("Error: makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY::PacketOpenAdapter error\n"), -1);
+		return FALSE;
+	}
+
+	BOOL Status;
+	ULONG IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1);
+	PPACKET_OID_DATA OidData;
+	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
+	if (OidData == NULL)
+	{
+		_tprintf(_T("Error: makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY::GlobalAllocPtr error\n"), -1);
+		return FALSE;
+	}
+
+	OidData->Oid = iOid;
+	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
+
+	if (bSet)
+	{
+		*((DOT11_OPERATION_MODE_CAPABILITY*)OidData->Data) = *pFlag;
+	}
+	Status = PacketRequest(pAdapter, bSet, OidData);
+	if (!bSet)
+	{
+		*pFlag = *((DOT11_OPERATION_MODE_CAPABILITY*)OidData->Data);
 	}
 
 	GlobalFreePtr(OidData);
@@ -320,6 +360,48 @@ BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode)
 	}
 
 	bResult = makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(strGUID, OID_DOT11_CURRENT_OPERATION_MODE, TRUE, &CurrentOperationMode);
+	return bResult;
+}
+
+BOOL GetOperationModeCapability(tstring strGUID, tstring &strModes)
+{
+	BOOL bResult;
+	DOT11_OPERATION_MODE_CAPABILITY OperationModeCapability;
+
+	bResult = makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY(strGUID, OID_DOT11_OPERATION_MODE_CAPABILITY, FALSE, &OperationModeCapability);
+	if (bResult)
+	{
+		strModes = _T("");
+		if ((OperationModeCapability.uOpModeCapability & DOT11_OPERATION_MODE_EXTENSIBLE_AP) == DOT11_OPERATION_MODE_EXTENSIBLE_AP)
+		{
+			if (strModes != _T(""))
+			{
+				strModes += _T(", ");
+			}
+			strModes += _T("master");
+		}
+		if ((OperationModeCapability.uOpModeCapability & DOT11_OPERATION_MODE_EXTENSIBLE_STATION) == DOT11_OPERATION_MODE_EXTENSIBLE_STATION)
+		{
+			if (strModes != _T(""))
+			{
+				strModes += _T(", ");
+			}
+			strModes += _T("managed");
+		}
+		if ((OperationModeCapability.uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
+		{
+			if (strModes != _T(""))
+			{
+				strModes += _T(", ");
+			}
+			strModes += _T("monitor");
+		}
+	}
+	else
+	{
+		strModes = _T("unknown (call failed)");
+	}
+
 	return bResult;
 }
 

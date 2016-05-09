@@ -453,8 +453,9 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 WlanHelper for Npcap " WINPCAP_VER_STRING " (http://npcap.org)\n\
 Usage: WlanHelper {Interface Name or GUID} [Options]\n\
 Options:\n\
-  mode: get interface mode\n\
-  mode <managed|monitor|master|wfd_device|wfd_owner|wfd_client>: set interface mode\n\
+  mode: get interface operation mode\n\
+  mode <managed|monitor|master|wfd_device|wfd_owner|wfd_client>: set interface operation mode\n\
+  modes: get all operation modes supported by the interface, comma-separated\n\
   channel: get interface channel\n\
   channel <1-11>: set interface channel (only works at monitor mode)\n\
   freq: get interface frequency\n\
@@ -509,6 +510,20 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (GetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strMode))
 			{
 				_tprintf("%s\n", strMode.c_str());
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
+		else if (strArgs[2] == _T("modes"))
+		{
+			tstring strModes;
+			if (GetOperationModeCapability(getGuidFromAdapterName_Wrapper(strArgs[1]), strModes))
+			{
+				_tprintf("%s\n", strModes.c_str());
 				return 0;
 			}
 			else

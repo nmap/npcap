@@ -17,9 +17,12 @@ tstring getGuidFromAdapterName(tstring strAdapterName);
 
 BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag);
 BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG iOid, BOOL bSet, DOT11_CURRENT_OPERATION_MODE *pFlag);
+BOOL makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY(tstring strAdapterGUID, ULONG iOid, BOOL bSet, DOT11_OPERATION_MODE_CAPABILITY *pFlag);
 
 BOOL GetCurrentOperationMode(tstring strGUID, tstring &strMode);
 BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode);
+
+BOOL GetOperationModeCapability(tstring strGUID, tstring &strModes);
 
 BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel);
 BOOL SetCurrentChannel(tstring strGUID, ULONG ulChannel);
