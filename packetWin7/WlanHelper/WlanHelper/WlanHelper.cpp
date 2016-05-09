@@ -570,7 +570,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		if (strArgs[2] == _T("mode"))
 		{
-			if (SetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strArgs[3]))
+			if (SetWlanOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strArgs[3]))
 			{
 				_tprintf(_T("Success\n"));
 				return 0;
