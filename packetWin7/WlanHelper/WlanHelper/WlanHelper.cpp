@@ -2,6 +2,9 @@
 //
 
 // #include "stdafx.h"
+
+#include "..\..\..\version.h"
+
 #include <stdio.h>
 #include <tchar.h>
 
@@ -447,7 +450,7 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 }
 
 #define STR_COMMAND_USAGE _T("\
-WlanHelper for Npcap 0.07 (http://npcap.org)\n\
+WlanHelper for Npcap " WINPCAP_VER_STRING " (http://npcap.org)\n\
 Usage: WlanHelper {Interface Name or GUID} [Options]\n\
 Options:\n\
   mode: get interface mode\n\
