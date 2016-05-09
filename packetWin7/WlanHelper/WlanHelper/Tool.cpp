@@ -216,7 +216,7 @@ BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest_ULONG::PacketOpenAdapter error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_ULONG::PacketOpenAdapter error\n"));
 		return FALSE;
 	}
 
@@ -226,7 +226,7 @@ BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *
 	OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
 	if (OidData == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest_ULONG::GlobalAllocPtr error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_ULONG::GlobalAllocPtr error\n"));
 		return FALSE;
 	}
 
@@ -238,6 +238,12 @@ BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *
 		*((ULONG*)OidData->Data) = *pFlag;
 	}
 	Status = PacketRequest(pAdapter, bSet, OidData);
+	if (!Status)
+	{
+		_tprintf(_T("Error: makeOIDRequest_ULONG::PacketRequest error, error code = %d\n"), GetLastError());
+
+	}
+
 	if (!bSet)
 	{
 		*pFlag = *((ULONG*) OidData->Data);
@@ -256,7 +262,7 @@ BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG i
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest_DOT11_CURRENT_OPERATION_MODE::PacketOpenAdapter error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_DOT11_CURRENT_OPERATION_MODE::PacketOpenAdapter error\n"));
 		return FALSE;
 	}
 
@@ -266,7 +272,7 @@ BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG i
 	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
 	if (OidData == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest_DOT11_CURRENT_OPERATION_MODE::GlobalAllocPtr error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_DOT11_CURRENT_OPERATION_MODE::GlobalAllocPtr error\n"));
 		return FALSE;
 	}
 
@@ -278,6 +284,12 @@ BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG i
 		*((DOT11_CURRENT_OPERATION_MODE*)OidData->Data) = *pFlag;
 	}
 	Status = PacketRequest(pAdapter, bSet, OidData);
+	if (!Status)
+	{
+		_tprintf(_T("Error: makeOIDRequest_DOT11_CURRENT_OPERATION_MODE::PacketRequest error, error code = %d\n"), GetLastError());
+		
+	}
+
 	if (!bSet)
 	{
 		*pFlag = *((DOT11_CURRENT_OPERATION_MODE*)OidData->Data);
@@ -296,7 +308,7 @@ BOOL makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY(tstring strAdapterGUID, ULON
 	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY::PacketOpenAdapter error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY::PacketOpenAdapter error\n"));
 		return FALSE;
 	}
 
@@ -306,7 +318,7 @@ BOOL makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY(tstring strAdapterGUID, ULON
 	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
 	if (OidData == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY::GlobalAllocPtr error\n"), -1);
+		_tprintf(_T("Error: makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY::GlobalAllocPtr error\n"));
 		return FALSE;
 	}
 
@@ -318,6 +330,12 @@ BOOL makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY(tstring strAdapterGUID, ULON
 		*((DOT11_OPERATION_MODE_CAPABILITY*)OidData->Data) = *pFlag;
 	}
 	Status = PacketRequest(pAdapter, bSet, OidData);
+	if (!Status)
+	{
+		_tprintf(_T("Error: makeOIDRequest_DOT11_OPERATION_MODE_CAPABILITY::PacketRequest error, error code = %d\n"), GetLastError());
+
+	}
+
 	if (!bSet)
 	{
 		*pFlag = *((DOT11_OPERATION_MODE_CAPABILITY*)OidData->Data);

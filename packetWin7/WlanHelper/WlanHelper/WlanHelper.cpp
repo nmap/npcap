@@ -396,7 +396,7 @@ BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
 	GUID ChoiceGUID;
 	if (myGUIDFromString(strGUID.c_str(), &ChoiceGUID) != TRUE)
 	{
-		_tprintf(_T("Error: GetWlanOperationMode::myGUIDFromString error, error code = %d\n"), -1);
+		_tprintf(_T("Error: GetWlanOperationMode::myGUIDFromString error\n"));
 		return FALSE;
 	}
 
@@ -426,7 +426,7 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 	GUID ChoiceGUID;
 	if (myGUIDFromString(strGUID.c_str(), &ChoiceGUID) != TRUE)
 	{
-		_tprintf(_T("Error: SetWlanOperationMode::myGUIDFromString error, error code = %d\n"), -1);
+		_tprintf(_T("Error: SetWlanOperationMode::myGUIDFromString error\n"));
 		return FALSE;
 	}
 
