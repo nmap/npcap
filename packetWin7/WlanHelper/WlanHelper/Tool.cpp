@@ -350,3 +350,31 @@ BOOL SetCurrentChannel(tstring strGUID, ULONG ulChannel)
 	bResult = makeOIDRequest_ULONG(strGUID, OID_DOT11_CURRENT_CHANNEL, TRUE, &CurrentChannel);
 	return bResult;
 }
+
+BOOL GetCurrentFrequency(tstring strGUID, ULONG &ulFrequency)
+{
+	BOOL bResult;
+	ULONG CurrentFrequency;
+
+	bResult = makeOIDRequest_ULONG(strGUID, OID_DOT11_CURRENT_FREQUENCY, FALSE, &CurrentFrequency);
+	if (bResult)
+	{
+		ulFrequency = CurrentFrequency;
+	}
+	else
+	{
+		ulFrequency = (ULONG) -1;
+	}
+
+	return bResult;
+}
+
+BOOL SetCurrentFrequency(tstring strGUID, ULONG ulFrequency)
+{
+	BOOL bResult;
+	ULONG CurrentFrequency;
+
+	CurrentFrequency = ulFrequency;
+	bResult = makeOIDRequest_ULONG(strGUID, OID_DOT11_CURRENT_FREQUENCY, TRUE, &CurrentFrequency);
+	return bResult;
+}

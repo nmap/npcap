@@ -23,3 +23,6 @@ BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode);
 
 BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel);
 BOOL SetCurrentChannel(tstring strGUID, ULONG ulChannel);
+
+BOOL GetCurrentFrequency(tstring strGUID, ULONG &ulFrequency);
+BOOL SetCurrentFrequency(tstring strGUID, ULONG ulFrequency);

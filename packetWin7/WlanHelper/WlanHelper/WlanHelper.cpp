@@ -506,6 +506,20 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		else if (strArgs[2] == _T("freq"))
+		{
+			ULONG ulFrequency;
+			if (GetCurrentFrequency(getGuidFromAdapterName_Wrapper(strArgs[1]), ulFrequency))
+			{
+				_tprintf("%u\n", ulFrequency);
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
 		else
 		{
 			_tprintf(STR_INVALID_PARAMETER);
@@ -531,6 +545,20 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			int ulChannel = atoi(strArgs[3].c_str());
 			if (SetCurrentChannel(getGuidFromAdapterName_Wrapper(strArgs[1]), ulChannel))
+			{
+				_tprintf(_T("Success\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
+		else if (strArgs[2] == _T("freq"))
+		{
+			int ulFrequency = atoi(strArgs[3].c_str());
+			if (SetCurrentFrequency(getGuidFromAdapterName_Wrapper(strArgs[1]), ulFrequency))
 			{
 				_tprintf(_T("Success\n"));
 				return 0;
