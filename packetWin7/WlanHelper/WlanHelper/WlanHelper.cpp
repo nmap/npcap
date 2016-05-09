@@ -446,7 +446,25 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 	}
 }
 
-#define STR_COMMAND_USAGE _T("Command Usage:\nWlanHelper {Interface Name} mode [*null*|managed|monitor]\n*null* - get interface mode\nmanaged - set interface mode to managed mode (aka ExtSTA)\nmonitor - set interface mode to monitor mode (aka NetMon)\n")
+#define STR_COMMAND_USAGE _T("\
+WlanHelper for Npcap 0.07 (http://npcap.org)\n\
+Usage: WlanHelper {Interface Name or GUID} [Options]\n\
+Options:\n\
+  mode: get interface mode\n\
+  mode <managed|monitor|master|wfd_device|wfd_owner|wfd_client>: set interface mode\n\
+  channel: get interface channel\n\
+  channel <1-11>: set interface channel (only works at monitor mode)\n\
+  freq: get interface frequency\n\
+  freq <0-200>: set interface frequency (only works at monitor mode)\n\
+\n\
+Operation Modes:\n\
+  managed - the Extensible Station (ExtSTA) operation mode\n\
+  monitor - the Network Monitor (NetMon) operation mode\n\
+  master - the Extensible Access Point (ExtAP) operation mode (supported for Windows 7 and later)\n\
+  wfd_device - the Wi-Fi Direct Device operation mode (supported for Windows 8 and later)\n\
+  wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported for Windows 8 and later)\n\
+  wfd_client - the Wi-Fi Direct Client operation mode (supported for Windows 8 and later)\n\
+")
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n")
 
 int _tmain(int argc, _TCHAR* argv[])
