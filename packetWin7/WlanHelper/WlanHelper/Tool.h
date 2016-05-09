@@ -22,3 +22,4 @@ BOOL GetCurrentOperationMode(tstring strGUID, tstring &strMode);
 BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode);
 
 BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel);
+BOOL SetCurrentChannel(tstring strGUID, ULONG ulChannel);

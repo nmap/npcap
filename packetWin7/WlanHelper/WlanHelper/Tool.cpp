@@ -340,3 +340,13 @@ BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel)
 
 	return bResult;
 }
+
+BOOL SetCurrentChannel(tstring strGUID, ULONG ulChannel)
+{
+	BOOL bResult;
+	ULONG CurrentChannel;
+
+	CurrentChannel = ulChannel;
+	bResult = makeOIDRequest_ULONG(strGUID, OID_DOT11_CURRENT_CHANNEL, TRUE, &CurrentChannel);
+	return bResult;
+}

@@ -514,31 +514,37 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else if (argc == 4)
 	{
-		if (strArgs[2] != _T("mode"))
+		if (strArgs[2] == _T("mode"))
 		{
-			_tprintf(STR_INVALID_PARAMETER);
-			return -1;
-		}
-		else
-		{
-			if (strArgs[3] != _T("managed") && strArgs[3] != _T("monitor"))
+			if (SetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strArgs[3]))
 			{
-				_tprintf(STR_INVALID_PARAMETER);
-				return -1;
+				_tprintf(_T("Success\n"));
+				return 0;
 			}
 			else
 			{
-				if (SetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strArgs[3]))
-				{
-					_tprintf(_T("Success\n"));
-					return 0;
-				}
-				else
-				{
-					_tprintf(_T("Failure\n"));
-					return -1;
-				}
+				_tprintf(_T("Failure\n"));
+				return -1;
 			}
+		}
+		else if (strArgs[2] == _T("channel"))
+		{
+			int ulChannel = atoi(strArgs[3].c_str());
+			if (SetCurrentChannel(getGuidFromAdapterName_Wrapper(strArgs[1]), ulChannel))
+			{
+				_tprintf(_T("Success\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
+		else
+		{
+			_tprintf(STR_INVALID_PARAMETER);
+			return -1;
 		}
 	}
 	else
