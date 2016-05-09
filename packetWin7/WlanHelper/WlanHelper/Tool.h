@@ -20,3 +20,5 @@ BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG i
 
 BOOL GetCurrentOperationMode(tstring strGUID, tstring &strMode);
 BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode);
+
+BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel);

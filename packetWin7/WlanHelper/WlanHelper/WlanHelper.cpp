@@ -478,24 +478,38 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else if (argc == 3)
 	{
-		if (strArgs[2] != _T("mode"))
+		if (strArgs[2] == _T("mode"))
 		{
-			_tprintf(STR_INVALID_PARAMETER);
-			return -1;
-		}
-		else
-		{
-			tstring buf;
-			if (GetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), buf))
+			tstring strMode;
+			if (GetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strMode))
 			{
-				_tprintf(("%s\n", buf.c_str()));
+				_tprintf("%s\n", strMode.c_str());
 				return 0;
 			}
 			else
 			{
-				_tprintf(_T("Error: SetInterface error\n"));
+				_tprintf(_T("Failure\n"));
 				return -1;
 			}
+		}
+		else if (strArgs[2] == _T("channel"))
+		{
+			ULONG ulChannel;
+			if (GetCurrentChannel(getGuidFromAdapterName_Wrapper(strArgs[1]), ulChannel))
+			{
+				_tprintf("%u\n", ulChannel);
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
+		else
+		{
+			_tprintf(STR_INVALID_PARAMETER);
+			return -1;
 		}
 	}
 	else if (argc == 4)

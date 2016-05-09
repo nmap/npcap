@@ -323,3 +323,20 @@ BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode)
 	return bResult;
 }
 
+BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel)
+{
+	BOOL bResult;
+	ULONG CurrentChannel;
+
+	bResult = makeOIDRequest_ULONG(strGUID, OID_DOT11_CURRENT_CHANNEL, FALSE, &CurrentChannel);
+	if (bResult)
+	{
+		ulChannel = CurrentChannel;
+	}
+	else
+	{
+		ulChannel = 0;
+	}
+
+	return bResult;
+}
