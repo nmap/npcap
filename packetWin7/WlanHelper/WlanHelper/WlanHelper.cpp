@@ -560,6 +560,20 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		else if (strArgs[2] == _T("modus"))
+		{
+			vector<tstring> nstrPhyTypes;
+			if (GetSupportedPhyTypes(getGuidFromAdapterName_Wrapper(strArgs[1]), nstrPhyTypes))
+			{
+				_tprintf("%s\n", printArray(nstrPhyTypes).c_str());
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
 		else
 		{
 			_tprintf(STR_INVALID_PARAMETER);

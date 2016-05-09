@@ -73,6 +73,72 @@ ULONG String2OperationMode(tstring strOperationMode)
 	}
 }
 
+tstring PhyType2String(ULONG PhyType)
+{
+	if (PhyType == dot11_phy_type_unknown)
+	{
+		return _T("unknown");
+	}
+	else if (PhyType == dot11_phy_type_any)
+	{
+		return _T("any");
+	}
+	else if (PhyType == dot11_phy_type_fhss)
+	{
+		return _T("fhss");
+	}
+	else if (PhyType == dot11_phy_type_dsss)
+	{
+		return _T("dsss");
+	}
+	else if (PhyType == dot11_phy_type_irbaseband)
+	{
+		return _T("irbaseband");
+	}
+	else if (PhyType == dot11_phy_type_ofdm)
+	{
+		return _T("ofdm");
+	}
+	else if (PhyType == dot11_phy_type_hrdsss)
+	{
+		return _T("hrdsss");
+	}
+	else if (PhyType == dot11_phy_type_erp)
+	{
+		return _T("erp");
+	}
+	else if (PhyType == dot11_phy_type_ht)
+	{
+		return _T("ht");
+	}
+	else if (PhyType == dot11_phy_type_vht)
+	{
+		return _T("vht");
+	}
+	else if (dot11_phy_type_IHV_start <= PhyType && PhyType <= dot11_phy_type_IHV_end)
+	{
+		return _T("ihv");
+	}
+	else
+	{
+		return _T("undefined");
+	}
+}
+
+tstring printArray(vector<tstring> nstr)
+{
+	tstring strResult;
+	for (size_t i = 0; i < nstr.size(); i++)
+	{
+		if (i != 0)
+		{
+			strResult += _T(", ");
+		}
+		strResult += nstr[i];
+	}
+	return strResult;
+}
+
 tstring strToLower(const tstring &str)
 {
 	tstring strTmp = str;
@@ -243,10 +309,12 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 		_tprintf(_T("Error: makeOIDRequest::PacketRequest error, error code = %d\n"), GetLastError());
 		
 	}
-
-	if (!bSet)
+	else
 	{
-		CopyMemory(pData, OidData->Data, ulDataSize);
+		if (!bSet)
+		{
+			CopyMemory(pData, OidData->Data, ulDataSize);
+		}
 	}
 
 	GlobalFreePtr(OidData);
@@ -326,6 +394,23 @@ BOOL GetOperationModeCapability(tstring strGUID, tstring &strModes)
 	else
 	{
 		strModes = _T("unknown (call failed)");
+	}
+
+	return bResult;
+}
+
+BOOL GetSupportedPhyTypes(tstring strGUID, vector<tstring> &nstrPhyTypes)
+{
+	BOOL bResult;
+	DOT11_SUPPORTED_PHY_TYPES SupportedPhyTypes;
+
+	bResult = makeOIDRequest(strGUID, OID_DOT11_SUPPORTED_PHY_TYPES, FALSE, &SupportedPhyTypes, sizeof(DOT11_SUPPORTED_PHY_TYPES));
+	if (bResult)
+	{
+		for (size_t i = 0; i < SupportedPhyTypes.uNumOfEntries; i++)
+		{
+			nstrPhyTypes.push_back(PhyType2String(SupportedPhyTypes.dot11PHYType[i]));
+		}
 	}
 
 	return bResult;
