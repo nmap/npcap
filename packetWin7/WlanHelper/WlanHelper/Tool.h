@@ -6,6 +6,9 @@ using namespace std;
 
 typedef std::basic_string<TCHAR> tstring;
 
+tstring OperationMode2String(ULONG OperationMode);
+ULONG String2OperationMode(tstring strOperationMode);
+
 tstring executeCommand(TCHAR* cmd);
 
 void initAdapterList();
@@ -13,9 +16,7 @@ void initAdapterList();
 tstring getGuidFromAdapterName(tstring strAdapterName);
 
 BOOL makeOIDRequest_ULONG(tstring strAdapterGUID, ULONG iOid, BOOL bSet, ULONG *pFlag);
-
 BOOL makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(tstring strAdapterGUID, ULONG iOid, BOOL bSet, DOT11_CURRENT_OPERATION_MODE *pFlag);
 
 BOOL GetCurrentOperationMode(tstring strGUID, tstring &strMode);
-
 BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode);

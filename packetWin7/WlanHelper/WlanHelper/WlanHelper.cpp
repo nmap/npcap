@@ -411,22 +411,7 @@ BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
 		WlanFreeMemory(pOperationMode);
 	}
 
-	if (ulOperationMode == DOT11_OPERATION_MODE_EXTENSIBLE_STATION)
-	{
-		strMode = _T("managed");
-	}
-	else if (ulOperationMode == DOT11_OPERATION_MODE_NETWORK_MONITOR)
-	{
-		strMode = _T("monitor");
-	}
-	else if (ulOperationMode == DOT11_OPERATION_MODE_EXTENSIBLE_AP)
-	{
-		strMode = _T("master");
-	}
-	else
-	{
-		strMode = _T("unknown mode");
-	}
+	strMode = OperationMode2String(ulOperationMode);
 	
 	return TRUE;
 }
@@ -442,20 +427,8 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 		return FALSE;
 	}
 
-	ULONG ulOperationMode;
-	if (strMode == _T("managed"))
-	{
-		ulOperationMode = DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
-	}
-	else if (strMode == _T("monitor"))
-	{
-		ulOperationMode = DOT11_OPERATION_MODE_NETWORK_MONITOR;
-	}
-	else if (strMode == _T("master"))
-	{
-		ulOperationMode = DOT11_OPERATION_MODE_EXTENSIBLE_AP;
-	}
-	else
+	ULONG ulOperationMode = String2OperationMode(strMode);
+	if (ulOperationMode == DOT11_OPERATION_MODE_UNKNOWN)
 	{
 		_tprintf(_T("Error: SetWlanOperationMode error, unknown mode: %s\n"), strMode);
 		return FALSE;

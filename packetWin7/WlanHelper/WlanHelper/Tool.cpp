@@ -9,6 +9,70 @@
 vector<tstring> g_strAdapterNames;
 vector<tstring> g_strAdapterGUIDs;
 
+tstring OperationMode2String(ULONG OperationMode)
+{
+	if (OperationMode == DOT11_OPERATION_MODE_EXTENSIBLE_AP)
+	{
+		return _T("master");
+	}
+	else if (OperationMode == DOT11_OPERATION_MODE_EXTENSIBLE_STATION)
+	{
+		return _T("managed");
+	}
+	else if (OperationMode == DOT11_OPERATION_MODE_NETWORK_MONITOR)
+	{
+		return _T("monitor");
+	}
+	else if (OperationMode == DOT11_OPERATION_MODE_WFD_DEVICE)
+	{
+		return _T("wfd_device");
+	}
+	else if (OperationMode == DOT11_OPERATION_MODE_WFD_GROUP_OWNER)
+	{
+		return _T("wfd_owner");
+	}
+	else if (OperationMode == DOT11_OPERATION_MODE_WFD_CLIENT)
+	{
+		return _T("wfd_client");
+	}
+	else
+	{
+		return _T("unknown");
+	}
+}
+
+ULONG String2OperationMode(tstring strOperationMode)
+{
+	if (strOperationMode == _T("master"))
+	{
+		return DOT11_OPERATION_MODE_EXTENSIBLE_AP;
+	}
+	else if (strOperationMode == _T("managed"))
+	{
+		return DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
+	}
+	else if (strOperationMode == _T("monitor"))
+	{
+		return DOT11_OPERATION_MODE_NETWORK_MONITOR;
+	}
+	else if (strOperationMode == _T("wfd_device"))
+	{
+		return DOT11_OPERATION_MODE_WFD_DEVICE;
+	}
+	else if (strOperationMode == _T("wfd_owner"))
+	{
+		return DOT11_OPERATION_MODE_WFD_GROUP_OWNER;
+	}
+	else if (strOperationMode == _T("wfd_client"))
+	{
+		return DOT11_OPERATION_MODE_WFD_CLIENT;
+	}
+	else
+	{
+		return DOT11_OPERATION_MODE_UNKNOWN;
+	}
+}
+
 tstring strToLower(const tstring &str)
 {
 	tstring strTmp = str;
@@ -232,26 +296,11 @@ BOOL GetCurrentOperationMode(tstring strGUID, tstring &strMode)
 	bResult = makeOIDRequest_DOT11_CURRENT_OPERATION_MODE(strGUID, OID_DOT11_CURRENT_OPERATION_MODE, FALSE, &CurrentOperationMode);
 	if (bResult)
 	{
-		if (CurrentOperationMode.uCurrentOpMode == DOT11_OPERATION_MODE_EXTENSIBLE_STATION)
-		{
-			strMode = _T("managed");
-		}
-		else if (CurrentOperationMode.uCurrentOpMode == DOT11_OPERATION_MODE_NETWORK_MONITOR)
-		{
-			strMode = _T("monitor");
-		}
-		else if (CurrentOperationMode.uCurrentOpMode == DOT11_OPERATION_MODE_EXTENSIBLE_AP)
-		{
-			strMode = _T("master");
-		}
-		else
-		{
-			strMode = _T("unknown mode");
-		}
+		strMode = OperationMode2String(CurrentOperationMode.uCurrentOpMode);
 	}
 	else
 	{
-		strMode = _T("unknown mode (call failed)");
+		strMode = _T("unknown (call failed)");
 	}
 
 	return bResult;
@@ -263,19 +312,8 @@ BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode)
 	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode;
 
 	CurrentOperationMode.uReserved = 0;
-	if (strMode == _T("managed"))
-	{
-		CurrentOperationMode.uCurrentOpMode = DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
-	}
-	else if (strMode == _T("monitor"))
-	{
-		CurrentOperationMode.uCurrentOpMode = DOT11_OPERATION_MODE_NETWORK_MONITOR;
-	}
-	else if (strMode == _T("master"))
-	{
-		CurrentOperationMode.uCurrentOpMode = DOT11_OPERATION_MODE_EXTENSIBLE_AP;
-	}
-	else
+	CurrentOperationMode.uCurrentOpMode = String2OperationMode(strMode);
+	if (CurrentOperationMode.uCurrentOpMode == DOT11_OPERATION_MODE_UNKNOWN)
 	{
 		_tprintf(_T("Error: SetCurrentOperationMode error, unknown mode: %s\n"), strMode);
 		return FALSE;
