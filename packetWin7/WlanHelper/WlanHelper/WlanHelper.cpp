@@ -433,7 +433,7 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 	ULONG ulOperationMode = String2OperationMode(strMode);
 	if (ulOperationMode == DOT11_OPERATION_MODE_UNKNOWN)
 	{
-		_tprintf(_T("Error: SetWlanOperationMode::String2OperationMode error, unknown mode: %s\n"), strMode);
+		_tprintf(_T("Error: SetWlanOperationMode::String2OperationMode error, unknown mode: %s\n"), strMode.c_str());
 		return FALSE;
 	}
 
