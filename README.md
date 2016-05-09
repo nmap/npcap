@@ -50,7 +50,7 @@ To conclude, a software that wants to support Npcap loopback feature should do t
 * Detect ``Npcap Loopback Adapter``'s presence, by reading registry value ``Loopback`` at key ``HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npf`` (or ``npcap`` if you installed Npcap With "WinPcap Compatible Mode" ``OFF``). If ``Loopback`` value exsits, it means ``Npcap Loopback Adapter`` is OK. Then perform the following steps.
 * Treat the IP address of ``Npcap Loopback Adapter`` as ``127.0.0.1`` (IPv4) and ``::1`` (IPv6).
 * Treat the MAC address of ``Npcap Loopback Adapter`` as ``00:00:00:00:00:00``.
-* If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like ``Loopback Pseudo-Interface 1``. This interface is a **DUMMY** interface by Microsoft and can't be seen in NDIS layer. And tt also takes the ``127.0.0.1``/``::1`` IP address. A good practise for softwares is merging the entry of ``Npcap Loopback Adapter`` and the entry of ``Loopback Pseudo-Interface 1`` into one entry, like what I have implemented for Nmap (see the ``Other code (for developers)`` part).
+* If you use [**IP Helper API**](https://msdn.microsoft.com/en-us/library/aa366073.aspx) to get adapter list, you will get an interface named like ``Loopback Pseudo-Interface 1``. This interface is a **DUMMY** interface by Microsoft and can't be seen in NDIS layer. And it also takes the ``127.0.0.1``/``::1`` IP address. A good practise for softwares is merging the entry of ``Npcap Loopback Adapter`` and the entry of ``Loopback Pseudo-Interface 1`` into one entry, like what I have implemented for Nmap (see the ``Other code (for developers)`` part).
 * Don't make use of OID requests for ``Npcap Loopback Adapter`` except ``OID_GEN_MAXIMUM_TOTAL_SIZE`` requests.
 
 ## For softwares that use Npcap raw 802.11 feature
@@ -91,16 +91,33 @@ Run ``WlanHelper`` without parameters.
 
 ##### Command-line API way:
 
-1. Run ``netsh wlan show interfaces``, get the ``GUID`` for the interface.
+1. Run ``netsh wlan show interfaces``, get the ``Name`` or ``GUID`` for the interface.
 
-2. Run ``WlanHelper -h`` to see the usage. ``{Interface Name}`` refers to the ``GUID`` in the above step.
+2. Run ``WlanHelper -h`` to see the man page.
 
 ```
-Command Usage:
-WlanHelper {Interface Name} mode [*null*|managed|monitor]
-*null* - get interface mode
-managed - set interface mode to managed mode (aka ExtSTA)
-monitor - set interface mode to monitor mode (aka NetMon)
+WlanHelper for Npcap 0.07 (http://npcap.org)
+Usage: WlanHelper {Interface Name or GUID} [Options]
+Options:
+  mode: get interface operation mode
+  mode <managed|monitor|master|wfd_device|wfd_owner|wfd_client>: set interface operation mode
+  modes: get all operation modes supported by the interface, comma-separated
+  channel: get interface channel
+  channel <1-11>: set interface channel (only works at monitor mode)
+  freq: get interface frequency
+  freq <0-200>: set interface frequency (only works at monitor mode)
+Operation Modes:
+  managed - the Extensible Station (ExtSTA) operation mode
+  monitor - the Network Monitor (NetMon) operation mode
+  master - the Extensible Access Point (ExtAP) operation mode (supported for Windows 7 and later)
+  wfd_device - the Wi-Fi Direct Device operation mode (supported for Windows 8 and later)
+  wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported for Windows 8 and later)
+  wfd_client - the Wi-Fi Direct Client operation mode (supported for Windows 8 and later)
+Examples:
+  WlanHelper wi-fi mode
+  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11
+  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2
+See the MAN Page (https://github.com/nmap/npcap) for more options and examples
 ```
 
 An example:
@@ -130,18 +147,16 @@ There is 1 interface on the system:
 
     Hosted network status  : Not available
 
-C:\>WlanHelper.exe 42dfd47a-2764-43ac-b58e-3df569c447da mode
+C:\>WlanHelper.exe wi-fi mode
 managed
-C:\>WlanHelper.exe 42dfd47a-2764-43ac-b58e-3df569c447da mode monitor
+C:\>WlanHelper.exe wi-fi mode monitor
 Success
-C:\>WlanHelper.exe 42dfd47a-2764-43ac-b58e-3df569c447da mode 
+C:\>WlanHelper.exe wi-fi mode 
 monitor
-C:\>WlanHelper.exe 42dfd47a-2764-43ac-b58e-3df569c447da mode managed
+C:\>WlanHelper.exe wi-fi mode managed
 Success
-C:\>WlanHelper.exe 42dfd47a-2764-43ac-b58e-3df569c447da mode
+C:\>WlanHelper.exe wi-fi mode
 managed
-C:\>WlanHelper.exe 42dfd47a-2764-43ac-b58e-3df569c447da mode master
-Error: invalid parameter, type in "WlanHelper -h" for help.
 ```
 
 ## Build
