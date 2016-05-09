@@ -355,7 +355,7 @@ BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode)
 	CurrentOperationMode.uCurrentOpMode = String2OperationMode(strMode);
 	if (CurrentOperationMode.uCurrentOpMode == DOT11_OPERATION_MODE_UNKNOWN)
 	{
-		_tprintf(_T("Error: SetCurrentOperationMode error, unknown mode: %s\n"), strMode);
+		_tprintf(_T("Error: SetCurrentOperationMode error, unknown mode: %s\n"), strMode.c_str());
 		return FALSE;
 	}
 
