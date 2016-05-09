@@ -396,7 +396,7 @@ BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
 	GUID ChoiceGUID;
 	if (myGUIDFromString(strGUID.c_str(), &ChoiceGUID) != TRUE)
 	{
-		_tprintf(_T("Error: UuidFromString error, error code = %d\n"), -1);
+		_tprintf(_T("Error: GetWlanOperationMode::myGUIDFromString error, error code = %d\n"), -1);
 		return FALSE;
 	}
 
@@ -405,7 +405,7 @@ BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
 	DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
 	{
-		_tprintf(_T("Error: GetInterface error, error code = %d\n"), dwResult);
+		_tprintf(_T("Error: GetWlanOperationMode::GetInterface error, error code = %d\n"), dwResult);
 		return FALSE;
 	}
 	else
@@ -426,21 +426,21 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 	GUID ChoiceGUID;
 	if (myGUIDFromString(strGUID.c_str(), &ChoiceGUID) != TRUE)
 	{
-		_tprintf(_T("Error: UuidFromString error, error code = %d\n"), -1);
+		_tprintf(_T("Error: SetWlanOperationMode::myGUIDFromString error, error code = %d\n"), -1);
 		return FALSE;
 	}
 
 	ULONG ulOperationMode = String2OperationMode(strMode);
 	if (ulOperationMode == DOT11_OPERATION_MODE_UNKNOWN)
 	{
-		_tprintf(_T("Error: SetWlanOperationMode error, unknown mode: %s\n"), strMode);
+		_tprintf(_T("Error: SetWlanOperationMode::String2OperationMode error, unknown mode: %s\n"), strMode);
 		return FALSE;
 	}
 
 	DWORD dwResult = SetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&ulOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
 	{
-		_tprintf(_T("Error: SetInterface error, error code = %d\n"), dwResult);
+		_tprintf(_T("Error: SetWlanOperationMode::SetInterface error, error code = %d\n"), dwResult);
 		return FALSE;
 	}
 	else
