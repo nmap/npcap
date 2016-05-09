@@ -459,7 +459,6 @@ Options:\n\
   channel <1-11>: set interface channel (only works at monitor mode)\n\
   freq: get interface frequency\n\
   freq <0-200>: set interface frequency (only works at monitor mode)\n\
-\n\
 Operation Modes:\n\
   managed - the Extensible Station (ExtSTA) operation mode\n\
   monitor - the Network Monitor (NetMon) operation mode\n\
@@ -467,6 +466,11 @@ Operation Modes:\n\
   wfd_device - the Wi-Fi Direct Device operation mode (supported for Windows 8 and later)\n\
   wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported for Windows 8 and later)\n\
   wfd_client - the Wi-Fi Direct Client operation mode (supported for Windows 8 and later)\n\
+Examples:\n\
+  WlanHelper wi-fi mode\n\
+  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11\n\
+  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2\n\
+See the MAN Page (https://github.com/nmap/npcap) for more options and examples\n\
 ")
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n")
 
