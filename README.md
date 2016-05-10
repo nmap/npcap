@@ -242,6 +242,11 @@ The commonly seen sources of the incompatble softwares are ``anti-virus``, ``net
 - Avaya Collaboration Services x64
 - Avaya UCA Type Library
 
+## Installation Issues
+
+1. Network disconnects after installing Npcap: As Microsoft states [here](https://support.microsoft.com/en-us/kb/2019184), **an optional NDIS light-weight filter (LWF) driver like Npcap could cause 90-second delay in network availability**. Some solutions you could try are: 1) wait for 90 seconds; 2) disable and re-enable the adapter icon in ncpa.cpl; 3) reboot. If this doesn't help you, you should consider that you have **installed some incompatible software**. It can be a ``VPN, anti-virus, firewall or other network related software``. We are maintaining an incompatible software list in the previous section. So you can uninstall all those potential softwares one by one, and see which one exactly causes the issue. Don't forget to report it to me, so I could add it to this list.
+2. Installation fails with error code ``0x8004a029``: The cause is that you have **reached the maximum number of network filter drivers**, see solution [here](https://social.technet.microsoft.com/Forums/windows/en-US/4deb27fc-33ce-4fc0-a26f-3fec5b57733d/is-there-a-maximum-number-of-network-filter-drivers-in-windows-7?forum=w7itpronetworking).
+
 ## License
 
 See: [LICENSE](https://github.com/nmap/npcap/blob/master/LICENSE)
