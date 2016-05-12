@@ -15,7 +15,7 @@
   and <ulink role="hidepdf" url="http://www.netscantools.com/">NetScanTools</ulink>.
   </para>
 </sect1>
-  
+
 <sect1 id="ncat-features">
   <title>Features</title>
 	
@@ -205,7 +205,7 @@
 
   <listitem><para>If you use IP Helper API to get adapter list, you will get an interface named
   like <quote>Loopback Pseudo-Interface 1</quote>. This interface is a DUMMY interface by Microsoft
-  and can't be seen in NDIS layer. And tt also takes the 127.0.0.1/::1 IP address. A good practice
+  and can't be seen in NDIS layer. And it also takes the 127.0.0.1/::1 IP address. A good practice
   for softwares is merging the entry of <quote>Npcap Loopback Adapter</quote> and the entry of
   <quote>Loopback Pseudo-Interface 1</quote> into one entry, like what I have implemented for Nmap (see the
   <quote>Other code (for developers)</quote> part).</para></listitem>
@@ -296,18 +296,35 @@
         <title>Command-line API way</title>
 
         <itemizedlist>
-          <listitem><para>Run <command>netsh wlan show interfaces</command>, get the <option>GUID</option> for the interface.</para></listitem>
-          <listitem><para>Run <command>WlanHelper -h</command> to see the usage. <option>{Interface Name}</option> refers to the <option>GUID</option> in the above step.</para></listitem>
+          <listitem><para>Run <command>netsh wlan show interfaces</command>, get the <option>Name</option> or <option>GUID</option> for the interface.</para></listitem>
+          <listitem><para>Run <command>WlanHelper -h</command> to see the man page.</para></listitem>
         </itemizedlist>
         <example id="npcap-ex-wlanhelper-man">
         <title>WlanHelper Man</title>
         <screen>
 C:\> <userinput>WlanHelper.exe</userinput>
-Command Usage:
-WlanHelper {Interface Name} mode [*null*|managed|monitor]
-*null* - get interface mode
-managed - set interface mode to managed mode (aka ExtSTA)
-monitor - set interface mode to monitor mode (aka NetMon)
+WlanHelper for Npcap 0.07 (http://npcap.org)
+Usage: WlanHelper {Interface Name or GUID} [Options]
+Options:
+  mode: get interface operation mode
+  mode &lt;managed|monitor|master|wfd_device|wfd_owner|wfd_client&gt;: set interface operation mode
+  modes: get all operation modes supported by the interface, comma-separated
+  channel: get interface channel
+  channel &lt;1-11&gt;: set interface channel (only works at monitor mode)
+  freq: get interface frequency
+  freq &lt;0-200&gt;: set interface frequency (only works at monitor mode)
+Operation Modes:
+  managed - the Extensible Station (ExtSTA) operation mode
+  monitor - the Network Monitor (NetMon) operation mode
+  master - the Extensible Access Point (ExtAP) operation mode (supported for Windows 7 and later)
+  wfd_device - the Wi-Fi Direct Device operation mode (supported for Windows 8 and later)
+  wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported for Windows 8 and later)
+  wfd_client - the Wi-Fi Direct Client operation mode (supported for Windows 8 and later)
+Examples:
+  WlanHelper wi-fi mode
+  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11
+  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2
+See the MAN Page (https://github.com/nmap/npcap) for more options and examples
         </screen>
         </example>
         <para>
@@ -320,7 +337,7 @@ C:\> <userinput>netsh wlan show interfaces</userinput>
 
 There is 1 interface on the system:
 
-    Name                   : Wi-Fi
+    Name                   : <replaceable>Wi-Fi</replaceable>
     Description            : Qualcomm Atheros AR9485WB-EG Wireless Network Adapter
     GUID                   : <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable>
     Physical address       : a4:db:30:d9:3a:9a
@@ -340,18 +357,16 @@ There is 1 interface on the system:
 
     Hosted network status  : Not available
 
-C:\> <userinput>WlanHelper.exe <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable> mode</userinput>
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode</userinput>
 managed
-C:\> <userinput>WlanHelper.exe <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable> mode monitor</userinput>
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode monitor</userinput>
 Success
-C:\> <userinput>WlanHelper.exe <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable> mode </userinput>
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode </userinput>
 monitor
-C:\> <userinput>WlanHelper.exe <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable> mode managed</userinput>
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode managed</userinput>
 Success
-C:\> <userinput>WlanHelper.exe <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable> mode</userinput>
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode</userinput>
 managed
-C:\> <userinput>WlanHelper.exe <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable> mode master</userinput>
-Error: invalid parameter, type in "WlanHelper -h" for help.
         </screen>
         </example>
       </sect4>
@@ -411,7 +426,7 @@ Error: invalid parameter, type in "WlanHelper -h" for help.
     </para>
 
     <para>
-    <option>/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</option>
+    <option>/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no</option>
     </para>
 
     <itemizedlist>
@@ -431,7 +446,7 @@ Error: invalid parameter, type in "WlanHelper -h" for help.
     </para>
 
     <para>
-    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no</command>
+    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
     </para>
 
     <para>
@@ -439,15 +454,15 @@ Error: invalid parameter, type in "WlanHelper -h" for help.
     </para>
 
     <para>
-    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /winpcap_mode=no</command>
+    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /winpcap_mode=yes</command>
     </para>
 
     <para>
-    As the default option of <option>/winpcap_mode</option> is yes. Running the installer
+    As the default option of <option>/winpcap_mode</option> is no. Running the installer
 	directly without options will see <option>Install Npcap in WinPcap API-compatible Mode</option>
-	<emphasis>CHECKED</emphasis> by default in the <quote>Installation Options</quote> page.
+	<emphasis>UNCHECKED</emphasis> by default in the <quote>Installation Options</quote> page.
 	However, the above two commands will launch the installer GUI, and in the <quote>Installation Options</quote> page, the
-	<option>Install Npcap in WinPcap API-compatible Mode</option> option will be <emphasis>UNCHECKED</emphasis> by default.
+	<option>Install Npcap in WinPcap API-compatible Mode</option> option will be <emphasis>CHECKED</emphasis> by default.
     </para>
   </sect2>
 
@@ -462,30 +477,25 @@ Error: invalid parameter, type in "WlanHelper -h" for help.
     </para>
 
     <itemizedlist>
-    <listitem><para>The above example shows the default value. e.g., if you doesn't specify
-	the key <option>/admin_only</option>, it will take the default value <emphasis>no</emphasis>.
-	This is the same with the GUI.</para></listitem>
+    <listitem><para>If you doesn't specify a paramter key, it will take the default value.
+    This is the same with the GUI.</para></listitem>
     <listitem><para>The keys are <emphasis>case-insensitive</emphasis>.</para></listitem>
     <listitem><para>The values are <emphasis>case-sensitive</emphasis>, only two values are
-	permitted: <emphasis>yes</emphasis> or <emphasis>no</emphasis>.</para></listitem>
+    permitted: <option>yes</option> or <option>no</option>.</para></listitem>
     </itemizedlist>
   </sect2>
 
 </sect1>
 
 <sect1 id="npcap-download">
-  <title>Downloads &amp; Run (for users)</title>
+  <title>Downloads</title>
 
   <para>
-  Download and install the latest Npcap installer: <ulink role="hidepdf" url="https://github.com/nmap/npcap/releases">Npcap Releases</ulink>
+  Latest Npcap installer: <ulink role="hidepdf" url="https://github.com/nmap/npcap/releases">Npcap Release</ulink>
   </para>
-</sect1>
-
-<sect1 id="npcap-code">
-  <title>Other code (for developers)</title>
 
   <para>
-  Previous installers before Npcap 0.05: <ulink role="hidepdf" url="https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/">Npcap History Releases</ulink>
+  Archived Npcap installers (prior to <option>0.05</option>): <ulink role="hidepdf" url="https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/">Npcap Release (Archieve)</ulink>
   </para>
 </sect1>
 
@@ -515,11 +525,43 @@ Error: invalid parameter, type in "WlanHelper -h" for help.
   </itemizedlist>
 </sect1>
 
+<sect1 id="npcap-qa">
+  <title>Q &amp; A</title>
+
+  <itemizedlist>
+  <listitem><para>Network disconnects after installing Npcap: As Microsoft states
+  <ulink role="hidepdf" url="https://support.microsoft.com/en-us/kb/2019184">here</ulink>,
+  <emphasis>an optional NDIS light-weight filter (LWF) driver like Npcap could cause
+  90-second delay in network availability</emphasis>. Some solutions you could try
+  are: 1) wait for 90 seconds; 2) disable and re-enable the adapter icon in
+  <command>ncpa.cpl</command>; 3) reboot. If this doesn't help you, you should
+  consider that you have <emphasis>installed some incompatible software</emphasis>.
+  It can be a <emphasis>VPN, anti-virus, firewall or other network related</emphasis>
+  software. We are maintaining an incompatible software list in the previous section.
+  So you can uninstall all those potential softwares one by one, and see which one
+  exactly causes the issue. Don't forget to report it to me, so I could add it to
+  this list.</para></listitem>
+  <listitem><para>Installation fails with error code <varname>0x8004a029</varname>:
+  The cause is that you have <quote>reached the maximum number of network filter
+  drivers</quote>, see solution
+  <ulink role="hidepdf" url="https://social.technet.microsoft.com/Forums/windows/en-US/4deb27fc-33ce-4fc0-a26f-3fec5b57733d/is-there-a-maximum-number-of-network-filter-drivers-in-windows-7?forum=w7itpronetworking">here</ulink>.
+  </para></listitem>
+  </itemizedlist>
+</sect1>
+
 <sect1 id="npcap-license">
   <title>License</title>
 
   <para>
   See: <ulink role="hidepdf" url="https://github.com/nmap/npcap/blob/master/LICENSE">LICENSE</ulink>
+  </para>
+</sect1>
+
+<sect1 id="npcap-issues">
+  <title>Bug report</title>
+
+  <para>
+  Please report any bugs or issues about Npcap at: <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues">GitHub Issues</ulink>
   </para>
 </sect1>
 
