@@ -41,6 +41,10 @@ Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from bu
 1. Download and install the latest Npcap installer: https://github.com/nmap/npcap/releases
 2. Use [Nmap](https://nmap.org/) or [Wireshark](https://www.wireshark.org/) to test Npcap.
 
+## Development kit
+
+Npcap doesn't have its own development kit for now. Please use ``WinPcap's development kit`` instead: [WinPcap 4.1.2 Developer's Pack](http://www.winpcap.org/devel.htm)
+
 ## Bug report
 
 Please report any bugs or issues about Npcap at: https://github.com/nmap/nmap/issues
