@@ -507,3 +507,21 @@ BOOL GetDesiredPhyList(tstring strGUID, vector<tstring> &nstrPhyList)
 
 	return bResult;
 }
+
+BOOL GetCurrentPhyID(tstring strGUID, ULONG &ulPhyID)
+{
+	BOOL bResult;
+	ULONG CurrentPhyID;
+
+	bResult = makeOIDRequest(strGUID, OID_DOT11_CURRENT_PHY_ID, FALSE, &CurrentPhyID, sizeof(ULONG));
+	if (bResult)
+	{
+		ulPhyID = CurrentPhyID;
+	}
+	else
+	{
+		ulPhyID = (ULONG)-1;
+	}
+
+	return bResult;
+}

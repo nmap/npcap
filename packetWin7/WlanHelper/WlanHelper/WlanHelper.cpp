@@ -588,6 +588,20 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		else if (strArgs[2] == _T("modu"))
+		{
+			ULONG ulPhyID;
+			if (GetCurrentPhyID(getGuidFromAdapterName_Wrapper(strArgs[1]), ulPhyID))
+			{
+				_tprintf("%u\n", ulPhyID);
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
 		else
 		{
 			_tprintf(STR_INVALID_PARAMETER);
