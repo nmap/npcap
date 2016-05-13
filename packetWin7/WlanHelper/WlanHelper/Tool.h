@@ -13,6 +13,8 @@ tstring PhyType2String(ULONG PhyType);
 
 tstring printArray(vector<tstring> nstr);
 
+tstring itos(int i);
+
 tstring executeCommand(TCHAR* cmd);
 
 void initAdapterList();
@@ -26,10 +28,11 @@ BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode);
 
 BOOL GetOperationModeCapability(tstring strGUID, tstring &strModes);
 
-BOOL GetSupportedPhyTypes(tstring strGUID, vector<tstring> &strPhyTypes);
-
 BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel);
 BOOL SetCurrentChannel(tstring strGUID, ULONG ulChannel);
 
 BOOL GetCurrentFrequency(tstring strGUID, ULONG &ulFrequency);
 BOOL SetCurrentFrequency(tstring strGUID, ULONG ulFrequency);
+
+BOOL GetSupportedPhyTypes(tstring strGUID, vector<tstring> &strPhyTypes);
+BOOL GetDesiredPhyList(tstring strGUID, vector<tstring> &nstrPhyList);

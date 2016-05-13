@@ -574,6 +574,20 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		else if (strArgs[2] == _T("modus2"))
+		{
+			vector<tstring> nstrPhyList;
+			if (GetDesiredPhyList(getGuidFromAdapterName_Wrapper(strArgs[1]), nstrPhyList))
+			{
+				_tprintf("%s\n", printArray(nstrPhyList).c_str());
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
 		else
 		{
 			_tprintf(STR_INVALID_PARAMETER);

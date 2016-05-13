@@ -9,6 +9,8 @@
 vector<tstring> g_strAdapterNames;
 vector<tstring> g_strAdapterGUIDs;
 
+vector<tstring> g_nstrPhyTypes;
+
 tstring OperationMode2String(ULONG OperationMode)
 {
 	if (OperationMode == DOT11_OPERATION_MODE_EXTENSIBLE_AP)
@@ -176,6 +178,14 @@ wstring ANSIToUnicode(const string& str)
 	rt = (wchar_t*)pUnicode;
 	delete pUnicode;
 	return rt;
+}
+
+tstring itos(int i)
+{
+	char buf[256];
+	_itoa_s(i, buf, 10);
+	tstring res = buf;
+	return res;
 }
 
 tstring executeCommand(TCHAR* cmd)
@@ -399,23 +409,6 @@ BOOL GetOperationModeCapability(tstring strGUID, tstring &strModes)
 	return bResult;
 }
 
-BOOL GetSupportedPhyTypes(tstring strGUID, vector<tstring> &nstrPhyTypes)
-{
-	BOOL bResult;
-	DOT11_SUPPORTED_PHY_TYPES SupportedPhyTypes;
-
-	bResult = makeOIDRequest(strGUID, OID_DOT11_SUPPORTED_PHY_TYPES, FALSE, &SupportedPhyTypes, sizeof(DOT11_SUPPORTED_PHY_TYPES));
-	if (bResult)
-	{
-		for (size_t i = 0; i < SupportedPhyTypes.uNumOfEntries; i++)
-		{
-			nstrPhyTypes.push_back(PhyType2String(SupportedPhyTypes.dot11PHYType[i]));
-		}
-	}
-
-	return bResult;
-}
-
 BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel)
 {
 	BOOL bResult;
@@ -469,5 +462,48 @@ BOOL SetCurrentFrequency(tstring strGUID, ULONG ulFrequency)
 
 	CurrentFrequency = ulFrequency;
 	bResult = makeOIDRequest(strGUID, OID_DOT11_CURRENT_FREQUENCY, TRUE, &CurrentFrequency, sizeof(ULONG));
+	return bResult;
+}
+
+BOOL GetSupportedPhyTypes(tstring strGUID, vector<tstring> &nstrPhyTypes)
+{
+	BOOL bResult;
+	DOT11_SUPPORTED_PHY_TYPES SupportedPhyTypes;
+
+	bResult = makeOIDRequest(strGUID, OID_DOT11_SUPPORTED_PHY_TYPES, FALSE, &SupportedPhyTypes, sizeof(DOT11_SUPPORTED_PHY_TYPES));
+	if (bResult)
+	{
+		nstrPhyTypes.clear();
+		for (size_t i = 0; i < SupportedPhyTypes.uNumOfEntries; i++)
+		{
+			nstrPhyTypes.push_back(PhyType2String(SupportedPhyTypes.dot11PHYType[i]));
+		}
+	}
+
+	g_nstrPhyTypes = nstrPhyTypes;
+	return bResult;
+}
+
+BOOL GetDesiredPhyList(tstring strGUID, vector<tstring> &nstrPhyList)
+{
+	BOOL bResult;
+	DOT11_PHY_ID_LIST DesiredPhyList;
+
+	if (g_nstrPhyTypes.size() == 0)
+	{
+		GetSupportedPhyTypes(strGUID, g_nstrPhyTypes);
+	}
+
+	bResult = makeOIDRequest(strGUID, OID_DOT11_DESIRED_PHY_LIST, FALSE, &DesiredPhyList, sizeof(DOT11_PHY_ID_LIST));
+	if (bResult)
+	{
+		nstrPhyList.clear();
+		for (size_t i = 0; i < DesiredPhyList.uNumOfEntries; i++)
+		{
+			
+			nstrPhyList.push_back(itos(DesiredPhyList.dot11PhyId[i]));
+		}
+	}
+
 	return bResult;
 }
