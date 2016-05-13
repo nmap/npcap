@@ -131,12 +131,12 @@
   <row>
     <entry>NPcapHelper.exe</entry>
     <entry>packetWin7\Helper</entry>
-    <entry>the helper program for <quote>Admin-only Mode</quote>, will run under Administrator rights</entry>
+    <entry>the helper program for <quote>Admin-only Mode</quote>, will run under <emphasis>Administrator</emphasis> rights</entry>
   </row>
   <row>
     <entry>WlanHelper.exe</entry>
     <entry>packetWin7\WlanHelper</entry>
-    <entry>a tool is used to set/get the operation mode (like <quote>Monitor Mode</quote>) for a wireless adapter</entry>
+    <entry>a tool is used to set/get the operation mode (like <quote>Monitor Mode</quote>) for a wireless adapter, will run under <emphasis>Administrator</emphasis> rights</entry>
   </row>
   </tbody>
   </tgroup>
@@ -144,8 +144,31 @@
 
 </sect1>
 
+<sect1 id="npcap-feature-native">
+  <title>For softwares that use Npcap native mode</title>
+  
+  <para>
+  Prerequisite: Uncheck the <option>Install Npcap in WinPcap API-compatible Mode</option> option at install-time.
+  </para>
+  
+  <itemizedlist>
+    <listitem><para>Npcap installs its DLLs into <filename>C:\Windows\System32\Npcap\</filename>
+    instead of WinPcap's <filename>C:\Windows\System32\</filename>. So applications who want
+    to load Npcap first must make <filename>C:\Windows\System32\Npcap\</filename> precedent
+    to other paths in ways such as calling <function>SetDllDirectory</function>, etc.</para></listitem>
+
+    <listitem><para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
+  <quote>WinPcap Compatible Mode</quote> OFF. So applications using <command>net start npf</command>
+  for starting service must use <command>net start npcap</command> instead.</para></listitem>
+  </itemizedlist>
+</sect1>
+
 <sect1 id="npcap-feature-loopback">
   <title>For softwares that use Npcap loopback feature</title>
+
+  <para>
+  Prerequisite: Check the <option>Support loopback traffic ("Npcap Loopback Adapter" will be created)</option> option at install-time.
+  </para>
 
   <para>
   Npcap's loopback adapter device is based on <quote>Microsoft KM-TEST Loopback Adapter</quote>
@@ -218,6 +241,10 @@
 <sect1 id="npcap-feature-dot11">
   <title>For softwares that use Npcap raw 802.11 feature</title>
   
+  <para>
+  Prerequisite: Check the <option>Support raw 802.11 traffic (and monitor mode) for wireless adapters</option> option at install-time.
+  </para>
+  
   <sect2 id="npcap-feature-dot11-steps">
     <title>Steps</title>
     <itemizedlist>
@@ -227,7 +254,7 @@
 	<emphasis>Radiotap + 802.11</emphasis> headers for wireless adapters. Otherwise, Npcap
 	will see packets with <emphasis>fake Ethernet</emphasis> headers for wireless adapters.</para></listitem>
 
-    <listitem><para>Run <filename>WlanHelper.exe</filename> with Administrator privilege. Type in
+    <listitem><para>Run <filename>WlanHelper.exe</filename> with <emphasis>Administrator privilege</emphasis>. Type in
 	the index of your wireless adapter (usually <keycap>Enter</keycap>) and press <keycap>Enter</keycap>.
 	Then type in <keycap>Enter</keycap> and press <keycap>Enter</keycap> to switch on the <quote>Monitor Mode</quote>.
 	<filename>WlanHelper.exe</filename> also supports parameters to be used in an API manner, run
@@ -271,6 +298,10 @@
     <para>
       <quote>Monitor Mode</quote> (for Linux) = <quote>Network Monitor Mode</quote> (aka <quote>NetMon</quote>, for Windows)
     </para>
+
+    <para>
+      <quote>Master Mode</quote> (for Linux) = <quote>Extensible Access Point</quote> (aka <quote>ExtAP</quote>, for Windows)
+    </para>
   </sect2>
 
   <sect2 id="npcap-feature-dot11-wlanhelper">
@@ -284,6 +315,9 @@
 	
     <sect3 id="npcap-feature-dot11-wlanhelper-usage">
       <title>WlanHelper's Usage</title>
+      <para>
+        Note: <command>WlanHelper</command> must run under <emphasis>Administrator privilege</emphasis>.
+      </para>
 
       <sect4 id="npcap-feature-dot11-wlanhelper-usage-interactive">
         <title>Interactive way</title>
@@ -496,6 +530,14 @@ managed
 
   <para>
   Archived Npcap installers (prior to <option>0.05</option>): <ulink role="hidepdf" url="https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/">Npcap Release (Archieve)</ulink>
+  </para>
+</sect1>
+
+<sect1 id="npcap-developmentkit">
+  <title>Development kit</title>
+
+  <para>
+  Npcap doesn't have its own development kit for now. Please use <emphasis>WinPcap's development kit</emphasis> instead: <ulink role="hidepdf" url="http://www.winpcap.org/devel.htm">WinPcap 4.1.2 Developer's Pack</ulink>
   </para>
 </sect1>
 
