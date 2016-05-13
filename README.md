@@ -24,6 +24,18 @@ Npcap is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-
 
 [Npcap Users' Guide](https://htmlpreview.github.io/?https://github.com/nmap/npcap/blob/master/docs/npcap-guide-wrapper.html)
 
+## Build
+
+Run ``installer\Build.bat``: build all DLLs and the driver. The DLLs need to be built using **Visual Studio 2013**. And the driver needs to be built using **Visual Studio 2015** with **Windows SDK 10 10586** & **Windows Driver Kit 10 10586**.
+
+## Packaging
+
+Run ``installer\Deploy.bat``: copy the files from build directories to deployment directories and sign the files. Generate an installer named ``npcap-nmap-%VERSION%.exe`` using [NSIS large strings build](http://nsis.sourceforge.net/Special_Builds) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore) and sign the installer.
+
+## Generating debug symbols (optional)
+
+Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from build directories to deployment directories and package them into a zip file named ``npcap-nmap-<VERSION>-DebugSymbols.zip`` using [7-Zip](http://www.7-zip.org/).
+
 ## Downloads
 
 1. Download and install the latest Npcap installer: https://github.com/nmap/npcap/releases
