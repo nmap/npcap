@@ -1,60 +1,137 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
   <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Npcap : Update of WinPcap to NDIS 6 and LWF.">
+    <title>Npcap by exploitprotocol</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Npcap</title>
   </head>
-
   <body>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/nmap/npcap">View on GitHub</a>
+      <header>
+        <h1>Npcap</h1>
+        <p>Nmap Project&#39;s packet sniffing library for Windows, based on WinPcap/Libpcap improved with NDIS 6 and LWF</p>
+      </header>
 
-          <h1 id="project_title">Npcap</h1>
-          <h2 id="project_tagline">Update of WinPcap to NDIS 6 and LWF, sponsored but not officially supported by the <a href="https://github.com/nmap">Nmap</a> Project.</h2>
+      <div id="banner">
+        <span id="logo"></span>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/nmap/npcap/releases">Download the releases</a>
-            </section>
-        </header>
-    </div>
+        <a href="https://github.com/exploitprotocol/npcap" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/exploitprotocol/npcap/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/exploitprotocol/npcap/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <h1>
+<a id="npcap" class="anchor" href="#npcap" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Npcap</h1>
 
-<h2><a id="features" class="anchor" href="#overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Features</h2>
+<p><a href="http://www.npcap.org">http://www.npcap.org</a></p>
 
-<li><p>NDIS 6 Support</p></li>
-<li><p>"Admin-only Mode" Support</p></li>
-<li><p>"WinPcap Compatible Mode" Support</p></li>
-<li><p>Loopback Packets Capture Support</p></li>
-<li><p>Loopback Packets Send Support</p></li>
+<p><a href="https://ci.appveyor.com/project/hsluoyz/npcap"><img src="https://ci.appveyor.com/api/projects/status/01yoks5rn14wgny2?svg=true" alt="Build status"></a>
+<img src="https://img.shields.io/badge/Windows-Vista,%207,%208,%2010-yellow.svg" alt="Environment">
+<img src="https://img.shields.io/github/release/nmap/npcap.svg" alt="Release">
+<img src="https://img.shields.io/github/license/nmap/npcap.svg" alt="License">
+<img src="https://img.shields.io/github/downloads/nmap/npcap/latest/total.svg" alt="Downloads">
+<img src="https://img.shields.io/github/downloads/nmap/npcap/total.svg" alt="TotalDownloads"></p>
 
-<h2><a id="more" class="anchor" href="#overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>More Info</h2>
+<p>Npcap is an update of <a href="http://www.winpcap.org/"><strong>WinPcap</strong></a> to <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx"><strong>NDIS 6 Light-Weight Filter (LWF)</strong></a> technique. It supports <strong>Windows Vista, 7, 8 and 10</strong>. It is sponsored by the <a href="http://nmap.org/"><strong>Nmap Project</strong></a> and developed by <a href="http://www.veotax.com/"><strong>Yang Luo</strong></a> under <a href="https://www.google-melange.com/gsoc/project/details/google/gsoc2013/hsluoyz/5727390428823552"><strong>Google Summer of Code 2013</strong></a> and <a href="https://www.google-melange.com/gsoc/project/details/google/gsoc2015/hsluoyz/5723971634855936"><strong>2015</strong></a>. It also received many helpful tests from <a href="https://www.wireshark.org/"><strong>Wireshark</strong></a> and <a href="http://www.netscantools.com/"><strong>NetScanTools</strong></a>.</p>
 
-<p>See: <a href="https://github.com/nmap/npcap">https://github.com/nmap/npcap</a></p>
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Features</h2>
 
+<ol>
+<li>
+<strong>NDIS 6 Support</strong>: Npcap makes use of new <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx">NDIS 6 Light-Weight Filter (LWF)</a> API in Windows Vista and later (the legacy driver is used on XP). It's faster than the deprecated <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff557012(v=vs.85).aspx">NDIS 5</a> API, which Microsoft could remove at any time.</li>
+<li>
+<strong>Extra Security</strong>: Npcap can be restricted so that only Administrators can sniff packets. If a non-Admin user tries to utilize Npcap through software such as Nmap or Wireshark, the user will have to pass a <a href="http://windows.microsoft.com/en-us/windows/what-is-user-account-control#1TC=windows-7">User Account Control (UAC)</a> dialog to utilize the driver. This is conceptually similar to UNIX, where root access is generally required to capture packets.</li>
+<li>
+<strong>WinPcap Compatibility</strong>: If you choose <code>WinPcap Compatible Mode</code> at install-time, Npcap will use the WinPcap-style DLL directories <code>c:\Windows\System32</code> and servcie name <code>npf</code>, allowing software built with WinPcap in mind to transparently use Npcap instead. If compatability mode is not selected, Npcap is installed in a different location <code>C:\Windows\System32\Npcap</code> with a different service name <code>npcap</code> so that both drivers can coexist on the same system. In this case, applications which only know about WinPcap will continue using that, while other applications can choose to use the newer and faster Npcap driver instead.</li>
+<li>
+<strong>Loopback Packet Capture</strong>: Npcap is able to sniff loopback packets (transmissions between services on the same machine) by using the <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa366510(v=vs.85).aspx">Windows Filtering Platform (WFP)</a>. After installation, Npcap will create an adapter named <code>Npcap Loopback Adapter</code> for you. If you are a Wireshark user, choose this adapter to capture, you will see all loopback traffic the same way as other non-loopback adapters. Try it by typing in commands like <code>ping 127.0.0.1</code> (IPv4) or <code>ping ::1</code> (IPv6).</li>
+<li>
+<strong>Loopback Packet Injection</strong>: Npcap is also able to send loopback packets using the <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff556958(v=vs.85).aspx">Winsock Kernel (WSK)</a> technique. User-level software such as <a href="https://nmap.org/nping/">Nping</a> can just send the packets out using <code>Npcap Loopback Adapter</code> just like any other adapter. Npcap then does the magic of removing the packet's Ethernet header and injecting the payload into the Windows TCP/IP stack.</li>
+<li>
+<strong>Raw 802.11 Packet Capture</strong>: Npcap is able to see <strong>802.11</strong> packets instead of <strong>fake Ethernet</strong> packets on ordinary wireless adapters. You need to select the <code>Support raw 802.11 traffic (and monitor mode) for wireless adapters</code> option in the installation wizard to enable this feature. When your adapter is in <code>Monitor Mode</code>, Npcap will supply all <code>802.11 data + control + management</code> packets with <code>radiotap</code> headers. When your adapter is in <code>Managed Mode</code>, Npcap will only supply <code>802.11 data</code> packets with <code>radiotap</code> headers. Moreover, Npcap provides the <code>WlanHelper.exe</code> tool to help you switch to <code>Monitor Mode</code> on Windows. See more details about this feature in section <code>For softwares that use Npcap raw 802.11 feature</code>. See more details about <code>radiotap</code> here: <a href="http://www.radiotap.org/">http://www.radiotap.org/</a>
+</li>
+</ol>
+
+<h2>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Documentation</h2>
+
+<p><a href="https://htmlpreview.github.io/?https://github.com/nmap/npcap/blob/master/docs/npcap-guide-wrapper.html">Npcap Users' Guide</a></p>
+
+<h2>
+<a id="build" class="anchor" href="#build" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Build</h2>
+
+<p>Run <code>installer\Build.bat</code>: build all DLLs and the driver. The DLLs need to be built using <strong>Visual Studio 2013</strong>. And the driver needs to be built using <strong>Visual Studio 2015</strong> with <strong>Windows SDK 10 10586</strong> &amp; <strong>Windows Driver Kit 10 10586</strong>.</p>
+
+<h2>
+<a id="packaging" class="anchor" href="#packaging" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Packaging</h2>
+
+<p>Run <code>installer\Deploy.bat</code>: copy the files from build directories to deployment directories and sign the files. Generate an installer named <code>npcap-nmap-%VERSION%.exe</code> using <a href="http://nsis.sourceforge.net/Special_Builds">NSIS large strings build</a> with the <a href="https://github.com/hsluoyz/SysRestore">SysRestore plug-in (special build for Npcap)</a> and sign the installer.</p>
+
+<h2>
+<a id="generating-debug-symbols-optional" class="anchor" href="#generating-debug-symbols-optional" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Generating debug symbols (optional)</h2>
+
+<p>Run <code>installer\Deploy_Symbols.bat</code>: copy the debug symbol files (.PDB) from build directories to deployment directories and package them into a zip file named <code>npcap-nmap-&lt;VERSION&gt;-DebugSymbols.zip</code> using <a href="http://www.7-zip.org/">7-Zip</a>.</p>
+
+<h2>
+<a id="downloads" class="anchor" href="#downloads" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Downloads</h2>
+
+<ol>
+<li>Download and install the latest Npcap installer: <a href="https://github.com/nmap/npcap/releases">https://github.com/nmap/npcap/releases</a>
+</li>
+<li>Use <a href="https://nmap.org/">Nmap</a> or <a href="https://www.wireshark.org/">Wireshark</a> to test Npcap.</li>
+</ol>
+
+<h2>
+<a id="development-kit" class="anchor" href="#development-kit" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Development kit</h2>
+
+<p>Npcap doesn't have its own development kit for now. Please use <code>WinPcap's development kit</code> instead: <a href="http://www.winpcap.org/devel.htm">WinPcap 4.1.2 Developer's Pack</a></p>
+
+<h2>
+<a id="bug-report" class="anchor" href="#bug-report" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Bug report</h2>
+
+<p>Please report any bugs or issues about Npcap at: <a href="https://github.com/nmap/nmap/issues">https://github.com/nmap/nmap/issues</a></p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
+
+<p>See: <a href="https://github.com/nmap/npcap/blob/master/LICENSE">LICENSE</a></p>
+
+<h2>
+<a id="contact" class="anchor" href="#contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contact</h2>
+
+<ul>
+<li>
+<code>dev@nmap.org</code> (Nmap development list, this is <strong>preferred</strong>)</li>
+<li>
+<code>hsluoyz@gmail.com</code> (Yang Luo's email, if your issue needs to be kept private, please contact me via this mail)</li>
+</ul>
       </section>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Npcap maintained by <a href="https://github.com/hsluoyz">Yang Luo</a></p>
-        <p>Published with <a href="https://github.com/nmap/npcap/blob/master/LICENSE">Custom License</a></p>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/exploitprotocol">exploitprotocol</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></small></p>
       </footer>
     </div>
-
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     
-
   </body>
 </html>
