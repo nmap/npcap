@@ -821,6 +821,15 @@ bad:
 	return (PCAP_ERROR);
 }
 
+/*
+* Check if rfmon mode is supported on the pcap_t for Windows systems.
+*/
+static int
+pcap_can_set_rfmon_win32(pcap_t *p _U_)
+{
+	return (0);
+}
+
 pcap_t *
 pcap_create(const char *device, char *ebuf)
 {
@@ -868,6 +877,7 @@ pcap_create(const char *device, char *ebuf)
 	else
 	{
 	p->activate_op = pcap_activate_win32;
+	p->can_set_rfmon_op = pcap_can_set_rfmon_win32;
 	}
 
 	return (p);
