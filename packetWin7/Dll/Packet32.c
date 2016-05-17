@@ -4653,6 +4653,49 @@ BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject)
 }
 
 /*!
+\brief Returns whether a wireless adapter supports monitor mode.
+\param AdapterObject The adapter on which information is needed.
+\return TRUE if yes, FALSE if no.
+*/
+BOOLEAN PacketIsMonitorModeSupported(LPADAPTER AdapterObject)
+{
+	BOOLEAN    Status;
+	ULONG      IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1);
+	PPACKET_OID_DATA  OidData;
+	DOT11_OPERATION_MODE_CAPABILITY ModeCapability;
+
+	TRACE_ENTER("PacketIsMonitorModeSupported");
+
+	OidData = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
+	if (OidData == NULL) {
+		TRACE_PRINT("PacketIsMonitorModeSupported failed");
+		TRACE_EXIT("PacketIsMonitorModeSupported");
+		return FALSE;
+	}
+	//get the mode capability
+	OidData->Oid = OID_DOT11_OPERATION_MODE_CAPABILITY;
+	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
+	Status = PacketRequest(AdapterObject, FALSE, OidData);
+	if (Status == TRUE)
+	{
+		ModeCapability = *((DOT11_OPERATION_MODE_CAPABILITY*)OidData->Data);
+		if ((ModeCapability.uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
+		{
+			Status = TRUE;
+		}
+		else
+		{
+			Status = FALSE;
+		}
+	}
+
+	GlobalFreePtr(OidData);
+
+	TRACE_EXIT("PacketIsMonitorModeSupported");
+	return Status;
+}
+
+/*!
   \brief Returns the AirPcap handler associated with an adapter. This handler can be used to change
            the wireless-related settings of the CACE Technologies AirPcap wireless capture adapters.
   \param AdapterObject the open adapter whose AirPcap handler is needed.

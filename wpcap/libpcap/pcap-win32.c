@@ -825,9 +825,9 @@ bad:
 * Check if rfmon mode is supported on the pcap_t for Windows systems.
 */
 static int
-pcap_can_set_rfmon_win32(pcap_t *p _U_)
+pcap_can_set_rfmon_win32(pcap_t *p)
 {
-	return (0);
+	return PacketIsMonitorModeSupported(p->adapter);
 }
 
 pcap_t *
