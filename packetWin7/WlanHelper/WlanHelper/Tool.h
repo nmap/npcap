@@ -27,6 +27,7 @@ BOOL GetCurrentOperationMode(tstring strGUID, tstring &strMode);
 BOOL SetCurrentOperationMode(tstring strGUID, tstring strMode);
 
 BOOL GetOperationModeCapability(tstring strGUID, tstring &strModes);
+BOOL IsMonitorModeSupported(tstring strGUID);
 
 BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel);
 BOOL SetCurrentChannel(tstring strGUID, ULONG ulChannel);

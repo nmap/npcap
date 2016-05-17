@@ -532,6 +532,20 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		else if (strArgs[2] == _T("modes-monitor"))
+		{
+			tstring strModes;
+			if (IsMonitorModeSupported(getGuidFromAdapterName_Wrapper(strArgs[1])))
+			{
+				_tprintf("%d\n", TRUE);
+				return 0;
+			}
+			else
+			{
+				_tprintf("%d\n", FALSE);
+				return 0;
+			}
+		}
 		else if (strArgs[2] == _T("channel"))
 		{
 			ULONG ulChannel;

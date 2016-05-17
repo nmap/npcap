@@ -409,6 +409,29 @@ BOOL GetOperationModeCapability(tstring strGUID, tstring &strModes)
 	return bResult;
 }
 
+BOOL IsMonitorModeSupported(tstring strGUID)
+{
+	BOOL bResult;
+	DOT11_OPERATION_MODE_CAPABILITY OperationModeCapability;
+
+	bResult = makeOIDRequest(strGUID, OID_DOT11_OPERATION_MODE_CAPABILITY, FALSE, &OperationModeCapability, sizeof(DOT11_OPERATION_MODE_CAPABILITY));
+	if (bResult)
+	{
+		if ((OperationModeCapability.uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
+		{
+			return TRUE;
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+
 BOOL GetCurrentChannel(tstring strGUID, ULONG &ulChannel)
 {
 	BOOL bResult;
