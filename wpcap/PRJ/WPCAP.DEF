@@ -92,3 +92,4 @@ EXPORTS
 		pcap_setdirection
 		pcap_free_datalinks
 		pcap_can_set_rfmon
+		pcap_set_rfmon
