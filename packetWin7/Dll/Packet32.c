@@ -464,7 +464,7 @@ void NPcapGetLoopbackInterfaceName()
 	HKEY hKey;
 	DWORD type;
 	char buffer[BUFSIZE];
-	int size = sizeof(buffer);
+	DWORD size = sizeof(buffer);
 
 #ifndef _X86_
 	Wow64EnableWow64FsRedirection(FALSE);
@@ -474,7 +474,7 @@ void NPcapGetLoopbackInterfaceName()
 	{
 		if (RegQueryValueExA(hKey, "Loopback", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
-			strncpy(g_LoopbackAdapterName, buffer, sizeof(g_LoopbackAdapterName)/ sizeof(g_LoopbackAdapterName[0]) - 1);
+			strncpy_s(g_LoopbackAdapterName, 512, buffer, sizeof(g_LoopbackAdapterName)/ sizeof(g_LoopbackAdapterName[0]) - 1);
 		}
 
 		RegCloseKey(hKey);
@@ -490,7 +490,7 @@ BOOL NPcapIsAdminOnlyMode()
 	HKEY hKey;
 	DWORD type;
 	char buffer[BUFSIZE];
-	int size = sizeof(buffer);
+	DWORD size = sizeof(buffer);
 	DWORD dwAdminOnlyMode = 0;
 
 #ifndef _X86_
@@ -776,6 +776,7 @@ PCHAR NPcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 PCHAR NPcapAdapterNameNPF2NPCAP(PCHAR AdapterName)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	UNREFERENCED_PARAMETER(AdapterName);
 	return NULL;
 #else
 	return NPcapReplaceString(AdapterName, "NPF", "NPCAP");
@@ -785,6 +786,7 @@ PCHAR NPcapAdapterNameNPF2NPCAP(PCHAR AdapterName)
 PCHAR NPcapAdapterNameNPCAP2NPF(PCHAR AdapterName)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	UNREFERENCED_PARAMETER(AdapterName);
 	return NULL;
 #else
 	return NPcapReplaceString(AdapterName, "NPCAP", "NPF");
@@ -794,6 +796,8 @@ PCHAR NPcapAdapterNameNPCAP2NPF(PCHAR AdapterName)
 PCHAR NPcapMemNPF2NPCAP(PCHAR pStr, int iBufSize)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	UNREFERENCED_PARAMETER(pStr);
+	UNREFERENCED_PARAMETER(iBufSize);
 	return NULL;
 #else
 	return NPcapReplaceMemory(pStr, iBufSize, "NPF", "NPCAP");
@@ -803,6 +807,8 @@ PCHAR NPcapMemNPF2NPCAP(PCHAR pStr, int iBufSize)
 PCHAR NPcapMemNPCAP2NPF(PCHAR pStr, int iBufSize)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+	UNREFERENCED_PARAMETER(pStr);
+	UNREFERENCED_PARAMETER(iBufSize);
 	return NULL;
 #else
 	return NPcapReplaceMemory(pStr, iBufSize, "NPCAP", "NPF");
@@ -4634,7 +4640,6 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 */
 BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject)
 {
-	PADAPTER_INFO TAdInfo;
 	BOOLEAN ret;
 	TRACE_ENTER("PacketIsLoopbackAdapter");
 
@@ -4742,7 +4747,6 @@ DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 	DWORD dwResult = 0;
 	HANDLE hClient = NULL;
 	DWORD dwCurVersion = 0;
-	DWORD outsize = 0;
 
 	// Open Handle for the set operation
 	dwResult = WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
