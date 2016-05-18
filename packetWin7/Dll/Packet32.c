@@ -4633,6 +4633,35 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	return ret;
 }
 
+BOOLEAN PacketGetNetType2(PCHAR AdapterName, NetType *type)
+{
+	PADAPTER_INFO TAdInfo;
+	BOOLEAN ret;
+	TRACE_ENTER("PacketGetNetType2");
+
+	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
+	// Find the PADAPTER_INFO structure associated with this adapter 
+	TAdInfo = PacketFindAdInfo(AdapterName);
+
+	if (TAdInfo != NULL)
+	{
+		TRACE_PRINT("Adapter found");
+		// Copy the data
+		memcpy(type, &(TAdInfo->LinkLayer), sizeof(struct NetType));
+		ret = TRUE;
+	}
+	else
+	{
+		TRACE_PRINT("PacketGetNetType2: Adapter not found");
+		ret = FALSE;
+	}
+
+	ReleaseMutex(g_AdaptersInfoMutex);
+
+	TRACE_EXIT("PacketGetNetType2");
+	return ret;
+}
+
 /*! 
   \brief Returns whether an adapter is a loopback adapter (like Npcap loopback adapter).
   \param AdapterObject The adapter on which information is needed.
@@ -4663,29 +4692,21 @@ BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject)
 \param AdapterObject The adapter on which information is needed.
 \return TRUE if yes, FALSE if no.
 */
-BOOLEAN PacketIsMonitorModeSupported(LPADAPTER AdapterObject)
+BOOLEAN PacketIsMonitorModeSupported(PCHAR AdapterName)
 {
-	BOOLEAN    Status;
-	ULONG      IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1);
-	PPACKET_OID_DATA  OidData;
-	DOT11_OPERATION_MODE_CAPABILITY ModeCapability;
+	BOOLEAN Status;
+	NetType Type;
 
 	TRACE_ENTER("PacketIsMonitorModeSupported");
 
-	OidData = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
-	if (OidData == NULL) {
-		TRACE_PRINT("PacketIsMonitorModeSupported failed");
-		TRACE_EXIT("PacketIsMonitorModeSupported");
-		return FALSE;
-	}
-	//get the mode capability
-	OidData->Oid = OID_DOT11_OPERATION_MODE_CAPABILITY;
-	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
-	Status = PacketRequest(AdapterObject, FALSE, OidData);
-	if (Status == TRUE)
+	if (PacketGetNetType2(AdapterName, &Type) == FALSE)
 	{
-		ModeCapability = *((DOT11_OPERATION_MODE_CAPABILITY*)OidData->Data);
-		if ((ModeCapability.uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
+		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketGetNetType error");
+		Status = FALSE;
+	}
+	else
+	{
+		if (Type.LinkType == NdisMediumBare80211 || Type.LinkType == NdisMediumRadio80211)
 		{
 			Status = TRUE;
 		}
@@ -4695,11 +4716,51 @@ BOOLEAN PacketIsMonitorModeSupported(LPADAPTER AdapterObject)
 		}
 	}
 
-	GlobalFreePtr(OidData);
-
 	TRACE_EXIT("PacketIsMonitorModeSupported");
 	return Status;
 }
+
+/*!
+This code needs to send OID request, which requires the adapter to be opened first,
+but usually this function is called before opening, so we don't use it for now.
+*/
+// BOOLEAN PacketIsMonitorModeSupported(LPADAPTER AdapterObject)
+// {
+// 	BOOLEAN    Status;
+// 	ULONG      IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1);
+// 	PPACKET_OID_DATA  OidData;
+// 	DOT11_OPERATION_MODE_CAPABILITY ModeCapability;
+// 
+// 	TRACE_ENTER("PacketIsMonitorModeSupported");
+// 
+// 	OidData = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
+// 	if (OidData == NULL) {
+// 		TRACE_PRINT("PacketIsMonitorModeSupported failed");
+// 		TRACE_EXIT("PacketIsMonitorModeSupported");
+// 		return FALSE;
+// 	}
+// 	//get the mode capability
+// 	OidData->Oid = OID_DOT11_OPERATION_MODE_CAPABILITY;
+// 	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
+// 	Status = PacketRequest(AdapterObject, FALSE, OidData);
+// 	if (Status == TRUE)
+// 	{
+// 		ModeCapability = *((DOT11_OPERATION_MODE_CAPABILITY*)OidData->Data);
+// 		if ((ModeCapability.uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
+// 		{
+// 			Status = TRUE;
+// 		}
+// 		else
+// 		{
+// 			Status = FALSE;
+// 		}
+// 	}
+// 
+// 	GlobalFreePtr(OidData);
+// 
+// 	TRACE_EXIT("PacketIsMonitorModeSupported");
+// 	return Status;
+// }
 
 // MAKEINTRESOURCE() returns an LPSTR, but GetProcAddress()
 // expects LPSTR even in UNICODE, so using MAKEINTRESOURCEA()...

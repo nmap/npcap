@@ -828,7 +828,7 @@ bad:
 static int
 pcap_can_set_rfmon_win32(pcap_t *p)
 {
-	return PacketIsMonitorModeSupported(p->adapter);
+	return PacketIsMonitorModeSupported(p->opt.source);
 }
 
 pcap_t *
