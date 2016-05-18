@@ -43,6 +43,7 @@
 #include <tchar.h>
 #include <strsafe.h>
 #include <Shlwapi.h>
+#include <wlanapi.h>
 
 #include "ProtInstall.h"
 #include "Packet32-Int.h"
@@ -4693,6 +4694,95 @@ BOOLEAN PacketIsMonitorModeSupported(LPADAPTER AdapterObject)
 
 	TRACE_EXIT("PacketIsMonitorModeSupported");
 	return Status;
+}
+
+// MAKEINTRESOURCE() returns an LPTSTR, but GetProcAddress()
+// expects LPSTR even in UNICODE, so using MAKEINTRESOURCEA()...
+#ifdef UNICODE
+#define MAKEINTRESOURCEA_T(a, u) MAKEINTRESOURCEA(u)
+#else
+#define MAKEINTRESOURCEA_T(a, u) MAKEINTRESOURCEA(a)
+#endif
+
+BOOL myGUIDFromString(LPCSTR psz, LPGUID pguid)
+{
+	BOOL bRet = FALSE;
+
+	typedef BOOL(WINAPI *LPFN_GUIDFromString)(LPCSTR, LPGUID);
+	LPFN_GUIDFromString pGUIDFromString = NULL;
+
+	HINSTANCE hInst = LoadLibrary(TEXT("shell32.dll"));
+	if (hInst)
+	{
+		pGUIDFromString = (LPFN_GUIDFromString)GetProcAddress(hInst, MAKEINTRESOURCEA_T(703, 704));
+		if (pGUIDFromString)
+			bRet = pGUIDFromString(psz, pguid);
+		FreeLibrary(hInst);
+	}
+
+	if (!pGUIDFromString)
+	{
+		hInst = LoadLibrary(TEXT("Shlwapi.dll"));
+		if (hInst)
+		{
+			pGUIDFromString = (LPFN_GUIDFromString)GetProcAddress(hInst, MAKEINTRESOURCEA_T(269, 270));
+			if (pGUIDFromString)
+				bRet = pGUIDFromString(psz, pguid);
+			FreeLibrary(hInst);
+		}
+	}
+
+	return bRet;
+}
+
+#define WLAN_CLIENT_VERSION_VISTA 2
+
+DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
+{
+	DWORD dwResult = 0;
+	HANDLE hClient = NULL;
+	DWORD dwCurVersion = 0;
+	DWORD outsize = 0;
+
+	// Open Handle for the set operation
+	dwResult = WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
+	dwResult = WlanSetInterface(hClient, InterfaceGuid, opcode, sizeof(ULONG), pData, NULL);
+	WlanCloseHandle(hClient, NULL);
+
+	return dwResult;
+}
+
+/*!
+\brief Sets the operation mode of an adapter.
+\param AdapterObject Pointer to an _ADAPTER structure.
+\param mode The new operation mode of the adapter, 1 for monitor mode, 0 for managed mode.
+\return If the function succeeds, the return value is nonzero.
+*/
+BOOLEAN PacketSetMonitorMode(LPADAPTER AdapterObject, int mode)
+{
+	GUID ChoiceGUID;
+	TRACE_ENTER("PacketSetMonitorMode");
+
+	if (myGUIDFromString(AdapterObject->Name + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
+	{
+		TRACE_PRINT("PacketSetMonitorMode failed, myGUIDFromString error");
+		return FALSE;
+	}
+
+	ULONG ulOperationMode = mode ? DOT11_OPERATION_MODE_NETWORK_MONITOR : DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
+
+	DWORD dwResult = SetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&ulOperationMode, &ChoiceGUID);
+	if (dwResult != ERROR_SUCCESS)
+	{
+		TRACE_PRINT("PacketSetMonitorMode failed, SetInterface error");
+		TRACE_EXIT("PacketSetMonitorMode");
+		return FALSE;
+	}
+	else
+	{
+		TRACE_EXIT("PacketSetMonitorMode");
+		return TRUE;
+	}
 }
 
 /*!

@@ -23,6 +23,7 @@ EXPORTS
 		PacketGetNetType
 		PacketIsLoopbackAdapter
 		PacketIsMonitorModeSupported
+		PacketSetMonitorMode
 		PacketSetReadTimeout
 		PacketSetMode
 		PacketSetNumWrites
