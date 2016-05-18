@@ -4357,7 +4357,7 @@ BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
   - a double "\0". 
 */
 
-BOOLEAN PacketGetAdapterNames(PTSTR pStr,PULONG  BufferSize)
+BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 {
 	PADAPTER_INFO	TAdInfo;
 	ULONG	SizeNeeded = 0;

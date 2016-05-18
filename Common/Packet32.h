@@ -341,7 +341,7 @@ extern "C"
 	VOID PacketFreePacket(LPPACKET lpPacket);
 	BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject, LPPACKET lpPacket, BOOLEAN Sync);
 	BOOLEAN PacketSetHwFilter(LPADAPTER AdapterObject, ULONG Filter);
-	BOOLEAN PacketGetAdapterNames(PTSTR pStr, PULONG  BufferSize);
+	BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize);
 	BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntries);
 	BOOLEAN PacketRequest(LPADAPTER  AdapterObject, BOOLEAN Set, PPACKET_OID_DATA  OidData);
 	HANDLE PacketGetReadEvent(LPADAPTER AdapterObject);
