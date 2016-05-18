@@ -570,7 +570,7 @@ pcap_activate_win32(pcap_t *p)
 		/*
 		 * Monitor mode is supported on Windows Vista and later.
 		 */
-		if (PacketSetMonitorMode(p->adapter, 1) == FALSE)
+		if (PacketSetMonitorMode(p->opt.source, 1) == FALSE)
 		{
 			return PCAP_ERROR;
 		}

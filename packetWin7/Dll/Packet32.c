@@ -4701,10 +4701,10 @@ BOOLEAN PacketIsMonitorModeSupported(LPADAPTER AdapterObject)
 	return Status;
 }
 
-// MAKEINTRESOURCE() returns an LPTSTR, but GetProcAddress()
+// MAKEINTRESOURCE() returns an LPSTR, but GetProcAddress()
 // expects LPSTR even in UNICODE, so using MAKEINTRESOURCEA()...
 #ifdef UNICODE
-#define MAKEINTRESOURCEA_T(a, u) MAKEINTRESOURCEA(u)
+#define MAKEINTRESOURCEA_T(a, u) MAKEINTRESOURCEA(a)
 #else
 #define MAKEINTRESOURCEA_T(a, u) MAKEINTRESOURCEA(a)
 #endif
@@ -4762,12 +4762,12 @@ DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 \param mode The new operation mode of the adapter, 1 for monitor mode, 0 for managed mode.
 \return If the function succeeds, the return value is nonzero.
 */
-BOOLEAN PacketSetMonitorMode(LPADAPTER AdapterObject, int mode)
+BOOLEAN PacketSetMonitorMode(PCHAR AdapterName, int mode)
 {
 	GUID ChoiceGUID;
 	TRACE_ENTER("PacketSetMonitorMode");
 
-	if (myGUIDFromString(AdapterObject->Name + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
+	if (myGUIDFromString(AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
 	{
 		TRACE_PRINT("PacketSetMonitorMode failed, myGUIDFromString error");
 		return FALSE;
