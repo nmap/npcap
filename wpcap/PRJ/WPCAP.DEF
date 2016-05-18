@@ -91,3 +91,4 @@ EXPORTS
 		pcap_hopen_offline
 		pcap_setdirection
 		pcap_free_datalinks
+		pcap_can_set_rfmon
