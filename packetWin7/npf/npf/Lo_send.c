@@ -474,7 +474,12 @@ InitWskBuffer(
 
 	__try
 	{
-		MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, IoWriteAccess);
+		if ((WskBuffer->Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) != MDL_MAPPED_TO_SYSTEM_VA &&
+			(WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) != MDL_PAGES_LOCKED &&
+			(WskBuffer->Mdl->MdlFlags & MDL_SOURCE_IS_NONPAGED_POOL) != MDL_SOURCE_IS_NONPAGED_POOL)
+		{
+			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, IoWriteAccess);
+		}
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
@@ -497,7 +502,12 @@ FreeWskBuffer(
 
 	TRACE_ENTER();
 
-	MmUnlockPages(WskBuffer->Mdl);
+	if ((WskBuffer->Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) != MDL_MAPPED_TO_SYSTEM_VA &&
+		(WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) != MDL_PAGES_LOCKED &&
+		(WskBuffer->Mdl->MdlFlags & MDL_SOURCE_IS_NONPAGED_POOL) != MDL_SOURCE_IS_NONPAGED_POOL)
+	{
+		MmUnlockPages(WskBuffer->Mdl);
+	}
 	IoFreeMdl(WskBuffer->Mdl);
 	TRACE_EXIT();
 }
@@ -530,7 +540,12 @@ InitWskBuffer_NBL(
 
 	__try
 	{
-		MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, IoWriteAccess);
+		if ((WskBuffer->Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) != MDL_MAPPED_TO_SYSTEM_VA &&
+			(WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) != MDL_PAGES_LOCKED &&
+			(WskBuffer->Mdl->MdlFlags & MDL_SOURCE_IS_NONPAGED_POOL) != MDL_SOURCE_IS_NONPAGED_POOL)
+		{
+			MmProbeAndLockPages(WskBuffer->Mdl, KernelMode, IoWriteAccess);
+		}
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
@@ -552,7 +567,12 @@ FreeWskBuffer_NBL(
 
 	TRACE_ENTER();
 
-	MmUnlockPages(WskBuffer->Mdl);
+	if ((WskBuffer->Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) != MDL_MAPPED_TO_SYSTEM_VA &&
+		(WskBuffer->Mdl->MdlFlags & MDL_PAGES_LOCKED) != MDL_PAGES_LOCKED &&
+		(WskBuffer->Mdl->MdlFlags & MDL_SOURCE_IS_NONPAGED_POOL) != MDL_SOURCE_IS_NONPAGED_POOL)
+	{
+		MmUnlockPages(WskBuffer->Mdl);
+	}
 	TRACE_EXIT();
 }
 
