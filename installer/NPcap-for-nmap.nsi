@@ -934,11 +934,21 @@ Section "WinPcap" SecWinPcap
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
     ${Endif}
 
+    ; Copy the "Loopback" option from software key to services key
+    ReadRegStr $0 HKLM "Software\Npcap" "Loopback"
+    WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Loopback" $0
+
     ; Npcap driver will read this option
     ${If} $dlt_null == "yes"
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 1 ; make "DltNull" = 1 only when "dlt null" is chosen
     ${Else}
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 0
+    ${Endif}
+
+    ${If} $dot11_support == "yes"
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "dot11 support" is chosen
+    ${Else}
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 0
     ${Endif}
 
     ; Npcap driver will read this option
@@ -948,9 +958,13 @@ Section "WinPcap" SecWinPcap
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 0
     ${Endif}
 
-    ; Copy the "Loopback" option from software key to services key
-    ReadRegStr $0 HKLM "Software\Npcap" "Loopback"
-    WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Loopback" $0
+	; Wireshark will read this option
+    ${If} $winpcap_mode == "yes"
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
+    ${Else}
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 0 ;
+    ${EndIf}
+
 
     nsExec::Exec "net start $driver_name"
     nsExec::Exec "net stop $driver_name"
