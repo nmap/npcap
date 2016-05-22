@@ -320,6 +320,7 @@ extern "C"
 
 	PCHAR PacketGetVersion();
 	PCHAR PacketGetDriverVersion();
+	PCHAR PacketGetDriverName();
 	BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject, int nbytes);
 	BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject, int nwrites);
 	BOOLEAN PacketSetMode(LPADAPTER AdapterObject, int mode);

@@ -4,6 +4,7 @@ EXPORTS
 		PacketLibraryVersion
 		PacketGetVersion
 		PacketGetDriverVersion
+		PacketGetDriverName
 		PacketOpenAdapter
 		PacketSendPacket
 		PacketSendPackets

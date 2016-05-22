@@ -79,6 +79,7 @@ EXPORTS
 		pcap_datalink_val_to_name
 		pcap_datalink_val_to_description
 		pcap_lib_version
+		pcap_get_servicename
 		pcap_dump_file
 		pcap_dump_ftell
 		pcap_get_airpcap_handle

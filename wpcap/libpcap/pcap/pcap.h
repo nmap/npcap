@@ -353,6 +353,7 @@ int	pcap_findalldevs(pcap_if_t **, char *);
 void	pcap_freealldevs(pcap_if_t *);
 
 const char *pcap_lib_version(void);
+const char *pcap_get_servicename(void);
 
 /* XXX this guy lives in the bpf tree */
 u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);

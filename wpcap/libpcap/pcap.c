@@ -1381,6 +1381,17 @@ pcap_lib_version(void)
 	return (full_pcap_version_string);
 }
 
+const char *
+pcap_get_servicename(void)
+{
+	/*
+	* Generate the service name string, can be "NPF" (WinPcap compatible mode) or "NPCAP" (Non-WinPcap compatible mode)
+	*/
+	char *service_name_string;
+	service_name_string = PacketGetDriverName();
+	return (service_name_string);
+}
+
 #elif defined(MSDOS)
 
 static char *full_pcap_version_string;
