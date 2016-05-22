@@ -144,6 +144,133 @@
 
 </sect1>
 
+<sect1 id="npcap-detect">
+  <title>How to detect what version Npcap/WinPcap you are using?</title>
+  
+  <para>
+  Sometimes, our user software needs to detect the existence of Npcap/WinPcap at install-time or run-time. Although Npcap's GUI installer has the ability to handle this, you may want to handle it by yourself in some conditions, like you run Npcap installer in silent-mode.
+  The run-time detection is even more useful. Your software probably has some functions that rely on Npcap's particular features (like the loopback interface). You need to know if you are running on top of Npcap or the legacy WinPcap to control whether to switch your functions on.
+  Fortunately, Npcap provides you some methods to detect Npcap/WinPcap at install-time and run-time.
+  </para>
+
+  <sect2 id="npcap-detect-version">
+    <title>Npcap version</title>
+
+    <para>
+    You may notice that Npcap has several version strings. The installer name can be something
+	like <filename>npcap-0.07-r5.exe</filename>. <quote>0.07</quote> is the version number, and
+	<quote>r5</quote> is the revision number. We use a version number less than <quote>1.00</quote>
+	to imply that it's still a beta release. This naming follows the Nmap's convension. However,
+	WinPcap follows a different version system. It has three dotted figures like <quote>4.1.3</quote>,
+	which is more Wireshark-like. One thing you need to know here is that Npcap starts the
+	development based on the latest WinPcap <quote>4.1.3</quote>. So any Npcap release is more
+	<emphasis>advanced</emphasis> than WinPcap's latest release. Another thing needs to notice is
+	that, the <quote>0.07</quote> version number can be obtained from the
+	<function>pcap_lib_version</function> function. The <quote>r5</quote> revision number
+	<emphasis>only</emphasis> appears in the installer filename, it doesn't show its existence
+	in any code or functions. So you'd better not determine anything based on Npcap revision
+	number. Just use the latest release.
+    </para>
+
+    <para>
+    The executable file version (aka e-version in this document) is another thing we need to notice.
+	A e-version has four dotted figures on Windows. Npcap's e-version is something like
+	<quote>5.0.7.424</quote>. <quote>5</quote> here is used to advance Npcap version than the legacy
+	WinPcap's e-version <quote>4.1.0.2980</quote> because <quote>5.0.7.424</quote> is larger than
+	<quote>4.1.0.2980</quote>. The legacy WinPcap installer and Wireshark uses e-version to check
+	the version of WinPcap. Usually these legacy codes don't even know Npcap. So Npcap needs to
+	make them simply think Npcap is a newer version of WinPcap. <quote>0</quote> and <quote>7</quote>
+	in Npcap's e-version corresponds to Npcap's version <quote>0.07</quote>. <quote>424</quote> means
+	that this release is built at date <quote>4.24</quote> (aka 24th, April). When Npcap version jumps
+	to a new version (like from <quote>0.06</quote> to <quote>0.07</quote>), the e-version will also
+	change (like from <quote>0.6.0.301</quote> to <quote>0.7.0.424</quote>). A revision update won't
+	cause a change of version or e-version.
+    </para>
+  </sect2>
+
+  <sect2 id="npcap-detect-install-time">
+    <title>Install-time detection</title>
+
+    <para>
+    You can check the existence of <filename>C:\Program Files\Npcap\NPFInstall.exe</filename> to
+	detect Npcap's existence. If Npcap exists, you can check the file version of
+	<filename>C:\Program Files\Npcap\NPFInstall.exe</filename> to detect Npcap e-version. The
+	e-version also gives you the version. The NSIS code is shown below. <varname>$inst_ver</varname>
+	is an e-version string like <quote>5.0.7.424</quote>
+    </para>
+<screen>
+GetDllVersion "C:\Program Files\Npcap\NPFInstall.exe" $R0 $R1
+IntOp $R2 $R0 / 0x00010000
+IntOp $R3 $R0 &amp; 0x0000FFFF
+IntOp $R4 $R1 / 0x00010000
+IntOp $R5 $R1 &amp; 0x0000FFFF
+StrCpy $inst_ver "$R2.$R3.$R4.$R5"
+</screen>
+
+    <para>
+    You can check the installation options of an already installed Npcap by reading the registry
+	key: <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npf</filename>
+	(WinPcap compatible mode) or <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap</filename>
+	(Non-WinPcap compatible mode). the entries like <filename>AdminOnly</filename>,
+	<filename>Loopback</filename>, <filename>DltNull</filename>,<filename>Dot11Support</filename>,
+	<filename>VlanSupport</filename>, <filename>WinPcapCompatible</filename>, etc. show the installation options.
+	<filename>Loopback</filename> is <code>REG_SZ</code> type. A non-NULL value indicates the option is
+	<emphasis>CHECKED</emphasis>. All other entries are <code>REG_DWORD</code> type. A 0x00000001 value
+	indicates the option is <emphasis>CHECKED</emphasis>.
+    </para>
+  </sect2>
+
+  <sect2 id="npcap-detect-run-time">
+    <title>Run-time detection</title>
+
+    <para>
+    Npcap and WinPcap can be installed together on a symtem. Which capture library is used by the
+	user software relies on the DLL loading path. If Npcap's <filename>wpcap.dll</filename> is loaded first, then you
+	are using Npcap, vice versa. However, it's difficult and fragile to check the DLL loading path by yourself.
+	So we provide a better way: Npcap exports a <function>pcap_get_servicename</function> function in its libpcap
+	API. It returns the string of Npcap service name, which can be used to start the service using
+	<command>net start %SERVICE_NAME%</command> command. You need to dynamically import this function to call it because
+	WinPcap doesn't have this function and it's obviously not in the WinPcap SDK. The C code of the
+	<function>pcap_get_servicename</function> usage is shown below.
+    </para>
+<screen>
+typedef char* (__cdecl *MY_PCAP_GET_SERVICENAME) ();
+
+HINSTANCE hinstLib;
+// Get a handle to the wpcap DLL module.
+hinstLib = LoadLibrary(TEXT("wpcap.dll"));
+MY_PCAP_GET_SERVICENAME pcap_get_servicename;
+char *servicename_buf;
+
+// If the handle is valid, try to get the function address.  
+if (hinstLib != NULL)
+{
+	pcap_get_servicename = (MY_PCAP_GET_SERVICENAME)GetProcAddress(hinstLib, "pcap_get_servicename");
+	// If the function address is valid, call the function.  
+
+	if (pcap_get_servicename != NULL)
+	{
+		printf("Notice: You are using Npcap.\n");
+		servicename_buf = pcap_get_servicename();
+		// servicename_buf = "NPF" or "NPCAP"
+		printf("Npcap service name: %s\n", servicename_buf);
+	}
+	else
+	{
+		printf("Notice: You are using WinPcap.\n");
+	}
+
+	// Free the DLL module.  
+	FreeLibrary(hinstLib);
+}
+else
+{
+	printf("Notice: Neither Npcap nor WinPcap is installed.\n");
+}
+</screen>
+  </sect2>
+</sect1>
+
 <sect1 id="npcap-feature-native">
   <title>For softwares that use Npcap native mode</title>
   
@@ -159,7 +286,9 @@
 
     <listitem><para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
   <quote>WinPcap Compatible Mode</quote> OFF. So applications using <command>net start npf</command>
-  for starting service must use <command>net start npcap</command> instead.</para></listitem>
+  for starting service must use <command>net start npcap</command> instead.</para></listitem>. The
+  service name can be obtained using the <function>pcap_get_servicename</function> function. See section
+  <quote>Run-time detection</quote> for the usage of <function>pcap_get_servicename</function>.
   </itemizedlist>
 </sect1>
 
