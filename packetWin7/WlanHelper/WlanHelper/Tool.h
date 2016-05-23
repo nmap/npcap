@@ -20,6 +20,7 @@ tstring executeCommand(TCHAR* cmd);
 void initAdapterList();
 
 tstring getGuidFromAdapterName(tstring strAdapterName);
+tstring getAdapterNameFromGuid(tstring strGuid);
 
 BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, ULONG ulDataSize);
 

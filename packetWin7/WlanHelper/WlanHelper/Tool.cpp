@@ -284,6 +284,24 @@ tstring getGuidFromAdapterName(tstring strAdapterName)
 	return _T("");
 }
 
+tstring getAdapterNameFromGuid(tstring strGuid)
+{
+	if (g_strAdapterGUIDs.size() == 0)
+	{
+		initAdapterList();
+	}
+
+	for (size_t i = 0; i < g_strAdapterGUIDs.size(); i++)
+	{
+		if (compareNoCase(g_strAdapterGUIDs[i], strGuid))
+		{
+			return g_strAdapterNames[i];
+		}
+	}
+
+	return _T("");
+}
+
 BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, ULONG ulDataSize)
 {
 	TCHAR strAdapterName[256];
