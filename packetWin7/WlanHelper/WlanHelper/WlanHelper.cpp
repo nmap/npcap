@@ -457,9 +457,9 @@ Options:\n\
   mode <managed|monitor|master|wfd_device|wfd_owner|wfd_client>: set interface operation mode\n\
   modes: get all operation modes supported by the interface, comma-separated\n\
   channel: get interface channel\n\
-  channel <1-11>: set interface channel (only works in monitor mode)\n\
+  channel <VALUE>: set interface channel (only works in monitor mode)\n\
   freq: get interface frequency\n\
-  freq <0-200>: set interface frequency (only works in monitor mode)\n\
+  freq <VALUE>: set interface frequency (only works in monitor mode)\n\
 Operation Modes:\n\
   managed - the Extensible Station (ExtSTA) operation mode\n\
   monitor - the Network Monitor (NetMon) operation mode\n\
