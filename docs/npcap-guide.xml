@@ -662,16 +662,49 @@ managed
   </para>
 
   <para>
-  Archived Npcap installers (prior to <option>0.05</option>): <ulink role="hidepdf" url="https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/">Npcap Release (Archieve)</ulink>
+  Archived Npcap installers (prior to <option>0.05</option>):
+  <ulink role="hidepdf" url="https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/">Npcap Release (Archieve)</ulink>
   </para>
 </sect1>
 
-<sect1 id="npcap-developmentkit">
-  <title>Development kit</title>
+<sect1 id="npcap-development">
+  <title>Development</title>
 
-  <para>
-  Npcap doesn't have its own development kit for now. Please use <emphasis>WinPcap's development kit</emphasis> instead: <ulink role="hidepdf" url="http://www.winpcap.org/devel.htm">WinPcap 4.1.2 Developer's Pack</ulink>
-  </para>
+  <sect2 id="npcap-sdk">
+    <title>SDK</title>
+
+    <para>
+    Npcap doesn't have its own development kit for now. Please use
+	<emphasis>WinPcap's development kit</emphasis> instead:
+	<ulink role="hidepdf" url="http://www.winpcap.org/devel.htm">WinPcap 4.1.2 Developer's Pack</ulink>
+    </para>
+  </sect2>
+
+  <sect2 id="npcap-documentation">
+    <title>Documentation</title>
+
+    <para>
+    This document currently only addresses the Npcap particular features. It doesn't
+	show you the basics about the general WinPcap usage. As Npcap shares the libpcap
+	API with WinPcap, you can always refer to the
+	<ulink role="hidepdf" url="https://www.winpcap.org/docs/default.htm">WinPcap documentation</ulink>
+	for general usage of Npcap.
+    </para>
+  </sect2>
+
+  <sect2 id="npcap-examples">
+    <title>Examples</title>
+
+    <para>
+    You can refer to <ulink role="hidepdf" url="https://github.com/nmap/npcap/tree/master/Examples">WinPcap's examples</ulink> to see the usage.
+    </para>
+
+    <para>
+    I also provided an example:
+	<ulink role="hidepdf" url="https://github.com/hsluoyz/UserBridge/">UserBridge</ulink>,
+	which is a tool to redirect all packets from an interface to another.
+    </para>
+  </sect2>
 </sect1>
 
 <sect1 id="npcap-incompatible">
