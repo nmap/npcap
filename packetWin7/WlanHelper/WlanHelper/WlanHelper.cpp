@@ -471,6 +471,7 @@ Examples:\n\
   WlanHelper wi-fi mode\n\
   WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11\n\
   WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2\n\
+  WlanHelper \"Wireless Network Connection\" mode monitor\n\
 See the MAN Page (https://github.com/nmap/npcap) for more options and examples\n\
 ")
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n")
