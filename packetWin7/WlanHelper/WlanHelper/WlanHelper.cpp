@@ -457,20 +457,24 @@ Options:\n\
   mode <managed|monitor|master|wfd_device|wfd_owner|wfd_client>: set interface operation mode\n\
   modes: get all operation modes supported by the interface, comma-separated\n\
   channel: get interface channel\n\
-  channel <1-11>: set interface channel (only works at monitor mode)\n\
+  channel <VALUE>: set interface channel (only works in monitor mode)\n\
   freq: get interface frequency\n\
-  freq <0-200>: set interface frequency (only works at monitor mode)\n\
+  freq <VALUE>: set interface frequency (only works in monitor mode)\n\
+\n\
 Operation Modes:\n\
   managed - the Extensible Station (ExtSTA) operation mode\n\
   monitor - the Network Monitor (NetMon) operation mode\n\
-  master - the Extensible Access Point (ExtAP) operation mode (supported for Windows 7 and later)\n\
-  wfd_device - the Wi-Fi Direct Device operation mode (supported for Windows 8 and later)\n\
-  wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported for Windows 8 and later)\n\
-  wfd_client - the Wi-Fi Direct Client operation mode (supported for Windows 8 and later)\n\
+  master - the Extensible Access Point (ExtAP) operation mode (supported on Windows 7 and later)\n\
+  wfd_device - the Wi-Fi Direct Device operation mode (supported on Windows 8 and later)\n\
+  wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported on Windows 8 and later)\n\
+  wfd_client - the Wi-Fi Direct Client operation mode (supported on Windows 8 and later)\n\
+\n\
 Examples:\n\
   WlanHelper wi-fi mode\n\
   WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11\n\
   WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2\n\
+  WlanHelper \"Wireless Network Connection\" mode monitor\n\
+\n\
 See the MAN Page (https://github.com/nmap/npcap) for more options and examples\n\
 ")
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n")
@@ -491,7 +495,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else if (argc == 2)
 	{
-		if (strArgs[1] ==_T("-h"))
+		if (strArgs[1] ==_T("-h") || strArgs[1] == _T("--help"))
 		{
 			_tprintf(STR_COMMAND_USAGE);
 			return -1;
