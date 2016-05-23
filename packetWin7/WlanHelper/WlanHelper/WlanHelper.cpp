@@ -495,7 +495,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else if (argc == 2)
 	{
-		if (strArgs[1] ==_T("-h"))
+		if (strArgs[1] ==_T("-h") || strArgs[1] == _T("--help"))
 		{
 			_tprintf(STR_COMMAND_USAGE);
 			return -1;
