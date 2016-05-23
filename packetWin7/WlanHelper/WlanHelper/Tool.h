@@ -6,6 +6,12 @@ using namespace std;
 
 typedef std::basic_string<TCHAR> tstring;
 
+#ifdef UNICODE
+	#define RPC_TSTR RPC_WSTR
+#else
+	#define RPC_TSTR RPC_CSTR
+#endif
+
 tstring OperationMode2String(ULONG OperationMode);
 ULONG String2OperationMode(tstring strOperationMode);
 

@@ -179,63 +179,63 @@ PHANDLE phClient
 }
 
 // get interface state string
-LPWSTR
+LPTSTR
 GetInterfaceStateString(__in WLAN_INTERFACE_STATE wlanInterfaceState)
 {
-	LPWSTR strRetCode;
+	LPSTR strRetCode;
 
 	switch (wlanInterfaceState)
 	{
 	case wlan_interface_state_not_ready:
-		strRetCode = L"\"not ready\"";
+		strRetCode = _T("\"not ready\"");
 		break;
 	case wlan_interface_state_connected:
-		strRetCode = L"\"connected\"";
+		strRetCode = _T("\"connected\"");
 		break;
 	case wlan_interface_state_ad_hoc_network_formed:
-		strRetCode = L"\"ad hoc network formed\"";
+		strRetCode = _T("\"ad hoc network formed\"");
 		break;
 	case wlan_interface_state_disconnecting:
-		strRetCode = L"\"disconnecting\"";
+		strRetCode = _T("\"disconnecting\"");
 		break;
 	case wlan_interface_state_disconnected:
-		strRetCode = L"\"disconnected\"";
+		strRetCode = _T("\"disconnected\"");
 		break;
 	case wlan_interface_state_associating:
-		strRetCode = L"\"associating\"";
+		strRetCode = _T("\"associating\"");
 		break;
 	case wlan_interface_state_discovering:
-		strRetCode = L"\"discovering\"";
+		strRetCode = _T("\"discovering\"");
 		break;
 	case wlan_interface_state_authenticating:
-		strRetCode = L"\"authenticating\"";
+		strRetCode = _T("\"authenticating\"");
 		break;
 	default:
-		strRetCode = L"\"invalid interface state\"";
+		strRetCode = _T("\"invalid interface state\"");
 	}
 
 	return strRetCode;
 }
 
 // get interface operation mode string
-LPWSTR
+LPTSTR
 GetInterfaceOperationModeString(__in ULONG wlanInterfaceOperationMode)
 {
-	LPWSTR strRetCode;
+	LPTSTR strRetCode;
 
 	switch (wlanInterfaceOperationMode)
 	{
 	case DOT11_OPERATION_MODE_EXTENSIBLE_STATION:
-		strRetCode = L"\"Extensible Station (ExtSTA)\"";
+		strRetCode = _T("\"Extensible Station (ExtSTA)\"");
 		break;
 	case DOT11_OPERATION_MODE_NETWORK_MONITOR:
-		strRetCode = L"\"Network Monitor (NetMon)\"";
+		strRetCode = _T("\"Network Monitor (NetMon)\"");
 		break;
 	case DOT11_OPERATION_MODE_EXTENSIBLE_AP:
-		strRetCode = L"\"Extensible Access Point (ExtAP)\"";
+		strRetCode = _T("\"Extensible Access Point (ExtAP)\"");
 		break;
 	default:
-		strRetCode = L"\"invalid interface operation mode\"";
+		strRetCode = _T("\"invalid interface operation mode\"");
 	}
 
 	return strRetCode;
@@ -245,28 +245,28 @@ int MainInteractive()
 {
 	HANDLE hClient = NULL;
 	WLAN_INTERFACE_INFO sInfo[64];
-	RPC_CSTR strGuid = NULL;
+	RPC_TSTR strGuid = NULL;
 
 	TCHAR szBuffer[256];
 	DWORD dwRead;
 	if (OpenHandleAndCheckVersion(&hClient) != ERROR_SUCCESS)
 	{
-		system("PAUSE");
+		_tsystem(_T("PAUSE"));
 		return -1;
 	}
 
 	UINT nCount = EnumInterface(hClient, sInfo);
 	for (UINT i = 0; i < nCount; ++i)
 	{
-		if (UuidToStringA(&sInfo[i].InterfaceGuid, &strGuid) == RPC_S_OK)
+		if (UuidToString(&sInfo[i].InterfaceGuid, &strGuid) == RPC_S_OK)
 		{
 			ULONG ulOperationMode = -1;
 			PULONG pOperationMode;
 			DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &sInfo[i].InterfaceGuid);
 			if (dwResult != ERROR_SUCCESS)
 			{
-				printf("GetInterface error, error code = %d\n", dwResult);
-				system("PAUSE");
+				_tprintf(_T("GetInterface error, error code = %d\n"), dwResult);
+				_tsystem(_T("PAUSE"));
 			}
 			else
 			{
@@ -274,26 +274,26 @@ int MainInteractive()
 				WlanFreeMemory(pOperationMode);
 			}
 
-			printf(("%d. %s\n\tDescription: %S\n\tState: %S\n\tOperation Mode: %S\n"),
+			_tprintf(_T("%d. %s\n\tDescription: %S\n\tState: %S\n\tOperation Mode: %S\n"),
 				i,
 				strGuid,
 				sInfo[i].strInterfaceDescription,
 				GetInterfaceStateString(sInfo[i].isState),
 				GetInterfaceOperationModeString(ulOperationMode));
 
-			RpcStringFreeA(&strGuid);
+			RpcStringFree(&strGuid);
 		}
 	}
 
 	UINT nChoice = 0;
 	GUID ChoiceGUID;
 	LPGUID pChoiceGUID = NULL;
-	printf("Enter the choice (0, 1,..) of the wireless card you want to operate on:\n");
+	_tprintf(_T("Enter the choice (0, 1,..) of the wireless card you want to operate on:\n"));
 
 	if (ReadConsole(GetStdHandle(STD_INPUT_HANDLE), szBuffer, _countof(szBuffer), &dwRead, NULL) == FALSE)
 	{
-		puts("Error input.");
-		system("PAUSE");
+		_putts(_T("Error input."));
+		_tsystem(_T("PAUSE"));
 		return -1;
 	}
 	szBuffer[dwRead] = 0;
@@ -308,8 +308,8 @@ int MainInteractive()
 	{
 		if (myGUIDFromString(buf, &ChoiceGUID) != TRUE)
 		{
-			printf("UuidFromString error, error code = %d\n", -1);
-			system("PAUSE");
+			_tprintf(_T("UuidFromString error, error code = %d\n"), -1);
+			_tsystem(_T("PAUSE"));
 		}
 		else
 		{
@@ -322,8 +322,8 @@ int MainInteractive()
 
 		if (nChoice > nCount)
 		{
-			puts("No such index.");
-			system("PAUSE");
+			_putts(_T("No such index."));
+			_tsystem(_T("PAUSE"));
 			return -1;
 		}
 
@@ -332,13 +332,13 @@ int MainInteractive()
 
 	UINT nSTate = 0;
 	ULONG ulOperationMode = -1;
-	printf("Enter the operation mode (0, 1 or 2) you want to switch to for the chosen wireless card:\n");
-	printf("0: Extensible Station (ExtSTA)\n1: Network Monitor (NetMon)\n2: Extensible Access Point (ExtAP)\n");
+	_tprintf(_T("Enter the operation mode (0, 1 or 2) you want to switch to for the chosen wireless card:\n"));
+	_tprintf(_T("0: Extensible Station (ExtSTA)\n1: Network Monitor (NetMon)\n2: Extensible Access Point (ExtAP)\n"));
 
 	if (ReadConsole(GetStdHandle(STD_INPUT_HANDLE), szBuffer, _countof(szBuffer), &dwRead, NULL) == FALSE)
 	{
-		puts("Error input.");
-		system("PAUSE");
+		_putts(_T("Error input."));
+		_tsystem(_T("PAUSE"));
 		return -1;
 	}
 	szBuffer[dwRead] = 0;
@@ -346,8 +346,8 @@ int MainInteractive()
 
 	if (nSTate != 0 && nSTate != 1 && nSTate != 2)
 	{
-		puts("Only 0, 1 and 2 are valid inputs.");
-		system("PAUSE");
+		_putts(_T("Only 0, 1 and 2 are valid inputs."));
+		_tsystem(_T("PAUSE"));
 		return -1;
 	}
 	if (nSTate == 0)
@@ -366,12 +366,12 @@ int MainInteractive()
 	DWORD dwResult = SetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&ulOperationMode, pChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
 	{
-		printf("SetInterface error, error code = %d\n", dwResult);
-		system("PAUSE");
+		_tprintf(_T("SetInterface error, error code = %d\n"), dwResult);
+		_tsystem(_T("PAUSE"));
 	}
 	else
 	{
-		printf("SetInterface success!\n");
+		_tprintf(_T("SetInterface success!\n"));
 	}
 
 	return 0;
