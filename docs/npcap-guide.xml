@@ -228,10 +228,14 @@ StrCpy $inst_ver "$R2.$R3.$R4.$R5"
 	user software relies on the DLL loading path. If Npcap's <filename>wpcap.dll</filename> is loaded first, then you
 	are using Npcap, vice versa. However, it's difficult and fragile to check the DLL loading path by yourself.
 	So we provide a better way: Npcap exports a <function>pcap_get_servicename</function> function in its libpcap
-	API. It returns the string of Npcap service name, which can be used to start the service using
-	<command>net start %SERVICE_NAME%</command> command. You need to dynamically import this function to call it because
-	WinPcap doesn't have this function and it's obviously not in the WinPcap SDK. The C code of the
-	<function>pcap_get_servicename</function> usage is shown below.
+	API. It returns the string of Npcap service name (aka <replaceable>%SERVICE_NAME%</replaceable>), which can be used to start the service using
+	<command>net start <replaceable>%SERVICE_NAME%</replaceable></command> command.
+	<replaceable>%SERVICE_NAME%</replaceable> is <varname>NPF</varname> if Npcap is installed
+	in <quote>WinPcap Compatible Mode</quote> and <varname>NPCAP</varname> if Npcap is installed
+	at <quote>Non-WinPcap Compatible Mode</quote> (Notice: the returned string is upper-case, and
+	you don't need to free its memory). You need to dynamically import this function if you want
+	to call it because WinPcap doesn't have this function and it's obviously not in the WinPcap
+	SDK. The C code of the <function>pcap_get_servicename</function> usage is shown below.
     </para>
 <screen>
 typedef char* (__cdecl *MY_PCAP_GET_SERVICENAME) ();
@@ -285,10 +289,10 @@ else
     to other paths in ways such as calling <function>SetDllDirectory</function>, etc.</para></listitem>
 
     <listitem><para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
-  <quote>WinPcap Compatible Mode</quote> OFF. So applications using <command>net start npf</command>
-  for starting service must use <command>net start npcap</command> instead.</para></listitem>. The
-  service name can be obtained using the <function>pcap_get_servicename</function> function. See section
-  <quote>Run-time detection</quote> for the usage of <function>pcap_get_servicename</function>.
+    <quote>WinPcap Compatible Mode</quote> OFF. So applications using <command>net start npf</command>
+    for starting service must use <command>net start npcap</command> instead. The service name
+    can be obtained using the <function>pcap_get_servicename</function> function. See section
+    <quote>Run-time detection</quote> for the usage of <function>pcap_get_servicename</function>.</para></listitem>
   </itemizedlist>
 </sect1>
 
