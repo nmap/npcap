@@ -274,9 +274,10 @@ int MainInteractive()
 				WlanFreeMemory(pOperationMode);
 			}
 
-			_tprintf(_T("%d. %s\n\tDescription: %S\n\tState: %S\n\tOperation Mode: %S\n"),
+			_tprintf(_T("%d. %s\n\tName: %s\n\tDescription: %S\n\tState: %S\n\tOperation Mode: %S\n"),
 				i,
 				strGuid,
+				getAdapterNameFromGuid((TCHAR*) strGuid).c_str(),
 				sInfo[i].strInterfaceDescription,
 				GetInterfaceStateString(sInfo[i].isState),
 				GetInterfaceOperationModeString(ulOperationMode));
