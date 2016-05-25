@@ -4834,6 +4834,22 @@ DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 	return dwResult;
 }
 
+DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
+{
+	DWORD dwResult = 0;
+	HANDLE hClient = NULL;
+	DWORD dwCurVersion = 0;
+	DWORD outsize = 0;
+	WLAN_OPCODE_VALUE_TYPE opCode = wlan_opcode_value_type_invalid;
+
+	// Open Handle for the set operation
+	dwResult = WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
+	dwResult = WlanQueryInterface(hClient, InterfaceGuid, opcode, NULL, &outsize, pData, &opCode);
+	WlanCloseHandle(hClient, NULL);
+
+	return dwResult;
+}
+
 /*!
 \brief Sets the operation mode of an adapter.
 \param AdapterObject Pointer to an _ADAPTER structure.
@@ -4864,6 +4880,48 @@ BOOLEAN PacketSetMonitorMode(PCHAR AdapterName, int mode)
 	{
 		TRACE_EXIT("PacketSetMonitorMode");
 		return TRUE;
+	}
+}
+
+/*!
+\brief Determine if the operation mode of an adapter is monitor mode.
+\param AdapterObject Pointer to an _ADAPTER structure.
+\param mode The new operation mode of the adapter, 1 for monitor mode, 0 for managed mode.
+\return 1 if it's monitor mode, 0 if it's not monitor mode, -1 if the function fails.
+*/
+int PacketGetMonitorMode(PCHAR AdapterName)
+{
+	GUID ChoiceGUID;
+	TRACE_ENTER("PacketGetMonitorMode");
+
+	if (myGUIDFromString(AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
+	{
+		TRACE_PRINT("PacketGetMonitorMode failed, myGUIDFromString error");
+		return FALSE;
+	}
+
+	ULONG ulOperationMode = -1;
+	PULONG pOperationMode;
+	DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &ChoiceGUID);
+	if (dwResult != ERROR_SUCCESS)
+	{
+		TRACE_PRINT("PacketGetMonitorMode failed, GetInterface error");
+		TRACE_EXIT("PacketGetMonitorMode");
+		return -1;
+	}
+	else
+	{
+		ulOperationMode = *pOperationMode;
+		WlanFreeMemory(pOperationMode);
+		TRACE_EXIT("PacketGetMonitorMode");
+		if (ulOperationMode == DOT11_OPERATION_MODE_NETWORK_MONITOR)
+		{
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
 	}
 }
 

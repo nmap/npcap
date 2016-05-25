@@ -25,6 +25,7 @@ EXPORTS
 		PacketIsLoopbackAdapter
 		PacketIsMonitorModeSupported
 		PacketSetMonitorMode
+		PacketGetMonitorMode
 		PacketSetReadTimeout
 		PacketSetMode
 		PacketSetNumWrites
