@@ -6,6 +6,10 @@
 #include <algorithm>
 #include "Tool.h"
 
+#include "../../../Common/WpcapNames.h"
+// "\\Device\\NPF_{%s}" or "\\Device\\NPCAP_{%s}"
+#define NPF_DRIVER_FORMAT_STR	_T("\\Device\\") _T(NPF_DRIVER_NAME) _T("_{%s}")
+
 vector<tstring> g_strAdapterNames;
 vector<tstring> g_strAdapterGUIDs;
 
