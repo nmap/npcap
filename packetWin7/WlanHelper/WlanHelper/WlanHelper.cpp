@@ -182,7 +182,7 @@ PHANDLE phClient
 LPTSTR
 GetInterfaceStateString(__in WLAN_INTERFACE_STATE wlanInterfaceState)
 {
-	LPSTR strRetCode;
+	LPTSTR strRetCode;
 
 	switch (wlanInterfaceState)
 	{
@@ -644,7 +644,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else if (strArgs[2] == _T("channel"))
 		{
-			int ulChannel = atoi(strArgs[3].c_str());
+			int ulChannel = _ttoi(strArgs[3].c_str());
 			if (SetCurrentChannel(getGuidFromAdapterName_Wrapper(strArgs[1]), ulChannel))
 			{
 				_tprintf(_T("Success\n"));
@@ -658,7 +658,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else if (strArgs[2] == _T("freq"))
 		{
-			int ulFrequency = atoi(strArgs[3].c_str());
+			int ulFrequency = _ttoi(strArgs[3].c_str());
 			if (SetCurrentFrequency(getGuidFromAdapterName_Wrapper(strArgs[1]), ulFrequency))
 			{
 				_tprintf(_T("Success\n"));

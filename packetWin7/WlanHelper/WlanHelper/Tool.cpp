@@ -159,35 +159,72 @@ bool compareNoCase(const tstring &strA, const tstring &strB)
 	return (str1 == str2);
 }
 
-wstring ANSIToUnicode(const string& str)
+BOOL string2wstring(const std::string &str, std::wstring &wstr)
 {
-	size_t len = 0;
-	len = str.length();
-	int unicodeLen = ::MultiByteToWideChar(CP_ACP,
-		0,
-		str.c_str(),
-		-1,
-		NULL,
-		0);
-	wchar_t * pUnicode;
-	pUnicode = new wchar_t[unicodeLen + 1];
-	memset(pUnicode, 0, (unicodeLen + 1)*sizeof(wchar_t));
-	::MultiByteToWideChar(CP_ACP,
-		0,
-		str.c_str(),
-		-1,
-		(LPWSTR)pUnicode,
-		unicodeLen);
-	wstring rt;
-	rt = (wchar_t*)pUnicode;
-	delete pUnicode;
-	return rt;
+	int nLen = (int)str.length();
+	wstr.resize(nLen, L' ');
+
+	int nResult = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)str.c_str(), nLen, (LPWSTR)wstr.c_str(), nLen);
+
+	if (nResult == 0)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
 }
+
+BOOL wstring2string(const std::wstring &wstr, std::string &str)
+{
+	int nLen = (int)wstr.length();
+	str.resize(nLen, ' ');
+
+	int nResult = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)wstr.c_str(), nLen, (LPSTR)str.c_str(), nLen, NULL, NULL);
+
+	if (nResult == 0)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+wstring any2wstring_a(string &str)
+{
+	wstring wstr;
+	string2wstring(str, wstr);
+	return wstr;
+}
+
+wstring any2wstring_w(wstring &wstr)
+{
+	return wstr;
+}
+
+string any2string_a(string &str)
+{
+	return str;
+}
+
+string any2string_w(wstring &wstr)
+{
+	string str;
+	wstring2string(wstr, str);
+	return str;
+}
+
+#ifdef UNICODE
+#define any2wstring any2wstring_w
+#define any2string any2string_w
+#else
+#define any2wstring any2wstring_a
+#define any2string any2string_a
+#endif
 
 tstring itos(int i)
 {
-	char buf[256];
-	_itoa_s(i, buf, 10);
+	TCHAR buf[256];
+	_itot_s(i, buf, 10);
 	tstring res = buf;
 	return res;
 }
@@ -371,8 +408,8 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 		goto makeOIDRequest_Exit3;
 	}
 
-	TCHAR strAdapterName[256];
-	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_{%s}"), strAdapterGUID.c_str());
+	char strAdapterName[256];
+	sprintf_s(strAdapterName, 256, "\\Device\\NPF_{%s}", any2string(strAdapterGUID).c_str());
 
 	LPADAPTER pAdapter = My_PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
