@@ -482,7 +482,7 @@ _T("See the MAN Page (https://github.com/nmap/npcap) for more options and exampl
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	SetConsoleTitle(_T("WlanHelper Tool for Npcap [www.npcap.org]"));
+	SetConsoleTitle(_T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.org)"));
 	vector<tstring> strArgs;
 	for (int i = 0; i < argc; i++)
 	{
