@@ -302,26 +302,91 @@ tstring getAdapterNameFromGuid(tstring strGuid)
 	return _T("");
 }
 
+HINSTANCE hinstLib = NULL;
+typedef LPADAPTER (*MY_PACKETOPENADAPTER) (PCHAR AdapterName);
+typedef BOOLEAN(*MY_PACKETREQUEST) (LPADAPTER  AdapterObject, BOOLEAN Set, PPACKET_OID_DATA  OidData);
+typedef VOID(*MY_PACKETCLOSEADAPTER) (LPADAPTER lpAdapter);
+MY_PACKETOPENADAPTER My_PacketOpenAdapter = NULL;
+MY_PACKETREQUEST My_PacketRequest = NULL;
+MY_PACKETCLOSEADAPTER My_PacketCloseAdapter = NULL;
+
+BOOL initPacketFunctions()
+{
+	BOOL bRet;
+	
+	// Get a handle to the packet DLL module.
+	hinstLib = LoadLibrary(TEXT("packet.dll"));
+
+	// If the handle is valid, try to get the function address.  
+	if (hinstLib != NULL)
+	{
+		My_PacketOpenAdapter = (MY_PACKETOPENADAPTER)GetProcAddress(hinstLib, "PacketOpenAdapter");
+		My_PacketRequest = (MY_PACKETREQUEST)GetProcAddress(hinstLib, "PacketRequest");
+		My_PacketCloseAdapter = (MY_PACKETCLOSEADAPTER)GetProcAddress(hinstLib, "PacketCloseAdapter");
+		// If the function address is valid, call the function.  
+
+		if (My_PacketOpenAdapter != NULL && My_PacketRequest != NULL && My_PacketCloseAdapter != NULL)
+		{
+			bRet = TRUE;
+		}
+		else
+		{
+			bRet = FALSE;
+		}
+
+		
+	}
+	else
+	{
+		bRet = FALSE;
+	}
+
+	return bRet;
+}
+
+void freePacketFunctions()
+{
+	if (hinstLib)
+	{
+		// Free the DLL module.  
+		FreeLibrary(hinstLib);
+		My_PacketOpenAdapter = NULL;
+		My_PacketRequest = NULL;
+		My_PacketCloseAdapter = NULL;
+	}
+}
+
 BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, ULONG ulDataSize)
 {
+	BOOL Status;
+
+	if (!initPacketFunctions())
+	{
+		_tprintf(_T("Error: makeOIDRequest::initPacketFunctions error\n"));
+		Status = FALSE;
+		goto makeOIDRequest_Exit3;
+	}
+
 	TCHAR strAdapterName[256];
 	_stprintf_s(strAdapterName, 256, _T("\\Device\\NPF_{%s}"), strAdapterGUID.c_str());
 
-	LPADAPTER pAdapter = PacketOpenAdapter(strAdapterName);
+	LPADAPTER pAdapter = My_PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest::PacketOpenAdapter error\n"));
-		return FALSE;
+		_tprintf(_T("Error: makeOIDRequest::My_PacketOpenAdapter error\n"));
+		Status = FALSE;
+		goto makeOIDRequest_Exit2;
 	}
 
-	BOOL Status;
+	
 	ULONG IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + ulDataSize - 1);
 	PPACKET_OID_DATA OidData;
 	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
 	if (OidData == NULL)
 	{
 		_tprintf(_T("Error: makeOIDRequest::GlobalAllocPtr error\n"));
-		return FALSE;
+		Status = FALSE;
+		goto makeOIDRequest_Exit1;
 	}
 
 	OidData->Oid = iOid;
@@ -331,11 +396,10 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 	{
 		CopyMemory(OidData->Data, pData, ulDataSize);
 	}
-	Status = PacketRequest(pAdapter, bSet, OidData);
+	Status = My_PacketRequest(pAdapter, bSet, OidData);
 	if (!Status)
 	{
-		_tprintf(_T("Error: makeOIDRequest::PacketRequest error, error code = %d\n"), GetLastError());
-		
+		_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, error code = %d\n"), GetLastError());
 	}
 	else
 	{
@@ -346,7 +410,11 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 	}
 
 	GlobalFreePtr(OidData);
-	PacketCloseAdapter(pAdapter);
+makeOIDRequest_Exit1:
+	My_PacketCloseAdapter(pAdapter);
+makeOIDRequest_Exit2:
+	freePacketFunctions();
+makeOIDRequest_Exit3:
 	return Status;
 }
 
