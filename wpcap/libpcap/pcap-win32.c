@@ -570,9 +570,21 @@ pcap_activate_win32(pcap_t *p)
 		/*
 		 * Monitor mode is supported on Windows Vista and later.
 		 */
-		if (PacketSetMonitorMode(p->opt.source, 1) == FALSE)
+		if (PacketGetMonitorMode(p->opt.source) == 1)
 		{
-			return PCAP_ERROR;
+			p->opt.rfmon_selfstart = 0;
+		}
+		else
+		{
+			if (PacketSetMonitorMode(p->opt.source, 1) == FALSE)
+			{
+				p->opt.rfmon_selfstart = 0;
+				return PCAP_ERROR;
+			}
+			else
+			{
+				p->opt.rfmon_selfstart = 1;
+			}
 		}
 	}
 
@@ -585,6 +597,10 @@ pcap_activate_win32(pcap_t *p)
 	{
 		/* Adapter detected but we are not able to open it. Return failure. */
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "Error opening adapter: %s", pcap_win32strerror());
+		if (p->opt.rfmon_selfstart)
+		{
+			PacketSetMonitorMode(p->opt.source, 0);
+		}
 		return PCAP_ERROR;
 	}
 	
@@ -819,6 +835,10 @@ pcap_activate_win32(pcap_t *p)
 	return (0);
 bad:
 	pcap_cleanup_win32(p);
+	if (p->opt.rfmon_selfstart)
+	{
+		PacketSetMonitorMode(p->opt.source, 0);
+	}
 	return (PCAP_ERROR);
 }
 

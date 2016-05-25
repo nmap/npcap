@@ -1279,6 +1279,10 @@ pcap_inject(pcap_t *p, const void *buf, size_t size)
 void
 pcap_close(pcap_t *p)
 {
+	if (p->opt.rfmon_selfstart)
+	{
+		PacketSetMonitorMode(p->opt.source, 0);
+	}
 	if (p->opt.source != NULL)
 		free(p->opt.source);
 	p->cleanup_op(p);

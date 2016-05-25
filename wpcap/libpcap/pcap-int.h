@@ -226,6 +226,7 @@ struct pcap_opt {
 	char	*source;
 	int	promisc;
 	int	rfmon;
+	int rfmon_selfstart;
 };
 
 /*
