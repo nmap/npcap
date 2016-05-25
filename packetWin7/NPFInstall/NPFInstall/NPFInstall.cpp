@@ -381,6 +381,21 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		else if (strArgs[1] == _T("-wlan_check"))
+		{
+			vector<tstring> nstrAdapterGuids;
+			nstrAdapterGuids = getWlanAdapterGuids();
+			if (nstrAdapterGuids.size() != 0)
+			{
+				_tprintf(_T("Wlan adapters: %s\n"), printArray(nstrAdapterGuids).c_str());
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Wlan adapters: NULL\n"));
+				return -1;
+			}
+		}
 		else if (strArgs[1] == _T("-h"))
 		{
 			_tprintf(STR_COMMAND_USAGE);
