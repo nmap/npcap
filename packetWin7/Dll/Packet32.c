@@ -4854,9 +4854,9 @@ DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 \brief Sets the operation mode of an adapter.
 \param AdapterObject Pointer to an _ADAPTER structure.
 \param mode The new operation mode of the adapter, 1 for monitor mode, 0 for managed mode.
-\return If the function succeeds, the return value is nonzero.
+\return 1 if the function succeeds, 0 if monitor mode is not supported, -1 if the function fails with other errors.
 */
-BOOLEAN PacketSetMonitorMode(PCHAR AdapterName, int mode)
+int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 {
 	GUID ChoiceGUID;
 	TRACE_ENTER("PacketSetMonitorMode");
@@ -4864,7 +4864,7 @@ BOOLEAN PacketSetMonitorMode(PCHAR AdapterName, int mode)
 	if (myGUIDFromString(AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
 	{
 		TRACE_PRINT("PacketSetMonitorMode failed, myGUIDFromString error");
-		return FALSE;
+		return -1;
 	}
 
 	ULONG ulOperationMode = mode ? DOT11_OPERATION_MODE_NETWORK_MONITOR : DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
@@ -4874,12 +4874,20 @@ BOOLEAN PacketSetMonitorMode(PCHAR AdapterName, int mode)
 	{
 		TRACE_PRINT("PacketSetMonitorMode failed, SetInterface error");
 		TRACE_EXIT("PacketSetMonitorMode");
-		return FALSE;
+		// Monitor mode is not supported.
+		if (dwResult == ERROR_INVALID_PARAMETER)
+		{
+			return 0;
+		}
+		else
+		{
+			return -1;
+		}
 	}
 	else
 	{
 		TRACE_EXIT("PacketSetMonitorMode");
-		return TRUE;
+		return 1;
 	}
 }
 

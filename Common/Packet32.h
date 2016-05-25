@@ -335,7 +335,7 @@ extern "C"
 	BOOLEAN PacketGetNetType2(PCHAR AdapterName, NetType *type);
 	BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject);
 	BOOLEAN PacketIsMonitorModeSupported(PCHAR AdapterName);
-	BOOLEAN PacketSetMonitorMode(PCHAR AdapterName, int mode);
+	int PacketSetMonitorMode(PCHAR AdapterName, int mode);
 	int PacketGetMonitorMode(PCHAR AdapterName);
 	LPADAPTER PacketOpenAdapter(PCHAR AdapterName);
 	BOOLEAN PacketSendPacket(LPADAPTER AdapterObject, LPPACKET pPacket, BOOLEAN Sync);

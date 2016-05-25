@@ -508,6 +508,7 @@ static int
 pcap_activate_win32(pcap_t *p)
 {
 	NetType type;
+	int res;
 
 #ifdef HAVE_REMOTE
 	char host[PCAP_BUF_SIZE + 1];
@@ -576,10 +577,18 @@ pcap_activate_win32(pcap_t *p)
 		}
 		else
 		{
-			if (PacketSetMonitorMode(p->opt.source, 1) == FALSE)
+			if ((res = PacketSetMonitorMode(p->opt.source, 1)) != 1)
 			{
 				p->opt.rfmon_selfstart = 0;
-				return PCAP_ERROR;
+				// Monitor mode is not supported.
+				if (res == 0)
+				{
+					return PCAP_ERROR_RFMON_NOTSUP;
+				}
+				else
+				{
+					return PCAP_ERROR;
+				}
 			}
 			else
 			{
