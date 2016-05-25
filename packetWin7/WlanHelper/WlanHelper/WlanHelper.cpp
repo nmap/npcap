@@ -514,7 +514,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			tstring strMode;
 			if (GetCurrentOperationMode(getGuidFromAdapterName_Wrapper(strArgs[1]), strMode))
 			{
-				_tprintf("%s\n", strMode.c_str());
+				_tprintf(_T("%s\n"), strMode.c_str());
 				return 0;
 			}
 			else
@@ -528,7 +528,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			tstring strModes;
 			if (GetOperationModeCapability(getGuidFromAdapterName_Wrapper(strArgs[1]), strModes))
 			{
-				_tprintf("%s\n", strModes.c_str());
+				_tprintf(_T("%s\n"), strModes.c_str());
 				return 0;
 			}
 			else
@@ -542,12 +542,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			tstring strModes;
 			if (IsMonitorModeSupported(getGuidFromAdapterName_Wrapper(strArgs[1])))
 			{
-				_tprintf("%d\n", TRUE);
+				_tprintf(_T("%d\n"), TRUE);
 				return 0;
 			}
 			else
 			{
-				_tprintf("%d\n", FALSE);
+				_tprintf(_T("%d\n"), FALSE);
 				return 0;
 			}
 		}
@@ -556,7 +556,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			ULONG ulChannel;
 			if (GetCurrentChannel(getGuidFromAdapterName_Wrapper(strArgs[1]), ulChannel))
 			{
-				_tprintf("%u\n", ulChannel);
+				_tprintf(_T("%u\n"), ulChannel);
 				return 0;
 			}
 			else
@@ -570,7 +570,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			ULONG ulFrequency;
 			if (GetCurrentFrequency(getGuidFromAdapterName_Wrapper(strArgs[1]), ulFrequency))
 			{
-				_tprintf("%u\n", ulFrequency);
+				_tprintf(_T("%u\n"), ulFrequency);
 				return 0;
 			}
 			else
@@ -584,7 +584,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			vector<tstring> nstrPhyTypes;
 			if (GetSupportedPhyTypes(getGuidFromAdapterName_Wrapper(strArgs[1]), nstrPhyTypes))
 			{
-				_tprintf("%s\n", printArray(nstrPhyTypes).c_str());
+				_tprintf(_T("%s\n"), printArray(nstrPhyTypes).c_str());
 				return 0;
 			}
 			else
@@ -598,7 +598,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			vector<tstring> nstrPhyList;
 			if (GetDesiredPhyList(getGuidFromAdapterName_Wrapper(strArgs[1]), nstrPhyList))
 			{
-				_tprintf("%s\n", printArray(nstrPhyList).c_str());
+				_tprintf(_T("%s\n"), printArray(nstrPhyList).c_str());
 				return 0;
 			}
 			else
@@ -612,7 +612,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			ULONG ulPhyID;
 			if (GetCurrentPhyID(getGuidFromAdapterName_Wrapper(strArgs[1]), ulPhyID))
 			{
-				_tprintf("%u\n", ulPhyID);
+				_tprintf(_T("%u\n"), ulPhyID);
 				return 0;
 			}
 			else
