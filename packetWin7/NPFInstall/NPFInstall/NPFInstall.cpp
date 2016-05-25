@@ -3,6 +3,8 @@
 #include <tchar.h>
 #include <windows.h>
 
+#include "..\..\..\version.h"
+
 #include "ProtInstall.h"
 #include "LoopbackInstall.h"
 #include "CalloutInstall.h"
@@ -14,7 +16,21 @@ BOOL PacketStopDriver60();
 BOOL PacketInstallDriver40();
 BOOL PacketStopDriver40();
 
-#define STR_COMMAND_USAGE _T("Command Usage: NPFInstall -[i/u/r/ii/uu]: i - install win7 driver, u - uninstall win7 driver, r - restartBindings, ii - install xp driver, uu - uninstall xp driver, il - install Npcap loopback adapter, ul - uninstall Npcap loopback adapter, iw - install WFP callout driver, uw - uninstall WFP callout driver.\n")
+#define STR_COMMAND_USAGE \
+_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.org)\n")\
+_T("Usage: NPFInstall [Options]\n")\
+_T("Options:\n")\
+_T("  -i: install win7 driver\n")\
+_T("  -u: uninstall win7 driver\n")\
+_T("  -r: restartBindings\n")\
+_T("  -ii: install xp driver\n")\
+_T("  -uu: uninstall xp driver\n")\
+_T("  -il: install Npcap loopback adapter\n")\
+_T("  -ul: uninstall Npcap loopback adapter\n")\
+_T("  -iw: install WFP callout driver\n")\
+_T("  -uw: uninstall WFP callout driver\n")\
+_T("\n")\
+_T("See the MAN Page (https://github.com/nmap/npcap) for more options and examples\n")
 
 BOOL PacketIsServiceStopPending()
 {
