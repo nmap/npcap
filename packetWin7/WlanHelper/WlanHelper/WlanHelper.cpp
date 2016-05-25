@@ -450,34 +450,34 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 	}
 }
 
-#define STR_COMMAND_USAGE _T("\
-WlanHelper for Npcap " WINPCAP_VER_STRING " (http://npcap.org)\n\
-Usage: WlanHelper {Interface Name or GUID} [Options]\n\
-Options:\n\
-  mode: get interface operation mode\n\
-  mode <managed|monitor|master|wfd_device|wfd_owner|wfd_client>: set interface operation mode\n\
-  modes: get all operation modes supported by the interface, comma-separated\n\
-  channel: get interface channel\n\
-  channel <VALUE>: set interface channel (only works in monitor mode)\n\
-  freq: get interface frequency\n\
-  freq <VALUE>: set interface frequency (only works in monitor mode)\n\
-\n\
-Operation Modes:\n\
-  managed - the Extensible Station (ExtSTA) operation mode\n\
-  monitor - the Network Monitor (NetMon) operation mode\n\
-  master - the Extensible Access Point (ExtAP) operation mode (supported on Windows 7 and later)\n\
-  wfd_device - the Wi-Fi Direct Device operation mode (supported on Windows 8 and later)\n\
-  wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported on Windows 8 and later)\n\
-  wfd_client - the Wi-Fi Direct Client operation mode (supported on Windows 8 and later)\n\
-\n\
-Examples:\n\
-  WlanHelper wi-fi mode\n\
-  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11\n\
-  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2\n\
-  WlanHelper \"Wireless Network Connection\" mode monitor\n\
-\n\
-See the MAN Page (https://github.com/nmap/npcap) for more options and examples\n\
-")
+#define STR_COMMAND_USAGE \
+_T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.org)\n")\
+_T("Usage: WlanHelper {Interface Name or GUID} [Options]\n")\
+_T("Options:\n")\
+_T("  mode: get interface operation mode\n")\
+_T("  mode <managed|monitor|master|wfd_device|wfd_owner|wfd_client>: set interface operation mode\n")\
+_T("  modes: get all operation modes supported by the interface, comma-separated\n")\
+_T("  channel: get interface channel\n")\
+_T("  channel <VALUE>: set interface channel (only works in monitor mode)\n")\
+_T("  freq: get interface frequency\n")\
+_T("  freq <VALUE>: set interface frequency (only works in monitor mode)\n")\
+_T("\n")\
+_T("Operation Modes:\n")\
+_T("  managed - the Extensible Station (ExtSTA) operation mode\n")\
+_T("  monitor - the Network Monitor (NetMon) operation mode\n")\
+_T("  master - the Extensible Access Point (ExtAP) operation mode (supported on Windows 7 and later)\n")\
+_T("  wfd_device - the Wi-Fi Direct Device operation mode (supported on Windows 8 and later)\n")\
+_T("  wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported on Windows 8 and later)\n")\
+_T("  wfd_client - the Wi-Fi Direct Client operation mode (supported on Windows 8 and later)\n")\
+_T("\n")\
+_T("Examples:\n")\
+_T("  WlanHelper wi-fi mode\n")\
+_T("  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11\n")\
+_T("  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2\n")\
+_T("  WlanHelper \"Wireless Network Connection\" mode monitor\n")\
+_T("\n")\
+_T("See the MAN Page (https://github.com/nmap/npcap) for more options and examples\n")
+
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n")
 
 int _tmain(int argc, _TCHAR* argv[])
