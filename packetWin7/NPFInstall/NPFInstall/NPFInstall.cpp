@@ -7,6 +7,7 @@
 #include "LoopbackInstall.h"
 #include "CalloutInstall.h"
 #include "DriverStoreClear.h"
+#include "WlanRecord.h"
 
 BOOL PacketInstallDriver60(BOOL bWifiOrNormal);
 BOOL PacketStopDriver60();
@@ -173,10 +174,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	BOOL bVerbose = FALSE;
 
 	SetConsoleTitle(NPF_SERVICE_DESC_TCHAR _T(" for packet capturing"));
+	vector<tstring> strArgs;
+	for (int i = 0; i < argc; i++)
+	{
+		strArgs.push_back(argv[i]);
+	}
 
 	if (argc >= 2)
 	{
-		if (_tcscmp(_T("-h"), argv[1]) == 0)
+		if (strArgs[1] == _T("-v"))
 		{
 			bVerbose = TRUE;
 		}
@@ -184,7 +190,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	if (argc >= 3)
 	{
-		if (_tcscmp(_T("-v"), argv[2]) == 0)
+		if (strArgs[2] == _T("-v"))
 		{
 			bVerbose = TRUE;
 		}
@@ -207,7 +213,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else //argc == 2
 	{
-		if (_tcscmp(_T("-i"), argv[1]) == 0)
+		if (strArgs[1] == _T("-i"))
 		{
 			bSuccess = PacketInstallDriver60(FALSE);
 			if (bSuccess)
@@ -221,7 +227,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-i2"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-i2"))
 		{
 			bSuccess = PacketInstallDriver60(TRUE);
 			if (bSuccess)
@@ -235,7 +241,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-u"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-u"))
 		{
 			bSuccess = PacketStopDriver60();
 			if (bSuccess)
@@ -249,7 +255,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-ii"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-ii"))
 		{
 			bSuccess = PacketInstallDriver40();
 			if (bSuccess)
@@ -263,7 +269,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-uu"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-uu"))
 		{
 			bSuccess = PacketStopDriver40();
 			if (bSuccess)
@@ -277,7 +283,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-il"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-il"))
 		{
 			bSuccess = InstallLoopbackAdapter();
 			if (bSuccess)
@@ -291,7 +297,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-ul"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-ul"))
 		{
 			bSuccess = UninstallLoopbackAdapter();
 			if (bSuccess)
@@ -305,7 +311,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-iw"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-iw"))
 		{
 			bSuccess = InstallWFPCallout();
 			if (bSuccess)
@@ -319,7 +325,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-uw"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-uw"))
 		{
 			bSuccess = UninstallWFPCallout();
 			if (bSuccess)
@@ -333,7 +339,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-r"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-r"))
 		{
 			bSuccess = PacketRenableBindings();
 			if (bSuccess)
@@ -347,7 +353,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-d"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-d"))
 		{
 			bSuccess = PacketIsServiceStopPending();
 			if (bSuccess)
@@ -361,7 +367,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-c"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-c"))
 		{
 			bSuccess = ClearDriverStore();
 			if (bSuccess)
@@ -375,7 +381,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
-		else if (_tcscmp(_T("-h"), argv[1]) == 0)
+		else if (strArgs[1] == _T("-h"))
 		{
 			_tprintf(STR_COMMAND_USAGE);
 			return -1;
