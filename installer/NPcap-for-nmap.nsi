@@ -76,6 +76,7 @@ Var /GLOBAL dlt_null
 Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
 Var /GLOBAL restore_point_success
+Var /GLOBAL has_wlan_card
 
 RequestExecutionLevel admin
 
@@ -258,6 +259,11 @@ Function .onInit
   ${GetParameters} $R0
   ClearErrors
   ${GetOptions} $R0 "/NPFSTARTUP=" $npf_startup
+  
+  StrCpy $has_wlan_card "0"
+  ; SetOutPath $PLUGINSDIR
+  ; File win8_above_winpcap\x86\NPFInstall.exe
+  ; nsExec::Exec "$PLUGINSDIR\NPFInstall.exe -wlan_check" $has_wlan_card
 
   IfSilent do_silent no_silent
 
@@ -441,6 +447,11 @@ Function adminOnlyOptionsPage
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
   ${ElseIf} $winpcap_mode == "yes"
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 1
+  ${EndIf}
+
+  ${If} $has_wlan_card != "0"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "Flags" "DISABLED"
   ${EndIf}
 
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
