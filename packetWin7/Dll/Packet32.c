@@ -4707,9 +4707,9 @@ BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject)
 /*!
 \brief Returns whether a wireless adapter supports monitor mode.
 \param AdapterObject The adapter on which information is needed.
-\return TRUE if yes, FALSE if no.
+\return 1 if yes, 0 if no, -1 if the function fails.
 */
-BOOLEAN PacketIsMonitorModeSupported(PCHAR AdapterName)
+int PacketIsMonitorModeSupported(PCHAR AdapterName)
 {
 	BOOLEAN Status;
 	NetType Type;
@@ -4719,17 +4719,17 @@ BOOLEAN PacketIsMonitorModeSupported(PCHAR AdapterName)
 	if (PacketGetNetType2(AdapterName, &Type) == FALSE)
 	{
 		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketGetNetType error");
-		Status = FALSE;
+		Status = -1;
 	}
 	else
 	{
 		if (Type.LinkType == NdisMediumBare80211 || Type.LinkType == NdisMediumRadio80211)
 		{
-			Status = TRUE;
+			Status = 1;
 		}
 		else
 		{
-			Status = FALSE;
+			Status = 0;
 		}
 	}
 
