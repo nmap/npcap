@@ -14,7 +14,7 @@ Abstract:
 --*/
 
 int getIntDevID(TCHAR strDevID[]);
-BOOL WriteStrToRegistry(LPCWSTR strSubKey, LPCWSTR strValueName, wchar_t strDeviceName[], DWORD dwSamDesired);
-BOOL AddFlagToRegistry(wchar_t strDeviceName[]);
-BOOL AddFlagToRegistry_Service(wchar_t strDeviceName[]);
+BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, TCHAR strDeviceName[], DWORD dwSamDesired);
+BOOL AddFlagToRegistry(TCHAR strDeviceName[]);
+BOOL AddFlagToRegistry_Service(TCHAR strDeviceName[]);
 BOOL RecordLoopbackDevice(int iNpcapAdapterID);

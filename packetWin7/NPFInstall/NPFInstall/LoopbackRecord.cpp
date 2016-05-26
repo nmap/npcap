@@ -48,7 +48,7 @@ COM::COM()
 
 	if(!SUCCEEDED(hr))
 	{
-		printf("ERROR: CoInitializeEx() failed. Error code: 0x%08x\n", hr);
+		_tprintf(_T("ERROR: CoInitializeEx() failed. Error code: 0x%08x\n"), hr);
 	}
 }
 
@@ -81,7 +81,7 @@ NetCfg::NetCfg() : m_pINetCfg(0)
 
 	if(!SUCCEEDED(hr))
 	{
-		printf("ERROR: CoCreateInstance() failed. Error code: 0x%08x\n", hr);
+		_tprintf(_T("ERROR: CoCreateInstance() failed. Error code: 0x%08x\n"), hr);
 		throw 1;
 	}
 
@@ -89,7 +89,7 @@ NetCfg::NetCfg() : m_pINetCfg(0)
 
 	if (!SUCCEEDED(hr))
 	{
-		printf("QueryInterface(INetCfgLock) 0x%08x\n", hr);
+		_tprintf(_T("QueryInterface(INetCfgLock) 0x%08x\n"), hr);
 		throw 2;
 	}
 
@@ -97,7 +97,7 @@ NetCfg::NetCfg() : m_pINetCfg(0)
 	hr = m_pLock->AcquireWriteLock(INFINITE, NPCAP_LOOPBACK_APP_NAME, NULL);
 	if (!SUCCEEDED(hr))
 	{
-		printf("INetCfgLock::AcquireWriteLock 0x%08x\n", hr);
+		_tprintf(_T("INetCfgLock::AcquireWriteLock 0x%08x\n"), hr);
 		throw 3;
 	}
 
@@ -105,7 +105,7 @@ NetCfg::NetCfg() : m_pINetCfg(0)
 
 	if(!SUCCEEDED(hr))
 	{
-		printf("ERROR: Initialize() failed. Error code: 0x%08x\n", hr);
+		_tprintf(_T("ERROR: Initialize() failed. Error code: 0x%08x\n"), hr);
 		throw 4;
 	}
 }
@@ -119,13 +119,13 @@ NetCfg::~NetCfg()
 		hr = m_pINetCfg->Uninitialize();
 		if(!SUCCEEDED(hr))
 		{
-			printf("ERROR: Uninitialize() failed. Error code: 0x%08x\n", hr);
+			_tprintf(_T("ERROR: Uninitialize() failed. Error code: 0x%08x\n"), hr);
 		}
 
 		hr = m_pLock->ReleaseWriteLock();
 		if (!SUCCEEDED(hr))
 		{
-			printf("INetCfgLock::ReleaseWriteLock 0x%08x\n", hr);
+			_tprintf(_T("INetCfgLock::ReleaseWriteLock 0x%08x\n"), hr);
 		}
 	}
 }
@@ -144,7 +144,7 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 
 	if(!SUCCEEDED(hr))
 	{
-		printf("ERROR: Failed to get IEnumNetCfgComponent interface pointer\n");
+		_tprintf(_T("ERROR: Failed to get IEnumNetCfgComponent interface pointer\n"));
 		throw 1;
 	} 
 
@@ -261,20 +261,20 @@ int getIntDevID(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 	return iDevID;
 }
 
-BOOL WriteStrToRegistry(LPCWSTR strSubKey, LPCWSTR strValueName, wchar_t strDeviceName[], DWORD dwSamDesired)
+BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, TCHAR strDeviceName[], DWORD dwSamDesired)
 {
 	LONG Status;
 	HKEY hNpcapKey;
 
-	wchar_t strFullDeviceName[BUF_SIZE];
-	wsprintf(strFullDeviceName, L"\\Device\\%s", strDeviceName);
-	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired, &hNpcapKey);
+	TCHAR strFullDeviceName[BUF_SIZE];
+	_stprintf_s(strFullDeviceName, BUF_SIZE, _T("\\Device\\%s"), strDeviceName);
+	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired, &hNpcapKey);
 	if (Status == ERROR_SUCCESS)
 	{
-		Status = RegSetValueExW(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof(wchar_t));
+		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof(TCHAR));
 		if (Status != ERROR_SUCCESS)
 		{
-			printf("WriteStrToRegistry: 0x%08x\n", GetLastError());
+			_tprintf(_T("WriteStrToRegistry: 0x%08x\n"), GetLastError());
 			RegCloseKey(hNpcapKey);
 			return FALSE;
 		}
@@ -282,19 +282,19 @@ BOOL WriteStrToRegistry(LPCWSTR strSubKey, LPCWSTR strValueName, wchar_t strDevi
 	}
 	else
 	{
-		printf("WriteStrToRegistry: 0x%08x\n", GetLastError());
+		_tprintf(_T("WriteStrToRegistry: 0x%08x\n"), GetLastError());
 		return FALSE;
 	}
 
 	return TRUE;
 }
 
-BOOL AddFlagToRegistry(wchar_t strDeviceName[])
+BOOL AddFlagToRegistry(TCHAR strDeviceName[])
 {
 	return WriteStrToRegistry(NPCAP_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, strDeviceName, KEY_WRITE | KEY_WOW64_32KEY);
 }
 
-BOOL AddFlagToRegistry_Service(wchar_t strDeviceName[])
+BOOL AddFlagToRegistry_Service(TCHAR strDeviceName[])
 {
 	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, strDeviceName, KEY_WRITE);
 }
@@ -314,7 +314,7 @@ BOOL RecordLoopbackDevice(int iNpcapAdapterID)
 	}
 	catch(...)
 	{
-		printf("ERROR: main() caught exception\n");
+		_tprintf(_T("ERROR: main() caught exception\n"));
 		return FALSE;
 	}
 
