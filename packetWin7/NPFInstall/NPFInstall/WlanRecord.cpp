@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <wlanapi.h>
 #include "WlanRecord.h"
+#include "RegUtil.h"
 
 tstring printArray(vector<tstring> nstr)
 {
@@ -139,4 +140,27 @@ vector<tstring> getWlanAdapterGuids()
 	}
 
 	return nstrWlanAdapterGuids;
+}
+
+BOOL AddFlagToRegistry_Dot11Adapters(LPCTSTR strDeviceName)
+{
+	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME, NPCAP_REG_DOT11_VALUE_NAME, strDeviceName, KEY_WRITE);
+}
+
+BOOL writeWlanAdapterGuidsToRegistry()
+{
+	vector<tstring> nstrWlanAdapterGuids = getWlanAdapterGuids();
+	if (nstrWlanAdapterGuids.size() == 0)
+	{
+		return FALSE;
+	}
+
+	for (size_t i = 0; i < nstrWlanAdapterGuids.size(); i++)
+	{
+		nstrWlanAdapterGuids[i] = _T("\\Device\\{") + nstrWlanAdapterGuids[i] + _T("}");
+	}
+
+	tstring strGuidText = printAdapterNames(nstrWlanAdapterGuids);
+	return AddFlagToRegistry_Dot11Adapters(strGuidText.c_str());
+
 }

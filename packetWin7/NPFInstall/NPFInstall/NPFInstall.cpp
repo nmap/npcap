@@ -412,6 +412,20 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		else if (strArgs[1] == _T("-wlan_write_reg"))
+		{
+			bSuccess = writeWlanAdapterGuidsToRegistry();
+			if (bSuccess)
+			{
+				_tprintf(_T("Wlan adapters have been successfully written to registry!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Wlan adapters have failed to be written to registry.\n"));
+				return -1;
+			}
+		}
 		else if (strArgs[1] == _T("-h"))
 		{
 			_tprintf(STR_COMMAND_USAGE);

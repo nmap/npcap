@@ -15,3 +15,5 @@ typedef std::basic_string<TCHAR> tstring;
 tstring printArray(vector<tstring> nstr);
 
 vector<tstring> getWlanAdapterGuids();
+
+BOOL writeWlanAdapterGuidsToRegistry();
