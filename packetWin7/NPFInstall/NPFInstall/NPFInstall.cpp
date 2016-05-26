@@ -189,7 +189,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	BOOL bSuccess = FALSE;
 	BOOL bVerbose = FALSE;
 
-	SetConsoleTitle(NPF_SERVICE_DESC_TCHAR _T(" for packet capturing"));
+	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.org)"));
 	vector<tstring> strArgs;
 	for (int i = 0; i < argc; i++)
 	{
@@ -239,7 +239,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap LWF driver (standard version) has failed the installation."));
+				_tprintf(_T("Npcap LWF driver (standard version) has failed to be installed.\n"));
 				return -1;
 			}
 		}
@@ -253,7 +253,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap LWF driver (WiFi version) has failed the installation."));
+				_tprintf(_T("Npcap LWF driver (WiFi version) has failed to be installed.\n"));
 				return -1;
 			}
 		}
@@ -267,7 +267,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap LWF driver has failed the uninstallation."));
+				_tprintf(_T("Npcap LWF driver has failed to be uninstalled.\n"));
 				return -1;
 			}
 		}
@@ -281,7 +281,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("NPF legacy driver has failed the installation."));
+				_tprintf(_T("NPF legacy driver has failed to be installed.\n"));
 				return -1;
 			}
 		}
@@ -295,7 +295,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("NPF legacy driver has failed the uninstallation."));
+				_tprintf(_T("NPF legacy driver has failed to be uninstalled.\n"));
 				return -1;
 			}
 		}
@@ -309,7 +309,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap Loopback adapter has failed the installation."));
+				_tprintf(_T("Npcap Loopback adapter has failed to be installed.\n"));
 				return -1;
 			}
 		}
@@ -323,7 +323,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap Loopback adapter has failed the uninstallation."));
+				_tprintf(_T("Npcap Loopback adapter has failed to be uninstalled.\n"));
 				return -1;
 			}
 		}
@@ -337,7 +337,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap WFP callout driver has failed the installation."));
+				_tprintf(_T("Npcap WFP callout driver has failed to be installed.\n"));
 				return -1;
 			}
 		}
@@ -351,7 +351,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap WFP callout driver has failed the uninstallation."));
+				_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
 				return -1;
 			}
 		}
@@ -365,7 +365,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap driver's bindings have failed to restart."));
+				_tprintf(_T("Npcap driver's bindings have failed to be restarted.\n"));
 				return -1;
 			}
 		}
@@ -379,7 +379,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap service is not pending to stop."));
+				_tprintf(_T("Npcap service is not pending to stop.\n"));
 				return -1;
 			}
 		}
@@ -393,7 +393,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
-				_tprintf(_T("Npcap driver cache in Driver Store has failed the cleanning up."));
+				_tprintf(_T("Npcap driver cache in Driver Store has failed to be cleaned up.\n"));
 				return -1;
 			}
 		}
