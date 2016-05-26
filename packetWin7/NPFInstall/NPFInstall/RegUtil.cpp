@@ -24,7 +24,7 @@ This is used for operating on registry.
 
 #define BUF_SIZE 255
 
-BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, TCHAR strDeviceName[], DWORD dwSamDesired)
+BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDeviceName, DWORD dwSamDesired)
 {
 	LONG Status;
 	HKEY hNpcapKey;
