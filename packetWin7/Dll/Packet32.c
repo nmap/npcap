@@ -477,7 +477,7 @@ void NPcapGetLoopbackInterfaceName()
 
 	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
-		if (RegQueryValueExA(hKey, "Loopback", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
+		if (RegQueryValueExA(hKey, "LoopbackAdapter", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
 			strncpy_s(g_LoopbackAdapterName, 512, buffer, sizeof(g_LoopbackAdapterName)/ sizeof(g_LoopbackAdapterName[0]) - 1);
 		}
