@@ -261,20 +261,20 @@ int getIntDevID(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 	return iDevID;
 }
 
-BOOL AddFlagToRegistry(wchar_t strDeviceName[])
+BOOL WriteStrToRegistry(LPCWSTR strSubKey, LPCWSTR strValueName, wchar_t strDeviceName[], DWORD dwSamDesired)
 {
 	LONG Status;
 	HKEY hNpcapKey;
 
 	wchar_t strFullDeviceName[BUF_SIZE];
 	wsprintf(strFullDeviceName, L"\\Device\\%s", strDeviceName);
-	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_REG_KEY_NAME, 0, KEY_WRITE | KEY_WOW64_32KEY, &hNpcapKey);
+	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired, &hNpcapKey);
 	if (Status == ERROR_SUCCESS)
 	{
-		Status = RegSetValueExW(hNpcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof (wchar_t));
+		Status = RegSetValueExW(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof(wchar_t));
 		if (Status != ERROR_SUCCESS)
 		{
-			printf("AddFlagToRegistry: 0x%08x\n", GetLastError());
+			printf("WriteStrToRegistry: 0x%08x\n", GetLastError());
 			RegCloseKey(hNpcapKey);
 			return FALSE;
 		}
@@ -282,39 +282,21 @@ BOOL AddFlagToRegistry(wchar_t strDeviceName[])
 	}
 	else
 	{
-		printf("AddFlagToRegistry: 0x%08x\n", GetLastError());
+		printf("WriteStrToRegistry: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
 	return TRUE;
 }
 
+BOOL AddFlagToRegistry(wchar_t strDeviceName[])
+{
+	return WriteStrToRegistry(NPCAP_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, strDeviceName, KEY_WRITE | KEY_WOW64_32KEY);
+}
+
 BOOL AddFlagToRegistry_Service(wchar_t strDeviceName[])
 {
-	LONG Status;
-	HKEY hNpcapKey;
-
-	wchar_t strFullDeviceName[BUF_SIZE];
-	wsprintf(strFullDeviceName, L"\\Device\\%s", strDeviceName);
-	Status = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NPCAP_SERVICE_REG_KEY_NAME, 0, KEY_WRITE, &hNpcapKey);
-	if (Status == ERROR_SUCCESS)
-	{
-		Status = RegSetValueExW(hNpcapKey, NPCAP_REG_LOOPBACK_VALUE_NAME, 0, REG_SZ, (PBYTE) strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof (wchar_t));
-		if (Status != ERROR_SUCCESS)
-		{
-			printf("AddFlagToRegistry_Service: 0x%08x\n", GetLastError());
-			RegCloseKey(hNpcapKey);
-			return FALSE;
-		}
-		RegCloseKey(hNpcapKey);
-	}
-	else
-	{
-		printf("AddFlagToRegistry_Service: 0x%08x\n", GetLastError());
-		return FALSE;
-	}
-
-	return TRUE;
+	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, strDeviceName, KEY_WRITE);
 }
 
 BOOL RecordLoopbackDevice(int iNpcapAdapterID)
