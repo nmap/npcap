@@ -20,8 +20,7 @@ This is used for operating on registry.
 #include <atlbase.h> // CComPtr
 #include <devguid.h> // GUID_DEVCLASS_NET, ...
 
-#include "LoopbackRecord.h"
-#include "LoopbackRename.h"
+#include "RegUtil.h"
 
 #define BUF_SIZE 255
 
@@ -51,4 +50,18 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, TCHAR strDevice
 	}
 
 	return TRUE;
+}
+
+tstring printAdapterNames(vector<tstring> nstr)
+{
+	tstring strResult;
+	for (size_t i = 0; i < nstr.size(); i++)
+	{
+		if (i != 0)
+		{
+			strResult += _T(";");
+		}
+		strResult += nstr[i];
+	}
+	return strResult;
 }
