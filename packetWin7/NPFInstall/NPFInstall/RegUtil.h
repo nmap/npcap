@@ -21,7 +21,7 @@ using namespace std;
 #define		NPF_DRIVER_NAME_SMALL_T				_T(NPF_DRIVER_NAME_SMALL)
 #define		NPCAP_REG_KEY_NAME					_T("SOFTWARE\\") NPF_SOFT_REGISTRY_NAME_T
 #define		NPCAP_SERVICE_REG_KEY_NAME			_T("SYSTEM\\CurrentControlSet\\Services\\") NPF_DRIVER_NAME_SMALL_T
-#define		NPCAP_REG_LOOPBACK_VALUE_NAME		_T("Loopback")
+#define		NPCAP_REG_LOOPBACK_VALUE_NAME		_T("LoopbackAdapter")
 #define		NPCAP_REG_DOT11_VALUE_NAME		_T("Dot11Adapters")
 
 typedef std::basic_string<TCHAR> tstring;

@@ -80,7 +80,7 @@ POPEN_INSTANCE g_LoopbackOpenGroupHead = NULL; // Loopback adapter open_instance
 PDEVICE_OBJECT g_LoopbackDevObj = NULL;
 
 NDIS_STRING g_LoopbackAdapterName;
-NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("Loopback");
+NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("LoopbackAdapter");
 
 extern HANDLE g_WFPEngineHandle;
 #endif
@@ -88,9 +88,9 @@ extern HANDLE g_WFPEngineHandle;
 #ifdef HAVE_RX_SUPPORT
 
 NDIS_STRING g_SendToRxAdapterName;
-NDIS_STRING g_SendToRxRegValueName = NDIS_STRING_CONST("SendToRx");
+NDIS_STRING g_SendToRxRegValueName = NDIS_STRING_CONST("SendToRxAdapters");
 NDIS_STRING g_BlockRxAdapterName;
-NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRx");
+NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRxAdapters");
 
 #endif
 

@@ -946,8 +946,13 @@ Section "WinPcap" SecWinPcap
     ${Endif}
 
     ; Copy the "Loopback" option from software key to services key
-    ReadRegStr $0 HKLM "Software\Npcap" "Loopback"
-    WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Loopback" $0
+    ReadRegStr $0 HKLM "Software\Npcap" "LoopbackAdapter"
+    WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackAdapter" $0
+    ${If} $loopback_support == "yes"
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackSupport" 1 ; make "LoopbackSupport" = 1 only when "loopback support" is chosen
+    ${Else}
+      WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackSupport" 0
+    ${Endif}
 
     ; Npcap driver will read this option
     ${If} $dlt_null == "yes"
