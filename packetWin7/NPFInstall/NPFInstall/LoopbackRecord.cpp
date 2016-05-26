@@ -23,14 +23,13 @@ Abstract:
 
 #include "LoopbackRecord.h"
 #include "LoopbackRename.h"
+#include "RegUtil.h"
 
 #define			NPCAP_LOOPBACK_ADAPTER_NAME				NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
 #define			NPCAP_LOOPBACK_APP_NAME					NPF_DRIVER_NAME_NORMAL_WIDECHAR L"_Loopback"
 #define			NPCAP_REG_KEY_NAME						L"SOFTWARE\\" NPF_SOFT_REGISTRY_NAME_WIDECHAR
 #define			NPCAP_SERVICE_REG_KEY_NAME				L"SYSTEM\\CurrentControlSet\\Services\\" NPF_DRIVER_NAME_SMALL_WIDECHAR
 #define			NPCAP_REG_LOOPBACK_VALUE_NAME			L"Loopback"
-
-#define			BUF_SIZE 255
 
 int g_NpcapAdapterID = -1;
 
@@ -259,34 +258,6 @@ int getIntDevID(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 	int iDevID;
 	_stscanf_s(strDevID, _T("ROOT\\NET\\%04d"), &iDevID);
 	return iDevID;
-}
-
-BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, TCHAR strDeviceName[], DWORD dwSamDesired)
-{
-	LONG Status;
-	HKEY hNpcapKey;
-
-	TCHAR strFullDeviceName[BUF_SIZE];
-	_stprintf_s(strFullDeviceName, BUF_SIZE, _T("\\Device\\%s"), strDeviceName);
-	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired, &hNpcapKey);
-	if (Status == ERROR_SUCCESS)
-	{
-		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof(TCHAR));
-		if (Status != ERROR_SUCCESS)
-		{
-			_tprintf(_T("WriteStrToRegistry: 0x%08x\n"), GetLastError());
-			RegCloseKey(hNpcapKey);
-			return FALSE;
-		}
-		RegCloseKey(hNpcapKey);
-	}
-	else
-	{
-		_tprintf(_T("WriteStrToRegistry: 0x%08x\n"), GetLastError());
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 BOOL AddFlagToRegistry(TCHAR strDeviceName[])

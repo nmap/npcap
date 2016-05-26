@@ -397,6 +397,7 @@
     <ClCompile Include="..\..\Dll\netcfgapi.cpp" />
     <ClCompile Include="NPFInstall.cpp" />
     <ClCompile Include="..\..\Dll\ProtInstall.cpp" />
+    <ClCompile Include="RegUtil.cpp" />
     <ClCompile Include="WlanRecord.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -410,6 +411,7 @@
     <ClInclude Include="..\..\Dll\netcfgapi.h" />
     <ClInclude Include="..\..\Dll\ProtInstall.h" />
     <ClInclude Include="rc_ids.h" />
+    <ClInclude Include="RegUtil.h" />
     <ClInclude Include="WlanRecord.h" />
   </ItemGroup>
   <ItemGroup>
