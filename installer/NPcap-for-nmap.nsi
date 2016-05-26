@@ -963,6 +963,9 @@ Section "WinPcap" SecWinPcap
 
     ${If} $dot11_support == "yes"
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "dot11 support" is chosen
+      ${If} $dot11_support == "yes"
+        ExecWait '"$INSTDIR\NPFInstall.exe" -wlan_write_reg' $0
+      ${Endif}
     ${Else}
       WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 0
     ${Endif}
