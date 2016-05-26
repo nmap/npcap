@@ -257,14 +257,14 @@ int getIntDevID(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 	return iDevID;
 }
 
-BOOL AddFlagToRegistry(TCHAR strDeviceName[])
+BOOL AddFlagToRegistry(tstring strDeviceName)
 {
-	return WriteStrToRegistry(NPCAP_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, strDeviceName, KEY_WRITE | KEY_WOW64_32KEY);
+	return WriteStrToRegistry(NPCAP_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, tstring(_T("\\Device\\") + strDeviceName).c_str(), KEY_WRITE | KEY_WOW64_32KEY);
 }
 
-BOOL AddFlagToRegistry_Service(TCHAR strDeviceName[])
+BOOL AddFlagToRegistry_Service(tstring strDeviceName)
 {
-	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, strDeviceName, KEY_WRITE);
+	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, tstring(_T("\\Device\\") + strDeviceName).c_str(), KEY_WRITE);
 }
 
 BOOL RecordLoopbackDevice(int iNpcapAdapterID)

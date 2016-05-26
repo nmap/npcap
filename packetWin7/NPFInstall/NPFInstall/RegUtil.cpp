@@ -29,12 +29,10 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDevi
 	LONG Status;
 	HKEY hNpcapKey;
 
-	TCHAR strFullDeviceName[BUF_SIZE];
-	_stprintf_s(strFullDeviceName, BUF_SIZE, _T("\\Device\\%s"), strDeviceName);
 	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired, &hNpcapKey);
 	if (Status == ERROR_SUCCESS)
 	{
-		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strFullDeviceName, (lstrlen(strFullDeviceName) + 1) * sizeof(TCHAR));
+		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strDeviceName, (lstrlen(strDeviceName) + 1) * sizeof(TCHAR));
 		if (Status != ERROR_SUCCESS)
 		{
 			_tprintf(_T("WriteStrToRegistry: 0x%08x\n"), GetLastError());

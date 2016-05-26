@@ -13,7 +13,12 @@ Abstract:
 
 --*/
 
+#include <vector>
+using namespace std;
+
+typedef std::basic_string<TCHAR> tstring;
+
 int getIntDevID(TCHAR strDevID[]);
-BOOL AddFlagToRegistry(TCHAR strDeviceName[]);
-BOOL AddFlagToRegistry_Service(TCHAR strDeviceName[]);
+BOOL AddFlagToRegistry(tstring strDeviceName);
+BOOL AddFlagToRegistry_Service(tstring strDeviceName);
 BOOL RecordLoopbackDevice(int iNpcapAdapterID);
