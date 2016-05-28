@@ -156,6 +156,8 @@ pcap_create_common(const char *source, char *ebuf)
 	pcap_set_snaplen(p, 65535);	/* max packet size */
 	p->opt.promisc = 0;
 	p->opt.buffer_size = 0;
+	p->opt.rfmon = 0;
+	p->opt.rfmon_selfstart = 0;
 	return (p);
 }
 
