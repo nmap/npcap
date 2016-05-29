@@ -1852,10 +1852,11 @@ NPF_Pause(
 
 	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
 	{
-		NdisAcquireSpinLock(&GroupOpen->OpenInUseLock);
 		if (GroupOpen->Multiple_Write_Counter > 0 || GroupOpen->TransmitPendingPackets > 0)
 		{
+			NdisAcquireSpinLock(&GroupOpen->OpenInUseLock);
 			GroupOpen->PausePending = TRUE;
+			NdisReleaseSpinLock(&GroupOpen->OpenInUseLock);
 			Status = NDIS_STATUS_PENDING;
 		}
 		else
@@ -1863,8 +1864,6 @@ NPF_Pause(
 			Status = NDIS_STATUS_SUCCESS;
 		}
 	}
-	
-	NdisReleaseSpinLock(&Open->OpenInUseLock);
 	
 	TRACE_EXIT();
 	return Status;
