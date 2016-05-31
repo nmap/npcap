@@ -138,8 +138,8 @@ VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2016 Insecure.Com LLC ($\
 ;Logo
 
 !define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP "logo.bmp"
-!define MUI_HEADERIMAGE_UNBITMAP "logo.bmp"
+!define MUI_HEADERIMAGE_BITMAP "nmap-logo.bmp"
+!define MUI_HEADERIMAGE_UNBITMAP "nmap-logo.bmp"
 
 ;--------------------------------
 ;Pages
