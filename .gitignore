@@ -36,6 +36,8 @@ sdv/
 /installer/win7_winpcap/
 /installer/win8_above/
 /installer/win8_above_winpcap/
+/WpdPack/
+/dox/prj/
 /packetWin7/Dll/Project/Debug*/
 /packetWin7/Dll/Project/Release*/
 /packetWin7/Dll/Project/x64/Debug*/
