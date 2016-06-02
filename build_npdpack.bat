@@ -9,5 +9,7 @@ call create_lib.bat %1 %2
 call create_examples.bat %1 %2
 
 call create_docs.bat %1 %2
+
+"C:\Program Files\7-Zip\7z.exe" a installer\npcap-sdk-0.07.zip .\NpdPack\*
 PAUSE
 
