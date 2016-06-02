@@ -25,6 +25,7 @@ xcopy /v /Y %WINPCAPSOURCEDIR%\dox\WinPcap_docs.html	%WPDPACKDESTDIR%\docs\ 		>n
 xcopy /v /Y %WINPCAPSOURCEDIR%\dox\prj\docs\*.*		%WPDPACKDESTDIR%\docs\html\	>nul
 xcopy /v /Y %WINPCAPSOURCEDIR%\dox\*.gif		%WPDPACKDESTDIR%\docs\html\	>nul
 xcopy /v /Y %WINPCAPSOURCEDIR%\dox\pics\*.gif		%WPDPACKDESTDIR%\docs\html\	>nul
+xcopy /v /Y %WINPCAPSOURCEDIR%\docs\npcap-guide-wrapper.html		%WPDPACKDESTDIR%\docs\	>nul
 echo Folder \docs created successfully
 set WPDPACKDESTDIR=
 set WINPCAPSOURCEDIR=
