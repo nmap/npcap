@@ -1,4 +1,4 @@
-In order to build the developers' pack, you need to compile the various DLLs and then call build_wpdpack.bat
+In order to build the developers' pack, you need to compile the various DLLs and then call build_npdpack.bat
 This batch file, in turn, calls the four batches
 - create_includes.bat	creates the include folder
 - create_lib.bat		creates the lib folder
@@ -10,7 +10,7 @@ The syntax for the various scripts is
 <script.bat> winpcap_folder developer_folder
 
 winpcap_folder		The winpcap sources folder. It is defaulted to .\
-developer_folder	The developers' pack folder. It is defaulted to .\wpdpack.
+developer_folder	The developers' pack folder. It is defaulted to .\npdpack.
 
-HINT: just call build_wpdpack.bat without any parameter!
+HINT: just call build_npdpack.bat without any parameter!
 

@@ -1,6 +1,6 @@
 @echo off
 
-IF "%2"=="" (set WPDPACKDESTDIR=.\WpdPack\) ELSE (set WPDPACKDESTDIR=%2)
+IF "%2"=="" (set WPDPACKDESTDIR=.\NpdPack\) ELSE (set WPDPACKDESTDIR=%2)
 
 IF ""=="%1" (set WINPCAPSOURCEDIR=.\) ELSE (set WINPCAPSOURCEDIR=%1) 
 
