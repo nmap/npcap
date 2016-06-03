@@ -34,6 +34,6 @@ xcopy /v /y ".\packetNtx\Dll\Project\Release NT4 LOG_TO_FILE\x86\packet.dll"		.\
 rem
 rem docs
 rem
-xcopy /s /e /v /y ".\npdpack\docs\*.*"  .\web\docs\docs_%1\ >nul
+xcopy /s /e /v /y ".\npcap-sdk\docs\*.*"  .\web\docs\docs_%1\ >nul
 
 :end
