@@ -45,7 +45,9 @@ Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from bu
 
 ## Development kit
 
-Npcap has its own SDK for ``Non-WinPcap Compatible Mode``. By using it, your software will run under ``Non-WinPcap Compatible Mode``. We don't update the SDK as frequently as the binaries. The latest SDK is [Npcap SDK 0.07 r9](https://github.com/nmap/npcap/releases/tag/v0.07-r9). If you only want to build your software under ``WinPcap Compatible Mode`` (which is **NOT** recommended), please use the legacy [WinPcap 4.1.2 Developer's Pack](http://www.winpcap.org/devel.htm) instead.
+Npcap has its own SDK for ``Non-WinPcap Compatible Mode``. By using it, your software will run under ``Non-WinPcap Compatible Mode``. We don't update the SDK as frequently as the binaries. The latest SDK is [Npcap SDK 0.07 r9](https://github.com/nmap/npcap/releases/tag/v0.07-r9).
+
+If you only want to build your software under ``WinPcap Compatible Mode`` (which is **NOT** recommended), please use the legacy [WinPcap 4.1.2 Developer's Pack](http://www.winpcap.org/devel.htm) instead.
 
 ## Our users
 
@@ -53,7 +55,7 @@ Npcap has been used in many softwares. They are:
 
 * [Nmap](https://nmap.org/) (``Non-WinPcap Compatible Mode``, installer integrated, in beta test)
 * [Wireshark](https://www.wireshark.org/) (``WinPcap Compatible Mode``, installer detected)
-* [GNS3](https://www.gns3.com/) (``Non-WinPcap Compatible Mode``, installer integrated, published soon, in beta test)
+* [GNS3](https://www.gns3.com/) (``Non-WinPcap Compatible Mode``, installer integrated, in beta test)
 * [Aircrack-ng](http://www.aircrack-ng.org/) (in development)
 * [VividCortex](https://www.vividcortex.com/) (``WinPcap Compatible Mode``, recommended in docs)
 * [Elastic Beats](https://www.elastic.co/products/beats) (``WinPcap Compatible Mode``, recommended in FAQ)
