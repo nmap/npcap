@@ -32,11 +32,15 @@ Run ``installer\Build.bat``: build all DLLs and the driver. The DLLs need to be 
 
 ## Packaging
 
-Run ``installer\Deploy.bat``: copy the files from build directories to deployment directories and sign the files. Generate an installer named ``npcap-nmap-%VERSION%.exe`` using [NSIS large strings build](http://nsis.sourceforge.net/Special_Builds) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore) and sign the installer.
+Run ``installer\Deploy.bat``: copy the files from build directories to deployment directories and sign the files. Generate an installer named ``npcap-%VERSION%.exe`` using [NSIS large strings build](http://nsis.sourceforge.net/Special_Builds) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore) and sign the installer.
+
+## Build SDK (optional)
+
+Run ``build_sdk.bat``: copy the headers, libraries, examples and docs from build directories to ``npcap-sdk`` directory and package them into a zip file named ``npcap-sdk-<VERSION>.zip`` in the ``installer`` folder using [7-Zip](http://www.7-zip.org/).
 
 ## Generating debug symbols (optional)
 
-Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from build directories to deployment directories and package them into a zip file named ``npcap-nmap-<VERSION>-DebugSymbols.zip`` using [7-Zip](http://www.7-zip.org/).
+Run ``installer\Deploy_Symbols.bat``: copy the debug symbol files (.PDB) from build directories to deployment directories and package them into a zip file named ``npcap-<VERSION>-DebugSymbols.zip`` using [7-Zip](http://www.7-zip.org/).
 
 ## Downloads
 
