@@ -45,4 +45,4 @@ sdv/
 /wpcap/PRJ/Debug*/
 /wpcap/PRJ/Release*/
 *.VC.opendb
-!/installer/xp/
+!/installer/xp/*/*
