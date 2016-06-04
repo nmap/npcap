@@ -771,6 +771,35 @@ Section "WinPcap" SecWinPcap
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
       Goto npfdone
 
+    install_xp_64bit:
+      SetOutPath $INSTDIR
+      File rpcapd.exe
+      File ..\LICENSE
+      WriteUninstaller "$INSTDIR\uninstall.exe"
+      DetailPrint "Installing NDIS5.x x64 driver for XP"
+      SetOutPath $SYSDIR\drivers
+      ; disable Wow64FsRedirection
+      System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
+      File x64\npf.sys ; x64 NT5/NT6.0 version
+      ; The x86 versions of wpcap.dll and packet.dll are
+      ; installed into the right place further above.
+      ; install the 64-bit version of wpcap.dll into System32
+	  ${If} $winpcap_mode == "yes"
+	    SetOutPath $SYSDIR
+	  ${Else}
+        SetOutPath $SYSDIR\Npcap
+	  ${EndIf}
+      File x64\wpcap.dll ; x64 NT5/NT6.0 version
+      ; install the 64-bit version of packet.dll into System32
+      File nt5\x64\Packet.dll ; x64 XP/2003 version
+      WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
+      ; re-enable Wow64FsRedirection
+      System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
+      Goto npfdone
+
     install_win7_32bit:
       SetOutPath $INSTDIR
       File rpcapd.exe
@@ -834,35 +863,6 @@ Section "WinPcap" SecWinPcap
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
       Goto npfdone
 
-    install_xp_64bit:
-      SetOutPath $INSTDIR
-      File rpcapd.exe
-      File ..\LICENSE
-      WriteUninstaller "$INSTDIR\uninstall.exe"
-      DetailPrint "Installing NDIS5.x x64 driver for XP"
-      SetOutPath $SYSDIR\drivers
-      ; disable Wow64FsRedirection
-      System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
-      File x64\npf.sys ; x64 NT5/NT6.0 version
-      ; The x86 versions of wpcap.dll and packet.dll are
-      ; installed into the right place further above.
-      ; install the 64-bit version of wpcap.dll into System32
-	  ${If} $winpcap_mode == "yes"
-	    SetOutPath $SYSDIR
-	  ${Else}
-        SetOutPath $SYSDIR\Npcap
-	  ${EndIf}
-      File x64\wpcap.dll ; x64 NT5/NT6.0 version
-      ; install the 64-bit version of packet.dll into System32
-      File nt5\x64\Packet.dll ; x64 XP/2003 version
-      WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
-      ; re-enable Wow64FsRedirection
-      System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-      WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
-      Goto npfdone
-      
     install_win7_64bit:
       SetOutPath $INSTDIR
       File rpcapd.exe
