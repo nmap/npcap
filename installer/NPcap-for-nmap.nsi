@@ -698,9 +698,12 @@ FunctionEnd
 Function copy_win7_32bit_home_dlls
 	SetOutPath $INSTDIR
 	File ..\LICENSE
+
 	${If} $winpcap_mode == "yes"
 		File win8_above_winpcap\x86\NPFInstall.exe
-	${Else}
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
 		File win8_above\x86\NPFInstall.exe
 	${EndIf}
 FunctionEnd
@@ -708,9 +711,12 @@ FunctionEnd
 Function copy_win7_64bit_home_dlls
 	SetOutPath $INSTDIR
 	File ..\LICENSE
+
 	${If} $winpcap_mode == "yes"
 		File win8_above_winpcap\x64\NPFInstall.exe
-	${Else}
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
 		File win8_above\x64\NPFInstall.exe
 	${EndIf}
 FunctionEnd
@@ -743,7 +749,9 @@ Function copy_win7_32bit_system_dlls
 		File win8_above_winpcap\x64\Packet.dll
 		File win8_above_winpcap\x64\NPcapHelper.exe
 		File win8_above_winpcap\x64\WlanHelper.exe
-	${Else}
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
 		SetOutPath $SYSDIR\Npcap
 		File win8_above\x64\wpcap.dll
 		File win8_above\x64\Packet.dll
@@ -759,7 +767,9 @@ Function copy_win7_64bit_system_dlls
 		File win8_above_winpcap\x64\Packet.dll
 		File win8_above_winpcap\x64\NPcapHelper.exe
 		File win8_above_winpcap\x64\WlanHelper.exe
-	${Else}
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
 		SetOutPath $SYSDIR\Npcap
 		File win8_above\x64\wpcap.dll
 		File win8_above\x64\Packet.dll
@@ -790,7 +800,9 @@ Function copy_win7_32bit_driver
 			File win8_above_winpcap\x86\npf_wifi.inf
 			File win8_above_winpcap\x86\npf.cat
 		${EndIf}
-	${Else}
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
 		${If} $os_ver == "vista"
 			File vista\x86\npcap.sys
 			File vista\x86\npcap.inf
@@ -835,7 +847,9 @@ Function copy_win7_64bit_driver
 			File win8_above_winpcap\x64\npf_wifi.inf
 			File win8_above_winpcap\x64\npf.cat
 		${EndIf}
-	${Else}
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
 		${If} $os_ver == "vista"
 			File vista\x64\npcap.sys
 			File vista\x64\npcap.inf
@@ -888,7 +902,9 @@ Function un.remove_win7_XXbit_system_dlls
 		Delete $SYSDIR\Packet.dll
 		Delete $SYSDIR\NPcapHelper.exe
 		Delete $SYSDIR\WlanHelper.exe
-	${Else}
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
 		Delete $SYSDIR\Npcap\wpcap.dll
 		Delete $SYSDIR\Npcap\Packet.dll
 		Delete $SYSDIR\Npcap\NPcapHelper.exe
@@ -908,17 +924,17 @@ Function un.remove_win7_driver
 		Delete $INSTDIR\npf_wfp.inf
 		Delete $INSTDIR\npf_wifi.inf
 		Delete $INSTDIR\npf.cat
-	${Else}
+
+		Delete $SYSDIR\drivers\npf.sys
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
 		Delete $INSTDIR\npcap.sys
 		Delete $INSTDIR\npcap.inf
 		Delete $INSTDIR\npcap_wfp.inf
 		Delete $INSTDIR\npcap_wifi.inf
 		Delete $INSTDIR\npcap.cat
-	${EndIf}
 
-	${If} $winpcap_mode == "yes"
-		Delete $SYSDIR\drivers\npf.sys
-	${Else}
 		Delete $SYSDIR\drivers\npcap.sys
 	${EndIf}
 FunctionEnd
