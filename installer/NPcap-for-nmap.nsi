@@ -670,10 +670,9 @@ Function uninstallWinPcap
 FunctionEnd
 
 Function checkWindowsVersion
-	; Check windows version
 	ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
 	StrCpy $R1 $R0 2
-	${If} $R1 == "6."
+	${If} $R1 == "6." ; Vista and later
 		${If} $R0 == "6.0"
 			StrCpy $os_ver 'vista'
 		${ElseIf} $R0 == "6.1"
@@ -681,7 +680,23 @@ Function checkWindowsVersion
 		${Else}
 			StrCpy $os_ver 'win8_above'
 		${EndIf}
-	${Else} ; xp_files:
+	${Else} ; XP and eariler
+		StrCpy $os_ver 'xp'
+	${EndIf}
+FunctionEnd
+
+Function un.checkWindowsVersion
+	ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
+	StrCpy $R1 $R0 2
+	${If} $R1 == "6." ; Vista and later
+		${If} $R0 == "6.0"
+			StrCpy $os_ver 'vista'
+		${ElseIf} $R0 == "6.1"
+			StrCpy $os_ver 'win7'
+		${Else}
+			StrCpy $os_ver 'win8_above'
+		${EndIf}
+	${Else} ; XP and eariler
 		StrCpy $os_ver 'xp'
 	${EndIf}
 FunctionEnd
@@ -960,6 +975,7 @@ Section "WinPcap" SecWinPcap
 		${EndIf}
 	${EndIf}
 
+	; Check windows version
 	Call checkWindowsVersion
 	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
@@ -1162,12 +1178,13 @@ Section "Uninstall"
 	; StrCpy $restore_point_success "yes"
 	; ${Endif}
 
-	StrCpy $winpcap_mode "yes"
-	StrCpy $driver_name "npf"
-	IfFileExists "$INSTDIR\npf.sys" npcap_sys_checked
-	StrCpy $winpcap_mode "no"
-	StrCpy $driver_name "npcap"
-npcap_sys_checked:
+	${If} ${FileExists} "$INSTDIR\npf.sys"
+		StrCpy $winpcap_mode "yes"
+		StrCpy $driver_name "npf"
+	${Else}
+		StrCpy $winpcap_mode "no"
+		StrCpy $driver_name "npcap"
+	${EndIf}
 
 	; stop npf before we delete the service from the registry
 	DetailPrint "Trying to stop the npf service.."
@@ -1187,38 +1204,14 @@ npcap_sys_checked:
 	${EndIf}
 
 	; Check windows version
-	ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
-	DetailPrint "Windows CurrentVersion: $R0"
-	StrCmp $R0 '6.0' un_vista_files
-	StrCpy $R0 $R0 2
-	StrCmp $R0 '6.' un_win7_files
+	Call un.checkWindowsVersion
+	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
-	; un_xp_files:
-	StrCpy $os_ver 'xp' 5
-	Goto check_windows_done
-
-	un_vista_files:
-	StrCpy $os_ver 'vista' 5
-	Goto check_windows_done
-
-	un_win7_files:
-	StrCpy $os_ver 'win7' 5
-	Goto check_windows_done
-
-	check_windows_done:
-
-	; unregister the driver as a system service using Windows API calls, so it works on Windows 2000
-	StrCmp $os_ver 'vista' unregister_service_win7
-	StrCmp $os_ver 'win7' unregister_service_win7
-
-	;unregisterService_xp_vista:
-	Call un.registerServiceAPI_xp
-	Goto unregisterdone
-
-	unregister_service_win7:
-	Call un.registerServiceAPI_win7
-
-	unregisterdone:
+	${If} $os_ver != "xp"
+		Call un.registerServiceAPI_win7
+	${Else}
+		Call un.registerServiceAPI_xp
+	${EndIf}
 
 	; delete our winpcap-nmap and any WinPcapInst registry keys
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
@@ -1229,6 +1222,7 @@ npcap_sys_checked:
 	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\NPFInstall.exe
 	Delete $INSTDIR\loopback.ini
+
 	${If} $winpcap_mode == "yes"
 		Delete $INSTDIR\npf.sys
 		Delete $INSTDIR\npf.inf
@@ -1262,21 +1256,19 @@ npcap_sys_checked:
 
 	; check for x64, delete npf.sys file from system32\drivers
 	Call un.is64bit
-	StrCmp $0 "0" del32bitnpf del64bitnpf
-
-del64bitnpf:
-	ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
-	DetailPrint "Windows CurrentVersion: $R0"
-	; StrCmp $R0 '6.0'	 del64bitnpf_xp_vista
-	StrCpy $R0 $R0 2
-	StrCmp $R0 '6.' del64bitnpf_win7 del64bitnpf_xp_vista
-
-del32bitnpf:
-	ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
-	DetailPrint "Windows CurrentVersion: $R0"
-	; StrCmp $R0 '6.0'	 del32bitnpf_xp_vista
-	StrCpy $R0 $R0 2
-	StrCmp $R0 '6.' del32bitnpf_win7 del32bitnpf_xp_vista
+	${If} $0 == "0" ; 32bit
+		${If} $os_ver != "xp"
+			Goto del32bitnpf_win7
+		${Else}
+			Goto del32bitnpf_xp_vista
+		${EndIf}
+	${Else} ; 64bit
+		${If} $os_ver != "xp"
+			Goto del64bitnpf_win7
+		${Else}
+			Goto del64bitnpf_xp_vista
+		${EndIf}
+	${EndIf}
 
 del64bitnpf_xp_vista:
 	; disable Wow64FsRedirection
