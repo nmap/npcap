@@ -552,7 +552,7 @@ Function doFinal
  ; don't need to do anything
 FunctionEnd
 
-Function registerServiceAPI_xp_vista
+Function registerServiceAPI_xp
 	; delete the npf service to avoid an error message later if it already exists
 	System::Call 'advapi32::OpenSCManagerA(,,i ${SC_MANAGER_ALL_ACCESS})i.r0'
 	System::Call 'advapi32::OpenServiceA(i r0,t "npf", i ${SERVICE_ALL_ACCESS}) i.r1'
@@ -575,7 +575,7 @@ close_register_xp_vista_handle:
 	System::Call 'advapi32::CloseServiceHandle(i R0) n'
 FunctionEnd
 
-Function un.registerServiceAPI_xp_vista
+Function un.registerServiceAPI_xp
 	System::Call 'advapi32::OpenSCManagerA(,,i ${SC_MANAGER_ALL_ACCESS})i.r0'
 	System::Call 'advapi32::OpenServiceA(i r0,t "npf", i ${SERVICE_ALL_ACCESS}) i.r1'
 	System::Call 'advapi32::DeleteService(i r1) i.r6'
@@ -874,6 +874,57 @@ Function write_registry_software_options
 	${EndIf}
 FunctionEnd
 
+Function write_registry_service_options
+	; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
+	WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
+
+	; Npcap driver will read this option
+	${If} $admin_only == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
+	${Else}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
+	${Endif}
+
+	; Copy the "Loopback" option from software key to services key
+	ReadRegStr $0 HKLM "Software\Npcap" "LoopbackAdapter"
+	WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackAdapter" $0
+	${If} $loopback_support == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackSupport" 1 ; make "LoopbackSupport" = 1 only when "loopback support" is chosen
+	${Else}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackSupport" 0
+	${Endif}
+
+	; Npcap driver will read this option
+	${If} $dlt_null == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 1 ; make "DltNull" = 1 only when "dlt null" is chosen
+	${Else}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 0
+	${Endif}
+
+	${If} $dot11_support == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "dot11 support" is chosen
+		${If} $dot11_support == "yes"
+			ExecWait '"$INSTDIR\NPFInstall.exe" -wlan_write_reg' $0
+		${Endif}
+	${Else}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 0
+	${Endif}
+
+	; Npcap driver will read this option
+	${If} $vlan_support == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 1 ; make "VlanSupport" = 1 only when "vlan support" is chosen
+	${Else}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 0
+	${Endif}
+
+	; Wireshark will read this option
+	${If} $winpcap_mode == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
+	${Else}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 0 ;
+	${EndIf}
+FunctionEnd
+
 ;--------------------------------
 ; The stuff to install
 Section "WinPcap" SecWinPcap	
@@ -1030,17 +1081,11 @@ Section "WinPcap" SecWinPcap
 
 	; register the driver as a system service using Windows API calls
 	; this will work on Windows 2000 (that lacks sc.exe) and higher
-	StrCmp $os_ver 'vista' register_service_win7
-	StrCmp $os_ver 'win7' register_service_win7
-	StrCmp $os_ver 'win8_above' register_service_win7
-	;registerService_xp_vista:
-	Call registerServiceAPI_xp_vista
-	Goto registerdone
-
-	register_service_win7:
+	${If} $os_ver != "xp"
 		Call registerServiceAPI_win7
-
-	registerdone:
+	${Else}
+		Call registerServiceAPI_xp
+	${EndIf}
 
 	${If} $winpcap_mode == "no"
 		; Add "system32\Npcap" directory to PATH
@@ -1049,58 +1094,13 @@ Section "WinPcap" SecWinPcap
 		${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$SYSDIR\Npcap"
 	${EndIf}
 
-	; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
-	WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
+	; write options to registry "service" key
+	Call write_registry_service_options
 
-	; Npcap driver will read this option
-	${If} $admin_only == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
-	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
-	${Endif}
-
-	; Copy the "Loopback" option from software key to services key
-	ReadRegStr $0 HKLM "Software\Npcap" "LoopbackAdapter"
-	WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackAdapter" $0
-	${If} $loopback_support == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackSupport" 1 ; make "LoopbackSupport" = 1 only when "loopback support" is chosen
-	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackSupport" 0
-	${Endif}
-
-	; Npcap driver will read this option
-	${If} $dlt_null == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 1 ; make "DltNull" = 1 only when "dlt null" is chosen
-	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 0
-	${Endif}
-
-	${If} $dot11_support == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "dot11 support" is chosen
-		${If} $dot11_support == "yes"
-			ExecWait '"$INSTDIR\NPFInstall.exe" -wlan_write_reg' $0
-		${Endif}
-	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 0
-	${Endif}
-
-	; Npcap driver will read this option
-	${If} $vlan_support == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 1 ; make "VlanSupport" = 1 only when "vlan support" is chosen
-	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 0
-	${Endif}
-
-	; Wireshark will read this option
-	${If} $winpcap_mode == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
-	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 0 ;
-	${EndIf}
-
+	; start the driver service
 	nsExec::Exec "net start $driver_name"
-	nsExec::Exec "net stop $driver_name"
-	nsExec::Exec "net start $driver_name"
+	; nsExec::Exec "net stop $driver_name"
+	; nsExec::Exec "net start $driver_name"
 
 	; automatically start the service if performing a silent install, unless
 	; /NPFSTARTUP=NO was given.
@@ -1212,7 +1212,7 @@ npcap_sys_checked:
 	StrCmp $os_ver 'win7' unregister_service_win7
 
 	;unregisterService_xp_vista:
-	Call un.registerServiceAPI_xp_vista
+	Call un.registerServiceAPI_xp
 	Goto unregisterdone
 
 	unregister_service_win7:
