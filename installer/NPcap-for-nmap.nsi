@@ -446,6 +446,9 @@ Function adminOnlyOptionsPage
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
 	${ElseIf} $winpcap_mode == "yes"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 1
+	${ElseIf} $winpcap_mode == "yes2"
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 1
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
 	${EndIf}
 
 	${If} $has_wlan_card != "0"
@@ -519,7 +522,9 @@ Function doAdminOnlyOptions
 		StrCpy $winpcap_mode "no" ; by default
 		StrCpy $driver_name "npcap" ; by default
 	${Else}
-		StrCpy $winpcap_mode "yes"
+		${If} $winpcap_mode == "no"
+			StrCpy $winpcap_mode "yes"
+		${EndIf}
 		StrCpy $driver_name "npf"
 	${EndIf}
 FunctionEnd
@@ -701,6 +706,13 @@ Function copy_win7_32bit_home_dlls
 
 	${If} $winpcap_mode == "yes"
 		File win8_above_winpcap\x86\NPFInstall.exe
+		SetOutPath "$INSTDIR\Npcap"
+		File win8_above\x86\NPFInstall.exe
+		SetOutPath $INSTDIR
+	${EndIf}
+
+	${If} $winpcap_mode == "yes2"
+		File win8_above_winpcap\x86\NPFInstall.exe
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
@@ -713,6 +725,13 @@ Function copy_win7_64bit_home_dlls
 	File ..\LICENSE
 
 	${If} $winpcap_mode == "yes"
+		File win8_above_winpcap\x64\NPFInstall.exe
+		SetOutPath "$INSTDIR\Npcap"
+		File win8_above\x64\NPFInstall.exe
+		SetOutPath $INSTDIR
+	${EndIf}
+
+	${If} $winpcap_mode == "yes2"
 		File win8_above_winpcap\x64\NPFInstall.exe
 	${EndIf}
 
@@ -743,7 +762,7 @@ Function copy_xp_64bit_system_dlls
 FunctionEnd
 
 Function copy_win7_32bit_system_dlls
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
 		SetOutPath $SYSDIR
 		File win8_above_winpcap\x64\wpcap.dll
 		File win8_above_winpcap\x64\Packet.dll
@@ -752,6 +771,7 @@ Function copy_win7_32bit_system_dlls
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR\Npcap
 		File win8_above\x64\wpcap.dll
 		File win8_above\x64\Packet.dll
@@ -761,7 +781,7 @@ Function copy_win7_32bit_system_dlls
 FunctionEnd
 
 Function copy_win7_64bit_system_dlls
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
 		SetOutPath $SYSDIR
 		File win8_above_winpcap\x64\wpcap.dll
 		File win8_above_winpcap\x64\Packet.dll
@@ -770,6 +790,7 @@ Function copy_win7_64bit_system_dlls
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR\Npcap
 		File win8_above\x64\wpcap.dll
 		File win8_above\x64\Packet.dll
@@ -780,7 +801,7 @@ FunctionEnd
 
 Function copy_win7_32bit_driver
 	SetOutPath $INSTDIR
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
 		${If} $os_ver == "vista"
 			File vista_winpcap\x86\npf.sys
 			File vista_winpcap\x86\npf.inf
@@ -803,6 +824,7 @@ Function copy_win7_32bit_driver
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		${If} $os_ver == "vista"
 			File vista\x86\npcap.sys
 			File vista\x86\npcap.inf
@@ -827,7 +849,7 @@ FunctionEnd
 
 Function copy_win7_64bit_driver
 	SetOutPath $INSTDIR
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
 		${If} $os_ver == "vista"
 			File vista_winpcap\x64\npf.sys
 			File vista_winpcap\x64\npf.inf
@@ -850,6 +872,7 @@ Function copy_win7_64bit_driver
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		${If} $os_ver == "vista"
 			File vista\x64\npcap.sys
 			File vista\x64\npcap.inf
@@ -881,6 +904,11 @@ Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\NPFInstall.exe
 	Delete $INSTDIR\loopback.ini
+
+	${If} $winpcap_mode == "yes"
+		Delete $INSTDIR\Npcap\NPFInstall.exe
+		RMDir $INSTDIR\Npcap
+	${EndIf}
 FunctionEnd
 
 Function un.remove_xp_XXbit_system_dlls
@@ -897,7 +925,7 @@ Function un.remove_xp_XXbit_system_dlls
 FunctionEnd
 
 Function un.remove_win7_XXbit_system_dlls
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
 		Delete $SYSDIR\wpcap.dll
 		Delete $SYSDIR\Packet.dll
 		Delete $SYSDIR\NPcapHelper.exe
@@ -905,6 +933,7 @@ Function un.remove_win7_XXbit_system_dlls
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		Delete $SYSDIR\Npcap\wpcap.dll
 		Delete $SYSDIR\Npcap\Packet.dll
 		Delete $SYSDIR\Npcap\NPcapHelper.exe
@@ -918,7 +947,7 @@ Function un.remove_xp_driver
 FunctionEnd
 
 Function un.remove_win7_driver
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
 		Delete $INSTDIR\npf.sys
 		Delete $INSTDIR\npf.inf
 		Delete $INSTDIR\npf_wfp.inf
@@ -929,6 +958,7 @@ Function un.remove_win7_driver
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		Delete $INSTDIR\npcap.sys
 		Delete $INSTDIR\npcap.inf
 		Delete $INSTDIR\npcap_wfp.inf
@@ -949,6 +979,8 @@ Function write_registry_software_options
 	; Wireshark will read this option
 	${If} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
+	${ElseIf} $winpcap_mode == "yes2"
+		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 2 ;
 	${Else}
 		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 0 ;
 	${EndIf}
@@ -1000,6 +1032,8 @@ Function write_registry_service_options
 	; Wireshark will read this option
 	${If} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
+	${ElseIf} $winpcap_mode == "yes2"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 2 ;
 	${Else}
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 0 ;
 	${EndIf}
@@ -1031,7 +1065,7 @@ Section "WinPcap" SecWinPcap
 
 	; uninstall WinPcap first, if winpcap exists and the user asks
 	; to install in WinPcap mode.
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode != "no"
 	${AndIf} $winpcap_installed == "yes"
 		Call uninstallWinPcap
 		${If} $R0 == "false"
@@ -1168,6 +1202,7 @@ npfdone:
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		; Add "system32\Npcap" directory to PATH
 		DetailPrint "Adding DLL folder: $\"$SYSDIR\Npcap$\" to PATH environment variable"
 		; SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment"
@@ -1239,7 +1274,11 @@ Section "Uninstall"
 	; ${Endif}
 
 	${If} ${FileExists} "$INSTDIR\npf.sys"
-		StrCpy $winpcap_mode "yes"
+		${If} ${FileExists} "$INSTDIR\Npcap\NPFInstall.exe"
+			StrCpy $winpcap_mode "yes"
+		${Else}
+			StrCpy $winpcap_mode "yes2"
+		${EndIf}
 		StrCpy $driver_name "npf"
 	${Else}
 		StrCpy $winpcap_mode "no"
@@ -1258,6 +1297,7 @@ Section "Uninstall"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		; Remove "system32\Npcap" directory in PATH
 		DetailPrint "Removing DLL folder: $\"$SYSDIR\Npcap$\" from PATH environment variable"
 		${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$SYSDIR\Npcap"
