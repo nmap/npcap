@@ -892,27 +892,57 @@ Function copy_win7_64bit_driver
 FunctionEnd
 
 Function install_win7_XXbit_driver
-	; clear the driver cache in Driver Store
-	ExecWait '"$INSTDIR\NPFInstall.exe" -c' $0
-	DetailPrint "The cache in driver store was cleared"
+	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes2"
+		; clear the driver cache in Driver Store
+		ExecWait '"$INSTDIR\NPFInstall.exe" -c' $0
+		DetailPrint "The cache in driver store was cleared"
 
-	; install the WFP callout driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
+		; install the WFP callout driver
+		ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
 
-	; install the NDIS filter driver
-	${If} $dot11_support == "yes"
-		ExecWait '"$INSTDIR\NPFInstall.exe" -i2' $0
-	${Else}
-		ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
+		; install the NDIS filter driver
+		${If} $dot11_support == "yes"
+			ExecWait '"$INSTDIR\NPFInstall.exe" -i2' $0
+		${Else}
+			ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
+		${EndIf}
+	${EndIf}
+	
+	${If} $winpcap_mode == "yes"
+		; clear the driver cache in Driver Store
+		ExecWait '"$INSTDIR\Npcap\NPFInstall.exe" -c' $0
+		DetailPrint "The cache in driver store was cleared"
+
+		; install the WFP callout driver
+		ExecWait '"$INSTDIR\Npcap\NPFInstall.exe" -iw' $0
+
+		; install the NDIS filter driver
+		${If} $dot11_support == "yes"
+			ExecWait '"$INSTDIR\Npcap\NPFInstall.exe" -i2' $0
+		${Else}
+			ExecWait '"$INSTDIR\Npcap\NPFInstall.exe" -i' $0
+		${EndIf}
 	${EndIf}
 FunctionEnd
 
 Function un.uninstall_win7_XXbit_driver
-	; uninstall the NDIS filter driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
+	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes2"
+		; uninstall the NDIS filter driver
+		ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
 
-	; uninstall the WFP callout driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
+		; uninstall the WFP callout driver
+		ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
+	${EndIf}
+
+	${If} $winpcap_mode == "yes"
+		; uninstall the NDIS filter driver
+		ExecWait '"$INSTDIR\Npcap\NPFInstall.exe" -u' $0
+
+		; uninstall the WFP callout driver
+		ExecWait '"$INSTDIR\Npcap\NPFInstall.exe" -uw' $0
+	${EndIf}
 FunctionEnd
 
 Function un.remove_xp_XXbit_home_dlls
