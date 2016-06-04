@@ -659,9 +659,29 @@ Function uninstallWinPcap
     ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
     ; If the WinPcap uninstaller fails, then quit the installation.
     ${If} ${FileExists} "$SYSDIR\wpcap.dll"
-        DetailPrint "Error occured when uninstalling WinPcap, Npcap installation quits"
-        Goto install_fail
+      StrCpy $R0 "false"
+    ${Else}
+      StrCpy $R0 "true"
     ${EndIf}
+  ${Else}
+    StrCpy $R0 "false"
+  ${EndIf}
+FunctionEnd
+
+Function checkWindowsVersion
+  ; Check windows version
+  ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
+  StrCpy $R1 $R0 2
+  ${If} $R1 == "6."
+    ${If} $R0 == "6.0"
+      StrCpy $os_ver 'vista'
+    ${ElseIf} $R0 == "6.1"
+      StrCpy $os_ver 'win7'
+    ${Else}
+      StrCpy $os_ver 'win8_above'
+    ${EndIf}
+  ${Else} ; xp_files:
+    StrCpy $os_ver 'xp'
   ${EndIf}
 FunctionEnd
 
@@ -694,6 +714,10 @@ Section "WinPcap" SecWinPcap
   ${AndIf} $winpcap_installed == "yes"
     ; uninstall WinPcap first.
     Call uninstallWinPcap
+    ${If} $R0 == "false"
+      DetailPrint "Error occured when uninstalling WinPcap, Npcap installation quits"
+      Goto install_fail
+    ${EndIf}
   ${EndIf}
 
   ; These x86 files are automatically redirected to the right place on x64
@@ -707,31 +731,20 @@ Section "WinPcap" SecWinPcap
   File win8_above\x86\NPcapHelper.exe
   File win8_above\x86\WlanHelper.exe
 
-  ; Check windows version
-  ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
-  StrCpy $R1 $R0 2
-  ${If} $R1 == "6."
-    ${If} $R0 == "6.0"
-      StrCpy $os_ver 'vista'
-    ${ElseIf} $R0 == "6.1"
-      StrCpy $os_ver 'win7'
-    ${Else}
-      StrCpy $os_ver 'win8_above'
-    ${EndIf}
+  Call checkWindowsVersion
+  DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
+  ${If} $os_ver != "xp"
     ${If} $winpcap_mode == "yes"
       File win8_above_winpcap\x86\Packet.dll
     ${Else}
       File win8_above\x86\Packet.dll
     ${EndIf}
-    DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
     Call is64bit
     StrCmp $0 "0" install_win7_32bit install_win7_64bit
   ${Else} ; xp_files:
-    StrCpy $os_ver 'xp'
     File nt5\x86\Packet.dll
-    DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
     Call is64bit
     StrCmp $0 "0" install_xp_32bit install_xp_64bit
