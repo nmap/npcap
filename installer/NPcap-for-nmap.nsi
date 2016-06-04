@@ -73,16 +73,17 @@ Var /GLOBAL npf_startup
 
 Var /GLOBAL os_ver
 Var /GLOBAL cmd_line
+Var /GLOBAL service_name
+
 Var /GLOBAL admin_only
 Var /GLOBAL winpcap_mode
-Var /GLOBAL driver_name
 Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
 Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
+
 Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
-
 Var /GLOBAL winpcap_installed
 
 RequestExecutionLevel admin
@@ -233,12 +234,6 @@ Function getInstallOptions
 	${OrIf} $R0 S== "no"
 		StrCpy $winpcap_mode $R0
 	${EndIf}
-
-	${If} $winpcap_mode == "no"
-		StrCpy $driver_name "npcap"
-	${Else}
-		StrCpy $driver_name "npf"
-	${EndIf}
 FunctionEnd
 
 ; This function is called on startup. IfSilent checks
@@ -327,7 +322,7 @@ do_silent:
 		SetOverwrite on
 
 		; try to ensure that npf has been stopped before we install/overwrite files
-		ExecWait '"net stop $driver_name"'
+		Call stop_driver_service
 
 		Return
 
@@ -520,12 +515,10 @@ Function doAdminOnlyOptions
 	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State"
 	${If} $0 == "0"
 		StrCpy $winpcap_mode "no" ; by default
-		StrCpy $driver_name "npcap" ; by default
 	${Else}
 		${If} $winpcap_mode == "no"
 			StrCpy $winpcap_mode "yes"
 		${EndIf}
-		StrCpy $driver_name "npf"
 	${EndIf}
 FunctionEnd
 
@@ -537,7 +530,7 @@ FunctionEnd
 Function doOptions
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 1" "State"
 	${If} $0 == "0"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 3
+		Call set_driver_service_not_autostart
 	${EndIf}
 FunctionEnd
 
@@ -630,8 +623,8 @@ Function un.registerServiceAPI_win7
 FunctionEnd
 
 Function autoStartWinPcap
-	WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
-	nsExec::Exec "net start $driver_name"
+	Call set_driver_service_autostart
+	Call start_driver_service
 FunctionEnd
 
 Function uninstallWinPcap
@@ -986,56 +979,106 @@ Function write_registry_software_options
 	${EndIf}
 FunctionEnd
 
-Function write_registry_service_options
+Function write_single_registry_service_options
 	; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
-	WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
+	WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Start" 1
 
 	; Npcap driver will read this option
 	${If} $admin_only == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
 	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "AdminOnly" 0
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "AdminOnly" 0
 	${Endif}
 
 	; Copy the "Loopback" option from software key to services key
 	ReadRegStr $0 HKLM "Software\Npcap" "LoopbackAdapter"
-	WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackAdapter" $0
+	WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "LoopbackAdapter" $0
 	${If} $loopback_support == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackSupport" 1 ; make "LoopbackSupport" = 1 only when "loopback support" is chosen
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "LoopbackSupport" 1 ; make "LoopbackSupport" = 1 only when "loopback support" is chosen
 	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "LoopbackSupport" 0
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "LoopbackSupport" 0
 	${Endif}
 
 	; Npcap driver will read this option
 	${If} $dlt_null == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 1 ; make "DltNull" = 1 only when "dlt null" is chosen
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "DltNull" 1 ; make "DltNull" = 1 only when "dlt null" is chosen
 	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "DltNull" 0
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "DltNull" 0
 	${Endif}
 
 	${If} $dot11_support == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "dot11 support" is chosen
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "dot11 support" is chosen
 		${If} $dot11_support == "yes"
 			ExecWait '"$INSTDIR\NPFInstall.exe" -wlan_write_reg' $0
 		${Endif}
 	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Dot11Support" 0
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 0
 	${Endif}
 
 	; Npcap driver will read this option
 	${If} $vlan_support == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 1 ; make "VlanSupport" = 1 only when "vlan support" is chosen
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "VlanSupport" 1 ; make "VlanSupport" = 1 only when "vlan support" is chosen
 	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "VlanSupport" 0
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "VlanSupport" 0
 	${Endif}
 
 	; Wireshark will read this option
 	${If} $winpcap_mode == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
-	${ElseIf} $winpcap_mode == "yes2"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 2 ;
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
 	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "WinPcapCompatible" 0 ;
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "WinPcapCompatible" 0 ;
+	${EndIf}
+FunctionEnd
+
+Function write_registry_service_options
+	${If} $winpcap_mode == "yes"
+		StrCpy $service_name "npf"
+		Call write_single_registry_service_options
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
+		StrCpy $service_name "npcap"
+		Call write_single_registry_service_options
+	${EndIf}
+FunctionEnd
+
+Function start_driver_service
+	${If} $winpcap_mode == "yes"
+		ExecWait "net start npf"
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
+		ExecWait "net start npcap"
+	${EndIf}
+FunctionEnd
+
+Function stop_driver_service
+	${If} $winpcap_mode == "yes"
+		ExecWait "net stop npf"
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
+		ExecWait "net stop npcap"
+	${EndIf}
+FunctionEnd
+
+Function set_driver_service_autostart
+	${If} $winpcap_mode == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf" "Start" 1
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap" "Start" 1
+	${EndIf}
+FunctionEnd
+
+Function set_driver_service_not_autostart
+	${If} $winpcap_mode == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf" "Start" 3
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap" "Start" 3
 	${EndIf}
 FunctionEnd
 
@@ -1044,7 +1087,7 @@ FunctionEnd
 Section "WinPcap" SecWinPcap	
 	; stop the service, in case it's still registered, so files can be
 	; safely overwritten and the service can be deleted.
-	nsExec::Exec "net stop $driver_name"
+	Call stop_driver_service
 
 	; NB: We may need to introduce a check here to ensure that NPF
 	; has been stopped before we continue, otherwise we Sleep for a
@@ -1213,7 +1256,7 @@ npfdone:
 	Call write_registry_service_options
 
 	; start the driver service
-	nsExec::Exec "net start $driver_name"
+	Call start_driver_service
 
 	; automatically start the service if performing a silent install
 	${If} $npf_startup == "yes"
@@ -1279,15 +1322,13 @@ Section "Uninstall"
 		${Else}
 			StrCpy $winpcap_mode "yes2"
 		${EndIf}
-		StrCpy $driver_name "npf"
 	${Else}
 		StrCpy $winpcap_mode "no"
-		StrCpy $driver_name "npcap"
 	${EndIf}
 
 	; stop npf before we delete the service from the registry
 	DetailPrint "Trying to stop the npf service.."
-	nsExec::Exec "net stop $driver_name"
+	Call stop_driver_service
 
 	ExecWait '"$INSTDIR\NPFInstall.exe" -d' $0
 	${If} $0 == "0"
