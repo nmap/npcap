@@ -79,6 +79,8 @@ Var /GLOBAL vlan_support
 Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
 
+Var /GLOBAL winpcap_installed
+
 RequestExecutionLevel admin
 
 ; These leave either "1" or "0" in $0.
@@ -179,6 +181,7 @@ Function getInstallOptions
   StrCpy $dot11_support "no"
   StrCpy $vlan_support "no"
   StrCpy $winpcap_mode "no"
+  StrCpy $winpcap_installed "no"
 
   ${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
 
@@ -391,23 +394,22 @@ Function .onInit
     ; as WinPcap hasn't used quotes in the past, but our old installers did.
     ; Check the first and last character for safety!
     StrCpy $1 $0 1
-    StrCmp $1 "$\"" maybestripquotes nostrip
-    maybestripquotes:
-    StrLen $1 $0
-    IntOp $1 $1 - 1
-    StrCpy $1 $0 1 $1
-    StrCmp $1 "$\"" stripquotes nostrip
-    stripquotes:
-    StrCpy $0 $0 -1 1
-    nostrip:
-    IfFileExists "$0\uninstall.exe" run_last_uninstaller no_uninstall_exe
-    run_last_uninstaller:
-    ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
-    ; If the uninstaller fails, then quit the installation.
-    ; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-        ; quit
-    ; ${EndIf}
-    no_uninstall_exe:
+    ${If} $1 == "$\""
+      StrLen $1 $0
+      IntOp $1 $1 - 1
+      StrCpy $1 $0 1 $1
+      ${If} $1 == "$\"" 
+        StrCpy $0 $0 -1 1
+      ${EndIf}
+    ${EndIf}
+
+    ${If} ${FileExists} "$0\uninstall.exe"
+      ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
+      ; If the uninstaller fails, then quit the installation.
+      ; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+          ; quit
+      ; ${EndIf}
+    ${EndIf}
     ; give up now, we've tried our hardest to determine a valid uninstaller!
     return
 
@@ -457,9 +459,10 @@ Function adminOnlyOptionsPage
 
   IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
   winpcap_exist:
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, you must uninstall WinPcap first."
+    StrCpy $winpcap_installed "yes"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, WinPcap will be uninstalled first."
     WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
-    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Flags" "DISABLED"
+    WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Install Npcap in WinPcap API-compatible Mode (WinPcap will be uninstalled)"
   no_winpcap_exist:
   !insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
@@ -662,6 +665,33 @@ Section "WinPcap" SecWinPcap
   ${Else}
     StrCpy $restore_point_success "yes"
   ${Endif}
+
+  ${If} $winpcap_mode == "yes"
+  ${AndIf} $winpcap_installed == "yes"
+    ; uninstall WinPcap first.
+      ReadRegStr $0 "HKLM" "Software\WinPcap" ""
+    ; Strip any surrounding double quotes from around the install string,
+    ; as WinPcap hasn't used quotes in the past, but our old installers did.
+    ; Check the first and last character for safety!
+    StrCpy $1 $0 1
+    ${If} $1 == "$\""
+      StrLen $1 $0
+      IntOp $1 $1 - 1
+      StrCpy $1 $0 1 $1
+      ${If} $1 == "$\"" 
+        StrCpy $0 $0 -1 1
+      ${EndIf}
+    ${EndIf}
+
+    ${If} ${FileExists} "$0\uninstall.exe"
+      ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
+      ; If the WinPcap uninstaller fails, then quit the installation.
+      ${If} ${FileExists} "$SYSDIR\wpcap.dll"
+          DetailPrint "Error occured when uninstalling WinPcap, Npcap installation quits"
+          Goto install_fail
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
 
   ; These x86 files are automatically redirected to the right place on x64
   ${If} $winpcap_mode == "yes"
@@ -1012,6 +1042,8 @@ Section "WinPcap" SecWinPcap
 
   ; delete our legacy winpcap-nmap keys if they still exist (e.g. official 4.0.2 force installed over our 4.0.2):
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
+
+  install_fail:
 
   ; Close the system restore point
   ${If} $restore_point_success == "yes"
