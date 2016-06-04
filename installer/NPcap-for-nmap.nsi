@@ -685,7 +685,61 @@ Function checkWindowsVersion
   ${EndIf}
 FunctionEnd
 
+Function copy_xp_32bit_system_dlls
+  ${If} $winpcap_mode == "yes"
+    SetOutPath $SYSDIR
+  ${Else}
+    SetOutPath $SYSDIR\Npcap
+  ${EndIf}
+  File xp\x86\wpcap.dll
+  File xp\x86\Packet.dll
+  File xp\x86\pthreadVC.dll
+FunctionEnd
+
+Function copy_xp_64bit_system_dlls
+  ${If} $winpcap_mode == "yes"
+    SetOutPath $SYSDIR
+  ${Else}
+    SetOutPath $SYSDIR\Npcap
+  ${EndIf}
+  File xp\x64\wpcap.dll
+  File xp\x64\Packet.dll
+FunctionEnd
+
+Function copy_win7_32bit_system_dlls
+  ${If} $winpcap_mode == "yes"
+    SetOutPath $SYSDIR
+    File win8_above_winpcap\x64\wpcap.dll
+    File win8_above_winpcap\x64\Packet.dll
+    File win8_above_winpcap\x64\NPcapHelper.exe
+    File win8_above_winpcap\x64\WlanHelper.exe
+  ${Else}
+    SetOutPath $SYSDIR\Npcap
+    File win8_above\x64\wpcap.dll
+    File win8_above\x64\Packet.dll
+    File win8_above\x64\NPcapHelper.exe
+    File win8_above\x64\WlanHelper.exe
+  ${EndIf}
+FunctionEnd
+
+Function copy_win7_64bit_system_dlls
+  ${If} $winpcap_mode == "yes"
+    SetOutPath $SYSDIR
+    File win8_above_winpcap\x64\wpcap.dll
+    File win8_above_winpcap\x64\Packet.dll
+    File win8_above_winpcap\x64\NPcapHelper.exe
+    File win8_above_winpcap\x64\WlanHelper.exe
+  ${Else}
+    SetOutPath $SYSDIR\Npcap
+    File win8_above\x64\wpcap.dll
+    File win8_above\x64\Packet.dll
+    File win8_above\x64\NPcapHelper.exe
+    File win8_above\x64\WlanHelper.exe
+  ${EndIf}
+FunctionEnd
+
 Function copy_win7_32bit_driver
+  SetOutPath $INSTDIR
   ${If} $os_ver == "vista"
     ${If} $winpcap_mode == "yes"
       File vista_winpcap\x86\npf.sys
@@ -732,6 +786,7 @@ Function copy_win7_32bit_driver
 FunctionEnd
 
 Function copy_win7_64bit_driver
+  SetOutPath $INSTDIR
   ${If} $os_ver == "vista"
     ${If} $winpcap_mode == "yes"
       File vista_winpcap\x64\npf.sys
@@ -802,9 +857,10 @@ Section "WinPcap" SecWinPcap
     StrCpy $restore_point_success "yes"
   ${Endif}
 
+  ; uninstall WinPcap first, if winpcap exists and the user asks
+  ; to install in WinPcap mode.
   ${If} $winpcap_mode == "yes"
   ${AndIf} $winpcap_installed == "yes"
-    ; uninstall WinPcap first.
     Call uninstallWinPcap
     ${If} $R0 == "false"
       DetailPrint "Error occured when uninstalling WinPcap, Npcap installation quits"
@@ -812,32 +868,13 @@ Section "WinPcap" SecWinPcap
     ${EndIf}
   ${EndIf}
 
-  ; These x86 files are automatically redirected to the right place on x64
-  ${If} $winpcap_mode == "yes"
-    SetOutPath $SYSDIR
-  ${Else}
-    SetOutPath $SYSDIR\Npcap
-  ${EndIf}
-  File xp\x86\pthreadVC.dll
-  File xp\x86\wpcap.dll
-  File win8_above\x86\NPcapHelper.exe
-  File win8_above\x86\WlanHelper.exe
-
   Call checkWindowsVersion
   DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
-  ${If} $os_ver != "xp"
-    ${If} $winpcap_mode == "yes"
-      File win8_above_winpcap\x86\Packet.dll
-    ${Else}
-      File win8_above\x86\Packet.dll
-    ${EndIf}
-
+  ${If} $os_ver != "xp" ; Vista, Win7, Win8, Win10
     Call is64bit
     StrCmp $0 "0" install_win7_32bit install_win7_64bit
-  ${Else} ; xp_files:
-    File xp\x86\Packet.dll
-
+  ${Else} ; XP
     Call is64bit
     StrCmp $0 "0" install_xp_32bit install_xp_64bit
   ${EndIf}
@@ -853,10 +890,17 @@ Section "WinPcap" SecWinPcap
       SetOutPath $INSTDIR
       File xp\x86\rpcapd.exe
       File ..\LICENSE
+
       WriteUninstaller "$INSTDIR\uninstall.exe"
-      DetailPrint "Installing NDIS5.0 x86 driver for XP"
+      DetailPrint "Installing NDIS5.x x86 driver for XP"
+
+      ; copy the 32-bit driver
       SetOutPath $SYSDIR\drivers
-      File xp\x86\npf.sys ; x86 NT5/NT6.0 version
+      File xp\x86\npf.sys
+
+      ; copy the 32-bit DLLs into System folder
+      Call copy_xp_32bit_system_dlls
+
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
@@ -867,23 +911,22 @@ Section "WinPcap" SecWinPcap
       SetOutPath $INSTDIR
       File xp\x86\rpcapd.exe
       File ..\LICENSE
+
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS5.x x64 driver for XP"
+
+      ; copy the 32-bit DLLs into System folder
+      Call copy_xp_32bit_system_dlls
+
+      ; copy the 64-bit driver
       SetOutPath $SYSDIR\drivers
       ; disable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
-      File xp\x64\npf.sys ; x64 NT5/NT6.0 version
-      ; The x86 versions of wpcap.dll and packet.dll are
-      ; installed into the right place further above.
-      ; install the 64-bit version of wpcap.dll into System32
-	  ${If} $winpcap_mode == "yes"
-	    SetOutPath $SYSDIR
-	  ${Else}
-        SetOutPath $SYSDIR\Npcap
-	  ${EndIf}
-      File xp\x64\wpcap.dll ; x64 NT5/NT6.0 version
-      ; install the 64-bit version of packet.dll into System32
-      File xp\x64\Packet.dll ; x64 XP/2003 version
+      File xp\x64\npf.sys
+
+      ; copy the 64-bit DLLs into System folder
+	  Call copy_xp_64bit_system_dlls
+
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -902,11 +945,15 @@ Section "WinPcap" SecWinPcap
 	    File win8_above\x86\NPFInstall.exe
 	  ${EndIf}
 
+      ; copy the 32-bit driver
       Call copy_win7_32bit_driver
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Vista, Win7, Win8 and Win10"
-      SetOutPath $SYSDIR\drivers
+
+      ; copy the 32-bit DLLs and EXEs into System folder
+	  Call copy_win7_32bit_system_dlls
+
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
@@ -923,31 +970,21 @@ Section "WinPcap" SecWinPcap
         File win8_above\x64\NPFInstall.exe
 	  ${EndIf}
 
+      ; copy the 64-bit driver
       Call copy_win7_64bit_driver
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x64 driver for Vista, Win7, Win8 and Win10"
-      SetOutPath $SYSDIR\drivers
+
+      ; copy the 32-bit DLLs and EXEs into System folder
+	  Call copy_win7_32bit_system_dlls
+
       ; disable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
-      ; The x86 versions of wpcap.dll and packet.dll are
-      ; installed into the right place further above.
-      ; install the 64-bit version of wpcap.dll into System32
-	  ${If} $winpcap_mode == "yes"
-	    SetOutPath $SYSDIR
-	  ${Else}
-        SetOutPath $SYSDIR\Npcap
-	  ${EndIf}
-      File win8_above\x64\NPcapHelper.exe
-      File win8_above\x64\WlanHelper.exe
-      File xp\x64\wpcap.dll ; x64 NT5/NT6 version
-      ; install the 64-bit version of packet.dll into System32
-      ; install the NT6.0 above version (for Vista, Win7, Win8 and Win10)
-	  ${If} $winpcap_mode == "yes"
-	    File win8_above_winpcap\x64\Packet.dll
-	  ${Else}
-        File win8_above\x64\Packet.dll
-	  ${EndIf}
+
+      ; copy the 64-bit DLLs and EXEs into System folder
+	  Call copy_win7_64bit_system_dlls
+
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       ; Packet.dll will read this option
       ${If} $admin_only == "yes"
