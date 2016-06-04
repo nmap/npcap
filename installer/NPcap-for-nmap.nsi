@@ -859,6 +859,21 @@ Function copy_win7_64bit_driver
 	${EndIf}
 FunctionEnd
 
+Function write_registry_software_options
+	; Packet.dll will read this option
+	${If} $admin_only == "yes"
+		WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
+	${Else}
+		WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 0 ;
+	${EndIf}
+	; Wireshark will read this option
+	${If} $winpcap_mode == "yes"
+		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
+	${Else}
+		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 0 ;
+	${EndIf}
+FunctionEnd
+
 ;--------------------------------
 ; The stuff to install
 Section "WinPcap" SecWinPcap	
@@ -972,6 +987,9 @@ Section "WinPcap" SecWinPcap
 		; copy the 32-bit DLLs and EXEs into System folder
 		Call copy_win7_32bit_system_dlls
 
+		; write options to registry "software" key
+		Call write_registry_software_options
+		; write other keys
 		WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
@@ -997,19 +1015,11 @@ Section "WinPcap" SecWinPcap
 		; copy the 64-bit DLLs and EXEs into System folder
 		Call copy_win7_64bit_system_dlls
 
+		; write options to registry "software" key
+		Call write_registry_software_options
+		; write other keys
 		WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
-		; Packet.dll will read this option
-		${If} $admin_only == "yes"
-			WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
-		${Else}
-			WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 0 ;
-		${EndIf}
-		; Wireshark will read this option
-		${If} $winpcap_mode == "yes"
-			WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
-		${Else}
-			WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 0 ;
-		${EndIf}
+
 		; re-enable Wow64FsRedirection
 		System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
