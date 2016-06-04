@@ -636,10 +636,34 @@ Function un.registerServiceAPI_win7
 FunctionEnd
 
 Function autoStartWinPcap
-    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
-    nsExec::Exec "net start $driver_name"
+  WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$driver_name" "Start" 1
+  nsExec::Exec "net start $driver_name"
 FunctionEnd
 
+Function uninstallWinPcap
+  ReadRegStr $0 "HKLM" "Software\WinPcap" ""
+  ; Strip any surrounding double quotes from around the install string,
+  ; as WinPcap hasn't used quotes in the past, but our old installers did.
+  ; Check the first and last character for safety!
+  StrCpy $1 $0 1
+  ${If} $1 == "$\""
+    StrLen $1 $0
+    IntOp $1 $1 - 1
+    StrCpy $1 $0 1 $1
+    ${If} $1 == "$\"" 
+      StrCpy $0 $0 -1 1
+    ${EndIf}
+  ${EndIf}
+
+  ${If} ${FileExists} "$0\uninstall.exe"
+    ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
+    ; If the WinPcap uninstaller fails, then quit the installation.
+    ${If} ${FileExists} "$SYSDIR\wpcap.dll"
+        DetailPrint "Error occured when uninstalling WinPcap, Npcap installation quits"
+        Goto install_fail
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
 
 ;--------------------------------
 ; The stuff to install
@@ -669,28 +693,7 @@ Section "WinPcap" SecWinPcap
   ${If} $winpcap_mode == "yes"
   ${AndIf} $winpcap_installed == "yes"
     ; uninstall WinPcap first.
-      ReadRegStr $0 "HKLM" "Software\WinPcap" ""
-    ; Strip any surrounding double quotes from around the install string,
-    ; as WinPcap hasn't used quotes in the past, but our old installers did.
-    ; Check the first and last character for safety!
-    StrCpy $1 $0 1
-    ${If} $1 == "$\""
-      StrLen $1 $0
-      IntOp $1 $1 - 1
-      StrCpy $1 $0 1 $1
-      ${If} $1 == "$\"" 
-        StrCpy $0 $0 -1 1
-      ${EndIf}
-    ${EndIf}
-
-    ${If} ${FileExists} "$0\uninstall.exe"
-      ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
-      ; If the WinPcap uninstaller fails, then quit the installation.
-      ${If} ${FileExists} "$SYSDIR\wpcap.dll"
-          DetailPrint "Error occured when uninstalling WinPcap, Npcap installation quits"
-          Goto install_fail
-      ${EndIf}
-    ${EndIf}
+    Call uninstallWinPcap
   ${EndIf}
 
   ; These x86 files are automatically redirected to the right place on x64
