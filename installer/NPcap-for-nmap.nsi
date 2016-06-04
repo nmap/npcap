@@ -874,6 +874,65 @@ Function copy_win7_64bit_driver
 	${EndIf}
 FunctionEnd
 
+Function remove_home_dlls
+	Delete $INSTDIR\rpcapd.exe
+	Delete $INSTDIR\LICENSE
+	Delete $INSTDIR\NPFInstall.exe
+	Delete $INSTDIR\loopback.ini
+FunctionEnd
+
+Function remove_32bit_system_dlls
+	${If} $winpcap_mode == "yes"
+		Delete $SYSDIR\Packet.dll
+		Delete $SYSDIR\pthreadVC.dll
+		Delete $SYSDIR\wpcap.dll
+		Delete $SYSDIR\NPcapHelper.exe
+		Delete $SYSDIR\WlanHelper.exe
+	${Else}
+		Delete $SYSDIR\Npcap\Packet.dll
+		Delete $SYSDIR\Npcap\pthreadVC.dll
+		Delete $SYSDIR\Npcap\wpcap.dll
+		Delete $SYSDIR\Npcap\NPcapHelper.exe
+		Delete $SYSDIR\Npcap\WlanHelper.exe
+		RMDir "$SYSDIR\Npcap"
+	${EndIf}
+FunctionEnd
+
+Function remove_64bit_system_dlls
+	${If} $winpcap_mode == "yes"
+		Delete $SYSDIR\drivers\npf.sys
+		; Also delete the x64 files in System32
+		Delete $SYSDIR\wpcap.dll
+		Delete $SYSDIR\Packet.dll
+		Delete $SYSDIR\NPcapHelper.exe
+		Delete $SYSDIR\WlanHelper.exe
+	${Else}
+		Delete $SYSDIR\drivers\npcap.sys
+		; Also delete the x64 files in System32
+		Delete $SYSDIR\Npcap\wpcap.dll
+		Delete $SYSDIR\Npcap\Packet.dll
+		Delete $SYSDIR\Npcap\NPcapHelper.exe
+		Delete $SYSDIR\Npcap\WlanHelper.exe
+		RMDir "$SYSDIR\Npcap"
+	${EndIf}
+FunctionEnd
+
+Function remove_win7_driver
+	${If} $winpcap_mode == "yes"
+		Delete $INSTDIR\npf.sys
+		Delete $INSTDIR\npf.inf
+		Delete $INSTDIR\npf_wfp.inf
+		Delete $INSTDIR\npf_wifi.inf
+		Delete $INSTDIR\npf.cat
+	${Else}
+		Delete $INSTDIR\npcap.sys
+		Delete $INSTDIR\npcap.inf
+		Delete $INSTDIR\npcap_wfp.inf
+		Delete $INSTDIR\npcap_wifi.inf
+		Delete $INSTDIR\npcap.cat
+	${EndIf}
+FunctionEnd
+
 Function write_registry_software_options
 	; Packet.dll will read this option
 	${If} $admin_only == "yes"
@@ -1218,41 +1277,14 @@ Section "Uninstall"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
 	DeleteRegKey HKLM "Software\Npcap"
 
-	Delete $INSTDIR\rpcapd.exe
-	Delete $INSTDIR\LICENSE
-	Delete $INSTDIR\NPFInstall.exe
-	Delete $INSTDIR\loopback.ini
-
-	${If} $winpcap_mode == "yes"
-		Delete $INSTDIR\npf.sys
-		Delete $INSTDIR\npf.inf
-		Delete $INSTDIR\npf_wfp.inf
-		Delete $INSTDIR\npf_wifi.inf
-		Delete $INSTDIR\npf.cat
-	${Else}
-		Delete $INSTDIR\npcap.sys
-		Delete $INSTDIR\npcap.inf
-		Delete $INSTDIR\npcap_wfp.inf
-		Delete $INSTDIR\npcap_wifi.inf
-		Delete $INSTDIR\npcap.cat
-	${EndIf}
+	; delete the DLLs and EXEs in home folder
+	Call remove_home_dlls
+	; delete the driver
+	Call remove_win7_driver
 	Delete $INSTDIR\uninstall.exe
 
-	; This deletes the x86 files from SysWOW64 if we're on x64.
-	${If} $winpcap_mode == "yes"
-		Delete $SYSDIR\Packet.dll
-		Delete $SYSDIR\pthreadVC.dll
-		Delete $SYSDIR\wpcap.dll
-		Delete $SYSDIR\NPcapHelper.exe
-		Delete $SYSDIR\WlanHelper.exe
-	${Else}
-		Delete $SYSDIR\Npcap\Packet.dll
-		Delete $SYSDIR\Npcap\pthreadVC.dll
-		Delete $SYSDIR\Npcap\wpcap.dll
-		Delete $SYSDIR\Npcap\NPcapHelper.exe
-		Delete $SYSDIR\Npcap\WlanHelper.exe
-		RMDir "$SYSDIR\Npcap"
-	${EndIf}
+	; delete the 32-bit DLLs and EXEs in System folder
+	Call remove_32bit_system_dlls
 
 	; check for x64, delete npf.sys file from system32\drivers
 	Call un.is64bit
@@ -1300,22 +1332,8 @@ uninstall_win7_64bit:
 	; disable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
-	${If} $winpcap_mode == "yes"
-		Delete $SYSDIR\drivers\npf.sys
-		; Also delete the x64 files in System32
-		Delete $SYSDIR\wpcap.dll
-		Delete $SYSDIR\Packet.dll
-		Delete $SYSDIR\NPcapHelper.exe
-		Delete $SYSDIR\WlanHelper.exe
-	${Else}
-		Delete $SYSDIR\drivers\npcap.sys
-		; Also delete the x64 files in System32
-		Delete $SYSDIR\Npcap\wpcap.dll
-		Delete $SYSDIR\Npcap\Packet.dll
-		Delete $SYSDIR\Npcap\NPcapHelper.exe
-		Delete $SYSDIR\Npcap\WlanHelper.exe
-		RMDir "$SYSDIR\Npcap"
-	${EndIf}
+	; delete the 64-bit DLLs and EXEs in System folder
+	Call remove_64bit_system_dlls
 
 	; re-enable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
