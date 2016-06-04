@@ -686,6 +686,32 @@ Function checkWindowsVersion
 	${EndIf}
 FunctionEnd
 
+Function copy_xp_32bit_home_dlls
+	SetOutPath $INSTDIR
+	File ..\LICENSE
+	File xp\x86\rpcapd.exe
+FunctionEnd
+
+Function copy_win7_32bit_home_dlls
+	SetOutPath $INSTDIR
+	File ..\LICENSE
+	${If} $winpcap_mode == "yes"
+		File win8_above_winpcap\x86\NPFInstall.exe
+	${Else}
+		File win8_above\x86\NPFInstall.exe
+	${EndIf}
+FunctionEnd
+
+Function copy_win7_64bit_home_dlls
+	SetOutPath $INSTDIR
+	File ..\LICENSE
+	${If} $winpcap_mode == "yes"
+		File win8_above_winpcap\x64\NPFInstall.exe
+	${Else}
+		File win8_above\x64\NPFInstall.exe
+	${EndIf}
+FunctionEnd
+
 Function copy_xp_32bit_system_dlls
 	${If} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR
@@ -833,12 +859,6 @@ Function copy_win7_64bit_driver
 	${EndIf}
 FunctionEnd
 
-Function copy_xp_32bit_home_dlls
-	SetOutPath $INSTDIR
-	File xp\x86\rpcapd.exe
-	File ..\LICENSE
-FunctionEnd
-
 ;--------------------------------
 ; The stuff to install
 Section "WinPcap" SecWinPcap	
@@ -893,7 +913,7 @@ Section "WinPcap" SecWinPcap
 	; HKLM Software\PackageName doesn't usually have quotes either.
 
 	install_xp_32bit:
-		; copy the 32-bit DLLs into installation folder
+		; copy the 32-bit DLLs into home folder
 		Call copy_xp_32bit_home_dlls
 
 		WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -913,7 +933,7 @@ Section "WinPcap" SecWinPcap
 		Goto npfdone
 
 	install_xp_64bit:
-		; copy the 32-bit DLLs into installation folder
+		; copy the 32-bit DLLs into home folder
 		Call copy_xp_32bit_home_dlls
 
 		WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -940,14 +960,8 @@ Section "WinPcap" SecWinPcap
 		Goto npfdone
 
 	install_win7_32bit:
-		SetOutPath $INSTDIR
-		; File rpcapd.exe
-		File ..\LICENSE
-		${If} $winpcap_mode == "yes"
-			File win8_above_winpcap\x86\NPFInstall.exe
-		${Else}
-			File win8_above\x86\NPFInstall.exe
-		${EndIf}
+		; copy the 32-bit DLLs and EXEs into home folder
+		Call copy_win7_32bit_home_dlls
 
 		; copy the 32-bit driver
 		Call copy_win7_32bit_driver
@@ -965,14 +979,8 @@ Section "WinPcap" SecWinPcap
 		Goto npfdone
 
 	install_win7_64bit:
-		SetOutPath $INSTDIR
-		; File rpcapd.exe
-		File ..\LICENSE
-		${If} $winpcap_mode == "yes"
-			File win8_above_winpcap\x64\NPFInstall.exe
-		${Else}
-			File win8_above\x64\NPFInstall.exe
-		${EndIf}
+		; copy the 64-bit DLLs and EXEs into home folder
+		Call copy_win7_64bit_home_dlls
 
 		; copy the 64-bit driver
 		Call copy_win7_64bit_driver
