@@ -186,6 +186,10 @@ function initialize_list([ref]$file_name_array, [ref]$from_path_array, [ref]$to_
 			$my_to_path_array += $init_to_path_array[$j] -f $deploy_folder_mode
 		}
 	}
+	
+	$file_name_array.value = $my_file_name_array
+	$from_path_array.value = $my_from_path_array
+	$to_path_array.value = $my_to_path_array
 }
 
 function copy_and_sign($file_name, $from_path, $to_path)
