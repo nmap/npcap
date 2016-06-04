@@ -756,6 +756,7 @@ FunctionEnd
 
 Function copy_win7_32bit_system_dlls
 	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR
 		File win8_above_winpcap\x64\wpcap.dll
 		File win8_above_winpcap\x64\Packet.dll
@@ -775,6 +776,7 @@ FunctionEnd
 
 Function copy_win7_64bit_system_dlls
 	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR
 		File win8_above_winpcap\x64\wpcap.dll
 		File win8_above_winpcap\x64\Packet.dll
@@ -795,6 +797,7 @@ FunctionEnd
 Function copy_win7_32bit_driver
 	SetOutPath $INSTDIR
 	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		${If} $os_ver == "vista"
 			File vista_winpcap\x86\npf.sys
 			File vista_winpcap\x86\npf.inf
@@ -843,6 +846,7 @@ FunctionEnd
 Function copy_win7_64bit_driver
 	SetOutPath $INSTDIR
 	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		${If} $os_ver == "vista"
 			File vista_winpcap\x64\npf.sys
 			File vista_winpcap\x64\npf.inf
@@ -919,6 +923,7 @@ FunctionEnd
 
 Function un.remove_win7_XXbit_system_dlls
 	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		Delete $SYSDIR\wpcap.dll
 		Delete $SYSDIR\Packet.dll
 		Delete $SYSDIR\NPcapHelper.exe
@@ -941,6 +946,7 @@ FunctionEnd
 
 Function un.remove_win7_driver
 	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		Delete $INSTDIR\npf.sys
 		Delete $INSTDIR\npf.inf
 		Delete $INSTDIR\npf_wfp.inf
@@ -969,11 +975,10 @@ Function write_registry_software_options
 	${Else}
 		WriteRegDWORD HKLM "Software\Npcap" "AdminOnly" 0 ;
 	${EndIf}
+
 	; Wireshark will read this option
 	${If} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
-	${ElseIf} $winpcap_mode == "yes2"
-		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 2 ;
 	${Else}
 		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 0 ;
 	${EndIf}
@@ -1031,53 +1036,75 @@ Function write_single_registry_service_options
 FunctionEnd
 
 Function write_registry_service_options
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		StrCpy $service_name "npf"
 		Call write_single_registry_service_options
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		StrCpy $service_name "npcap"
 		Call write_single_registry_service_options
 	${EndIf}
 FunctionEnd
 
 Function start_driver_service
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		ExecWait "net start npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		ExecWait "net start npcap"
 	${EndIf}
 FunctionEnd
 
 Function stop_driver_service
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		ExecWait "net stop npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
+		ExecWait "net stop npcap"
+	${EndIf}
+FunctionEnd
+
+Function un.stop_driver_service
+	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
+		ExecWait "net stop npf"
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		ExecWait "net stop npcap"
 	${EndIf}
 FunctionEnd
 
 Function set_driver_service_autostart
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf" "Start" 1
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap" "Start" 1
 	${EndIf}
 FunctionEnd
 
 Function set_driver_service_not_autostart
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf" "Start" 3
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap" "Start" 3
 	${EndIf}
 FunctionEnd
@@ -1328,7 +1355,7 @@ Section "Uninstall"
 
 	; stop npf before we delete the service from the registry
 	DetailPrint "Trying to stop the npf service.."
-	Call stop_driver_service
+	Call un.stop_driver_service
 
 	ExecWait '"$INSTDIR\NPFInstall.exe" -d' $0
 	${If} $0 == "0"
