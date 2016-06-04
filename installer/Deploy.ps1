@@ -58,6 +58,13 @@ $init_to_path_array =
 ".\win8_above{0}\x64\"
 
 ###########################################################
+# wpcap.dll
+$wpcap_filename = "wpcap.dll"
+$wpcap_init_from_path_array =
+"..\wpcap\PRJ\Release No AirPcap\x86\",
+"..\wpcap\PRJ\Release No AirPcap\x64\"
+
+###########################################################
 # Packet.dll
 $packet_filename = "Packet.dll"
 $packet_init_from_path_array =
@@ -85,16 +92,6 @@ $wlanhelper_init_from_path_array =
 "..\packetWin7\WlanHelper\release\",
 "..\packetWin7\WlanHelper\x64\release\"
 
-###########################################################
-# wpcap.dll
-$wpcap_filename = "wpcap.dll"
-$wpcap_init_from_path_array =
-"..\wpcap\PRJ\Release No AirPcap\x86\",
-"..\wpcap\PRJ\Release No AirPcap\x64\"
-$wpcap_init_to_path_array =
-".\",
-".\x64\"
-
 
 function initialize_list([ref]$file_name_array, [ref]$from_path_array, [ref]$to_path_array)
 {
@@ -117,6 +114,20 @@ function initialize_list([ref]$file_name_array, [ref]$from_path_array, [ref]$to_
 				$my_from_path_array += $driver_init_from_path_array[$j] -f $vs_config_mode
 				$my_to_path_array += $driver_init_to_path_array[$j] -f $deploy_folder_mode
 			}
+		}
+	}
+	
+	# wpcap.dll
+	for ($i = 0; $i -lt 2; $i ++)
+	{
+		$vs_config_mode = $vs_config_mode_array[$i]
+		$deploy_folder_mode = $deploy_folder_mode_array[$i]
+
+		for ($j = 0; $j -lt 2; $j ++)
+		{
+			$my_file_name_array += $wpcap_filename
+			$my_from_path_array += $wpcap_init_from_path_array[$j] -f $vs_config_mode
+			$my_to_path_array += $init_to_path_array[$j] -f $deploy_folder_mode
 		}
 	}
 
@@ -175,18 +186,6 @@ function initialize_list([ref]$file_name_array, [ref]$from_path_array, [ref]$to_
 			$my_to_path_array += $init_to_path_array[$j] -f $deploy_folder_mode
 		}
 	}
-
-	# wpcap.dll
-	for ($j = 0; $j -lt 2; $j ++)
-	{
-		$my_file_name_array += $wpcap_filename
-		$my_from_path_array += $wpcap_init_from_path_array[$j] -f $vs_config_mode
-		$my_to_path_array += $wpcap_init_to_path_array[$j]
-	}
-
-	$file_name_array.value = $my_file_name_array
-	$from_path_array.value = $my_from_path_array
-	$to_path_array.value = $my_to_path_array
 }
 
 function copy_and_sign($file_name, $from_path, $to_path)
