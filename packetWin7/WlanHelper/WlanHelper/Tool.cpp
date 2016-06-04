@@ -409,7 +409,7 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 	}
 
 	char strAdapterName[256];
-	sprintf_s(strAdapterName, 256, "\\Device\\NPF_{%s}", any2string(strAdapterGUID).c_str());
+	sprintf_s(strAdapterName, 256, NPF_DRIVER_FORMAT_STR, any2string(strAdapterGUID).c_str());
 
 	LPADAPTER pAdapter = My_PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
