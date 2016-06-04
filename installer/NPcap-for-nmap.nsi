@@ -191,7 +191,13 @@ Function getInstallOptions
 	StrCpy $winpcap_mode "no"
 	StrCpy $winpcap_installed "no"
 
-	${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
+	${If} ${FileExists} "C:\npcap_install_options.txt"
+		FileOpen $4 "C:\npcap_install_options.txt" r
+		FileRead $4 $cmd_line ; we read until the end of line (including carriage return and new line) and save it to $1
+		FileClose $4 ; and close the file
+	${Else}
+		${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
+	${EndIf}
 
 	${GetOptions} $cmd_line "/npf_startup=" $R0
 	${If} $R0 S== "yes"
@@ -231,6 +237,7 @@ Function getInstallOptions
 
 	${GetOptions} $cmd_line "/winpcap_mode=" $R0
 	${If} $R0 S== "yes"
+	${OrIf} $R0 S== "yes2"
 	${OrIf} $R0 S== "no"
 		StrCpy $winpcap_mode $R0
 	${EndIf}
@@ -588,17 +595,8 @@ Function registerServiceAPI_win7
 		ExecWait '"$INSTDIR\NPFInstall.exe" -il'
 	${Endif}
 
-	; clear the driver cache in Driver Store
-	ExecWait '"$INSTDIR\NPFInstall.exe" -c' $0
-	DetailPrint "The cache in driver store was cleared"
-	; install the WFP callout driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
-	; install the NDIS filter driver
-	${If} $dot11_support == "yes"
-		ExecWait '"$INSTDIR\NPFInstall.exe" -i2' $0
-	${Else}
-		ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
-	${EndIf}
+	; install the driver
+	Call install_win7_XXbit_driver
 
 	${If} $0 == "0"
 		DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully created"
@@ -611,8 +609,9 @@ Function registerServiceAPI_win7
 FunctionEnd
 
 Function un.registerServiceAPI_win7
-	ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
-	ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
+	; uninstall the driver
+	Call un.uninstall_win7_XXbit_driver
+
 	ExecWait '"$INSTDIR\NPFInstall.exe" -ul' $0
 
 	${If} $0 == "0"
@@ -890,6 +889,30 @@ Function copy_win7_64bit_driver
 			File win8_above\x64\npcap.cat
 		${EndIf}
 	${EndIf}
+FunctionEnd
+
+Function install_win7_XXbit_driver
+	; clear the driver cache in Driver Store
+	ExecWait '"$INSTDIR\NPFInstall.exe" -c' $0
+	DetailPrint "The cache in driver store was cleared"
+
+	; install the WFP callout driver
+	ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
+
+	; install the NDIS filter driver
+	${If} $dot11_support == "yes"
+		ExecWait '"$INSTDIR\NPFInstall.exe" -i2' $0
+	${Else}
+		ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
+	${EndIf}
+FunctionEnd
+
+Function un.uninstall_win7_XXbit_driver
+	; uninstall the NDIS filter driver
+	ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
+
+	; uninstall the WFP callout driver
+	ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
 FunctionEnd
 
 Function un.remove_xp_XXbit_home_dlls
@@ -1281,9 +1304,6 @@ npfdone:
 
 	; write options to registry "service" key
 	Call write_registry_service_options
-
-	; start the driver service
-	Call start_driver_service
 
 	; automatically start the service if performing a silent install
 	${If} $npf_startup == "yes"
