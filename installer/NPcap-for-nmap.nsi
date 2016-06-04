@@ -1258,19 +1258,23 @@ Section "Uninstall"
 	Call un.is64bit
 	${If} $0 == "0" ; 32bit
 		${If} $os_ver != "xp"
-			Goto del32bitnpf_win7
+			Goto uninstall_win7_32bit
 		${Else}
-			Goto del32bitnpf_xp_vista
+			Goto uninstall_xp_32bit
 		${EndIf}
 	${Else} ; 64bit
 		${If} $os_ver != "xp"
-			Goto del64bitnpf_win7
+			Goto uninstall_win7_64bit
 		${Else}
-			Goto del64bitnpf_xp_vista
+			Goto uninstall_xp_64bit
 		${EndIf}
 	${EndIf}
 
-del64bitnpf_xp_vista:
+uninstall_xp_32bit:
+	Delete $SYSDIR\drivers\npf.sys
+	Goto npfdeleted
+
+uninstall_xp_64bit:
 	; disable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
@@ -1284,13 +1288,15 @@ del64bitnpf_xp_vista:
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
 	Goto npfdeleted
 
-
-del32bitnpf_xp_vista:
-	Delete $SYSDIR\drivers\npf.sys
+uninstall_win7_32bit:
+	${If} $winpcap_mode == "yes"
+		Delete $SYSDIR\drivers\npf.sys
+	${Else}
+		Delete $SYSDIR\drivers\npcap.sys
+	${EndIf}
 	Goto npfdeleted
 
-
-del64bitnpf_win7:
+uninstall_win7_64bit:
 	; disable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
@@ -1314,16 +1320,6 @@ del64bitnpf_win7:
 	; re-enable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
 	Goto npfdeleted
-
-
-del32bitnpf_win7:
-	${If} $winpcap_mode == "yes"
-		Delete $SYSDIR\drivers\npf.sys
-	${Else}
-		Delete $SYSDIR\drivers\npcap.sys
-	${EndIf}
-	Goto npfdeleted
-
 
 npfdeleted:
 	RMDir "$INSTDIR"
