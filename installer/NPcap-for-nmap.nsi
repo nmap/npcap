@@ -832,6 +832,12 @@ Function copy_win7_64bit_driver
   ${EndIf}
 FunctionEnd
 
+Function copy_xp_32bit_home_dlls
+  SetOutPath $INSTDIR
+  File xp\x86\rpcapd.exe
+  File ..\LICENSE
+FunctionEnd
+
 ;--------------------------------
 ; The stuff to install
 Section "WinPcap" SecWinPcap	
@@ -887,9 +893,8 @@ Section "WinPcap" SecWinPcap
     ; HKLM Software\PackageName doesn't usually have quotes either.
 
     install_xp_32bit:
-      SetOutPath $INSTDIR
-      File xp\x86\rpcapd.exe
-      File ..\LICENSE
+      ; copy the 32-bit DLLs into installation folder
+      Call copy_xp_32bit_home_dlls
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS5.x x86 driver for XP"
@@ -908,9 +913,8 @@ Section "WinPcap" SecWinPcap
       Goto npfdone
 
     install_xp_64bit:
-      SetOutPath $INSTDIR
-      File xp\x86\rpcapd.exe
-      File ..\LICENSE
+      ; copy the 32-bit DLLs into installation folder
+      Call copy_xp_32bit_home_dlls
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS5.x x64 driver for XP"
