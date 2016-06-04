@@ -716,8 +716,7 @@ Function copy_win7_64bit_home_dlls
 	File ..\LICENSE
 
 	${If} $winpcap_mode == "yes"
-		File win8_above\x64\NPFInstall.exe
-		Rename win8_above\x64\NPFInstall.exe win8_above\x64\NPFInstall2.exe
+		File /oname=NPFInstall2.exe win8_above\x64\NPFInstall.exe
 		File win8_above_winpcap\x64\NPFInstall.exe
 	${EndIf}
 
