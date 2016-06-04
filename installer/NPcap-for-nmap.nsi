@@ -701,7 +701,7 @@ Function un.checkWindowsVersion
 	${EndIf}
 FunctionEnd
 
-Function copy_xp_32bit_home_dlls
+Function copy_xp_XXbit_home_dlls
 	SetOutPath $INSTDIR
 	File ..\LICENSE
 	File xp\x86\rpcapd.exe
@@ -874,41 +874,37 @@ Function copy_win7_64bit_driver
 	${EndIf}
 FunctionEnd
 
-Function remove_home_dlls
+Function un.remove_xp_XXbit_home_dlls
+	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\rpcapd.exe
+FunctionEnd
+
+Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\NPFInstall.exe
 	Delete $INSTDIR\loopback.ini
 FunctionEnd
 
-Function remove_32bit_system_dlls
+Function un.remove_xp_XXbit_system_dlls
 	${If} $winpcap_mode == "yes"
+		Delete $SYSDIR\wpcap.dll
 		Delete $SYSDIR\Packet.dll
 		Delete $SYSDIR\pthreadVC.dll
-		Delete $SYSDIR\wpcap.dll
-		Delete $SYSDIR\NPcapHelper.exe
-		Delete $SYSDIR\WlanHelper.exe
 	${Else}
+		Delete $SYSDIR\Npcap\wpcap.dll
 		Delete $SYSDIR\Npcap\Packet.dll
 		Delete $SYSDIR\Npcap\pthreadVC.dll
-		Delete $SYSDIR\Npcap\wpcap.dll
-		Delete $SYSDIR\Npcap\NPcapHelper.exe
-		Delete $SYSDIR\Npcap\WlanHelper.exe
 		RMDir "$SYSDIR\Npcap"
 	${EndIf}
 FunctionEnd
 
-Function remove_64bit_system_dlls
+Function un.remove_win7_XXbit_system_dlls
 	${If} $winpcap_mode == "yes"
-		Delete $SYSDIR\drivers\npf.sys
-		; Also delete the x64 files in System32
 		Delete $SYSDIR\wpcap.dll
 		Delete $SYSDIR\Packet.dll
 		Delete $SYSDIR\NPcapHelper.exe
 		Delete $SYSDIR\WlanHelper.exe
 	${Else}
-		Delete $SYSDIR\drivers\npcap.sys
-		; Also delete the x64 files in System32
 		Delete $SYSDIR\Npcap\wpcap.dll
 		Delete $SYSDIR\Npcap\Packet.dll
 		Delete $SYSDIR\Npcap\NPcapHelper.exe
@@ -917,7 +913,11 @@ Function remove_64bit_system_dlls
 	${EndIf}
 FunctionEnd
 
-Function remove_win7_driver
+Function un.remove_xp_driver
+	Delete $SYSDIR\drivers\npf.sys
+FunctionEnd
+
+Function un.remove_win7_driver
 	${If} $winpcap_mode == "yes"
 		Delete $INSTDIR\npf.sys
 		Delete $INSTDIR\npf.inf
@@ -930,6 +930,12 @@ Function remove_win7_driver
 		Delete $INSTDIR\npcap_wfp.inf
 		Delete $INSTDIR\npcap_wifi.inf
 		Delete $INSTDIR\npcap.cat
+	${EndIf}
+
+	${If} $winpcap_mode == "yes"
+		Delete $SYSDIR\drivers\npf.sys
+	${Else}
+		Delete $SYSDIR\drivers\npcap.sys
 	${EndIf}
 FunctionEnd
 
@@ -1055,7 +1061,7 @@ Section "WinPcap" SecWinPcap
 
 	install_xp_32bit:
 		; copy the 32-bit DLLs into home folder
-		Call copy_xp_32bit_home_dlls
+		Call copy_xp_XXbit_home_dlls
 
 		WriteUninstaller "$INSTDIR\uninstall.exe"
 		DetailPrint "Installing NDIS5.x x86 driver for XP"
@@ -1075,7 +1081,7 @@ Section "WinPcap" SecWinPcap
 
 	install_xp_64bit:
 		; copy the 32-bit DLLs into home folder
-		Call copy_xp_32bit_home_dlls
+		Call copy_xp_XXbit_home_dlls
 
 		WriteUninstaller "$INSTDIR\uninstall.exe"
 		DetailPrint "Installing NDIS5.x x64 driver for XP"
@@ -1277,16 +1283,9 @@ Section "Uninstall"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
 	DeleteRegKey HKLM "Software\Npcap"
 
-	; delete the DLLs and EXEs in home folder
-	Call remove_home_dlls
-	; delete the driver
-	Call remove_win7_driver
+	; delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
 
-	; delete the 32-bit DLLs and EXEs in System folder
-	Call remove_32bit_system_dlls
-
-	; check for x64, delete npf.sys file from system32\drivers
 	Call un.is64bit
 	${If} $0 == "0" ; 32bit
 		${If} $os_ver != "xp"
@@ -1303,40 +1302,69 @@ Section "Uninstall"
 	${EndIf}
 
 uninstall_xp_32bit:
-	Delete $SYSDIR\drivers\npf.sys
+	; delete the 32-bit DLLs and EXEs in home folder
+	Call un.remove_xp_XXbit_home_dlls
+
+	; delete the 32-bit DLLs and EXEs in System folder
+	Call un.remove_xp_XXbit_system_dlls
+
+	; delete the driver
+	Call un.remove_xp_driver
+
 	Goto npfdeleted
 
 uninstall_xp_64bit:
-	; disable Wow64FsRedirection
-	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
+	; delete the 32-bit DLLs and EXEs in home folder
+	Call un.remove_xp_XXbit_home_dlls
 
-	Delete $SYSDIR\drivers\npf.sys
-	; Also delete the x64 files in System32
-	Delete $SYSDIR\Npcap\wpcap.dll
-	Delete $SYSDIR\Npcap\Packet.dll
-	RMDir "$SYSDIR\Npcap"
+	; delete the 32-bit DLLs and EXEs in System folder
+	Call un.remove_xp_XXbit_system_dlls
 
-	; re-enable Wow64FsRedirection
-	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-	Goto npfdeleted
-
-uninstall_win7_32bit:
-	${If} $winpcap_mode == "yes"
-		Delete $SYSDIR\drivers\npf.sys
-	${Else}
-		Delete $SYSDIR\drivers\npcap.sys
-	${EndIf}
-	Goto npfdeleted
-
-uninstall_win7_64bit:
 	; disable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
 	; delete the 64-bit DLLs and EXEs in System folder
-	Call remove_64bit_system_dlls
+	Call un.remove_xp_XXbit_system_dlls
+
+	; delete the driver
+	Call un.remove_xp_driver
 
 	; re-enable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
+
+	Goto npfdeleted
+
+uninstall_win7_32bit:
+	; delete the 32-bit DLLs and EXEs in home folder
+	Call un.remove_win7_XXbit_home_dlls
+
+	; delete the 32-bit DLLs and EXEs in System folder
+	Call un.remove_win7_XXbit_system_dlls
+
+	; delete the driver
+	Call un.remove_win7_driver
+
+	Goto npfdeleted
+
+uninstall_win7_64bit:
+	; delete the 32-bit DLLs and EXEs in home folder
+	Call un.remove_win7_XXbit_home_dlls
+
+	; delete the 32-bit DLLs and EXEs in System folder
+	Call un.remove_win7_XXbit_system_dlls
+
+	; disable Wow64FsRedirection
+	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
+
+	; delete the 64-bit DLLs and EXEs in System folder
+	Call un.remove_win7_XXbit_system_dlls
+
+	; delete the driver
+	Call un.remove_win7_driver
+
+	; re-enable Wow64FsRedirection
+	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
+
 	Goto npfdeleted
 
 npfdeleted:
