@@ -273,150 +273,142 @@ Function .onInit
 	; File win8_above_winpcap\x86\NPFInstall.exe
 	; nsExec::Exec "$PLUGINSDIR\NPFInstall.exe -wlan_check" $has_wlan_card
 
+	Call getInstallOptions
+
 	IfSilent do_silent no_silent
 
 do_silent:
 	SetSilent silent
-	Call getInstallOptions
 
-	IfFileExists "$INSTDIR\NPFInstall.exe" silent_checks
-	Return
-silent_checks:
-	; check for the presence of Nmap's custom WinPcapInst registry key:
-	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "InstalledBy"
-	StrCmp $0 "Nmap" silent_uninstall winpcap_installedby_keys_not_present
+	${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+		; check for the presence of Nmap's custom WinPcapInst registry key:
+		ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "InstalledBy"
+		${If} $0 == "Nmap"
+			Goto silent_uninstall
+		${EndIf}
 
-	winpcap_installedby_keys_not_present:
-	; check for the presence of WinPcapInst's UninstallString
-	; and manually cleanup registry entries to avoid running
-	; the GUI uninstaller and assume our installer will overwrite
-	; the files. Needs to be checked in case someone (force)
-	; installs WinPcap over the top of our installation
-	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
-	StrCmp $0 "" winpcap_keys_not_present
+		; check for the presence of WinPcapInst's UninstallString
+		; and manually cleanup registry entries to avoid running
+		; the GUI uninstaller and assume our installer will overwrite
+		; the files. Needs to be checked in case someone (force)
+		; installs WinPcap over the top of our installation
+		ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
+		${If} $0 != ""
+			DeleteRegKey "HKLM" "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
 
-	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
+			ReadRegStr $0 "HKLM" "Software\Npcap" ""
+			${If} $0 != ""
+				Delete $0\rpcapd.exe
+				Delete $0\LICENSE
+				Delete $0\uninstall.exe
+				; Official 4.1 installer creates an install.log
+				Delete $0\install.log
+				RMDir "$0"
+				DeleteRegKey HKLM "Software\Npcap"
 
-	ReadRegStr $0 "HKLM" "Software\Npcap" ""
-	StrCmp $0 "" winpcap_keys_not_present
+				; because we've deleted their uninstaller, skip the next
+				; registry key check (we'll still need to overwrite stuff)
+				Goto override_install
+			${EndIf}
+		${EndIf}
 
-	Delete $0\rpcapd.exe
-	Delete $0\LICENSE
-	Delete $0\uninstall.exe
-	; Official 4.1 installer creates an install.log
-	Delete $0\install.log
-	RMDir "$0"
-	DeleteRegKey HKLM "Software\Npcap"
+		; if our old registry key is present then assume all is well
+		; (we got this far so the official WinPcap wasn't installed)
+		; and use our uninstaller to (magically) silently uninstall
+		; everything cleanly and avoid having to overwrite files
+		ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap" "UninstallString"
+		${If} $0 != ""
+			Goto silent_uninstall
+		${EndIf}
 
-	; because we've deleted their uninstaller, skip the next
-	; registry key check (we'll still need to overwrite stuff)
-	Goto winpcap-nmap_keys_not_present
+	override_install:
+		; setoverwrite on to try and avoid any problems when trying to install the files
+		; wpcap.dll is still present at this point, but unclear where it came from
+		SetOverwrite on
 
-	winpcap_keys_not_present:
+		; try to ensure that npf has been stopped before we install/overwrite files
+		ExecWait '"net stop $driver_name"'
 
-	; if our old registry key is present then assume all is well
-	; (we got this far so the official WinPcap wasn't installed)
-	; and use our uninstaller to (magically) silently uninstall
-	; everything cleanly and avoid having to overwrite files
-	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap" "UninstallString"
-	StrCmp $0 "" winpcap-nmap_keys_not_present silent_uninstall
+		Return
 
-	winpcap-nmap_keys_not_present:
-
-	; setoverwrite on to try and avoid any problems when trying to install the files
-	; wpcap.dll is still present at this point, but unclear where it came from
-	SetOverwrite on
-
-	; try to ensure that npf has been stopped before we install/overwrite files
-	ExecWait '"net stop $driver_name"'
-
-	Return
-
-silent_uninstall:
-	; Our InstalledBy string is present, UninstallString should have quotes and uninstall.exe location
-	; and this file should support a silent uninstall by passing /S to it.
-	; we could read QuietUninstallString, but this should be exactly the same as UninstallString with /S on the end.
-	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
-	ExecWait '$0 /S _?=$INSTDIR'
+	silent_uninstall:
+		; Our InstalledBy string is present, UninstallString should have quotes and uninstall.exe location
+		; and this file should support a silent uninstall by passing /S to it.
+		; we could read QuietUninstallString, but this should be exactly the same as UninstallString with /S on the end.
+		ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
+		ExecWait '$0 /S _?=$INSTDIR'
+		Return
+	${EndIf}
 	Return
 
 no_silent:
-	IfFileExists "$INSTDIR\NPFInstall.exe" do_version_check
-	Call getInstallOptions
-	Return
+	${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+		GetDllVersion "$INSTDIR\NPFInstall.exe" $R0 $R1
+		IntOp $R2 $R0 / 0x00010000
+		IntOp $R3 $R0 & 0x0000FFFF
+		IntOp $R4 $R1 / 0x00010000
+		IntOp $R5 $R1 & 0x0000FFFF
+		StrCpy $inst_ver "$R2.$R3.$R4.$R5"
 
-do_version_check:
-
-	GetDllVersion "$INSTDIR\NPFInstall.exe" $R0 $R1
-	IntOp $R2 $R0 / 0x00010000
-	IntOp $R3 $R0 & 0x0000FFFF
-	IntOp $R4 $R1 / 0x00010000
-	IntOp $R5 $R1 & 0x0000FFFF
-	StrCpy $inst_ver "$R2.$R3.$R4.$R5"
-
-	StrCmp $inst_ver $my_ver same_ver
-
-	MessageBox MB_YESNO|MB_ICONQUESTION "Npcap version $inst_ver exists on this system. Replace with version $my_ver?" IDYES try_uninstallers
-	quit
-
-same_ver:
-	MessageBox MB_YESNO|MB_ICONQUESTION "Npcap version $inst_ver already exists on this system. Reinstall this version?" IDYES try_uninstallers
-	quit
-
-try_uninstallers:
-
-	; check for UninstallString and use that in preference (should already have double quotes and uninstall.exe)
-	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
-	StrCmp $0 "" no_uninstallstring
-	IfFileExists "$0" uninstaller_exists no_uninstallstring
-uninstaller_exists:
-	ExecWait '$0 _?=$INSTDIR'
-	; If the uninstaller fails, then quit the installation.
-	; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-		; quit
-	; ${EndIf}
-	Return
-
-no_uninstallstring:
-	; didn't find an UninstallString, check for our old UninstallString and if uninstall.exe exists:
-	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap" "UninstallString"
-	StrCmp $0 "" still_no_uninstallstring
-	IfFileExists "$0" old_uninstaller_exists still_no_uninstallstring
-old_uninstaller_exists:
-	MessageBox MB_OK "Using our old UninstallString, file exists"
-	ExecWait '$0 _?=$INSTDIR'
-	; If the uninstaller fails, then quit the installation.
-	; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-		; quit
-	; ${EndIf}
-	Return
-
-still_no_uninstallstring:
-	; still didn't find anything, try looking for an uninstall.exe file at:
-		ReadRegStr $0 "HKLM" "Software\Npcap" ""
-	; Strip any surrounding double quotes from around the install string,
-	; as WinPcap hasn't used quotes in the past, but our old installers did.
-	; Check the first and last character for safety!
-	StrCpy $1 $0 1
-	${If} $1 == "$\""
-		StrLen $1 $0
-		IntOp $1 $1 - 1
-		StrCpy $1 $0 1 $1
-		${If} $1 == "$\"" 
-			StrCpy $0 $0 -1 1
+		${If} $inst_ver == $my_ver
+			MessageBox MB_YESNO|MB_ICONQUESTION "Npcap version $inst_ver already exists on this system. Reinstall this version?" IDYES try_uninstallers
+			quit
+		${Else}
+			MessageBox MB_YESNO|MB_ICONQUESTION "Npcap version $inst_ver exists on this system. Replace with version $my_ver?" IDYES try_uninstallers
+			quit
 		${EndIf}
-	${EndIf}
 
-	${If} ${FileExists} "$0\uninstall.exe"
-		ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
-		; If the uninstaller fails, then quit the installation.
-		; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-			; quit
-		; ${EndIf}
-	${EndIf}
-	; give up now, we've tried our hardest to determine a valid uninstaller!
-	Return
+	try_uninstallers:
+		; check for UninstallString and use that in preference (should already have double quotes and uninstall.exe)
+		ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
+		${If} $0 != ""
+		${AndIf} ${FileExists} $0
+			ExecWait '$0 _?=$INSTDIR'
+			; If the uninstaller fails, then quit the installation.
+			; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+				; quit
+			; ${EndIf}
+			Return
+		${EndIf}
 
+		; didn't find an UninstallString, check for our old UninstallString and if uninstall.exe exists:
+		ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap" "UninstallString"
+		${If} $0 != ""
+		${AndIf} ${FileExists} $0
+			MessageBox MB_OK "Using our old UninstallString, file exists"
+			ExecWait '$0 _?=$INSTDIR'
+			; If the uninstaller fails, then quit the installation.
+			; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+				; quit
+			; ${EndIf}
+			Return
+		${EndIf}
+
+		; still didn't find anything, try looking for an uninstall.exe file at:
+		ReadRegStr $0 "HKLM" "Software\Npcap" ""
+		; Strip any surrounding double quotes from around the install string,
+		; as WinPcap hasn't used quotes in the past, but our old installers did.
+		; Check the first and last character for safety!
+		StrCpy $1 $0 1
+		${If} $1 == "$\""
+			StrLen $1 $0
+			IntOp $1 $1 - 1
+			StrCpy $1 $0 1 $1
+			${If} $1 == "$\"" 
+				StrCpy $0 $0 -1 1
+			${EndIf}
+		${EndIf}
+
+		${If} ${FileExists} "$0\uninstall.exe"
+			ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
+			; If the uninstaller fails, then quit the installation.
+			; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
+				; quit
+			; ${EndIf}
+		${EndIf}
+		; give up now, we've tried our hardest to determine a valid uninstaller!
+		Return
+	${EndIf}
 FunctionEnd
 
 Function adminOnlyOptionsPage
