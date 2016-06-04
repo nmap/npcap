@@ -770,42 +770,40 @@ FunctionEnd
 
 Function copy_win7_32bit_driver
 	SetOutPath $INSTDIR
-	${If} $os_ver == "vista"
-		${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes"
+		${If} $os_ver == "vista"
 			File vista_winpcap\x86\npf.sys
 			File vista_winpcap\x86\npf.inf
 			File vista_winpcap\x86\npf_wfp.inf
 			File vista_winpcap\x86\npf_wifi.inf
 			File vista_winpcap\x86\npf.cat
-		${Else}
-			File vista\x86\npcap.sys
-			File vista\x86\npcap.inf
-			File vista\x86\npcap_wfp.inf
-			File vista\x86\npcap_wifi.inf
-			File vista\x86\npcap.cat
-		${EndIf}
-	${ElseIf} $os_ver == "win7"
-		${If} $winpcap_mode == "yes"
+		${ElseIf} $os_ver == "win7"
 			File win7_winpcap\x86\npf.sys
 			File win7_winpcap\x86\npf.inf
 			File win7_winpcap\x86\npf_wfp.inf
 			File win7_winpcap\x86\npf_wifi.inf
 			File win7_winpcap\x86\npf.cat
-		${Else}
-			File win7\x86\npcap.sys
-			File win7\x86\npcap.inf
-			File win7\x86\npcap_wfp.inf
-			File win7\x86\npcap_wifi.inf
-			File win7\x86\npcap.cat
-		${EndIf}
-	${Else} ; $os_ver == "win8_above"
-		${If} $winpcap_mode == "yes"
+		${Else} ; $os_ver == "win8_above"
 			File win8_above_winpcap\x86\npf.sys
 			File win8_above_winpcap\x86\npf.inf
 			File win8_above_winpcap\x86\npf_wfp.inf
 			File win8_above_winpcap\x86\npf_wifi.inf
 			File win8_above_winpcap\x86\npf.cat
-		${Else}
+		${EndIf}
+	${Else}
+		${If} $os_ver == "vista"
+			File vista\x86\npcap.sys
+			File vista\x86\npcap.inf
+			File vista\x86\npcap_wfp.inf
+			File vista\x86\npcap_wifi.inf
+			File vista\x86\npcap.cat
+		${ElseIf} $os_ver == "win7"
+			File win7\x86\npcap.sys
+			File win7\x86\npcap.inf
+			File win7\x86\npcap_wfp.inf
+			File win7\x86\npcap_wifi.inf
+			File win7\x86\npcap.cat
+		${Else} ; $os_ver == "win8_above"
 			File win8_above\x86\npcap.sys
 			File win8_above\x86\npcap.inf
 			File win8_above\x86\npcap_wfp.inf
@@ -817,42 +815,40 @@ FunctionEnd
 
 Function copy_win7_64bit_driver
 	SetOutPath $INSTDIR
-	${If} $os_ver == "vista"
-		${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes"
+		${If} $os_ver == "vista"
 			File vista_winpcap\x64\npf.sys
 			File vista_winpcap\x64\npf.inf
 			File vista_winpcap\x64\npf_wfp.inf
 			File vista_winpcap\x64\npf_wifi.inf
 			File vista_winpcap\x64\npf.cat
-		${Else}
-			File vista\x64\npcap.sys
-			File vista\x64\npcap.inf
-			File vista\x64\npcap_wfp.inf
-			File vista\x64\npcap_wifi.inf
-			File vista\x64\npcap.cat
-		${EndIf}
-	${ElseIf} $os_ver == "win7"
-		${If} $winpcap_mode == "yes"
+		${ElseIf} $os_ver == "win7"
 			File win7_winpcap\x64\npf.sys
 			File win7_winpcap\x64\npf.inf
 			File win7_winpcap\x64\npf_wfp.inf
 			File win7_winpcap\x64\npf_wifi.inf
 			File win7_winpcap\x64\npf.cat
-		${Else}
-			File win7\x64\npcap.sys
-			File win7\x64\npcap.inf
-			File win7\x64\npcap_wfp.inf
-			File win7\x64\npcap_wifi.inf
-			File win7\x64\npcap.cat
-		${EndIf}
-	${Else} ; $os_ver == "win8_above"
-		${If} $winpcap_mode == "yes"
+		${Else} ; $os_ver == "win8_above"
 			File win8_above_winpcap\x64\npf.sys
 			File win8_above_winpcap\x64\npf.inf
 			File win8_above_winpcap\x64\npf_wfp.inf
 			File win8_above_winpcap\x64\npf_wifi.inf
 			File win8_above_winpcap\x64\npf.cat
-		${Else}
+		${EndIf}
+	${Else}
+		${If} $os_ver == "vista"
+			File vista\x64\npcap.sys
+			File vista\x64\npcap.inf
+			File vista\x64\npcap_wfp.inf
+			File vista\x64\npcap_wifi.inf
+			File vista\x64\npcap.cat
+		${ElseIf} $os_ver == "win7"
+			File win7\x64\npcap.sys
+			File win7\x64\npcap.inf
+			File win7\x64\npcap_wfp.inf
+			File win7\x64\npcap_wifi.inf
+			File win7\x64\npcap.cat
+		${Else} ; $os_ver == "win8_above"
 			File win8_above\x64\npcap.sys
 			File win8_above\x64\npcap.inf
 			File win8_above\x64\npcap_wfp.inf
