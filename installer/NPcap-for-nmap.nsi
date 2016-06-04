@@ -562,16 +562,15 @@ Function registerServiceAPI_xp
 	; create the new npf service
 	System::Call 'advapi32::OpenSCManagerA(,,i ${SC_MANAGER_ALL_ACCESS})i.R0'
 	System::Call 'advapi32::CreateServiceA(i R0,t "npf",t "NetGroup Packet Filter Driver",i ${SERVICE_ALL_ACCESS},i ${SERVICE_KERNEL_DRIVER}, i ${SERVICE_DEMAND_START},i ${SERVICE_ERROR_NORMAL}, t "system32\drivers\npf.sys",,,,,) i.r1'
-	StrCmp $1 "0" register_xp_vista_fail register_xp_vista_success
-register_xp_vista_fail:
-	DetailPrint "Failed to create the npf service for XP"
-	IfSilent close_register_xp_vista_handle register_xp_vista_fail_messagebox
-register_xp_vista_fail_messagebox:
-	MessageBox MB_OK "Failed to create the npf service for XP. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
-	Goto close_register_xp_vista_handle
-register_xp_vista_success:
-	DetailPrint "The npf service for XP was successfully created"
-close_register_xp_vista_handle:
+
+	${If} $1 == "0"
+		DetailPrint "Failed to create the npf service for XP"
+		${IfNot} ${Silent}
+			MessageBox MB_OK "Failed to create the npf service for XP. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+		${EndIf}
+	${Else}
+		DetailPrint "The npf service for XP was successfully created"
+	${EndIf}
 	System::Call 'advapi32::CloseServiceHandle(i R0) n'
 FunctionEnd
 
@@ -579,13 +578,12 @@ Function un.registerServiceAPI_xp
 	System::Call 'advapi32::OpenSCManagerA(,,i ${SC_MANAGER_ALL_ACCESS})i.r0'
 	System::Call 'advapi32::OpenServiceA(i r0,t "npf", i ${SERVICE_ALL_ACCESS}) i.r1'
 	System::Call 'advapi32::DeleteService(i r1) i.r6'
-	StrCmp $6 "0" unregister_xp_vista_fail unregister_xp_vista_success
-unregister_xp_vista_fail:
-	DetailPrint "Failed to delete the npf service for XP"
-	Goto close_unregister_xp_vista_handle
-unregister_xp_vista_success:
-	DetailPrint "The npf service for XP was successfully deleted"
-	close_unregister_xp_vista_handle:
+
+	${If} $6 == "0"
+		DetailPrint "Failed to delete the npf service for XP"
+	${Else}
+		DetailPrint "The npf service for XP was successfully deleted"
+	${EndIf}
 	System::Call 'advapi32::CloseServiceHandle(i r1) n'
 	System::Call 'advapi32::CloseServiceHandle(i r0) n'
 FunctionEnd
@@ -609,31 +607,28 @@ Function registerServiceAPI_win7
 	${Else}
 		ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
 	${EndIf}
-	StrCmp $0 "0" register_win7_success register_win7_fail
 
-register_win7_fail:
-	DetailPrint "Failed to create the npf service for Vista, Win7, Win8 and Win10"
-	IfSilent register_win7_done register_win7_fail_messagebox
-register_win7_fail_messagebox:
-	MessageBox MB_OK "Failed to create the npcap service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
-	Goto register_win7_done
-register_win7_success:
-	DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully created"
-register_win7_done:
+	${If} $0 == "0"
+		DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully created"
+	${Else}
+		DetailPrint "Failed to create the npf service for Vista, Win7, Win8 and Win10"
+		${IfNot} ${Silent}
+			MessageBox MB_OK "Failed to create the npcap service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+		${EndIf}
+	${EndIf}
 FunctionEnd
 
 Function un.registerServiceAPI_win7
 	ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
 	ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
 	ExecWait '"$INSTDIR\NPFInstall.exe" -ul' $0
-	StrCmp $0 "0" unregister_win7_success unregister_win7_fail
 
-unregister_win7_fail:
-	DetailPrint "Failed to delete the npf service for Vista, Win7, Win8 and Win10"
-	Goto unregister_win7_done
-unregister_win7_success:
-	DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully deleted"
-unregister_win7_done:
+	${If} $0 == "0"
+		DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully deleted"
+	${Else}
+		DetailPrint "Failed to delete the npf service for Vista, Win7, Win8 and Win10"
+	${EndIf}
+	StrCmp $0 "0" unregister_win7_success unregister_win7_fail
 FunctionEnd
 
 Function autoStartWinPcap
