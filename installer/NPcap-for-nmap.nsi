@@ -685,6 +685,98 @@ Function checkWindowsVersion
   ${EndIf}
 FunctionEnd
 
+Function copy_win7_32bit_driver
+  ${If} $os_ver == "vista"
+    ${If} $winpcap_mode == "yes"
+      File vista_winpcap\x86\npf.sys
+      File vista_winpcap\x86\npf.inf
+      File vista_winpcap\x86\npf_wfp.inf
+      File vista_winpcap\x86\npf_wifi.inf
+      File vista_winpcap\x86\npf.cat
+    ${Else}
+      File vista\x86\npcap.sys
+      File vista\x86\npcap.inf
+      File vista\x86\npcap_wfp.inf
+      File vista\x86\npcap_wifi.inf
+      File vista\x86\npcap.cat
+    ${EndIf}
+  ${ElseIf} $os_ver == "win7"
+    ${If} $winpcap_mode == "yes"
+      File win7_winpcap\x86\npf.sys
+      File win7_winpcap\x86\npf.inf
+      File win7_winpcap\x86\npf_wfp.inf
+      File win7_winpcap\x86\npf_wifi.inf
+      File win7_winpcap\x86\npf.cat
+    ${Else}
+      File win7\x86\npcap.sys
+      File win7\x86\npcap.inf
+      File win7\x86\npcap_wfp.inf
+      File win7\x86\npcap_wifi.inf
+      File win7\x86\npcap.cat
+    ${EndIf}
+  ${Else} ; $os_ver == "win8_above"
+    ${If} $winpcap_mode == "yes"
+      File win8_above_winpcap\x86\npf.sys
+      File win8_above_winpcap\x86\npf.inf
+      File win8_above_winpcap\x86\npf_wfp.inf
+      File win8_above_winpcap\x86\npf_wifi.inf
+      File win8_above_winpcap\x86\npf.cat
+    ${Else}
+      File win8_above\x86\npcap.sys
+      File win8_above\x86\npcap.inf
+      File win8_above\x86\npcap_wfp.inf
+      File win8_above\x86\npcap_wifi.inf
+      File win8_above\x86\npcap.cat
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
+
+Function copy_win7_64bit_driver
+  ${If} $os_ver == "vista"
+    ${If} $winpcap_mode == "yes"
+      File vista_winpcap\x64\npf.sys
+      File vista_winpcap\x64\npf.inf
+      File vista_winpcap\x64\npf_wfp.inf
+      File vista_winpcap\x64\npf_wifi.inf
+      File vista_winpcap\x64\npf.cat
+    ${Else}
+      File vista\x64\npcap.sys
+      File vista\x64\npcap.inf
+      File vista\x64\npcap_wfp.inf
+      File vista\x64\npcap_wifi.inf
+      File vista\x64\npcap.cat
+    ${EndIf}
+  ${ElseIf} $os_ver == "win7"
+    ${If} $winpcap_mode == "yes"
+      File win7_winpcap\x64\npf.sys
+      File win7_winpcap\x64\npf.inf
+      File win7_winpcap\x64\npf_wfp.inf
+      File win7_winpcap\x64\npf_wifi.inf
+      File win7_winpcap\x64\npf.cat
+    ${Else}
+      File win7\x64\npcap.sys
+      File win7\x64\npcap.inf
+      File win7\x64\npcap_wfp.inf
+      File win7\x64\npcap_wifi.inf
+      File win7\x64\npcap.cat
+    ${EndIf}
+  ${Else} ; $os_ver == "win8_above"
+    ${If} $winpcap_mode == "yes"
+      File win8_above_winpcap\x64\npf.sys
+      File win8_above_winpcap\x64\npf.inf
+      File win8_above_winpcap\x64\npf_wfp.inf
+      File win8_above_winpcap\x64\npf_wifi.inf
+      File win8_above_winpcap\x64\npf.cat
+    ${Else}
+      File win8_above\x64\npcap.sys
+      File win8_above\x64\npcap.inf
+      File win8_above\x64\npcap_wfp.inf
+      File win8_above\x64\npcap_wifi.inf
+      File win8_above\x64\npcap.cat
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
+
 ;--------------------------------
 ; The stuff to install
 Section "WinPcap" SecWinPcap	
@@ -726,8 +818,8 @@ Section "WinPcap" SecWinPcap
   ${Else}
     SetOutPath $SYSDIR\Npcap
   ${EndIf}
-  File pthreadVC.dll
-  File wpcap.dll
+  File xp\x86\pthreadVC.dll
+  File xp\x86\wpcap.dll
   File win8_above\x86\NPcapHelper.exe
   File win8_above\x86\WlanHelper.exe
 
@@ -744,7 +836,7 @@ Section "WinPcap" SecWinPcap
     Call is64bit
     StrCmp $0 "0" install_win7_32bit install_win7_64bit
   ${Else} ; xp_files:
-    File nt5\x86\Packet.dll
+    File xp\x86\Packet.dll
 
     Call is64bit
     StrCmp $0 "0" install_xp_32bit install_xp_64bit
@@ -759,12 +851,12 @@ Section "WinPcap" SecWinPcap
 
     install_xp_32bit:
       SetOutPath $INSTDIR
-      File rpcapd.exe
+      File xp\x86\rpcapd.exe
       File ..\LICENSE
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS5.0 x86 driver for XP"
       SetOutPath $SYSDIR\drivers
-      File npf.sys ; x86 NT5/NT6.0 version
+      File xp\x86\npf.sys ; x86 NT5/NT6.0 version
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
       WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
@@ -773,14 +865,14 @@ Section "WinPcap" SecWinPcap
 
     install_xp_64bit:
       SetOutPath $INSTDIR
-      File rpcapd.exe
+      File xp\x86\rpcapd.exe
       File ..\LICENSE
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS5.x x64 driver for XP"
       SetOutPath $SYSDIR\drivers
       ; disable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
-      File x64\npf.sys ; x64 NT5/NT6.0 version
+      File xp\x64\npf.sys ; x64 NT5/NT6.0 version
       ; The x86 versions of wpcap.dll and packet.dll are
       ; installed into the right place further above.
       ; install the 64-bit version of wpcap.dll into System32
@@ -789,9 +881,9 @@ Section "WinPcap" SecWinPcap
 	  ${Else}
         SetOutPath $SYSDIR\Npcap
 	  ${EndIf}
-      File x64\wpcap.dll ; x64 NT5/NT6.0 version
+      File xp\x64\wpcap.dll ; x64 NT5/NT6.0 version
       ; install the 64-bit version of packet.dll into System32
-      File nt5\x64\Packet.dll ; x64 XP/2003 version
+      File xp\x64\Packet.dll ; x64 XP/2003 version
       WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
       ; re-enable Wow64FsRedirection
       System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
@@ -802,7 +894,7 @@ Section "WinPcap" SecWinPcap
 
     install_win7_32bit:
       SetOutPath $INSTDIR
-      File rpcapd.exe
+      ; File rpcapd.exe
       File ..\LICENSE
 	  ${If} $winpcap_mode == "yes"
 	    File win8_above_winpcap\x86\NPFInstall.exe
@@ -810,49 +902,7 @@ Section "WinPcap" SecWinPcap
 	    File win8_above\x86\NPFInstall.exe
 	  ${EndIf}
 
-	  ${If} $os_ver == "vista"
-        ${If} $winpcap_mode == "yes"
-          File vista_winpcap\x86\npf.sys
-          File vista_winpcap\x86\npf.inf
-          File vista_winpcap\x86\npf_wfp.inf
-          File vista_winpcap\x86\npf_wifi.inf
-          File vista_winpcap\x86\npf.cat
-        ${Else}
-          File vista\x86\npcap.sys
-          File vista\x86\npcap.inf
-          File vista\x86\npcap_wfp.inf
-          File vista\x86\npcap_wifi.inf
-          File vista\x86\npcap.cat
-        ${EndIf}
-	  ${ElseIf} $os_ver == "win7"
-        ${If} $winpcap_mode == "yes"
-          File win7_winpcap\x86\npf.sys
-          File win7_winpcap\x86\npf.inf
-          File win7_winpcap\x86\npf_wfp.inf
-          File win7_winpcap\x86\npf_wifi.inf
-          File win7_winpcap\x86\npf.cat
-        ${Else}
-          File win7\x86\npcap.sys
-          File win7\x86\npcap.inf
-          File win7\x86\npcap_wfp.inf
-          File win7\x86\npcap_wifi.inf
-          File win7\x86\npcap.cat
-        ${EndIf}
-	  ${Else} ; $os_ver == "win8_above"
-	    ${If} $winpcap_mode == "yes"
-          File win8_above_winpcap\x86\npf.sys
-          File win8_above_winpcap\x86\npf.inf
-          File win8_above_winpcap\x86\npf_wfp.inf
-          File win8_above_winpcap\x86\npf_wifi.inf
-          File win8_above_winpcap\x86\npf.cat
-        ${Else}
-          File win8_above\x86\npcap.sys
-          File win8_above\x86\npcap.inf
-          File win8_above\x86\npcap_wfp.inf
-          File win8_above\x86\npcap_wifi.inf
-          File win8_above\x86\npcap.cat
-        ${EndIf}
-	  ${EndIf}
+      Call copy_win7_32bit_driver
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x86 driver for Vista, Win7, Win8 and Win10"
@@ -865,7 +915,7 @@ Section "WinPcap" SecWinPcap
 
     install_win7_64bit:
       SetOutPath $INSTDIR
-      File rpcapd.exe
+      ; File rpcapd.exe
       File ..\LICENSE
 	  ${If} $winpcap_mode == "yes"
 	    File win8_above_winpcap\x64\NPFInstall.exe
@@ -873,49 +923,7 @@ Section "WinPcap" SecWinPcap
         File win8_above\x64\NPFInstall.exe
 	  ${EndIf}
 
-	  ${If} $os_ver == "vista"
-	    ${If} $winpcap_mode == "yes"
-          File vista_winpcap\x64\npf.sys
-          File vista_winpcap\x64\npf.inf
-          File vista_winpcap\x64\npf_wfp.inf
-          File vista_winpcap\x64\npf_wifi.inf
-          File vista_winpcap\x64\npf.cat
-        ${Else}
-          File vista\x64\npcap.sys
-          File vista\x64\npcap.inf
-          File vista\x64\npcap_wfp.inf
-          File vista\x64\npcap_wifi.inf
-          File vista\x64\npcap.cat
-        ${EndIf}
-	  ${ElseIf} $os_ver == "win7"
-	    ${If} $winpcap_mode == "yes"
-          File win7_winpcap\x64\npf.sys
-          File win7_winpcap\x64\npf.inf
-          File win7_winpcap\x64\npf_wfp.inf
-          File win7_winpcap\x64\npf_wifi.inf
-          File win7_winpcap\x64\npf.cat
-        ${Else}
-          File win7\x64\npcap.sys
-          File win7\x64\npcap.inf
-          File win7\x64\npcap_wfp.inf
-          File win7\x64\npcap_wifi.inf
-          File win7\x64\npcap.cat
-        ${EndIf}
-	  ${Else} ; $os_ver == "win8_above"
-        ${If} $winpcap_mode == "yes"
-          File win8_above_winpcap\x64\npf.sys
-          File win8_above_winpcap\x64\npf.inf
-          File win8_above_winpcap\x64\npf_wfp.inf
-          File win8_above_winpcap\x64\npf_wifi.inf
-          File win8_above_winpcap\x64\npf.cat
-        ${Else}
-          File win8_above\x64\npcap.sys
-          File win8_above\x64\npcap.inf
-          File win8_above\x64\npcap_wfp.inf
-          File win8_above\x64\npcap_wifi.inf
-          File win8_above\x64\npcap.cat
-        ${EndIf}
-	  ${EndIf}
+      Call copy_win7_64bit_driver
 
       WriteUninstaller "$INSTDIR\uninstall.exe"
       DetailPrint "Installing NDIS6.x x64 driver for Vista, Win7, Win8 and Win10"
@@ -932,7 +940,7 @@ Section "WinPcap" SecWinPcap
 	  ${EndIf}
       File win8_above\x64\NPcapHelper.exe
       File win8_above\x64\WlanHelper.exe
-      File x64\wpcap.dll ; x64 NT5/NT6 version
+      File xp\x64\wpcap.dll ; x64 NT5/NT6 version
       ; install the 64-bit version of packet.dll into System32
       ; install the NT6.0 above version (for Vista, Win7, Win8 and Win10)
 	  ${If} $winpcap_mode == "yes"
