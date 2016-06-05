@@ -1171,6 +1171,23 @@ Function set_driver_service_not_autostart
 	${EndIf}
 FunctionEnd
 
+Function write_env_var
+	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
+		DetailPrint "Adding DLL folder: $\"$SYSDIR\Npcap$\" to PATH environment variable"
+		; SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment"
+		${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$SYSDIR\Npcap"
+	${EndIf}
+FunctionEnd
+
+Function un.clear_env_var
+	${If} $winpcap_mode == "no"
+	${OrIf} $winpcap_mode == "yes"
+		DetailPrint "Removing DLL folder: $\"$SYSDIR\Npcap$\" from PATH environment variable"
+		${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$SYSDIR\Npcap"
+	${EndIf}
+FunctionEnd
+
 ;--------------------------------
 ; The stuff to install
 Section "WinPcap" SecWinPcap	
@@ -1333,13 +1350,8 @@ npfdone:
 		Call registerServiceAPI_xp
 	${EndIf}
 
-	${If} $winpcap_mode == "no"
-	${OrIf} $winpcap_mode == "yes"
-		; Add "system32\Npcap" directory to PATH
-		DetailPrint "Adding DLL folder: $\"$SYSDIR\Npcap$\" to PATH environment variable"
-		; SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment"
-		${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$SYSDIR\Npcap"
-	${EndIf}
+	; add "C:\Windows\System32\Npcap" directory to PATH
+	Call write_env_var
 
 	; write options to registry "service" key
 	Call write_registry_service_options
@@ -1423,12 +1435,8 @@ Section "Uninstall"
 		Goto uninstall_fail
 	${EndIf}
 
-	${If} $winpcap_mode == "no"
-	${OrIf} $winpcap_mode == "yes"
-		; Remove "system32\Npcap" directory in PATH
-		DetailPrint "Removing DLL folder: $\"$SYSDIR\Npcap$\" from PATH environment variable"
-		${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$SYSDIR\Npcap"
-	${EndIf}
+	; remove "C:\Windows\System32\Npcap" directory in PATH
+	Call un.clear_env_var
 
 	; Check windows version
 	Call un.checkWindowsVersion
