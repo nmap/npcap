@@ -84,7 +84,7 @@
   your adapter is in <quote>Managed Mode</quote>, Npcap will only supply <emphasis>802.11 data</emphasis>
   packets with radiotap headers. Moreover, Npcap provides the <filename>WlanHelper.exe</filename>
   tool to help you switch to <quote>Monitor Mode</quote> on Windows. See more details
-  about this feature in section <quote>For softwares that use Npcap raw 802.11
+  about this feature in section <quote>For software that use Npcap raw 802.11
   feature</quote>. See more details about radiotap here:
   <ulink role="hidepdf" url="http://www.radiotap.org/">http://www.radiotap.org/</ulink></para></listitem>
   </itemizedlist>
@@ -276,7 +276,7 @@ else
 </sect1>
 
 <sect1 id="npcap-feature-native">
-  <title>For softwares that use Npcap native mode</title>
+  <title>For software that use Npcap native mode</title>
   
   <para>
   Prerequisite: Uncheck the <option>Install Npcap in WinPcap API-compatible Mode</option> option at install-time.
@@ -297,7 +297,7 @@ else
 </sect1>
 
 <sect1 id="npcap-feature-loopback">
-  <title>For softwares that use Npcap loopback feature</title>
+  <title>For software that use Npcap loopback feature</title>
 
   <para>
   Prerequisite: Check the <option>Support loopback traffic ("Npcap Loopback Adapter" will be created)</option> option at install-time.
@@ -312,24 +312,24 @@ else
 
   <para>
   The IP address of <quote>Npcap Loopback Adapter</quote> is usually like 169.254.x.x. However,
-  this IP is totally meaningless. Softwares using Npcap should regard this interface's IP address
+  this IP is totally meaningless. Software using Npcap should regard this interface's IP address
   as 127.0.0.1 (IPv4) and ::1 (IPv6). This work can't be done by Npcap because Windows forbids
   any IP address to be configured as 127.0.0.1 or ::1 as they're reserved.
   </para>
 
   <para>
   The MAC address of <quote>Npcap Loopback Adapter</quote> is usually like 02:00:4C:4F:4F:50. However,
-  this address is meaningless too. Softwares using Npcap should think this interface doesn't own a
-  MAC address, as the loopback traffic never goes to link layer. For softwares using Npcap to
+  this address is meaningless too. Software using Npcap should think this interface doesn't own a
+  MAC address, as the loopback traffic never goes to link layer. For software using Npcap to
   capture loopback traffic, the MAC addresses in captured data will be all zeros (aka 00:00:00:00:00:00).
-  For softwares using Npcap to send loopback traffic, any MAC addresses can be specified as they
+  For software using Npcap to send loopback traffic, any MAC addresses can be specified as they
   will be ignored. But notice that ether_type in Ethernet header should be set correctly. Only <option>IPv4</option>
   and <option>IPv6</option> are accepted. Other values like <option>ARP</option> will be ignored. (You don't need an ARP request for
   loopback interface)
   </para>
 
   <para>
-  The MTU of <quote>Npcap Loopback Adapter</quote> is hard-coded to 65536 by Npcap. Softwares
+  The MTU of <quote>Npcap Loopback Adapter</quote> is hard-coded to 65536 by Npcap. Software
   using Npcap should get this value automatically and no special handling is needed. This value is
   determined personally by me and doesn't mean Windows loopback stack can only support packet size
   as large as 65536. So don't feel weird if you have captured packets whose size are larger than it.
@@ -362,7 +362,7 @@ else
   <listitem><para>If you use IP Helper API to get adapter list, you will get an interface named
   like <quote>Loopback Pseudo-Interface 1</quote>. This interface is a DUMMY interface by Microsoft
   and can't be seen in NDIS layer. And it also takes the 127.0.0.1/::1 IP address. A good practice
-  for softwares is merging the entry of <quote>Npcap Loopback Adapter</quote> and the entry of
+  for software is merging the entry of <quote>Npcap Loopback Adapter</quote> and the entry of
   <quote>Loopback Pseudo-Interface 1</quote> into one entry, like what I have implemented for Nmap (see the
   <quote>Other code (for developers)</quote> part).</para></listitem>
 
@@ -372,7 +372,7 @@ else
 </sect1>
 
 <sect1 id="npcap-feature-dot11">
-  <title>For softwares that use Npcap raw 802.11 feature</title>
+  <title>For software that use Npcap raw 802.11 feature</title>
   
   <para>
   Prerequisite: Check the <option>Support raw 802.11 traffic (and monitor mode) for wireless adapters</option> option at install-time.
@@ -708,7 +708,7 @@ managed
 </sect1>
 
 <sect1 id="npcap-incompatible">
-  <title>The list of incompatible softwares</title>
+  <title>The list of incompatible software</title>
 
   <para>
   The LWF technique Npcap used is usually a cause of conflicts between the programs
@@ -719,9 +719,9 @@ managed
   </para>
 
   <para>
-  The commonly seen sources of the incompatble softwares are <emphasis>anti-virus,
+  The commonly seen sources of the incompatble software are <emphasis>anti-virus,
   network firewall, VPN, traffic capture</emphasis>, etc. To help you identify those
-  softwares, We have collected the programs that have trouble with Npcap
+  software, We have collected the programs that have trouble with Npcap
   according to user's report, so what you need to do is to remove them if
   your Npcap doesn't work normally.
   </para>
@@ -746,7 +746,7 @@ managed
   consider that you have <emphasis>installed some incompatible software</emphasis>.
   It can be a <emphasis>VPN, anti-virus, firewall or other network related</emphasis>
   software. We are maintaining an incompatible software list in the previous section.
-  So you can uninstall all those potential softwares one by one, and see which one
+  So you can uninstall all those potential software one by one, and see which one
   exactly causes the issue. Don't forget to report it to me, so I could add it to
   this list.</para></listitem>
   <listitem><para>Installation fails with error code <varname>0x8004a029</varname>:
