@@ -674,9 +674,15 @@ managed
     <title>SDK</title>
 
     <para>
-    Npcap doesn't have its own development kit for now. Please use
-	<emphasis>WinPcap's development kit</emphasis> instead:
-	<ulink role="hidepdf" url="http://www.winpcap.org/devel.htm">WinPcap 4.1.2 Developer's Pack</ulink>
+    Npcap has its own SDK for <quote>Non-WinPcap Compatible Mode</quote>.
+    By using it, your software will run under <quote>Non-WinPcap Compatible Mode</quote>.
+    We don't update the SDK as frequently as the binaries. The latest SDK is <ulink role="hidepdf" url="https://github.com/nmap/npcap/releases/tag/v0.07-r9">Npcap SDK 0.07 r9</ulink>.
+    </para>
+
+    <para>
+    If you only want to build your software under <quote>WinPcap Compatible Mode</quote>
+    (which is <emphasis>NOT</emphasis> recommended), please use the legacy
+    <ulink role="hidepdf" url="http://www.winpcap.org/devel.htm">WinPcap 4.1.2 Developer's Pack</ulink> instead.
     </para>
   </sect2>
 
