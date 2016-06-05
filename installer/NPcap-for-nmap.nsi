@@ -948,9 +948,9 @@ Function un.uninstall_win7_XXbit_driver
 
 		; check the driver uninstall result
 		${If} $0 == "0"
-			DetailPrint "The npcap service for Vista, Win7, Win8 and Win10 was successfully deleted"
+			DetailPrint "The npcap2 service for Vista, Win7, Win8 and Win10 was successfully deleted"
 		${Else}
-			DetailPrint "Failed to delete the npcap service for Vista, Win7, Win8 and Win10"
+			DetailPrint "Failed to delete the npcap2 service for Vista, Win7, Win8 and Win10"
 		${EndIf}
 	${EndIf}
 FunctionEnd
