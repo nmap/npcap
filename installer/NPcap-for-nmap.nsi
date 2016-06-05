@@ -682,8 +682,7 @@ Function copy_win7_32bit_home_dlls
 	File ..\LICENSE
 
 	${If} $winpcap_mode == "yes"
-		File win8_above\x86\NPFInstall.exe
-		Rename win8_above\x86\NPFInstall.exe win8_above\x86\NPFInstall2.exe
+		File /oname=NPFInstall2.exe win8_above\x86\NPFInstall.exe
 		File win8_above_winpcap\x86\NPFInstall.exe
 	${EndIf}
 
@@ -739,19 +738,19 @@ Function copy_win7_32bit_system_dlls
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR
-		File win8_above_winpcap\x64\wpcap.dll
-		File win8_above_winpcap\x64\Packet.dll
-		File win8_above_winpcap\x64\NPcapHelper.exe
-		File win8_above_winpcap\x64\WlanHelper.exe
+		File win8_above_winpcap\x86\wpcap.dll
+		File win8_above_winpcap\x86\Packet.dll
+		File win8_above_winpcap\x86\NPcapHelper.exe
+		File win8_above_winpcap\x86\WlanHelper.exe
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR\Npcap
-		File win8_above\x64\wpcap.dll
-		File win8_above\x64\Packet.dll
-		File win8_above\x64\NPcapHelper.exe
-		File win8_above\x64\WlanHelper.exe
+		File win8_above\x86\wpcap.dll
+		File win8_above\x86\Packet.dll
+		File win8_above\x86\NPcapHelper.exe
+		File win8_above\x86\WlanHelper.exe
 	${EndIf}
 FunctionEnd
 
