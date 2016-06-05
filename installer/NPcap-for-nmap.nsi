@@ -1174,6 +1174,15 @@ FunctionEnd
 Function write_env_var
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
+		ReadEnvStr $0 PATH
+		${StrStr} $1 $0 "$SYSDIR\Npcap"
+		${If} $1 != ""
+			DetailPrint "DLL folder: $\"$SYSDIR\Npcap$\" is already in PATH environment variable, no need to add"
+			FileOpen $0 "$INSTDIR\no_envvar.txt" w
+			FileClose $0
+			Return
+		${EndIf}
+
 		DetailPrint "Adding DLL folder: $\"$SYSDIR\Npcap$\" to PATH environment variable"
 		; SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment"
 		${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$SYSDIR\Npcap"
@@ -1183,6 +1192,12 @@ FunctionEnd
 Function un.clear_env_var
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
+		${If} ${FileExists} "$INSTDIR\no_envvar.txt"
+			Delete "$INSTDIR\no_envvar.txt"
+			DetailPrint "DLL folder: $\"$SYSDIR\Npcap$\" is already in PATH environment variable before installation, no need to delete"
+			Return
+		${EndIf}
+
 		DetailPrint "Removing DLL folder: $\"$SYSDIR\Npcap$\" from PATH environment variable"
 		${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$SYSDIR\Npcap"
 	${EndIf}
