@@ -597,15 +597,6 @@ Function registerServiceAPI_win7
 
 	; install the driver
 	Call install_win7_XXbit_driver
-
-	${If} $0 == "0"
-		DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully created"
-	${Else}
-		DetailPrint "Failed to create the npf service for Vista, Win7, Win8 and Win10"
-		${IfNot} ${Silent}
-			MessageBox MB_OK "Failed to create the npcap service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
-		${EndIf}
-	${EndIf}
 FunctionEnd
 
 Function un.registerServiceAPI_win7
@@ -613,12 +604,6 @@ Function un.registerServiceAPI_win7
 	Call un.uninstall_win7_XXbit_driver
 
 	ExecWait '"$INSTDIR\NPFInstall.exe" -ul' $0
-
-	${If} $0 == "0"
-		DetailPrint "The npf service for Vista, Win7, Win8 and Win10 was successfully deleted"
-	${Else}
-		DetailPrint "Failed to delete the npf service for Vista, Win7, Win8 and Win10"
-	${EndIf}
 FunctionEnd
 
 Function autoStartWinPcap
@@ -902,7 +887,17 @@ Function install_win7_XXbit_driver
 	${Else}
 		ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
 	${EndIf}
-	
+
+	; check the driver install result
+	${If} $0 == "0"
+		DetailPrint "The npcap service for Vista, Win7, Win8 and Win10 was successfully created"
+	${Else}
+		DetailPrint "Failed to create the npcap service for Vista, Win7, Win8 and Win10"
+		${IfNot} ${Silent}
+			MessageBox MB_OK "Failed to create the npcap service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+		${EndIf}
+	${EndIf}
+
 	${If} $winpcap_mode == "yes"
 		; clear the driver cache in Driver Store
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -c' $0
@@ -917,6 +912,16 @@ Function install_win7_XXbit_driver
 		${Else}
 			ExecWait '"$INSTDIR\NPFInstall2.exe" -i' $0
 		${EndIf}
+
+		; check the driver install result
+		${If} $0 == "0"
+			DetailPrint "The npcap2 service for Vista, Win7, Win8 and Win10 was successfully created"
+		${Else}
+			DetailPrint "Failed to create the npcap2 service for Vista, Win7, Win8 and Win10"
+			${IfNot} ${Silent}
+				MessageBox MB_OK "Failed to create the npcap2 service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+		${EndIf}
+	${EndIf}
 	${EndIf}
 FunctionEnd
 
@@ -927,12 +932,26 @@ Function un.uninstall_win7_XXbit_driver
 	; uninstall the WFP callout driver
 	ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
 
+	; check the driver uninstall result
+	${If} $0 == "0"
+		DetailPrint "The npcap service for Vista, Win7, Win8 and Win10 was successfully deleted"
+	${Else}
+		DetailPrint "Failed to delete the npcap service for Vista, Win7, Win8 and Win10"
+	${EndIf}
+
 	${If} $winpcap_mode == "yes"
 		; uninstall the NDIS filter driver
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -u' $0
 
 		; uninstall the WFP callout driver
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -uw' $0
+
+		; check the driver uninstall result
+		${If} $0 == "0"
+			DetailPrint "The npcap service for Vista, Win7, Win8 and Win10 was successfully deleted"
+		${Else}
+			DetailPrint "Failed to delete the npcap service for Vista, Win7, Win8 and Win10"
+		${EndIf}
 	${EndIf}
 FunctionEnd
 
