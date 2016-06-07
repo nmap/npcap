@@ -17,20 +17,30 @@ BOOL PacketInstallDriver40();
 BOOL PacketStopDriver40();
 
 #define STR_COMMAND_USAGE \
-_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.org)\n")\
+_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.org )\n")\
 _T("Usage: NPFInstall [Options]\n")\
-_T("Options:\n")\
-_T("  -i: install win7 driver\n")\
-_T("  -u: uninstall win7 driver\n")\
-_T("  -r: restartBindings\n")\
-_T("  -ii: install xp driver\n")\
-_T("  -uu: uninstall xp driver\n")\
-_T("  -il: install Npcap loopback adapter\n")\
-_T("  -ul: uninstall Npcap loopback adapter\n")\
-_T("  -iw: install WFP callout driver\n")\
-_T("  -uw: uninstall WFP callout driver\n")\
 _T("\n")\
-_T("See the MAN Page (https://github.com/nmap/npcap) for more options and examples\n")
+_T("OPTIONS:\n")\
+_T("  -i\t\t\t: Install the LWF driver (non Wi-Fi version)\n")\
+_T("  -i2\t\t\t: Install the LWF driver (Wi-Fi version)\n")\
+_T("  -u\t\t\t: Uninstall the LWF driver\n")\
+_T("  -iw\t\t\t: Install the WFP callout driver\n")\
+_T("  -uw\t\t\t: Uninstall the WFP callout driver\n")\
+_T("  -il\t\t\t: Install \"Npcap loopback adapter\"\n")\
+_T("  -ul\t\t\t: Uninstall \"Npcap loopback adapter\"\n")\
+_T("  -ii\t\t\t: Install the legacy driver (for XP)\n")\
+_T("  -uu\t\t\t: Uninstall the legacy driver (for XP)\n")\
+_T("  -r\t\t\t: Restart all bindings\n")\
+_T("  -d\t\t\t: Detect whether the driver service is pending to stop\n")\
+_T("  -c\t\t\t: Clear all the driverstore cache for the driver\n")\
+_T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n")\
+_T("  -wlan_write_reg\t: Write the names of all wireless adapters to registry\n")\
+_T("\n")\
+_T("EXAMPLES:\n")\
+_T("  NPFInstall -i\n")\
+_T("  NPFInstall -iw\n")\
+_T("\n")\
+_T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPLES\n")
 
 BOOL PacketIsServiceStopPending()
 {
