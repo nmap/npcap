@@ -592,7 +592,7 @@ Function registerServiceAPI_win7
 
 	${If} $loopback_support == "yes"
 		; create the Npcap Loopback Adapter, used for capturing loopback packets
-		ExecWait '"$INSTDIR\NPFInstall.exe" -il'
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -il'
 	${Endif}
 
 	; install the driver
@@ -603,7 +603,7 @@ Function un.registerServiceAPI_win7
 	; uninstall the driver
 	Call un.uninstall_win7_XXbit_driver
 
-	ExecWait '"$INSTDIR\NPFInstall.exe" -ul' $0
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 FunctionEnd
 
 Function autoStartWinPcap
@@ -874,17 +874,17 @@ FunctionEnd
 
 Function install_win7_XXbit_driver
 	; clear the driver cache in Driver Store
-	ExecWait '"$INSTDIR\NPFInstall.exe" -c' $0
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -c' $0
 	DetailPrint "The cache in driver store was cleared"
 
 	; install the WFP callout driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -iw' $0
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -iw' $0
 
 	; install the NDIS filter driver
 	${If} $dot11_support == "yes"
-		ExecWait '"$INSTDIR\NPFInstall.exe" -i2' $0
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -i2' $0
 	${Else}
-		ExecWait '"$INSTDIR\NPFInstall.exe" -i' $0
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -i' $0
 	${EndIf}
 
 	; check the driver install result
@@ -926,10 +926,10 @@ FunctionEnd
 
 Function un.uninstall_win7_XXbit_driver
 	; uninstall the NDIS filter driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -u' $0
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -u' $0
 
 	; uninstall the WFP callout driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -uw' $0
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -uw' $0
 
 	; check the driver uninstall result
 	${If} $0 == "0"
@@ -1075,7 +1075,7 @@ Function write_single_registry_service_options
 	${If} $dot11_support == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "dot11 support" is chosen
 		${If} $dot11_support == "yes"
-			ExecWait '"$INSTDIR\NPFInstall.exe" -wlan_write_reg' $0
+			ExecWait '"$INSTDIR\NPFInstall.exe" -n -wlan_write_reg' $0
 		${Endif}
 	${Else}
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 0
@@ -1442,7 +1442,7 @@ Section "Uninstall"
 	DetailPrint "Trying to stop the npf service.."
 	Call un.stop_driver_service
 
-	ExecWait '"$INSTDIR\NPFInstall.exe" -d' $0
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
 	${If} $0 == "0"
 		MessageBox MB_OK "Failed to stop the npf service, uninstallation quits now. Please stop using Npcap first"
 		DetailPrint "Failed to stop the npf service, uninstallation quits now. Please stop using Npcap first"

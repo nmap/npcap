@@ -35,12 +35,16 @@ _T("  -d\t\t\t: Detect whether the driver service is pending to stop\n")\
 _T("  -c\t\t\t: Clear all the driverstore cache for the driver\n")\
 _T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n")\
 _T("  -wlan_write_reg\t: Write the names of all wireless adapters to registry\n")\
+_T("  -n\t\t\t: Hide this window when executing the command\n")\
+_T("  -h\t\t\t: Print this help summary page\n")\
 _T("\n")\
 _T("EXAMPLES:\n")\
 _T("  NPFInstall -i\n")\
 _T("  NPFInstall -iw\n")\
 _T("\n")\
 _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPLES\n")
+
+#define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"NPFInstall -h\" for help.\n")
 
 BOOL PacketIsServiceStopPending()
 {
@@ -197,47 +201,40 @@ BOOL PacketRenableBindings()
 int _tmain(int argc, _TCHAR* argv[])
 {
 	BOOL bSuccess = FALSE;
-	BOOL bVerbose = FALSE;
+	BOOL bNoWindow = FALSE;
 
 	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.org)"));
 	vector<tstring> strArgs;
+	tstring strTmp;
 	for (int i = 0; i < argc; i++)
 	{
-		strArgs.push_back(argv[i]);
-	}
-
-	if (argc >= 2)
-	{
-		if (strArgs[1] == _T("-v"))
+		strTmp = argv[i];
+		if (strTmp == _T("-n"))
 		{
-			bVerbose = TRUE;
-		}
-	}
-
-	if (argc >= 3)
-	{
-		if (strArgs[2] == _T("-v"))
-		{
-			bVerbose = TRUE;
+			bNoWindow = TRUE;
 		}
 		else
 		{
-			_tprintf(STR_COMMAND_USAGE);
-			return -1;
+			strArgs.push_back(strTmp);
 		}
 	}
 
-	if (!bVerbose)
+	if (bNoWindow)
 	{
 		ShowWindow(GetConsoleWindow(), SW_HIDE);
 	}
 
-	if (argc < 2)
+	if (strArgs.size() == 1)
 	{
 		_tprintf(STR_COMMAND_USAGE);
 		return -1;
 	}
-	else //argc == 2
+	else if (strArgs.size() >= 3)
+	{
+		_tprintf(STR_INVALID_PARAMETER);
+		return -1;
+	}
+	else //strArgs.size() == 2
 	{
 		if (strArgs[1] == _T("-i"))
 		{
@@ -443,7 +440,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else
 		{
-			_tprintf(_T("Invalid parameter, type in \"NPFInstall -h\" for help.\n"));
+			_tprintf(STR_INVALID_PARAMETER);
 			return -1;
 		}
 	}
