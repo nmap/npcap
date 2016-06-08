@@ -898,10 +898,6 @@ Function install_win7_XXbit_driver
 	${EndIf}
 
 	${If} $winpcap_mode == "yes"
-		; clear the driver cache in Driver Store
-		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -c' $0
-		DetailPrint "The cache in driver store was cleared"
-
 		; install the WFP callout driver
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -iw' $0
 
