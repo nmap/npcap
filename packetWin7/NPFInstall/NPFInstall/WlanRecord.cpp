@@ -12,6 +12,77 @@
 #include "WlanRecord.h"
 #include "RegUtil.h"
 
+
+HINSTANCE hinstLib = NULL;
+typedef DWORD
+(WINAPI *MY_WLANOPENHANDLE)(
+_In_ DWORD dwClientVersion,
+_Reserved_ PVOID pReserved,
+_Out_ PDWORD pdwNegotiatedVersion,
+_Out_ PHANDLE phClientHandle
+);
+
+typedef DWORD
+(WINAPI *MY_WLANCLOSEHANDLE)(
+_In_ HANDLE hClientHandle,
+_Reserved_ PVOID pReserved
+);
+
+typedef DWORD
+(WINAPI *MY_WLANENUMINTERFACES)(
+_In_ HANDLE hClientHandle,
+_Reserved_ PVOID pReserved,
+_Outptr_ PWLAN_INTERFACE_INFO_LIST *ppInterfaceList
+);
+
+typedef VOID
+(WINAPI *MY_WLANFREEMEMORY)(
+_In_ PVOID pMemory
+);
+
+MY_WLANOPENHANDLE My_WlanOpenHandle = NULL;
+MY_WLANCLOSEHANDLE My_WlanCloseHandle = NULL;
+MY_WLANENUMINTERFACES My_WlanEnumInterfaces = NULL;
+MY_WLANFREEMEMORY My_WlanFreeMemory = NULL;
+
+BOOL initWlanFunctions()
+{
+	BOOL bRet;
+
+	// Get a handle to the packet DLL module.
+	hinstLib = LoadLibrary(TEXT("wlanapi.dll"));
+
+	// If the handle is valid, try to get the function address.  
+	if (hinstLib != NULL)
+	{
+		My_WlanOpenHandle = (MY_WLANOPENHANDLE)GetProcAddress(hinstLib, "WlanOpenHandle");
+		My_WlanCloseHandle = (MY_WLANCLOSEHANDLE)GetProcAddress(hinstLib, "WlanCloseHandle");
+		My_WlanEnumInterfaces = (MY_WLANENUMINTERFACES)GetProcAddress(hinstLib, "WlanEnumInterfaces");
+		My_WlanFreeMemory = (MY_WLANFREEMEMORY)GetProcAddress(hinstLib, "WlanFreeMemory");
+		// If the function address is valid, call the function.  
+
+		if (My_WlanOpenHandle != NULL &&
+			My_WlanCloseHandle != NULL &&
+			My_WlanEnumInterfaces != NULL &&
+			My_WlanFreeMemory != NULL)
+		{
+			bRet = TRUE;
+		}
+		else
+		{
+			bRet = FALSE;
+		}
+
+
+	}
+	else
+	{
+		bRet = FALSE;
+	}
+
+	return bRet;
+}
+
 tstring printArray(vector<tstring> nstr)
 {
 	tstring strResult;
@@ -36,7 +107,7 @@ UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 	__try
 	{
 		// enumerate wireless interfaces
-		if ((dwError = WlanEnumInterfaces(
+		if ((dwError = My_WlanEnumInterfaces(
 			hClient,
 			NULL,               // reserved
 			&pIntfList
@@ -58,7 +129,7 @@ UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 		// clean up
 		if (pIntfList != NULL)
 		{
-			WlanFreeMemory(pIntfList);
+			My_WlanFreeMemory(pIntfList);
 		}
 	}
 	return 0;
@@ -79,7 +150,7 @@ PHANDLE phClient
 		*phClient = NULL;
 
 		// open a handle to the service
-		if ((dwError = WlanOpenHandle(
+		if ((dwError = My_WlanOpenHandle(
 			WLAN_API_VERSION,
 			NULL,               // reserved
 			&dwServiceVersion,
@@ -106,7 +177,7 @@ PHANDLE phClient
 		if (hClient != NULL)
 		{
 			// clean up
-			WlanCloseHandle(
+			My_WlanCloseHandle(
 				hClient,
 				NULL            // reserved
 				);
@@ -122,6 +193,12 @@ vector<tstring> getWlanAdapterGuids()
 	WLAN_INTERFACE_INFO sInfo[64];
 	RPC_TSTR strGuid = NULL;
 	vector<tstring> nstrWlanAdapterGuids;
+
+	if (!initWlanFunctions())
+	{
+		_tprintf(_T("getWlanAdapterGuids::initWlanFunctions error.\n"));
+		return nstrWlanAdapterGuids;
+	}
 
 	if (OpenHandleAndCheckVersion(&hClient) != ERROR_SUCCESS)
 	{

@@ -29,10 +29,10 @@ wstring getNpcapLoopbackAdapterName()
 		return L"";
 	}
 
-	for (int i = 0; i < g_InterfaceNameList2.size(); i ++)
+	for (size_t i = 0; i < g_InterfaceNameList2.size(); i ++)
 	{
 		int found = 0;
-		for (int j = 0; j < g_InterfaceNameList1.size(); j ++)
+		for (size_t j = 0; j < g_InterfaceNameList1.size(); j ++)
 		{
 			if (g_InterfaceNameList2[i].compare(g_InterfaceNameList1[j]) == 0)
 			{

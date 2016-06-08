@@ -1363,7 +1363,7 @@ BOOL SaveDevIDToFile(int iDevID)
 	}
 
 	FILE *fp;
-	if ((fp = fopen(strLoopbackIDFilePath, "w")) == NULL)
+	if (fopen_s(&fp, strLoopbackIDFilePath, "w") != 0)
 	{
 		return FALSE;
 	}
@@ -1382,7 +1382,7 @@ int LoadDevIDFromFile()
 
 	FILE *fp;
 	int iDevID;
-	if ((fp = fopen(strLoopbackIDFilePath, "r")) == NULL)
+	if (fopen_s(&fp, strLoopbackIDFilePath, "r") != 0)
 	{
 		return -1;
 	}

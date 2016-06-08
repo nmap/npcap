@@ -87,7 +87,7 @@ BOOLEAN ClearDriverStore()
 
 	wchar_t renameCmd[MAX_PATH];
 	// "pnputil.exe -d oem1.inf"
-	for (int i = 0; i < nInfFileNameList.size(); i++)
+	for (size_t i = 0; i < nInfFileNameList.size(); i++)
 	{
 		swprintf_s(renameCmd, MAX_PATH, L"pnputil.exe -d %s", nInfFileNameList[i].c_str());
 		executeCommand(renameCmd);
