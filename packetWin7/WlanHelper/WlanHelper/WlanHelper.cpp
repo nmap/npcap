@@ -452,7 +452,8 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 
 #define STR_COMMAND_USAGE \
 _T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.org )\n")\
-_T("Usage: WlanHelper {Interface Name or GUID} [Options]\n")\
+_T("Usage: WlanHelper [Commands]\n")\
+_T("   or: WlanHelper {Interface Name or GUID} [Options]\n")\
 _T("\n")\
 _T("OPTIONS:\n")\
 _T("  mode\t\t\t\t\t: Get interface operation mode\n")\
@@ -462,6 +463,10 @@ _T("  channel\t\t\t\t: Get interface channel\n")\
 _T("  channel <1-14>\t\t\t: Set interface channel (only works in monitor mode)\n")\
 _T("  freq\t\t\t\t\t: Get interface frequency\n")\
 _T("  freq <VALUE>\t\t\t\t: Set interface frequency (only works in monitor mode)\n")\
+_T("\n")\
+_T("COMMANDS:\n")\
+_T("  -i\t\t\t\t\t: Enter the interactive mode\n")\
+_T("  -h\t\t\t\t\t: Print this help summary page\n")\
 _T("\n")\
 _T("OPERATION MODES:\n")\
 _T("  managed\t: The Extensible Station (ExtSTA) operation mode\n")\
@@ -492,8 +497,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	if (argc == 1)
 	{
-		_tprintf(_T("WlanHelper [Interactive Mode]:\n****************************************************\n"));
-		return MainInteractive();
+		_tprintf(STR_COMMAND_USAGE);
+		return -1;
 	}
 	else if (argc == 2)
 	{
@@ -501,6 +506,11 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			_tprintf(STR_COMMAND_USAGE);
 			return -1;
+		}
+		else if (strArgs[1] == _T("-i"))
+		{
+			_tprintf(_T("WlanHelper [Interactive Mode]:\n****************************************************\n"));
+			return MainInteractive();
 		}
 		else
 		{
