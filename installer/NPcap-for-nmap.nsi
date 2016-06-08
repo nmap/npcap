@@ -899,17 +899,17 @@ Function install_win7_XXbit_driver
 
 	${If} $winpcap_mode == "yes"
 		; clear the driver cache in Driver Store
-		ExecWait '"$INSTDIR\NPFInstall2.exe" -c' $0
+		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -c' $0
 		DetailPrint "The cache in driver store was cleared"
 
 		; install the WFP callout driver
-		ExecWait '"$INSTDIR\NPFInstall2.exe" -iw' $0
+		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -iw' $0
 
 		; install the NDIS filter driver
 		${If} $dot11_support == "yes"
-			ExecWait '"$INSTDIR\NPFInstall2.exe" -i2' $0
+			ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i2' $0
 		${Else}
-			ExecWait '"$INSTDIR\NPFInstall2.exe" -i' $0
+			ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i' $0
 		${EndIf}
 
 		; check the driver install result
@@ -940,10 +940,10 @@ Function un.uninstall_win7_XXbit_driver
 
 	${If} $winpcap_mode == "yes"
 		; uninstall the NDIS filter driver
-		ExecWait '"$INSTDIR\NPFInstall2.exe" -u' $0
+		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -u' $0
 
 		; uninstall the WFP callout driver
-		ExecWait '"$INSTDIR\NPFInstall2.exe" -uw' $0
+		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -uw' $0
 
 		; check the driver uninstall result
 		${If} $0 == "0"
