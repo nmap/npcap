@@ -76,5 +76,5 @@ AddReg          = Common.Params.reg
 [Strings]
 NPF_DriverName = "npf"
 Insecure = "Nmap Project"
-NPF_Desc = "Npcap Packet Driver (NPCAP)"
+NPF_Desc = "Npcap Packet Driver (NPF)"
 NPF_HelpText = "A NDIS 6 filter driver & WFP callout driver to support packet capturing and sending under Windows 7, 8 & 10"
