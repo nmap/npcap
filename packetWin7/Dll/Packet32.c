@@ -146,6 +146,112 @@ char PacketDriverName[64];
 extern PADAPTER_INFO g_AdaptersInfoList;
 extern HANDLE g_AdaptersInfoMutex;
 
+HINSTANCE hinstLib = NULL;
+typedef DWORD
+(WINAPI *MY_WLANOPENHANDLE)(
+_In_ DWORD dwClientVersion,
+_Reserved_ PVOID pReserved,
+_Out_ PDWORD pdwNegotiatedVersion,
+_Out_ PHANDLE phClientHandle
+);
+
+typedef DWORD
+(WINAPI *MY_WLANCLOSEHANDLE)(
+_In_ HANDLE hClientHandle,
+_Reserved_ PVOID pReserved
+);
+
+typedef DWORD
+(WINAPI *MY_WLANENUMINTERFACES)(
+_In_ HANDLE hClientHandle,
+_Reserved_ PVOID pReserved,
+_Outptr_ PWLAN_INTERFACE_INFO_LIST *ppInterfaceList
+);
+
+typedef VOID
+(WINAPI *MY_WLANFREEMEMORY)(
+_In_ PVOID pMemory
+);
+
+typedef DWORD
+(WINAPI *MY_WLANSETINTERFACE)(
+_In_ HANDLE hClientHandle,
+_In_ CONST GUID *pInterfaceGuid,
+_In_ WLAN_INTF_OPCODE OpCode,
+_In_ DWORD dwDataSize,
+_In_reads_bytes_(dwDataSize) CONST PVOID pData,
+_Reserved_ PVOID pReserved
+);
+
+typedef DWORD
+(WINAPI *My_WLANQUERYINTERFACE)(
+_In_ HANDLE hClientHandle,
+_In_ CONST GUID *pInterfaceGuid,
+_In_ WLAN_INTF_OPCODE OpCode,
+_Reserved_ PVOID pReserved,
+_Out_ PDWORD pdwDataSize,
+_Outptr_result_bytebuffer_(*pdwDataSize) PVOID *ppData,
+_Out_opt_ PWLAN_OPCODE_VALUE_TYPE pWlanOpcodeValueType
+);
+
+MY_WLANOPENHANDLE My_WlanOpenHandle = NULL;
+MY_WLANCLOSEHANDLE My_WlanCloseHandle = NULL;
+MY_WLANENUMINTERFACES My_WlanEnumInterfaces = NULL;
+MY_WLANFREEMEMORY My_WlanFreeMemory = NULL;
+MY_WLANSETINTERFACE My_WlanSetInterface = NULL;
+My_WLANQUERYINTERFACE My_WlanQueryInterface = NULL;
+
+BOOL initWlanFunctions()
+{
+	BOOL bRet;
+
+	// If these functions are already available, we don't import them again.
+	if (My_WlanOpenHandle != NULL &&
+		My_WlanCloseHandle != NULL &&
+		My_WlanEnumInterfaces != NULL &&
+		My_WlanFreeMemory != NULL &&
+		My_WlanSetInterface != NULL &&
+		My_WlanQueryInterface != NULL)
+	{
+		return TRUE;
+	}
+
+	// Get a handle to the packet DLL module.
+	hinstLib = LoadLibrary(TEXT("wlanapi.dll"));
+
+	// If the handle is valid, try to get the function address.  
+	if (hinstLib != NULL)
+	{
+		My_WlanOpenHandle = (MY_WLANOPENHANDLE)GetProcAddress(hinstLib, "WlanOpenHandle");
+		My_WlanCloseHandle = (MY_WLANCLOSEHANDLE)GetProcAddress(hinstLib, "WlanCloseHandle");
+		My_WlanEnumInterfaces = (MY_WLANENUMINTERFACES)GetProcAddress(hinstLib, "WlanEnumInterfaces");
+		My_WlanFreeMemory = (MY_WLANFREEMEMORY)GetProcAddress(hinstLib, "WlanFreeMemory");
+		My_WlanSetInterface = (MY_WLANSETINTERFACE)GetProcAddress(hinstLib, "WlanSetInterface");
+		My_WlanQueryInterface = (My_WLANQUERYINTERFACE)GetProcAddress(hinstLib, "WlanQueryInterface");
+		// If the function address is valid, call the function.  
+
+		if (My_WlanOpenHandle != NULL &&
+			My_WlanCloseHandle != NULL &&
+			My_WlanEnumInterfaces != NULL &&
+			My_WlanFreeMemory != NULL &&
+			My_WlanSetInterface != NULL &&
+			My_WlanQueryInterface != NULL)
+		{
+			bRet = TRUE;
+		}
+		else
+		{
+			bRet = FALSE;
+		}
+	}
+	else
+	{
+		bRet = FALSE;
+	}
+
+	return bRet;
+}
+
 #ifdef HAVE_IPHELPER_API
 typedef VOID (*GAAHandler)(
   ULONG,
@@ -4711,7 +4817,7 @@ BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject)
 */
 int PacketIsMonitorModeSupported(PCHAR AdapterName)
 {
-	BOOLEAN Status;
+	int Status;
 	NetType Type;
 
 	TRACE_ENTER("PacketIsMonitorModeSupported");
@@ -4826,10 +4932,16 @@ DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 	HANDLE hClient = NULL;
 	DWORD dwCurVersion = 0;
 
+	if (!initWlanFunctions())
+	{
+		TRACE_PRINT("SetInterface failed, initWlanFunctions error");
+		return ERROR_INVALID_FUNCTION;
+	}
+
 	// Open Handle for the set operation
-	dwResult = WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
-	dwResult = WlanSetInterface(hClient, InterfaceGuid, opcode, sizeof(ULONG), pData, NULL);
-	WlanCloseHandle(hClient, NULL);
+	dwResult = My_WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
+	dwResult = My_WlanSetInterface(hClient, InterfaceGuid, opcode, sizeof(ULONG), pData, NULL);
+	My_WlanCloseHandle(hClient, NULL);
 
 	return dwResult;
 }
@@ -4842,10 +4954,16 @@ DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 	DWORD outsize = 0;
 	WLAN_OPCODE_VALUE_TYPE opCode = wlan_opcode_value_type_invalid;
 
+	if (!initWlanFunctions())
+	{
+		TRACE_PRINT("SetInterface failed, initWlanFunctions error");
+		return ERROR_INVALID_FUNCTION;
+	}
+
 	// Open Handle for the set operation
-	dwResult = WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
-	dwResult = WlanQueryInterface(hClient, InterfaceGuid, opcode, NULL, &outsize, pData, &opCode);
-	WlanCloseHandle(hClient, NULL);
+	dwResult = My_WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
+	dwResult = My_WlanQueryInterface(hClient, InterfaceGuid, opcode, NULL, &outsize, pData, &opCode);
+	My_WlanCloseHandle(hClient, NULL);
 
 	return dwResult;
 }
@@ -4908,7 +5026,7 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 		return FALSE;
 	}
 
-	ULONG ulOperationMode = -1;
+	ULONG ulOperationMode = 0;
 	PULONG pOperationMode;
 	DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
@@ -4920,7 +5038,7 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 	else
 	{
 		ulOperationMode = *pOperationMode;
-		WlanFreeMemory(pOperationMode);
+		My_WlanFreeMemory(pOperationMode);
 		TRACE_EXIT("PacketGetMonitorMode");
 		if (ulOperationMode == DOT11_OPERATION_MODE_NETWORK_MONITOR)
 		{
