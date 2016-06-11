@@ -227,8 +227,23 @@ StrCpy $inst_ver "$R2.$R3.$R4.$R5"
     Npcap and WinPcap can be installed together on a symtem. Which capture library is used by the
 	user software relies on the DLL loading path. If Npcap's <filename>wpcap.dll</filename> is loaded first, then you
 	are using Npcap, vice versa. However, it's difficult and fragile to check the DLL loading path by yourself.
-	So we provide a better way: Npcap exports a <function>pcap_get_servicename</function> function in its libpcap
-	API. It returns the string of Npcap service name (aka <replaceable>%SERVICE_NAME%</replaceable>), which can be used to start the service using
+  Fortunately, you can use <function>pcap_lib_version</function> to get the Npcap/WinPcap version string.
+  </para>
+
+<screen>
+char *pcap_version = pcap_lib_version();
+printf("%s", pcap_version);
+// Npcap output:
+// Npcap version 0.07
+//
+// WinPcap output:
+// WinPcap version 4.1.3
+</screen>
+
+	<para>Considering Npcap has different driver service name in different modes, we provide a
+  way to get the current service name: Npcap exports a <function>pcap_get_servicename</function>
+  function in its libpcap API. It returns the string of Npcap service name (aka
+  <replaceable>%SERVICE_NAME%</replaceable>), which can be used to start the service using
 	<command>net start <replaceable>%SERVICE_NAME%</replaceable></command> command.
 	<replaceable>%SERVICE_NAME%</replaceable> is <varname>NPF</varname> if Npcap is installed
 	in <quote>WinPcap Compatible Mode</quote> and <varname>NPCAP</varname> if Npcap is installed
@@ -279,14 +294,21 @@ else
   <title>For software that use Npcap native mode</title>
   
   <para>
-  Prerequisite: Uncheck the <option>Install Npcap in WinPcap API-compatible Mode</option> option at install-time.
+  Prerequisite: Uncheck the <option>Install Npcap in WinPcap API-compatible Mode</option> option at install-time (which is by default).
   </para>
   
   <itemizedlist>
     <listitem><para>Npcap installs its DLLs into <filename>C:\Windows\System32\Npcap\</filename>
-    instead of WinPcap's <filename>C:\Windows\System32\</filename>. So applications who want
-    to load Npcap first must make <filename>C:\Windows\System32\Npcap\</filename> precedent
-    to other paths in ways such as calling <function>SetDllDirectory</function>, etc.</para></listitem>
+    instead of WinPcap's <filename>C:\Windows\System32\</filename>. So when Npcap and WinPcap coexist, applications who want
+    to use Npcap instead of WinPcap must make <filename>C:\Windows\System32\Npcap\</filename> precedent
+    to the <filename>C:\Windows\System32\</filename> in
+    <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/desktop/ms686203(v=vs.85).aspx">DLL search path</ulink>.
+    If the consumer software implicitly loads <filename>wpcap.dll</filename>, the only way for it
+    to use Npcap first is to deploy the Npcap DLLs (<filename>wpcap.dll, Packet.dll</filename>)
+    together the software EXE in the same folder. If the consumer software exlicitly loads
+    <filename>wpcap.dll</filename> using <function>LoadLibrary</function>, it can also call
+    <function>SetDllDirectory</function> to specify the <filename>C:\Windows\System32\Npcap\</filename>
+    path.</para></listitem>
 
     <listitem><para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
     <quote>WinPcap Compatible Mode</quote> OFF. So applications using <command>net start npf</command>
