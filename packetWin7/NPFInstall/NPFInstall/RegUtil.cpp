@@ -21,6 +21,7 @@ This is used for operating on registry.
 #include <devguid.h> // GUID_DEVCLASS_NET, ...
 
 #include "RegUtil.h"
+#include "RegKey.h"
 
 #define BUF_SIZE 255
 
@@ -62,4 +63,30 @@ tstring printAdapterNames(vector<tstring> nstr)
 		strResult += nstr[i];
 	}
 	return strResult;
+}
+
+BOOL addNpcapFolderToPath()
+{
+	int iRes = ProcessRegistryTask(_T("PATH"), _T("C:\\Windows\\System32\\Npcap"), TRUE, TRUE, FALSE);
+	if (iRes == 0)
+	{
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
+}
+
+BOOL removeNpcapFolderFromPath()
+{
+	int iRes = ProcessRegistryTask(_T("PATH"), _T("C:\\Windows\\System32\\Npcap"), FALSE, TRUE, FALSE);
+	if (iRes == 0)
+	{
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
 }

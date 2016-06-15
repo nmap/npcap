@@ -10,6 +10,7 @@
 #include "CalloutInstall.h"
 #include "DriverStoreClear.h"
 #include "WlanRecord.h"
+#include "RegUtil.h"
 
 BOOL PacketInstallDriver60(BOOL bWifiOrNormal);
 BOOL PacketStopDriver60();
@@ -35,6 +36,8 @@ _T("  -d\t\t\t: Detect whether the driver service is pending to stop\n")\
 _T("  -c\t\t\t: Clear all the driverstore cache for the driver\n")\
 _T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n")\
 _T("  -wlan_write_reg\t: Write the names of all wireless adapters to registry\n")\
+_T("  -add_path\t\t: Add Npcap folder to the PATH environment variable\n")\
+_T("  -remove_path\t\t: Remove Npcap folder from the PATH environment variable\n")\
 _T("  -n\t\t\t: Hide this window when executing the command\n")\
 _T("  -h\t\t\t: Print this help summary page\n")\
 _T("\n")\
@@ -430,6 +433,34 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				_tprintf(_T("Wlan adapters have failed to be written to registry.\n"));
+				return -1;
+			}
+		}
+		else if (strArgs[1] == _T("-add_path"))
+		{
+			bSuccess = addNpcapFolderToPath();
+			if (bSuccess)
+			{
+				_tprintf(_T("Npcap folder has been successfully added to PATH!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Npcap folder has failed to be added to PATH.\n"));
+				return -1;
+			}
+		}
+		else if (strArgs[1] == _T("-remove_path"))
+		{
+			bSuccess = removeNpcapFolderFromPath();
+			if (bSuccess)
+			{
+				_tprintf(_T("Npcap folder has been successfully removed from PATH!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Npcap folder has failed to be removed from PATH.\n"));
 				return -1;
 			}
 		}
