@@ -13,7 +13,7 @@ mkdir %WPDPACKDESTDIR%\Include\pcap  	2>nul >nul
 xcopy /v /Y %WINPCAPSOURCEDIR%\wpcap\libpcap\pcap\*.h		 		%WPDPACKDESTDIR%\Include\pcap\	>nul
 
 xcopy /v /Y %WINPCAPSOURCEDIR%\wpcap\libpcap\pcap.h			 	%WPDPACKDESTDIR%\Include\	>nul
-rem xcopy /v /Y %WINPCAPSOURCEDIR%\wpcap\libpcap\pcap-int.h			%WPDPACKDESTDIR%\Include\	>nul
+xcopy /v /Y %WINPCAPSOURCEDIR%\wpcap\libpcap\pcap-int.h			%WPDPACKDESTDIR%\Include\	>nul
 xcopy /v /Y %WINPCAPSOURCEDIR%\wpcap\libpcap\pcap-bpf.h		 		%WPDPACKDESTDIR%\Include\	>nul
 xcopy /v /Y %WINPCAPSOURCEDIR%\wpcap\libpcap\pcap-namedb.h	 		%WPDPACKDESTDIR%\Include\	>nul
 xcopy /v /Y %WINPCAPSOURCEDIR%\wpcap\libpcap\remote-ext.h		 	%WPDPACKDESTDIR%\Include\	>nul
