@@ -46,7 +46,7 @@ SetCompressor /SOLID /FINAL lzma
 
 !include "MUI.nsh"
 !include "FileFunc.nsh"
-!include "EnvVarUpdate.nsh"
+; !include "EnvVarUpdate.nsh"
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
 
@@ -1109,36 +1109,36 @@ FunctionEnd
 Function start_driver_service
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		ExecWait "net start npf"
+		nsExec::Exec "net start npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		ExecWait "net start npcap"
+		nsExec::Exec "net start npcap"
 	${EndIf}
 FunctionEnd
 
 Function stop_driver_service
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		ExecWait "net stop npf"
+		nsExec::Exec "net stop npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		ExecWait "net stop npcap"
+		nsExec::Exec "net stop npcap"
 	${EndIf}
 FunctionEnd
 
 Function un.stop_driver_service
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		ExecWait "net stop npf"
+		nsExec::Exec "net stop npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		ExecWait "net stop npcap"
+		nsExec::Exec "net stop npcap"
 	${EndIf}
 FunctionEnd
 
@@ -1166,7 +1166,7 @@ Function set_driver_service_not_autostart
 	${EndIf}
 FunctionEnd
 
-Function write_env_var
+/* Function write_env_var
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		ReadEnvStr $0 PATH
@@ -1196,7 +1196,7 @@ Function un.clear_env_var
 		DetailPrint "Removing DLL folder: $\"$SYSDIR\Npcap$\" from PATH environment variable"
 		${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$SYSDIR\Npcap"
 	${EndIf}
-FunctionEnd
+FunctionEnd */
 
 ;--------------------------------
 ; The stuff to install
@@ -1361,7 +1361,7 @@ npfdone:
 	${EndIf}
 
 	; add "C:\Windows\System32\Npcap" directory to PATH
-	Call write_env_var
+	; Call write_env_var
 
 	; write options to registry "service" key
 	Call write_registry_service_options
@@ -1446,7 +1446,7 @@ Section "Uninstall"
 	${EndIf}
 
 	; remove "C:\Windows\System32\Npcap" directory in PATH
-	Call un.clear_env_var
+	; Call un.clear_env_var
 
 	; Check windows version
 	Call un.checkWindowsVersion
