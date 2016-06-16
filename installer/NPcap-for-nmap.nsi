@@ -1034,7 +1034,8 @@ Function write_registry_software_options
 	${EndIf}
 
 	; Wireshark will read this option
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
 	${Else}
 		WriteRegDWORD HKLM "Software\Npcap" "WinPcapCompatible" 0 ;
@@ -1085,7 +1086,8 @@ Function write_single_registry_service_options
 	${Endif}
 
 	; Wireshark will read this option
-	${If} $winpcap_mode == "yes"
+	${If} $winpcap_mode == "yes2"
+	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "WinPcapCompatible" 1 ; make "WinPcapCompatible" = 1 only when "WinPcap API-compatible Mode" is chosen
 	${Else}
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "WinPcapCompatible" 0 ;
