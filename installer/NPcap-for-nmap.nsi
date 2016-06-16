@@ -1111,11 +1111,19 @@ FunctionEnd
 Function start_driver_service
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
+		${If} $loopback_support == "yes"
+			nsExec::Exec "net start npf"
+			nsExec::Exec "net stop npf"
+		${EndIf}
 		nsExec::Exec "net start npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
+		${If} $loopback_support == "yes"
+			nsExec::Exec "net start npcap"
+			nsExec::Exec "net stop npcap"
+		${EndIf}
 		nsExec::Exec "net start npcap"
 	${EndIf}
 FunctionEnd
