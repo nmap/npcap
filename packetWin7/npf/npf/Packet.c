@@ -617,6 +617,7 @@ NPF_GetRegistryOption_Integer(
 	HANDLE keyHandle;
 
 	TRACE_ENTER();
+	IF_LOUD(DbgPrint("\nRegistryPath: %ws, RegValueName: %ws\n", RegistryPath->Buffer, RegValueName->Buffer);)
 
 	InitializeObjectAttributes(&objAttrs, RegistryPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
 	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
@@ -707,6 +708,7 @@ NPF_GetRegistryOption_String(
 	HANDLE keyHandle;
 
 	TRACE_ENTER();
+	IF_LOUD(DbgPrint("\nRegistryPath: %ws, RegValueName: %ws\n", RegistryPath->Buffer, RegValueName->Buffer);)
 
 	InitializeObjectAttributes(&objAttrs, RegistryPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
 	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
