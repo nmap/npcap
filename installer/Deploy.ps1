@@ -345,13 +345,11 @@ elseif ($args.count -eq 1)
 
 		$init_to_path_array = $init_to_path_array.replace(".\", $symbols_folder)
 
+		$wpcap_filename = $wpcap_filename.replace(".dll", ".pdb")
 		$packet_filename = $packet_filename.replace(".dll", ".pdb")
 		$npfinstall_filename = $npfinstall_filename.replace(".exe", ".pdb")
 		$npcaphelper_filename = $npcaphelper_filename.replace(".exe", ".pdb")
 		$wlanhelper_filename = $wlanhelper_filename.replace(".exe", ".pdb")
-		$wpcap_filename = $wpcap_filename.replace(".dll", ".pdb")
-
-		$wpcap_init_to_path_array = $wpcap_init_to_path_array.replace(".\", $symbols_folder)
 
 		do_deploy 0
 	}
