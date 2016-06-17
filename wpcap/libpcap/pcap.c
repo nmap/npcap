@@ -203,7 +203,15 @@ int
 pcap_set_timeout(pcap_t *p, int timeout_ms)
 {
 	if (pcap_check_activated(p))
-		return PCAP_ERROR_ACTIVATED;
+	{
+		if (p->md.timeout != timeout_ms)
+		{
+			if (PacketSetReadTimeout(p->adapter, p->md.timeout))
+				return 0;
+			else
+				return PCAP_ERROR;
+		}
+	}
 	p->md.timeout = timeout_ms;
 	return 0;
 }
