@@ -15,6 +15,7 @@ $cert_ms_cross_cert = "C:\DigiCert High Assurance EV Root CA.crt"
 $cert_hash_vista = "67cdca7703a01b25e6e0426072ec08b0046eb5f8"
 $cert_hash_win7_above = "928101b5d0631c8e1ada651478e41afaac798b4c"
 $cert_timestamp_server = "http://timestamp.digicert.com"
+$has_timestamp = 1
 
 $driver_name_array = "npf", "npcap"
 $vs_config_mode_array = "(WinPcap Mode)", ""
@@ -241,22 +242,50 @@ function copy_and_sign($file_name, $from_path, $to_path)
 
 function sign_driver_sha1($file_path_name)
 {
-	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name
+	if ($has_timestamp)
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name
+	}
+	else
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", $file_path_name
+	}
 }
 
 function sign_driver_sha256($file_path_name)
 {
-	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
+	if ($has_timestamp)
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
+	}
+	else
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", $file_path_name
+	}
 }
 
 function sign_file_sha1($file_path_name)
 {
-	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name
+	if ($has_timestamp)
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name
+	}
+	else
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha1", $file_path_name
+	}
 }
 
 function sign_file_sha256($file_path_name)
 {
-	&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
+	if ($has_timestamp)
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
+	}
+	else
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", $file_path_name
+	}
 }
 
 function generate_installer($install_script, $installer_name)
@@ -332,8 +361,19 @@ elseif ($args.count -eq 1)
 	{
 		do_deploy
 	}
+	elseif ($args[0] -eq "deploy-no_timestamp")
+	{
+		$has_timestamp = 0
+		do_deploy
+	}
 	elseif ($args[0] -eq "debug-deploy")
 	{
+		$driver_init_from_path_array = $driver_init_from_path_array.replace("Release", "Debug")
+		do_deploy
+	}
+	elseif ($args[0] -eq "debug-deploy-no_timestamp")
+	{
+		$has_timestamp = 0
 		$driver_init_from_path_array = $driver_init_from_path_array.replace("Release", "Debug")
 		do_deploy
 	}
