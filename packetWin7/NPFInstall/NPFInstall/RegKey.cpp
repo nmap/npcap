@@ -259,7 +259,7 @@ bool RegKey::EnumerateKeys(LPTSTR pszSubkeyName, const DWORD dwIndex)
 	if (lRetValue == ERROR_NO_MORE_ITEMS)
 	{
 		iLastErrorCode_ = ERROR_NO_MORE_ITEMS;
-		_tcscpy(pszSubkeyName, subkeyNameBuffer);
+		_tcscpy_s(pszSubkeyName, 2048, subkeyNameBuffer);
 		return false;
 	}
 
@@ -269,7 +269,7 @@ bool RegKey::EnumerateKeys(LPTSTR pszSubkeyName, const DWORD dwIndex)
 		return false;
 	}
 
-	_tcscpy(pszSubkeyName, subkeyNameBuffer);
+	_tcscpy_s(pszSubkeyName, 2048, subkeyNameBuffer);
 
 	iLastErrorCode_ = ERROR_SUCCESS;
 	return true;
@@ -310,7 +310,7 @@ bool RegKey::ConnectRemote(HKEY hKeyToOpen, LPCTSTR pszComputerName)
 		bRemote_ = true;
 		pszComputerName_ = new TCHAR[MAX_COMPUTERNAME_LENGTH + 1];
 		memset(pszComputerName_, 0, (MAX_COMPUTERNAME_LENGTH + 1) * sizeof(TCHAR));
-		_tcsncpy(pszComputerName_, pszComputerName, MAX_COMPUTERNAME_LENGTH);
+		_tcsncpy_s(pszComputerName_, MAX_COMPUTERNAME_LENGTH + 1, pszComputerName, MAX_COMPUTERNAME_LENGTH);
 	}
 	else
 	{
@@ -401,7 +401,7 @@ bool RegKey::EnumerateValues(LPTSTR pszValueName, LPBYTE lpValue, DWORD& dwValue
 	LONG lRetValue = RegEnumValue(hTheKey_, dwIndex, tmpName, &dwTmpNameSize, NULL, &dwValueType, lpValue, &dwValueSize);
 	if (lRetValue == ERROR_NO_MORE_ITEMS)
 	{
-		_tcscpy(pszValueName, tmpName);
+		_tcscpy_s(pszValueName, 2048, tmpName);
 		iLastErrorCode_ = ERROR_NO_MORE_ITEMS;
 		return false;
 	}
@@ -412,7 +412,7 @@ bool RegKey::EnumerateValues(LPTSTR pszValueName, LPBYTE lpValue, DWORD& dwValue
 		return false;
 	}
 
-	_tcscpy(pszValueName, tmpName);
+	_tcscpy_s(pszValueName, 2048, tmpName);
 
 	iLastErrorCode_ = ERROR_SUCCESS;
 	return true;
@@ -552,7 +552,7 @@ bool RegKey::GetValue(LPCTSTR pszValueName, LPTSTR pszValue, DWORD& dwValueLengt
 		return false;
 	}
 
-	_tcsncpy(pszValue, tmpBuffer, dwValueLength);
+	_tcsncpy_s(pszValue, dwValueLength + 1, tmpBuffer, dwValueLength);
 	delete[] tmpBuffer;
 	tmpBuffer = NULL;
 
@@ -1050,14 +1050,14 @@ bool RegKey::MoveKey(LPCTSTR pszSourceKey, LPCTSTR pszDestKey, HKEY hBaseKey /* 
 			TCHAR szSourceKey[_MAX_PATH] = { '\0' };
 			TCHAR szDestKey[_MAX_PATH] = { '\0' };
 
-			_tcscpy(szSourceKey, pszSourceKey);
-			_tcscpy(szDestKey, pszDestKey);
+			_tcscpy_s(szSourceKey, _MAX_PATH, pszSourceKey);
+			_tcscpy_s(szDestKey, _MAX_PATH, pszDestKey);
 
-			_tcscat(szSourceKey, _T("\\"));
-			_tcscat(szSourceKey, szValueName);
+			_tcscat_s(szSourceKey, _MAX_PATH, _T("\\"));
+			_tcscat_s(szSourceKey, _MAX_PATH, szValueName);
 
-			_tcscat(szDestKey, _T("\\"));
-			_tcscat(szDestKey, szValueName);
+			_tcscat_s(szDestKey, _MAX_PATH, _T("\\"));
+			_tcscat_s(szDestKey, _MAX_PATH, szValueName);
 
 			if (!MoveKey(szSourceKey, szDestKey, hBaseKey))
 				dwIndex++;
@@ -1142,7 +1142,7 @@ void OutputErr(LPCTSTR pBuff)
 	if (!pBuff) return;
 
 	OutputDebugString(pBuff);
-	_stprintf(_T("%s"), pBuff);
+	_tprintf(_T("%s"), pBuff);
 }
 
 // Display a system error message to the console window

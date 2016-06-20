@@ -15,6 +15,9 @@ This code is based on the Windows built-in netsh.exe tool.
 
 #include "LoopbackRename2.h"
 
+// Depress the GetVersionEx() call warning.
+#pragma warning (disable: 4996)
+
 #define			NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR		NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
 #define			NPCAP_LOOPBACK_INTERFACE_MTU				65536
 #define			BUF_SIZE									255
