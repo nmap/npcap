@@ -109,11 +109,13 @@ NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
 
 NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
 NDIS_STRING g_DltNullRegValueName = NDIS_STRING_CONST("DltNull");
+NDIS_STRING g_Dot11SupportRegValueName = NDIS_STRING_CONST("Dot11Support");
 NDIS_STRING g_VlanSupportRegValueName = NDIS_STRING_CONST("VlanSupport");
 NDIS_STRING g_TimestampRegValueName = NDIS_STRING_CONST("TimestampMode");
 
 ULONG g_AdminOnlyMode = 0;
 ULONG g_DltNullMode = 0;
+ULONG g_Dot11SupportMode = 1;
 ULONG g_VlanSupportMode = 0;
 ULONG g_TimestampMode = 0;
 
@@ -245,6 +247,9 @@ DriverEntry(
 	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
 	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
 	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
+	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
+	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
+	g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
 	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
 	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
 	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
@@ -1935,7 +1940,7 @@ NPF_IoControl(
 #endif
 
 #ifdef HAVE_DOT11_SUPPORT
-			if (Open->Medium == NdisMediumNative802_11 && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
+			if (Open->Dot11 && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
 			{
 				if (FunctionCode == BIOCSETOID)
 				{

@@ -287,6 +287,7 @@ typedef struct _OPEN_INSTANCE
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
 #ifdef HAVE_DOT11_SUPPORT
+	BOOLEAN					Dot11;
 	ULONG					Dot11PacketFilter;
 #endif
 

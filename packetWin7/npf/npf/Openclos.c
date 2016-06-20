@@ -49,6 +49,7 @@ extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING g_SendToRxAdapterName;
 extern NDIS_STRING g_BlockRxAdapterName;
 extern NDIS_STRING devicePrefix;
+extern ULONG g_Dot11SupportMode;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	extern HANDLE g_WFPEngineHandle;
@@ -344,13 +345,16 @@ NPF_OpenAdapter(
 
 #ifdef HAVE_DOT11_SUPPORT
 	// Fetch the device's data rate mapping table with the OID_DOT11_DATA_RATE_MAPPING_TABLE OID.
-	if (NPF_GetDataRateMappingTable(Open, &Open->DataRateMappingTable) != STATUS_SUCCESS)
+	if (Open->Dot11)
 	{
-		Open->HasDataRateMappingTable = FALSE;
-	}
-	else
-	{
-		Open->HasDataRateMappingTable = TRUE;
+		if (NPF_GetDataRateMappingTable(Open, &Open->DataRateMappingTable) != STATUS_SUCCESS)
+		{
+			Open->HasDataRateMappingTable = FALSE;
+		}
+		else
+		{
+			Open->HasDataRateMappingTable = TRUE;
+		}
 	}
 #endif
 
@@ -1408,6 +1412,9 @@ NPF_DuplicateOpenObject(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	Open->Loopback = OriginalOpen->Loopback;
 #endif
+#ifdef HAVE_DOT11_SUPPORT
+	Open->Dot11 = OriginalOpen->Dot11;
+#endif
 
 #ifdef HAVE_RX_SUPPORT
 	Open->SendToRxPath = OriginalOpen->SendToRxPath;
@@ -1456,6 +1463,7 @@ NPF_CreateOpenObject(
 #endif
 
 #ifdef HAVE_DOT11_SUPPORT
+	Open->Dot11 = FALSE;
 	Open->HasDataRateMappingTable = FALSE;
 #endif
 
@@ -1811,9 +1819,10 @@ NPF_AttachAdapter(
 				Open->HigherPacketFilter);
 
 #ifdef HAVE_DOT11_SUPPORT
-			if (Open->Medium == NdisMediumNative802_11)
+			if (Open->Medium == NdisMediumNative802_11 && g_Dot11SupportMode)
 			{
 				// Handling raw 802.11 packets need to set NDIS_PACKET_TYPE_802_11_RAW_DATA and NDIS_PACKET_TYPE_802_11_RAW_MGMT in the packet filter.
+				Open->Dot11 = TRUE;
 				Open->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
 				ULONG combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
 				Status = NPF_SetPacketFilter(Open, combinedPacketFilter);

@@ -1054,6 +1054,7 @@ Function write_single_registry_service_options
 	${Endif}
 
 	; Copy the "Loopback" option from software key to services key
+	; Npcap driver will read this option
 	ReadRegStr $0 HKLM "Software\Npcap" "LoopbackAdapter"
 	WriteRegStr HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "LoopbackAdapter" $0
 	${If} $loopback_support == "yes"
@@ -1069,6 +1070,7 @@ Function write_single_registry_service_options
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "DltNull" 0
 	${Endif}
 
+	; Npcap driver will read this option
 	${If} $dot11_support == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "dot11 support" is chosen
 		${If} $dot11_support == "yes"
@@ -1111,19 +1113,17 @@ FunctionEnd
 Function start_driver_service
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $loopback_support == "yes"
-			nsExec::Exec "net start npf"
-			nsExec::Exec "net stop npf"
-		${EndIf}
+		DetailPrint "Starting the npf driver"
+		; nsExec::Exec "net start npf"
+		; nsExec::Exec "net stop npf"
 		nsExec::Exec "net start npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $loopback_support == "yes"
-			nsExec::Exec "net start npcap"
-			nsExec::Exec "net stop npcap"
-		${EndIf}
+		DetailPrint "Starting the npcap driver"
+		; nsExec::Exec "net start npcap"
+		; nsExec::Exec "net stop npcap"
 		nsExec::Exec "net start npcap"
 	${EndIf}
 FunctionEnd
@@ -1131,11 +1131,13 @@ FunctionEnd
 Function stop_driver_service
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
+		DetailPrint "Stopping the npf driver"
 		nsExec::Exec "net stop npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
+		DetailPrint "Stopping the npcap driver"
 		nsExec::Exec "net stop npcap"
 	${EndIf}
 FunctionEnd
@@ -1143,11 +1145,13 @@ FunctionEnd
 Function un.stop_driver_service
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
+		DetailPrint "Stopping the npf driver"
 		nsExec::Exec "net stop npf"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
+		DetailPrint "Stopping the npcap driver"
 		nsExec::Exec "net stop npcap"
 	${EndIf}
 FunctionEnd
@@ -1362,6 +1366,10 @@ install_win7_64bit:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 
 npfdone:
+	; write options to registry "service" key
+	DetailPrint "Writting service options to registry"
+	Call write_registry_service_options
+
 	; register the driver as a system service using Windows API calls
 	; this will work on Windows 2000 (that lacks sc.exe) and higher
 	${If} $os_ver != "xp"
@@ -1372,9 +1380,6 @@ npfdone:
 
 	; add "C:\Windows\System32\Npcap" directory to PATH
 	; Call write_env_var
-
-	; write options to registry "service" key
-	Call write_registry_service_options
 
 	; automatically start the service if performing a silent install
 	${If} $npf_startup == "yes"

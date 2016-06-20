@@ -679,7 +679,7 @@ NPF_TapExForEachOpen(
 #ifdef HAVE_DOT11_SUPPORT
 		// Handle native 802.11 media specific OOB data here.
 		// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
-		if (Open->Medium == NdisMediumNative802_11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
+		if (Open->Dot11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
 		{
 			PDOT11_EXTSTA_RECV_CONTEXT  pwInfo;
 			PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) Dot11RadiotapHeader;
