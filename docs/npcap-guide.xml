@@ -291,31 +291,84 @@ else
 </sect1>
 
 <sect1 id="npcap-feature-native">
-  <title>For software that use Npcap native mode</title>
-  
+  <title>For software that want to use Npcap first when Npcap and WinPcap coexist</title>
+
   <para>
   Prerequisite: Uncheck the <option>Install Npcap in WinPcap API-compatible Mode</option> option at install-time (which is by default).
   </para>
-  
-  <itemizedlist>
-    <listitem><para>Npcap installs its DLLs into <filename>C:\Windows\System32\Npcap\</filename>
-    instead of WinPcap's <filename>C:\Windows\System32\</filename>. So when Npcap and WinPcap coexist, applications who want
-    to use Npcap instead of WinPcap must make <filename>C:\Windows\System32\Npcap\</filename> precedent
-    to the <filename>C:\Windows\System32\</filename> in
-    <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/desktop/ms686203(v=vs.85).aspx">DLL search path</ulink>.
-    If the consumer software implicitly loads <filename>wpcap.dll</filename>, the only way for it
-    to use Npcap first is to deploy the Npcap DLLs (<filename>wpcap.dll, Packet.dll</filename>)
-    together the software EXE in the same folder. If the consumer software exlicitly loads
-    <filename>wpcap.dll</filename> using <function>LoadLibrary</function>, it can also call
-    <function>SetDllDirectory</function> to specify the <filename>C:\Windows\System32\Npcap\</filename>
-    path.</para></listitem>
 
-    <listitem><para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
+  <sect2 id="npcap-feature-native-dll">
+    <title>DLL loading</title>
+
+    <para>Npcap installs its DLLs into <filename>C:\Windows\System32\Npcap\</filename>
+    instead of WinPcap's <filename>C:\Windows\System32\</filename>. Based on the design
+    of <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/desktop/ms686203(v=vs.85).aspx">DLL search path</ulink>,
+    your application will use WinPcap first by default when Npcap and WinPcap coexist,
+    as <filename>C:\Windows\System32\</filename> is prior to <filename>C:\Windows\System32\Npcap\</filename>.
+    So when Npcap and WinPcap coexist, an application that want to use Npcap instead
+    of WinPcap must make <filename>C:\Windows\System32\Npcap\</filename> precedent to the
+    <filename>C:\Windows\System32\</filename> in Dll search path. here we provide ways
+    to modify this search path to make your application load Npcap's DLLs first.
+    Here are two conditions based on how your application links Npcap/WinPcap's library
+    (<filename>wpcap.dll</filename>).</para>
+
+    <sect3 id="npcap-feature-native-dll-implicitly">
+      <title>If the application <emphasis>implicitly</emphasis> link <filename>wpcap.dll</filename>:</title>
+
+      <para>Implicitly linking means that either you specified <filename>wpcap.lib</filename>
+      in your <option>Project Properties</option> -> <option>Configuration Properties</option>
+      -> <option>Linker</option> -> <option>Input</option> -> <option>Additional Dependencies</option> in Visual Studio,
+      or specified <code>#pragma comment(linker, "wpcap.lib")</code> in your code.</para>
+  
+      <para>You need to do the following two steps:</para>
+
+      <itemizedlist>
+      <listitem><para>Specify <filename>wpcap.dll</filename> as a delay-loaded DLL: In
+      Visual Studio, open the <option>Project Properties</option> window. Go to:
+      <option>Configuration Properties</option> -> <option>Linker</option> -> <option>Input</option>
+      -> <option>Delay Loaded Dlls</option>. Enter <filename>wpcap.dll</filename>
+      in that option.</para></listitem>
+
+      <listitem><para>Before calling any <filename>wpcap.dll</filename> functions,
+      call <function>SetDllDirectory</function> to add <filename>C:\Windows\System32\Npcap\</filename>
+      to DLL search path.</para></listitem>
+      </itemizedlist>
+
+      <para><ulink role="hidepdf" url="https://github.com/hsluoyz/WinDump/">Here</ulink>
+      is an example called WinDump, it's a simple packet capture tool using Npcap/WinPcap.
+      And <ulink role="hidepdf" url="https://github.com/hsluoyz/WinDump/commit/dffe2eaa520fc3b449ec0a90dcfa24f96359bbfa">this commit</ulink>
+      makes it able to use Npcap first when Npcap and WinPcap coexist.</para>
+    </sect3>
+
+    <sect3 id="npcap-feature-native-dll-explicitly">
+      <title>If the application <emphasis>explicitly</emphasis> link <filename>wpcap.dll</filename>:</title>
+
+      <para>Explicitly linking means that you exlicitly called <function>LoadLibrary</function>
+      to load <filename>wpcap.dll</filename> and called <function>GetProcAddress</function> to get the
+      function pointers.</para>
+
+      <para>You need to do the following one step:</para>
+
+      <itemizedlist>
+      <listitem><para>Before calling <function>LoadLibrary</function> to load <filename>wpcap.dll</filename>,
+      call <function>SetDllDirectory</function> to add <filename>C:\Windows\System32\Npcap\</filename>
+      to DLL search path.</para></listitem>
+      </itemizedlist>
+
+      <para>The function <function>init_npcap_dll_path</function> is provided in the following example:
+      <ulink role="hidepdf" url="https://github.com/hsluoyz/WinDump/commit/dffe2eaa520fc3b449ec0a90dcfa24f96359bbfa">WinDump</ulink></para>
+    </sect3>
+  </sect2>
+
+  <sect2 id="npcap-feature-native-servicename">
+    <title>Service name</title>
+
+    <para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
     <quote>WinPcap Compatible Mode</quote> OFF. So applications using <command>net start npf</command>
     for starting service must use <command>net start npcap</command> instead. The service name
     can be obtained using the <function>pcap_get_servicename</function> function. See section
-    <quote>Run-time detection</quote> for the usage of <function>pcap_get_servicename</function>.</para></listitem>
-  </itemizedlist>
+    <quote>Run-time detection</quote> for the usage of <function>pcap_get_servicename</function>.</para>
+  </sect2>
 </sect1>
 
 <sect1 id="npcap-feature-loopback">
@@ -756,8 +809,8 @@ managed
   
   <itemizedlist>
   <listitem><para>Avaya Collaboration Services</para></listitem>
-  <listitem><para>Avaya Collaboration Services x64</para></listitem>
   <listitem><para>Avaya UCA Type Library</para></listitem>
+  <listitem><para>Killer Network Manager</para></listitem>
   </itemizedlist>
 </sect1>
 
