@@ -1681,14 +1681,15 @@ NPF_AttachAdapter(
 // 			break;
 // 		}
 
-		IF_LOUD(DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X\n",
+		IF_LOUD(DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
 			AttachParameters->BaseMiniportName->Buffer,
 			AttachParameters->CurrentMacAddress[0],
 			AttachParameters->CurrentMacAddress[1],
 			AttachParameters->CurrentMacAddress[2],
 			AttachParameters->CurrentMacAddress[3],
 			AttachParameters->CurrentMacAddress[4],
-			AttachParameters->CurrentMacAddress[5]);
+			AttachParameters->CurrentMacAddress[5],
+			AttachParameters->MiniportMediaType);
 		)
 
 		// create the adapter object

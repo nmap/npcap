@@ -1836,12 +1836,12 @@ NPF_IoControl(
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCSETOID, fail it");
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCSETOID, fail it", Open->AdapterName.Buffer);
 					SET_FAILURE_UNSUCCESSFUL();
 				}
 				else
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", Open->AdapterName.Buffer, NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
 					*((PUINT)OidData->Data) = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 				}
@@ -1861,12 +1861,12 @@ NPF_IoControl(
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCSETOID, fail it");
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCSETOID, fail it", Open->AdapterName.Buffer);
 					SET_FAILURE_UNSUCCESSFUL();
 				}
 				else
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", 1);
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", Open->AdapterName.Buffer, 1);
 					*((PUINT)OidData->Data) = 1;
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 				}
@@ -1910,12 +1910,12 @@ NPF_IoControl(
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it");
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->AdapterName.Buffer);
 					SET_FAILURE_UNSUCCESSFUL();
 				}
 				else
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", NdisMediumNull);
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->AdapterName.Buffer, NdisMediumNull);
 					*((PUINT)OidData->Data) = NdisMediumNull;
 					OidData->Length = sizeof(UINT);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
@@ -1939,12 +1939,12 @@ NPF_IoControl(
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Npcap 802.11: OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it");
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->AdapterName.Buffer);
 					SET_FAILURE_UNSUCCESSFUL();
 				}
 				else
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Npcap 802.11: OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", NdisMediumRadio80211);
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->AdapterName.Buffer, NdisMediumRadio80211);
 					*((PUINT)OidData->Data) = NdisMediumRadio80211;
 					OidData->Length = sizeof(UINT);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
