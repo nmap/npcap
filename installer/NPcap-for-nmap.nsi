@@ -588,13 +588,6 @@ Function un.registerServiceAPI_xp
 FunctionEnd
 
 Function registerServiceAPI_win7
-	; delete the npf service to avoid an error message later if it already exists
-
-	${If} $loopback_support == "yes"
-		; create the Npcap Loopback Adapter, used for capturing loopback packets
-		ExecWait '"$INSTDIR\NPFInstall.exe" -n -il'
-	${Endif}
-
 	; install the driver
 	Call install_win7_XXbit_driver
 FunctionEnd
@@ -602,8 +595,6 @@ FunctionEnd
 Function un.registerServiceAPI_win7
 	; uninstall the driver
 	Call un.uninstall_win7_XXbit_driver
-
-	ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 FunctionEnd
 
 Function autoStartWinPcap
@@ -1366,6 +1357,11 @@ install_win7_64bit:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 
 npfdone:
+	${If} $loopback_support == "yes"
+		; create "Npcap Loopback Adapter", used for capturing loopback packets
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -il'
+	${Endif}
+
 	; write options to registry "service" key
 	DetailPrint "Writting service options to registry"
 	Call write_registry_service_options
@@ -1472,6 +1468,9 @@ Section "Uninstall"
 	${Else}
 		Call un.registerServiceAPI_xp
 	${EndIf}
+
+	; remove "Npcap Loopback Adapter" if exists
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 
 	; delete our winpcap-nmap and any WinPcapInst registry keys
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
