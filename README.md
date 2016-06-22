@@ -52,20 +52,6 @@ Npcap has its own SDK for ``Non-WinPcap Compatible Mode``. By using it, your sof
 
 If you only want to build your software under ``WinPcap Compatible Mode`` (which is **NOT** recommended), please use the legacy [WinPcap 4.1.2 Developer's Pack](http://www.winpcap.org/devel.htm) instead.
 
-## Our users
-
-Npcap has been used in many software. They are:
-
-* [Nmap](https://nmap.org/) (``Non-WinPcap Compatible Mode``, installer integrated, in beta test)
-* [Wireshark](https://www.wireshark.org/) (``WinPcap Compatible Mode``, installer detected)
-* [GNS3](https://www.gns3.com/) (``Non-WinPcap Compatible Mode``, installer integrated, in beta test)
-* [Aircrack-ng](http://www.aircrack-ng.org/) (in development)
-* [VividCortex](https://www.vividcortex.com/) (``WinPcap Compatible Mode``, recommended in docs)
-* [Elastic Beats](https://www.elastic.co/products/beats) (``WinPcap Compatible Mode``, recommended in FAQ)
-* [ApacheBeat](https://github.com/radoondas/apachebeat) (``WinPcap Compatible Mode``, recommended in FAQ)
-
-Any other user software who want to be listed here can contact: [Yang Luo](mailto:hsluoyz@gmail.com).
-
 ## Bug report
 
 Please report any bugs or issues about Npcap at: https://github.com/nmap/nmap/issues
