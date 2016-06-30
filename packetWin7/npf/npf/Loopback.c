@@ -117,7 +117,8 @@ HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 BOOLEAN
 NPF_IsPacketSelfSent(
 	_In_ PNET_BUFFER_LIST pNetBufferList,
-	_In_ BOOLEAN bIPv4
+	_In_ BOOLEAN bIPv4,
+	_Out_ BOOLEAN *pbInnerIPv4
 	)
 {
 	NTSTATUS			status = STATUS_SUCCESS;
@@ -152,6 +153,7 @@ NPF_IsPacketSelfSent(
 			iProtocol = bIPv4 ? ((PIP_HEADER) pContiguousData)->ip_Protocol : ((PIP6_HEADER) pContiguousData)->ip6_CTL.ip6_HeaderCtl.ip6_NextHeader;
 			if (iProtocol == IPPROTO_NPCAP_LOOPBACK)
 			{
+				*pbInnerIPv4 = bIPv4;
 				TRACE_EXIT();
 				return TRUE;
 			}
@@ -238,7 +240,8 @@ NPF_NetworkClassify(
 	UINT32				ipHeaderSize = 0;
 	UINT32				bytesRetreated = 0;
 	UINT32				bytesRetreatedEthernet = 0;
-	BOOLEAN				bIPv4 = TRUE;
+	BOOLEAN				bIPv4;
+	BOOLEAN				bInnerIPv4;
 	INT32				iDrection = -1;
 	BOOLEAN				bSelfSent = FALSE;
 	PVOID				pContiguousData = NULL;
@@ -331,7 +334,7 @@ NPF_NetworkClassify(
 	}
 
 	//bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN)bIPv4);
-	bSelfSent = (iDrection == 0) ? FALSE : NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN) bIPv4);
+	bSelfSent = (iDrection == 0) ? FALSE : NPF_IsPacketSelfSent(pNetBufferList, bIPv4, &bInnerIPv4);
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 		"NPF_NetworkClassify: NPF_IsPacketSelfSent() [bSelfSent: %#x]\n",
 		bSelfSent);
@@ -363,7 +366,7 @@ NPF_NetworkClassify(
 			compartmentID = (COMPARTMENT_ID)inMetaValues->compartmentId;
 
 		// This cloned NBL will be freed in NPF_NetworkInjectionComplete function.
-		status = FwpsInjectNetworkSendAsync(bIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+		status = FwpsInjectNetworkSendAsync(bInnerIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
 			NULL,
 			0,
 			compartmentID,
