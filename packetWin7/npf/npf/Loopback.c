@@ -238,7 +238,7 @@ NPF_NetworkClassify(
 	UINT32				ipHeaderSize = 0;
 	UINT32				bytesRetreated = 0;
 	UINT32				bytesRetreatedEthernet = 0;
-	INT32				iIPv4 = -1;
+	BOOLEAN				bIPv4 = TRUE;
 	INT32				iDrection = -1;
 	BOOLEAN				bSelfSent = FALSE;
 	PVOID				pContiguousData = NULL;
@@ -275,11 +275,11 @@ NPF_NetworkClassify(
 	// Get the packet protocol (IPv4 or IPv6) and the direction (Inbound or Outbound).
 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
 	{
-		iIPv4 = 1;
+		bIPv4 = TRUE;
 	}
 	else // if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
 	{
-		iIPv4 = 0;
+		bIPv4 = FALSE;
 	}
 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
 	{
@@ -295,7 +295,7 @@ NPF_NetworkClassify(
 		ipHeaderSize = inMetaValues->ipHeaderSize;
 	}
 
-	injectionState = FwpsQueryPacketInjectionState(iIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+	injectionState = FwpsQueryPacketInjectionState(bIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
 		pNetBufferList,
 		NULL);
 	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
@@ -330,8 +330,8 @@ NPF_NetworkClassify(
 		return;
 	}
 
-	//bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN)iIPv4);
-	bSelfSent = (iDrection == 0) ? FALSE : NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN) iIPv4);
+	//bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN)bIPv4);
+	bSelfSent = (iDrection == 0) ? FALSE : NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN) bIPv4);
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 		"NPF_NetworkClassify: NPF_IsPacketSelfSent() [bSelfSent: %#x]\n",
 		bSelfSent);
@@ -339,7 +339,7 @@ NPF_NetworkClassify(
 	if (bSelfSent)
 	{
 		NdisAdvanceNetBufferListDataStart(pNetBufferList,
-			iIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN,
+			bIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN,
 			FALSE,
 			0);
 	}
@@ -363,7 +363,7 @@ NPF_NetworkClassify(
 			compartmentID = (COMPARTMENT_ID)inMetaValues->compartmentId;
 
 		// This cloned NBL will be freed in NPF_NetworkInjectionComplete function.
-		status = FwpsInjectNetworkSendAsync(iIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+		status = FwpsInjectNetworkSendAsync(bIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
 			NULL,
 			0,
 			compartmentID,
@@ -437,12 +437,12 @@ NPF_NetworkClassify(
 		{
 			if (g_DltNullMode)
 			{
-				((PDLT_NULL_HEADER) pContiguousData)->null_type = iIPv4 ? DLTNULLTYPE_IP : DLTNULLTYPE_IPV6;
+				((PDLT_NULL_HEADER) pContiguousData)->null_type = bIPv4 ? DLTNULLTYPE_IP : DLTNULLTYPE_IPV6;
 			}
 			else
 			{
 				RtlZeroMemory(pContiguousData, ETHER_ADDR_LEN * 2);
-				((PETHER_HEADER) pContiguousData)->ether_type = iIPv4 ? RtlUshortByteSwap(ETHERTYPE_IP) : RtlUshortByteSwap(ETHERTYPE_IPV6);
+				((PETHER_HEADER) pContiguousData)->ether_type = bIPv4 ? RtlUshortByteSwap(ETHERTYPE_IP) : RtlUshortByteSwap(ETHERTYPE_IPV6);
 			}
 		}
 
@@ -487,7 +487,7 @@ Exit_WSK_IP_Retreated:
 	if (bSelfSent)
 	{
 		status = NdisRetreatNetBufferListDataStart(pNetBufferList,
-			iIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN,
+			bIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN,
 			0,
 			NULL,
 			NULL);
