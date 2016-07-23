@@ -5,13 +5,12 @@
 #endif
 #define WIN_NT_DRIVER
 
-//#define NDIS620 1 //NDIS 6.2 version (for Windows 7 above) 
-#define NDIS60 1 //NDIS 6.0 version (for Windows Vista above) is currently used
-
 #if (NTDDI_VERSION >= NTDDI_WIN7)
 #define NDIS_SUPPORT_NDIS620 1
+#define NDIS620 1 // NDIS 6.2 version (for Windows 7 and later)
 #else
 #define NDIS_SUPPORT_NDIS6 1
+#define NDIS60 1 // NDIS 6.0 version (for Windows Vista and later)
 #endif
 
 // Specify which version of the NDIS contract you will use here.
