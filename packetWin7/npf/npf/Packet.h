@@ -810,11 +810,12 @@ NPF_InternalRequestComplete(
   performing all the allocations and the setup. In particular, DriverEntry registers all the driver's I/O
   callbacks, creates the devices, defines NPF as a protocol inside NDIS.
 */
-NTSTATUS
-DriverEntry(
-	IN PDRIVER_OBJECT DriverObject,
-	IN PUNICODE_STRING RegistryPath
-	);
+DRIVER_INITIALIZE DriverEntry;
+// NTSTATUS
+// DriverEntry(
+// 	IN PDRIVER_OBJECT DriverObject,
+// 	IN PUNICODE_STRING RegistryPath
+// 	);
 
 
 /*!
@@ -889,11 +890,13 @@ NPF_CreateDevice(
   and buffers needed by the new instance, fills the OPEN_INSTANCE structure associated with it and opens the
   adapter with a call to NdisOpenAdapter.
 */
-NTSTATUS
-NPF_OpenAdapter(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
-	);
+_Dispatch_type_(IRP_MJ_CREATE)
+DRIVER_DISPATCH NPF_OpenAdapter;
+// NTSTATUS
+// NPF_OpenAdapter(
+// 	IN PDEVICE_OBJECT DeviceObject,
+// 	IN PIRP Irp
+// 	);
 
 
 /*!
@@ -907,11 +910,13 @@ NPF_OpenAdapter(
   It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
-NTSTATUS
-NPF_Cleanup(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
-	);
+_Dispatch_type_(IRP_MJ_CLEANUP)
+DRIVER_DISPATCH NPF_Cleanup;
+// NTSTATUS
+// NPF_Cleanup(
+// 	IN PDEVICE_OBJECT DeviceObject,
+// 	IN PIRP Irp
+// 	);
 
 
 /*!
@@ -941,11 +946,13 @@ NPF_CleanupForUnclosed(
   It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
-NTSTATUS
-NPF_CloseAdapter(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
-	);
+_Dispatch_type_(IRP_MJ_CLOSE)
+DRIVER_DISPATCH NPF_CloseAdapter;
+// NTSTATUS
+// NPF_CloseAdapter(
+// 	IN PDEVICE_OBJECT DeviceObject,
+// 	IN PIRP Irp
+// 	);
 
 
 /*!
@@ -1006,11 +1013,13 @@ NPF_TapExForEachOpen(
   -	#BIOCSENDPACKETSSYNC
   -	#BIOCSENDPACKETSNOSYNC
 */
-NTSTATUS
-NPF_IoControl(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
-);
+_Dispatch_type_(IRP_MJ_DEVICE_CONTROL)
+DRIVER_DISPATCH NPF_IoControl;
+// NTSTATUS
+// NPF_IoControl(
+// 	IN PDEVICE_OBJECT DeviceObject,
+// 	IN PIRP Irp
+// );
 
 
 /*!
@@ -1025,11 +1034,13 @@ NPF_IoControl(
   associated with Irp indicates the number of copies of the packet that will be sent: more than one copy of the
   packet can be sent for performance reasons.
 */
-NTSTATUS
-NPF_Write(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
-	);
+_Dispatch_type_(IRP_MJ_WRITE)
+DRIVER_DISPATCH NPF_Write;
+// NTSTATUS
+// NPF_Write(
+// 	IN PDEVICE_OBJECT DeviceObject,
+// 	IN PIRP Irp
+// 	);
 
 
 /*!
@@ -1138,11 +1149,13 @@ NPF_StatusComplete(
   - If the instance is in statistical mode or in dump mode, the application's request is blocked until the
   timeout kept in OPEN_INSTANCE::TimeOut expires.
 */
-NTSTATUS
-NPF_Read(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
-	);
+_Dispatch_type_(IRP_MJ_READ)
+DRIVER_DISPATCH NPF_Read;
+// NTSTATUS
+// NPF_Read(
+// 	IN PDEVICE_OBJECT DeviceObject,
+// 	IN PIRP Irp
+// 	);
 
 
 /*!
