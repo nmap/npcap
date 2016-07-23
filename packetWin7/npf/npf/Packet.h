@@ -838,7 +838,6 @@ NPF_GetRegistryOption_Integer(
 	PUNICODE_STRING RegValueName
 	);
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
   \brief read Npcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.
 
@@ -847,7 +846,6 @@ NPF_GetRegistryOption_Integer(
 VOID
 NPF_GetRegistryOption_String(
 	);
-#endif
 
 /*!
   \brief Creates a device for a given MAC.
