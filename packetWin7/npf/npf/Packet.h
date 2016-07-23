@@ -447,12 +447,13 @@ FILTER_SET_OPTIONS NPF_RegisterOptions;
 
   Function called by NDIS when a new adapter is installed on the machine With Plug and Play.
 */
-NDIS_STATUS
-NPF_AttachAdapter(
-	NDIS_HANDLE                     NdisFilterHandle,
-	NDIS_HANDLE                     FilterDriverContext,
-	PNDIS_FILTER_ATTACH_PARAMETERS  AttachParameters
-	);
+FILTER_ATTACH NPF_AttachAdapter;
+// NDIS_STATUS
+// NPF_AttachAdapter(
+// 	NDIS_HANDLE                     NdisFilterHandle,
+// 	NDIS_HANDLE                     FilterDriverContext,
+// 	PNDIS_FILTER_ATTACH_PARAMETERS  AttachParameters
+// 	);
 
 
 /*!
@@ -464,10 +465,11 @@ NPF_AttachAdapter(
   associated with it. It also releases the waiting user-level app and closes the dump thread if the instance
   is in dump mode.
 */
-VOID
-NPF_DetachAdapter(
-	NDIS_HANDLE     FilterModuleContext
-	);
+FILTER_DETACH NPF_DetachAdapter;
+// VOID
+// NPF_DetachAdapter(
+// 	NDIS_HANDLE     FilterModuleContext
+// 	);
 
 
 /*!
@@ -478,10 +480,11 @@ NPF_DetachAdapter(
   delete the devices and deregisters the filter. The driver can be unloaded by the user stopping the NPF
   service (from control panel or with a console 'net stop npf').
 */
-VOID
-NPF_Unload(
-	IN PDRIVER_OBJECT DriverObject
-	);
+DRIVER_UNLOAD NPF_Unload;
+// VOID
+// NPF_Unload(
+// 	IN PDRIVER_OBJECT DriverObject
+// 	);
 
 
 /*!
@@ -493,11 +496,12 @@ NPF_Unload(
 
   Start the datapath - begin sending and receiving NBLs.
 */
-NDIS_STATUS
-NPF_Restart(
-	NDIS_HANDLE                     FilterModuleContext,
-	PNDIS_FILTER_RESTART_PARAMETERS RestartParameters
-	);
+FILTER_RESTART NPF_Restart;
+// NDIS_STATUS
+// NPF_Restart(
+// 	NDIS_HANDLE                     FilterModuleContext,
+// 	PNDIS_FILTER_RESTART_PARAMETERS RestartParameters
+// 	);
 
 /*!
   \brief Filter pause routine, Callback for NDIS PauseHandler.
@@ -515,11 +519,12 @@ NPF_Restart(
    receive packets, but it may still process OID requests and status
    indications.
 */
-NDIS_STATUS
-NPF_Pause(
-	NDIS_HANDLE                     FilterModuleContext,
-	PNDIS_FILTER_PAUSE_PARAMETERS   PauseParameters
-	);
+FILTER_PAUSE NPF_Pause;
+// NDIS_STATUS
+// NPF_Pause(
+// 	NDIS_HANDLE                     FilterModuleContext,
+// 	PNDIS_FILTER_PAUSE_PARAMETERS   PauseParameters
+// 	);
 
 
 FILTER_OID_REQUEST NPF_OidRequest;
@@ -531,11 +536,12 @@ FILTER_OID_REQUEST_COMPLETE NPF_OidRequestComplete;
 /*!
   \brief Callback for NDIS StatusHandler. Not used by NPF
 */
-VOID
-NPF_Status(
-	NDIS_HANDLE             FilterModuleContext,
-	PNDIS_STATUS_INDICATION StatusIndication
-	);
+FILTER_STATUS NPF_Status;
+// VOID
+// NPF_Status(
+// 	NDIS_HANDLE             FilterModuleContext,
+// 	PNDIS_STATUS_INDICATION StatusIndication
+// 	);
 
 
 /*!
@@ -545,11 +551,12 @@ NPF_Status(
 
   Callback for NDIS DevicePnPEventNotifyHandler. Not used by NPF
 */
-VOID
-NPF_DevicePnPEventNotify(
-	NDIS_HANDLE             FilterModuleContext,
-	PNET_DEVICE_PNP_EVENT   NetDevicePnPEvent
-	);
+FILTER_DEVICE_PNP_EVENT_NOTIFY NPF_DevicePnPEventNotify;
+// VOID
+// NPF_DevicePnPEventNotify(
+// 	NDIS_HANDLE             FilterModuleContext,
+// 	PNET_DEVICE_PNP_EVENT   NetDevicePnPEvent
+// 	);
 
 
 /*!
@@ -560,11 +567,12 @@ NPF_DevicePnPEventNotify(
 
   Callback for NDIS NetPnPEventHandler. Not used by NPF
 */
-NDIS_STATUS
-NPF_NetPnPEvent(
-	NDIS_HANDLE					FilterModuleContext,
-	PNET_PNP_EVENT_NOTIFICATION NetPnPEventNotification
-	);
+FILTER_NET_PNP_EVENT NPF_NetPnPEvent;
+// NDIS_STATUS
+// NPF_NetPnPEvent(
+// 	NDIS_HANDLE					FilterModuleContext,
+// 	PNET_PNP_EVENT_NOTIFICATION NetPnPEventNotification
+// 	);
 
 
 /*!
@@ -581,13 +589,14 @@ NPF_NetPnPEvent(
   driver in the stack.  A filter that doesn't provide a FilerSendNetBufferList
   handler can not originate a send on its own.
 */
-VOID
-NPF_SendEx(
-	NDIS_HANDLE         FilterModuleContext,
-	PNET_BUFFER_LIST    NetBufferLists,
-	NDIS_PORT_NUMBER    PortNumber,
-	ULONG               SendFlags
-	);
+FILTER_SEND_NET_BUFFER_LISTS NPF_SendEx;
+// VOID
+// NPF_SendEx(
+// 	NDIS_HANDLE         FilterModuleContext,
+// 	PNET_BUFFER_LIST    NetBufferLists,
+// 	NDIS_PORT_NUMBER    PortNumber,
+// 	ULONG               SendFlags
+// 	);
 
 
 /*!
@@ -606,12 +615,13 @@ NPF_SendEx(
   provide a FilterReturnNetBufferLists handler cannot originate a receive indication
   on its own.
 */
-VOID
-NPF_ReturnEx(
-	NDIS_HANDLE         FilterModuleContext,
-	PNET_BUFFER_LIST    NetBufferLists,
-	ULONG               ReturnFlags
-	);
+FILTER_RETURN_NET_BUFFER_LISTS NPF_ReturnEx;
+// VOID
+// NPF_ReturnEx(
+// 	NDIS_HANDLE         FilterModuleContext,
+// 	PNET_BUFFER_LIST    NetBufferLists,
+// 	ULONG               ReturnFlags
+// 	);
 
 /*!
   \brief Function to free the Net Buffer Lists initiated by ourself.
@@ -633,12 +643,13 @@ NPF_FreePackets(
   routine.  NDIS will pass along send packets on behalf of your filter more
   efficiently than the filter can.
 */
-VOID
-NPF_SendCompleteEx(
-	NDIS_HANDLE         FilterModuleContext,
-	PNET_BUFFER_LIST    NetBufferLists,
-	ULONG               SendCompleteFlags
-	);
+FILTER_SEND_NET_BUFFER_LISTS_COMPLETE NPF_SendCompleteEx;
+// VOID
+// NPF_SendCompleteEx(
+// 	NDIS_HANDLE         FilterModuleContext,
+// 	PNET_BUFFER_LIST    NetBufferLists,
+// 	ULONG               SendCompleteFlags
+// 	);
 
 
 /*!
@@ -662,14 +673,15 @@ NPF_SendCompleteEx(
   This controls whether the receive indication is an synchronous or
   asynchronous function call.
 */
-VOID
-NPF_TapEx(
-	NDIS_HANDLE         FilterModuleContext,
-	PNET_BUFFER_LIST    NetBufferLists,
-	NDIS_PORT_NUMBER    PortNumber,
-	ULONG               NumberOfNetBufferLists,
-	ULONG               ReceiveFlags
-	);
+FILTER_RECEIVE_NET_BUFFER_LISTS NPF_TapEx;
+// VOID
+// NPF_TapEx(
+// 	NDIS_HANDLE         FilterModuleContext,
+// 	PNET_BUFFER_LIST    NetBufferLists,
+// 	NDIS_PORT_NUMBER    PortNumber,
+// 	ULONG               NumberOfNetBufferLists,
+// 	ULONG               ReceiveFlags
+// 	);
 
 
 /*!
@@ -682,11 +694,12 @@ NPF_TapEx(
   If your driver does not queue any send NBLs, you may omit this routine.
   NDIS will propagate the cancelation on your behalf more efficiently.
 */
-VOID
-NPF_CancelSendNetBufferLists(
-	NDIS_HANDLE             FilterModuleContext,
-	PVOID                   CancelId
-	);
+FILTER_CANCEL_SEND_NET_BUFFER_LISTS NPF_CancelSendNetBufferLists;
+// VOID
+// NPF_CancelSendNetBufferLists(
+// 	NDIS_HANDLE             FilterModuleContext,
+// 	PVOID                   CancelId
+// 	);
 
 
 /*!
@@ -698,10 +711,11 @@ NPF_CancelSendNetBufferLists(
 
   This function set the optional handlers for the filter. Not used by NPF
 */
-NDIS_STATUS
-	NPF_SetModuleOptions(
-	NDIS_HANDLE             FilterModuleContext
-	);
+FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
+// NDIS_STATUS
+// 	NPF_SetModuleOptions(
+// 	NDIS_HANDLE             FilterModuleContext
+// 	);
 
 /*!
   \brief Get the packet filter of the adapter.
