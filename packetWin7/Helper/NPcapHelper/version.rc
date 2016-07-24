@@ -60,7 +60,7 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-#include "Version.rc2"
+#include "version.rc2"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED

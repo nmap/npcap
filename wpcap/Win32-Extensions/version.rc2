@@ -27,7 +27,7 @@ BEGIN
         BLOCK "000004b0"
         BEGIN
 			VALUE "CompanyName",       WINPCAP_COMPANY_NAME
-			VALUE "FileDescription",   "wpcap.dll Dynamic Link Library - based on libpcap " WINPCAP_LIBPCAP_VERSION
+			VALUE "FileDescription",   "The libpcap API"
 			VALUE "FileVersion",       WINPCAP_VER_STRING
 			VALUE "InternalName",      "wpcap.dll"
 			VALUE "LegalCopyright",    WINPCAP_COPYRIGHT_STRING

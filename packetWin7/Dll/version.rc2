@@ -1,5 +1,5 @@
 //
-// WinPcapOem.rc2 - resources Microsoft Visual C++ does not edit directly
+// version.rc2 - resources Microsoft Visual C++ does not edit directly
 //
 
 #ifdef APSTUDIO_INVOKED
@@ -27,22 +27,12 @@ BEGIN
         BLOCK "000004b0"
         BEGIN
 			VALUE "CompanyName",       WINPCAP_COMPANY_NAME
-#ifdef _WINNT4
-			VALUE "FileDescription",   "packet.dll (NT4) Dynamic Link Library"
-#elif defined(_WIN8)
-			VALUE "FileDescription",   "packet.dll (Win8) Dynamic Link Library"
-#elif defined(_WIN7)
-			VALUE "FileDescription",   "packet.dll (Win7) Dynamic Link Library"
-#elif defined(_WINVISTA)
-			VALUE "FileDescription",   "packet.dll (Vista) Dynamic Link Library"
-#else
-			VALUE "FileDescription",   "packet.dll (NT5) Dynamic Link Library"
-#endif
+			VALUE "FileDescription",   "The Packet API for Windows"
 			VALUE "FileVersion",       WINPCAP_VER_STRING
-			VALUE "InternalName",      "packet.dll"
+			VALUE "InternalName",      "Packet.dll"
 			VALUE "LegalCopyright",    WINPCAP_COPYRIGHT_STRING
 			VALUE "LegalTrademarks",   ""
-			VALUE "OriginalFilename",  "packet.dll"
+			VALUE "OriginalFilename",  "Packet.dll"
 			VALUE "ProductName",       WINPCAP_PRODUCT_NAME
 			VALUE "ProductVersion",    WINPCAP_VER_STRING
             VALUE "Build Description", WINPCAP_BUILD_DESCRIPTION

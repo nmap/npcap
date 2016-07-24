@@ -1,5 +1,5 @@
 //
-// WinPcapOem.rc2 - resources Microsoft Visual C++ does not edit directly
+// version.rc2 - resources Microsoft Visual C++ does not edit directly
 //
 
 #ifdef APSTUDIO_INVOKED
@@ -27,11 +27,7 @@ BEGIN
         BLOCK "000004b0"
         BEGIN
 			VALUE "CompanyName",       WINPCAP_COMPANY_NAME
-#ifdef _WIN8
-			VALUE "FileDescription",   "NPFInstall.exe (Win8) Driver Installer"
-#elif defined(_WIN7)
-			VALUE "FileDescription",   "NPFInstall.exe (Win7) Driver Installer"
-#endif
+			VALUE "FileDescription",   "A LWF & WFP driver installation tool"
 			VALUE "FileVersion",       WINPCAP_VER_STRING
 			VALUE "InternalName",      "NPFInstall.exe"
 			VALUE "LegalCopyright",    WINPCAP_COPYRIGHT_STRING

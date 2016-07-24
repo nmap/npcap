@@ -27,12 +27,12 @@ BEGIN
         BLOCK "000004b0"
         BEGIN
 			VALUE "CompanyName",       WINPCAP_COMPANY_NAME
-			VALUE "FileDescription",   "The helper program for \x22Admin-only Mode\x22"
+			VALUE "FileDescription",   "A tool for wireless adapter settings"
 			VALUE "FileVersion",       WINPCAP_VER_STRING
-			VALUE "InternalName",      "NPcapHelper.exe"
+			VALUE "InternalName",      "WlanHelper.exe"
 			VALUE "LegalCopyright",    WINPCAP_COPYRIGHT_STRING
 			VALUE "LegalTrademarks",   ""
-			VALUE "OriginalFilename",  "NPcapHelper.exe"
+			VALUE "OriginalFilename",  "WlanHelper.exe"
 			VALUE "ProductName",       WINPCAP_PRODUCT_NAME
 			VALUE "ProductVersion",    WINPCAP_VER_STRING
             VALUE "Build Description", WINPCAP_BUILD_DESCRIPTION
