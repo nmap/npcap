@@ -25,7 +25,7 @@ $deploy_folder_mode_array = "_winpcap", ""
 # The variables about generating the installer.
 $has_file_updated = 0
 $install_script = "NPcap-for-nmap.nsi"
-$installer_name = "npcap-0.07.exe"
+$installer_name = "npcap-0.08.exe"
 $nsis_compiler_tool = "C:\Program Files (x86)\NSIS\makensis.exe"
 
 ###########################################################

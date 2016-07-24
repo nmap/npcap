@@ -27,12 +27,13 @@
 // 0.5.0.912  -->  Npcap  0.05 beta
 // 0.6.0.301  -->  Npcap  0.06 beta
 // 0.7.0.424  -->  Npcap  0.07 beta
+// 0.8.0.724  -->  Npcap  0.08 beta
 
 #define WINPCAP_MAJOR	5
 #define WINPCAP_MINOR	0
-#define WINPCAP_REV		7
-#define WINPCAP_BUILD	424
-#define WINPCAP_VER_STRING	"0.07"
+#define WINPCAP_REV		8
+#define WINPCAP_BUILD	724
+#define WINPCAP_VER_STRING	"0.08"
 #define WINPCAP_PACKET9x_STRING_VERSION	WINPCAP_VER_STRING
 #define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
 
