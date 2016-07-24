@@ -62,8 +62,8 @@ $init_to_path_array =
 # wpcap.dll
 $wpcap_filename = "wpcap.dll"
 $wpcap_init_from_path_array =
-"..\wpcap\PRJ\Release No AirPcap\x86\",
-"..\wpcap\PRJ\Release No AirPcap\x64\"
+"..\wpcap\libpcap\Win32\Prj\Release\",
+"..\wpcap\libpcap\Win32\Prj\x64\Release\"
 
 ###########################################################
 # Packet.dll
