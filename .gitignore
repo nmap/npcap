@@ -31,6 +31,14 @@ Win7 Release SDV/
 Win7DebugAdmin-onlyMode/
 Win7ReleaseAdmin-onlyMode/
 sdv/
+build.err
+build.log
+msbuild.log
+runsdvui.cmd
+SDV-default.xml
+sdv-user.sdv
+staticdv.job
+StaticDVTrace.log
 /installer/vista/
 /installer/vista_winpcap/
 /installer/win7/
