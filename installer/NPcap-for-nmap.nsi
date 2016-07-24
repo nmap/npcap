@@ -734,7 +734,7 @@ Function copy_win7_32bit_system_dlls
 		SetOutPath $SYSDIR
 		File win8_above_winpcap\x86\wpcap.dll
 		File win8_above_winpcap\x86\Packet.dll
-		File win8_above_winpcap\x86\NPcapHelper.exe
+		File win8_above_winpcap\x86\NpcapHelper.exe
 		File win8_above_winpcap\x86\WlanHelper.exe
 	${EndIf}
 
@@ -743,7 +743,7 @@ Function copy_win7_32bit_system_dlls
 		SetOutPath $SYSDIR\Npcap
 		File win8_above\x86\wpcap.dll
 		File win8_above\x86\Packet.dll
-		File win8_above\x86\NPcapHelper.exe
+		File win8_above\x86\NpcapHelper.exe
 		File win8_above\x86\WlanHelper.exe
 	${EndIf}
 FunctionEnd
@@ -754,7 +754,7 @@ Function copy_win7_64bit_system_dlls
 		SetOutPath $SYSDIR
 		File win8_above_winpcap\x64\wpcap.dll
 		File win8_above_winpcap\x64\Packet.dll
-		File win8_above_winpcap\x64\NPcapHelper.exe
+		File win8_above_winpcap\x64\NpcapHelper.exe
 		File win8_above_winpcap\x64\WlanHelper.exe
 	${EndIf}
 
@@ -763,7 +763,7 @@ Function copy_win7_64bit_system_dlls
 		SetOutPath $SYSDIR\Npcap
 		File win8_above\x64\wpcap.dll
 		File win8_above\x64\Packet.dll
-		File win8_above\x64\NPcapHelper.exe
+		File win8_above\x64\NpcapHelper.exe
 		File win8_above\x64\WlanHelper.exe
 	${EndIf}
 FunctionEnd
@@ -977,7 +977,7 @@ Function un.remove_win7_XXbit_system_dlls
 	${OrIf} $winpcap_mode == "yes"
 		Delete $SYSDIR\wpcap.dll
 		Delete $SYSDIR\Packet.dll
-		Delete $SYSDIR\NPcapHelper.exe
+		Delete $SYSDIR\NpcapHelper.exe
 		Delete $SYSDIR\WlanHelper.exe
 	${EndIf}
 
@@ -985,7 +985,7 @@ Function un.remove_win7_XXbit_system_dlls
 	${OrIf} $winpcap_mode == "yes"
 		Delete $SYSDIR\Npcap\wpcap.dll
 		Delete $SYSDIR\Npcap\Packet.dll
-		Delete $SYSDIR\Npcap\NPcapHelper.exe
+		Delete $SYSDIR\Npcap\NpcapHelper.exe
 		Delete $SYSDIR\Npcap\WlanHelper.exe
 		RMDir "$SYSDIR\Npcap"
 	${EndIf}

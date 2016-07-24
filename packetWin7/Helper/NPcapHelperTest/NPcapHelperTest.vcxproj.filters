@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="NPcapHelperTest.c">
+    <ClCompile Include="NpcapHelperTest.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

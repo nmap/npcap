@@ -129,7 +129,7 @@
     <entry>a LWF &amp; WFP driver installation tool we added to Npcap</entry>
   </row>
   <row>
-    <entry>NPcapHelper.exe</entry>
+    <entry>NpcapHelper.exe</entry>
     <entry>packetWin7\Helper</entry>
     <entry>the helper program for <quote>Admin-only Mode</quote>, will run under <emphasis>Administrator</emphasis> rights</entry>
   </row>

@@ -61,12 +61,12 @@ BOOL bUseNPF60 = FALSE;
 #define MAX_SEM_COUNT 10
 #define MAX_TRY_TIME 50
 #define SLEEP_TIME 50
-// Handle for NPcapHelper named pipe.
-HANDLE g_NPcapHelperPipe = INVALID_HANDLE_VALUE;
+// Handle for NpcapHelper named pipe.
+HANDLE g_NpcapHelperPipe = INVALID_HANDLE_VALUE;
 // Whether this process is running in Administrator mode.
 BOOL g_IsRunByAdmin = FALSE;
-// Whether we have already tried NPcapHelper.
-BOOL g_NPcapHelperTried = FALSE;
+// Whether we have already tried NpcapHelper.
+BOOL g_NpcapHelperTried = FALSE;
 // The handle to this DLL.
 HANDLE g_DllHandle = NULL;
 // The name of "Npcap Loopback Adapter".
@@ -393,7 +393,7 @@ BOOL NPcapCreatePipe(char *pipeName, HANDLE moduleName)
 		return FALSE;
 	}
 	_splitpath_s(lpFilename, szDrive, BUFSIZE, szDir, BUFSIZE, NULL, 0, NULL, 0);
-	_makepath_s(lpFilename, BUFSIZE, szDrive, szDir, "NPcapHelper", ".exe");
+	_makepath_s(lpFilename, BUFSIZE, szDrive, szDir, "NpcapHelper", ".exe");
 
 	if (!PathFileExistsA(lpFilename))
 	{
@@ -479,7 +479,7 @@ HANDLE NPcapRequestHandle(char *sMsg, DWORD *pdwError)
 	char  chBuf[BUFSIZE];
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
-	HANDLE hPipe = g_NPcapHelperPipe;
+	HANDLE hPipe = g_NpcapHelperPipe;
 
 	TRACE_ENTER("NPcapRequestHandle");
 
@@ -693,7 +693,7 @@ void NPcapStartHelper()
 {
 	TRACE_ENTER("NPcapStartHelper");
 
-	g_NPcapHelperTried = TRUE;
+	g_NpcapHelperTried = TRUE;
 
 	// Check if Npcap is installed in "Admin-Only Mode".
 	if (!NPcapIsAdminOnlyMode())
@@ -713,16 +713,16 @@ void NPcapStartHelper()
 		sprintf_s(pipeName, BUFSIZE, "npcap-%d", pid);
 		if (NPcapCreatePipe(pipeName, g_DllHandle))
 		{
-			g_NPcapHelperPipe = NPcapConnect(pipeName);
-			if (g_NPcapHelperPipe == INVALID_HANDLE_VALUE)
+			g_NpcapHelperPipe = NPcapConnect(pipeName);
+			if (g_NpcapHelperPipe == INVALID_HANDLE_VALUE)
 			{
-				// NPcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNPcapHelper() calls.
+				// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
 				g_IsRunByAdmin = TRUE;
 			}
 		}
 		else
 		{
-			// NPcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNPcapHelper() calls.
+			// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
 			g_IsRunByAdmin = TRUE;
 		}
 	}
@@ -734,10 +734,10 @@ void NPcapStopHelper()
 {
 	TRACE_ENTER("NPcapStopHelper");
 
-	if (g_NPcapHelperPipe != INVALID_HANDLE_VALUE)
+	if (g_NpcapHelperPipe != INVALID_HANDLE_VALUE)
 	{
-		CloseHandle(g_NPcapHelperPipe);
-		g_NPcapHelperPipe = INVALID_HANDLE_VALUE;
+		CloseHandle(g_NpcapHelperPipe);
+		g_NpcapHelperPipe = INVALID_HANDLE_VALUE;
 	}
 
 	TRACE_EXIT("NPcapStopHelper");
@@ -1027,7 +1027,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 
 		if (!g_IsRunByAdmin)
 		{
-			// NPcapHelper De-Initialization.
+			// NpcapHelper De-Initialization.
 			NPcapStopHelper();
 		}
 
@@ -2034,13 +2034,13 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 
 	TRACE_PRINT1("Trying to open adapter %s", AdapterNameA);
 
-	// NPcapHelper Initialization, used for accessing the driver with Administrator privilege.
-	if (!g_NPcapHelperTried)
+	// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
+	if (!g_NpcapHelperTried)
 	{
 		NPcapStartHelper();
 	}
 
-	// Try NPcapHelper to start service if we are in Non-Admin mode.
+	// Try NpcapHelper to start service if we are in Non-Admin mode.
 // 	if (!g_IsAdminMode)
 // 	{
 // 		
@@ -2094,13 +2094,13 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	//
 	ZeroMemory(lpAdapter->SymbolicLink, sizeof(lpAdapter->SymbolicLink));
 
-	// Try NPcapHelper to request handle if we are in Non-Admin mode.
+	// Try NpcapHelper to request handle if we are in Non-Admin mode.
 	if (!g_IsRunByAdmin)
 	{
 		//try if it is possible to open the adapter immediately
 		DWORD dwErrorReceived;
 		lpAdapter->hFile = NPcapRequestHandle(SymbolicLinkA, &dwErrorReceived);
-		TRACE_PRINT1("Driver handle from NPcapHelper = %08x", lpAdapter->hFile);
+		TRACE_PRINT1("Driver handle from NpcapHelper = %08x", lpAdapter->hFile);
 		if (lpAdapter->hFile == INVALID_HANDLE_VALUE)
 		{
 			TRACE_PRINT1("ErrorCode = %d", dwErrorReceived);

@@ -1,9 +1,9 @@
 /***************************************************************************
- * NPcapHelperTest.c -- A program used to test NPcapHelper.exe             *
+ * NpcapHelperTest.c -- A program used to test NpcapHelper.exe             *
  * Note: this code is now integrated into packet.dll, this file is only    *
  * used for test. This is for "Admin-only mode", as packet.dll runs on     *
- * non-Admin level and NPcapHelper.exe runs on Admin level. If user denies *
- * the UAC prompt, NPcapHelper.exe will not start.                         *
+ * non-Admin level and NpcapHelper.exe runs on Admin level. If user denies *
+ * the UAC prompt, NpcapHelper.exe will not start.                         *
  *                                                                         *
  * This program is based on Microsoft example:                             *
  * https://msdn.microsoft.com/en-us/library/windows/desktop/aa365592%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396
@@ -19,12 +19,12 @@
 #define MAX_SEM_COUNT 10
 #define MAX_TRY_TIME 50
 #define SLEEP_TIME 50
-// Handle for NPcapHelper named pipe.
-HANDLE g_NPcapHelperPipe = INVALID_HANDLE_VALUE;
+// Handle for NpcapHelper named pipe.
+HANDLE g_NpcapHelperPipe = INVALID_HANDLE_VALUE;
 // Whether this process is running in Administrator mode.
 BOOL g_IsAdminMode = FALSE;
-// Whether we have already tried NPcapHelper.
-BOOL g_NPcapHelperTried = FALSE;
+// Whether we have already tried NpcapHelper.
+BOOL g_NpcapHelperTried = FALSE;
 // The handle to this DLL.
 HANDLE g_DllHandle = NULL;
 
@@ -49,7 +49,7 @@ BOOL NPcapCreatePipe(char *pipeName, HANDLE moduleName)
 		return FALSE;
 	}
 	_splitpath_s(lpFilename, szDrive, BUFSIZE, szDir, BUFSIZE, NULL, 0, NULL, 0);
-	_makepath_s(lpFilename, BUFSIZE, szDrive, szDir, "NPcapHelper", ".exe");
+	_makepath_s(lpFilename, BUFSIZE, szDrive, szDir, "NpcapHelper", ".exe");
 
 	sprintf_s(params, BUFSIZE, "%s %d", pipeName, pid);
 
@@ -146,7 +146,7 @@ HANDLE NPcapRequestHandle(char *sMsg)
 	char  chBuf[BUFSIZE]; 
 	BOOL   fSuccess = FALSE; 
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode; 
-	HANDLE hPipe = g_NPcapHelperPipe;
+	HANDLE hPipe = g_NpcapHelperPipe;
 
 	TRACE_ENTER("NPcapRequestHandle");
 
@@ -284,7 +284,7 @@ void NPcapStartHelper()
 {
 	TRACE_ENTER("NPcapStartHelper");
 
-	g_NPcapHelperTried = TRUE;
+	g_NpcapHelperTried = TRUE;
 
 	// Check if this process is running in Administrator mode.
 	g_IsAdminMode = NPcapIsAdminMode();
@@ -296,16 +296,16 @@ void NPcapStartHelper()
 		sprintf_s(pipeName, BUFSIZE, "npcap-%d", pid);
 		if (NPcapCreatePipe(pipeName, g_DllHandle))
 		{
-			g_NPcapHelperPipe = NPcapConnect(pipeName);
-			if (g_NPcapHelperPipe == INVALID_HANDLE_VALUE)
+			g_NpcapHelperPipe = NPcapConnect(pipeName);
+			if (g_NpcapHelperPipe == INVALID_HANDLE_VALUE)
 			{
-				// NPcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNPcapHelper() calls.
+				// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
 				g_IsAdminMode = TRUE;
 			}
 		}
 		else
 		{
-			// NPcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNPcapHelper() calls.
+			// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
 			g_IsAdminMode = TRUE;
 		}
 	}
@@ -317,10 +317,10 @@ void NPcapStopHelper()
 {
 	TRACE_ENTER("NPcapStopHelper");
 
-	if (g_NPcapHelperPipe != INVALID_HANDLE_VALUE)
+	if (g_NpcapHelperPipe != INVALID_HANDLE_VALUE)
 	{
-		CloseHandle(g_NPcapHelperPipe);
-		g_NPcapHelperPipe = INVALID_HANDLE_VALUE;
+		CloseHandle(g_NpcapHelperPipe);
+		g_NpcapHelperPipe = INVALID_HANDLE_VALUE;
 	}
 
 	TRACE_EXIT("NPcapStopHelper");
@@ -334,8 +334,8 @@ int main(int argc, char* argv[])
 
 	//g_DllHandle = DllHandle;
 
-	// NPcapHelper Initialization, used for accessing the driver with Administrator privilege.
-	if (!g_NPcapHelperTried)
+	// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
+	if (!g_NpcapHelperTried)
 	{
 		NPcapStartHelper();
 	}
@@ -364,7 +364,7 @@ int main(int argc, char* argv[])
 
 	if (!g_IsAdminMode)
 	{
-		// NPcapHelper De-Initialization.
+		// NpcapHelper De-Initialization.
 		NPcapStopHelper();
 	}
 

@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3F697FA8-4C35-416C-A381-2631AAB79D39}</ProjectGuid>
-    <RootNamespace>NPcapHelperTest</RootNamespace>
+    <RootNamespace>NpcapHelperTest</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -178,7 +178,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="NPcapHelperTest.c" />
+    <ClCompile Include="NpcapHelperTest.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\debug.h" />

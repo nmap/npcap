@@ -1,9 +1,9 @@
 /***************************************************************************
- * NPcapHelper.cpp -- A program used to fetch driver handles for packet.dll*
+ * NpcapHelper.cpp -- A program used to fetch driver handles for packet.dll*
  * , it is started by packet.dll and uses Named Pipe to communicate with   *
  * packet.dll. This is for "Admin-only mode", as packet.dll runs on        *
- * non-Admin level and NPcapHelper.exe runs on Admin level. If user denies *
- * the UAC prompt, NPcapHelper.exe will not start.                         *
+ * non-Admin level and NpcapHelper.exe runs on Admin level. If user denies *
+ * the UAC prompt, NpcapHelper.exe will not start.                         *
  *                                                                         *
  * This program is based on Microsoft example:                             *
  * https://msdn.microsoft.com/en-us/library/windows/desktop/aa365592%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396

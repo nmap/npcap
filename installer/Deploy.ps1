@@ -24,7 +24,7 @@ $deploy_folder_mode_array = "_winpcap", ""
 ###########################################################
 # The variables about generating the installer.
 $has_file_updated = 0
-$install_script = "NPcap-for-nmap.nsi"
+$install_script = "Npcap-for-nmap.nsi"
 $installer_name = "npcap-0.08.exe"
 $nsis_compiler_tool = "C:\Program Files (x86)\NSIS\makensis.exe"
 
@@ -80,8 +80,8 @@ $npfinstall_init_from_path_array =
 "..\packetWin7\NPFInstall\x64\Release{0}\"
 
 ###########################################################
-# NPcapHelper.exe
-$npcaphelper_filename = "NPcapHelper.exe"
+# NpcapHelper.exe
+$npcaphelper_filename = "NpcapHelper.exe"
 $npcaphelper_init_from_path_array =
 "..\packetWin7\Helper\release\",
 "..\packetWin7\Helper\x64\release\"
@@ -160,7 +160,7 @@ function initialize_list([ref]$file_name_array, [ref]$from_path_array, [ref]$to_
 		}
 	}
 
-	# NPcapHelper.exe
+	# NpcapHelper.exe
 	for ($i = 0; $i -lt 2; $i ++)
 	{
 		$vs_config_mode = $vs_config_mode_array[$i]
