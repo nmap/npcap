@@ -1,0 +1,3 @@
+[submodule "wpcap/libpcap"]
+	path = wpcap/libpcap
+	url = ../libpcap
