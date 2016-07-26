@@ -771,7 +771,6 @@ NPF_WaitEndOfBufferedWrite(
 
 //-------------------------------------------------------------------
 
-_Use_decl_annotations_
 VOID
 NPF_FreePackets(
 	PNET_BUFFER_LIST    NetBufferLists

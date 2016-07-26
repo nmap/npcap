@@ -612,7 +612,7 @@ NPF_GetDataRateMappingTable(
 	ASSERT(pOpen != NULL);
 	ASSERT(pDataRateMappingTable != NULL);
 
-	DOT11_DATA_RATE_MAPPING_TABLE DataRateMappingTable;
+	DOT11_DATA_RATE_MAPPING_TABLE DataRateMappingTable = { 0 };
 	ULONG BytesProcessed = 0;
 
 	NPF_DoInternalRequest(pOpen,
@@ -683,7 +683,7 @@ NPF_GetCurrentOperationMode(
 	ASSERT(pOpen != NULL);
 	ASSERT(pCurrentOperationMode != NULL);
 
-	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode;
+	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode = { 0 };
 	ULONG BytesProcessed = 0;
 
 	NPF_DoInternalRequest(pOpen,
@@ -743,7 +743,7 @@ NPF_GetCurrentChannel(
 	ASSERT(pOpen != NULL);
 	ASSERT(pCurrentChannel != NULL);
 
-	ULONG CurrentChannel;
+	ULONG CurrentChannel = 0;
 	ULONG BytesProcessed = 0;
 
 	NPF_DoInternalRequest(pOpen,
@@ -800,7 +800,7 @@ NPF_GetCurrentFrequency(
 	ASSERT(pOpen != NULL);
 	ASSERT(pCurrentFrequency != NULL);
 
-	ULONG CurrentFrequency;
+	ULONG CurrentFrequency = 0;
 	ULONG BytesProcessed = 0;
 
 	NPF_DoInternalRequest(pOpen,
@@ -1855,7 +1855,7 @@ NPF_Pause(
 {
 	POPEN_INSTANCE          Open = (POPEN_INSTANCE)FilterModuleContext;
 	POPEN_INSTANCE			GroupOpen;
-	NDIS_STATUS             Status;
+	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
 
 	UNREFERENCED_PARAMETER(PauseParameters);
 	TRACE_ENTER();

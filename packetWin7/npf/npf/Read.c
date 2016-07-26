@@ -57,6 +57,7 @@ extern ULONG g_VlanSupportMode;
 
 //-------------------------------------------------------------------
 
+_Use_decl_annotations_
 NTSTATUS
 NPF_Read(
 	IN PDEVICE_OBJECT DeviceObject,
@@ -147,6 +148,7 @@ NPF_Read(
 		{
 			//wait until some packets arrive or the timeout expires
 			if (Open->TimeOut.QuadPart != (LONGLONG)IMMEDIATE)
+#pragma warning (disable: 28118)
 				KeWaitForSingleObject(Open->ReadEvent,
 				UserRequest,
 				KernelMode,
@@ -159,7 +161,7 @@ NPF_Read(
 		if (Open->mode & MODE_STAT)
 		{
 			//this capture instance is in statistics mode
-			CurrBuff = (PUCHAR) MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
+			CurrBuff = (PUCHAR) MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
 
 			if (CurrBuff == NULL)
 			{
@@ -343,7 +345,7 @@ NPF_Read(
 	current_cpu = 0;
 	available = IrpSp->Parameters.Read.Length;
 
-	packp = (PUCHAR) MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
+	packp = (PUCHAR) MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
 
 
 	if (packp == NULL)

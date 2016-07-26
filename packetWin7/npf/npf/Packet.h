@@ -56,14 +56,6 @@
 #endif //HAVE_BUGGY_TME_SUPPORT
 
 
-//
-// Needed to disable a warning due to the #pragma prefast directives,
-// that are ignored by the normal DDK compiler
-//
-#ifndef _PREFAST_
-#pragma warning(disable:4068)
-#endif
-
 #include "win_bpf.h"
 
 #define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel) NdisAcquireSpinLock(_pLock)

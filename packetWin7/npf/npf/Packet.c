@@ -761,7 +761,8 @@ NPF_GetRegistryOption_String(
 					g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
 					g_OutputString->Buffer = ExAllocatePoolWithTag(PagedPool, g_OutputString->MaximumLength, '3PWA');
 
-					RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
+					if (g_OutputString->Buffer)
+						RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
 				}
 
 				ExFreePool(valueInfoP);
@@ -1685,7 +1686,6 @@ NPF_IoControl(
 		//
 		for (i = 0; i < g_NCpu ; i++)
 		{
-#pragma prefast(suppress:8103, "There's no Spinlock leak here, as it's released some lines below.")
 			NdisAcquireSpinLock(&Open->CpuData[i].BufferLock);
 		}
 
@@ -1722,14 +1722,11 @@ NPF_IoControl(
 		//
 		i = g_NCpu;
 
-		do
+		while (i > 0)
 		{
 			i --;
-
-#pragma prefast(suppress:8107, "There's no Spinlock leak here, as it's acquired some lines above.")
 			NdisReleaseSpinLock(&Open->CpuData[i].BufferLock);
 		}
-		while (i != 0);
 
 		SET_RESULT_SUCCESS(0);
 		break;
@@ -2161,7 +2158,6 @@ NPF_ResetBufferContents(
 	//
 	for (i = 0 ; i < g_NCpu ; i++)
 	{
-		//#pragma prefast(suppress:8103, "There's no Spinlock leak here, as it's released some lines below.")
 		NdisAcquireSpinLock(&Open->CpuData[i].BufferLock);
 	}
 
@@ -2186,11 +2182,9 @@ NPF_ResetBufferContents(
 	//
 	i = g_NCpu;
 
-	do
+	while (i > 0)
 	{
 		i--;
-#pragma prefast(suppress:8107, "There's no Spinlock leak here, as it's allocated some lines above.")
 		NdisReleaseSpinLock(&Open->CpuData[i].BufferLock);
 	}
-	while (i != 0);
 }
