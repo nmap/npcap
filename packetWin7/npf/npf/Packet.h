@@ -1006,6 +1006,7 @@ NPF_TapExForEachOpen(
   -	#BIOCSENDPACKETSNOSYNC
 */
 _Dispatch_type_(IRP_MJ_DEVICE_CONTROL)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 DRIVER_DISPATCH NPF_IoControl;
 // NTSTATUS
 // NPF_IoControl(

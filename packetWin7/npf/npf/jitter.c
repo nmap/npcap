@@ -96,6 +96,7 @@ BPF_filter_function BPFtoX86(struct bpf_insn* prog, UINT nins, INT* mem)
 
 	// Allocate the reference table for the jumps
 #ifdef NTKERNEL
+#pragma warning (disable: 30030)
 	stream.refs = (UINT *)ExAllocatePoolWithTag(NonPagedPoolExecute, (nins + 1) * sizeof(UINT), '0JWA');
 #else
 	stream.refs = (UINT *)malloc((nins + 1) * sizeof(UINT));
@@ -543,6 +544,7 @@ BPF_filter_function BPFtoX86(struct bpf_insn* prog, UINT nins, INT* mem)
 			break;
 
 #ifdef NTKERNEL
+#pragma warning (disable: 30030)
 		stream.ibuf = (CHAR *)ExAllocatePoolWithTag(NonPagedPoolExecute, stream.cur_ip, '1JWA');
 #else
 		stream.ibuf = (CHAR *)malloc(stream.cur_ip);
@@ -559,6 +561,7 @@ BPF_filter_function BPFtoX86(struct bpf_insn* prog, UINT nins, INT* mem)
 
 		// modify the reference table to contain the offsets and not the lengths of the instructions
 		for (i = 1; i < nins + 1; i++)
+#pragma warning (disable: 6385)
 			stream.refs[i] += stream.refs[i - 1];
 
 		// Reset the counters
@@ -585,6 +588,7 @@ JIT_BPF_Filter* BPF_jitter(struct bpf_insn* fp, INT nins)
 
 	// Allocate the filter structure
 #ifdef NTKERNEL
+#pragma warning (disable: 30030)
 	Filter = (struct JIT_BPF_Filter *)ExAllocatePoolWithTag(NonPagedPoolExecute, sizeof(struct JIT_BPF_Filter), '2JWA');
 #else
 	Filter = (struct JIT_BPF_Filter *)malloc(sizeof(struct JIT_BPF_Filter));
@@ -596,6 +600,7 @@ JIT_BPF_Filter* BPF_jitter(struct bpf_insn* fp, INT nins)
 
 	// Allocate the filter's memory
 #ifdef NTKERNEL
+#pragma warning (disable: 30030)
 	Filter->mem = (INT *)ExAllocatePoolWithTag(NonPagedPoolExecute, BPF_MEMWORDS * sizeof(INT), '3JWA');
 #else
 	Filter->mem = (INT *)malloc(BPF_MEMWORDS * sizeof(INT));

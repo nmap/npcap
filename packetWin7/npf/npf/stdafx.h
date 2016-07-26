@@ -31,8 +31,6 @@
 
 #define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
 
-//#pragma comment(lib, "ndis.lib")
-
 #define WIN9X_COMPAT_SPINLOCK
 
 #include <ntddk.h>

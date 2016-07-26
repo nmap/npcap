@@ -1038,6 +1038,7 @@ Return Value:
 
 //-------------------------------------------------------------------
 
+_Use_decl_annotations_
 NTSTATUS
 NPF_IoControl(
 	IN PDEVICE_OBJECT DeviceObject,
@@ -1725,6 +1726,7 @@ NPF_IoControl(
 		while (i > 0)
 		{
 			i --;
+#pragma warning (disable: 28122)
 			NdisReleaseSpinLock(&Open->CpuData[i].BufferLock);
 		}
 
