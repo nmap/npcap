@@ -37,8 +37,10 @@ msbuild.log
 runsdvui.cmd
 SDV-default.xml
 sdv-user.sdv
+sdv-map.h
 staticdv.job
 StaticDVTrace.log
+npcap.res
 /installer/vista/
 /installer/vista_winpcap/
 /installer/win7/
