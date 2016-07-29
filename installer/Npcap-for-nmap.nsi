@@ -78,12 +78,12 @@ Var /GLOBAL cmd_line
 Var /GLOBAL service_name
 
 Var /GLOBAL npf_startup
-Var /GLOBAL admin_only
-Var /GLOBAL winpcap_mode
 Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
+Var /GLOBAL admin_only
 Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
+Var /GLOBAL winpcap_mode
 
 Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
@@ -157,7 +157,7 @@ VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2016 Insecure.Com LLC ($\
 ;Pages
 
 !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
-Page custom adminOnlyOptionsPage doAdminOnlyOptions
+Page custom OptionsPage doOptions
 ; Don't let user choose where to install the files. WinPcap doesn't let people, and it's one less thing for us to worry about.
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -183,9 +183,9 @@ ReserveFile "final.ini"
 
 Function getInstallOptions
 	StrCpy $npf_startup "yes"
-	StrCpy $admin_only "no"
 	StrCpy $loopback_support "yes"
 	StrCpy $dlt_null "no"
+	StrCpy $admin_only "no"
 	StrCpy $dot11_support "no"
 	StrCpy $vlan_support "no"
 	StrCpy $winpcap_mode "no"
@@ -196,19 +196,13 @@ Function getInstallOptions
 		FileRead $4 $cmd_line ; we read until the end of line (including carriage return and new line) and save it to $1
 		FileClose $4 ; and close the file
 	${Else}
-		${GetParameters} $cmd_line ; $cmd_line = '/npf_startup=yes /admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
+		${GetParameters} $cmd_line ; $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
 	${EndIf}
 
 	${GetOptions} $cmd_line "/npf_startup=" $R0
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "no"
 		StrCpy $npf_startup $R0
-	${EndIf}
-
-	${GetOptions} $cmd_line "/admin_only=" $R0
-	${If} $R0 S== "yes"
-	${OrIf} $R0 S== "no"
-		StrCpy $admin_only $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/loopback_support=" $R0
@@ -221,6 +215,12 @@ Function getInstallOptions
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "no"
 		StrCpy $dlt_null $R0
+	${EndIf}
+
+	${GetOptions} $cmd_line "/admin_only=" $R0
+	${If} $R0 S== "yes"
+	${OrIf} $R0 S== "no"
+		StrCpy $admin_only $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/dot11_support=" $R0
@@ -412,28 +412,28 @@ no_silent:
 	${EndIf}
 FunctionEnd
 
-Function adminOnlyOptionsPage
+Function OptionsPage
 	${If} $npf_startup == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "State" 0
 	${ElseIf} $npf_startup == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "State" 1
 	${EndIf}
 
-	${If} $admin_only == "no"
+	${If} $loopback_support == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "State" 0
-	${ElseIf} $admin_only == "yes"
+	${ElseIf} $loopback_support == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "State" 1
 	${EndIf}
 
-	${If} $loopback_support == "no"
+	${If} $dlt_null == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 0
-	${ElseIf} $loopback_support == "yes"
+	${ElseIf} $dlt_null == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 1
 	${EndIf}
 
-	${If} $dlt_null == "no"
+	${If} $admin_only == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "State" 0
-	${ElseIf} $dlt_null == "yes"
+	${ElseIf} $admin_only == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "State" 1
 	${EndIf}
 
@@ -474,15 +474,15 @@ no_winpcap_exist:
 	!insertmacro MUI_INSTALLOPTIONS_DISPLAY "options.ini"
 FunctionEnd
 
-Function doAdminOnlyOptions
+Function doOptions
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Settings" "State"
-	${If} $0 == 3
-		ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 3" "State"
+	${If} $0 == 2
+		ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 2" "State"
 		${If} $0 == "0"
-			ReadINIStr $1 "$PLUGINSDIR\options.ini" "Field 4" "HWND"
+			ReadINIStr $1 "$PLUGINSDIR\options.ini" "Field 3" "HWND"
 			EnableWindow $1 0
 		${Else}
-			ReadINIStr $1 "$PLUGINSDIR\options.ini" "Field 4" "HWND"
+			ReadINIStr $1 "$PLUGINSDIR\options.ini" "Field 3" "HWND"
 			EnableWindow $1 1
 		${EndIf}
 		abort
@@ -497,24 +497,24 @@ Function doAdminOnlyOptions
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 2" "State"
 	${If} $0 == "0"
-		StrCpy $admin_only "no" ; by default
-	${Else}
-		StrCpy $admin_only "yes"
-	${EndIf}
-
-	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 3" "State"
-	${If} $0 == "0"
 		StrCpy $loopback_support "no"
 		StrCpy $dlt_null "no" ; if even loopback feature is not enabled, there's no need to care whether it's DLT_NULL or not
 	${Else}
 		StrCpy $loopback_support "yes" ; by default
 	${EndIf}
 
-	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 4" "State"
+	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 3" "State"
 	${If} $0 == "0"
 		StrCpy $dlt_null "no" ; by default
 	${Else}
 		StrCpy $dlt_null "yes"
+	${EndIf}
+
+	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 4" "State"
+	${If} $0 == "0"
+		StrCpy $admin_only "no" ; by default
+	${Else}
+		StrCpy $admin_only "yes"
 	${EndIf}
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 5" "State"
@@ -1032,13 +1032,6 @@ Function write_single_registry_service_options
 	; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
 	WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Start" 1
 
-	; Npcap driver will read this option
-	${If} $admin_only == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
-	${Else}
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "AdminOnly" 0
-	${Endif}
-
 	; Copy the "Loopback" option from software key to services key
 	; Npcap driver will read this option
 	ReadRegStr $0 HKLM "Software\Npcap" "LoopbackAdapter"
@@ -1054,6 +1047,13 @@ Function write_single_registry_service_options
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "DltNull" 1 ; make "DltNull" = 1 only when "dlt null" is chosen
 	${Else}
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "DltNull" 0
+	${Endif}
+
+	; Npcap driver will read this option
+	${If} $admin_only == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "AdminOnly" 1 ; make "AdminOnly" = 1 only when "admin only" is chosen
+	${Else}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "AdminOnly" 0
 	${Endif}
 
 	; Npcap driver will read this option
