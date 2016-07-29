@@ -72,12 +72,12 @@ OutFile "npcap-${VERSION}.exe"
 
 Var /GLOBAL inst_ver
 Var /GLOBAL my_ver
-Var /GLOBAL npf_startup
 
 Var /GLOBAL os_ver
 Var /GLOBAL cmd_line
 Var /GLOBAL service_name
 
+Var /GLOBAL npf_startup
 Var /GLOBAL admin_only
 Var /GLOBAL winpcap_mode
 Var /GLOBAL loopback_support
@@ -162,7 +162,6 @@ Page custom adminOnlyOptionsPage doAdminOnlyOptions
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
-Page custom optionsPage doOptions
 Page custom finalPage doFinal
 
 ;--------------------------------
@@ -174,7 +173,6 @@ Page custom finalPage doFinal
 ;Reserves
 
 ReserveFile "options_admin_only.ini"
-ReserveFile "options.ini"
 ReserveFile "final.ini"
 !insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
 
@@ -185,7 +183,6 @@ ReserveFile "final.ini"
 
 Function getInstallOptions
 	StrCpy $npf_startup "yes"
-
 	StrCpy $admin_only "no"
 	StrCpy $loopback_support "yes"
 	StrCpy $dlt_null "no"
@@ -199,7 +196,7 @@ Function getInstallOptions
 		FileRead $4 $cmd_line ; we read until the end of line (including carriage return and new line) and save it to $1
 		FileClose $4 ; and close the file
 	${Else}
-		${GetParameters} $cmd_line ; $cmd_line = '/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
+		${GetParameters} $cmd_line ; $cmd_line = '/npf_startup=yes /admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
 	${EndIf}
 
 	${GetOptions} $cmd_line "/npf_startup=" $R0
@@ -258,7 +255,6 @@ FunctionEnd
 
 Function .onInit
 	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "options_admin_only.ini"
-	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "options.ini"
 	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "final.ini"
 
 	StrCpy $my_ver "${WIN_VERSION}"
@@ -417,56 +413,62 @@ no_silent:
 FunctionEnd
 
 Function adminOnlyOptionsPage
-	${If} $admin_only == "no"
+	${If} $npf_startup == "no"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State" 0
-	${ElseIf} $admin_only == "yes"
+	${ElseIf} $npf_startup == "yes"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State" 1
 	${EndIf}
 
-	${If} $loopback_support == "no"
+	${If} $admin_only == "no"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 0
-	${ElseIf} $loopback_support == "yes"
+	${ElseIf} $admin_only == "yes"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State" 1
 	${EndIf}
 
-	${If} $dlt_null == "no"
+	${If} $loopback_support == "no"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 0
-	${ElseIf} $dlt_null == "yes"
+	${ElseIf} $loopback_support == "yes"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State" 1
 	${EndIf}
 
-	${If} $dot11_support == "no"
+	${If} $dlt_null == "no"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
-	${ElseIf} $dot11_support == "yes"
+	${ElseIf} $dlt_null == "yes"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 1
 	${EndIf}
 
-	${If} $vlan_support == "no"
+	${If} $dot11_support == "no"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
-	${ElseIf} $vlan_support == "yes"
+	${ElseIf} $dot11_support == "yes"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 1
 	${EndIf}
 
-	${If} $winpcap_mode == "no"
+	${If} $vlan_support == "no"
 		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
+	${ElseIf} $vlan_support == "yes"
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 1
+	${EndIf}
+
+	${If} $winpcap_mode == "no"
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "State" 0
 	${ElseIf} $winpcap_mode == "yes"
-		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 1
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "State" 1
 	${ElseIf} $winpcap_mode == "yes2"
-		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 1
-		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "State" 1
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
 	${EndIf}
 
 	${If} $has_wlan_card != "0"
-		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State" 0
-		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 4" "Flags" "DISABLED"
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State" 0
+		WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 5" "Flags" "DISABLED"
 	${EndIf}
 
 	IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
 winpcap_exist:
 	StrCpy $winpcap_installed "yes"
-	WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, WinPcap will be uninstalled first."
-	WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State" 0
-	WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 6" "Text" "Install Npcap in WinPcap API-compatible Mode (WinPcap will be uninstalled)"
+	WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 8" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, WinPcap will be uninstalled first."
+	WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "State" 0
+	WriteINIStr "$PLUGINSDIR\options_admin_only.ini" "Field 7" "Text" "Install Npcap in WinPcap API-compatible Mode (WinPcap will be uninstalled)"
 no_winpcap_exist:
 	!insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
 	!insertmacro MUI_INSTALLOPTIONS_DISPLAY "options_admin_only.ini"
@@ -474,13 +476,13 @@ FunctionEnd
 
 Function doAdminOnlyOptions
 	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Settings" "State"
-	${If} $0 == 2
-		ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State"
+	${If} $0 == 3
+		ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State"
 		${If} $0 == "0"
-			ReadINIStr $1 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "HWND"
+			ReadINIStr $1 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "HWND"
 			EnableWindow $1 0
 		${Else}
-			ReadINIStr $1 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "HWND"
+			ReadINIStr $1 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "HWND"
 			EnableWindow $1 1
 		${EndIf}
 		abort
@@ -488,12 +490,19 @@ Function doAdminOnlyOptions
 
 	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 1" "State"
 	${If} $0 == "0"
+		StrCpy $npf_startup "no"
+	${Else}
+		StrCpy $npf_startup "yes" ; by default
+	${EndIf}
+
+	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State"
+	${If} $0 == "0"
 		StrCpy $admin_only "no" ; by default
 	${Else}
 		StrCpy $admin_only "yes"
 	${EndIf}
 
-	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 2" "State"
+	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State"
 	${If} $0 == "0"
 		StrCpy $loopback_support "no"
 		StrCpy $dlt_null "no" ; if even loopback feature is not enabled, there's no need to care whether it's DLT_NULL or not
@@ -501,46 +510,34 @@ Function doAdminOnlyOptions
 		StrCpy $loopback_support "yes" ; by default
 	${EndIf}
 
-	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 3" "State"
+	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
 	${If} $0 == "0"
 		StrCpy $dlt_null "no" ; by default
 	${Else}
 		StrCpy $dlt_null "yes"
 	${EndIf}
 
-	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 4" "State"
+	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
 	${If} $0 == "0"
 		StrCpy $dot11_support "no" ; by default
 	${Else}
 		StrCpy $dot11_support "yes"
 	${EndIf}
 
-	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 5" "State"
+	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State"
 	${If} $0 == "0"
 		StrCpy $vlan_support "no" ; by default
 	${Else}
 		StrCpy $vlan_support "yes"
 	${EndIf}
 
-	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 6" "State"
+	ReadINIStr $0 "$PLUGINSDIR\options_admin_only.ini" "Field 7" "State"
 	${If} $0 == "0"
 		StrCpy $winpcap_mode "no" ; by default
 	${Else}
 		${If} $winpcap_mode == "no"
 			StrCpy $winpcap_mode "yes"
 		${EndIf}
-	${EndIf}
-FunctionEnd
-
-Function optionsPage
-	!insertmacro MUI_HEADER_TEXT "Driver Options" ""
-	!insertmacro MUI_INSTALLOPTIONS_DISPLAY "options.ini"
-FunctionEnd
-
-Function doOptions
-	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 1" "State"
-	${If} $0 == "0"
-		Call set_driver_service_not_autostart
 	${EndIf}
 FunctionEnd
 
@@ -598,11 +595,6 @@ FunctionEnd
 Function un.registerServiceAPI_win7
 	; uninstall the driver
 	Call un.uninstall_win7_XXbit_driver
-FunctionEnd
-
-Function autoStartWinPcap
-	Call set_driver_service_autostart
-	Call start_driver_service
 FunctionEnd
 
 Function uninstallWinPcap
@@ -1380,10 +1372,12 @@ npfdone:
 	; add "C:\Windows\System32\Npcap" directory to PATH
 	; Call write_env_var
 
-	; automatically start the service if performing a silent install
+	; automatically start the service if $npf_startup == "yes"
 	${If} $npf_startup == "yes"
-	${OrIf} ${Silent}
-		Call autoStartWinPcap
+		Call set_driver_service_autostart
+		Call start_driver_service
+	${Else}
+		Call set_driver_service_not_autostart
 	${EndIf}
 
 	; Write the rest of the uninstall keys for Windows
