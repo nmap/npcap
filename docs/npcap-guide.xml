@@ -668,13 +668,18 @@ managed
     </para>
 
     <para>
-    <option>/admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=no</option>
+    <option>/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no</option>
     </para>
 
     <itemizedlist>
-    <listitem><para><option>/admin_only=yes</option>: Restrict Npcap driver's access to Administrators only</para></listitem>
+    <listitem><para><option>/npf_startup=yes</option>: Automatically start the Npcap driver at boot time</para></listitem>
     <listitem><para><option>/loopback_support=yes</option>: Support loopback traffic (<quote>Npcap Loopback Adapter</quote> will be created)</para></listitem>
-    <listitem><para><option>/dlt_null=yes</option>: Use <varname>DLT_NULL</varname> as the loopback interface' link layer protocol instead of <varname>DLT_EN10MB</varname></para></listitem>
+    <listitem><para><option>/dlt_null=yes</option>: Use <varname>DLT_NULL</varname> as the loopback interface' link layer
+	protocol instead of <varname>DLT_EN10MB</varname>, so when capturing on <quote>Npcap Loopback Adapter</quote>,
+	the received packets will have <ulink role="hidepdf" url="http://www.tcpdump.org/linktypes.html">DLT_NULL</ulink>
+	header instead of Ethernet header. Notice: many softwares on Windows still only support the Ethernet header,
+	so don't enable this option if you have no idea whether your software supports it or not</para></listitem>
+    <listitem><para><option>/admin_only=yes</option>: Restrict Npcap driver's access to Administrators only</para></listitem>
     <listitem><para><option>/dot11_support=yes</option>: Support raw 802.11 traffic (and <quote>Monitor Mode</quote>) for wireless adapters</para></listitem>
     <listitem><para><option>/vlan_support=yes</option>: Support 802.1Q VLAN tag when capturing and sending data</para></listitem>
     <listitem><para><option>/winpcap_mode=yes</option>: Install Npcap in WinPcap API-compatible Mode</para></listitem>
@@ -688,7 +693,7 @@ managed
     </para>
 
     <para>
-    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
+    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
     </para>
 
     <para>
@@ -715,7 +720,7 @@ managed
     </para>
 
     <para>
-    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /S /admin_only=no /loopback_support=yes /dlt_null=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
+    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /S /npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
     </para>
 
     <itemizedlist>
