@@ -202,36 +202,42 @@ Function getInstallOptions
 	${GetOptions} $cmd_line "/npf_startup=" $R0
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "no"
+	${OrIf} $R0 S== "disabled"
 		StrCpy $npf_startup $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/loopback_support=" $R0
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "no"
+	${OrIf} $R0 S== "disabled"
 		StrCpy $loopback_support $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/dlt_null=" $R0
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "no"
+	${OrIf} $R0 S== "disabled"
 		StrCpy $dlt_null $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/admin_only=" $R0
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "no"
+	${OrIf} $R0 S== "disabled"
 		StrCpy $admin_only $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/dot11_support=" $R0
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "no"
+	${OrIf} $R0 S== "disabled"
 		StrCpy $dot11_support $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/vlan_support=" $R0
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "no"
+	${OrIf} $R0 S== "disabled"
 		StrCpy $vlan_support $R0
 	${EndIf}
 
@@ -239,6 +245,7 @@ Function getInstallOptions
 	${If} $R0 S== "yes"
 	${OrIf} $R0 S== "yes2"
 	${OrIf} $R0 S== "no"
+	${OrIf} $R0 S== "disabled"
 		StrCpy $winpcap_mode $R0
 	${EndIf}
 FunctionEnd
@@ -440,36 +447,59 @@ Function OptionsPage
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "State" 0
 	${ElseIf} $npf_startup == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "State" 1
+	${ElseIf} $npf_startup == "disabled"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $loopback_support == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "State" 0
 	${ElseIf} $loopback_support == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "State" 1
+	${ElseIf} $loopback_support == "disabled"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "Flags" "DISABLED"
 	${EndIf}
 
-	${If} $dlt_null == "no"
+	${If} $loopback_support == "yes"
+		${If} $dlt_null == "no"
+			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 0
+		${ElseIf} $dlt_null == "yes"
+			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 1
+		${ElseIf} $dlt_null == "disabled"
+			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 0
+			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "Flags" "DISABLED"
+		${EndIf}
+	${Else}
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 0
-	${ElseIf} $dlt_null == "yes"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $admin_only == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "State" 0
 	${ElseIf} $admin_only == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "State" 1
+	${ElseIf} $admin_only == "disabled"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $dot11_support == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
 	${ElseIf} $dot11_support == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 1
+	${ElseIf} $dot11_support == "disabled"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $vlan_support == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
 	${ElseIf} $vlan_support == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
+	${ElseIf} $vlan_support == "disabled"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
@@ -479,6 +509,9 @@ Function OptionsPage
 	${ElseIf} $winpcap_mode == "yes2"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 1
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
+	${ElseIf} $winpcap_mode == "disabled"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $has_wlan_card != "0"
@@ -501,12 +534,14 @@ Function doOptions
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Settings" "State"
 	${If} $0 == 2
 		ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 2" "State"
-		${If} $0 == "0"
-			ReadINIStr $1 "$PLUGINSDIR\options.ini" "Field 3" "HWND"
-			EnableWindow $1 0
-		${Else}
-			ReadINIStr $1 "$PLUGINSDIR\options.ini" "Field 3" "HWND"
-			EnableWindow $1 1
+		${If} $dlt_null != "disabled"
+			${If} $0 == "0"
+				ReadINIStr $1 "$PLUGINSDIR\options.ini" "Field 3" "HWND"
+				EnableWindow $1 0
+			${Else}
+				ReadINIStr $1 "$PLUGINSDIR\options.ini" "Field 3" "HWND"
+				EnableWindow $1 1
+			${EndIf}
 		${EndIf}
 		abort
 	${EndIf}
