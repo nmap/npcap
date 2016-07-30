@@ -253,11 +253,29 @@ FunctionEnd
 ; abort the install. If not, prompt the user about whether to
 ; replace it or not.
 
+Function GetProductVersion
+System::Store S
+Pop $3
+System::Call 'VERSION::GetFileVersionInfoSize(tr3,*i)i.r4'
+System::Call '*(&i$4,t""r1,t""r2)i.r5' ; Set $1 and $2 to "" so they are empty if we fail
+StrCmp $4 0 fail
+StrCmp $5 0 fail
+    System::Call 'VERSION::GetFileVersionInfo(tr3,i,ir4,ir5)i.r0'
+    StrCmp $0 0 fail
+    System::Call 'VERSION::VerQueryValue(ir5,t"\StringFileInfo\000004b0\FileVersion",*t.r6,*i.r7)i.r0'
+    StrCmp $0 0 fail
+    ;System::Call '*$6(i,i,i,i,i.r2,i.r1)'
+fail:
+System::Free $5
+Push $6
+System::Store L
+FunctionEnd
+
 Function .onInit
 	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "options.ini"
 	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "final.ini"
 
-	StrCpy $my_ver "${WIN_VERSION}"
+	StrCpy $my_ver "${VERSION}"
 
 	; On 64-bit Windows, $PROGRAMFILES is "C:\Program Files (x86)" and
 	; $PROGRAMFILES64 is "C:\Program Files". We want "C:\Program Files"
@@ -344,15 +362,20 @@ do_silent:
 
 no_silent:
 	${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-		GetDllVersion "$INSTDIR\NPFInstall.exe" $R0 $R1
-		IntOp $R2 $R0 / 0x00010000
-		IntOp $R3 $R0 & 0x0000FFFF
-		IntOp $R4 $R1 / 0x00010000
-		IntOp $R5 $R1 & 0x0000FFFF
-		StrCpy $inst_ver "$R2.$R3.$R4.$R5"
+		Push "$INSTDIR\NPFInstall.exe"
+		Call GetProductVersion
+		Pop $R0
+		StrCpy $inst_ver $R0
+		; We use ProductVersion from StringFileInfo instead of VersionInfo now.
+		; GetDllVersion "$INSTDIR\NPFInstall.exe" $R0 $R1
+		; IntOp $R2 $R0 / 0x00010000
+		; IntOp $R3 $R0 & 0x0000FFFF
+		; IntOp $R4 $R1 / 0x00010000
+		; IntOp $R5 $R1 & 0x0000FFFF
+		; StrCpy $inst_ver "$R2.$R3.$R4.$R5"
 
 		${If} $inst_ver == $my_ver
-			MessageBox MB_YESNO|MB_ICONQUESTION "Npcap version $inst_ver already exists on this system. Reinstall this version?" IDYES try_uninstallers
+			MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 "Npcap version $inst_ver is already installed. Reinstall (possibly with different options)?" IDYES try_uninstallers
 			quit
 		${Else}
 			MessageBox MB_YESNO|MB_ICONQUESTION "Npcap version $inst_ver exists on this system. Replace with version $my_ver?" IDYES try_uninstallers
