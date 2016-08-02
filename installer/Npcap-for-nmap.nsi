@@ -18,30 +18,6 @@
 ;; Yang Luo
 ;; Updated to 4.1.3, August 2013
 
-;; Yang Luo
-;; Updated to 0.01, June 2015
-
-;; Yang Luo
-;; Updated to 0.02, July 2015
-
-;; Yang Luo
-;; Updated to 0.03, July 2015
-
-;; Yang Luo
-;; Updated to 0.04, August 2015
-
-;; Yang Luo
-;; Updated to 0.05, September 2015
-
-;; Yang Luo
-;; Updated to 0.06, March 2016
-
-;; Yang Luo
-;; Updated to 0.07, April 2016
-
-;; Yang Luo
-;; Updated to 0.08, July 2016
-
 SetCompressor /SOLID /FINAL lzma
 
 ;--------------------------------
@@ -56,9 +32,12 @@ SetCompressor /SOLID /FINAL lzma
 ;--------------------------------
 ;General
 
+; Get the version strings from the C header
+!include "..\version.h"
+
 ; The version of Npcap
-!define VERSION "0.08"
-!define WIN_VERSION "5.0.8.724"
+!define VERSION ${WINPCAP_VER_STRING}
+!define WIN_VERSION "${WINPCAP_MAJOR}.${WINPCAP_MINOR}.${WINPCAP_REV}.${WINPCAP_BUILD}"
 
 ; The system restore point name created by Npcap installer
 !define RESTORE_POINT_NAME_INSTALL "Before installation of Npcap ${VERSION}"

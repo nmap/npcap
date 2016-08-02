@@ -16,16 +16,33 @@ $cert_hash_vista = "67cdca7703a01b25e6e0426072ec08b0046eb5f8"
 $cert_hash_win7_above = "928101b5d0631c8e1ada651478e41afaac798b4c"
 $cert_timestamp_server = "http://timestamp.digicert.com"
 $has_timestamp = 1
+$header_name = "..\version.h"
 
 $driver_name_array = "npf", "npcap"
 $vs_config_mode_array = "(WinPcap Mode)", ""
 $deploy_folder_mode_array = "_winpcap", ""
 
+function get_version()
+{
+    $token = [Management.Automation.PSParser]::Tokenize((Get-Content $header_name), [ref]$null)
+    for ($i = 0; $i -lt $token.Count; $i ++)
+    {
+        if ($token[$i].Content -eq "WINPCAP_VER_STRING")
+        {
+            return $token[$i + 1].Content
+        }
+    }
+	Write-Warning "Error: no valid version found, use 0.00 instead."
+    return "0.00“
+}
+
+$version_no = get_version
+
 ###########################################################
 # The variables about generating the installer.
 $has_file_updated = 0
 $install_script = "Npcap-for-nmap.nsi"
-$installer_name = "npcap-0.08.exe"
+$installer_name = "npcap-{0}.exe" -f $version_no
 $nsis_compiler_tool = "C:\Program Files (x86)\NSIS\makensis.exe"
 
 ###########################################################
