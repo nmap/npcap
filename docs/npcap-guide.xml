@@ -294,7 +294,8 @@ else
   <title>For software that want to use Npcap first when Npcap and WinPcap coexist</title>
 
   <para>
-  Prerequisite: Uncheck the <option>Install Npcap in WinPcap API-compatible Mode</option> option at install-time (which is by default).
+  Prerequisite: Uncheck the <option>Install Npcap in WinPcap API-compatible Mode</option> option at
+  install-time (which is by default).
   </para>
 
   <sect2 id="npcap-feature-native-dll">
@@ -616,11 +617,26 @@ managed
   </sect2>
 </sect1>
 
+<sect1 id="npcap-get-code">
+  <title>Get the code</title>
+
+  <para>
+  Run <command>git clone https://github.com/nmap/npcap</command>: pull this repo. This repo contains
+  <ulink role="hidepdf" url="https://github.com/the-tcpdump-group/libpcap">libpcap</ulink> as a
+  submodule, so make sure that you have also pulled all the submodules.
+  </para>
+</sect1>
+
 <sect1 id="npcap-build">
   <title>Build</title>
 
   <para>
-  Run <command>installer\Build.bat</command>: build all DLLs and the driver. The DLLs need to be built using Visual Studio 2013. And the driver needs to be built using Visual Studio 2015 with Windows SDK 10 10586 &amp; Windows Driver Kit 10 10586.
+  Run <command>installer\Build.bat</command>: build all DLLs and the driver. The DLLs need to be built
+  using Visual Studio 2013. And the driver needs to be built using Visual Studio 2015 with Windows SDK
+  10 10586 &amp; Windows Driver Kit 10 10586. The build of <filename>wpcap.dll</filename> also requires
+  to install <ulink role="hidepdf" url="https://sourceforge.net/projects/winflexbison/">Win flex-bison</ulink>.
+  Please unzip the downloaded package and add the directory to the <filename>PATH</filename>
+  environment variable.
   </para>
 </sect1>
 
@@ -630,10 +646,10 @@ managed
   <para>
   Run <command>installer\Deploy.bat</command>: copy the files from build directories to
   deployment directories and sign the files. Generate an installer named
-  <filename>npcap-nmap-%VERSION%.exe</filename> using
-  <ulink role="hidepdf" url="http://nsis.sourceforge.net/Special_Builds">NSIS large strings build</ulink>
-  with the <ulink role="hidepdf" url="https://github.com/hsluoyz/SysRestore">SysRestore plug-in (special build for Npcap)</ulink>
-  and sign the installer.
+  <filename>npcap-%VERSION%.exe</filename> using
+  <ulink role="hidepdf" url="http://nsis.sourceforge.net/Main_Page">NSIS 2.51</ulink>
+  with the <ulink role="hidepdf" url="https://github.com/hsluoyz/SysRestore">SysRestore
+  plug-in (special build for Npcap)</ulink> and sign the installer.
   </para>
 </sect1>
 
@@ -643,7 +659,7 @@ managed
   <para>
   Run <command>installer\Deploy_Symbols.bat</command>: copy the debug symbol files (.PDB)
   from build directories to deployment directories and package them into a zip file named
-  <filename>npcap-nmap-&lt;VERSION&gt;-DebugSymbols.zip</filename> using
+  <filename>npcap-&lt;VERSION&gt;-DebugSymbols.zip</filename> using
   <ulink role="hidepdf" url="http://www.7-zip.org/">7-Zip</ulink>.
   </para>
 </sect1>
