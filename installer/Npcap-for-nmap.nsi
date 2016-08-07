@@ -895,7 +895,33 @@ Function copy_win7_64bit_driver
 	${EndIf}
 FunctionEnd
 
+!macro !defineifexist _VAR_NAME _FILE_NAME
+	!tempfile _TEMPFILE
+	!ifdef NSIS_WIN32_MAKENSIS
+		; Windows - cmd.exe
+		!system 'if exist "${_FILE_NAME}" echo !define ${_VAR_NAME} > "${_TEMPFILE}"'
+	!else
+		; Posix - sh
+		!system 'if [ -e "${_FILE_NAME}" ]; then echo "!define ${_VAR_NAME}" > "${_TEMPFILE}"; fi'
+	!endif
+	!include '${_TEMPFILE}'
+	!delfile '${_TEMPFILE}'
+	!undef _TEMPFILE
+!macroend
+!define !defineifexist "!insertmacro !defineifexist"
+
 Function install_win7_XXbit_driver
+${!defineifexist} CERT_EXISTS "C:\Insecure.cer"
+!ifdef CERT_EXISTS
+	SetOutPath $TEMP
+	File "C:\Insecure.cer"
+	; add Npcap's cert into the certificate manager, it's used to
+	; remove the “Would you like to install this device software?” prompt
+	; this file can be generated based on this link:
+	; http://www.migee.com/2010/09/24/solution-for-unattendedsilent-installs-and-would-you-like-to-install-this-device-software/
+	ExecWait 'certutil -addstore "TrustedPublisher" "$TEMP\Insecure.cer"' $0
+!endif
+
 	; clear the driver cache in Driver Store
 	ExecWait '"$INSTDIR\NPFInstall.exe" -n -c' $0
 	DetailPrint "The cache in driver store was cleared"
