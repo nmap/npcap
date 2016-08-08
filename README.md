@@ -25,13 +25,17 @@ Npcap
 
 [Npcap Users' Guide](https://htmlpreview.github.io/?https://github.com/nmap/npcap/blob/master/docs/npcap-guide-wrapper.html)
 
+## Get the code
+
+Run ``git clone https://github.com/nmap/npcap``: pull this repo. This repo contains [libpcap](https://github.com/the-tcpdump-group/libpcap) as a submodule, so make sure that you have also pulled all the submodules.
+
 ## Build
 
-Run ``installer\Build.bat``: build all DLLs and the driver. The DLLs need to be built using **Visual Studio 2013**. And the driver needs to be built using **Visual Studio 2015** with **Windows SDK 10 10586** & **Windows Driver Kit 10 10586**.
+Run ``installer\Build.bat``: build all DLLs and the driver. The DLLs need to be built using **Visual Studio 2013**. And the driver needs to be built using **Visual Studio 2015** with **Windows SDK 10 10586** & **Windows Driver Kit 10 10586**. The build of ``wpcap.dll`` also requires to install [Win flex-bison](https://sourceforge.net/projects/winflexbison/). Please unzip the downloaded package and add the directory to the ``PATH`` environment variable.
 
 ## Packaging
 
-Run ``installer\Deploy.bat``: copy the files from build directories to deployment directories and sign the files. Generate an installer named ``npcap-%VERSION%.exe`` using [NSIS large strings build](http://nsis.sourceforge.net/Special_Builds) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore) and sign the installer.
+Run ``installer\Deploy.bat``: copy the files from build directories to deployment directories and sign the files. Generate an installer named ``npcap-%VERSION%.exe`` using [NSIS 2.51](http://nsis.sourceforge.net/Main_Page) with the [SysRestore plug-in (special build for Npcap)](https://github.com/hsluoyz/SysRestore) and sign the installer.
 
 ## Build SDK (optional)
 
