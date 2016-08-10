@@ -647,8 +647,9 @@ managed
   Run <command>installer\Deploy.bat</command>: copy the files from build directories to
   deployment directories and sign the files. Generate an installer named
   <filename>npcap-%VERSION%.exe</filename> using
-  <ulink role="hidepdf" url="http://nsis.sourceforge.net/Main_Page">NSIS 2.51</ulink>
-  with the <ulink role="hidepdf" url="https://github.com/hsluoyz/SysRestore">SysRestore
+  <ulink role="hidepdf" url="http://nsis.sourceforge.net/Main_Page">NSIS 2.51</ulink> with
+  the <ulink role="hidepdf" url="http://nsis.sourceforge.net/Special_Builds#Advanced_logging">advanced logging special build</ulink>
+  and <ulink role="hidepdf" url="https://github.com/hsluoyz/SysRestore">SysRestore
   plug-in (special build for Npcap)</ulink> and sign the installer.
   </para>
 </sect1>
@@ -871,8 +872,65 @@ managed
   <title>Bug report</title>
 
   <para>
-  Please report any bugs or issues about Npcap at: <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues">GitHub Issues</ulink>
+  Please report any bugs or issues about Npcap at:
+  <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues">Nmap issues on GitHub</ulink>.
+  In your report, please provide <emphasis>AT LEAST</emphasis> your OS (Vista |
+  Win7 | Win8 | Win10, x86 | x64), Npcap version and installation options, user
+  software version (e.g. Nmap, Wireshark), reproduce steps and other information
+  you think necessary. If your issue occurs only on a special OS version (e.g. Win10
+  1511, 1607), please mention it in the report.
   </para>
+
+  <sect2 id="npcap-issues-installation-log">
+    <title>Installation log</title>
+
+    <para>
+    Npcap keeps track of the installation in a log file:
+	<filename>C:\Program Files\Npcap\install.log</filename>, please submit it
+	together in your report if you encounter issues about the installation
+	(e.g. the installer halts).
+    </para>
+  </sect2>
+
+  <sect2 id="npcap-issues-driver-log">
+    <title>Driver log</title>
+
+    <para>
+    If you think the driver doesn't function well, you can open an
+	<emphasis>Administrator</emphasis> command prompt,  enter
+	<command>sc query npcap</command> to query the driver status and
+	<command>net start npcap</command> to start the driver (replace
+	<replaceable>npcap</replaceable> with <replaceable>npf</replaceable>
+	if you installed Npcap in <quote>WinPcap Compatible Mode</quote>).
+	The command output will inform you whether there's an error. If
+	the driver is running well, but the issue still exists, then you
+	need to check the driver's log. Normal Npcap releases don't switch
+	on the driver log function for performance. So you have to install
+	a debug version Npcap. We don't build a debug version for every
+	release. Currently, the latest debug version is
+	<ulink role="hidepdf" url="https://github.com/nmap/npcap/releases/tag/v0.07-r16">Npcap 0.07 r16</ulink>.
+	If the currently available debug version Npcap doesn't have your
+	issue, you can ask me to build a debug version Npcap for a specific
+	version in mail. I'll be happy to do that. When you have got an
+	appropriate debug version Npcap, you need to use
+	<ulink role="hidepdf" url="https://technet.microsoft.com/en-us/sysinternals/debugview.aspx">DbgView</ulink>
+	to read the Windows kernel log (which contains our driver log).
+	You may need to turn on DbgView before installing Npcap, if the
+	error occurs when the driver loads. When done, save the DbgView
+	output to a file and submit it in your report.
+    </para>
+  </sect2>
+  <sect2 id="npcap-issues-bsod">
+    <title>Blue screen of death (BSoD) dump</title>
+
+    <para>
+	If you encountered BSoD when using Npcap, please attach the minidump
+	file (in <filename>C:\Windows\Minidump</filename>) to your report
+	together with the Npcap version. We may ask you to provide the full
+	dump (<filename>C:\Windows\MEMORY.DMP</filename>) for further troubleshooting.
+    </para>
+  </sect2>
+
 </sect1>
 
 <sect1 id="npcap-list">

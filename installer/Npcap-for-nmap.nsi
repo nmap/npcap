@@ -272,6 +272,9 @@ Function .onInit
 	${Else}
 		StrCpy $INSTDIR "$PROGRAMFILES64\Npcap"
 	${EndIf}
+	
+	; write the installation log to $INSTDIR\install.log
+	LogSet on
 
 	StrCpy $has_wlan_card "0"
 	; SetOutPath $PLUGINSDIR
