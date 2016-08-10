@@ -376,7 +376,9 @@ no_silent:
 		ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
 		${If} $0 != ""
 		${AndIf} ${FileExists} $0
+			LogSet off
 			ExecWait '$0 _?=$INSTDIR'
+			LogSet on
 			; If the uninstaller fails, then quit the installation.
 			; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
 				; quit
@@ -389,7 +391,9 @@ no_silent:
 		${If} $0 != ""
 		${AndIf} ${FileExists} $0
 			MessageBox MB_OK "Using our old UninstallString, file exists"
+			LogSet off
 			ExecWait '$0 _?=$INSTDIR'
+			LogSet on
 			; If the uninstaller fails, then quit the installation.
 			; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
 				; quit
@@ -413,7 +417,9 @@ no_silent:
 		${EndIf}
 
 		${If} ${FileExists} "$0\uninstall.exe"
+			LogSet off
 			ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
+			LogSet on
 			; If the uninstaller fails, then quit the installation.
 			; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
 				; quit
@@ -1539,6 +1545,9 @@ Section "Uninstall"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
 	DeleteRegKey HKLM "Software\Npcap"
+
+	; delete the installation log
+	Delete $INSTDIR\install.log
 
 	; delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
