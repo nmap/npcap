@@ -233,60 +233,25 @@ StrCpy $inst_ver "$R2.$R3.$R4.$R5"
 <screen>
 char *pcap_version = pcap_lib_version();
 printf("%s", pcap_version);
-// Npcap output:
-// Npcap version 0.07
-//
-// WinPcap output:
-// WinPcap version 4.1.3
+// Npcap output: "Npcap version 0.08, based on libpcap version 1.8.0"
+// WinPcap output: "WinPcap version 4.1.3"
 </screen>
 
-	<para>Considering Npcap has different driver service name in different modes, we provide a
-  way to get the current service name: Npcap exports a <function>pcap_get_servicename</function>
-  function in its libpcap API. It returns the string of Npcap service name (aka
-  <replaceable>%SERVICE_NAME%</replaceable>), which can be used to start the service using
-	<command>net start <replaceable>%SERVICE_NAME%</replaceable></command> command.
-	<replaceable>%SERVICE_NAME%</replaceable> is <varname>NPF</varname> if Npcap is installed
-	in <quote>WinPcap Compatible Mode</quote> and <varname>NPCAP</varname> if Npcap is installed
-	at <quote>Non-WinPcap Compatible Mode</quote> (Notice: the returned string is upper-case, and
-	you don't need to free its memory). You need to dynamically import this function if you want
-	to call it because WinPcap doesn't have this function and it's obviously not in the WinPcap
-	SDK. The C code of the <function>pcap_get_servicename</function> usage is shown below.
+	<para>Considering Npcap has different driver service names for different modes, we provide a
+  way to get the current service name. You can query the registry key:
+  <filename>HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Npcap\WinPcapCompatible</filename> for x64
+  systems (or <filename>HKEY_LOCAL_MACHINE\SOFTWARE\Npcap\WinPcapCompatible</filename> for x86
+  systems). If it's 1, it means Npcap is installed in <quote>WinPcap Compatible Mode</quote>. In this mode both
+  <varname>npcap</varname> and <varname>npf</varname> services (drivers) are installed. If
+  the key value is 0, it means Npcap is installed in <quote>Non-WinPcap Compatible Mode</quote>.
+  In this mode only <varname>npcap</varname> service (driver) is installed. We
+  <emphasis>recommend</emphasis> our users to use the <varname>npcap</varname> service instead
+  of <varname>npf</varname>. Given that <varname>npcap</varname> service is always installed
+  in both modes, a good practice is just trying the <varname>npcap</varname> service first.
+  If it fails, then try the <varname>npf</varname> service. This is also what most of our users
+  do in their software based on our investigation. A code sample from Nmap is
+  <ulink role="hidepdf" url="https://github.com/nmap/nmap/blob/8c8e4a08c6c6b7abd2343e5921aafb6077bdb257/mswin32/winfix.cc#L322-L328">here</ulink>.
     </para>
-<screen>
-typedef char* (__cdecl *MY_PCAP_GET_SERVICENAME) ();
-
-HINSTANCE hinstLib;
-// Get a handle to the wpcap DLL module.
-hinstLib = LoadLibrary(TEXT("wpcap.dll"));
-MY_PCAP_GET_SERVICENAME pcap_get_servicename;
-char *servicename_buf;
-
-// If the handle is valid, try to get the function address.  
-if (hinstLib != NULL)
-{
-	pcap_get_servicename = (MY_PCAP_GET_SERVICENAME)GetProcAddress(hinstLib, "pcap_get_servicename");
-	// If the function address is valid, call the function.  
-
-	if (pcap_get_servicename != NULL)
-	{
-		printf("Notice: You are using Npcap.\n");
-		servicename_buf = pcap_get_servicename();
-		// servicename_buf = "NPF" or "NPCAP"
-		printf("Npcap service name: %s\n", servicename_buf);
-	}
-	else
-	{
-		printf("Notice: You are using WinPcap.\n");
-	}
-
-	// Free the DLL module.  
-	FreeLibrary(hinstLib);
-}
-else
-{
-	printf("Notice: Neither Npcap nor WinPcap is installed.\n");
-}
-</screen>
   </sect2>
 </sect1>
 
@@ -366,9 +331,8 @@ else
 
     <para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
     <quote>WinPcap Compatible Mode</quote> OFF. So applications using <command>net start npf</command>
-    for starting service must use <command>net start npcap</command> instead. The service name
-    can be obtained using the <function>pcap_get_servicename</function> function. See section
-    <quote>Run-time detection</quote> for the usage of <function>pcap_get_servicename</function>.</para>
+    for starting service must change to this: run <command>net start npcap</command> first, if it
+	fails, then try <command>net start npf</command>.</para>
   </sect2>
 </sect1>
 
@@ -704,13 +668,36 @@ managed
   </sect2>
 
   <sect2 id="npcap-redistribution-options-gui">
-    <title>How to change default options for GUI Mode installation</title>
+    <title>Disabled options for GUI Mode</title>
+		
+    <para>
+	We may disable certain options in the installer GUI to make them unselectable. This
+	usually means that those options can easily cause compatible issues and are considered
+	not suitable for beginners. Advanced users can still enable them using command-line
+	parameters, which is described in following sections.
+    </para>
+
+    <para>
+	Fortunately, if a distributor wants to start the Npcap installer GUI and disable
+	certain options for reasons like compatibility. It can also use this disable
+	mechanism by setting the command-line parameters to <option>disabled</option>.
+	For example, the following command will start an installer GUI with the
+	<option>dlt_null</option> disabled and unselected:
+    </para>
+
+    <para>
+    <command>npcap-<replaceable>0.08</replaceable>.exe /dlt_null=disabled</command>
+    </para>
+  </sect2>
+
+  <sect2 id="npcap-redistribution-options-gui">
+    <title>How to change default options for GUI Mode</title>
     <para>
     Default options for Npcap installer GUI can be changed. An example is:
     </para>
 
     <para>
-    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
+    <command>npcap-<replaceable>0.08</replaceable>.exe /npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
     </para>
 
     <para>
@@ -718,7 +705,7 @@ managed
     </para>
 
     <para>
-    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /winpcap_mode=yes</command>
+    <command>npcap-<replaceable>0.08</replaceable>.exe /winpcap_mode=yes</command>
     </para>
 
     <para>
@@ -731,13 +718,13 @@ managed
   </sect2>
 
   <sect2 id="npcap-redistribution-options-silent">
-    <title>How to change options for Silent Mode installation</title>
+    <title>How to change options for Silent Mode</title>
     <para>
     An example of changing option feature for silent installation is:
     </para>
 
     <para>
-    <command>npcap-nmap-<replaceable>0.07</replaceable>.exe /S /npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
+    <command>npcap-<replaceable>0.08</replaceable>.exe /S /npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
     </para>
 
     <itemizedlist>
@@ -755,12 +742,12 @@ managed
   <title>Downloads</title>
 
   <para>
-  Latest Npcap installer: <ulink role="hidepdf" url="https://github.com/nmap/npcap/releases">Npcap Release</ulink>
+  Latest Npcap installer: <ulink role="hidepdf" url="https://github.com/nmap/npcap/releases">Npcap Releases</ulink>
   </para>
 
   <para>
   Archived Npcap installers (prior to <option>0.05</option>):
-  <ulink role="hidepdf" url="https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/">Npcap Release (Archieve)</ulink>
+  <ulink role="hidepdf" url="https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/">Npcap Releases (SVN)</ulink>
   </para>
 </sect1>
 
