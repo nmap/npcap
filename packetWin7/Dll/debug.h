@@ -38,8 +38,6 @@
 #include <stdio.h>
 #include <windows.h>
 
-extern CHAR g_LogFileName[1024];
-
 #pragma warning(push)
 #pragma warning(disable : 4127)
 
@@ -61,7 +59,7 @@ static VOID OutputDebugStringVA(LPCSTR Format, ...)
 	do
 	{
 		
-		f = fopen(g_LogFileName, "a");
+		f = fopen("C:\\Program Files\\Npcap\\Packet.log", "a");
 		
 		if (f != NULL)
 			break;
@@ -88,6 +86,56 @@ static VOID OutputDebugStringVA(LPCSTR Format, ...)
 	vfprintf(f, Format, Marker);
 	
 	fclose(f);											
+
+
+	SetLastError(dwLastError);
+}
+
+static VOID OutputDebugStringVW(LPCWSTR Format, ...)
+{
+	FILE *f;											
+	SYSTEMTIME LocalTime;								
+	va_list Marker;
+	DWORD dwThreadId;
+	int loops = 0;
+	DWORD dwLastError = GetLastError();
+
+	dwThreadId = GetCurrentThreadId();
+
+	va_start( Marker, Format );     /* Initialize variable arguments. */
+
+	GetLocalTime(&LocalTime);							
+
+	do
+	{
+
+		f = _wfopen(L"C:\\Program Files\\Npcap\\Packet.log", L"a");
+
+		if (f != NULL)
+			break;
+
+		Sleep(0);
+		loops++;
+
+		if (loops > 10)
+		{
+			SetLastError(dwLastError);
+			return;
+		}
+	}
+	while(1);
+
+	fwprintf(f, L"[%.08X] %.04u-%.02u-%.02u %.02u:%02u:%02u ",
+		dwThreadId,
+		LocalTime.wYear,							
+		LocalTime.wMonth,							
+		LocalTime.wDay,								
+		LocalTime.wHour,
+		LocalTime.wMinute,
+		LocalTime.wSecond);
+	vfwprintf(f, Format, Marker);
+
+	fclose(f);
 
 
 	SetLastError(dwLastError);

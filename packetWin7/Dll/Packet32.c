@@ -109,7 +109,6 @@ CHAR g_LoopbackAdapterName[BUFSIZE] = "";
 
 #ifdef _DEBUG_TO_FILE
 LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName);
-CHAR g_LogFileName[1024] = "winpcap_debug.txt";
 #endif //_DEBUG_TO_FILE
 
 #include <windows.h>
