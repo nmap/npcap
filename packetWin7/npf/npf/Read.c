@@ -53,7 +53,8 @@
  //
  // Global variables
  //
-extern ULONG g_VlanSupportMode;
+extern ULONG	g_VlanSupportMode;
+extern ULONG	g_DltNullMode;
 
 //-------------------------------------------------------------------
 
@@ -638,12 +639,14 @@ NPF_TapExForEachOpen(
 
 	PMDL					pMdl = NULL;
 	UINT					BufferLength;
-	PETHER_HEADER			pEthHeader = NULL;
+	PUCHAR					pDataLinkBuffer = NULL;
 	PNET_BUFFER_LIST		pNetBufList;
 	PNET_BUFFER_LIST		pNextNetBufList;
 	PNET_BUFFER				pNetBuf;
 	PNET_BUFFER				pNextNetBuf;
 	ULONG					Offset;
+
+	UINT					DataLinkHeaderSize;
 
 #ifdef HAVE_DOT11_SUPPORT
 	UCHAR					Dot11RadiotapHeader[256] = { 0 };
@@ -651,6 +654,15 @@ NPF_TapExForEachOpen(
 #endif
 
 	//TRACE_ENTER();
+
+	if (Open->Loopback && g_DltNullMode)
+	{
+		DataLinkHeaderSize = DLT_NULL_HDR_LEN;
+	}
+	else
+	{
+		DataLinkHeaderSize = ETHER_HDR_LEN;
+	}
 
 	pNetBufList = pNetBufferLists;
 	while (pNetBufList != NULL)
@@ -858,12 +870,12 @@ NPF_TapExForEachOpen(
 				{
 					NdisQueryMdl(
 						pMdl,
-						&pEthHeader,
+						&pDataLinkBuffer,
 						&BufferLength,
 						NormalPagePriority);
 				}
 
-				if (pEthHeader == NULL)
+				if (pDataLinkBuffer == NULL)
 				{
 					//
 					//  The system is low on resources. Set up to handle failure
@@ -881,22 +893,22 @@ NPF_TapExForEachOpen(
 				}
 
 				BufferLength -= Offset;
-				pEthHeader = (PETHER_HEADER)((PUCHAR)pEthHeader + Offset);
+				pDataLinkBuffer += Offset;
 
 				// As for single MDL (as we assume) condition, we always have BufferLength == TotalLength
 				if (BufferLength > TotalLength)
 					BufferLength = TotalLength;
 
 				// Handle multiple MDLs situation here, if there's only 20 bytes in the first MDL, then the IP header is in the second MDL.
-				if (BufferLength == ETHER_HDR_LEN && pMdl->Next != NULL)
+				if (BufferLength == DataLinkHeaderSize && pMdl->Next != NULL)
 				{
 					TmpBuffer = ExAllocatePoolWithTag(NonPagedPool, pNetBuf->DataLength, 'NPCA');
-					pEthHeader = NdisGetDataBuffer(pNetBuf,
+					pDataLinkBuffer = NdisGetDataBuffer(pNetBuf,
 						pNetBuf->DataLength,
 						TmpBuffer,
 						1,
 						0);
-					if (!pEthHeader)
+					if (!pDataLinkBuffer)
 					{
 						TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 							"NPF_TapExForEachOpen: NdisGetDataBuffer() [status: %#x]\n",
@@ -929,9 +941,9 @@ NPF_TapExForEachOpen(
 				//
 				//DispatchLevel = NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags);
 
-				HeaderBuffer = (PUCHAR)pEthHeader;
-				HeaderBufferSize = ETHER_HDR_LEN;
-				LookaheadBuffer = (PUCHAR)pEthHeader + ETHER_HDR_LEN;
+				HeaderBuffer = pDataLinkBuffer;
+				HeaderBufferSize = DataLinkHeaderSize;
+				LookaheadBuffer = pDataLinkBuffer + HeaderBufferSize;
 				LookaheadBufferSize = BufferLength - HeaderBufferSize;
 				PacketSize = LookaheadBufferSize;
 
@@ -1058,7 +1070,7 @@ NPF_TapExForEachOpen(
 						{
 							NdisQueryMdl(
 								pCurMdl,
-								&pEthHeader,
+								&pDataLinkBuffer,
 								&BufferLength,
 								NormalPagePriority);
 							TotalPacketSize += BufferLength;
@@ -1186,7 +1198,7 @@ NPF_TapExForEachOpen(
 						{
 							NdisQueryMdl(
 								pCurMdl,
-								&pEthHeader,
+								&pDataLinkBuffer,
 								&BufferLength,
 								NormalPagePriority);
 
@@ -1195,7 +1207,7 @@ NPF_TapExForEachOpen(
 							{
 								IF_LOUD(DbgPrint("The 1st MDL, (Original) MdlSize = %d, Offset = %d\n", BufferLength, Offset);)
 								BufferLength -= Offset;
-								pEthHeader = (PETHER_HEADER)((PUCHAR)pEthHeader + Offset);
+								pDataLinkBuffer += Offset;
 							}
 
 							if (iFres != -1)
@@ -1213,15 +1225,15 @@ NPF_TapExForEachOpen(
 								//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
 								//two copies!!
 								ToCopy = Open->Size - LocalData->P;
-								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, ToCopy);
-								NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pEthHeader + ToCopy, CopyLengthForMDL - ToCopy);
+								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, ToCopy);
+								NdisMoveMappedMemory(LocalData->Buffer + 0, pDataLinkBuffer + ToCopy, CopyLengthForMDL - ToCopy);
 								LocalData->P = CopyLengthForMDL - ToCopy;
 
 								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
 							}
 							else
 							{
-								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pEthHeader, CopyLengthForMDL);
+								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, CopyLengthForMDL);
 								LocalData->P += CopyLengthForMDL;
 
 								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
