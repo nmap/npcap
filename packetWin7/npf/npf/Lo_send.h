@@ -77,20 +77,20 @@ NTAPI
 NPF_WSKCleanup(
 	);
 
-NTSTATUS
-NTAPI
-NPF_WSKSendPacket(
-	IN PCHAR PacketBuff,
-	IN ULONG BuffSize
-	);
-
-NTSTATUS
-NTAPI
-WSKSendPacketInternal(
-	IN BOOLEAN bIPv4,
-	IN PCHAR PacketBuff,
-	IN ULONG BuffSize
-	);
+// NTSTATUS
+// NTAPI
+// NPF_WSKSendPacket(
+// 	IN PCHAR PacketBuff,
+// 	IN ULONG BuffSize
+// 	);
+// 
+// NTSTATUS
+// NTAPI
+// WSKSendPacketInternal(
+// 	IN BOOLEAN bIPv4,
+// 	IN PCHAR PacketBuff,
+// 	IN ULONG BuffSize
+// 	);
 
 NTSTATUS
 NTAPI
@@ -102,7 +102,8 @@ NTSTATUS
 NTAPI
 WSKSendPacketInternal_NBL(
 	IN BOOLEAN bIPv4,
-	IN PNET_BUFFER_LIST NetBufferList
+	IN PNET_BUFFER_LIST NetBufferList,
+	IN ULONG Offset
 	);
 
 PWSK_SOCKET
@@ -120,23 +121,23 @@ WSKCloseSocket(
 	IN PWSK_SOCKET WskSocket
 	);
 
-LONG
-NTAPI
-WSKSend(
-	IN PWSK_SOCKET WskSocket,
-	IN PVOID Buffer,
-	IN ULONG BufferSize,
-	IN ULONG Flags
-	);
-
-LONG
-NTAPI
-WSKSendTo(
-	IN PWSK_SOCKET WskSocket,
-	IN PVOID Buffer,
-	IN ULONG BufferSize,
-	__in_opt PSOCKADDR RemoteAddress
-	);
+// LONG
+// NTAPI
+// WSKSend(
+// 	IN PWSK_SOCKET WskSocket,
+// 	IN PVOID Buffer,
+// 	IN ULONG BufferSize,
+// 	IN ULONG Flags
+// 	);
+// 
+// LONG
+// NTAPI
+// WSKSendTo(
+// 	IN PWSK_SOCKET WskSocket,
+// 	IN PVOID Buffer,
+// 	IN ULONG BufferSize,
+// 	__in_opt PSOCKADDR RemoteAddress
+// 	);
 
 LONG
 NTAPI
