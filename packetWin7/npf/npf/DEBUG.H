@@ -60,32 +60,32 @@ extern ULONG PacketDebugFlag;
 #define IF_VERY_LOUD(A) IF_PACKETDEBUG( PACKET_DEBUG_VERY_LOUD ) { A }
 #define IF_INIT_LOUD(A) IF_PACKETDEBUG( PACKET_DEBUG_INIT ) { A }
 
-#define TRACE_ENTER() DbgPrint("--> " __FUNCTION__)
-#define TRACE_EXIT() DbgPrint("<-- " __FUNCTION__)
-#define TRACE_MESSAGE(__level__, __message__) do{ if (PacketDebugFlag & (__level__)) DbgPrint("    " __FUNCTION__ ": " __message__);} while(FALSE)
+#define TRACE_ENTER() DbgPrint("--> " __FUNCTION__ "\n")
+#define TRACE_EXIT() DbgPrint("<-- " __FUNCTION__ "\n")
+#define TRACE_MESSAGE(__level__, __message__) do{ if (PacketDebugFlag & (__level__)) DbgPrint("    " __FUNCTION__ ": " __message__ "\n");} while(FALSE)
 
 #define TRACE_MESSAGE1(__level__, __message__, __p1__) do			\
 	{																\
 		if (PacketDebugFlag & (__level__))							\
-			DbgPrint("    " __FUNCTION__ ": " __message__, __p1__);	\
+			DbgPrint("    " __FUNCTION__ ": " __message__ "\n", __p1__);	\
 	} while(FALSE)
 
 #define TRACE_MESSAGE2(__level__, __message__, __p1__, __p2__) do			\
 	{																		\
 		if (PacketDebugFlag & (__level__))									\
-			DbgPrint("    " __FUNCTION__ ": " __message__, __p1__, __p2__);	\
+			DbgPrint("    " __FUNCTION__ ": " __message__ "\n", __p1__, __p2__);	\
 	} while(FALSE)
 
 #define TRACE_MESSAGE3(__level__, __message__, __p1__, __p2__, __p3__) do	\
 	{																		\
 		if (PacketDebugFlag & (__level__))									\
-			DbgPrint("    " __FUNCTION__ ": " __message__, __p1__, __p2__, __p3__);	\
+			DbgPrint("    " __FUNCTION__ ": " __message__ "\n", __p1__, __p2__, __p3__);	\
 	} while(FALSE)
 
 #define TRACE_MESSAGE4(__level__, __message__, __p1__, __p2__, __p3__, __p4__) do	\
 	{																		\
 		if (PacketDebugFlag & (__level__))									\
-			DbgPrint("    " __FUNCTION__ ": " __message__, __p1__, __p2__, __p3__, __p4__ );	\
+			DbgPrint("    " __FUNCTION__ ": " __message__ "\n", __p1__, __p2__, __p3__, __p4__ );	\
 	} while(FALSE)
 
 
