@@ -879,6 +879,26 @@ managed
     </para>
   </sect2>
 
+  <sect2 id="npcap-issues-packet-log">
+    <title>Dynamic link library (DLL) log</title>
+
+    <para>
+    If you think the dynamic link library (<filename>Packet.dll</filename>) doesn't
+	function well, you can refer to <filename>Packet.dll</filename>'s log. It's
+	also stored in Npcap's installation folder: <filename>C:\Program Files\Npcap\Packet.log</filename>.
+	We don't enable this log feature in regular releases. You have two ways: If you
+	are a Npcap developer, you can build the <filename>Packet.sln</filename> project
+	with the <varname>_DEBUG_TO_FILE</varname> macro defined. If you are only a
+	Npcap user, you can download the packet-debug version Npcap from our releases.
+	Currently, the latest packet-debug version is
+	<ulink role="hidepdf" url="https://github.com/nmap/npcap/releases/tag/v0.08-r4">Npcap 0.08 r4</ulink>.
+	You can also ask me to build a packet-debug version Npcap for a specific version Npcap.
+	I'll be glad to do it. Note, the (<filename>Packet.log</filename>) file is written
+	in an appending manner. So you may want to delete it after an amount of time, or
+	save your output to another place before it gets too large.
+    </para>
+  </sect2>
+
   <sect2 id="npcap-issues-driver-log">
     <title>Driver log</title>
 
@@ -893,13 +913,13 @@ managed
 	the driver is running well, but the issue still exists, then you
 	need to check the driver's log. Normal Npcap releases don't switch
 	on the driver log function for performance. So you have to install
-	a debug version Npcap. We don't build a debug version for every
-	release. Currently, the latest debug version is
+	a driver-debug version Npcap. We don't build a driver-debug version for every
+	release. Currently, the latest driver-debug version is
 	<ulink role="hidepdf" url="https://github.com/nmap/npcap/releases/tag/v0.07-r16">Npcap 0.07 r16</ulink>.
-	If the currently available debug version Npcap doesn't have your
-	issue, you can ask me to build a debug version Npcap for a specific
+	If the currently available driver-debug version Npcap doesn't have your
+	issue, you can ask me to build a driver-debug version Npcap for a specific
 	version in mail. I'll be happy to do that. When you have got an
-	appropriate debug version Npcap, you need to use
+	appropriate driver-debug version Npcap, you need to use
 	<ulink role="hidepdf" url="https://technet.microsoft.com/en-us/sysinternals/debugview.aspx">DbgView</ulink>
 	to read the Windows kernel log (which contains our driver log).
 	You may need to turn on DbgView before installing Npcap, if the
