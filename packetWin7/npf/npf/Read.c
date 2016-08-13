@@ -636,14 +636,14 @@ NPF_TapExForEachOpen(
 	ULONG					TotalLength;
 	UINT					TotalPacketSize;
 
-	PMDL                    pMdl = NULL;
-	UINT                    BufferLength;
-	PNDISPROT_ETH_HEADER    pEthHeader = NULL;
-	PNET_BUFFER_LIST        pNetBufList;
-	PNET_BUFFER_LIST        pNextNetBufList;
-	PNET_BUFFER             pNetBuf;
-	PNET_BUFFER             pNextNetBuf;
-	ULONG                   Offset;
+	PMDL					pMdl = NULL;
+	UINT					BufferLength;
+	PETHER_HEADER			pEthHeader = NULL;
+	PNET_BUFFER_LIST		pNetBufList;
+	PNET_BUFFER_LIST		pNextNetBufList;
+	PNET_BUFFER				pNetBuf;
+	PNET_BUFFER				pNextNetBuf;
+	ULONG					Offset;
 
 #ifdef HAVE_DOT11_SUPPORT
 	UCHAR					Dot11RadiotapHeader[256] = { 0 };
@@ -881,14 +881,14 @@ NPF_TapExForEachOpen(
 				}
 
 				BufferLength -= Offset;
-				pEthHeader = (PNDISPROT_ETH_HEADER)((PUCHAR)pEthHeader + Offset);
+				pEthHeader = (PETHER_HEADER)((PUCHAR)pEthHeader + Offset);
 
 				// As for single MDL (as we assume) condition, we always have BufferLength == TotalLength
 				if (BufferLength > TotalLength)
 					BufferLength = TotalLength;
 
 				// Handle multiple MDLs situation here, if there's only 20 bytes in the first MDL, then the IP header is in the second MDL.
-				if (BufferLength == sizeof(NDISPROT_ETH_HEADER) && pMdl->Next != NULL)
+				if (BufferLength == ETHER_HDR_LEN && pMdl->Next != NULL)
 				{
 					TmpBuffer = ExAllocatePoolWithTag(NonPagedPool, pNetBuf->DataLength, 'NPCA');
 					pEthHeader = NdisGetDataBuffer(pNetBuf,
@@ -930,8 +930,8 @@ NPF_TapExForEachOpen(
 				//DispatchLevel = NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags);
 
 				HeaderBuffer = (PUCHAR)pEthHeader;
-				HeaderBufferSize = sizeof(NDISPROT_ETH_HEADER);
-				LookaheadBuffer = (PUCHAR)pEthHeader + sizeof(NDISPROT_ETH_HEADER);
+				HeaderBufferSize = ETHER_HDR_LEN;
+				LookaheadBuffer = (PUCHAR)pEthHeader + ETHER_HDR_LEN;
 				LookaheadBufferSize = BufferLength - HeaderBufferSize;
 				PacketSize = LookaheadBufferSize;
 
@@ -1195,7 +1195,7 @@ NPF_TapExForEachOpen(
 							{
 								IF_LOUD(DbgPrint("The 1st MDL, (Original) MdlSize = %d, Offset = %d\n", BufferLength, Offset);)
 								BufferLength -= Offset;
-								pEthHeader = (PNDISPROT_ETH_HEADER)((PUCHAR)pEthHeader + Offset);
+								pEthHeader = (PETHER_HEADER)((PUCHAR)pEthHeader + Offset);
 							}
 
 							if (iFres != -1)
