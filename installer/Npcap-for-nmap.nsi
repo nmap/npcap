@@ -163,7 +163,7 @@ ReserveFile "final.ini"
 Function getInstallOptions
 	StrCpy $npf_startup "yes"
 	StrCpy $loopback_support "yes"
-	StrCpy $dlt_null "no"
+	StrCpy $dlt_null "enforced"
 	StrCpy $admin_only "no"
 	StrCpy $dot11_support "disabled"
 	StrCpy $vlan_support "no"
@@ -175,7 +175,7 @@ Function getInstallOptions
 		FileRead $4 $cmd_line ; we read until the end of line (including carriage return and new line) and save it to $1
 		FileClose $4 ; and close the file
 	${Else}
-		${GetParameters} $cmd_line ; $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
+		${GetParameters} $cmd_line ; An example: $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
 	${EndIf}
 
 	${GetOptions} $cmd_line "/npf_startup=" $R0
@@ -438,6 +438,9 @@ Function OptionsPage
 	${ElseIf} $npf_startup == "disabled"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "State" 0
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "Flags" "DISABLED"
+	${ElseIf} $npf_startup == "enforced"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 1" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $loopback_support == "no"
@@ -446,6 +449,9 @@ Function OptionsPage
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "State" 1
 	${ElseIf} $loopback_support == "disabled"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "Flags" "DISABLED"
+	${ElseIf} $loopback_support == "enforced"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "State" 1
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 2" "Flags" "DISABLED"
 	${EndIf}
 
@@ -456,6 +462,9 @@ Function OptionsPage
 			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 1
 		${ElseIf} $dlt_null == "disabled"
 			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 0
+			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "Flags" "DISABLED"
+		${ElseIf} $dlt_null == "enforced"
+			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "State" 1
 			WriteINIStr "$PLUGINSDIR\options.ini" "Field 3" "Flags" "DISABLED"
 		${EndIf}
 	${Else}
@@ -470,6 +479,9 @@ Function OptionsPage
 	${ElseIf} $admin_only == "disabled"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "State" 0
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "Flags" "DISABLED"
+	${ElseIf} $admin_only == "enforced"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $dot11_support == "no"
@@ -479,6 +491,9 @@ Function OptionsPage
 	${ElseIf} $dot11_support == "disabled"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
+	${ElseIf} $dot11_support == "enforced"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $vlan_support == "no"
@@ -487,6 +502,9 @@ Function OptionsPage
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
 	${ElseIf} $vlan_support == "disabled"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
+	${ElseIf} $vlan_support == "enforced"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
 	${EndIf}
 
@@ -499,6 +517,9 @@ Function OptionsPage
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
 	${ElseIf} $winpcap_mode == "disabled"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Flags" "DISABLED"
+	${ElseIf} $winpcap_mode == "enforced"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 1
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Flags" "DISABLED"
 	${EndIf}
 
@@ -538,48 +559,48 @@ Function doOptions
 	${If} $0 == "0"
 		StrCpy $npf_startup "no"
 	${Else}
-		StrCpy $npf_startup "yes" ; by default
+		StrCpy $npf_startup "yes"
 	${EndIf}
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 2" "State"
 	${If} $0 == "0"
 		StrCpy $loopback_support "no"
-		StrCpy $dlt_null "no" ; if even loopback feature is not enabled, there's no need to care whether it's DLT_NULL or not
+		StrCpy $dlt_null "no" ; if the loopback feature is not enabled, there's no need to care whether it's DLT_NULL or not
 	${Else}
-		StrCpy $loopback_support "yes" ; by default
+		StrCpy $loopback_support "yes"
 	${EndIf}
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 3" "State"
 	${If} $0 == "0"
-		StrCpy $dlt_null "no" ; by default
+		StrCpy $dlt_null "no"
 	${Else}
 		StrCpy $dlt_null "yes"
 	${EndIf}
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 4" "State"
 	${If} $0 == "0"
-		StrCpy $admin_only "no" ; by default
+		StrCpy $admin_only "no"
 	${Else}
 		StrCpy $admin_only "yes"
 	${EndIf}
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 5" "State"
 	${If} $0 == "0"
-		StrCpy $dot11_support "no" ; by default
+		StrCpy $dot11_support "no"
 	${Else}
 		StrCpy $dot11_support "yes"
 	${EndIf}
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 6" "State"
 	${If} $0 == "0"
-		StrCpy $vlan_support "no" ; by default
+		StrCpy $vlan_support "no"
 	${Else}
 		StrCpy $vlan_support "yes"
 	${EndIf}
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 7" "State"
 	${If} $0 == "0"
-		StrCpy $winpcap_mode "no" ; by default
+		StrCpy $winpcap_mode "no"
 	${Else}
 		${If} $winpcap_mode == "no"
 			StrCpy $winpcap_mode "yes"
