@@ -359,8 +359,7 @@ NPF_WSKSendPacket_NBL(
 		return status;
 	}
 
-	// if (g_DltNullMode)
-	if (FALSE)
+	if (g_DltNullMode)
 	{
 		if (pDltNullHdr->null_type == DLTNULLTYPE_IP)
 		{
