@@ -639,13 +639,25 @@ managed
   <para>
   The Npcap installer is friendly for redistribution by supporting two installation
   ways: <quote>GUI Mode</quote> (direct run) and <quote>Silent Mode</quote> (run with
-  <option>/s</option> paramter).
+  <option>/s</option> parameter).
   </para>
 
   <sect2 id="npcap-redistribution-options">
     <title>Installation options</title>
     <para>
-    The current Npcap installation options by default are (for both <quote>GUI Mode</quote> and <quote>Silent Mode</quote>):
+    The installation options are key-value pairs. The keys can be one of these values:
+	<option>/npf_startup, /loopback_support, /dlt_null, /admin_only, /dot11_support, /vlan_support, /winpcap_mode</option>,
+	representing the options in the GUI. The values can be one of these four values: <option>yes, no, enforced, disabled</option>.
+    </para>
+    <itemizedlist>
+    <listitem><para><option>yes</option>: select the option</para></listitem>
+    <listitem><para><option>no</option>: unselect the option</para></listitem>
+    <listitem><para><option>enforced</option>: select the option and make it unchangable in the <quote>GUI Mode</quote></para></listitem>
+    <listitem><para><option>disabled</option>: unselect the option and make it unchangable in the <quote>GUI Mode</quote></para></listitem>
+    </itemizedlist>
+
+    <para>
+    An example of Npcap installation options is (for both <quote>GUI Mode</quote> and <quote>Silent Mode</quote>):
     </para>
 
     <para>
@@ -667,20 +679,20 @@ managed
     </itemizedlist>
   </sect2>
 
-  <sect2 id="npcap-redistribution-options-gui">
-    <title>Disabled options for GUI Mode</title>
+  <sect2 id="npcap-redistribution-options-disabled">
+    <title>Disabled and enforced options for GUI Mode</title>
 		
     <para>
-	We may disable certain options in the installer GUI to make them unselectable. This
+	We may disable or enforce certain options in the installer GUI to make them unselectable. This
 	usually means that those options can easily cause compatible issues and are considered
-	not suitable for beginners. Advanced users can still enable them using command-line
+	not suitable for beginners, or we think we need to enforce some rules for the Npcap API. Advanced users can still change their states via command-line
 	parameters, which is described in following sections.
     </para>
 
     <para>
-	Fortunately, if a distributor wants to start the Npcap installer GUI and disable
-	certain options for reasons like compatibility. It can also use this disable
-	mechanism by setting the command-line parameters to <option>disabled</option>.
+	Fortunately, if a distributor wants to start the Npcap installer GUI and disable or enforce
+	certain options for reasons like compatibility. It can also use the four value
+	mechanism by setting the command-line parameters to <option>disabled</option> or <option>enforced</option>.
 	For example, the following command will start an installer GUI with the
 	<option>dlt_null</option> disabled and unselected:
     </para>
@@ -691,7 +703,7 @@ managed
   </sect2>
 
   <sect2 id="npcap-redistribution-options-gui">
-    <title>How to change default options for GUI Mode</title>
+    <title>How to change options for GUI Mode</title>
     <para>
     Default options for Npcap installer GUI can be changed. An example is:
     </para>
