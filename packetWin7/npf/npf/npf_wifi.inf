@@ -51,8 +51,8 @@ npf.copyfiles.sys=12
 ; Ndi installation support
 ;-------------------------------------------------------------------------
 [Inst_Ndi]
-HKR, Ndi,Service,,%NPF_DriverName%
-HKR, Ndi,CoServices,0x00010000,%NPF_DriverName%
+HKR, Ndi,Service,,%NPF_ServiceName%
+HKR, Ndi,CoServices,0x00010000,%NPF_ServiceName%
 HKR, Ndi,HelpText,,%NPF_HelpText%
 HKR, Ndi,FilterClass,, ms_medium_converter_128
 
@@ -99,7 +99,7 @@ HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter
 ; Service installation support
 ;-------------------------------------------------------------------------
 [Install.Services]
-AddService=%NPF_DriverName%,,NPF_Service_Inst
+AddService=%NPF_ServiceName%,,NPF_Service_Inst
 
 [NPF_Service_Inst]
 DisplayName     = %NPF_Desc%
@@ -112,7 +112,7 @@ Description     = %NPF_Desc%
 AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
 
 [Install.Remove.Services]
-DelService=%NPF_DriverName%,0x200 ; SPSVCINST_STOPSERVICE
+DelService=%NPF_ServiceName%,0x200 ; SPSVCINST_STOPSERVICE
 
 [Common.Params.reg]
 
@@ -130,6 +130,7 @@ HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to defaul
 
 [Strings]
 NPF_DriverName = "npf"
+NPF_ServiceName = "npf_wifi"
 Insecure = "Nmap Project"
 NPF_Desc = "Npcap Packet Driver (NPF)"
 NPF_HelpText = "A NDIS 6 filter driver & WFP callout driver to support packet capturing and sending under Windows 7, 8 & 10"

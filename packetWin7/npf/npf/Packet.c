@@ -72,6 +72,7 @@ PDEVICE_EXTENSION GlobalDeviceExtension;
 // Global strings
 //
 WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
+WCHAR g_NPF_PrefixBuffer_Wifi[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR L"WIFI_";
 
 POPEN_INSTANCE g_arrOpen = NULL; //Adapter OPEN_INSTANCE list head, each list item is a group head.
 NDIS_SPIN_LOCK g_OpenArrayLock; //The lock for adapter OPEN_INSTANCE list.
@@ -115,7 +116,7 @@ NDIS_STRING g_TimestampRegValueName = NDIS_STRING_CONST("TimestampMode");
 
 ULONG g_AdminOnlyMode = 0;
 ULONG g_DltNullMode = 0;
-ULONG g_Dot11SupportMode = 1;
+ULONG g_Dot11SupportMode = 0;
 ULONG g_VlanSupportMode = 0;
 ULONG g_TimestampMode = 0;
 
@@ -167,7 +168,34 @@ DriverEntry(
 	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
 
-	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
+	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
+	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
+	g_AdminOnlyMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_AdminOnlyRegValueName);
+	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
+	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
+	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
+	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
+	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
+	g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
+	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
+	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
+	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
+	// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
+	// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
+	g_TimestampMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_TimestampRegValueName);
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
+#endif
+#ifdef HAVE_RX_SUPPORT
+	NPF_GetRegistryOption_String(RegistryPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
+	NPF_GetRegistryOption_String(RegistryPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
+#endif
+
+	if (g_Dot11SupportMode)
+		NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer_Wifi);
+	else
+		NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
 
 	//
 	// Get number of CPUs and save it
@@ -240,30 +268,6 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_READ] = NPF_Read;
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
-
-	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
-	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
-	g_AdminOnlyMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_AdminOnlyRegValueName);
-	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
-	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
-	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
-	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
-	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
-	g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
-	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
-	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
-	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
-	// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
-	// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
-	g_TimestampMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_TimestampRegValueName);
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
-#endif
-#ifdef HAVE_RX_SUPPORT
-	NPF_GetRegistryOption_String(RegistryPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
-	NPF_GetRegistryOption_String(RegistryPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
-#endif
 
 	bindP = getAdaptersList();
 

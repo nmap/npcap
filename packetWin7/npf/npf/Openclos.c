@@ -1680,6 +1680,18 @@ NPF_AttachAdapter(
 			break;
 		}
 
+		// The WiFi driver will only bind to the 802.11 wirelress adapters.
+		if (g_Dot11SupportMode)
+		{
+			if (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
+			{
+				IF_LOUD(DbgPrint("Unsupported media type for the WiFi driver: MiniportMediaType = %d.\n", AttachParameters->MiniportMediaType);)
+
+				returnStatus = NDIS_STATUS_INVALID_PARAMETER;
+				break;
+			}
+		}
+
 		// Disable this code for now, because it invalidates most adapters to be bound, reason needs to be clarified.
 // 		if (AttachParameters->LowerIfIndex != AttachParameters->BaseMiniportIfIndex)
 // 		{
