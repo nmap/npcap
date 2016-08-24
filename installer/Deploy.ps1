@@ -37,6 +37,7 @@ function get_version()
 }
 
 $version_no = get_version
+$version_no = $version_no.Replace(" r", "-r")
 
 ###########################################################
 # The variables about generating the installer.

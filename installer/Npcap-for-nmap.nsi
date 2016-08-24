@@ -36,7 +36,8 @@ SetCompressor /SOLID /FINAL lzma
 !include "..\version.h"
 
 ; The version of Npcap
-!define VERSION ${WINPCAP_VER_STRING}
+!define VERSION "${WINPCAP_VER_STRING}"
+!searchreplace INSTALLER_VERSION "${VERSION}" " r" "-r"
 !define WIN_VERSION "${WINPCAP_MAJOR}.${WINPCAP_MINOR}.${WINPCAP_REV}.${WINPCAP_BUILD}"
 
 ; The system restore point name created by Npcap installer
@@ -47,7 +48,7 @@ SetCompressor /SOLID /FINAL lzma
 Name "Npcap ${VERSION} (beta)"
 
 ; The file to write
-OutFile "npcap-${VERSION}.exe"
+OutFile "npcap-${INSTALLER_VERSION}.exe"
 
 Var /GLOBAL inst_ver
 Var /GLOBAL my_ver
