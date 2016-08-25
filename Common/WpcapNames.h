@@ -51,8 +51,14 @@
 	#define NPF_DRIVER_NAME_SMALL_WIDECHAR			L"npcap"											///< (HHH) Packet.dll
 #endif
 
+#define NPF_DRIVER_NAME_SMALL_WIFI				NPF_DRIVER_NAME_SMALL "_wifi"
+#define NPF_DRIVER_NAME_SMALL_WIDECHAR_WIFI		NPF_DRIVER_NAME_SMALL_WIDECHAR L"_wifi"
+
+// Used as a logo string in NPFInstall
 #define NPF_DRIVER_NAME_NORMAL					"Npcap"												///< (HHH) Packet.dll
 #define NPF_DRIVER_NAME_NORMAL_WIDECHAR			L"Npcap"											///< (HHH) Packet.dll
+
+// Used as the registry software key name
 #define NPF_SOFT_REGISTRY_NAME					"NPCAP"												///< (HHH) Packet.dll
 #define NPF_SOFT_REGISTRY_NAME_WIDECHAR			L"NPCAP"											///< (HHH) Packet.dll
 
@@ -62,26 +68,32 @@
 //
 // Derived strings
 //
+
+// Used in packetWin7\Dll and the driver
 #define NPF_DEVICE_NAMES_PREFIX					NPF_DRIVER_NAME "_"     								///< (AAA) packet.dll
 #define NPF_DEVICE_NAMES_PREFIX_WIDECHAR		NPF_DRIVER_NAME_WIDECHAR L"_"     						///< (AAA) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
 #define NPF_DEVICE_NAMES_PREFIX_WIFI			NPF_DEVICE_NAMES_PREFIX "WIFI_"
 #define NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI	NPF_DEVICE_NAMES_PREFIX_WIDECHAR L"WIFI_"
 
-// Only used in packetNtx
+// Only used in packetNtx\Dll
 #define NPF_EVENTS_NAMES						NPF_DRIVER_NAME											///< (BBB) 
 #define NPF_EVENTS_NAMES_WIDECHAR				NPF_DRIVER_NAME_WIDECHAR								///< (BBB) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
 
-// Used in packetWin7
+// Used in packetWin7\Dll
 #define FAKE_NDISWAN_ADAPTER_NAME				"\\Device\\" NPF_DRIVER_NAME "_GenericDialupAdapter"	///< (CCC) Name of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
 #define FAKE_NDISWAN_ADAPTER_DESCRIPTION		"Adapter for generic dialup and VPN capture"			///< (DDD) Description of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
 
+// Used in packetWin7\Dll, NPFInstall and the driver
 #define NPF_SERVICE_DESC						NPF_DRIVER_NAME_NORMAL " Packet Driver (" NPF_DRIVER_NAME ")"						///< (FFF) packet.dll
 #define NPF_SERVICE_DESC_WIDECHAR				NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Packet Driver (" NPF_DRIVER_NAME_WIDECHAR L")"	///< (FFF) packet.dll
 #define NPF_SERVICE_DESC_TCHAR					_T(NPF_DRIVER_NAME_NORMAL) _T(" Packet Driver (") _T(NPF_DRIVER_NAME) _T(")")		///< (FFF) packet.dll
+#define NPF_SERVICE_DESC_WIFI					NPF_SERVICE_DESC " (WiFi version)"
+#define NPF_SERVICE_DESC_WIDECHAR_WIFI			NPF_SERVICE_DESC_WIDECHAR L" (WiFi version)"
+#define NPF_SERVICE_DESC_TCHAR_WIFI				NPF_SERVICE_DESC_TCHAR _T(" (WiFi version)")
 
-// Used in packetWin7
+// Used in packetWin7\Dll
 #define NPF_DRIVER_COMPLETE_DEVICE_PREFIX		"\\Device\\" NPF_DRIVER_NAME "_"						///< (III) packet.dll
-// Used in packetWin7
+// Used in packetWin7\Dll
 #define NPF_DRIVER_COMPLETE_PATH				"system32\\drivers\\" NPF_DRIVER_NAME ".sys"			///< (LLL) packet.dll
 
 

@@ -55,9 +55,11 @@
 #endif // ALLOC_PRAGMA
 
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
-#define				FILTER_UNIQUE_NAME		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"
+#define				FILTER_UNIQUE_NAME			L"{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"
+#define				FILTER_UNIQUE_NAME_WIFI		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501350}"
 #else
-#define				FILTER_UNIQUE_NAME		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501341}"
+#define				FILTER_UNIQUE_NAME			L"{7daf2ac8-e9f6-4765-a842-f1f5d2501341}"
+#define				FILTER_UNIQUE_NAME_WIFI		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501351}"
 #endif
 
 #if DBG
@@ -152,22 +154,6 @@ DriverEntry(
 	// Use NonPaged Pool instead of No-Execute (NX) Nonpaged Pool for Win8 and later, this is for security purpose.
 	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 
-	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR); //display name
-	NDIS_STRING UniqueName = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME); //unique name, quid name
-	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR); //this to match the service name in the INF
-	WCHAR* bindT;
-	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
-	UNICODE_STRING macName;
-	ULONG OsMajorVersion, OsMinorVersion;
-	NDIS_STRING GroupMaxProcessorCount;
-	UNREFERENCED_PARAMETER(RegistryPath);
-
-	TRACE_ENTER();
-	FilterDriverObject = DriverObject;
-
-	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
-	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
-
 	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
 	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
 	g_AdminOnlyMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_AdminOnlyRegValueName);
@@ -183,6 +169,26 @@ DriverEntry(
 	// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
 	// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
 	g_TimestampMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_TimestampRegValueName);
+
+	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR); // display name
+	NDIS_STRING UniqueName = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME); // unique name, quid name
+	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR); // this to match the service name in the INF
+	NDIS_STRING FriendlyName_WiFi = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR_WIFI); // display name
+	NDIS_STRING UniqueName_WiFi = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME_WIFI); // unique name, quid name
+	NDIS_STRING ServiceName_WiFi = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR_WIFI); // this to match the service name in the INF
+	
+	WCHAR* bindT;
+	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
+	UNICODE_STRING macName;
+	ULONG OsMajorVersion, OsMinorVersion;
+	NDIS_STRING GroupMaxProcessorCount;
+	UNREFERENCED_PARAMETER(RegistryPath);
+
+	TRACE_ENTER();
+	FilterDriverObject = DriverObject;
+
+	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
+	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
@@ -228,15 +234,25 @@ DriverEntry(
 	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
 #endif
 
-	FChars.MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION; //NDIS version is 6.2 (Windows 7)
+	FChars.MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION; // NDIS version is 6.2 (Windows 7)
 	FChars.MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
-	FChars.MajorDriverVersion = 1; //Driver version is 1.0
+	FChars.MajorDriverVersion = 1; // Driver version is 1.0
 	FChars.MinorDriverVersion = 0;
 	FChars.Flags = 0;
 
-	FChars.FriendlyName = FriendlyName;
-	FChars.UniqueName = UniqueName;
-	FChars.ServiceName = ServiceName;
+	// Use different names for the Wi-Fi driver.
+	if (g_Dot11SupportMode)
+	{
+		FChars.FriendlyName = FriendlyName_WiFi;
+		FChars.UniqueName = UniqueName_WiFi;
+		FChars.ServiceName = ServiceName_WiFi;
+	}
+	else
+	{
+		FChars.FriendlyName = FriendlyName;
+		FChars.UniqueName = UniqueName;
+		FChars.ServiceName = ServiceName;
+	}
 
 	FChars.SetOptionsHandler = NPF_RegisterOptions;
 	FChars.AttachHandler = NPF_AttachAdapter;
