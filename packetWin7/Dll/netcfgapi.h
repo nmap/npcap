@@ -50,6 +50,6 @@ VOID ReleaseRef(IUnknown* punk);
 
 BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR name);
 
-BOOL ConnectToNetCfg(PCWSTR name);
+BOOL ConnectToNetCfg(PCWSTR lpszPnpID, LPTSTR lpszAppName);
 
 #endif

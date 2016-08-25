@@ -552,7 +552,7 @@ BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR name)
 	return TRUE;
 }
 
-BOOL ConnectToNetCfg(PCWSTR name)
+BOOL ConnectToNetCfg(PCWSTR lpszPnpID, LPTSTR lpszAppName)
 {
 	HRESULT hr;
 	CComPtr<INetCfg> netcfg;
@@ -575,7 +575,7 @@ BOOL ConnectToNetCfg(PCWSTR name)
 	}
 
 	// Note that this call can block.
-	hr = lock->AcquireWriteLock(INFINITE, APP_NAME, NULL);
+	hr = lock->AcquireWriteLock(INFINITE, lpszAppName, NULL);
 	if (FAILED(hr))
 	{
 		wprintf(L"INetCfgLock::AcquireWriteLock 0x%08x\n", hr);
@@ -589,7 +589,7 @@ BOOL ConnectToNetCfg(PCWSTR name)
 		return FALSE;
 	}
 
-	BOOL ok = RestartAllBindings(netcfg.p, name);
+	BOOL ok = RestartAllBindings(netcfg.p, lpszPnpID);
 
 	hr = netcfg->Uninitialize();
 	if (FAILED(hr))

@@ -69,6 +69,7 @@
 #endif
 
 #define APP_NAME							_T(NPF_DRIVER_NAME)
+#define APP_NAME_WIFI						_T(NPF_DRIVER_NAME) _T("_WIFI")
 
 #ifdef __cplusplus
 extern "C"

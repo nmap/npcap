@@ -179,6 +179,7 @@ DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
 // Arguments:
 //    lpszInfFile [in]  INF file.
 //    lpszPnpID   [in]  PnpID of the network component to install.
+//    lpszAppName [in]  Application name.
 //    pguidClass  [in]  Class GUID of the network component.
 //
 // Returns:   None.
@@ -186,13 +187,13 @@ DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
 // Notes:
 //
 
-HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, const GUID* pguidClass)
+HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR lpszAppName, const GUID* pguidClass)
 {
 	INetCfg* pnc;
 	LPTSTR lpszApp;
 	HRESULT hr;
 
-	hr = HrGetINetCfg(TRUE, APP_NAME, &pnc, &lpszApp);
+	hr = HrGetINetCfg(TRUE, lpszAppName, &pnc, &lpszApp);
 
 	if (hr == S_OK)
 	{
@@ -256,7 +257,7 @@ DWORD InstallDriver(BOOL bWifiOrNormal)
 
 	//_tprintf( _T("PnpID: %s\n"), NDISPROT_SERVICE_PNP_DEVICE_ID );
 
-	hr = InstallSpecifiedComponent(szFileFullPath, bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID, &GUID_DEVCLASS_NETSERVICE);
+	hr = InstallSpecifiedComponent(szFileFullPath, bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID, bWifiOrNormal ? APP_NAME_WIFI : APP_NAME, &GUID_DEVCLASS_NETSERVICE);
 
 	if (hr != S_OK)
 	{
@@ -290,7 +291,7 @@ DWORD UninstallDriver(BOOL bWifiOrNormal)
 	OBO_TOKEN obo;
 	HRESULT hr;
 
-	hr = HrGetINetCfg(TRUE, APP_NAME, &pnc, &lpszApp);
+	hr = HrGetINetCfg(TRUE, bWifiOrNormal ? APP_NAME_WIFI : APP_NAME, &pnc, &lpszApp);
 
 	if (hr == S_OK)
 	{
@@ -416,7 +417,7 @@ BOOL RenableBindings(BOOL bWifiOrNormal)
 		return 1;
 	}
 
-	BOOL ok = ConnectToNetCfg(bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
+	BOOL ok = ConnectToNetCfg(bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID, bWifiOrNormal ? APP_NAME_WIFI : APP_NAME);
 
 	CoUninitialize();
 
