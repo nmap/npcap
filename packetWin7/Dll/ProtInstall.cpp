@@ -256,7 +256,7 @@ DWORD InstallDriver(BOOL bWifiOrNormal)
 
 	//_tprintf( _T("PnpID: %s\n"), NDISPROT_SERVICE_PNP_DEVICE_ID );
 
-	hr = InstallSpecifiedComponent(szFileFullPath, NDISLWF_SERVICE_PNP_DEVICE_ID, &GUID_DEVCLASS_NETSERVICE);
+	hr = InstallSpecifiedComponent(szFileFullPath, bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID, &GUID_DEVCLASS_NETSERVICE);
 
 	if (hr != S_OK)
 	{
@@ -269,7 +269,7 @@ DWORD InstallDriver(BOOL bWifiOrNormal)
 	return 1;
 }
 
-DWORD UninstallDriver()
+DWORD UninstallDriver(BOOL bWifiOrNormal)
 {
 	TRACE_ENTER("UninstallDriver");
 	//_tprintf( _T("Uninstalling %s...\n"), NDISPROT_FRIENDLY_NAME );
@@ -297,7 +297,7 @@ DWORD UninstallDriver()
 		//
 		// Get a reference to the network component to uninstall.
 		//
-		hr = pnc->FindComponent(NDISLWF_SERVICE_PNP_DEVICE_ID, &pncc);
+		hr = pnc->FindComponent(bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID, &pncc);
 
 		if (hr == S_OK)
 		{
@@ -338,8 +338,8 @@ DWORD UninstallDriver()
 
 							if ((hr != S_OK) && (hr != NETCFG_S_REBOOT))
 							{
-								ErrMsg(hr, L"Couldn't apply the changes after"
-									L" uninstalling %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+								ErrMsg(hr, L"Couldn't apply the changes after uninstalling %s.",
+									bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
 							}
 							else
 							{
@@ -349,7 +349,8 @@ DWORD UninstallDriver()
 						}
 						else
 						{
-							ErrMsg(hr, L"Failed to uninstall %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+							ErrMsg(hr, L"Failed to uninstall %s.",
+								bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
 						}
 
 						ReleaseRef(pncClassSetup);
@@ -363,20 +364,22 @@ DWORD UninstallDriver()
 				}
 				else
 				{
-					ErrMsg(hr, L"Couldn't get a pointer to class interface "
-						L"of %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+					ErrMsg(hr, L"Couldn't get a pointer to class interface of %s.",
+						bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
 				}
 			}
 			else
 			{
-				ErrMsg(hr, L"Couldn't get the class guid of %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+				ErrMsg(hr, L"Couldn't get the class guid of %s.",
+					bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
 			}
 
 			ReleaseRef(pncc);
 		}
 		else
 		{
-			ErrMsg(hr, L"Couldn't get an interface pointer to %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+			ErrMsg(hr, L"Couldn't get an interface pointer to %s.",
+				bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
 		}
 
 		HrReleaseINetCfg(pnc, TRUE);
@@ -399,52 +402,7 @@ DWORD UninstallDriver()
 	return 0;
 }
 
-// int _tmain(int argc, _TCHAR* argv[])
-// {
-//     SetConsoleTitle( _T("Installing NDIS Intermediate Filter Driver") );
-// 
-//     if( argc < 2 )
-//     {
-//  	   return 0;
-//     }
-// 
-//     if( argc > 2 )
-//     {
-//  	   if( _tcsicmp( argv[2], _T("/v") ) == 0 )
-//  	   {
-//  		   bVerbose = TRUE;
-//  	   }
-//     }
-// 
-//     if( argc > 2 )
-//     {
-//  	   if( _tcsicmp( argv[2], _T("/hide") ) == 0 )
-//  	   {
-//  		   bVerbose = FALSE;
-//  	   }
-//     }
-// 
-//     if( !bVerbose )
-//     {
-//  	   ShowWindow( GetConsoleWindow(), SW_HIDE );
-//     }
-// 
-//     // Handle Driver Install
-//     if( _tcsicmp( argv[1], _T("/Install") ) == 0 )
-//     {
-//  	   return InstallDriver();
-//     }
-// 
-//     // Handle Driver Uninstall
-//     if( _tcsicmp( argv[1], _T("/Uninstall") ) == 0 )
-//     {
-//  	   return UninstallDriver();
-//     }
-// 
-//     return 0;
-// }
-
-BOOL RenableBindings()
+BOOL RenableBindings(BOOL bWifiOrNormal)
 {
 	CComPtr<INetCfg> netcfg;
 	CComPtr<INetCfgLock> lock;
@@ -458,7 +416,7 @@ BOOL RenableBindings()
 		return 1;
 	}
 
-	BOOL ok = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID);
+	BOOL ok = ConnectToNetCfg(bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
 
 	CoUninitialize();
 
