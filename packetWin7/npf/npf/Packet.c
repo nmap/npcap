@@ -154,22 +154,6 @@ DriverEntry(
 	// Use NonPaged Pool instead of No-Execute (NX) Nonpaged Pool for Win8 and later, this is for security purpose.
 	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 
-	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
-	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
-	g_AdminOnlyMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_AdminOnlyRegValueName);
-	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
-	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
-	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
-	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
-	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
-	g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
-	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
-	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
-	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
-	// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
-	// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
-	g_TimestampMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_TimestampRegValueName);
-
 	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR); // display name
 	NDIS_STRING UniqueName = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME); // unique name, quid name
 	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR); // this to match the service name in the INF
@@ -189,6 +173,22 @@ DriverEntry(
 
 	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
+
+	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
+	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
+	g_AdminOnlyMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_AdminOnlyRegValueName);
+	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
+	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
+	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
+	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
+	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
+	g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
+	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
+	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
+	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
+	// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
+	// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
+	g_TimestampMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_TimestampRegValueName);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
@@ -319,7 +319,7 @@ DriverEntry(
 		&FilterDriverHandle);
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to register filter with NDIS.");
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter with NDIS, status = %x", Status);
 		TRACE_EXIT();
 		return Status;
 	}
