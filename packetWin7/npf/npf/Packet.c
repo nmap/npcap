@@ -72,7 +72,7 @@ PDEVICE_EXTENSION GlobalDeviceExtension;
 // Global strings
 //
 WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
-WCHAR g_NPF_PrefixBuffer_Wifi[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR L"WIFI_";
+WCHAR g_NPF_PrefixBuffer_Wifi[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI;
 
 POPEN_INSTANCE g_arrOpen = NULL; //Adapter OPEN_INSTANCE list head, each list item is a group head.
 NDIS_SPIN_LOCK g_OpenArrayLock; //The lock for adapter OPEN_INSTANCE list.

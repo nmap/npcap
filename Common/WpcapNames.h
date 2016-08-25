@@ -62,27 +62,37 @@
 //
 // Derived strings
 //
-#define NPF_DEVICE_NAMES_PREFIX				NPF_DRIVER_NAME "_"     								///< (AAA) packet.dll
-#define NPF_DEVICE_NAMES_PREFIX_WIDECHAR	NPF_DRIVER_NAME_WIDECHAR L"_"     						///< (AAA) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
-#define NPF_EVENTS_NAMES					NPF_DRIVER_NAME											///< (BBB) 
-#define NPF_EVENTS_NAMES_WIDECHAR			NPF_DRIVER_NAME_WIDECHAR								///< (BBB) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
-#define FAKE_NDISWAN_ADAPTER_NAME			"\\Device\\" NPF_DRIVER_NAME "_GenericDialupAdapter"	///< (CCC) Name of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
-#define FAKE_NDISWAN_ADAPTER_DESCRIPTION	"Adapter for generic dialup and VPN capture"			///< (DDD) Description of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
-#define NPF_SERVICE_DESC					NPF_DRIVER_NAME_NORMAL " Packet Driver (" NPF_DRIVER_NAME ")"				///< (FFF) packet.dll
-#define NPF_SERVICE_DESC_WIDECHAR			NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Packet Driver (" NPF_DRIVER_NAME_WIDECHAR L")"	///< (FFF) packet.dll
-#define NPF_SERVICE_DESC_TCHAR				_T(NPF_DRIVER_NAME_NORMAL) _T(" Packet Driver (") _T(NPF_DRIVER_NAME) _T(")")	///< (FFF) packet.dll
-#define NPF_DRIVER_COMPLETE_DEVICE_PREFIX	"\\Device\\" NPF_DRIVER_NAME "_"						///< (III) packet.dll
-#define NPF_DRIVER_COMPLETE_PATH			"system32\\drivers\\" NPF_DRIVER_NAME ".sys"			///< (LLL) packet.dll
+#define NPF_DEVICE_NAMES_PREFIX					NPF_DRIVER_NAME "_"     								///< (AAA) packet.dll
+#define NPF_DEVICE_NAMES_PREFIX_WIDECHAR		NPF_DRIVER_NAME_WIDECHAR L"_"     						///< (AAA) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
+#define NPF_DEVICE_NAMES_PREFIX_WIFI			NPF_DEVICE_NAMES_PREFIX "WIFI_"
+#define NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI	NPF_DEVICE_NAMES_PREFIX_WIDECHAR L"WIFI_"
+
+// Only used in packetNtx
+#define NPF_EVENTS_NAMES						NPF_DRIVER_NAME											///< (BBB) 
+#define NPF_EVENTS_NAMES_WIDECHAR				NPF_DRIVER_NAME_WIDECHAR								///< (BBB) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
+
+// Used in packetWin7
+#define FAKE_NDISWAN_ADAPTER_NAME				"\\Device\\" NPF_DRIVER_NAME "_GenericDialupAdapter"	///< (CCC) Name of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
+#define FAKE_NDISWAN_ADAPTER_DESCRIPTION		"Adapter for generic dialup and VPN capture"			///< (DDD) Description of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
+
+#define NPF_SERVICE_DESC						NPF_DRIVER_NAME_NORMAL " Packet Driver (" NPF_DRIVER_NAME ")"						///< (FFF) packet.dll
+#define NPF_SERVICE_DESC_WIDECHAR				NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Packet Driver (" NPF_DRIVER_NAME_WIDECHAR L")"	///< (FFF) packet.dll
+#define NPF_SERVICE_DESC_TCHAR					_T(NPF_DRIVER_NAME_NORMAL) _T(" Packet Driver (") _T(NPF_DRIVER_NAME) _T(")")		///< (FFF) packet.dll
+
+// Used in packetWin7
+#define NPF_DRIVER_COMPLETE_DEVICE_PREFIX		"\\Device\\" NPF_DRIVER_NAME "_"						///< (III) packet.dll
+// Used in packetWin7
+#define NPF_DRIVER_COMPLETE_PATH				"system32\\drivers\\" NPF_DRIVER_NAME ".sys"			///< (LLL) packet.dll
 
 
 //
 // WinPcap Global Registry Key
 //
-#define WINPCAP_GLOBAL_KEY				"SOFTWARE\\CaceTech\\WinPcapOem"
-#define WINPCAP_GLOBAL_KEY_WIDECHAR		L"SOFTWARE\\CaceTech\\WinPcapOem"
-#define WINPCAP_INSTANCE_KEY			WINPCAP_GLOBAL_KEY "\\" NPF_DRIVER_NAME
-#define WINPCAP_INSTANCE_KEY_WIDECHAR	WINPCAP_GLOBAL_KEY_WIDECHAR	L"\\" NPF_DRIVER_NAME_WIDECHAR
-#define MAX_WINPCAP_KEY_CHARS 512
+#define WINPCAP_GLOBAL_KEY						"SOFTWARE\\CaceTech\\WinPcapOem"
+#define WINPCAP_GLOBAL_KEY_WIDECHAR				L"SOFTWARE\\CaceTech\\WinPcapOem"
+#define WINPCAP_INSTANCE_KEY					WINPCAP_GLOBAL_KEY "\\" NPF_DRIVER_NAME
+#define WINPCAP_INSTANCE_KEY_WIDECHAR			WINPCAP_GLOBAL_KEY_WIDECHAR	L"\\" NPF_DRIVER_NAME_WIDECHAR
+#define MAX_WINPCAP_KEY_CHARS					512
 
 //
 // Subkeys names
