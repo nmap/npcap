@@ -182,7 +182,7 @@ DriverEntry(
 	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
 	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
 	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
-	g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
+	//g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
 	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
 	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
 	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
@@ -197,6 +197,19 @@ DriverEntry(
 	NPF_GetRegistryOption_String(RegistryPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
 	NPF_GetRegistryOption_String(RegistryPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
 #endif
+
+	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap" for standard driver
+	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap_wifi" for WiFi driver
+	g_Dot11SupportMode = 0;
+	for (USHORT i = 0; i < RegistryPath->Length / 2; i ++)
+	{
+		if (RegistryPath->Buffer[i] == L'_')
+		{
+			g_Dot11SupportMode = 1;
+			break;
+		}
+	}
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_Dot11SupportMode (based on RegistryPath) = %d\n", g_Dot11SupportMode);
 
 	if (g_Dot11SupportMode)
 		NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer_Wifi);
