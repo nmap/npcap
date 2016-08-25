@@ -16,13 +16,13 @@ DriverVer=05/15/2015,14.48.38.905
 %Insecure%=Insecure,NTx86,NTia64,NTamd64
 
 [Insecure.NTx86]
-%NPF_Desc%=Install, INSECURE_NPCAP
+%NPF_Desc%=Install, INSECURE_NPCAP_WIFI
 
 [Insecure.NTia64]
-%NPF_Desc%=Install, INSECURE_NPCAP
+%NPF_Desc%=Install, INSECURE_NPCAP_WIFI
 
 [Insecure.NTamd64]
-%NPF_Desc%=Install, INSECURE_NPCAP
+%NPF_Desc%=Install, INSECURE_NPCAP_WIFI
 
 ;-------------------------------------------------------------------------
 ; Installation Section
