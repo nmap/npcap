@@ -182,7 +182,7 @@
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)(WiFi)|Win32'">
-    <TargetName>npf</TargetName>
+    <TargetName>npf_wifi</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -196,7 +196,7 @@
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)(WiFi)|Win32'">
-    <TargetName>npf</TargetName>
+    <TargetName>npf_wifi</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -210,7 +210,7 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)(WiFi)|x64'">
-    <TargetName>npf</TargetName>
+    <TargetName>npf_wifi</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -224,7 +224,7 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)(WiFi)|x64'">
-    <TargetName>npf</TargetName>
+    <TargetName>npf_wifi</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -238,7 +238,7 @@
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WiFi)|Win32'">
-    <TargetName>npcap</TargetName>
+    <TargetName>npcap_wifi</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -252,7 +252,7 @@
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WiFi)|Win32'">
-    <TargetName>npcap</TargetName>
+    <TargetName>npcap_wifi</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -266,7 +266,7 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WiFi)|x64'">
-    <TargetName>npcap</TargetName>
+    <TargetName>npcap_wifi</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
@@ -280,7 +280,7 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WiFi)|x64'">
-    <TargetName>npcap</TargetName>
+    <TargetName>npcap_wifi</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
