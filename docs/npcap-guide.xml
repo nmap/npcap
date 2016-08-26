@@ -889,6 +889,12 @@ managed
 	together in your report if you encounter issues about the installation
 	(e.g. the installer halts).
     </para>
+
+    <para>
+    There's also a driver installation log in: <filename>C:\Windows\INF\setupapi.dev.log</filename>.
+	If you encounter errors about the driver/service installation, please submit it together in
+	your report.
+    </para>
   </sect2>
 
   <sect2 id="npcap-issues-packet-log">
