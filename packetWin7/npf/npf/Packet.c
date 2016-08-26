@@ -112,13 +112,16 @@ NDIS_STRING bindValueName = NDIS_STRING_CONST("Bind");
 
 NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
 NDIS_STRING g_DltNullRegValueName = NDIS_STRING_CONST("DltNull");
-NDIS_STRING g_Dot11SupportRegValueName = NDIS_STRING_CONST("Dot11Support");
 NDIS_STRING g_VlanSupportRegValueName = NDIS_STRING_CONST("VlanSupport");
 NDIS_STRING g_TimestampRegValueName = NDIS_STRING_CONST("TimestampMode");
 
 ULONG g_AdminOnlyMode = 0;
 ULONG g_DltNullMode = 0;
-ULONG g_Dot11SupportMode = 0;
+#ifdef IS_DOT11_DRIVER
+ULONG g_IsDot11Driver = 1;
+#else
+ULONG g_IsDot11Driver = 0;
+#endif
 ULONG g_VlanSupportMode = 0;
 ULONG g_TimestampMode = 0;
 
@@ -180,9 +183,6 @@ DriverEntry(
 	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
 	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
 	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
-	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
-	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
-	//g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
 	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
 	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
 	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
@@ -198,20 +198,9 @@ DriverEntry(
 	NPF_GetRegistryOption_String(RegistryPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
 #endif
 
-	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap" for standard driver
-	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap_wifi" for WiFi driver
-	g_Dot11SupportMode = 0;
-	for (USHORT i = 0; i < RegistryPath->Length / 2; i ++)
-	{
-		if (RegistryPath->Buffer[i] == L'_')
-		{
-			g_Dot11SupportMode = 1;
-			break;
-		}
-	}
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_Dot11SupportMode (based on RegistryPath) = %d\n", g_Dot11SupportMode);
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_IsDot11Driver = %d\n", g_IsDot11Driver);
 
-	if (g_Dot11SupportMode)
+	if (g_IsDot11Driver)
 		NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer_Wifi);
 	else
 		NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
@@ -254,7 +243,7 @@ DriverEntry(
 	FChars.Flags = 0;
 
 	// Use different names for the Wi-Fi driver.
-	if (g_Dot11SupportMode)
+	if (g_IsDot11Driver)
 	{
 		FChars.FriendlyName = FriendlyName_WiFi;
 		FChars.UniqueName = UniqueName_WiFi;

@@ -49,7 +49,7 @@ extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING g_SendToRxAdapterName;
 extern NDIS_STRING g_BlockRxAdapterName;
 extern NDIS_STRING devicePrefix;
-extern ULONG g_Dot11SupportMode;
+extern ULONG g_IsDot11Driver;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	extern HANDLE g_WFPEngineHandle;
@@ -1681,7 +1681,7 @@ NPF_AttachAdapter(
 		}
 
 		// The WiFi driver will only bind to the 802.11 wirelress adapters.
-		if (g_Dot11SupportMode)
+		if (g_IsDot11Driver)
 		{
 			if (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
 			{
@@ -1831,7 +1831,7 @@ NPF_AttachAdapter(
 				Open->HigherPacketFilter);
 
 #ifdef HAVE_DOT11_SUPPORT
-			if (Open->Medium == NdisMediumNative802_11 && g_Dot11SupportMode)
+			if (Open->Medium == NdisMediumNative802_11 && g_IsDot11Driver)
 			{
 				// Handling raw 802.11 packets need to set NDIS_PACKET_TYPE_802_11_RAW_DATA and NDIS_PACKET_TYPE_802_11_RAW_MGMT in the packet filter.
 				Open->Dot11 = TRUE;
