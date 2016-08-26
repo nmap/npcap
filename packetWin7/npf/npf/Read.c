@@ -655,6 +655,7 @@ NPF_TapExForEachOpen(
 
 	//TRACE_ENTER();
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (Open->Loopback && g_DltNullMode)
 	{
 		DataLinkHeaderSize = DLT_NULL_HDR_LEN;
@@ -663,6 +664,9 @@ NPF_TapExForEachOpen(
 	{
 		DataLinkHeaderSize = ETHER_HDR_LEN;
 	}
+#else
+	DataLinkHeaderSize = ETHER_HDR_LEN;
+#endif
 
 	pNetBufList = pNetBufferLists;
 	while (pNetBufList != NULL)
