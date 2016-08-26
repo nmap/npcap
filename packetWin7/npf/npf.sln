@@ -15,8 +15,6 @@ Global
 		Win7 Debug(WinPcap Mode)|x64 = Win7 Debug(WinPcap Mode)|x64
 		Win7 Debug|Win32 = Win7 Debug|Win32
 		Win7 Debug|x64 = Win7 Debug|x64
-		Win7 Release SDV|Win32 = Win7 Release SDV|Win32
-		Win7 Release SDV|x64 = Win7 Release SDV|x64
 		Win7 Release(WinPcap Mode)|Win32 = Win7 Release(WinPcap Mode)|Win32
 		Win7 Release(WinPcap Mode)|x64 = Win7 Release(WinPcap Mode)|x64
 		Win7 Release|Win32 = Win7 Release|Win32
@@ -35,12 +33,6 @@ Global
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Debug|x64.ActiveCfg = Win7 Debug|x64
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Debug|x64.Build.0 = Win7 Debug|x64
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Debug|x64.Deploy.0 = Win7 Debug|x64
-		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release SDV|Win32.ActiveCfg = Win7 Release SDV|Win32
-		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release SDV|Win32.Build.0 = Win7 Release SDV|Win32
-		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release SDV|Win32.Deploy.0 = Win7 Release SDV|Win32
-		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release SDV|x64.ActiveCfg = Win7 Release SDV|x64
-		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release SDV|x64.Build.0 = Win7 Release SDV|x64
-		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release SDV|x64.Deploy.0 = Win7 Release SDV|x64
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release(WinPcap Mode)|Win32.ActiveCfg = Win7 Release(WinPcap Mode)|Win32
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release(WinPcap Mode)|Win32.Build.0 = Win7 Release(WinPcap Mode)|Win32
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Win7 Release(WinPcap Mode)|Win32.Deploy.0 = Win7 Release(WinPcap Mode)|Win32
@@ -65,12 +57,6 @@ Global
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Debug|x64.ActiveCfg = Win7 Debug|x64
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Debug|x64.Build.0 = Win7 Debug|x64
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Debug|x64.Deploy.0 = Win7 Debug|x64
-		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release SDV|Win32.ActiveCfg = Win7 Release SDV|Win32
-		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release SDV|Win32.Build.0 = Win7 Release SDV|Win32
-		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release SDV|Win32.Deploy.0 = Win7 Release SDV|Win32
-		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release SDV|x64.ActiveCfg = Win7 Release SDV|x64
-		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release SDV|x64.Build.0 = Win7 Release SDV|x64
-		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release SDV|x64.Deploy.0 = Win7 Release SDV|x64
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release(WinPcap Mode)|Win32.ActiveCfg = Win7 Release(WinPcap Mode)|Win32
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release(WinPcap Mode)|Win32.Build.0 = Win7 Release(WinPcap Mode)|Win32
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Win7 Release(WinPcap Mode)|Win32.Deploy.0 = Win7 Release(WinPcap Mode)|Win32
