@@ -1,22 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Vista Debug(WinPcap Mode)|Win32">
-      <Configuration>Vista Debug(WinPcap Mode)</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Vista Debug(WinPcap Mode)|x64">
-      <Configuration>Vista Debug(WinPcap Mode)</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Vista Release(WinPcap Mode)|Win32">
-      <Configuration>Vista Release(WinPcap Mode)</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Vista Release(WinPcap Mode)|x64">
-      <Configuration>Vista Release(WinPcap Mode)</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Win7 Debug(WinPcap Mode)|Win32">
       <Configuration>Win7 Debug(WinPcap Mode)</Configuration>
       <Platform>Win32</Platform>
@@ -39,22 +23,6 @@
     </ProjectConfiguration>
     <ProjectConfiguration Include="Win7 Release(WinPcap Mode)|x64">
       <Configuration>Win7 Release(WinPcap Mode)</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Vista Debug|Win32">
-      <Configuration>Vista Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Vista Debug|x64">
-      <Configuration>Vista Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Vista Release|Win32">
-      <Configuration>Vista Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Vista Release|x64">
-      <Configuration>Vista Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Win7 Debug|Win32">
@@ -98,17 +66,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug(WinPcap Mode)|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release(WinPcap Mode)|Win32'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
@@ -118,27 +76,12 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug(WinPcap Mode)|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|x64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release(WinPcap Mode)|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug|Win32'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
@@ -153,17 +96,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug|x64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
@@ -174,11 +107,6 @@
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release SDV|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release|x64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
@@ -211,23 +139,7 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug(WinPcap Mode)|Win32'">
-    <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|x64'">
-    <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug(WinPcap Mode)|x64'">
     <EnableInf2cat>true</EnableInf2cat>
     <TargetName>npf</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
@@ -243,23 +155,7 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release(WinPcap Mode)|Win32'">
-    <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|x64'">
-    <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release(WinPcap Mode)|x64'">
     <EnableInf2cat>true</EnableInf2cat>
     <TargetName>npf</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
@@ -275,23 +171,7 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug|Win32'">
-    <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npcap</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
-    <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npcap</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug|x64'">
     <EnableInf2cat>true</EnableInf2cat>
     <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
@@ -315,14 +195,6 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release|Win32'">
-    <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npcap</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
     <TargetName>npcap</TargetName>
@@ -339,20 +211,7 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release|x64'">
-    <EnableInf2cat>true</EnableInf2cat>
-    <TargetName>npcap</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|Win32'">
-    <Inf2Cat>
-      <UseLocalTime>true</UseLocalTime>
-    </Inf2Cat>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release(WinPcap Mode)|Win32'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
@@ -362,27 +221,12 @@
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release(WinPcap Mode)|x64'">
-    <Inf2Cat>
-      <UseLocalTime>true</UseLocalTime>
-    </Inf2Cat>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|Win32'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug(WinPcap Mode)|Win32'">
-    <Inf2Cat>
-      <UseLocalTime>true</UseLocalTime>
-    </Inf2Cat>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|x64'">
-    <Inf2Cat>
-      <UseLocalTime>true</UseLocalTime>
-    </Inf2Cat>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug(WinPcap Mode)|x64'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
@@ -397,11 +241,6 @@
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release|Win32'">
-    <Inf2Cat>
-      <UseLocalTime>true</UseLocalTime>
-    </Inf2Cat>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
@@ -412,27 +251,12 @@
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vista Release|x64'">
-    <Inf2Cat>
-      <UseLocalTime>true</UseLocalTime>
-    </Inf2Cat>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug|Win32'">
-    <Inf2Cat>
-      <UseLocalTime>true</UseLocalTime>
-    </Inf2Cat>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
-    <Inf2Cat>
-      <UseLocalTime>true</UseLocalTime>
-    </Inf2Cat>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vista Debug|x64'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>

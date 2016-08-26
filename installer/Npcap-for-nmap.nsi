@@ -834,15 +834,7 @@ Function copy_win7_32bit_driver
 	SetOutPath $INSTDIR
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $os_ver == "vista"
-			File vista_winpcap\x86\npf.sys
-			File vista_winpcap\x86\npf.cat
-			File vista_winpcap\x86\npf.inf
-			File vista_winpcap\x86\npf_wfp.inf
-			${If} $dot11_support == "yes"
-				File vista_winpcap\x86\npf_wifi.inf
-			${EndIf}
-		${ElseIf} $os_ver == "win7"
+		${If} $os_ver == "win7"
 			File win7_winpcap\x86\npf.sys
 			File win7_winpcap\x86\npf.cat
 			File win7_winpcap\x86\npf.inf
@@ -863,15 +855,7 @@ Function copy_win7_32bit_driver
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $os_ver == "vista"
-			File vista\x86\npcap.sys
-			File vista\x86\npcap.cat
-			File vista\x86\npcap.inf
-			File vista\x86\npcap_wfp.inf
-			${If} $dot11_support == "yes"
-				File vista\x86\npcap_wifi.inf
-			${EndIf}
-		${ElseIf} $os_ver == "win7"
+		${If} $os_ver == "win7"
 			File win7\x86\npcap.sys
 			File win7\x86\npcap.cat
 			File win7\x86\npcap.inf
@@ -895,15 +879,7 @@ Function copy_win7_64bit_driver
 	SetOutPath $INSTDIR
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $os_ver == "vista"
-			File vista_winpcap\x64\npf.sys
-			File vista_winpcap\x64\npf.cat
-			File vista_winpcap\x64\npf.inf
-			File vista_winpcap\x64\npf_wfp.inf
-			${If} $dot11_support == "yes"
-				File vista_winpcap\x64\npf_wifi.inf
-			${EndIf}
-		${ElseIf} $os_ver == "win7"
+		${If} $os_ver == "win7"
 			File win7_winpcap\x64\npf.sys
 			File win7_winpcap\x64\npf.cat
 			File win7_winpcap\x64\npf.inf
@@ -924,15 +900,7 @@ Function copy_win7_64bit_driver
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $os_ver == "vista"
-			File vista\x64\npcap.sys
-			File vista\x64\npcap.cat
-			File vista\x64\npcap.inf
-			File vista\x64\npcap_wfp.inf
-			${If} $dot11_support == "yes"
-				File vista\x64\npcap_wifi.inf
-			${EndIf}
-		${ElseIf} $os_ver == "win7"
+		${If} $os_ver == "win7"
 			File win7\x64\npcap.sys
 			File win7\x64\npcap.cat
 			File win7\x64\npcap.inf
@@ -996,11 +964,11 @@ ${!defineifexist} CERT_EXISTS "C:\Insecure.cer"
 
 	; check the driver install result
 	${If} $0 == "0"
-		DetailPrint "The npcap service for Vista, Win7, Win8 and Win10 was successfully created"
+		DetailPrint "The npcap service for Win7, Win8 and Win10 was successfully created"
 	${Else}
-		DetailPrint "Failed to create the npcap service for Vista, Win7, Win8 and Win10"
+		DetailPrint "Failed to create the npcap service for Win7, Win8 and Win10"
 		${IfNot} ${Silent}
-			MessageBox MB_OK "Failed to create the npcap service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+			MessageBox MB_OK "Failed to create the npcap service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
 		${EndIf}
 	${EndIf}
 
@@ -1018,11 +986,11 @@ ${!defineifexist} CERT_EXISTS "C:\Insecure.cer"
 
 		; check the driver install result
 		${If} $0 == "0"
-			DetailPrint "The npcap2 service for Vista, Win7, Win8 and Win10 was successfully created"
+			DetailPrint "The npcap2 service for Win7, Win8 and Win10 was successfully created"
 		${Else}
-			DetailPrint "Failed to create the npcap2 service for Vista, Win7, Win8 and Win10"
+			DetailPrint "Failed to create the npcap2 service for Win7, Win8 and Win10"
 			${IfNot} ${Silent}
-				MessageBox MB_OK "Failed to create the npcap2 service for Vista, Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+				MessageBox MB_OK "Failed to create the npcap2 service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
 		${EndIf}
 	${EndIf}
 	${EndIf}
@@ -1040,9 +1008,9 @@ Function un.uninstall_win7_XXbit_driver
 
 	; check the driver uninstall result
 	${If} $0 == "0"
-		DetailPrint "The npcap service for Vista, Win7, Win8 and Win10 was successfully deleted"
+		DetailPrint "The npcap service for Win7, Win8 and Win10 was successfully deleted"
 	${Else}
-		DetailPrint "Failed to delete the npcap service for Vista, Win7, Win8 and Win10"
+		DetailPrint "Failed to delete the npcap service for Win7, Win8 and Win10"
 	${EndIf}
 
 	${If} $winpcap_mode == "yes"
@@ -1057,9 +1025,9 @@ Function un.uninstall_win7_XXbit_driver
 
 		; check the driver uninstall result
 		${If} $0 == "0"
-			DetailPrint "The npcap2 service for Vista, Win7, Win8 and Win10 was successfully deleted"
+			DetailPrint "The npcap2 service for Win7, Win8 and Win10 was successfully deleted"
 		${Else}
-			DetailPrint "Failed to delete the npcap2 service for Vista, Win7, Win8 and Win10"
+			DetailPrint "Failed to delete the npcap2 service for Win7, Win8 and Win10"
 		${EndIf}
 	${EndIf}
 FunctionEnd
@@ -1426,10 +1394,11 @@ Section "WinPcap" SecWinPcap
 	Call checkWindowsVersion
 	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
-	${If} $os_ver != "xp" ; Vista, Win7, Win8, Win10
+	${If} $os_ver != "xp"
+	${AndIf} $os_ver != "vista"  ; Win7, Win8, Win10
 		Call is64bit
 		StrCmp $0 "0" install_win7_32bit install_win7_64bit
-	${Else} ; XP
+	${Else} ; XP, Vista
 		Call is64bit
 		StrCmp $0 "0" install_xp_32bit install_xp_64bit
 	${EndIf}
@@ -1496,7 +1465,7 @@ install_win7_32bit:
 	Call copy_win7_32bit_driver
 
 	WriteUninstaller "$INSTDIR\uninstall.exe"
-	DetailPrint "Installing NDIS6.x x86 driver for Vista, Win7, Win8 and Win10"
+	DetailPrint "Installing NDIS6.x x86 driver for Win7, Win8 and Win10"
 
 	; copy the 32-bit DLLs and EXEs into System folder
 	Call copy_win7_32bit_system_dlls
@@ -1518,7 +1487,7 @@ install_win7_64bit:
 	Call copy_win7_64bit_driver
 
 	WriteUninstaller "$INSTDIR\uninstall.exe"
-	DetailPrint "Installing NDIS6.x x64 driver for Vista, Win7, Win8 and Win10"
+	DetailPrint "Installing NDIS6.x x64 driver for Win7, Win8 and Win10"
 
 	; copy the 32-bit DLLs and EXEs into System folder
 	Call copy_win7_32bit_system_dlls

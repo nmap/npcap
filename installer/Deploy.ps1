@@ -59,16 +59,12 @@ $driver_init_from_path_array =
 	"..\packetWin7\npf\Win7 Release{0}\npf Package\",
 	"..\packetWin7\npf\x64\Win7 Release{0}\npf Package\",
 	"..\packetWin7\npf\Win7 Release{0}\npf Package\",
-	"..\packetWin7\npf\x64\Win7 Release{0}\npf Package\",
-	"..\packetWin7\npf\Vista Release{0}\npf Package\",
-	"..\packetWin7\npf\x64\Vista Release{0}\npf Package\"
+	"..\packetWin7\npf\x64\Win7 Release{0}\npf Package\"
 $driver_init_to_path_array = 
 	".\win8_above{0}\x86\",
 	".\win8_above{0}\x64\",
 	".\win7{0}\x86\",
-	".\win7{0}\x64\",
-	".\vista{0}\x86\",
-	".\vista{0}\x64\"
+	".\win7{0}\x64\"
 
 ###########################################################
 # Common intial to_path_array
@@ -125,7 +121,7 @@ function initialize_list([ref]$file_name_array, [ref]$from_path_array, [ref]$to_
 		$vs_config_mode = $vs_config_mode_array[$i]
 		$deploy_folder_mode = $deploy_folder_mode_array[$i]
 
-		for ($j = 0; $j -lt 6; $j ++)
+		for ($j = 0; $j -lt 4; $j ++)
 		{
 			foreach ($filename in $driver_filename_array)
 			{
@@ -251,8 +247,9 @@ function copy_and_sign($file_name, $from_path, $to_path)
 	}
 	else
 	{
-		$null = sign_file_sha1 ($to_path + $file_name)
-		$null = sign_file_sha256 ($to_path + $file_name)
+		# $null = sign_file_sha1 ($to_path + $file_name)
+		# $null = sign_file_sha256 ($to_path + $file_name)
+		$null = sign_driver_sha256 ($to_path + $file_name)
 	}
 
 	return 1
@@ -309,8 +306,9 @@ function sign_file_sha256($file_path_name)
 function generate_installer($install_script, $installer_name)
 {
 	&$nsis_compiler_tool $install_script
-	sign_driver_sha1 $installer_name
-	sign_file_sha256 $installer_name
+	# sign_driver_sha1 $installer_name
+	# sign_file_sha256 $installer_name
+	sign_driver_sha256 $installer_name
 }
 
 function generate_symbols($symbols_folder, $symbols_zip_name)
