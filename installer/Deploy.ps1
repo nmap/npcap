@@ -14,7 +14,9 @@ $cert_sign_tool = "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe"
 $cert_ms_cross_cert = "C:\DigiCert High Assurance EV Root CA.crt"
 $cert_hash_vista = "67cdca7703a01b25e6e0426072ec08b0046eb5f8"
 $cert_hash_win7_above = "928101b5d0631c8e1ada651478e41afaac798b4c"
-$cert_timestamp_server = "http://timestamp.digicert.com"
+# $cert_timestamp_server = "http://timestamp.digicert.com"
+$cert_timestamp_server = "http://timestamp.wosign.com/timestamp"
+$cert_timestamp_rfc3161_server = "http://timestamp.wosign.com/rfc3161"
 $has_timestamp = 1
 $header_name = "..\version.h"
 
@@ -271,7 +273,7 @@ function sign_driver_sha256($file_path_name)
 {
 	if ($has_timestamp)
 	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server, "/td", "sha256", $file_path_name
 	}
 	else
 	{
@@ -295,7 +297,7 @@ function sign_file_sha256($file_path_name)
 {
 	if ($has_timestamp)
 	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server, "/td", "sha256", $file_path_name
 	}
 	else
 	{
