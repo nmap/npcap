@@ -273,7 +273,8 @@ function sign_driver_sha256($file_path_name)
 {
 	if ($has_timestamp)
 	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server, "/td", "sha256", $file_path_name
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/t", $cert_timestamp_server, $file_path_name
+		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server, "/td", "sha256", $file_path_name
 	}
 	else
 	{
