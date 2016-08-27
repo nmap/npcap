@@ -879,15 +879,31 @@ FunctionEnd
 !define !defineifexist "!insertmacro !defineifexist"
 
 Function install_win7_XXbit_driver
-${!defineifexist} CERT_EXISTS "C:\Insecure.cer"
-!ifdef CERT_EXISTS
-	SetOutPath $TEMP
-	File "C:\Insecure.cer"
-	; add Npcap's cert into the certificate manager, it's used to
-	; remove the “Would you like to install this device software?” prompt
-	; this file can be generated based on this link:
-	; http://www.migee.com/2010/09/24/solution-for-unattendedsilent-installs-and-would-you-like-to-install-this-device-software/
-	ExecWait 'certutil -addstore "TrustedPublisher" "$TEMP\Insecure.cer"' $0
+
+${!defineifexist} SHA1_CERT_EXISTS "C:\Insecure-SHA1.cer"
+!ifdef SHA1_CERT_EXISTS
+	${If} $os_ver == "win7"
+		SetOutPath $TEMP
+		File "C:\Insecure-SHA1.cer"
+		; add Npcap's SHA1 cert into the certificate manager, it's used to
+		; remove the “Would you like to install this device software?” prompt
+		; this file can be generated based on this link:
+		; http://www.migee.com/2010/09/24/solution-for-unattendedsilent-installs-and-would-you-like-to-install-this-device-software/
+		ExecWait 'certutil -addstore "TrustedPublisher" "$TEMP\Insecure-SHA1.cer"' $0
+	${EndIf}
+!endif
+
+${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
+!ifdef SHA2_CERT_EXISTS
+	${If} $os_ver != "win7"
+		SetOutPath $TEMP
+		File "C:\Insecure-SHA2.cer"
+		; add Npcap's SHA2 cert into the certificate manager, it's used to
+		; remove the “Would you like to install this device software?” prompt
+		; this file can be generated based on this link:
+		; http://www.migee.com/2010/09/24/solution-for-unattendedsilent-installs-and-would-you-like-to-install-this-device-software/
+		ExecWait 'certutil -addstore "TrustedPublisher" "$TEMP\Insecure-SHA2.cer"' $0
+	${EndIf}
 !endif
 
 	; clear the driver cache in Driver Store
