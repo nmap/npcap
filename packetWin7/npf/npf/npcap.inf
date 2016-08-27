@@ -16,16 +16,16 @@ DriverVer=05/15/2015,14.48.38.905
 %Insecure%=Insecure,NTx86,NTia64,NTamd64
 
 [Insecure.NTx86]
-"Npcap Filter Standard"=FilterStandard.Install, INSECURE_NPCAP
-"Npcap Filter WiFi"=FilterWiFi.Install, INSECURE_NPCAP_WIFI
+%NPF_Desc_Standard%=FilterStandard.Install, INSECURE_NPCAP
+%NPF_Desc_WiFi%=FilterWiFi.Install, INSECURE_NPCAP_WIFI
 
 [Insecure.NTia64]
-"Npcap Filter Standard"=FilterStandard.Install, INSECURE_NPCAP
-"Npcap Filter WiFi"=FilterWiFi.Install, INSECURE_NPCAP_WIFI
+%NPF_Desc_Standard%=FilterStandard.Install, INSECURE_NPCAP
+%NPF_Desc_WiFi%=FilterWiFi.Install, INSECURE_NPCAP_WIFI
 
 [Insecure.NTamd64]
-"Npcap Filter Standard"=FilterStandard.Install, INSECURE_NPCAP
-"Npcap Filter WiFi"=FilterWiFi.Install, INSECURE_NPCAP_WIFI
+%NPF_Desc_Standard%=FilterStandard.Install, INSECURE_NPCAP
+%NPF_Desc_WiFi%=FilterWiFi.Install, INSECURE_NPCAP_WIFI
 
 ;-------------------------------------------------------------------------
 ; Installation Section
@@ -42,7 +42,7 @@ Characteristics=0x40000
 AddReg=FilterWiFi.reg
 
 [SourceDisksNames]
-1=%NPF_Desc%,"",,
+1=%NPF_Desc_Standard%,"",,
 
 [SourceDisksFiles]
 npcap.sys=1
@@ -161,23 +161,23 @@ AddService=%NPF_Filter_Name_Standard%,,FilterStandard.svc
 AddService=%NPF_Filter_Name_WiFi%,,FilterWiFi.svc
 
 [FilterStandard.svc]
-DisplayName     = %NPF_Desc%
+DisplayName     = %NPF_Desc_Standard%
 ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
 StartType       = 3 ;SERVICE_DEMAND_START
 ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
 ServiceBinary   = %12%\%NPF_DriverName%.sys
 LoadOrderGroup  = NDIS
-Description     = %NPF_Desc%
+Description     = %NPF_Desc_Standard%
 AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
 
 [FilterWiFi.svc]
-DisplayName     = %NPF_Desc%
+DisplayName     = %NPF_Desc_WiFi%
 ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
 StartType       = 3 ;SERVICE_DEMAND_START
 ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
 ServiceBinary   = %12%\%NPF_DriverName%.sys
 LoadOrderGroup  = NDIS
-Description     = %NPF_Desc%
+Description     = %NPF_Desc_WiFi%
 AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
 
 [FilterStandard.Remove.Services]
@@ -205,5 +205,6 @@ NPF_DriverName = "npcap"
 NPF_Filter_Name_Standard = "npcap"
 NPF_Filter_Name_WiFi = "npcap_wifi"
 Insecure = "Nmap Project"
-NPF_Desc = "Npcap Packet Driver (NPCAP)"
+NPF_Desc_Standard = "Npcap Packet Driver (NPCAP)"
+NPF_Desc_WiFi = "Npcap Packet Driver (NPCAP) (Wi-Fi)"
 NPF_HelpText = "A NDIS 6 filter driver & WFP callout driver to support packet capturing and sending under Windows 7, 8 & 10"
