@@ -460,13 +460,13 @@ VOID ReleaseRef(IN IUnknown* punk)
 	return;
 }
 
-BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR name)
+BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR szComponentId)
 {
 	HRESULT hr;
 	CComPtr<INetCfgComponent> comp;
 	CComPtr<INetCfgComponentBindings> bindings;
 
-	hr = netcfg->FindComponent(name, &comp);
+	hr = netcfg->FindComponent(szComponentId, &comp);
 	if (FAILED(hr))
 	{
 		wprintf(L"INetCfg::FindComponent 0x%08x\n", hr);

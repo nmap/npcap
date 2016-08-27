@@ -54,31 +54,26 @@
 //
 #ifdef UNICODE
 #define NDISLWF_SERVICE_PNP_DEVICE_ID		NPF_ORGAN_NAME_WIDECHAR L"_" NPF_DRIVER_NAME_WIDECHAR
-#define NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI	NDISLWF_SERVICE_PNP_DEVICE_ID L"_WIFI"
 
 #define NDISLWF_SERVICE_INF_FILE			NPF_DRIVER_NAME_WIDECHAR
-#define NDISLWF_SERVICE_INF_FILE_WIFI		NDISLWF_SERVICE_INF_FILE L"_wifi"
 #define WFP_CALLOUT_INF_FILE				NDISLWF_SERVICE_INF_FILE L"_wfp"
 #else
 #define NDISLWF_SERVICE_PNP_DEVICE_ID		NPF_ORGAN_NAME "_" NPF_DRIVER_NAME
-#define NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI	NDISLWF_SERVICE_PNP_DEVICE_ID L"_WIFI"
 
 #define NDISLWF_SERVICE_INF_FILE			NPF_DRIVER_NAME
-#define NDISLWF_SERVICE_INF_FILE_WIFI		NDISLWF_SERVICE_INF_FILE "_wifi"
 #define WFP_CALLOUT_INF_FILE				NDISLWF_SERVICE_INF_FILE "_wfp"
 #endif
 
 #define APP_NAME							_T(NPF_DRIVER_NAME)
-#define APP_NAME_WIFI						_T(NPF_DRIVER_NAME) _T("_WIFI")
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	DWORD InstallDriver(BOOL bWifiOrNormal);
-	DWORD UninstallDriver(BOOL bWifiOrNormal);
-	BOOL RenableBindings(BOOL bWifiOrNormal);
+	DWORD InstallDriver();
+	DWORD UninstallDriver();
+	BOOL RenableBindings();
 
 #ifdef __cplusplus
 }
@@ -90,7 +85,7 @@ VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...);
 //// Registry Key Strings
 //
 
-DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize, BOOL bWifiOrNormal);
+DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize);
 DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize);
 DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize);
 

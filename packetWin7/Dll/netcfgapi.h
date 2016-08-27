@@ -48,7 +48,7 @@ HRESULT HrUninstallNetComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId);
 
 VOID ReleaseRef(IUnknown* punk);
 
-BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR name);
+BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR szComponentId);
 
 BOOL ConnectToNetCfg(PCWSTR lpszPnpID, LPTSTR lpszAppName);
 

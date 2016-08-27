@@ -101,7 +101,7 @@ VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...)
 	return;
 }
 
-DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize, BOOL bWifiOrNormal)
+DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
 {
 	// Get Path to This Module
 	DWORD nResult;
@@ -117,14 +117,7 @@ DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize, BOOL bWifiOrNormal)
 
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
-	if (bWifiOrNormal)
-	{
-		_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE_WIFI, _T(".inf"));
-	}
-	else
-	{
-		_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
-	}
+	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
 
 	return (DWORD)_tcslen(lpFilename);
 }
@@ -233,17 +226,19 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR l
 	return hr;
 }
 
-DWORD InstallDriver(BOOL bWifiOrNormal)
+DWORD InstallDriver()
 {
-	DWORD nResult;
 	TRACE_ENTER("InstallDriver");
+
+	DWORD nResult;
+	TCHAR szFileFullPath[_MAX_PATH];
+	HRESULT hr;
 
 	// Get Path to Service INF File
 	// ----------------------------
 	// The INF file is assumed to be in the same folder as this application...
-	TCHAR szFileFullPath[_MAX_PATH];
-
-	nResult = GetServiceInfFilePath(szFileFullPath, MAX_PATH, bWifiOrNormal);
+	
+	nResult = GetServiceInfFilePath(szFileFullPath, MAX_PATH);
 
 	if (nResult == 0)
 	{
@@ -251,13 +246,7 @@ DWORD InstallDriver(BOOL bWifiOrNormal)
 		return 0;
 	}
 
-	//_tprintf( _T("INF Path: %s\n"), szFileFullPath );
-
-	HRESULT hr = S_OK;
-
-	//_tprintf( _T("PnpID: %s\n"), NDISPROT_SERVICE_PNP_DEVICE_ID );
-
-	hr = InstallSpecifiedComponent(szFileFullPath, bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID, bWifiOrNormal ? APP_NAME_WIFI : APP_NAME, &GUID_DEVCLASS_NETSERVICE);
+	hr = InstallSpecifiedComponent(szFileFullPath, NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME, &GUID_DEVCLASS_NETSERVICE);
 
 	if (hr != S_OK)
 	{
@@ -270,7 +259,7 @@ DWORD InstallDriver(BOOL bWifiOrNormal)
 	return 1;
 }
 
-DWORD UninstallDriver(BOOL bWifiOrNormal)
+DWORD UninstallDriver()
 {
 	TRACE_ENTER("UninstallDriver");
 
@@ -278,11 +267,11 @@ DWORD UninstallDriver(BOOL bWifiOrNormal)
 	LPTSTR lpszApp;
 	HRESULT hr;
 
-	hr = HrGetINetCfg(TRUE, bWifiOrNormal ? APP_NAME_WIFI : APP_NAME, &pnc, &lpszApp);
+	hr = HrGetINetCfg(TRUE, APP_NAME, &pnc, &lpszApp);
 
 	if (hr == S_OK)
 	{
-		hr = HrUninstallNetComponent(pnc, bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
+		hr = HrUninstallNetComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID);
 
 		if (hr != S_OK)
 		{
@@ -312,7 +301,7 @@ DWORD UninstallDriver(BOOL bWifiOrNormal)
 	return 0;
 }
 
-BOOL RenableBindings(BOOL bWifiOrNormal)
+BOOL RenableBindings()
 {
 	CComPtr<INetCfg> netcfg;
 	CComPtr<INetCfgLock> lock;
@@ -326,7 +315,7 @@ BOOL RenableBindings(BOOL bWifiOrNormal)
 		return 1;
 	}
 
-	BOOL ok = ConnectToNetCfg(bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID, bWifiOrNormal ? APP_NAME_WIFI : APP_NAME);
+	BOOL ok = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME);
 
 	CoUninitialize();
 
