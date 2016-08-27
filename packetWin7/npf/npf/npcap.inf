@@ -16,27 +16,27 @@ DriverVer=05/15/2015,14.48.38.905
 %Insecure%=Insecure,NTx86,NTia64,NTamd64
 
 [Insecure.NTx86]
-%NPF_Desc_Standard%=FilterStandard.Install, INSECURE_NPCAP
-%NPF_Desc_WiFi%=FilterWiFi.Install, INSECURE_NPCAP_WIFI
+%NPF_Desc_Standard%=FilterStandard, INSECURE_NPCAP
+%NPF_Desc_WiFi%=FilterWiFi, INSECURE_NPCAP_WIFI
 
 [Insecure.NTia64]
-%NPF_Desc_Standard%=FilterStandard.Install, INSECURE_NPCAP
-%NPF_Desc_WiFi%=FilterWiFi.Install, INSECURE_NPCAP_WIFI
+%NPF_Desc_Standard%=FilterStandard, INSECURE_NPCAP
+%NPF_Desc_WiFi%=FilterWiFi, INSECURE_NPCAP_WIFI
 
 [Insecure.NTamd64]
-%NPF_Desc_Standard%=FilterStandard.Install, INSECURE_NPCAP
-%NPF_Desc_WiFi%=FilterWiFi.Install, INSECURE_NPCAP_WIFI
+%NPF_Desc_Standard%=FilterStandard, INSECURE_NPCAP
+%NPF_Desc_WiFi%=FilterWiFi, INSECURE_NPCAP_WIFI
 
 ;-------------------------------------------------------------------------
 ; Installation Section
 ;-------------------------------------------------------------------------
-[FilterStandard.Install]
+[FilterStandard]
 NetCfgInstanceId="{7daf2ac8-e9f6-4765-a842-f1f5d2501341}"
 Copyfiles = npf.copyfiles.sys
 Characteristics=0x40000
 AddReg=FilterStandard.reg
 
-[FilterWiFi.Install]
+[FilterWiFi]
 NetCfgInstanceId="{7daf2ac8-e9f6-4765-a842-f1f5d2501351}"
 Characteristics=0x40000
 AddReg=FilterWiFi.reg
