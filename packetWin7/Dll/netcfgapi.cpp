@@ -259,14 +259,19 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 		//
 		// Install the network component.
 		//
-		hr = HrInstallComponent(pnc, lpszComponentId, pguidClass);
+		hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID, pguidClass);
 
 		if (hr == S_OK)
 		{
-			//
-			// On success, apply the changes
-			//
-			hr = pnc->Apply();
+			hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, pguidClass);
+
+			if (hr == S_OK)
+			{
+				//
+				// On success, apply the changes
+				//
+				hr = pnc->Apply();
+			}
 		}
 	}
 
