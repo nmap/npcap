@@ -273,114 +273,23 @@ DWORD InstallDriver(BOOL bWifiOrNormal)
 DWORD UninstallDriver(BOOL bWifiOrNormal)
 {
 	TRACE_ENTER("UninstallDriver");
-	//_tprintf( _T("Uninstalling %s...\n"), NDISPROT_FRIENDLY_NAME );
-
-// 	int nResult = MessageBox(NULL, _T("Uninstalling Driver..."), NDISPROT_FRIENDLY_NAME, MB_OKCANCEL | MB_ICONINFORMATION);
-// 
-// 	if (nResult != IDOK)
-// 	{
-// 		return 0;
-// 	}
 
 	INetCfg* pnc;
-	INetCfgComponent* pncc;
-	INetCfgClass* pncClass;
-	INetCfgClassSetup* pncClassSetup;
 	LPTSTR lpszApp;
-	GUID guidClass;
-	OBO_TOKEN obo;
 	HRESULT hr;
 
 	hr = HrGetINetCfg(TRUE, bWifiOrNormal ? APP_NAME_WIFI : APP_NAME, &pnc, &lpszApp);
 
 	if (hr == S_OK)
 	{
-		//
-		// Get a reference to the network component to uninstall.
-		//
-		hr = pnc->FindComponent(bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID, &pncc);
+		hr = HrUninstallNetComponent(pnc, bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
 
-		if (hr == S_OK)
+		if (hr != S_OK)
 		{
-			//
-			// Get the class GUID.
-			//
-			hr = pncc->GetClassGuid(&guidClass);
-
-			if (hr == S_OK)
+			if (hr != HRESULT_FROM_WIN32(ERROR_CANCELLED))
 			{
-				//
-				// Get a reference to component's class.
-				//
-
-				hr = pnc->QueryNetCfgClass(&guidClass, IID_INetCfgClass, (PVOID *)&pncClass);
-				if (hr == S_OK)
-				{
-					//
-					// Get the setup interface.
-					//
-
-					hr = pncClass->QueryInterface(IID_INetCfgClassSetup, (LPVOID *)&pncClassSetup);
-
-					if (hr == S_OK)
-					{
-						//
-						// Uninstall the component.
-						//
-
-						ZeroMemory(&obo, sizeof(OBO_TOKEN));
-
-						obo.Type = OBO_USER;
-
-						hr = pncClassSetup->DeInstall(pncc, &obo, NULL);
-						if ((hr == S_OK) || (hr == NETCFG_S_REBOOT))
-						{
-							hr = pnc->Apply();
-
-							if ((hr != S_OK) && (hr != NETCFG_S_REBOOT))
-							{
-								ErrMsg(hr, L"Couldn't apply the changes after uninstalling %s.",
-									bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
-							}
-							else
-							{
-								TRACE_EXIT("UninstallDriver");
-								return 1;
-							}
-						}
-						else
-						{
-							ErrMsg(hr, L"Failed to uninstall %s.",
-								bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
-						}
-
-						ReleaseRef(pncClassSetup);
-					}
-					else
-					{
-						ErrMsg(hr, L"Couldn't get an interface to setup class.");
-					}
-
-					ReleaseRef(pncClass);
-				}
-				else
-				{
-					ErrMsg(hr, L"Couldn't get a pointer to class interface of %s.",
-						bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
-				}
+				ErrMsg(hr, L"Couldn't uninstall the network component.");
 			}
-			else
-			{
-				ErrMsg(hr, L"Couldn't get the class guid of %s.",
-					bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
-			}
-
-			ReleaseRef(pncc);
-		}
-		else
-		{
-			ErrMsg(hr, L"Couldn't get an interface pointer to %s.",
-				bWifiOrNormal ? NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI : NDISLWF_SERVICE_PNP_DEVICE_ID);
 		}
 
 		HrReleaseINetCfg(pnc, TRUE);

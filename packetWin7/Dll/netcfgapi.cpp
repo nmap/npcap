@@ -349,71 +349,89 @@ HRESULT HrInstallComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const G
 
 HRESULT HrUninstallNetComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId)
 {
-	INetCfgComponent* pncc = NULL;
-	INetCfgClass* pncClass = NULL;
-	INetCfgClassSetup* pncClassSetup = NULL;
-	OBO_TOKEN OboToken;
+	INetCfgComponent* pncc;
+	INetCfgClass* pncClass;
+	INetCfgClassSetup* pncClassSetup;
 	GUID guidClass;
-	HRESULT hr = S_OK;
+	OBO_TOKEN obo;
+	HRESULT hr;
 
 	//
-	// OBO_TOKEN specifies on whose behalf this
-	// component is being installed.
-	// Set it to OBO_USER so that szComponentId will be installed
-	// on behalf of the user.
+	// Get a reference to the network component to uninstall.
 	//
-
-	ZeroMemory(&OboToken, sizeof(OboToken));
-	OboToken.Type = OBO_USER;
-
-	//
-	// Get the component's reference.
-	//
-
 	hr = pnc->FindComponent(szComponentId, &pncc);
 
-	if (S_OK == hr)
+	if (hr == S_OK)
 	{
 		//
-		// Get the component's class GUID.
+		// Get the class GUID.
 		//
-
 		hr = pncc->GetClassGuid(&guidClass);
 
 		if (hr == S_OK)
 		{
 			//
-			// Get component's class reference.
+			// Get a reference to component's class.
 			//
 
-			hr = pnc->QueryNetCfgClass(&guidClass, IID_INetCfgClass, (void**)&pncClass);
+			hr = pnc->QueryNetCfgClass(&guidClass, IID_INetCfgClass, (PVOID *)&pncClass);
 			if (hr == S_OK)
 			{
 				//
-				// Get Setup reference.
+				// Get the setup interface.
 				//
 
-				hr = pncClass->QueryInterface(IID_INetCfgClassSetup, (void**)&pncClassSetup);
+				hr = pncClass->QueryInterface(IID_INetCfgClassSetup, (LPVOID *)&pncClassSetup);
+
 				if (hr == S_OK)
 				{
-					hr = pncClassSetup->DeInstall(pncc, &OboToken, NULL);
-					if (hr == S_OK)
-					{
-						//
-						// Apply the changes
-						//
+					//
+					// Uninstall the component.
+					//
 
+					ZeroMemory(&obo, sizeof(OBO_TOKEN));
+
+					obo.Type = OBO_USER;
+
+					hr = pncClassSetup->DeInstall(pncc, &obo, NULL);
+					if ((hr == S_OK) || (hr == NETCFG_S_REBOOT))
+					{
 						hr = pnc->Apply();
+
+						if ((hr != S_OK) && (hr != NETCFG_S_REBOOT))
+						{
+							ErrMsg(hr, L"Couldn't apply the changes after uninstalling %s.", szComponentId);
+						}
+					}
+					else
+					{
+						ErrMsg(hr, L"Failed to uninstall %s.", szComponentId);
 					}
 
 					ReleaseRef(pncClassSetup);
 				}
+				else
+				{
+					ErrMsg(hr, L"Couldn't get an interface to setup class.");
+				}
 
 				ReleaseRef(pncClass);
 			}
+			else
+			{
+				ErrMsg(hr, L"Couldn't get a pointer to class interface of %s.", szComponentId);
+			}
+		}
+		else
+		{
+			ErrMsg(hr, L"Couldn't get the class guid of %s.", szComponentId);
 		}
 
 		ReleaseRef(pncc);
+	}
+	else
+	{
+		ErrMsg(hr, L"Couldn't get an interface pointer to %s.", szComponentId);
 	}
 
 	return hr;
