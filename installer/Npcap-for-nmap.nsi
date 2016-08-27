@@ -61,7 +61,6 @@ Var /GLOBAL npf_startup
 Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
 Var /GLOBAL admin_only
-Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
 Var /GLOBAL winpcap_mode
 
@@ -168,7 +167,6 @@ Function getInstallOptions
 	StrCpy $loopback_support "yes"
 	StrCpy $dlt_null "enforced"
 	StrCpy $admin_only "no"
-	StrCpy $dot11_support "disabled"
 	StrCpy $vlan_support "no"
 	StrCpy $winpcap_mode "no"
 	StrCpy $winpcap_installed "no"
@@ -178,7 +176,7 @@ Function getInstallOptions
 		FileRead $4 $cmd_line ; we read until the end of line (including carriage return and new line) and save it to $1
 		FileClose $4 ; and close the file
 	${Else}
-		${GetParameters} $cmd_line ; An example: $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
+		${GetParameters} $cmd_line ; An example: $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /vlan_support=no /winpcap_mode=no'
 	${EndIf}
 
 	${GetOptions} $cmd_line "/npf_startup=" $R0
@@ -207,13 +205,6 @@ Function getInstallOptions
 	${OrIf} $R0 S== "no"
 	${OrIf} $R0 S== "disabled"
 		StrCpy $admin_only $R0
-	${EndIf}
-
-	${GetOptions} $cmd_line "/dot11_support=" $R0
-	${If} $R0 S== "yes"
-	${OrIf} $R0 S== "no"
-	${OrIf} $R0 S== "disabled"
-		StrCpy $dot11_support $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/vlan_support=" $R0
@@ -487,56 +478,39 @@ Function OptionsPage
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "Flags" "DISABLED"
 	${EndIf}
 
-	${If} $dot11_support == "no"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
-	${ElseIf} $dot11_support == "yes"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 1
-	${ElseIf} $dot11_support == "disabled"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
-	${ElseIf} $dot11_support == "enforced"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 1
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
-	${EndIf}
-
 	${If} $vlan_support == "no"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
 	${ElseIf} $vlan_support == "yes"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 1
 	${ElseIf} $vlan_support == "disabled"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
 	${ElseIf} $vlan_support == "enforced"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
 	${ElseIf} $winpcap_mode == "yes"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
 	${ElseIf} $winpcap_mode == "yes2"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 1
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
 	${ElseIf} $winpcap_mode == "disabled"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 0
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Flags" "DISABLED"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
 	${ElseIf} $winpcap_mode == "enforced"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 1
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Flags" "DISABLED"
-	${EndIf}
-
-	${If} $has_wlan_card != "0"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
 	${EndIf}
 
 	IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
 winpcap_exist:
 	StrCpy $winpcap_installed "yes"
-	WriteINIStr "$PLUGINSDIR\options.ini" "Field 8" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, WinPcap will be uninstalled first."
-	WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 0
-	WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Text" "Install Npcap in WinPcap API-compatible Mode (WinPcap will be uninstalled)"
+	WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, WinPcap will be uninstalled first."
+	WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
+	WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Text" "Install Npcap in WinPcap API-compatible Mode (WinPcap will be uninstalled)"
 no_winpcap_exist:
 	!insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
 	!insertmacro MUI_INSTALLOPTIONS_DISPLAY "options.ini"
@@ -589,19 +563,12 @@ Function doOptions
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 5" "State"
 	${If} $0 == "0"
-		StrCpy $dot11_support "no"
-	${Else}
-		StrCpy $dot11_support "yes"
-	${EndIf}
-
-	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 6" "State"
-	${If} $0 == "0"
 		StrCpy $vlan_support "no"
 	${Else}
 		StrCpy $vlan_support "yes"
 	${EndIf}
 
-	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 7" "State"
+	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 6" "State"
 	${If} $0 == "0"
 		StrCpy $winpcap_mode "no"
 	${Else}
@@ -839,17 +806,11 @@ Function copy_win7_32bit_driver
 			File win7_winpcap\x86\npf.cat
 			File win7_winpcap\x86\npf.inf
 			File win7_winpcap\x86\npf_wfp.inf
-			${If} $dot11_support == "yes"
-				File win7_winpcap\x86\npf_wifi.inf
-			${EndIf}
 		${Else} ; $os_ver == "win8_above"
 			File win8_above_winpcap\x86\npf.sys
 			File win8_above_winpcap\x86\npf.cat
 			File win8_above_winpcap\x86\npf.inf
 			File win8_above_winpcap\x86\npf_wfp.inf
-			${If} $dot11_support == "yes"
-				File win8_above_winpcap\x86\npf_wifi.inf
-			${EndIf}
 		${EndIf}
 	${EndIf}
 
@@ -860,17 +821,11 @@ Function copy_win7_32bit_driver
 			File win7\x86\npcap.cat
 			File win7\x86\npcap.inf
 			File win7\x86\npcap_wfp.inf
-			${If} $dot11_support == "yes"
-				File win7\x86\npcap_wifi.inf
-			${EndIf}
 		${Else} ; $os_ver == "win8_above"
 			File win8_above\x86\npcap.sys
 			File win8_above\x86\npcap.cat
 			File win8_above\x86\npcap.inf
 			File win8_above\x86\npcap_wfp.inf
-			${If} $dot11_support == "yes"
-				File win8_above\x86\npcap_wifi.inf
-			${EndIf}
 		${EndIf}
 	${EndIf}
 FunctionEnd
@@ -884,17 +839,11 @@ Function copy_win7_64bit_driver
 			File win7_winpcap\x64\npf.cat
 			File win7_winpcap\x64\npf.inf
 			File win7_winpcap\x64\npf_wfp.inf
-			${If} $dot11_support == "yes"
-				File win7_winpcap\x64\npf_wifi.inf
-			${EndIf}
 		${Else} ; $os_ver == "win8_above"
 			File win8_above_winpcap\x64\npf.sys
 			File win8_above_winpcap\x64\npf.cat
 			File win8_above_winpcap\x64\npf.inf
 			File win8_above_winpcap\x64\npf_wfp.inf
-			${If} $dot11_support == "yes"
-				File win8_above_winpcap\x64\npf_wifi.inf
-			${EndIf}
 		${EndIf}
 	${EndIf}
 
@@ -905,17 +854,11 @@ Function copy_win7_64bit_driver
 			File win7\x64\npcap.cat
 			File win7\x64\npcap.inf
 			File win7\x64\npcap_wfp.inf
-			${If} $dot11_support == "yes"
-				File win7\x64\npcap_wifi.inf
-			${EndIf}
 		${Else} ; $os_ver == "win8_above"
 			File win8_above\x64\npcap.sys
 			File win8_above\x64\npcap.cat
 			File win8_above\x64\npcap.inf
 			File win8_above\x64\npcap_wfp.inf
-			${If} $dot11_support == "yes"
-				File win8_above\x64\npcap_wifi.inf
-			${EndIf}
 		${EndIf}
 	${EndIf}
 FunctionEnd
@@ -956,11 +899,6 @@ ${!defineifexist} CERT_EXISTS "C:\Insecure.cer"
 
 	; install the NDIS filter driver
 	ExecWait '"$INSTDIR\NPFInstall.exe" -n -i' $0
-	
-	; install the Wi-Fi NDIS filter driver if the DOT11_SUPPORT option is selected
-	${If} $dot11_support == "yes"
-		ExecWait '"$INSTDIR\NPFInstall.exe" -n -i2' $0
-	${EndIf}
 
 	; check the driver install result
 	${If} $0 == "0"
@@ -978,11 +916,6 @@ ${!defineifexist} CERT_EXISTS "C:\Insecure.cer"
 
 		; install the NDIS filter driver
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i' $0
-		
-		; install the Wi-Fi NDIS filter driver if the DOT11_SUPPORT option is selected
-		${If} $dot11_support == "yes"
-			ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i2' $0
-		${EndIf}
 
 		; check the driver install result
 		${If} $0 == "0"
@@ -999,9 +932,6 @@ FunctionEnd
 Function un.uninstall_win7_XXbit_driver
 	; uninstall the NDIS filter driver
 	ExecWait '"$INSTDIR\NPFInstall.exe" -n -u' $0
-	${If} $dot11_support == "yes"
-		ExecWait '"$INSTDIR\NPFInstall.exe" -n -u2' $0
-	${EndIf}
 
 	; uninstall the WFP callout driver
 	ExecWait '"$INSTDIR\NPFInstall.exe" -n -uw' $0
@@ -1016,9 +946,6 @@ Function un.uninstall_win7_XXbit_driver
 	${If} $winpcap_mode == "yes"
 		; uninstall the NDIS filter driver
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -u' $0
-		${If} $dot11_support == "yes"
-			ExecWait '"$INSTDIR\NPFInstall2.exe" -n -u2' $0
-		${EndIf}
 
 		; uninstall the WFP callout driver
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -uw' $0
@@ -1159,9 +1086,7 @@ Function write_single_registry_service_options
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 0
 	${Endif}
 
-	;${If} $dot11_support == "yes"
-	;	ExecWait '"$INSTDIR\NPFInstall.exe" -n -wlan_write_reg' $0
-	;${Endif}
+	; ExecWait '"$INSTDIR\NPFInstall.exe" -n -wlan_write_reg' $0
 
 	; Npcap driver will read this option
 	${If} $vlan_support == "yes"
@@ -1186,11 +1111,9 @@ Function write_registry_service_options
 		StrCpy $wifi_or_not "no"
 		Call write_single_registry_service_options
 
-		${If} $dot11_support == "yes"
-			StrCpy $service_name "npf_wifi"
-			StrCpy $wifi_or_not "yes"
-			Call write_single_registry_service_options
-		${EndIf}
+		StrCpy $service_name "npf_wifi"
+		StrCpy $wifi_or_not "yes"
+		Call write_single_registry_service_options
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
@@ -1199,11 +1122,9 @@ Function write_registry_service_options
 		StrCpy $wifi_or_not "no"
 		Call write_single_registry_service_options
 
-		${If} $dot11_support == "yes"
-			StrCpy $service_name "npcap_wifi"
-			StrCpy $wifi_or_not "yes"
-			Call write_single_registry_service_options
-		${EndIf}
+		StrCpy $service_name "npcap_wifi"
+		StrCpy $wifi_or_not "yes"
+		Call write_single_registry_service_options
 	${EndIf}
 FunctionEnd
 
@@ -1214,11 +1135,6 @@ Function start_driver_service
 		; nsExec::Exec "net start npf"
 		; nsExec::Exec "net stop npf"
 		nsExec::Exec "net start npf"
-
-		${If} $dot11_support == "yes"
-			DetailPrint "Starting the npf_wifi driver"
-			nsExec::Exec "net start npf_wifi"
-		${EndIf}
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
@@ -1227,11 +1143,6 @@ Function start_driver_service
 		; nsExec::Exec "net start npcap"
 		; nsExec::Exec "net stop npcap"
 		nsExec::Exec "net start npcap"
-
-		${If} $dot11_support == "yes"
-			DetailPrint "Starting the npcap_wifi driver"
-			nsExec::Exec "net start npcap_wifi"
-		${EndIf}
 	${EndIf}
 FunctionEnd
 
@@ -1240,22 +1151,12 @@ Function stop_driver_service
 	${OrIf} $winpcap_mode == "yes"
 		DetailPrint "Stopping the npf driver"
 		nsExec::Exec "net stop npf"
-
-		${If} $dot11_support == "yes"
-			DetailPrint "Stopping the npf_wifi driver"
-			nsExec::Exec "net stop npf_wifi"
-		${EndIf}
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		DetailPrint "Stopping the npcap driver"
 		nsExec::Exec "net stop npcap"
-
-		${If} $dot11_support == "yes"
-			DetailPrint "Stopping the npcap_wifi driver"
-			nsExec::Exec "net stop npcap_wifi"
-		${EndIf}
 	${EndIf}
 FunctionEnd
 
@@ -1264,22 +1165,12 @@ Function un.stop_driver_service
 	${OrIf} $winpcap_mode == "yes"
 		DetailPrint "Stopping the npf driver"
 		nsExec::Exec "net stop npf"
-
-		${If} $dot11_support == "yes"
-			DetailPrint "Stopping the npf_wifi driver"
-			nsExec::Exec "net stop npf_wifi"
-		${EndIf}
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		DetailPrint "Stopping the npcap driver"
 		nsExec::Exec "net stop npcap"
-
-		${If} $dot11_support == "yes"
-			DetailPrint "Stopping the npcap_wifi driver"
-			nsExec::Exec "net stop npcap_wifi"
-		${EndIf}
 	${EndIf}
 FunctionEnd
 
@@ -1287,19 +1178,13 @@ Function set_driver_service_autostart
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf" "Start" 1
-
-		${If} $dot11_support == "yes"
-			WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf_wifi" "Start" 1
-		${EndIf}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf_wifi" "Start" 4
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap" "Start" 1
-
-		${If} $dot11_support == "yes"
-			WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap_wifi" "Start" 1
-		${EndIf}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap_wifi" "Start" 4
 	${EndIf}
 FunctionEnd
 
@@ -1307,19 +1192,13 @@ Function set_driver_service_not_autostart
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf" "Start" 3
-
-		${If} $dot11_support == "yes"
-			WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf_wifi" "Start" 3
-		${EndIf}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npf_wifi" "Start" 4
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap" "Start" 3
-
-		${If} $dot11_support == "yes"
-			WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap_wifi" "Start" 3
-		${EndIf}
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\npcap_wifi" "Start" 4
 	${EndIf}
 FunctionEnd
 
@@ -1598,12 +1477,6 @@ Section "Uninstall"
 		${EndIf}
 	${Else}
 		StrCpy $winpcap_mode "no"
-	${EndIf}
-
-	${If} ${FileExists} "$INSTDIR\npcap_wifi.inf"
-		StrCpy $dot11_support "yes"
-	${Else}
-		StrCpy $dot11_support "no"
 	${EndIf}
 
 	; stop npf before we delete the service from the registry
