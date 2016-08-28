@@ -1588,7 +1588,7 @@ NPF_CreateOpenObject(
 _Use_decl_annotations_
 NDIS_STATUS
 NPF_RegisterOptions(
-	NDIS_HANDLE  NdisFilterDriverHandle,
+	NDIS_HANDLE  NdisFilterHandle,
 	NDIS_HANDLE  FilterDriverContext
 	)
 /*++
@@ -1616,11 +1616,8 @@ Return Value:
 {
 	TRACE_ENTER();
 
-	ASSERT(NdisFilterDriverHandle == FilterDriverHandle);
 	ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
-
-	if ((NdisFilterDriverHandle != (NDIS_HANDLE)FilterDriverHandle) ||
-		(FilterDriverContext != (NDIS_HANDLE)FilterDriverObject))
+	if (FilterDriverContext != (NDIS_HANDLE)FilterDriverObject)
 	{
 		return NDIS_STATUS_INVALID_PARAMETER;
 	}

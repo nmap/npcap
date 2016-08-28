@@ -66,7 +66,6 @@ typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTE
 //
 // Global variables
 //
-extern NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
 extern NDIS_HANDLE         FilterDriverObject;
 
 #define  MAX_REQUESTS   128 ///< Maximum number of simultaneous IOCTL requests.
