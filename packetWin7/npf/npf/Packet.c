@@ -136,7 +136,6 @@ NDIS_HANDLE         FilterDriverObject; // Driver object for filter driver
 typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
 	USHORT Group
 	);
-NDISGROUPMAXPROCESSORCOUNT MyNdisGroupMaxProcessorCount;
 
 //
 //  Packet Driver's entry routine.
@@ -153,18 +152,12 @@ DriverEntry(
 
 	// Use NonPaged Pool instead of No-Execute (NX) Nonpaged Pool for Win8 and later, this is for security purpose.
 	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
-
-	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR); // display name
-	NDIS_STRING UniqueName = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME); // unique name, quid name
-	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR); // this to match the service name in the INF
-	NDIS_STRING FriendlyName_WiFi = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR_WIFI); // display name
-	NDIS_STRING UniqueName_WiFi = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME_WIFI); // unique name, quid name
-	NDIS_STRING ServiceName_WiFi = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR_WIFI); // this to match the service name in the INF
 	
 	WCHAR* bindT;
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
 	ULONG OsMajorVersion, OsMinorVersion;
+	NDISGROUPMAXPROCESSORCOUNT MyNdisGroupMaxProcessorCount;
 	NDIS_STRING GroupMaxProcessorCount;
 	UNREFERENCED_PARAMETER(RegistryPath);
 
@@ -238,53 +231,7 @@ DriverEntry(
 	//
 	// Register as a service with NDIS
 	//
-	NdisZeroMemory(&FChars, sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS));
-	FChars.Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
-	FChars.Header.Size = sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS);
-#if NDIS_SUPPORT_NDIS61
-	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_2;
-#else
-	FChars.Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
-#endif
-
-	FChars.MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION; // NDIS version is 6.2 (Windows 7)
-	FChars.MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
-	FChars.MajorDriverVersion = 1; // Driver version is 1.0
-	FChars.MinorDriverVersion = 0;
-	FChars.Flags = 0;
-
-	// Use different names for the Wi-Fi driver.
-	if (g_Dot11SupportMode)
-	{
-		FChars.FriendlyName = FriendlyName_WiFi;
-		FChars.UniqueName = UniqueName_WiFi;
-		FChars.ServiceName = ServiceName_WiFi;
-	}
-	else
-	{
-		FChars.FriendlyName = FriendlyName;
-		FChars.UniqueName = UniqueName;
-		FChars.ServiceName = ServiceName;
-	}
-
-	FChars.SetOptionsHandler = NPF_RegisterOptions;
-	FChars.AttachHandler = NPF_AttachAdapter;
-	FChars.DetachHandler = NPF_DetachAdapter;
-	FChars.RestartHandler = NPF_Restart;
-	FChars.PauseHandler = NPF_Pause;
-	FChars.SetFilterModuleOptionsHandler = NPF_SetModuleOptions;
-	FChars.OidRequestHandler = NPF_OidRequest;
-	FChars.OidRequestCompleteHandler = NPF_OidRequestComplete;
-	FChars.CancelOidRequestHandler = NPF_CancelOidRequest;
-
-	FChars.SendNetBufferListsHandler = NPF_SendEx;
-	FChars.ReturnNetBufferListsHandler = NPF_ReturnEx;
-	FChars.SendNetBufferListsCompleteHandler = NPF_SendCompleteEx;
-	FChars.ReceiveNetBufferListsHandler = NPF_TapEx;
-	FChars.DevicePnPEventNotifyHandler = NPF_DevicePnPEventNotify;
-	FChars.NetPnPEventHandler = NPF_NetPnPEvent;
-	FChars.StatusHandler = NPF_Status;
-	FChars.CancelSendNetBufferListsHandler = NPF_CancelSendNetBufferLists;
+	NPF_registerLWF(&FChars);
 
 	DriverObject->DriverUnload = NPF_Unload;
 
@@ -337,24 +284,6 @@ DriverEntry(
 		return Status;
 	}
 
-// #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-// 	if (DriverObject->DeviceObject)
-// 	{
-// 		Status = NPF_RegisterCallouts(DriverObject->DeviceObject);
-// 		if (!NT_SUCCESS(Status))
-// 		{
-// 			if (gWFPEngineHandle != NULL)
-// 			{
-// 				NPF_UnregisterCallouts();
-//
-// 				NdisFDeregisterFilterDriver(FilterDriverHandle);
-// 			}
-// 			TRACE_EXIT();
-// 			return Status;
-// 		}
-// 	}
-// #endif
-
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// Use Winsock Kernel (WSK) to send loopback packets.
 	Status = NPF_WSKStartup();
@@ -382,6 +311,68 @@ RegistryError:
 	Status = STATUS_UNSUCCESSFUL;
 	TRACE_EXIT();
 	return(Status);
+}
+
+//-------------------------------------------------------------------
+VOID
+NPF_registerLWF(
+	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars
+	)
+{
+	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR); // display name
+	NDIS_STRING UniqueName = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME); // unique name, quid name
+	NDIS_STRING ServiceName = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR); // this to match the service name in the INF
+	NDIS_STRING FriendlyName_WiFi = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR_WIFI); // display name
+	NDIS_STRING UniqueName_WiFi = RTL_CONSTANT_STRING(FILTER_UNIQUE_NAME_WIFI); // unique name, quid name
+	NDIS_STRING ServiceName_WiFi = RTL_CONSTANT_STRING(NPF_DRIVER_NAME_SMALL_WIDECHAR_WIFI); // this to match the service name in the INF
+
+	NdisZeroMemory(pFChars, sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS));
+	pFChars->Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
+	pFChars->Header.Size = sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS);
+#if NDIS_SUPPORT_NDIS61
+	pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_2;
+#else
+	pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
+#endif
+
+	pFChars->MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION; // NDIS version is 6.2 (Windows 7)
+	pFChars->MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
+	pFChars->MajorDriverVersion = 1; // Driver version is 1.0
+	pFChars->MinorDriverVersion = 0;
+	pFChars->Flags = 0;
+
+	// Use different names for the Wi-Fi driver.
+	if (g_Dot11SupportMode)
+	{
+		pFChars->FriendlyName = FriendlyName_WiFi;
+		pFChars->UniqueName = UniqueName_WiFi;
+		pFChars->ServiceName = ServiceName_WiFi;
+	}
+	else
+	{
+		pFChars->FriendlyName = FriendlyName;
+		pFChars->UniqueName = UniqueName;
+		pFChars->ServiceName = ServiceName;
+	}
+
+	pFChars->SetOptionsHandler = NPF_RegisterOptions;
+	pFChars->AttachHandler = NPF_AttachAdapter;
+	pFChars->DetachHandler = NPF_DetachAdapter;
+	pFChars->RestartHandler = NPF_Restart;
+	pFChars->PauseHandler = NPF_Pause;
+	pFChars->SetFilterModuleOptionsHandler = NPF_SetModuleOptions;
+	pFChars->OidRequestHandler = NPF_OidRequest;
+	pFChars->OidRequestCompleteHandler = NPF_OidRequestComplete;
+	pFChars->CancelOidRequestHandler = NPF_CancelOidRequest;
+
+	pFChars->SendNetBufferListsHandler = NPF_SendEx;
+	pFChars->ReturnNetBufferListsHandler = NPF_ReturnEx;
+	pFChars->SendNetBufferListsCompleteHandler = NPF_SendCompleteEx;
+	pFChars->ReceiveNetBufferListsHandler = NPF_TapEx;
+	pFChars->DevicePnPEventNotifyHandler = NPF_DevicePnPEventNotify;
+	pFChars->NetPnPEventHandler = NPF_NetPnPEvent;
+	pFChars->StatusHandler = NPF_Status;
+	pFChars->CancelSendNetBufferListsHandler = NPF_CancelSendNetBufferLists;
 }
 
 //-------------------------------------------------------------------
@@ -1009,7 +1000,8 @@ Return Value:
 
 		DeviceExtension = OldDeviceObject->DeviceExtension;
 
-		TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "Deleting Adapter %ws, Protocol Handle=%p, Device Obj=%p (%p)", DeviceExtension->AdapterName.Buffer, FilterDriverHandle, DeviceObject, OldDeviceObject);
+		TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "Deleting Adapter %ws, Protocol Handle=%p, Device Obj=%p (%p)",
+			DeviceExtension->AdapterName.Buffer, FilterDriverHandle, DeviceObject, OldDeviceObject);
 
 		if (DeviceExtension->ExportString)
 		{

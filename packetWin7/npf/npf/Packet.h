@@ -811,6 +811,17 @@ DRIVER_INITIALIZE DriverEntry;
 
 
 /*!
+  \brief The initialization routine of the LWF data structure.
+  \param pFChars The LWF data structure.
+  \return NULL
+*/
+VOID
+NPF_registerLWF(
+	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars
+	);
+
+
+/*!
   \brief Returns the list of the MACs available on the system.
   \return A string containing a list of network adapters.
 
