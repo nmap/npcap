@@ -231,7 +231,7 @@ DriverEntry(
 	//
 	// Register as a service with NDIS
 	//
-	NPF_registerLWF(&FChars);
+	NPF_registerLWF(&FChars, (BOOLEAN) g_Dot11SupportMode);
 
 	DriverObject->DriverUnload = NPF_Unload;
 
@@ -279,9 +279,13 @@ DriverEntry(
 		&FilterDriverHandle);
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter with NDIS, status = %x", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter with NDIS, Status = %x", Status);
 		TRACE_EXIT();
 		return Status;
+	}
+	else
+	{
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %x", Status, FilterDriverHandle);
 	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -316,7 +320,8 @@ RegistryError:
 //-------------------------------------------------------------------
 VOID
 NPF_registerLWF(
-	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars
+	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars,
+	BOOLEAN bWiFiOrNot
 	)
 {
 	NDIS_STRING FriendlyName = RTL_CONSTANT_STRING(NPF_SERVICE_DESC_WIDECHAR); // display name
@@ -341,8 +346,8 @@ NPF_registerLWF(
 	pFChars->MinorDriverVersion = 0;
 	pFChars->Flags = 0;
 
-	// Use different names for the Wi-Fi driver.
-	if (g_Dot11SupportMode)
+	// Use different names for the WiFi driver.
+	if (bWiFiOrNot)
 	{
 		pFChars->FriendlyName = FriendlyName_WiFi;
 		pFChars->UniqueName = UniqueName_WiFi;

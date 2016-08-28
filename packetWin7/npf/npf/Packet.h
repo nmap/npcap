@@ -813,11 +813,13 @@ DRIVER_INITIALIZE DriverEntry;
 /*!
   \brief The initialization routine of the LWF data structure.
   \param pFChars The LWF data structure.
+  \param bWiFiOrNot Whether the LWF is registered as a WiFi one or standard one.
   \return NULL
 */
 VOID
 NPF_registerLWF(
-	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars
+	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars,
+	BOOLEAN bWiFiOrNot
 	);
 
 
