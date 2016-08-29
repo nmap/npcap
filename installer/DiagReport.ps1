@@ -28,9 +28,13 @@ function get_os_bit()
     }
 }
 
-$os_bit = get_os_bit
+function get_winpcap_mode()
+{
+    return (Get-Item HKLM:\SYSTEM\CurrentControlSet\Services\npcap).GetValue("WinPcapCompatible")
+}
 
-#(Get-Item HKLM:\Software\Microsoft\Windows\Currentversion).GetValueNames()
+$os_bit = get_os_bit
+$winpcap_mode = get_winpcap_mode
 
 
 Write-Host ("`n")
@@ -75,7 +79,35 @@ dir "C:\Windows\SysWOW64\" WlanHelper.exe
 dir "C:\Windows\SysWOW64\" wpcap.dll
 dir "C:\Windows\SysWOW64\Npcap\"
 
-#Test-Path "C:\Program Files\Npcap\NPFInstall.exe"
+#########################################################
+Write-Host ("`n")
+Write-Host ("*************************************************")
+Write-Host ("Registry Info:")
+Write-Host ("*************************************************")
+
+if ($os_bit -eq "32-bit")
+{
+    Write-Host ("HKLM:\SOFTWARE\Npcap:")
+    (Get-ItemProperty HKLM:\SOFTWARE\Npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+}
+else
+{
+    Write-Host ("HKLM:\SOFTWARE\WOW6432Node\Npcap:")
+    (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\Npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+}
+
+Write-Host ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap:")
+(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+Write-Host ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi:")
+(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+
+if ($winpcap_mode -eq 1)
+{
+    Write-Host ("HKLM:\SYSTEM\CurrentControlSet\Services\npf:")
+    (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+    Write-Host ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi:")
+    (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+}
 
 #########################################################
 Write-Host ("`n")
@@ -84,6 +116,8 @@ Write-Host ("Service Info:")
 Write-Host ("*************************************************")
 
 Get-Service npcap
-Get-Service npf
 
-#cmd /c sc query npcap
+if ($winpcap_mode)
+{
+    Get-Service npf
+}
