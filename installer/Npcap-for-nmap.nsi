@@ -703,6 +703,8 @@ FunctionEnd
 Function copy_win7_32bit_home_dlls
 	SetOutPath $INSTDIR
 	File ..\LICENSE
+	File DiagReport.bat
+	File DiagReport.ps1
 
 	${If} $winpcap_mode == "yes"
 		File /oname=NPFInstall2.exe win8_above\x86\NPFInstall.exe
@@ -721,6 +723,8 @@ FunctionEnd
 Function copy_win7_64bit_home_dlls
 	SetOutPath $INSTDIR
 	File ..\LICENSE
+	File DiagReport.bat
+	File DiagReport.ps1
 
 	${If} $winpcap_mode == "yes"
 		File /oname=NPFInstall2.exe win8_above\x64\NPFInstall.exe
@@ -982,6 +986,8 @@ FunctionEnd
 
 Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
+	File DiagReport.bat
+	File DiagReport.ps1
 	Delete $INSTDIR\NPFInstall.exe
 	Delete $INSTDIR\loopback.ini
 
