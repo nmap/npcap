@@ -1,5 +1,5 @@
 @echo off
-set dir=%CD%
+set dir=.
 set scriptPath=%dir%\Deploy.ps1
 for /f "tokens=*" %%a in ('powershell Get-ExecutionPolicy') do (
 set originPolicy=%%a
