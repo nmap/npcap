@@ -121,3 +121,11 @@ if ($winpcap_mode)
 {
     Get-Service npf
 }
+
+#########################################################
+Write-Host ("`n")
+Write-Host ("*************************************************")
+Write-Host ("Install Info:")
+Write-Host ("*************************************************")
+
+Write-Host ("Please refer to: C:\Program Files\Npcap\install.log")
