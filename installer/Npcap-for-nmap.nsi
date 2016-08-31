@@ -986,8 +986,9 @@ FunctionEnd
 
 Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
-	File DiagReport.bat
-	File DiagReport.ps1
+	Delete $INSTDIR\DiagReport.bat
+	Delete $INSTDIR\DiagReport.ps1
+	Delete $INSTDIR\DiagReport.txt
 	Delete $INSTDIR\NPFInstall.exe
 	Delete $INSTDIR\loopback.ini
 
