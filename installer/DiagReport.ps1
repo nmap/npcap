@@ -4,6 +4,11 @@
 # Date: August 29, 2016
 #
 
+function write_report($text)
+{
+    Write-Host $text
+}
+
 function get_script_bit()
 {
     if ([IntPtr]::Size -eq 8)
@@ -30,35 +35,35 @@ $os_bit = get_os_bit
 $winpcap_mode = get_winpcap_mode
 
 
-Write-Host ("`n")
-Write-Host ("*************************************************")
-Write-Host "DiagReport for Npcap ( http://npcap.org )"
-Write-Host ("*************************************************")
-Write-Host "Script Architecture:`t`t", (get_script_bit)
-Write-Host "Current Time:`t`t`t", (Get-Date)
-Write-Host "Npcap Version:`t`t`t", ([System.Diagnostics.FileVersionInfo]::GetVersionInfo("C:\Program Files\Npcap\NPFInstall.exe").FileVersion)
+write_report ("`n")
+write_report ("*************************************************")
+write_report "DiagReport for Npcap ( http://npcap.org )"
+write_report ("*************************************************")
+write_report "Script Architecture:`t`t", (get_script_bit)
+write_report "Current Time:`t`t`t", (Get-Date)
+write_report "Npcap Version:`t`t`t", ([System.Diagnostics.FileVersionInfo]::GetVersionInfo("C:\Program Files\Npcap\NPFInstall.exe").FileVersion)
 
 #########################################################
-Write-Host ("`n")
-Write-Host ("*************************************************")
-Write-Host ("OS Info:")
-Write-Host ("*************************************************")
-Write-Host "Caption:`t`t`t", (Get-WmiObject Win32_OperatingSystem).Caption
-Write-Host "BuildNumber:`t`t`t", (Get-WmiObject Win32_OperatingSystem).BuildNumber
-#Write-Host "BuildType:`t`t`t`t`, (Get-WmiObject Win32_OperatingSystem).BuildType
-Write-Host "Locale:`t`t`t`t", (Get-WmiObject Win32_OperatingSystem).Locale
-Write-Host "MUILanguages:`t`t`t", (Get-WmiObject Win32_OperatingSystem).MUILanguages
-Write-Host "OSArchitecture:`t`t`t", (Get-WmiObject Win32_OperatingSystem).OSArchitecture
-Write-Host "ServicePackMajorVersion:`t", (Get-WmiObject Win32_OperatingSystem).ServicePackMajorVersion
-Write-Host "ServicePackMinorVersion:`t", (Get-WmiObject Win32_OperatingSystem).ServicePackMinorVersion
-Write-Host "SystemDirectory:`t`t", (Get-WmiObject Win32_OperatingSystem).SystemDirectory
-Write-Host "Version:`t`t`t", (Get-WmiObject Win32_OperatingSystem).Version
+write_report ("`n")
+write_report ("*************************************************")
+write_report ("OS Info:")
+write_report ("*************************************************")
+write_report "Caption:`t`t`t", (Get-WmiObject Win32_OperatingSystem).Caption
+write_report "BuildNumber:`t`t`t", (Get-WmiObject Win32_OperatingSystem).BuildNumber
+#write_report "BuildType:`t`t`t`t`, (Get-WmiObject Win32_OperatingSystem).BuildType
+write_report "Locale:`t`t`t`t", (Get-WmiObject Win32_OperatingSystem).Locale
+write_report "MUILanguages:`t`t`t", (Get-WmiObject Win32_OperatingSystem).MUILanguages
+write_report "OSArchitecture:`t`t`t", (Get-WmiObject Win32_OperatingSystem).OSArchitecture
+write_report "ServicePackMajorVersion:`t", (Get-WmiObject Win32_OperatingSystem).ServicePackMajorVersion
+write_report "ServicePackMinorVersion:`t", (Get-WmiObject Win32_OperatingSystem).ServicePackMinorVersion
+write_report "SystemDirectory:`t`t", (Get-WmiObject Win32_OperatingSystem).SystemDirectory
+write_report "Version:`t`t`t", (Get-WmiObject Win32_OperatingSystem).Version
 
 #########################################################
-Write-Host ("`n")
-Write-Host ("*************************************************")
-Write-Host ("File Info:")
-Write-Host ("*************************************************")
+write_report ("`n")
+write_report ("*************************************************")
+write_report ("File Info:")
+write_report ("*************************************************")
 
 dir "C:\Program Files\Npcap\"
 
@@ -75,40 +80,40 @@ dir "C:\Windows\SysWOW64\" wpcap.dll
 dir "C:\Windows\SysWOW64\Npcap\"
 
 #########################################################
-Write-Host ("`n")
-Write-Host ("*************************************************")
-Write-Host ("Registry Info:")
-Write-Host ("*************************************************")
+write_report ("`n")
+write_report ("*************************************************")
+write_report ("Registry Info:")
+write_report ("*************************************************")
 
 if ($os_bit -eq "32-bit")
 {
-    Write-Host ("HKLM:\SOFTWARE\Npcap:")
+    write_report ("HKLM:\SOFTWARE\Npcap:")
     (Get-ItemProperty HKLM:\SOFTWARE\Npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
 }
 else
 {
-    Write-Host ("HKLM:\SOFTWARE\WOW6432Node\Npcap:")
+    write_report ("HKLM:\SOFTWARE\WOW6432Node\Npcap:")
     (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\Npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
 }
 
-Write-Host ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap:")
+write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap:")
 (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
-Write-Host ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi:")
+write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi:")
 (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
 
 if ($winpcap_mode -eq 1)
 {
-    Write-Host ("HKLM:\SYSTEM\CurrentControlSet\Services\npf:")
+    write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf:")
     (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
-    Write-Host ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi:")
+    write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi:")
     (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
 }
 
 #########################################################
-Write-Host ("`n")
-Write-Host ("*************************************************")
-Write-Host ("Service Info:")
-Write-Host ("*************************************************")
+write_report ("`n")
+write_report ("*************************************************")
+write_report ("Service Info:")
+write_report ("*************************************************")
 
 Get-Service npcap
 
@@ -118,9 +123,9 @@ if ($winpcap_mode)
 }
 
 #########################################################
-Write-Host ("`n")
-Write-Host ("*************************************************")
-Write-Host ("Install Info:")
-Write-Host ("*************************************************")
+write_report ("`n")
+write_report ("*************************************************")
+write_report ("Install Info:")
+write_report ("*************************************************")
 
-Write-Host ("Please refer to: C:\Program Files\Npcap\install.log")
+write_report ("Please refer to: C:\Program Files\Npcap\install.log")
