@@ -58,25 +58,25 @@ $winpcap_mode = get_winpcap_mode
 write_report ("*************************************************")
 write_report "DiagReport for Npcap ( http://npcap.org )"
 write_report ("*************************************************")
-write_report "Script Architecture:`t`t", (get_script_bit)
-write_report "Current Time:`t`t`t", (Get-Date)
-write_report "Npcap Version:`t`t`t", ([System.Diagnostics.FileVersionInfo]::GetVersionInfo("C:\Program Files\Npcap\NPFInstall.exe").FileVersion)
+"Script Architecture:`t`t" + (get_script_bit)
+"Current Time:`t`t`t" + (Get-Date)
+"Npcap Version:`t`t`t" + ([System.Diagnostics.FileVersionInfo]::GetVersionInfo("C:\Program Files\Npcap\NPFInstall.exe").FileVersion)
 
 #########################################################
 write_report ("`n")
 write_report ("*************************************************")
 write_report ("OS Info:")
 write_report ("*************************************************")
-write_report "Caption:`t`t`t", (Get-WmiObject Win32_OperatingSystem).Caption
-write_report "BuildNumber:`t`t`t", (Get-WmiObject Win32_OperatingSystem).BuildNumber
+"Caption:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).Caption
+"BuildNumber:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).BuildNumber
 # write_report "BuildType:`t`t`t`t`, (Get-WmiObject Win32_OperatingSystem).BuildType
-write_report "Locale:`t`t`t`t", (Get-WmiObject Win32_OperatingSystem).Locale
-write_report "MUILanguages:`t`t`t", (Get-WmiObject Win32_OperatingSystem).MUILanguages
-write_report "OSArchitecture:`t`t`t", (Get-WmiObject Win32_OperatingSystem).OSArchitecture
-write_report "ServicePackMajorVersion:`t", (Get-WmiObject Win32_OperatingSystem).ServicePackMajorVersion
-write_report "ServicePackMinorVersion:`t", (Get-WmiObject Win32_OperatingSystem).ServicePackMinorVersion
-write_report "SystemDirectory:`t`t", (Get-WmiObject Win32_OperatingSystem).SystemDirectory
-write_report "Version:`t`t`t", (Get-WmiObject Win32_OperatingSystem).Version
+"Locale:`t`t`t`t" + (Get-WmiObject Win32_OperatingSystem).Locale
+"MUILanguages:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).MUILanguages
+"OSArchitecture:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).OSArchitecture
+"ServicePackMajorVersion:`t" + (Get-WmiObject Win32_OperatingSystem).ServicePackMajorVersion
+"ServicePackMinorVersion:`t" + (Get-WmiObject Win32_OperatingSystem).ServicePackMinorVersion
+"SystemDirectory:`t`t" + (Get-WmiObject Win32_OperatingSystem).SystemDirectory
+"Version:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).Version
 
 #########################################################
 write_report ("`n")
@@ -84,19 +84,25 @@ write_report ("`n")
 write_report ("File Info:")
 write_report ("*************************************************")
 
+# write_report ("C:\Program Files\Npcap:")
 dir "C:\Program Files\Npcap\"
 
+# write_report ("C:\Windows\System32:")
 dir "C:\Windows\System32\" NpcapHelper.exe
 dir "C:\Windows\System32\" Packet.dll
 dir "C:\Windows\System32\" WlanHelper.exe
 dir "C:\Windows\System32\" wpcap.dll
 dir "C:\Windows\System32\Npcap\"
 
-dir "C:\Windows\SysWOW64\" NpcapHelper.exe
-dir "C:\Windows\SysWOW64\" Packet.dll
-dir "C:\Windows\SysWOW64\" WlanHelper.exe
-dir "C:\Windows\SysWOW64\" wpcap.dll
-dir "C:\Windows\SysWOW64\Npcap\"
+if ($os_bit -eq "64-bit")
+{
+    # write_report ("C:\Windows\SysWOW64:")
+    dir "C:\Windows\SysWOW64\" NpcapHelper.exe
+    dir "C:\Windows\SysWOW64\" Packet.dll
+    dir "C:\Windows\SysWOW64\" WlanHelper.exe
+    dir "C:\Windows\SysWOW64\" wpcap.dll
+    dir "C:\Windows\SysWOW64\Npcap\"
+}
 
 #########################################################
 write_report ("`n")
