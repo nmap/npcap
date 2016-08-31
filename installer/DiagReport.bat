@@ -10,8 +10,8 @@ if not "%errorLevel%" == "0" (
   exit /b 2
 )
 
-set dir=.
-set scriptPath=%dir%\DiagReport.ps1
+set dir=%~dp0
+set scriptPath=%dir%DiagReport.ps1
 for /f "tokens=*" %%a in ('powershell Get-ExecutionPolicy') do (
 set originPolicy=%%a
 )
@@ -21,7 +21,7 @@ rem this way only works for Administrator
 rem powershell %scriptPath%
 
 rem This call works also for normal users
-powershell -noprofile -NoExit -command "&{start-process powershell -ArgumentList '-NoExit -noprofile -file \"C:\Program Files\Npcap\DiagReport.ps1\"' -verb RunAs}"
+powershell -noprofile -NoExit -command "&{start-process powershell -ArgumentList '-NoExit -noprofile -file \"%scriptPath%\"' -verb RunAs}"
 
 powershell Set-ExecutionPolicy %originPolicy%
 
