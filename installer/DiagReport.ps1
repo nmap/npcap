@@ -32,9 +32,11 @@ $winpcap_mode = get_winpcap_mode
 
 Write-Host ("`n")
 Write-Host ("*************************************************")
-Write-Host "DiagReport for Npcap 0.08 ( http://npcap.org )"
+Write-Host "DiagReport for Npcap ( http://npcap.org )"
 Write-Host ("*************************************************")
-Write-Host "This Script:`t`t`t", (get_script_bit)
+Write-Host "Script Architecture:`t`t", (get_script_bit)
+Write-Host "Current Time:`t`t`t", (Get-Date)
+Write-Host "Npcap Version:`t`t`t", ([System.Diagnostics.FileVersionInfo]::GetVersionInfo("C:\Program Files\Npcap\NPFInstall.exe").FileVersion)
 
 #########################################################
 Write-Host ("`n")
