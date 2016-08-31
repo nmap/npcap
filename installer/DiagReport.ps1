@@ -4,9 +4,29 @@
 # Date: August 29, 2016
 #
 
+$report_file_name = $MyInvocation.MyCommand.Definition.Replace(".ps1", ".txt")
+
+# Delete the old report if exists.
+if (Test-Path $report_file_name)
+{
+    Remove-Item $report_file_name
+}
+
+$(
+
+# $ErrorActionPreference="SilentlyContinue"
+# Stop-Transcript | Out-Null
+# $ErrorActionPreference = "Continue"
+# Start-Transcript -IncludeInvocationHeader -Path $report_file_name
+
 function write_report($text)
 {
-    Write-Host $text
+    # Write-Host $text
+    # Write-Output $text
+    # $text | Out-File -Append -FilePath $report_file_name
+    $text
+    # $text >> $report_file_name
+    # Write-Output $text | Out-File -Append -FilePath $report_file_name
 }
 
 function get_script_bit()
@@ -35,7 +55,6 @@ $os_bit = get_os_bit
 $winpcap_mode = get_winpcap_mode
 
 
-write_report ("`n")
 write_report ("*************************************************")
 write_report "DiagReport for Npcap ( http://npcap.org )"
 write_report ("*************************************************")
@@ -50,7 +69,7 @@ write_report ("OS Info:")
 write_report ("*************************************************")
 write_report "Caption:`t`t`t", (Get-WmiObject Win32_OperatingSystem).Caption
 write_report "BuildNumber:`t`t`t", (Get-WmiObject Win32_OperatingSystem).BuildNumber
-#write_report "BuildType:`t`t`t`t`, (Get-WmiObject Win32_OperatingSystem).BuildType
+# write_report "BuildType:`t`t`t`t`, (Get-WmiObject Win32_OperatingSystem).BuildType
 write_report "Locale:`t`t`t`t", (Get-WmiObject Win32_OperatingSystem).Locale
 write_report "MUILanguages:`t`t`t", (Get-WmiObject Win32_OperatingSystem).MUILanguages
 write_report "OSArchitecture:`t`t`t", (Get-WmiObject Win32_OperatingSystem).OSArchitecture
@@ -61,7 +80,7 @@ write_report "Version:`t`t`t", (Get-WmiObject Win32_OperatingSystem).Version
 
 #########################################################
 write_report ("`n")
-write_report ("*************************************************")
+"*************************************************"
 write_report ("File Info:")
 write_report ("*************************************************")
 
@@ -129,3 +148,10 @@ write_report ("Install Info:")
 write_report ("*************************************************")
 
 write_report ("Please refer to: C:\Program Files\Npcap\install.log")
+
+# Stop-Transcript
+# ) *>&1 > $report_file_name
+# ) >> $report_file_name
+) 2>&1 >> $report_file_name
+
+notepad $report_file_name
