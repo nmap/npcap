@@ -21,8 +21,8 @@ rem this way only works for Administrator
 rem powershell %scriptPath%
 
 rem This call works also for normal users
-powershell -noprofile -NoExit -command "&{start-process powershell -ArgumentList '-NoExit -noprofile -file \"%scriptPath%\"' -verb RunAs}"
+powershell -noprofile -command "&{start-process powershell -ArgumentList '-NoExit -noprofile -file \"%scriptPath%\"' -verb RunAs}"
 
 powershell Set-ExecutionPolicy %originPolicy%
 
-pause
+rem pause
