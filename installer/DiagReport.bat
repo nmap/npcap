@@ -17,11 +17,14 @@ set originPolicy=%%a
 )
 powershell Set-ExecutionPolicy 0
 
-rem this way only works for Administrator
+rem this call only works for Administrator
 rem powershell %scriptPath%
 
 rem This call works also for normal users
-powershell -noprofile -command "&{start-process powershell -ArgumentList '-NoExit -noprofile -file \"%scriptPath%\"' -verb RunAs}"
+rem "No Exit" version:
+rem powershell -NoExit -noprofile -command "&{start-process powershell -ArgumentList '-NoExit -noprofile -file \"%scriptPath%\"' -verb RunAs}"
+rem "Exit" version:
+powershell -noprofile -command "&{start-process powershell -ArgumentList '-noprofile -file \"%scriptPath%\"' -verb RunAs}"
 
 powershell Set-ExecutionPolicy %originPolicy%
 
