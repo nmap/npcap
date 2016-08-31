@@ -18,14 +18,7 @@ function get_script_bit()
 
 function get_os_bit()
 {
-    if ([Environment]::Is64BitOperatingSystem)
-    {
-        '64-bit'
-    }
-    else
-    {
-        '32-bit'
-    }
+    return (Get-WmiObject Win32_OperatingSystem).OSArchitecture
 }
 
 function get_winpcap_mode()
