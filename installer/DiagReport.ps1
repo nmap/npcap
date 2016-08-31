@@ -59,8 +59,10 @@ write_report ("*************************************************")
 write_report "DiagReport for Npcap ( http://npcap.org )"
 write_report ("*************************************************")
 "Script Architecture:`t`t" + (get_script_bit)
+"Script Path:`t`t`t" + ($MyInvocation.MyCommand.Definition)
 "Current Time:`t`t`t" + (Get-Date)
 "Npcap Version:`t`t`t" + ([System.Diagnostics.FileVersionInfo]::GetVersionInfo("C:\Program Files\Npcap\NPFInstall.exe").FileVersion)
+"PowerShell Version:`t`t" + ($PSVersionTable.PSVersion)
 
 #########################################################
 write_report ("`n")
