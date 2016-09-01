@@ -873,13 +873,25 @@ managed
   <para>
   Please report any bugs or issues about Npcap at:
   <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues">Nmap issues on GitHub</ulink>.
-  In your report, please provide <emphasis>AT LEAST</emphasis> your OS (Vista |
-  Win7 | Win8 | Win10, x86 | x64), Npcap version and installation options, user
+  In your report, please provide your <emphasis>DiagReport</emphasis> output, user
   software version (e.g. Nmap, Wireshark), reproduce steps and other information
   you think necessary. If your issue occurs only on a special OS version (e.g. Win10
   1511, 1607), please mention it in the report.
   </para>
 
+  <sect2 id="npcap-issues-diagreport">
+    <title>Diagnostic report</title>
+
+    <para>
+    Npcap has provided a diagnostic utility called <filename>DiagReport</filename>.
+	It provides a lot of information including OS metadata, Npcap related files,
+	install options, registry values, services, etc. You can simply click the
+	<filename>C:\Program Files\Npcap\DiagReport.bat</filename> file to run <filename>DiagReport</filename>.
+	It will pop up a text report via Notepad (it's stored in: <filename>C:\Program Files\Npcap\DiagReport.txt</filename>).
+	Please always submit it to us if you encounter any issues.
+    </para>
+
+	</sect2>
   <sect2 id="npcap-issues-installation-log">
     <title>Installation log</title>
 

@@ -58,7 +58,11 @@ If you only want to build your software under ``WinPcap Compatible Mode`` (which
 
 ## Bug report
 
-Please report any bugs or issues about Npcap at: [Nmap issues on GitHub](https://github.com/nmap/nmap/issues). In your report, please provide **AT LEAST** your OS (Vista | Win7 | Win8 | Win10, x86 | x64), Npcap version and installation options, user software version (e.g. Nmap, Wireshark), reproduce steps and other information you think necessary. If your issue occurs only on a special OS version (e.g. Win10 1511, 1607), please mention it in the report.
+Please report any bugs or issues about Npcap at: [Nmap issues on GitHub](https://github.com/nmap/nmap/issues). In your report, please provide your **DiagReport** output, user software version (e.g. Nmap, Wireshark), reproduce steps and other information you think necessary. If your issue occurs only on a special OS version (e.g. Win10 1511, 1607), please mention it in the report.
+
+### Diagnostic report ###
+
+Npcap has provided a diagnostic utility called ``DiagReport``. It provides a lot of information including OS metadata, Npcap related files, install options, registry values, services, etc. You can simply click the ``C:\Program Files\Npcap\DiagReport.bat`` file to run ``DiagReport``. It will pop up a text report via Notepad (it's stored in: ``C:\Program Files\Npcap\DiagReport.txt``). Please always submit it to us if you encounter any issues.
 
 ### Installation log
 
