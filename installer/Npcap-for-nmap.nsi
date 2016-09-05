@@ -1316,9 +1316,6 @@ install_xp_32bit:
 	Call copy_xp_32bit_system_dlls
 
 	WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 	Goto npfdone
 
 install_xp_64bit:
@@ -1343,9 +1340,6 @@ install_xp_64bit:
 	WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
 	; re-enable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 	Goto npfdone
 
 install_win7_32bit:
@@ -1365,9 +1359,6 @@ install_win7_32bit:
 	Call write_registry_software_options
 	; write other keys
 	WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 	Goto npfdone
 
 install_win7_64bit:
@@ -1396,11 +1387,12 @@ install_win7_64bit:
 
 	; re-enable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
+
+npfdone:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 
-npfdone:
 	${If} $loopback_support == "yes"
 		; create "Npcap Loopback Adapter", used for capturing loopback packets
 		ExecWait '"$INSTDIR\NPFInstall.exe" -n -il'
