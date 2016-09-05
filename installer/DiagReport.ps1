@@ -51,8 +51,21 @@ function get_winpcap_mode()
     return (Get-Item HKLM:\SYSTEM\CurrentControlSet\Services\npcap).GetValue("WinPcapCompatible")
 }
 
+function get_install_path()
+{
+    if ($os_bit -eq "32-bit")
+    {
+        return (Get-ItemProperty HKLM:\SOFTWARE\Npcap).'(default)'
+    }
+    else
+    {
+        return (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\Npcap).'(default)'
+    }
+}
+
 $os_bit = get_os_bit
 $winpcap_mode = get_winpcap_mode
+$install_path = get_install_path
 
 
 write_report ("*************************************************")
@@ -61,7 +74,8 @@ write_report ("*************************************************")
 "Script Architecture:`t`t" + (get_script_bit)
 "Script Path:`t`t`t" + ($MyInvocation.MyCommand.Definition)
 "Current Time:`t`t`t" + (Get-Date)
-"Npcap Version:`t`t`t" + ([System.Diagnostics.FileVersionInfo]::GetVersionInfo("C:\Program Files\Npcap\NPFInstall.exe").FileVersion)
+"Npcap install path:`t`t" + $install_path
+"Npcap Version:`t`t`t" + ([System.Diagnostics.FileVersionInfo]::GetVersionInfo($install_path + "\NPFInstall.exe").FileVersion)
 "PowerShell Version:`t`t" + ($PSVersionTable.PSVersion)
 
 #########################################################
@@ -87,7 +101,7 @@ write_report ("File Info:")
 write_report ("*************************************************")
 
 # write_report ("C:\Program Files\Npcap:")
-dir "C:\Program Files\Npcap\"
+dir $install_path
 
 # write_report ("C:\Windows\System32:")
 dir "C:\Windows\System32\" NpcapHelper.exe
@@ -155,7 +169,7 @@ write_report ("*************************************************")
 write_report ("Install Info:")
 write_report ("*************************************************")
 
-write_report ("Please refer to: C:\Program Files\Npcap\install.log")
+write_report ("Please refer to: $install_path\install.log")
 
 # Stop-Transcript
 # ) *>&1 > $report_file_name
