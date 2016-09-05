@@ -52,6 +52,8 @@ OutFile "npcap-${INSTALLER_VERSION}.exe"
 
 Var /GLOBAL inst_ver
 Var /GLOBAL my_ver
+Var /GLOBAL UNINSTDIR
+Var /GLOBAL INSTDIR_DEFAULT
 
 Var /GLOBAL os_ver
 Var /GLOBAL cmd_line
@@ -239,17 +241,19 @@ Function .onInit
 
 	StrCpy $my_ver "${VERSION}"
 
+	; On 64-bit Windows, $PROGRAMFILES is "C:\Program Files (x86)" and
+	; $PROGRAMFILES64 is "C:\Program Files". We want "C:\Program Files"
+	; on 32-bit or 64-bit.
+	Call is64bit
+	${If} $0 == "0"
+		StrCpy $INSTDIR_DEFAULT "$PROGRAMFILES\Npcap"
+	${Else}
+		StrCpy $INSTDIR_DEFAULT "$PROGRAMFILES64\Npcap"
+	${EndIf}
+
 	; If the user doesn't specify the installation path via "/D=", we will use the default path.
 	${If} $INSTDIR == ""
-		; On 64-bit Windows, $PROGRAMFILES is "C:\Program Files (x86)" and
-		; $PROGRAMFILES64 is "C:\Program Files". We want "C:\Program Files"
-		; on 32-bit or 64-bit.
-		Call is64bit
-		${If} $0 == "0"
-			StrCpy $INSTDIR "$PROGRAMFILES\Npcap"
-		${Else}
-			StrCpy $INSTDIR "$PROGRAMFILES64\Npcap"
-		${EndIf}
+		StrCpy $INSTDIR $INSTDIR_DEFAULT
 	${EndIf}
 
 	; write the installation log to $INSTDIR\install.log
@@ -322,7 +326,15 @@ silent_uninstall:
 	; and this file should support a silent uninstall by passing /S to it.
 	; we could read QuietUninstallString, but this should be exactly the same as UninstallString with /S on the end.
 	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
-	ExecWait '$0 /S _?=$INSTDIR'
+
+	; Get the previous installation path.
+	ReadRegStr $1 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
+	${If} $1 != ""
+		StrCpy $UNINSTDIR $1
+	${Else}
+		StrCpy $UNINSTDIR $INSTDIR_DEFAULT
+	${EndIf}
+	ExecWait '$0 /S _?=$UNINSTDIR'
 	Return
 
 no_silent:
@@ -343,7 +355,15 @@ try_uninstallers:
 	${If} $0 != ""
 	${AndIf} ${FileExists} $0
 		LogSet off
-		ExecWait '$0 _?=$INSTDIR'
+
+		; Get the previous installation path.
+		ReadRegStr $1 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
+		${If} $1 != ""
+			StrCpy $UNINSTDIR $1
+		${Else}
+			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
+		${EndIf}
+		ExecWait '$0 _?=$UNINSTDIR'
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
 		; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
@@ -358,7 +378,15 @@ try_uninstallers:
 	${AndIf} ${FileExists} $0
 		MessageBox MB_OK "Using our old UninstallString, file exists"
 		LogSet off
-		ExecWait '$0 _?=$INSTDIR'
+
+		; Get the previous installation path.
+		ReadRegStr $1 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
+		${If} $1 != ""
+			StrCpy $UNINSTDIR $1
+		${Else}
+			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
+		${EndIf}
+		ExecWait '$0 _?=$UNINSTDIR'
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
 		; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
@@ -384,7 +412,15 @@ try_uninstallers:
 
 	${If} ${FileExists} "$0\uninstall.exe"
 		LogSet off
-		ExecWait '"$0\Uninstall.exe" _?=$INSTDIR'
+
+		; Get the previous installation path.
+		ReadRegStr $1 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
+		${If} $1 != ""
+			StrCpy $UNINSTDIR $1
+		${Else}
+			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
+		${EndIf}
+		ExecWait '"$0\Uninstall.exe" _?=$UNINSTDIR'
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
 		; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
@@ -1455,11 +1491,6 @@ Section "Uninstall"
 	; ${Else}
 	; StrCpy $restore_point_success "yes"
 	; ${Endif}
-
-	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
-	${If} $0 != ""
-		StrCpy $INSTDIR $0
-	${EndIf}
 
 	${If} ${FileExists} "$INSTDIR\npf.sys"
 		${If} ${FileExists} "$INSTDIR\npcap.sys"
