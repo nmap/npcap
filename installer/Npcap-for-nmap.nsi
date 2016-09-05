@@ -257,16 +257,19 @@ Function .onInit
 
 	StrCpy $my_ver "${VERSION}"
 
-	; On 64-bit Windows, $PROGRAMFILES is "C:\Program Files (x86)" and
-	; $PROGRAMFILES64 is "C:\Program Files". We want "C:\Program Files"
-	; on 32-bit or 64-bit.
-	Call is64bit
-	${If} $0 == "0"
-		StrCpy $INSTDIR "$PROGRAMFILES\Npcap"
-	${Else}
-		StrCpy $INSTDIR "$PROGRAMFILES64\Npcap"
+	; If the user doesn't specify the installation path via "/D=", we will use the default path.
+	${If} $INSTDIR == ""
+		; On 64-bit Windows, $PROGRAMFILES is "C:\Program Files (x86)" and
+		; $PROGRAMFILES64 is "C:\Program Files". We want "C:\Program Files"
+		; on 32-bit or 64-bit.
+		Call is64bit
+		${If} $0 == "0"
+			StrCpy $INSTDIR "$PROGRAMFILES\Npcap"
+		${Else}
+			StrCpy $INSTDIR "$PROGRAMFILES64\Npcap"
+		${EndIf}
 	${EndIf}
-	
+
 	; write the installation log to $INSTDIR\install.log
 	LogSet on
 
