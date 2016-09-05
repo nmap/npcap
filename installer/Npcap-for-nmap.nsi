@@ -1392,6 +1392,7 @@ npfdone:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath" $INSTDIR
 
 	${If} $loopback_support == "yes"
 		; create "Npcap Loopback Adapter", used for capturing loopback packets
@@ -1472,6 +1473,11 @@ Section "Uninstall"
 	; ${Else}
 	; StrCpy $restore_point_success "yes"
 	; ${Endif}
+
+	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
+	${If} $0 != ""
+		StrCpy $INSTDIR $0
+	${EndIf}
 
 	${If} ${FileExists} "$INSTDIR\npf.sys"
 		${If} ${FileExists} "$INSTDIR\npcap.sys"
