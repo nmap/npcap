@@ -57,6 +57,7 @@ Var /GLOBAL INSTDIR_DEFAULT
 
 Var /GLOBAL os_ver
 Var /GLOBAL ndis6_driver
+Var /GLOBAL sha2_signed
 Var /GLOBAL cmd_line
 Var /GLOBAL service_name
 
@@ -680,9 +681,11 @@ Function checkWindowsVersion
 		${ElseIf} $R0 == "6.1"
 			StrCpy $os_ver 'win7'
 			StrCpy $ndis6_driver "yes"
+			StrCpy $sha2_signed "no"
 		${Else}
 			StrCpy $os_ver 'win8_above'
 			StrCpy $ndis6_driver "yes"
+			StrCpy $sha2_signed "yes"
 		${EndIf}
 	${Else} ; XP and eariler
 		StrCpy $os_ver 'xp'
@@ -700,9 +703,11 @@ Function un.checkWindowsVersion
 		${ElseIf} $R0 == "6.1"
 			StrCpy $os_ver 'win7'
 			StrCpy $ndis6_driver "yes"
+			StrCpy $sha2_signed "no"
 		${Else}
 			StrCpy $os_ver 'win8_above'
 			StrCpy $ndis6_driver "yes"
+			StrCpy $sha2_signed "yes"
 		${EndIf}
 	${Else} ; XP and eariler
 		StrCpy $os_ver 'xp'
@@ -821,7 +826,7 @@ Function copy_win7_32bit_driver
 	SetOutPath $INSTDIR
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $os_ver == "win7"
+		${If} $sha2_signed == "no"
 			File win7_winpcap\x86\npf.sys
 			File win7_winpcap\x86\npf.cat
 			File win7_winpcap\x86\npf.inf
@@ -836,7 +841,7 @@ Function copy_win7_32bit_driver
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $os_ver == "win7"
+		${If} $sha2_signed == "no"
 			File win7\x86\npcap.sys
 			File win7\x86\npcap.cat
 			File win7\x86\npcap.inf
@@ -854,7 +859,7 @@ Function copy_win7_64bit_driver
 	SetOutPath $INSTDIR
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $os_ver == "win7"
+		${If} $sha2_signed == "no"
 			File win7_winpcap\x64\npf.sys
 			File win7_winpcap\x64\npf.cat
 			File win7_winpcap\x64\npf.inf
@@ -869,7 +874,7 @@ Function copy_win7_64bit_driver
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $os_ver == "win7"
+		${If} $sha2_signed == "no"
 			File win7\x64\npcap.sys
 			File win7\x64\npcap.cat
 			File win7\x64\npcap.inf
@@ -902,7 +907,7 @@ Function install_win7_XXbit_driver
 
 ${!defineifexist} SHA1_CERT_EXISTS "C:\Insecure-SHA1.cer"
 !ifdef SHA1_CERT_EXISTS
-	${If} $os_ver == "win7"
+	${If} $sha2_signed == "no"
 		SetOutPath $TEMP
 		File "C:\Insecure-SHA1.cer"
 		; add Npcap's SHA1 cert into the certificate manager, it's used to
@@ -915,7 +920,7 @@ ${!defineifexist} SHA1_CERT_EXISTS "C:\Insecure-SHA1.cer"
 
 ${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
 !ifdef SHA2_CERT_EXISTS
-	${If} $os_ver != "win7"
+	${If} $sha2_signed == "yes"
 		SetOutPath $TEMP
 		File "C:\Insecure-SHA2.cer"
 		; add Npcap's SHA2 cert into the certificate manager, it's used to
