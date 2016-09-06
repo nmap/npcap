@@ -677,7 +677,8 @@ Function ${un}checkWindowsVersion
 	${If} $R1 == "6." ; Vista and later
 		${If} $R0 == "6.0"
 			StrCpy $os_ver 'vista'
-			StrCpy $ndis6_driver "no"
+			StrCpy $ndis6_driver "yes"
+			StrCpy $sha2_signed "no"
 		${ElseIf} $R0 == "6.1"
 			StrCpy $os_ver 'win7'
 			StrCpy $ndis6_driver "yes"
