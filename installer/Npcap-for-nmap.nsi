@@ -56,6 +56,7 @@ Var /GLOBAL UNINSTDIR
 Var /GLOBAL INSTDIR_DEFAULT
 
 Var /GLOBAL os_ver
+Var /GLOBAL ndis6_driver
 Var /GLOBAL cmd_line
 Var /GLOBAL service_name
 
@@ -675,13 +676,17 @@ Function checkWindowsVersion
 	${If} $R1 == "6." ; Vista and later
 		${If} $R0 == "6.0"
 			StrCpy $os_ver 'vista'
+			StrCpy $ndis6_driver "no"
 		${ElseIf} $R0 == "6.1"
 			StrCpy $os_ver 'win7'
+			StrCpy $ndis6_driver "yes"
 		${Else}
 			StrCpy $os_ver 'win8_above'
+			StrCpy $ndis6_driver "yes"
 		${EndIf}
 	${Else} ; XP and eariler
 		StrCpy $os_ver 'xp'
+		StrCpy $ndis6_driver "no"
 	${EndIf}
 FunctionEnd
 
@@ -691,13 +696,17 @@ Function un.checkWindowsVersion
 	${If} $R1 == "6." ; Vista and later
 		${If} $R0 == "6.0"
 			StrCpy $os_ver 'vista'
+			StrCpy $ndis6_driver "no"
 		${ElseIf} $R0 == "6.1"
 			StrCpy $os_ver 'win7'
+			StrCpy $ndis6_driver "yes"
 		${Else}
 			StrCpy $os_ver 'win8_above'
+			StrCpy $ndis6_driver "yes"
 		${EndIf}
 	${Else} ; XP and eariler
 		StrCpy $os_ver 'xp'
+		StrCpy $ndis6_driver "no"
 	${EndIf}
 FunctionEnd
 
@@ -817,7 +826,7 @@ Function copy_win7_32bit_driver
 			File win7_winpcap\x86\npf.cat
 			File win7_winpcap\x86\npf.inf
 			File win7_winpcap\x86\npf_wfp.inf
-		${Else} ; $os_ver == "win8_above"
+		${Else} ; "win8_above"
 			File win8_above_winpcap\x86\npf.sys
 			File win8_above_winpcap\x86\npf.cat
 			File win8_above_winpcap\x86\npf.inf
@@ -832,7 +841,7 @@ Function copy_win7_32bit_driver
 			File win7\x86\npcap.cat
 			File win7\x86\npcap.inf
 			File win7\x86\npcap_wfp.inf
-		${Else} ; $os_ver == "win8_above"
+		${Else} ; "win8_above"
 			File win8_above\x86\npcap.sys
 			File win8_above\x86\npcap.cat
 			File win8_above\x86\npcap.inf
@@ -850,7 +859,7 @@ Function copy_win7_64bit_driver
 			File win7_winpcap\x64\npf.cat
 			File win7_winpcap\x64\npf.inf
 			File win7_winpcap\x64\npf_wfp.inf
-		${Else} ; $os_ver == "win8_above"
+		${Else} ; "win8_above"
 			File win8_above_winpcap\x64\npf.sys
 			File win8_above_winpcap\x64\npf.cat
 			File win8_above_winpcap\x64\npf.inf
@@ -865,7 +874,7 @@ Function copy_win7_64bit_driver
 			File win7\x64\npcap.cat
 			File win7\x64\npcap.inf
 			File win7\x64\npcap_wfp.inf
-		${Else} ; $os_ver == "win8_above"
+		${Else} ; "win8_above"
 			File win8_above\x64\npcap.sys
 			File win8_above\x64\npcap.cat
 			File win8_above\x64\npcap.inf
@@ -1303,13 +1312,20 @@ Section "WinPcap" SecWinPcap
 	Call checkWindowsVersion
 	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
-	${If} $os_ver != "xp"
-	${AndIf} $os_ver != "vista"  ; Win7, Win8, Win10
+	${If} $ndis6_driver == "yes"
 		Call is64bit
-		StrCmp $0 "0" install_win7_32bit install_win7_64bit
-	${Else} ; XP, Vista
+		${If} $0 == "0"
+			Goto install_win7_32bit
+		${Else}
+			Goto install_win7_64bit
+		${EndIf}
+	${Else}
 		Call is64bit
-		StrCmp $0 "0" install_xp_32bit install_xp_64bit
+		${If} $0 == "0"
+			Goto install_xp_32bit
+		${Else}
+			Goto install_xp_64bit
+		${EndIf}
 	${EndIf}
 
 	; Note, NSIS states: "You should always quote the path to make sure spaces
@@ -1412,9 +1428,11 @@ npfdone:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath" $INSTDIR
 
-	${If} $loopback_support == "yes"
-		; create "Npcap Loopback Adapter", used for capturing loopback packets
-		ExecWait '"$INSTDIR\NPFInstall.exe" -n -il'
+	${If} $ndis6_driver == "yes"
+		${If} $loopback_support == "yes"
+			; create "Npcap Loopback Adapter", used for capturing loopback packets
+			ExecWait '"$INSTDIR\NPFInstall.exe" -n -il'
+		${Endif}
 	${Endif}
 
 	; write options to registry "service" key
@@ -1423,7 +1441,7 @@ npfdone:
 
 	; register the driver as a system service using Windows API calls
 	; this will work on Windows 2000 (that lacks sc.exe) and higher
-	${If} $os_ver != "xp"
+	${If} $ndis6_driver == "yes"
 		Call registerServiceAPI_win7
 	${Else}
 		Call registerServiceAPI_xp
@@ -1502,32 +1520,36 @@ Section "Uninstall"
 		StrCpy $winpcap_mode "no"
 	${EndIf}
 
+	; Check windows version
+	Call un.checkWindowsVersion
+	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
+
 	; stop npf before we delete the service from the registry
 	DetailPrint "Trying to stop the driver.."
 	Call un.stop_driver_service
 
-	ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
-	${If} $0 == "0"
-		MessageBox MB_OK "Failed to stop the driver, uninstallation aborts now. Please stop using Npcap first"
-		DetailPrint "Failed to stop the driver, uninstallation aborts now. Please stop using Npcap first"
-		Goto uninstall_fail
+	${If} $ndis6_driver == "yes"
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+		${If} $0 == "0"
+			MessageBox MB_OK "Failed to stop the driver, uninstallation aborts now. Please stop using Npcap first"
+			DetailPrint "Failed to stop the driver, uninstallation aborts now. Please stop using Npcap first"
+			Goto uninstall_fail
+		${EndIf}
 	${EndIf}
 
 	; remove "C:\Windows\System32\Npcap" directory in PATH
 	; Call un.clear_env_var
 
-	; Check windows version
-	Call un.checkWindowsVersion
-	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
-
-	${If} $os_ver != "xp"
+	${If} $ndis6_driver == "yes"
 		Call un.registerServiceAPI_win7
 	${Else}
 		Call un.registerServiceAPI_xp
 	${EndIf}
 
-	; remove "Npcap Loopback Adapter" if exists
-	ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
+	${If} $ndis6_driver == "yes"
+		; remove "Npcap Loopback Adapter" if exists
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
+	${EndIf}
 
 	; delete our winpcap-nmap and any WinPcapInst registry keys
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
@@ -1542,13 +1564,13 @@ Section "Uninstall"
 
 	Call un.is64bit
 	${If} $0 == "0" ; 32bit
-		${If} $os_ver != "xp"
+		${If} $ndis6_driver == "yes"
 			Goto uninstall_win7_32bit
 		${Else}
 			Goto uninstall_xp_32bit
 		${EndIf}
 	${Else} ; 64bit
-		${If} $os_ver != "xp"
+		${If} $ndis6_driver == "yes"
 			Goto uninstall_win7_64bit
 		${Else}
 			Goto uninstall_xp_64bit
