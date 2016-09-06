@@ -77,15 +77,14 @@ Var /GLOBAL winpcap_installed
 RequestExecutionLevel admin
 
 ; These leave either "1" or "0" in $0.
-Function is64bit
+!macro MACRO_is64bit un
+Function ${un}is64bit
 	System::Call "kernel32::GetCurrentProcess() i .s"
 	System::Call "kernel32::IsWow64Process(i s, *i .r0)"
 FunctionEnd
-
-Function un.is64bit
-	System::Call "kernel32::GetCurrentProcess() i .s"
-	System::Call "kernel32::IsWow64Process(i s, *i .r0)"
-FunctionEnd
+!macroend
+!insertmacro MACRO_is64bit ""
+!insertmacro MACRO_is64bit "un."
 
 VIProductVersion "${WIN_VERSION}"
 VIAddVersionKey /LANG=1033 "FileVersion" "${VERSION}"
@@ -671,7 +670,8 @@ Function uninstallWinPcap
 	${EndIf}
 FunctionEnd
 
-Function checkWindowsVersion
+!macro MACRO_checkWindowsVersion un
+Function ${un}checkWindowsVersion
 	ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
 	StrCpy $R1 $R0 2
 	${If} $R1 == "6." ; Vista and later
@@ -692,28 +692,9 @@ Function checkWindowsVersion
 		StrCpy $ndis6_driver "no"
 	${EndIf}
 FunctionEnd
-
-Function un.checkWindowsVersion
-	ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
-	StrCpy $R1 $R0 2
-	${If} $R1 == "6." ; Vista and later
-		${If} $R0 == "6.0"
-			StrCpy $os_ver 'vista'
-			StrCpy $ndis6_driver "no"
-		${ElseIf} $R0 == "6.1"
-			StrCpy $os_ver 'win7'
-			StrCpy $ndis6_driver "yes"
-			StrCpy $sha2_signed "no"
-		${Else}
-			StrCpy $os_ver 'win8_above'
-			StrCpy $ndis6_driver "yes"
-			StrCpy $sha2_signed "yes"
-		${EndIf}
-	${Else} ; XP and eariler
-		StrCpy $os_ver 'xp'
-		StrCpy $ndis6_driver "no"
-	${EndIf}
-FunctionEnd
+!macroend
+!insertmacro MACRO_checkWindowsVersion ""
+!insertmacro MACRO_checkWindowsVersion "un."
 
 Function copy_xp_XXbit_home_dlls
 	SetOutPath $INSTDIR
@@ -1197,7 +1178,8 @@ Function start_driver_service
 	${EndIf}
 FunctionEnd
 
-Function stop_driver_service
+!macro MACRO_stop_driver_service un
+Function ${un}stop_driver_service
 	${If} $ndis6_driver == "yes"
 		${If} $winpcap_mode == "yes2"
 		${OrIf} $winpcap_mode == "yes"
@@ -1215,25 +1197,9 @@ Function stop_driver_service
 		nsExec::Exec "net stop npf"
 	${EndIf}
 FunctionEnd
-
-Function un.stop_driver_service
-	${If} $ndis6_driver == "yes"
-		${If} $winpcap_mode == "yes2"
-		${OrIf} $winpcap_mode == "yes"
-			DetailPrint "Stopping the npf driver"
-			nsExec::Exec "net stop npf"
-		${EndIf}
-
-		${If} $winpcap_mode == "no"
-		${OrIf} $winpcap_mode == "yes"
-			DetailPrint "Stopping the npcap driver"
-			nsExec::Exec "net stop npcap"
-		${EndIf}
-	${Else}
-		DetailPrint "Stopping the npf driver"
-		nsExec::Exec "net stop npf"
-	${EndIf}
-FunctionEnd
+!macroend
+!insertmacro MACRO_stop_driver_service ""
+!insertmacro MACRO_stop_driver_service "un."
 
 Function set_driver_service_autostart
 	${If} $winpcap_mode == "yes2"
