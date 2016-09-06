@@ -1168,48 +1168,65 @@ Function write_registry_service_options
 FunctionEnd
 
 Function start_driver_service
-	${If} $winpcap_mode == "yes2"
-	${OrIf} $winpcap_mode == "yes"
+	${If} $ndis6_driver == "yes"
+		${If} $winpcap_mode == "yes2"
+		${OrIf} $winpcap_mode == "yes"
+			DetailPrint "Starting the npf driver"
+			; nsExec::Exec "net start npf"
+			; nsExec::Exec "net stop npf"
+			nsExec::Exec "net start npf"
+		${EndIf}
+
+		${If} $winpcap_mode == "no"
+		${OrIf} $winpcap_mode == "yes"
+			DetailPrint "Starting the npcap driver"
+			; nsExec::Exec "net start npcap"
+			; nsExec::Exec "net stop npcap"
+			nsExec::Exec "net start npcap"
+		${EndIf}
+	${Else}
 		DetailPrint "Starting the npf driver"
 		; nsExec::Exec "net start npf"
 		; nsExec::Exec "net stop npf"
 		nsExec::Exec "net start npf"
 	${EndIf}
-
-	${If} $winpcap_mode == "no"
-	${OrIf} $winpcap_mode == "yes"
-		DetailPrint "Starting the npcap driver"
-		; nsExec::Exec "net start npcap"
-		; nsExec::Exec "net stop npcap"
-		nsExec::Exec "net start npcap"
-	${EndIf}
 FunctionEnd
 
 Function stop_driver_service
-	${If} $winpcap_mode == "yes2"
-	${OrIf} $winpcap_mode == "yes"
+	${If} $ndis6_driver == "yes"
+		${If} $winpcap_mode == "yes2"
+		${OrIf} $winpcap_mode == "yes"
+			DetailPrint "Stopping the npf driver"
+			nsExec::Exec "net stop npf"
+		${EndIf}
+
+		${If} $winpcap_mode == "no"
+		${OrIf} $winpcap_mode == "yes"
+			DetailPrint "Stopping the npcap driver"
+			nsExec::Exec "net stop npcap"
+		${EndIf}
+	${Else}
 		DetailPrint "Stopping the npf driver"
 		nsExec::Exec "net stop npf"
-	${EndIf}
-
-	${If} $winpcap_mode == "no"
-	${OrIf} $winpcap_mode == "yes"
-		DetailPrint "Stopping the npcap driver"
-		nsExec::Exec "net stop npcap"
 	${EndIf}
 FunctionEnd
 
 Function un.stop_driver_service
-	${If} $winpcap_mode == "yes2"
-	${OrIf} $winpcap_mode == "yes"
+	${If} $ndis6_driver == "yes"
+		${If} $winpcap_mode == "yes2"
+		${OrIf} $winpcap_mode == "yes"
+			DetailPrint "Stopping the npf driver"
+			nsExec::Exec "net stop npf"
+		${EndIf}
+
+		${If} $winpcap_mode == "no"
+		${OrIf} $winpcap_mode == "yes"
+			DetailPrint "Stopping the npcap driver"
+			nsExec::Exec "net stop npcap"
+		${EndIf}
+	${Else}
 		DetailPrint "Stopping the npf driver"
 		nsExec::Exec "net stop npf"
-	${EndIf}
-
-	${If} $winpcap_mode == "no"
-	${OrIf} $winpcap_mode == "yes"
-		DetailPrint "Stopping the npcap driver"
-		nsExec::Exec "net stop npcap"
 	${EndIf}
 FunctionEnd
 
