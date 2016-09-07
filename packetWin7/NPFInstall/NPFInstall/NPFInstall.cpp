@@ -12,6 +12,8 @@
 #include "WlanRecord.h"
 #include "RegUtil.h"
 
+extern BOOLEAN bWiFiService;
+
 BOOL PacketInstallDriver60();
 BOOL PacketStopDriver60();
 BOOL PacketInstallDriver40();
@@ -23,7 +25,9 @@ _T("Usage: NPFInstall [Options]\n")\
 _T("\n")\
 _T("OPTIONS:\n")\
 _T("  -i\t\t\t: Install the LWF driver\n")\
+_T("  -i2\t\t\t: Install the LWF driver (with Wi-Fi support)\n")\
 _T("  -u\t\t\t: Uninstall the LWF driver\n")\
+_T("  -u2\t\t\t: Uninstall the LWF driver (with Wi-Fi support)\n")\
 _T("  -iw\t\t\t: Install the WFP callout driver\n")\
 _T("  -uw\t\t\t: Uninstall the WFP callout driver\n")\
 _T("  -il\t\t\t: Install \"Npcap loopback adapter\"\n")\
@@ -31,6 +35,7 @@ _T("  -ul\t\t\t: Uninstall \"Npcap loopback adapter\"\n")\
 _T("  -ii\t\t\t: Install the legacy driver (for XP)\n")\
 _T("  -uu\t\t\t: Uninstall the legacy driver (for XP)\n")\
 _T("  -r\t\t\t: Restart all bindings\n")\
+_T("  -r2\t\t\t: Restart all bindings (with Wi-Fi support)\n")\
 _T("  -d\t\t\t: Detect whether the driver service is pending to stop\n")\
 _T("  -c\t\t\t: Clear all the driverstore cache for the driver\n")\
 _T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n")\
@@ -240,6 +245,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		if (strArgs[1] == _T("-i"))
 		{
+			bWiFiService = FALSE;
 			bSuccess = PacketInstallDriver60();
 			if (bSuccess)
 			{
@@ -252,8 +258,24 @@ int _tmain(int argc, _TCHAR* argv[])
 				return -1;
 			}
 		}
+		if (strArgs[1] == _T("-i2"))
+		{
+			bWiFiService = TRUE;
+			bSuccess = PacketInstallDriver60();
+			if (bSuccess)
+			{
+				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has been successfully installed!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be installed.\n"));
+				return -1;
+			}
+		}
 		else if (strArgs[1] == _T("-u"))
 		{
+			bWiFiService = FALSE;
 			bSuccess = PacketStopDriver60();
 			if (bSuccess)
 			{
@@ -263,6 +285,51 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				_tprintf(_T("Npcap LWF driver has failed to be uninstalled.\n"));
+				return -1;
+			}
+		}
+		else if (strArgs[1] == _T("-u2"))
+		{
+			bWiFiService = TRUE;
+			bSuccess = PacketStopDriver60();
+			if (bSuccess)
+			{
+				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has been successfully uninstalled!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be uninstalled.\n"));
+				return -1;
+			}
+		}
+		else if (strArgs[1] == _T("-r"))
+		{
+			bWiFiService = FALSE;
+			bSuccess = PacketRenableBindings();
+			if (bSuccess)
+			{
+				_tprintf(_T("The bindings of Npcap driver have been successfully restarted!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("The bindings of Npcap driver have failed to be restarted.\n"));
+				return -1;
+			}
+		}
+		else if (strArgs[1] == _T("-r2"))
+		{
+			bWiFiService = TRUE;
+			bSuccess = PacketRenableBindings();
+			if (bSuccess)
+			{
+				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have been successfully restarted!\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have failed to be restarted.\n"));
 				return -1;
 			}
 		}
@@ -347,20 +414,6 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
-				return -1;
-			}
-		}
-		else if (strArgs[1] == _T("-r"))
-		{
-			bSuccess = PacketRenableBindings();
-			if (bSuccess)
-			{
-				_tprintf(_T("The bindings of Npcap driver have been successfully restarted!\n"));
-				return 0;
-			}
-			else
-			{
-				_tprintf(_T("The bindings of Npcap driver have failed to be restarted.\n"));
 				return -1;
 			}
 		}

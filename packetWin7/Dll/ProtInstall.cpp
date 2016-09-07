@@ -41,6 +41,8 @@
 
 BOOLEAN bVerbose = TRUE;
 
+BOOLEAN bWiFiService = FALSE;
+
 //
 // Function:  ErrMsg
 //
@@ -281,13 +283,16 @@ DWORD UninstallDriver()
 			}
 		}
 
-		hr = HrUninstallNetComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
-
-		if (hr != S_OK)
+		if (bWiFiService)
 		{
-			if (hr != HRESULT_FROM_WIN32(ERROR_CANCELLED))
+			hr = HrUninstallNetComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+
+			if (hr != S_OK)
 			{
-				ErrMsg(hr, L"Couldn't uninstall the network component.");
+				if (hr != HRESULT_FROM_WIN32(ERROR_CANCELLED))
+				{
+					ErrMsg(hr, L"Couldn't uninstall the network component.");
+				}
 			}
 		}
 
@@ -328,8 +333,11 @@ BOOL RenableBindings()
 	BOOL ok = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME);
 	wprintf(ok ? L"Succeeded.\n" : L"Failed.\n");
 
-	ok = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, APP_NAME);
-	wprintf(ok ? L"Succeeded.\n" : L"Failed.\n");
+	if (bWiFiService)
+	{
+		ok = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, APP_NAME);
+		wprintf(ok ? L"Succeeded.\n" : L"Failed.\n");
+	}
 
 	CoUninitialize();
 

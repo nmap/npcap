@@ -36,6 +36,8 @@
 // Notes:
 //
 
+extern BOOLEAN bWiFiService;
+
 HRESULT HrGetINetCfg(IN BOOL fGetWriteLock, IN LPCTSTR lpszAppName, OUT INetCfg** ppnc, OUT LPTSTR* lpszLockedBy)
 {
 	INetCfg* pnc = NULL;
@@ -263,9 +265,19 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 
 		if (hr == S_OK)
 		{
-			hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, pguidClass);
+			if (bWiFiService)
+			{
+				hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, pguidClass);
 
-			if (hr == S_OK)
+				if (hr == S_OK)
+				{
+					//
+					// On success, apply the changes
+					//
+					hr = pnc->Apply();
+				}
+			}
+			else
 			{
 				//
 				// On success, apply the changes
