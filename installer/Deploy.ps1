@@ -242,10 +242,14 @@ function copy_and_sign($file_name, $from_path, $to_path)
 		if ($to_path -match ".\win8_above")
 		{
 			$null = sign_driver_sha256_DigiCert ($to_path + $file_name)
+			# We used WoSign for now, because DigiCert is blocked in my side.
+			# $null = sign_driver_sha256_WoSign ($to_path + $file_name)
 		}
 		else
 		{
 			$null = sign_driver_sha1_DigiCert ($to_path + $file_name)
+			# We used WoSign for now, because DigiCert is blocked in my side.
+			# $null = sign_driver_sha1_WoSign ($to_path + $file_name)
 		}
 	}
 	elseif ($file_name -match ".inf" -or $file_name -match ".pdb")
