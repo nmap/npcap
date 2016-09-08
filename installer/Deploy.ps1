@@ -14,12 +14,14 @@ $cert_sign_tool = "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe"
 $cert_ms_cross_cert = "C:\DigiCert High Assurance EV Root CA.crt"
 $cert_hash_vista = "67cdca7703a01b25e6e0426072ec08b0046eb5f8"
 $cert_hash_win7_above = "928101b5d0631c8e1ada651478e41afaac798b4c"
+
 # The DigiCert timestamp server (also for RFC3161)
-$cert_timestamp_server = "http://timestamp.digicert.com"
+$cert_timestamp_server_DigiCert = "http://timestamp.digicert.com"
 # The WoSign timestamp server
-# $cert_timestamp_server = "http://timestamp.wosign.com/timestamp"
+$cert_timestamp_server_WoSign = "http://timestamp.wosign.com/timestamp"
 # The WoSign timestamp server (for RFC3161)
-# $cert_timestamp_rfc3161_server = "http://timestamp.wosign.com/rfc3161"
+$cert_timestamp_rfc3161_server_WoSign = "http://timestamp.wosign.com/rfc3161"
+
 $has_timestamp = 1
 $header_name = "..\version.h"
 
@@ -252,8 +254,6 @@ function copy_and_sign($file_name, $from_path, $to_path)
 	}
 	else
 	{
-		# $null = sign_file_sha1 ($to_path + $file_name)
-		# $null = sign_file_sha256 ($to_path + $file_name)
 		$null = sign_driver_sha256 ($to_path + $file_name)
 	}
 
@@ -264,7 +264,7 @@ function sign_driver_sha1($file_path_name)
 {
 	if ($has_timestamp)
 	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server_DigiCert, $file_path_name
 	}
 	else
 	{
@@ -277,12 +277,12 @@ function sign_driver_sha256($file_path_name)
 	if ($has_timestamp)
 	{
 		# The WoSign timestamped version doesn't work on Win8.1 x64.
-		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/t", $cert_timestamp_server, $file_path_name
+		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/t", $cert_timestamp_server_WoSign, $file_path_name
 
 		# The WoSign RFC3161 timestamped version doesn't work.
-		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server, "/td", "sha256", $file_path_name
+		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server_WoSign, "/td", "sha256", $file_path_name
 
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server_DigiCert, "/td", "sha256", $file_path_name
 	}
 	else
 	{
@@ -290,38 +290,10 @@ function sign_driver_sha256($file_path_name)
 	}
 }
 
-function sign_file_sha1($file_path_name)
-{
-	if ($has_timestamp)
-	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha1", "/t", $cert_timestamp_server, $file_path_name
-	}
-	else
-	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha1", $file_path_name
-	}
-}
-
-function sign_file_sha256($file_path_name)
-{
-	if ($has_timestamp)
-	{
-		# The WoSign RFC3161 timestamped version doesn't work.
-		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server, "/td", "sha256", $file_path_name
-
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", "/tr", $cert_timestamp_server, "/td", "sha256", $file_path_name
-	}
-	else
-	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/as", "/fd", "sha256", $file_path_name
-	}
-}
-
 function generate_installer($install_script, $installer_name)
 {
 	&$nsis_compiler_tool $install_script
-	# sign_driver_sha1 $installer_name
-	# sign_file_sha256 $installer_name
+
 	sign_driver_sha256 $installer_name
 }
 
