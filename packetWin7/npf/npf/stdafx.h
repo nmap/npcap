@@ -5,7 +5,8 @@
 #endif
 #define WIN_NT_DRIVER
 
-#if FALSE // (NTDDI_VERSION >= NTDDI_WIN7)
+#define NTDDI_WIN7 0x06010000
+#if (NTDDI_VERSION >= NTDDI_WIN7)
 #define NDIS_SUPPORT_NDIS620 1
 #define NDIS620 1 // NDIS 6.2 version (for Windows 7 and later)
 #else
