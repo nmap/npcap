@@ -241,11 +241,11 @@ function copy_and_sign($file_name, $from_path, $to_path)
 	{
 		if ($to_path -match ".\win8_above")
 		{
-			$null = sign_driver_sha256 ($to_path + $file_name)
+			$null = sign_driver_sha256_DigiCert ($to_path + $file_name)
 		}
 		else
 		{
-			$null = sign_driver_sha1 ($to_path + $file_name)
+			$null = sign_driver_sha1_DigiCert ($to_path + $file_name)
 		}
 	}
 	elseif ($file_name -match ".inf" -or $file_name -match ".pdb")
@@ -254,13 +254,20 @@ function copy_and_sign($file_name, $from_path, $to_path)
 	}
 	else
 	{
-		$null = sign_driver_sha256 ($to_path + $file_name)
+		if ($to_path -match ".\win8_above")
+		{
+			$null = sign_driver_sha256_WoSign ($to_path + $file_name)
+		}
+		else
+		{
+			$null = sign_driver_sha1_WoSign ($to_path + $file_name)
+		}
 	}
 
 	return 1
 }
 
-function sign_driver_sha1($file_path_name)
+function sign_driver_sha1_DigiCert($file_path_name)
 {
 	if ($has_timestamp)
 	{
@@ -272,7 +279,31 @@ function sign_driver_sha1($file_path_name)
 	}
 }
 
-function sign_driver_sha256($file_path_name)
+function sign_driver_sha256_DigiCert($file_path_name)
+{
+	if ($has_timestamp)
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server_DigiCert, "/td", "sha256", $file_path_name
+	}
+	else
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", $file_path_name
+	}
+}
+
+function sign_driver_sha1_WoSign($file_path_name)
+{
+	if ($has_timestamp)
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server_WoSign, $file_path_name
+	}
+	else
+	{
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", $file_path_name
+	}
+}
+
+function sign_driver_sha256_WoSign($file_path_name)
 {
 	if ($has_timestamp)
 	{
@@ -280,9 +311,7 @@ function sign_driver_sha256($file_path_name)
 		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/t", $cert_timestamp_server_WoSign, $file_path_name
 
 		# The WoSign RFC3161 timestamped version doesn't work.
-		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server_WoSign, "/td", "sha256", $file_path_name
-
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server_DigiCert, "/td", "sha256", $file_path_name
+		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server_WoSign, "/td", "sha256", $file_path_name
 	}
 	else
 	{
@@ -294,7 +323,7 @@ function generate_installer($install_script, $installer_name)
 {
 	&$nsis_compiler_tool $install_script
 
-	sign_driver_sha256 $installer_name
+	sign_driver_sha256_WoSign $installer_name
 }
 
 function generate_symbols($symbols_folder, $symbols_zip_name)
