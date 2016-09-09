@@ -346,6 +346,13 @@ NPF_Read(
 	current_cpu = 0;
 	available = IrpSp->Parameters.Read.Length;
 
+	if (Irp->MdlAddress == 0x0)
+	{
+		NPF_StopUsingOpenInstance(Open);
+		TRACE_EXIT();
+		EXIT_FAILURE(0);
+	}
+
 	packp = (PUCHAR) MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
 
 
