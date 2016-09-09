@@ -266,7 +266,7 @@ NPF_NetworkClassify(
 	{
 		return;
 	}
-#if(NTDDI_VERSION >= NTDDI_WIN7)
+#if(NTDDI_VERSION >= NTDDI_VISTASP1)
 	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_REASSEMBLED)
 	{
 		return;
@@ -606,7 +606,7 @@ NPF_AddFilter(
 		filterConditions[conditionIndex].conditionValue.uint32 = FWP_CONDITION_FLAG_IS_FRAGMENT;
 		conditionIndex++;
 	}
-#if(NTDDI_VERSION >= NTDDI_WIN7)
+#if(NTDDI_VERSION >= NTDDI_VISTASP1)
 	else if (iFlag == 2)
 	{
 		filter.action.type = FWP_ACTION_PERMIT;
@@ -728,7 +728,7 @@ FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
 	{
 		goto Exit;
 	}
-#if(NTDDI_VERSION >= NTDDI_WIN7)
+#if(NTDDI_VERSION >= NTDDI_VISTASP1)
 	status = NPF_AddFilter(layerKey, calloutKey, 2);
 	if (!NT_SUCCESS(status))
 	{
