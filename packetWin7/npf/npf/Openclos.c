@@ -262,6 +262,10 @@ NPF_OpenAdapter(
 	if (OriginalOpen == NULL)
 	{
 		// Can't find the adapter from the global open array.
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_OpenAdapter: NPF_GetOpenByAdapterName error, AdapterName=%ws",
+			DeviceExtension->AdapterName.Buffer);
+
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
@@ -270,6 +274,10 @@ NPF_OpenAdapter(
 
 	if (NPF_StartUsingOpenInstance(OriginalOpen) == FALSE)
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_OpenAdapter: NPF_StartUsingOpenInstance error, AdapterName=%ws",
+			DeviceExtension->AdapterName.Buffer);
+
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
