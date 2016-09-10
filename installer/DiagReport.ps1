@@ -96,6 +96,20 @@ write_report ("*************************************************")
 
 #########################################################
 write_report ("`n")
+write_report ("*************************************************")
+write_report ("CPU Info:")
+write_report ("*************************************************")
+
+"Name:`t`t`t`t" + (Get-WmiObject Win32_processor).Name
+"Manufacturer:`t`t`t" + (Get-WmiObject Win32_processor).Manufacturer
+"DeviceID:`t`t`t" + (Get-WmiObject Win32_processor).DeviceID
+"NumberOfCores:`t`t`t" + (Get-WmiObject Win32_processor).NumberOfCores
+"NumberOfEnabledCore:`t`t" + (Get-WmiObject Win32_processor).NumberOfEnabledCore
+"NumberOfLogicalProcessors:`t" + (Get-WmiObject Win32_processor).NumberOfLogicalProcessors
+"Addresswidth:`t`t`t" + (Get-WmiObject Win32_processor).Addresswidth
+
+#########################################################
+write_report ("`n")
 "*************************************************"
 write_report ("File Info:")
 write_report ("*************************************************")
