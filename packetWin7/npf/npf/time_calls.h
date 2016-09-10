@@ -51,7 +51,12 @@ extern ULONG g_TimestampMode;
 
 /* Defined in Packet.c/h */
 ULONG
-MyNdisGroupMaxProcessorCount(
+My_NdisGroupMaxProcessorCount(
+);
+
+/* Defined in Packet.c/h */
+ULONG
+My_KeGetCurrentProcessorNumber(
 );
 
 /*!
@@ -256,7 +261,7 @@ __inline VOID TIME_SYNCHRONIZE(struct time_conv* data)
 	if (data->reference != 0)
 		return;
 
-	NumberOfCpus = MyNdisGroupMaxProcessorCount();
+	NumberOfCpus = My_NdisGroupMaxProcessorCount();
 
 	if (g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP || g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP)
 	{
@@ -318,7 +323,7 @@ __inline void GetTimeKQPC(struct timeval* dst, struct time_conv* data)
 	if (g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP || g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP)
 	{
 		//actually this code is ok only if we are guaranteed that no thread scheduling will take place. 
-		CurrentCpu = KeGetCurrentProcessorNumber();	
+		CurrentCpu = My_KeGetCurrentProcessorNumber();
 
 		dst->tv_sec = data->start[CurrentCpu].tv_sec + tmp;
 		dst->tv_usec = data->start[CurrentCpu].tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);

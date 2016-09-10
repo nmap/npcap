@@ -854,7 +854,7 @@ NPF_TapExForEachOpen(
 		{
 			pNextNetBuf = NET_BUFFER_NEXT_NB(pNetBuf);
 
-			Cpu = KeGetCurrentProcessorNumber();
+			Cpu = My_KeGetCurrentProcessorNumber();
 			LocalData = &Open->CpuData[Cpu];
 
 			LocalData->Received++;

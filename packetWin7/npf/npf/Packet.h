@@ -794,7 +794,16 @@ NPF_InternalRequestComplete(
   \return A ULONG value for the maximum number of processors of the machine.
 */
 ULONG
-MyNdisGroupMaxProcessorCount(
+My_NdisGroupMaxProcessorCount(
+);
+
+
+/*!
+\brief Returns the processor number of the logical processor that the caller is running on.
+\return A ULONG value for the system-wide processor index of the logical processor that the caller is running on.
+*/
+ULONG
+My_KeGetCurrentProcessorNumber(
 );
 
 

@@ -136,20 +136,26 @@ NDIS_HANDLE         FilterDriverObject; // Driver object for filter driver
 typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
 	USHORT Group
 	);
-NDISGROUPMAXPROCESSORCOUNT g_My_NdisGroupMaxProcessorCount;
+//KeGetCurrentProcessorNumberEx
+typedef ULONG (*KEGETCURRENTPROCESSORNUMBEREX)(
+	PPROCESSOR_NUMBER ProcNumber
+	);
+
+NDISGROUPMAXPROCESSORCOUNT g_My_NdisGroupMaxProcessorCount = NULL;
+KEGETCURRENTPROCESSORNUMBEREX g_My_KeGetCurrentProcessorNumberEx = NULL;
 
 //-------------------------------------------------------------------
 ULONG
-MyNdisGroupMaxProcessorCount(
+My_NdisGroupMaxProcessorCount(
 	)
 {
 	ULONG Cpu;
 	if (g_My_NdisGroupMaxProcessorCount) // for NDIS620 and later (Win7 and later).
 	{
 		Cpu = g_My_NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
-		if (Cpu > NPF_MAX_CPU_NUMBER)
+		if (Cpu > NPF_MAX_CPU_NUMBER - 1)
 		{
-			Cpu = NPF_MAX_CPU_NUMBER;
+			Cpu = NPF_MAX_CPU_NUMBER - 1;
 		}
 	}
 	else // for NDIS6 (Vista)
@@ -158,6 +164,28 @@ MyNdisGroupMaxProcessorCount(
 	}
 	return Cpu;
 }
+
+//-------------------------------------------------------------------
+ULONG
+My_KeGetCurrentProcessorNumber(
+)
+{
+	ULONG Cpu;
+	if (g_My_KeGetCurrentProcessorNumberEx) // for NDIS620 and later (Win7 and later).
+	{
+		Cpu = g_My_KeGetCurrentProcessorNumberEx(NULL);
+		if (Cpu > NPF_MAX_CPU_NUMBER - 1)
+		{
+			Cpu = NPF_MAX_CPU_NUMBER - 1;
+		}
+	}
+	else // for NDIS6 (Vista)
+	{
+		Cpu = KeGetCurrentProcessorNumber();
+	}
+	return Cpu;
+}
+
 
 //-------------------------------------------------------------------
 //
@@ -180,7 +208,11 @@ DriverEntry(
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
 	ULONG OsMajorVersion, OsMinorVersion;
-	NDIS_STRING GroupMaxProcessorCount;
+
+	NDIS_STRING strNdisGroupMaxProcessorCount;
+	NDIS_STRING strKeGetCurrentProcessorNumberEx;
+	NDIS_STRING strKeGetProcessorIndexFromNumber;
+
 	UNREFERENCED_PARAMETER(RegistryPath);
 
 	TRACE_ENTER();
@@ -232,12 +264,18 @@ DriverEntry(
 		NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
 
 	//
+	// Initialize several CPU-related functions.
+	//
+	RtlInitUnicodeString(&strNdisGroupMaxProcessorCount, L"NdisGroupMaxProcessorCount");
+	g_My_NdisGroupMaxProcessorCount = (NDISGROUPMAXPROCESSORCOUNT) NdisGetRoutineAddress(&strNdisGroupMaxProcessorCount);
+
+	RtlInitUnicodeString(&strKeGetCurrentProcessorNumberEx, L"KeGetCurrentProcessorNumberEx");
+	g_My_KeGetCurrentProcessorNumberEx = (KEGETCURRENTPROCESSORNUMBEREX) NdisGetRoutineAddress(&strKeGetCurrentProcessorNumberEx);
+
+	//
 	// Get number of CPUs and save it
 	//
-	RtlInitUnicodeString(&GroupMaxProcessorCount, L"NdisGroupMaxProcessorCount");
-	g_My_NdisGroupMaxProcessorCount = (NDISGROUPMAXPROCESSORCOUNT) NdisGetRoutineAddress(&GroupMaxProcessorCount);
-
-	g_NCpu = MyNdisGroupMaxProcessorCount();
+	g_NCpu = My_NdisGroupMaxProcessorCount();
 	TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "g_NCpu: %d, NPF_MAX_CPU_NUMBER: %d, g_My_NdisGroupMaxProcessorCount: %x\n", g_NCpu, NPF_MAX_CPU_NUMBER, g_My_NdisGroupMaxProcessorCount);
 
 	//
