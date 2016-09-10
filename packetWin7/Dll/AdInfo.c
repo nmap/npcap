@@ -1072,6 +1072,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	if (strlen(AdName) + 1 > sizeof(TmpAdInfo->Name))
 	{
 		TRACE_PRINT("PacketAddAdapterNPF: adapter name is too long to be stored into ADAPTER_INFO::Name, simply skip it");
+		TRACE_EXIT("PacketAddAdapterNPF");
 		return FALSE;
 	}
 
@@ -1117,7 +1118,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 			TRACE_PRINT("NPF Adapter not available, do not add it to the global list");
 			// We are not able to open this adapter. Skip to the next one.
 			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT("AddAdapter");
+			TRACE_EXIT("PacketAddAdapterNPF");
 			return FALSE;
 		}			
 	}
@@ -1141,7 +1142,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		}		
 		
 		ReleaseMutex(g_AdaptersInfoMutex);
- 		TRACE_EXIT("AddAdapter");
+		TRACE_EXIT("PacketAddAdapterNPF");
 		return FALSE;
 	}
 	
@@ -1184,12 +1185,12 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 
 		if (Status == FALSE)
 		{
-			TRACE_PRINT("AddAdapter: PacketGetLinkLayerFromRegistry failed. Returning.");
+			TRACE_PRINT("PacketAddAdapterNPF: PacketGetLinkLayerFromRegistry failed. Returning.");
 			PacketCloseAdapter(adapter);
 			GlobalFreePtr(OidData);
 			GlobalFreePtr(TmpAdInfo);
 			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT("AddAdapter");
+			TRACE_EXIT("PacketAddAdapterNPF");
 			return FALSE;
 		}
 		
@@ -1278,7 +1279,8 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	
 	ReleaseMutex(g_AdaptersInfoMutex);
 
-	TRACE_EXIT("AddAdapter");
+	TRACE_PRINT("PacketAddAdapterNPF: Adapter successfully added to the list");
+	TRACE_EXIT("PacketAddAdapterNPF");
 	return TRUE;
 }
 
