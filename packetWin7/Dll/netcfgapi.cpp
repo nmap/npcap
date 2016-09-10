@@ -220,6 +220,8 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 	TCHAR szDir[_MAX_DIR];
 	TCHAR szDirWithDrive[_MAX_DRIVE + _MAX_DIR];
 
+	UNREFERENCED_PARAMETER(lpszComponentId);
+
 	//
 	// If full path to INF has been specified, the INF
 	// needs to be copied using Setup API to ensure that any other files
