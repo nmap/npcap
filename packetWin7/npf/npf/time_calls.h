@@ -64,10 +64,6 @@ My_KeGetCurrentProcessorNumber(
 
   included in the sf_pkthdr or the bpf_hdr that NPF associates with every packet. 
 */
-
-// Maximum CPU core number, the original value is sizeof(KAFFINITY) * 8, but Amazon instance can return 128 cores, so we make NPF_MAX_CPU_NUMBER to 256 for safe.
-#define NPF_MAX_CPU_NUMBER		sizeof(KAFFINITY) * 32
-
 struct timeval
 {
 	long tv_sec;		 ///< seconds
@@ -75,6 +71,9 @@ struct timeval
 };
 
 #endif /*WIN_NT_DRIVER*/
+
+// Maximum CPU core number, the original value is sizeof(KAFFINITY) * 8, but Amazon instance can return 128 cores, so we make NPF_MAX_CPU_NUMBER to 256 for safe.
+#define NPF_MAX_CPU_NUMBER		sizeof(KAFFINITY) * 32
 
 struct time_conv
 {
