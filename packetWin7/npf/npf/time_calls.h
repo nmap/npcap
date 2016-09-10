@@ -49,6 +49,11 @@
 
 extern ULONG g_TimestampMode;
 
+/* Defined in Packet.c/h */
+ULONG
+MyNdisGroupMaxProcessorCount(
+);
+
 /*!
   \brief A microsecond precise timestamp.
 
@@ -248,11 +253,7 @@ __inline VOID TIME_SYNCHRONIZE(struct time_conv* data)
 	if (data->reference != 0)
 		return;
 
-#ifdef NDIS620
-	NumberOfCpus = NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
-#else
-	NumberOfCpus = NdisSystemProcessorCount();
-#endif
+	NumberOfCpus = MyNdisGroupMaxProcessorCount();
 
 	if (g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP || g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP)
 	{
