@@ -244,6 +244,7 @@ NPF_OpenAdapter(
 	)
 {
 	PDEVICE_EXTENSION		DeviceExtension;
+	POPEN_INSTANCE			OriginalOpen;
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
 	NDIS_STATUS				Status;
@@ -255,17 +256,20 @@ NPF_OpenAdapter(
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
-	//find the head adaper of the global open array, if found, create a group child adapter object from the head adapter.
-	Open = NPF_GetCopyFromOpenArray(&DeviceExtension->AdapterName, DeviceExtension);
+	// Find the head adapter of the global open array.
+	OriginalOpen = NPF_GetOpenByAdapterName(&DeviceExtension->AdapterName);
 
-	if (Open == NULL)
+	if (OriginalOpen == NULL)
 	{
-		//cannot find the adapter from the global open array.
+		// Can't find the adapter from the global open array.
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
+
+	// Create a group child adapter object from the head adapter.
+	Open = NPF_DuplicateOpenObject(OriginalOpen, DeviceExtension);
 
 	Open->DeviceExtension = DeviceExtension;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -1324,9 +1328,8 @@ NPF_EqualAdapterName(
 //-------------------------------------------------------------------
 
 POPEN_INSTANCE
-NPF_GetCopyFromOpenArray(
-	PNDIS_STRING pAdapterName,
-	PDEVICE_EXTENSION DeviceExtension
+NPF_GetOpenByAdapterName(
+	PNDIS_STRING pAdapterName
 	)
 {
 	POPEN_INSTANCE CurOpen;
@@ -1338,7 +1341,7 @@ NPF_GetCopyFromOpenArray(
 		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_EqualAdapterName(&CurOpen->AdapterName, pAdapterName) == TRUE)
 		{
 			NdisReleaseSpinLock(&g_OpenArrayLock);
-			return NPF_DuplicateOpenObject(CurOpen, DeviceExtension);
+			return CurOpen;
 		}
 	}
 	NdisReleaseSpinLock(&g_OpenArrayLock);

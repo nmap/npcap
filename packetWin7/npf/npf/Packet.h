@@ -1245,9 +1245,8 @@ NPF_EqualAdapterName(
   This function is used to create a group member adapter for the group head one.
 */
 POPEN_INSTANCE
-NPF_GetCopyFromOpenArray(
-	PNDIS_STRING pAdapterName,
-	PDEVICE_EXTENSION DeviceExtension
+NPF_GetOpenByAdapterName(
+	PNDIS_STRING pAdapterName
 	);
 
 
