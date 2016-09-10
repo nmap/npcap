@@ -136,7 +136,30 @@ NDIS_HANDLE         FilterDriverObject; // Driver object for filter driver
 typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
 	USHORT Group
 	);
+NDISGROUPMAXPROCESSORCOUNT g_MyNdisGroupMaxProcessorCount;
 
+//-------------------------------------------------------------------
+ULONG
+MyNdisGroupMaxProcessorCount(
+	)
+{
+	ULONG Cpu;
+	if (g_MyNdisGroupMaxProcessorCount) // for NDIS620 and later (Win7 and later).
+	{
+		Cpu = g_MyNdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
+		if (Cpu > NPF_MAX_CPU_NUMBER)
+		{
+			Cpu = NPF_MAX_CPU_NUMBER;
+		}
+	}
+	else // for NDIS6 (Vista)
+	{
+		Cpu = NdisSystemProcessorCount();
+	}
+	return Cpu;
+}
+
+//-------------------------------------------------------------------
 //
 //  Packet Driver's entry routine.
 //
@@ -157,7 +180,6 @@ DriverEntry(
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING macName;
 	ULONG OsMajorVersion, OsMinorVersion;
-	NDISGROUPMAXPROCESSORCOUNT MyNdisGroupMaxProcessorCount;
 	NDIS_STRING GroupMaxProcessorCount;
 	UNREFERENCED_PARAMETER(RegistryPath);
 
@@ -213,20 +235,10 @@ DriverEntry(
 	// Get number of CPUs and save it
 	//
 	RtlInitUnicodeString(&GroupMaxProcessorCount, L"NdisGroupMaxProcessorCount");
-	MyNdisGroupMaxProcessorCount = (NDISGROUPMAXPROCESSORCOUNT) NdisGetRoutineAddress(&GroupMaxProcessorCount);
-	if (MyNdisGroupMaxProcessorCount) // for NDIS620 and later (Win7 and later).
-	{
-		g_NCpu = MyNdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_NCpu (NdisGroupMaxProcessorCount): %d, NPF_MAX_CPU_NUMBER: %d\n", g_NCpu, NPF_MAX_CPU_NUMBER);
-		if (g_NCpu > NPF_MAX_CPU_NUMBER)
-		{
-			g_NCpu = NPF_MAX_CPU_NUMBER;
-		}
-	}
-	else // for NDIS6 (Vista)
-	{
-		g_NCpu = NdisSystemProcessorCount();
-	}
+	g_MyNdisGroupMaxProcessorCount = (NDISGROUPMAXPROCESSORCOUNT) NdisGetRoutineAddress(&GroupMaxProcessorCount);
+
+	g_NCpu = MyNdisGroupMaxProcessorCount();
+	TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "g_NCpu: %d, NPF_MAX_CPU_NUMBER: %d, g_MyNdisGroupMaxProcessorCount: %x\n", g_NCpu, NPF_MAX_CPU_NUMBER, g_MyNdisGroupMaxProcessorCount);
 
 	//
 	// Register as a service with NDIS

@@ -790,6 +790,15 @@ NPF_InternalRequestComplete(
 
 
 /*!
+  \brief Returns the maximum number of processors in the machine.
+  \return A ULONG value for the maximum number of processors of the machine.
+*/
+ULONG
+MyNdisGroupMaxProcessorCount(
+);
+
+
+/*!
   \brief The initialization routine of the driver.
   \param DriverObject The driver object of NPF created by the system.
   \param RegistryPath The registry path containing the keys related to the driver.
