@@ -268,6 +268,14 @@ NPF_OpenAdapter(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
+	if (NPF_StartUsingOpenInstance(OriginalOpen) == FALSE)
+	{
+		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
 	// Create a group child adapter object from the head adapter.
 	Open = NPF_DuplicateOpenObject(OriginalOpen, DeviceExtension);
 
@@ -380,6 +388,8 @@ NPF_OpenAdapter_End:;
 			Open = NULL;
 		}
 
+		NPF_StopUsingOpenInstance(OriginalOpen);
+
 		Irp->IoStatus.Status = Status;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
@@ -393,6 +403,8 @@ NPF_OpenAdapter_End:;
 
 	NPF_AddToOpenArray(Open);
 	NPF_AddToGroupOpenArray(Open);
+
+	NPF_StopUsingOpenInstance(OriginalOpen);
 
 	Irp->IoStatus.Status = Status;
 	Irp->IoStatus.Information = 0;
