@@ -113,6 +113,19 @@ Get-NetAdapter
 (Get-WmiObject Win32_NetworkAdapter) | Where-Object {$_.GUID -ne $null} | Format-List Caption, GUID, Index, InterfaceIndex, Manufacturer, NetConnectionID, PNPDeviceID
 
 #########################################################
+#write_report ("`n")
+#write_report ("*************************************************")
+#write_report ("Driver Info:")
+#write_report ("*************************************************")
+
+#Get-WmiObject Win32_SystemDriver | 
+#    select *, @{ N='CompanyName';E={ (Get-ItemProperty $_.pathname -ErrorAction Ignore).VersionInfo.companyname }} |
+#    Where CompanyName -NotLike "*microsoft*" |
+#    Where State -NotLike "Stopped" |
+#    sort State, Name |
+#    Format-Table Name, Description, ServiceType, State, ExitCode, CompanyName, PathName
+
+#########################################################
 write_report ("`n")
 "*************************************************"
 write_report ("File Info:")
