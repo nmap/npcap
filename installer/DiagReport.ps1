@@ -110,6 +110,22 @@ write_report ("*************************************************")
 
 #########################################################
 write_report ("`n")
+write_report ("*************************************************")
+write_report ("Memory Info:")
+write_report ("*************************************************")
+
+"Size:`t`t`t`t" + [int]((Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory / 1024 / 1024) + " MB" + " (" + (Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory + “ Bytes)”
+
+#########################################################
+write_report ("`n")
+write_report ("*************************************************")
+write_report ("Network Adapter Info:")
+write_report ("*************************************************")
+
+Get-NetAdapter
+
+#########################################################
+write_report ("`n")
 "*************************************************"
 write_report ("File Info:")
 write_report ("*************************************************")
