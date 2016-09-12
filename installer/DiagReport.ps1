@@ -83,16 +83,8 @@ write_report ("`n")
 write_report ("*************************************************")
 write_report ("OS Info:")
 write_report ("*************************************************")
-"Caption:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).Caption
-"BuildNumber:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).BuildNumber
-# write_report "BuildType:`t`t`t`t`, (Get-WmiObject Win32_OperatingSystem).BuildType
-"Locale:`t`t`t`t" + (Get-WmiObject Win32_OperatingSystem).Locale
-"MUILanguages:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).MUILanguages
-"OSArchitecture:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).OSArchitecture
-"ServicePackMajorVersion:`t" + (Get-WmiObject Win32_OperatingSystem).ServicePackMajorVersion
-"ServicePackMinorVersion:`t" + (Get-WmiObject Win32_OperatingSystem).ServicePackMinorVersion
-"SystemDirectory:`t`t" + (Get-WmiObject Win32_OperatingSystem).SystemDirectory
-"Version:`t`t`t" + (Get-WmiObject Win32_OperatingSystem).Version
+
+(Get-WmiObject Win32_OperatingSystem) | Format-List Caption, BuildNumber, Locale, MUILanguages, OSArchitecture, ServicePackMajorVersion, ServicePackMinorVersion, SystemDirectory, Version
 
 #########################################################
 write_report ("`n")
@@ -100,13 +92,7 @@ write_report ("*************************************************")
 write_report ("CPU Info:")
 write_report ("*************************************************")
 
-"Name:`t`t`t`t" + (Get-WmiObject Win32_processor).Name
-"Manufacturer:`t`t`t" + (Get-WmiObject Win32_processor).Manufacturer
-"DeviceID:`t`t`t" + (Get-WmiObject Win32_processor).DeviceID
-"NumberOfCores:`t`t`t" + (Get-WmiObject Win32_processor).NumberOfCores
-"NumberOfEnabledCore:`t`t" + (Get-WmiObject Win32_processor).NumberOfEnabledCore
-"NumberOfLogicalProcessors:`t" + (Get-WmiObject Win32_processor).NumberOfLogicalProcessors
-"Addresswidth:`t`t`t" + (Get-WmiObject Win32_processor).Addresswidth
+(Get-WmiObject Win32_Processor) | Format-List Name, Manufacturer, DeviceID, NumberOfCores, NumberOfEnabledCore, NumberOfLogicalProcessors, Addresswidth
 
 #########################################################
 write_report ("`n")
