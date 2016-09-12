@@ -105,10 +105,12 @@ write_report ("*************************************************")
 #########################################################
 write_report ("`n")
 write_report ("*************************************************")
-write_report ("Network Adapter Info:")
+write_report ("Network Adapter(s) Info:")
 write_report ("*************************************************")
 
 Get-NetAdapter
+
+(Get-WmiObject Win32_NetworkAdapter) | Where-Object {$_.GUID -ne $null} | Format-List Caption, GUID, Index, InterfaceIndex, Manufacturer, NetConnectionID, PNPDeviceID
 
 #########################################################
 write_report ("`n")
