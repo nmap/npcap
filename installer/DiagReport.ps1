@@ -4,7 +4,7 @@
 # Date: August 29, 2016
 #
 
-$report_file_name = $MyInvocation.MyCommand.Definition.Replace(".ps1", ".txt")
+$report_file_name = $MyInvocation.MyCommand.Definition.Replace(".ps1", "-" + (Get-Date -Format 'yyyyMMdd-HHmmss') + ".txt")
 
 # Delete the old report if exists.
 if (Test-Path $report_file_name)
