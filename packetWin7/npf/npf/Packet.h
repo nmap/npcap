@@ -952,7 +952,7 @@ DRIVER_DISPATCH NPF_Cleanup;
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
 NTSTATUS
-NPF_CleanupForUnclosed(
+NPF_Cleanup_Internal(
 	POPEN_INSTANCE Open
 );
 

@@ -916,7 +916,7 @@ NPF_Cleanup(
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	Open = IrpSp->FileObject->FsContext;
 
-	Status = NPF_CleanupForUnclosed(Open);
+	Status = NPF_Cleanup_Internal(Open);
 
 	//
 	// and complete the IRP with status success
@@ -933,7 +933,7 @@ NPF_Cleanup(
 //-------------------------------------------------------------------
 
 NTSTATUS
-NPF_CleanupForUnclosed(
+NPF_Cleanup_Internal(
 	POPEN_INSTANCE Open
 	)
 {
@@ -1304,7 +1304,7 @@ NPF_RemoveUnclosedAdapters(
 		TempOpen = CurOpen->Next;
 		if (CurOpen->DirectBinded)
 		{
-			NPF_CleanupForUnclosed(CurOpen);
+			NPF_Cleanup_Internal(CurOpen);
 			ExFreePool(CurOpen);
 		}
 		CurOpen = TempOpen;
