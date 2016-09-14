@@ -247,7 +247,7 @@ NPF_OpenAdapter(
 	POPEN_INSTANCE			OriginalOpen;
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
-	NDIS_STATUS				Status;
+	NDIS_STATUS				Status = STATUS_SUCCESS;
 	ULONG					localNumOpenedInstances;
 
 	TRACE_ENTER();
