@@ -1919,8 +1919,8 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	}
 
 	NPF_RemoveFromOpenArray(Open); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
-	//NPF_ReleaseOpenInstanceResources(Open);
-	//ExFreePool(Open);
+	NPF_ReleaseOpenInstanceResources(Open);
+	ExFreePool(Open);
 
 	//NPF_RemoveUnclosedAdapters(); //if there are any unclosed adapter objects, just close them
 
