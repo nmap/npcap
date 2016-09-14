@@ -390,11 +390,8 @@ NPF_OpenAdapter_End:;
 		NPF_ReleaseOpenInstanceResources(Open);
 
 		// Free the open instance itself
-		if (Open)
-		{
-			ExFreePool(Open);
-			Open = NULL;
-		}
+		ExFreePool(Open);
+		Open = NULL;
 
 		NPF_StopUsingOpenInstance(OriginalOpen);
 
@@ -512,9 +509,9 @@ NPF_ReleaseOpenInstanceResources(
 	}
 
 	// Release the adapter name
-	if (pOpen->AdapterName.MaximumLength != 0)
+	if (pOpen->AdapterName.Buffer)
 	{
-		NdisFreeString(pOpen->AdapterName);
+		ExFreePool(pOpen->AdapterName.Buffer);
 		pOpen->AdapterName.Buffer = NULL;
 		pOpen->AdapterName.Length = 0;
 		pOpen->AdapterName.MaximumLength = 0;
