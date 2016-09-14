@@ -555,6 +555,7 @@ NPF_ReleaseOpenInstanceResources(
 	{
 		ExFreePool(pOpen->CpuData[0].Buffer);
 		pOpen->CpuData[0].Buffer = NULL;
+		pOpen->Size = 0;
 	}
 
 	//
@@ -1939,7 +1940,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		NPF_CloseBindingAndAdapter(GroupOpen);
 	}
 
-	NPF_RemoveFromOpenArray(Open); //Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
+	NPF_RemoveFromOpenArray(Open); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
 	//NPF_ReleaseOpenInstanceResources(Open);
 	//ExFreePool(Open);
 
