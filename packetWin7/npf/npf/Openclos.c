@@ -902,28 +902,6 @@ NPF_CloseAdapter(
 //-------------------------------------------------------------------
 
 NTSTATUS
-NPF_CloseAdapterForUnclosed(
-	POPEN_INSTANCE pOpen
-	)
-{
-	TRACE_ENTER();
-
-	ASSERT(pOpen != NULL);
-	//
-	// Free the open instance itself
-	//
-	if (pOpen)
-	{
-		ExFreePool(pOpen);
-	}
-
-	TRACE_EXIT();
-	return STATUS_SUCCESS;
-}
-
-//-------------------------------------------------------------------
-
-NTSTATUS
 NPF_Cleanup(
 	IN PDEVICE_OBJECT DeviceObject,
 	IN PIRP Irp
@@ -1327,7 +1305,7 @@ NPF_RemoveUnclosedAdapters(
 		if (CurOpen->DirectBinded)
 		{
 			NPF_CleanupForUnclosed(CurOpen);
-			NPF_CloseAdapterForUnclosed(CurOpen);
+			ExFreePool(CurOpen);
 		}
 		CurOpen = TempOpen;
 	}

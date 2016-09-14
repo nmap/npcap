@@ -978,23 +978,6 @@ DRIVER_DISPATCH NPF_CloseAdapter;
 
 
 /*!
-  \brief Closes an instance of the driver.
-  \param DeviceObject Pointer to the device object utilized by the user.
-  \param Irp Pointer to the IRP containing the user request.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  This function is called by NPF_RemoveUnclosedAdapters().
-  Used together with NPF_CleanupForUnclosed().
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
-  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
-*/
-NTSTATUS
-NPF_CloseAdapterForUnclosed(
-	POPEN_INSTANCE pOpen
-	);
-
-
-/*!
   \brief Callback invoked by NPF_TapEx() when a packet arrives from the network.
   \param Open Pointer to an OPEN_INSTANCE structure to which the packets are destined.
   \param pNetBufferLists A List of NetBufferLists to receive.
