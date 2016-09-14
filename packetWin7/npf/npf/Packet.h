@@ -969,7 +969,7 @@ NPF_CleanupForUnclosed(
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
 _Dispatch_type_(IRP_MJ_CLOSE)
-DRIVER_DISPATCH NPF_CloseAdapter;
+DRIVER_DISPATCH NPF_FreeAdapter;
 // NTSTATUS
 // NPF_CloseAdapter(
 // 	IN PDEVICE_OBJECT DeviceObject,
