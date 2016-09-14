@@ -676,20 +676,20 @@ Function ${un}checkWindowsVersion
 	StrCpy $R1 $R0 2
 	${If} $R1 == "6." ; Vista and later
 		${If} $R0 == "6.0"
-			StrCpy $os_ver 'vista'
+			StrCpy $os_ver 'Vista'
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "no"
 		${ElseIf} $R0 == "6.1"
-			StrCpy $os_ver 'win7'
+			StrCpy $os_ver 'Win7'
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "no"
 		${Else}
-			StrCpy $os_ver 'win8_above'
+			StrCpy $os_ver 'Win8 and later'
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "yes"
 		${EndIf}
 	${Else} ; XP and eariler
-		StrCpy $os_ver 'xp'
+		StrCpy $os_ver 'XP'
 		StrCpy $ndis6_driver "no"
 	${EndIf}
 FunctionEnd
