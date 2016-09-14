@@ -683,8 +683,12 @@ Function ${un}checkWindowsVersion
 			StrCpy $os_ver 'Win7'
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "no"
+		${ElseIf} $R0 == "6.2"
+			StrCpy $os_ver 'Win8'
+			StrCpy $ndis6_driver "yes"
+			StrCpy $sha2_signed "yes"
 		${Else}
-			StrCpy $os_ver 'Win8 and later'
+			StrCpy $os_ver 'Win8.1 and later'
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "yes"
 		${EndIf}
