@@ -676,19 +676,31 @@ Function ${un}checkWindowsVersion
 	StrCpy $R1 $R0 2
 	${If} $R1 == "6." ; Vista and later
 		${If} $R0 == "6.0"
-			StrCpy $os_ver 'Vista'
+			StrCpy $os_ver "Vista"
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "no"
 		${ElseIf} $R0 == "6.1"
-			StrCpy $os_ver 'Win7'
+			StrCpy $os_ver "Win7"
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "no"
 		${ElseIf} $R0 == "6.2"
-			StrCpy $os_ver 'Win8'
+			StrCpy $os_ver "Win8"
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "yes"
+		${ElseIf} $R0 == "6.3"
+			ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentMajorVersionNumber
+			${If} $R1 == ""
+				StrCpy $os_ver "Win8.1"
+				StrCpy $ndis6_driver "yes"
+				StrCpy $sha2_signed "yes"
+			${Else}
+				StrCpy $R0 "10.0"
+				StrCpy $os_ver "Win10"
+				StrCpy $ndis6_driver "yes"
+				StrCpy $sha2_signed "yes"
+			${EndIf}
 		${Else}
-			StrCpy $os_ver 'Win8.1 and later'
+			StrCpy $os_ver 'Unknown OS'
 			StrCpy $ndis6_driver "yes"
 			StrCpy $sha2_signed "yes"
 		${EndIf}
