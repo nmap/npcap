@@ -931,103 +931,24 @@ NPF_Cleanup(
 	POPEN_INSTANCE Open;
 	NDIS_STATUS Status;
 	PIO_STACK_LOCATION IrpSp;
-	LARGE_INTEGER ThreadDelay;
-	ULONG localNumOpenInstances;
 
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	Open = IrpSp->FileObject->FsContext;
 
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
-
-	ASSERT(Open != NULL);
-
-	NPF_RemoveFromOpenArray(Open); //Remove the adapter from the global adapter list
-	NPF_RemoveFromGroupOpenArray(Open); //Remove the adapter from the group adapter list
-
-	NPF_CloseOpenInstance(Open);
-
-	if (Open->ReadEvent != NULL)
-		KeSetEvent(Open->ReadEvent, 0, FALSE);
-
-	NPF_CloseBinding(Open);
-
-	// NOTE:
-	// code commented out because the kernel dump feature is disabled
-	//
-	//if (AdapterAlreadyClosing == FALSE)
-	//{
-
-	//
-	//	 Unfreeze the consumer
-	//
-	//	if(Open->mode & MODE_DUMP)
-	//		NdisSetEvent(&Open->DumpEvent);
-	//	else
-	//		KeSetEvent(Open->ReadEvent,0,FALSE);
-
-	//	//
-	//	// If this instance is in dump mode, complete the dump and close the file
-	//	//
-	//	if((Open->mode & MODE_DUMP) && Open->DumpFileHandle != NULL)
-	//	{
-	//		NTSTATUS wres;
-
-	//		ThreadDelay.QuadPart = -50000000;
-
-	//		//
-	//		// Wait the completion of the thread
-	//		//
-	//		wres = KeWaitForSingleObject(Open->DumpThreadObject,
-	//			UserRequest,
-	//			KernelMode,
-	//			TRUE,
-	//			&ThreadDelay);
-
-	//		ObDereferenceObject(Open->DumpThreadObject);
-
-	//		//
-	//		// Flush and close the dump file
-	//		//
-	//		NPF_CloseDumpFile(Open);
-	//	}
-	//}
-
-
-	//
-	// release all the resources
-	//
-	NPF_ReleaseOpenInstanceResources(Open);
-
-	//	IrpSp->FileObject->FsContext = NULL;
-
-	//
-	// Decrease the counter of open instances
-	//
-	localNumOpenInstances = InterlockedDecrement(&g_NumOpenedInstances);
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened Instances: %u", localNumOpenInstances);
-
-	if (localNumOpenInstances == 0)
-	{
-		//
-		// Force a synchronization at the next NPF_Open().
-		// This hopefully avoids the synchronization issues caused by hibernation or standby.
-		//
-		TIME_DESYNCHRONIZE(&G_Start_Time);
-	}
-
+	Status = NPF_CleanupForUnclosed(Open);
 
 	//
 	// and complete the IRP with status success
 	//
 	Irp->IoStatus.Information = 0;
-	Irp->IoStatus.Status = STATUS_SUCCESS;
+	Irp->IoStatus.Status = Status;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 	TRACE_EXIT();
 
-	return(STATUS_SUCCESS);
+	return Status;
 }
 
 //-------------------------------------------------------------------
