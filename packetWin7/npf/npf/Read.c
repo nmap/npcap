@@ -662,11 +662,11 @@ NPF_TapExForEachOpen(
 
 	//TRACE_ENTER();
 
-	if (NPF_StartUsingOpenInstance(Open) == FALSE)
-	{
-		// The adapter is in use or even released, stop the tapping.
-		return;
-	}
+// 	if (NPF_StartUsingOpenInstance(Open) == FALSE)
+// 	{
+// 		// The adapter is in use or even released, stop the tapping.
+// 		return;
+// 	}
 
 	if (Open->Loopback && g_DltNullMode)
 	{
@@ -1311,6 +1311,6 @@ NPF_TapExForEachOpen_End:;
 		pNetBufList = pNextNetBufList;
 	} // while (pNetBufList != NULL)
 
-	NPF_StopUsingOpenInstance(Open);
+	//NPF_StopUsingOpenInstance(Open);
 	//TRACE_EXIT();
 }
