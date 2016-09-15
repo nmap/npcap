@@ -662,6 +662,12 @@ NPF_TapExForEachOpen(
 
 	//TRACE_ENTER();
 
+	if (NPF_StartUsingOpenInstance(Open) == FALSE)
+	{
+		// The adapter is in use or even released, stop the tapping.
+		return;
+	}
+
 	if (Open->Loopback && g_DltNullMode)
 	{
 		DataLinkHeaderSize = DLT_NULL_HDR_LEN;
@@ -1305,5 +1311,6 @@ NPF_TapExForEachOpen_End:;
 		pNetBufList = pNextNetBufList;
 	} // while (pNetBufList != NULL)
 
+	NPF_StopUsingOpenInstance(Open);
 	//TRACE_EXIT();
 }
