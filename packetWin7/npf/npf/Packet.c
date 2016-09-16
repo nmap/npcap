@@ -239,6 +239,15 @@ DriverEntry(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
+	if (g_LoopbackAdapterName.Buffer != NULL && g_LoopbackAdapterName.Length != ADAPTER_NAME_SIZE * 2)
+	{
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_LoopbackAdapterName is invalid, g_LoopbackAdapterName.Length = %d, ADAPTER_NAME_SIZE * 2 = %d\n",
+			g_LoopbackAdapterName.Length, ADAPTER_NAME_SIZE * 2);
+		ExFreePool(g_LoopbackAdapterName.Buffer);
+		g_LoopbackAdapterName.Buffer = NULL;
+		g_LoopbackAdapterName.Length = 0;
+		g_LoopbackAdapterName.MaximumLength = 0;
+	}
 #endif
 #ifdef HAVE_RX_SUPPORT
 	NPF_GetRegistryOption_String(RegistryPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
@@ -838,7 +847,7 @@ NPF_GetRegistryOption_String(
 
 					g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
 					g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
-					g_OutputString->Buffer = ExAllocatePoolWithTag(PagedPool, g_OutputString->MaximumLength, '3PWA');
+					g_OutputString->Buffer = ExAllocatePoolWithTag(NonPagedPool, g_OutputString->MaximumLength, '3PWA');
 
 					if (g_OutputString->Buffer)
 						RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);

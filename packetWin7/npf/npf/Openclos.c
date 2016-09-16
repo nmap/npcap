@@ -43,8 +43,6 @@
 #include "Lo_send.h"
 #include "..\..\..\Common\WpcapNames.h"
 
-#define ADAPTER_NAME_SIZE_WITH_SEPARATOR 47 //An example is: \Device\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF};
-
 extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING g_SendToRxAdapterName;
 extern NDIS_STRING g_BlockRxAdapterName;

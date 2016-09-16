@@ -68,7 +68,7 @@ typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTE
 //
 extern NDIS_HANDLE         FilterDriverObject;
 
-#define  MAX_REQUESTS   128 ///< Maximum number of simultaneous IOCTL requests.
+#define  MAX_REQUESTS						128 ///< Maximum number of simultaneous IOCTL requests.
 
 #define Packet_ALIGNMENT sizeof(int) ///< Alignment macro. Defines the alignment size.
 #define Packet_WORDALIGN(x) (((x)+(Packet_ALIGNMENT-1))&~(Packet_ALIGNMENT-1))	///< Alignment macro. Rounds up to the next
@@ -76,42 +76,49 @@ extern NDIS_HANDLE         FilterDriverObject;
 
 
 // Working modes
-#define MODE_CAPT 0x0		///< Capture working mode
-#define MODE_STAT 0x1		///< Statistical working mode
-#define MODE_MON  0x2		///< Kernel monitoring mode
-#define MODE_DUMP 0x10		///< Kernel dump working mode
+#define MODE_CAPT							0x0		///< Capture working mode
+#define MODE_STAT							0x1		///< Statistical working mode
+#define MODE_MON							0x2		///< Kernel monitoring mode
+#define MODE_DUMP							0x10		///< Kernel dump working mode
 
 
 #define IMMEDIATE 1			///< Immediate timeout. Forces a read call to return immediately.
 
-#define NDIS_FLAGS_SKIP_LOOPBACK_W2K	0x400 ///< This is an undocumented flag for NdisSetPacketFlags() that allows to disable loopback reception.
+#define NDIS_FLAGS_SKIP_LOOPBACK_W2K		0x400 ///< This is an undocumented flag for NdisSetPacketFlags() that allows to disable loopback reception.
 
 // The following definitions are used to provide compatibility
 // of the dump files with the ones of libpcap
-#define TCPDUMP_MAGIC		0xa1b2c3d4	///< Libpcap magic number. Used by programs like tcpdump to recognize a driver's generated dump file.
-#define PCAP_VERSION_MAJOR	2			///< Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
-#define PCAP_VERSION_MINOR	4			///< Minor libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
+#define TCPDUMP_MAGIC						0xa1b2c3d4	///< Libpcap magic number. Used by programs like tcpdump to recognize a driver's generated dump file.
+#define PCAP_VERSION_MAJOR					2			///< Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
+#define PCAP_VERSION_MINOR					4			///< Minor libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
 
 // Loopback behaviour definitions
-#define NPF_DISABLE_LOOPBACK	1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
-#define NPF_ENABLE_LOOPBACK		2	///< Tells the driver to capture the packets sent by itself.
+#define NPF_DISABLE_LOOPBACK				1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
+#define NPF_ENABLE_LOOPBACK					2	///< Tells the driver to capture the packets sent by itself.
 
 // Admin only mode definition
 //#define NPF_ADMIN_ONLY_MODE			///< Tells the driver to restrict its access only to Administrators. This is used to support "Admin-only Mode" for Npcap.
 
 // Loopback interface MTU definition
-#define NPF_LOOPBACK_INTERFACR_MTU		65536	///< The MTU of the "Npcap Loopback Adapter", this value adopts Linux's "lo" MTU and can't be modified.
+#define NPF_LOOPBACK_INTERFACR_MTU			65536	///< The MTU of the "Npcap Loopback Adapter", this value adopts Linux's "lo" MTU and can't be modified.
 
 // Custom link type, originally defined in Packet32.h, NDIS doesn't provide an equivalent for some of values
-#define NdisMediumNull					-1		///< The link type of the "Npcap Loopback Adapter", this value will be recognized by packet.dll code.
-#define NdisMediumCHDLC					-2		///< Custom linktype: NDIS doesn't provide an equivalent
-#define NdisMediumPPPSerial				-3		///< Custom linktype: NDIS doesn't provide an equivalent
-#define NdisMediumBare80211				-4		///< The link type of the Native WiFi adapters, Npcap versions with Native WiFi feature enabled will support this value.
-#define NdisMediumRadio80211			-5		///< Custom linktype: NDIS doesn't provide an equivalent
-#define NdisMediumPpi					-6		///< Custom linktype: NDIS doesn't provide an equivalent
+#define NdisMediumNull						-1		///< The link type of the "Npcap Loopback Adapter", this value will be recognized by packet.dll code.
+#define NdisMediumCHDLC						-2		///< Custom linktype: NDIS doesn't provide an equivalent
+#define NdisMediumPPPSerial					-3		///< Custom linktype: NDIS doesn't provide an equivalent
+#define NdisMediumBare80211					-4		///< The link type of the Native WiFi adapters, Npcap versions with Native WiFi feature enabled will support this value.
+#define NdisMediumRadio80211				-5		///< Custom linktype: NDIS doesn't provide an equivalent
+#define NdisMediumPpi						-6		///< Custom linktype: NDIS doesn't provide an equivalent
 
 // Maximum CPU core number, the original value is sizeof(KAFFINITY) * 8, but Amazon instance can return 128 cores, so we make NPF_MAX_CPU_NUMBER to 256 for safe.
-#define NPF_MAX_CPU_NUMBER		sizeof(KAFFINITY) * 32
+#define NPF_MAX_CPU_NUMBER					sizeof(KAFFINITY) * 32
+
+// The length of the adapter name
+#define ADAPTER_NAME_SIZE					(sizeof("\\Device\\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}") - 1)
+
+// The length of the adapter name with the separator ";"
+// An example is: \Device\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF};
+#define ADAPTER_NAME_SIZE_WITH_SEPARATOR	(ADAPTER_NAME_SIZE + 1)
 
 /*!
   \brief Header of a libpcap dump file.
