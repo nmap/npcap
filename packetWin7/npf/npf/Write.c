@@ -243,30 +243,33 @@ NPF_Write(
 			NdisResetEvent(&Open->NdisWriteCompleteEvent);
 
 			//receive the packets before sending them
-			if (Open->GroupHead != NULL)
-			{
-				GroupOpen = Open->GroupHead->GroupNext;
-			}
-			else
-			{
-				//this is impossible
-				GroupOpen = Open->GroupNext;
-			}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			// Do not capture the send traffic we send, if this is our loopback adapter.
 			if (Open->Loopback == FALSE)
 			{
 #endif
-				while (GroupOpen != NULL)
+				if (Open->GroupHead != NULL)
 				{
-					TempOpen = GroupOpen;
-					if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
-					{
-						NPF_TapExForEachOpen(TempOpen, pNetBufferList);
-					}
+					GroupOpen = Open->GroupHead->GroupNext;
 
-					GroupOpen = TempOpen->GroupNext;
+					NdisAcquireSpinLock(&Open->GroupHead->GroupOpenArrayLock);
+					while (GroupOpen != NULL)
+					{
+						TempOpen = GroupOpen;
+						if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
+						{
+							NPF_TapExForEachOpen(TempOpen, pNetBufferList);
+						}
+
+						GroupOpen = TempOpen->GroupNext;
+					}
+					NdisReleaseSpinLock(&Open->GroupHead->GroupOpenArrayLock);
+				}
+				else
+				{
+					//this is impossible
+					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_Write: never should be here.");
 				}
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			}
@@ -628,22 +631,24 @@ NPF_BufferedWrite(
 		if (Open->GroupHead != NULL)
 		{
 			GroupOpen = Open->GroupHead->GroupNext;
+
+			NdisAcquireSpinLock(&Open->GroupHead->GroupOpenArrayLock);
+			while (GroupOpen != NULL)
+			{
+				TempOpen = GroupOpen;
+				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
+				{
+					NPF_TapExForEachOpen(TempOpen, pNetBufferList);
+				}
+
+				GroupOpen = TempOpen->GroupNext;
+			}
+			NdisReleaseSpinLock(&Open->GroupHead->GroupOpenArrayLock);
 		}
 		else
 		{
-			GroupOpen = Open->GroupNext;
-		}
-		
-		GroupOpen = Open->GroupNext;
-		while (GroupOpen != NULL)
-		{
-			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
-			{
-				NPF_TapExForEachOpen(TempOpen, pNetBufferList);
-			}
-
-			GroupOpen = TempOpen->GroupNext;
+			//this is impossible
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_BufferedWrite: never should be here.");
 		}
 
 		pNetBufferList->SourceHandle = Open->AdapterHandle;

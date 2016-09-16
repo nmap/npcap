@@ -572,6 +572,7 @@ NPF_ReleaseOpenInstanceResources(
 	NdisFreeSpinLock(&pOpen->MachineLock);
 	NdisFreeSpinLock(&pOpen->AdapterHandleLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
+	NdisFreeSpinLock(&pOpen->GroupOpenArrayLock);
 
 	//
 	// Free the string with the name of the dump file
@@ -1083,6 +1084,7 @@ NPF_AddToGroupOpenArray(
 	{
 		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_EqualAdapterName(&CurOpen->AdapterName, &Open->AdapterName) == TRUE && CurOpen->DirectBinded)
 		{
+			NdisAcquireSpinLock(&CurOpen->GroupOpenArrayLock);
 			GroupRear = CurOpen;
 			while (GroupRear->GroupNext != NULL)
 			{
@@ -1090,6 +1092,7 @@ NPF_AddToGroupOpenArray(
 			}
 			GroupRear->GroupNext = Open;
 			Open->GroupHead = CurOpen;
+			NdisReleaseSpinLock(&CurOpen->GroupOpenArrayLock);
 			break;
 		}
 	}
@@ -1147,6 +1150,7 @@ NPF_RemoveFromGroupOpenArray(
 	POPEN_INSTANCE Open
 	)
 {
+	POPEN_INSTANCE GroupHeadOpen;
 	POPEN_INSTANCE CurOpen;
 	POPEN_INSTANCE GroupOpen;
 	POPEN_INSTANCE GroupPrev = NULL;
@@ -1159,8 +1163,16 @@ NPF_RemoveFromGroupOpenArray(
 		return;
 	}
 
-	NdisAcquireSpinLock(&g_OpenArrayLock);
-	GroupOpen = Open->GroupHead;
+	GroupHeadOpen = Open->GroupHead;
+	if (!GroupHeadOpen)
+	{
+		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: we don't remove the group head itself.\n");)
+		TRACE_EXIT();
+		return;
+	}
+
+	NdisAcquireSpinLock(&GroupHeadOpen->GroupOpenArrayLock);
+	GroupOpen = GroupHeadOpen;
 	while (GroupOpen)
 	{
 		if (GroupOpen == Open)
@@ -1173,7 +1185,7 @@ NPF_RemoveFromGroupOpenArray(
 			else
 			{
 				GroupPrev->GroupNext = GroupOpen->GroupNext;
-				NdisReleaseSpinLock(&g_OpenArrayLock);
+				NdisReleaseSpinLock(&GroupHeadOpen->GroupOpenArrayLock);
 				TRACE_EXIT();
 				return;
 			}
@@ -1181,7 +1193,7 @@ NPF_RemoveFromGroupOpenArray(
 		GroupPrev = GroupOpen;
 		GroupOpen = GroupOpen->GroupNext;
 	}
-	NdisReleaseSpinLock(&g_OpenArrayLock);
+	NdisReleaseSpinLock(&GroupHeadOpen->GroupOpenArrayLock);
 
 	IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: never should be here.\n");)
 	TRACE_EXIT();
@@ -1467,6 +1479,8 @@ NPF_CreateOpenObject(
 	Open->ClosePending = FALSE;
 	Open->PausePending = FALSE;
 	NdisAllocateSpinLock(&Open->OpenInUseLock);
+
+	NdisAllocateSpinLock(&Open->GroupOpenArrayLock);
 
 	//
 	//allocate the spinlock for the statistic counters
