@@ -493,6 +493,7 @@ NPF_SendEx(
 	if (Open->Loopback == FALSE)
 	{
 #endif
+		NdisAcquireSpinLock(&Open->GroupOpenArrayLock);
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
@@ -503,6 +504,7 @@ NPF_SendEx(
 
 			GroupOpen = TempOpen->GroupNext;
 		}
+		NdisReleaseSpinLock(&Open->GroupOpenArrayLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif
@@ -556,6 +558,7 @@ NPF_TapEx(
 	if (Open->Loopback == FALSE)
 	{
 #endif
+		NdisAcquireSpinLock(&Open->GroupOpenArrayLock);
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
@@ -567,6 +570,7 @@ NPF_TapEx(
 
 			GroupOpen = TempOpen->GroupNext;
 		}
+		NdisReleaseSpinLock(&Open->GroupOpenArrayLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif

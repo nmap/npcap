@@ -464,6 +464,7 @@ NPF_NetworkClassify(
 		GroupOpen = NULL;
 	}
 
+	NdisAcquireSpinLock(&g_LoopbackOpenGroupHead->GroupOpenArrayLock);
 	while (GroupOpen != NULL)
 	{
 		TempOpen = GroupOpen;
@@ -475,6 +476,7 @@ NPF_NetworkClassify(
 
 		GroupOpen = TempOpen->GroupNext;
 	}
+	NdisReleaseSpinLock(&g_LoopbackOpenGroupHead->GroupOpenArrayLock);
 
 Exit_Ethernet_Retreated:
 	// Advance the offset back to the original position.
