@@ -937,7 +937,7 @@ ${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
 	ExecWait '"$INSTDIR\NPFInstall.exe" -n -iw' $0
 
 	; install the NDIS filter driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -n -i' $0
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -i2' $0
 
 	; check the driver install result
 	${If} $0 == "0"
@@ -954,7 +954,7 @@ ${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -iw' $0
 
 		; install the NDIS filter driver
-		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i' $0
+		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i2' $0
 
 		; check the driver install result
 		${If} $0 == "0"
@@ -970,7 +970,7 @@ FunctionEnd
 
 Function un.uninstall_win7_XXbit_driver
 	; uninstall the NDIS filter driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -n -u' $0
+	ExecWait '"$INSTDIR\NPFInstall.exe" -n -u2' $0
 
 	; uninstall the WFP callout driver
 	ExecWait '"$INSTDIR\NPFInstall.exe" -n -uw' $0
@@ -984,7 +984,7 @@ Function un.uninstall_win7_XXbit_driver
 
 	${If} $winpcap_mode == "yes"
 		; uninstall the NDIS filter driver
-		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -u' $0
+		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -u2' $0
 
 		; uninstall the WFP callout driver
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -uw' $0
