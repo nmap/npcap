@@ -61,7 +61,7 @@ npf.copyfiles.sys=12
 [FilterStandard.reg]
 HKR, Ndi,Service,,%NPF_Filter_Name_Standard%
 HKR, Ndi,CoServices,0x00010000,%NPF_Filter_Name_Standard%
-HKR, Ndi,HelpText,,%NPF_HelpText%
+HKR, Ndi,HelpText,,%NPF_HelpText_Standard%
 HKR, Ndi,FilterClass,, compression
 
 
@@ -109,7 +109,7 @@ HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter
 [FilterWiFi.reg]
 HKR, Ndi,Service,,%NPF_Filter_Name_WiFi%
 HKR, Ndi,CoServices,0x00010000,%NPF_Filter_Name_WiFi%
-HKR, Ndi,HelpText,,%NPF_HelpText%
+HKR, Ndi,HelpText,,%NPF_HelpText_WiFi%
 HKR, Ndi,FilterClass,, ms_medium_converter_128
 
 
@@ -207,4 +207,5 @@ NPF_Filter_Name_WiFi = "npcap_wifi"
 Insecure = "Nmap Project"
 NPF_Desc_Standard = "Npcap Packet Driver (NPCAP)"
 NPF_Desc_WiFi = "Npcap Packet Driver (NPCAP) (Wi-Fi)"
-NPF_HelpText = "A NDIS 6 filter driver & WFP callout driver to support packet capturing and sending under Windows 7, 8 & 10"
+NPF_HelpText_Standard = "A NDIS 6 filter driver & WFP callout driver to support packet capturing and sending under Windows 7, 8 & 10"
+NPF_HelpText_WiFi = "A NDIS 6 filter driver & WFP callout driver (Wi-Fi) to support packet capturing and sending under Windows 7, 8 & 10"
