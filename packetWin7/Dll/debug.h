@@ -58,8 +58,12 @@ static VOID OutputDebugStringVA(LPCSTR Format, ...)
 														
 	do
 	{
-		
+
+#ifdef _CONSOLE
+		f = fopen("C:\\Program Files\\Npcap\\NPFInstall.log", "a");
+#else
 		f = fopen("C:\\Program Files\\Npcap\\Packet.log", "a");
+#endif
 		
 		if (f != NULL)
 			break;
@@ -109,7 +113,11 @@ static VOID OutputDebugStringVW(LPCWSTR Format, ...)
 	do
 	{
 
+#ifdef _CONSOLE
+		f = _wfopen(L"C:\\Program Files\\Npcap\\NPFInstall.log", L"a");
+#else
 		f = _wfopen(L"C:\\Program Files\\Npcap\\Packet.log", L"a");
+#endif
 
 		if (f != NULL)
 			break;
