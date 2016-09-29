@@ -198,7 +198,7 @@ DriverEntry(
 	IN PUNICODE_STRING RegistryPath
 	)
 {
-	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars;
+	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars; // The specification for the filter.
 	NTSTATUS Status = STATUS_SUCCESS;
 
 	// Use NonPaged Pool instead of No-Execute (NX) Nonpaged Pool for Win8 and later, this is for security purpose.
@@ -332,6 +332,7 @@ DriverEntry(
 		NPF_CreateDevice(DriverObject, &macName);
 	}
 
+	// Register the filter to NDIS.
 	Status = NdisFRegisterFilterDriver(DriverObject,
 		(NDIS_HANDLE) FilterDriverObject,
 		&FChars,
@@ -1064,8 +1065,8 @@ Return Value:
 
 		DeviceExtension = OldDeviceObject->DeviceExtension;
 
-		TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "Deleting Adapter %ws, Protocol Handle=%p, Device Obj=%p (%p)",
-			DeviceExtension->AdapterName.Buffer, FilterDriverHandle, DeviceObject, OldDeviceObject);
+		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "Deleting Adapter %ws, Device Obj=%p (%p)",
+			DeviceExtension->AdapterName.Buffer, DeviceObject, OldDeviceObject);
 
 		if (DeviceExtension->ExportString)
 		{
@@ -1082,6 +1083,7 @@ Return Value:
 	}
 
 	NdisFDeregisterFilterDriver(FilterDriverHandle);
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting Filter Handle = %p", FilterDriverHandle);
 
 	NPF_RemoveUnclosedAdapters();
 
