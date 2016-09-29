@@ -1551,6 +1551,7 @@ Return Value:
 	ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
 	if (FilterDriverContext != (NDIS_HANDLE)FilterDriverObject)
 	{
+		IF_LOUD(DbgPrint("NPF_RegisterOptions: driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);)
 		return NDIS_STATUS_INVALID_PARAMETER;
 	}
 
