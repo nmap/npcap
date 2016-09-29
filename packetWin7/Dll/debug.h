@@ -199,8 +199,8 @@ static VOID OutputDebugStringVW(LPCWSTR Format, ...)
 #define TRACE_PRINT_DLLMAIN(_x)			//we cannot use the _DEBUG_TO_FILE stuff from DllMain!!
 #endif
 
-#define TRACE_ENTER(_x)					OutputDebugStringVA ("--> " _x "\n")
-#define TRACE_EXIT(_x)					OutputDebugStringVA ("<-- " _x "\n")
+#define TRACE_ENTER()					OutputDebugStringVA ("--> " __FUNCTION__ "\n")
+#define TRACE_EXIT()					OutputDebugStringVA ("<-- " __FUNCTION__ "\n")
 #define TRACE_PRINT(_x)					OutputDebugStringVA ("    " _x "\n")
 #define TRACE_PRINT1(_x, _y)			OutputDebugStringVA("    " _x "\n", _y)   		
 #define TRACE_PRINT2(_x, _p1, _p2)		OutputDebugStringVA("    " _x "\n", _p1, _p2)   		

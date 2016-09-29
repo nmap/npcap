@@ -230,7 +230,7 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR l
 
 DWORD InstallDriver()
 {
-	TRACE_ENTER("InstallDriver");
+	TRACE_ENTER();
 
 	DWORD nResult;
 	TCHAR szFileFullPath[_MAX_PATH];
@@ -253,17 +253,17 @@ DWORD InstallDriver()
 	if (hr != S_OK)
 	{
 		ErrMsg(hr, L"InstallSpecifiedComponent\n");
-		TRACE_EXIT("InstallDriver");
+		TRACE_EXIT();
 		return 0;
 	}
 
-	TRACE_EXIT("InstallDriver");
+	TRACE_EXIT();
 	return 1;
 }
 
 DWORD UninstallDriver()
 {
-	TRACE_ENTER("UninstallDriver");
+	TRACE_ENTER();
 
 	INetCfg* pnc;
 	LPTSTR lpszApp;
@@ -312,7 +312,7 @@ DWORD UninstallDriver()
 		}
 	}
 
-	TRACE_EXIT("UninstallDriver");
+	TRACE_EXIT();
 	return 0;
 }
 
