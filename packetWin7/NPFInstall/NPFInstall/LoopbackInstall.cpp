@@ -17,6 +17,8 @@ Abstract:
 #include "LoopbackRecord.h"
 #include "LoopbackRename2.h"
 
+#include "debug.h"
+
 #include <shlobj.h>
 
 #define BUF_SIZE 255
@@ -1294,34 +1296,52 @@ Return Value:
 
 BOOL GetLoopbackINFFilePath(TCHAR strLoopbackInfPath[])
 {
+	TRACE_ENTER();
+
 	TCHAR tmp[MAX_PATH];
 	if (!SHGetSpecialFolderPath(NULL, tmp, CSIDL_WINDOWS, FALSE))
 	{
+		TRACE_PRINT("SHGetSpecialFolderPath: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 	_stprintf_s(strLoopbackInfPath, MAX_PATH + 30, _T("%s\\inf\\netloop.inf"), tmp);
+
+	TRACE_PRINT1("SHGetSpecialFolderPath: succeed, strLoopbackInfPath = %ws.", strLoopbackInfPath);
+	TRACE_EXIT();
 	return TRUE;
 }
 
 BOOL GetConfigFilePath(char strConfigPath[])
 {
+	TRACE_ENTER();
+
 	char tmp[MAX_PATH];
 	char drive[_MAX_DRIVE];
 	char dir[_MAX_DIR];
 	if (!GetModuleFileNameA(NULL, tmp, MAX_PATH))
 	{
+		TRACE_PRINT("GetModuleFileNameA: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 	_splitpath_s(tmp, drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0);
 	sprintf_s(strConfigPath, MAX_PATH + 30, "%s%sloopback.ini", drive, dir);
+
+	TRACE_PRINT1("GetModuleFileNameA: succeed, strConfigPath = %ws.", strConfigPath);
+	TRACE_EXIT();
 	return TRUE;
 }
 
 BOOL InstallLoopbackDeviceInternal()
 {
+	TRACE_ENTER();
+
 	TCHAR strLoopbackInfPath[MAX_PATH + 30];
 	if (!GetLoopbackINFFilePath(strLoopbackInfPath))
 	{
+		TRACE_PRINT("GetLoopbackINFFilePath: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -1329,16 +1349,21 @@ BOOL InstallLoopbackDeviceInternal()
 	TCHAR *strArgVs[2] = {strLoopbackInfPath, _T("*msloop")}; // Inf File: netloop.inf, Hardware ID: *msloop
 	if (cmdInstall(_T("devcon.exe"), NULL, 0, 2, strArgVs) == EXIT_OK)
 	{
+		TRACE_EXIT();
 		return TRUE;
 	}
 	else
 	{
+		TRACE_PRINT("cmdInstall: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 }
 
 BOOL RemoveLoopbackDeviceInternal(int iDevID)
 {
+	TRACE_ENTER();
+
 	TCHAR strDevID[BUF_SIZE];
 	_stprintf_s(strDevID, BUF_SIZE, _T("@ROOT\\NET\\%04d"), iDevID);
 
@@ -1346,37 +1371,52 @@ BOOL RemoveLoopbackDeviceInternal(int iDevID)
 	TCHAR *strArgVs[1] = {strDevID}; // Device ID: @ROOT\NET\000X
 	if (cmdRemove(_T("devcon.exe"), NULL, 0, 1, strArgVs) == EXIT_OK)
 	{
+		TRACE_EXIT();
 		return TRUE;
 	}
 	else
 	{
+		TRACE_PRINT("cmdRemove: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 }
 
 BOOL SaveDevIDToFile(int iDevID)
 {
+	TRACE_ENTER();
+
 	char strLoopbackIDFilePath[MAX_PATH + 30];
 	if (!GetConfigFilePath(strLoopbackIDFilePath))
 	{
+		TRACE_PRINT("GetConfigFilePath: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
 	FILE *fp;
 	if (fopen_s(&fp, strLoopbackIDFilePath, "w") != 0)
 	{
+		TRACE_PRINT("fopen_s: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 	fprintf(fp, "%d", iDevID);
 	fclose(fp);
+
+	TRACE_EXIT();
 	return TRUE;
 }
 
 int LoadDevIDFromFile()
 {
+	TRACE_ENTER();
+
 	char strLoopbackIDFilePath[MAX_PATH + 30];
 	if (!GetConfigFilePath(strLoopbackIDFilePath))
 	{
+		TRACE_PRINT("GetConfigFilePath: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -1384,15 +1424,21 @@ int LoadDevIDFromFile()
 	int iDevID;
 	if (fopen_s(&fp, strLoopbackIDFilePath, "r") != 0)
 	{
+		TRACE_PRINT("fopen_s: error.");
+		TRACE_EXIT();
 		return -1;
 	}
 	fscanf_s(fp, "%d", &iDevID);
 	fclose(fp);
+
+	TRACE_EXIT();
 	return iDevID;
 }
 
 BOOL InstallLoopbackAdapter()
 {
+	TRACE_ENTER();
+
 	BOOL isWin10 = IsWindowsWin10();
 
 	if (isWin10)
@@ -1402,12 +1448,16 @@ BOOL InstallLoopbackAdapter()
 
 	if (!InstallLoopbackDeviceInternal())
 	{
+		TRACE_PRINT("InstallLoopbackDeviceInternal: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
 	int iNpcapAdapterID = g_DevInstanceID;
 	if (iNpcapAdapterID == -1)
 	{
+		TRACE_PRINT("iNpcapAdapterID == -1: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -1417,34 +1467,49 @@ BOOL InstallLoopbackAdapter()
 		{
 			if (!DoRenameLoopbackNetwork2())
 			{
+				TRACE_PRINT("DoRenameLoopbackNetwork2: error.");
+				TRACE_EXIT();
 				return FALSE;
 			}
 		}
 		else
 		{
+			TRACE_PRINT("RecordLoopbackDevice: error.");
+			TRACE_EXIT();
 			return FALSE;
 		}
 	}
 
 	if (!SaveDevIDToFile(iNpcapAdapterID))
 	{
+		TRACE_PRINT("SaveDevIDToFile: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
+
+	TRACE_EXIT();
 	return TRUE;
 }
 
 BOOL UninstallLoopbackAdapter()
 {
+	TRACE_ENTER();
+
 	int iNpcapAdapterID = LoadDevIDFromFile();
 	if (iNpcapAdapterID == -1)
 	{
+		TRACE_PRINT("iNpcapAdapterID == -1: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
 	if (!RemoveLoopbackDeviceInternal(iNpcapAdapterID))
 	{
+		TRACE_PRINT("RemoveLoopbackDeviceInternal: error.");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
+	TRACE_EXIT();
 	return TRUE;
 }

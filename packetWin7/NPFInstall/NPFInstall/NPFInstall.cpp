@@ -57,6 +57,8 @@ _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPL
 
 BOOL PacketIsServiceStopPending()
 {
+	TRACE_ENTER();
+
 	BOOL bResult = FALSE;
 	SERVICE_STATUS_PROCESS ssp;
 	DWORD dwStartTime = GetTickCount();
@@ -73,7 +75,8 @@ BOOL PacketIsServiceStopPending()
 
 	if (NULL == schSCManager)
 	{
-		printf("OpenSCManager failed (%d)\n", GetLastError());
+		TRACE_PRINT1("OpenSCManager failed (0x%08x)", GetLastError());
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -88,8 +91,9 @@ BOOL PacketIsServiceStopPending()
 
 	if (schService == NULL)
 	{
-		printf("OpenService failed (%d)\n", GetLastError());
+		TRACE_PRINT1("OpenService failed (0x%08x)", GetLastError());
 		CloseServiceHandle(schSCManager);
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -102,13 +106,13 @@ BOOL PacketIsServiceStopPending()
 		sizeof(SERVICE_STATUS_PROCESS),
 		&dwBytesNeeded ) )
 	{
-		printf("QueryServiceStatusEx failed (%d)\n", GetLastError());
+		TRACE_PRINT1("QueryServiceStatusEx failed (0x%08x)", GetLastError());
 		goto stop_cleanup;
 	}
 
 	if ( ssp.dwCurrentState == SERVICE_STOPPED )
 	{
-		printf("Service is already stopped.\n");
+		TRACE_PRINT("Service is already stopped.");
 		goto stop_cleanup;
 	}
 
@@ -120,34 +124,42 @@ BOOL PacketIsServiceStopPending()
 stop_cleanup:
 	CloseServiceHandle(schService);
 	CloseServiceHandle(schSCManager);
+	TRACE_EXIT();
 	return bResult;
 }
 
 BOOL PacketInstallDriver60()
 {
+	TRACE_ENTER();
 	BOOL result = FALSE;
 
 	result = (BOOL) InstallDriver();
 
+	TRACE_EXIT();
 	return result;
 }
 
 BOOL PacketStopDriver60()
 {
+	TRACE_ENTER();
 	BOOL result;
 
 	result = (BOOL) UninstallDriver();
 
+	TRACE_EXIT();
 	return result;
 }
 
 BOOL PacketInstallDriver40()
 {
+	TRACE_ENTER();
+
 	PacketStopDriver40();
 
 	SC_HANDLE schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if (schSCManager == NULL)
 	{
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -155,6 +167,7 @@ BOOL PacketInstallDriver40()
 	DWORD nResult = GetServiceSysFilePath(szFileFullPath, MAX_PATH);
 	if (nResult == 0)
 	{
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -167,27 +180,32 @@ BOOL PacketInstallDriver40()
 		NULL, NULL, NULL, NULL, NULL);
 	if (schService == NULL)
 	{
-		int aaa = GetLastError();
+		TRACE_EXIT();
 		return FALSE;
 	}
 
 	CloseServiceHandle(schSCManager);
 	CloseServiceHandle(schService);
 
+	TRACE_EXIT();
 	return TRUE;
 }
 
 BOOL PacketStopDriver40()
 {
+	TRACE_ENTER();
+
 	SC_HANDLE schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if (schSCManager == NULL)
 	{
+		TRACE_EXIT();
 		return FALSE;
 	}
 
 	SC_HANDLE schService = OpenService(schSCManager, _T(NPF_DRIVER_NAME_SMALL), SERVICE_ALL_ACCESS | DELETE);
 	if (schService == NULL)
 	{
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -195,6 +213,8 @@ BOOL PacketStopDriver40()
 
 	CloseServiceHandle(schSCManager);
 	CloseServiceHandle(schService); 
+
+	TRACE_EXIT();
 	return TRUE;
 }
 
@@ -202,8 +222,11 @@ BOOL PacketRenableBindings()
 {
 	BOOL result;
 
+	TRACE_ENTER();
+
 	result = (BOOL) RenableBindings();
 
+	TRACE_EXIT();
 	return result;
 }
 

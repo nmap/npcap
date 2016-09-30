@@ -24,16 +24,20 @@ BOOL isFileExist(TCHAR szFileFullPath[])
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hFind;
 
+	TRACE_ENTER();
+
 	hFind = FindFirstFile(szFileFullPath, &FindFileData);
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
-		//printf("Invalid File Handle. Get Last Error reports %d ", GetLastError());
+		TRACE_PRINT2("FindFirstFile: error, szFileFullPath = %ws, errCode = 0x%08x.", szFileFullPath, GetLastError());
+		TRACE_EXIT();
 		return FALSE;
 	}
 	else
 	{
-		//printf("The first file found is %s ", FindFileData.cFileName);
+		TRACE_PRINT1("FindFirstFile: succeed, szFileFullPath = %ws.", szFileFullPath);
 		FindClose(hFind);
+		TRACE_EXIT();
 		return TRUE;
 	}
 }
@@ -42,6 +46,8 @@ BOOL InstallWFPCallout()
 {
 	DWORD nResult;
 
+	TRACE_ENTER();
+
 	// Get Path to Service INF File
 	// ----------------------------
 	// The INF file is assumed to be in the same folder as this application...
@@ -50,12 +56,14 @@ BOOL InstallWFPCallout()
 	if (nResult == 0)
 	{
 		TRACE_PRINT("Unable to get WFP callout INF file path");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
 	if (!isFileExist(szFileFullPath))
 	{
 		TRACE_PRINT("WFP callout INF file doesn't exist");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -63,12 +71,15 @@ BOOL InstallWFPCallout()
 	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("DefaultInstall 132 %s"), szFileFullPath);
 	InstallHinfSection(NULL, NULL, szCmd, 0);
 
+	TRACE_EXIT();
 	return TRUE;
 }
 
 BOOL UninstallWFPCallout()
 {
 	DWORD nResult;
+
+	TRACE_ENTER();
 
 	// Get Path to Service INF File
 	// ----------------------------
@@ -78,12 +89,14 @@ BOOL UninstallWFPCallout()
 	if (nResult == 0)
 	{
 		TRACE_PRINT("Unable to get WFP callout INF file path");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
 	if (!isFileExist(szFileFullPath))
 	{
 		TRACE_PRINT("WFP callout INF file doesn't exist");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -91,5 +104,6 @@ BOOL UninstallWFPCallout()
 	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("DefaultUninstall 132 %s"), szFileFullPath);
 	InstallHinfSection(NULL, NULL, szCmd, 0);
 
+	TRACE_EXIT();
 	return TRUE;
 }

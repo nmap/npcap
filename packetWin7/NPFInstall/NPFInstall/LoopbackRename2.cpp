@@ -15,6 +15,8 @@ This code is based on the Windows built-in netsh.exe tool.
 
 #include "LoopbackRename2.h"
 
+#include "debug.h"
+
 // Depress the GetVersionEx() call warning.
 #pragma warning (disable: 4996)
 
@@ -27,8 +29,12 @@ vector<wstring> g_InterfaceNameList2;
 
 wstring getNpcapLoopbackAdapterName()
 {
+	TRACE_ENTER();
+
 	if (g_InterfaceNameList1.size() != g_InterfaceNameList2.size() - 1)
 	{
+		TRACE_PRINT1("getNpcapLoopbackAdapterName: error, res = %ws.", L"NULL");
+		TRACE_EXIT();
 		return L"";
 	}
 
@@ -45,10 +51,14 @@ wstring getNpcapLoopbackAdapterName()
 		}
 		if (found == 0)
 		{
+			TRACE_PRINT1("getNpcapLoopbackAdapterName: error, res = %ws.", g_InterfaceNameList2[i].c_str());
+			TRACE_EXIT();
 			return g_InterfaceNameList2[i];
 		}
 	}
 
+	TRACE_PRINT1("getNpcapLoopbackAdapterName: error, res = %ws.", L"NULL");
+	TRACE_EXIT();
 	return L"";
 }
 
@@ -80,12 +90,17 @@ wstring ANSIToUnicode(const string& str)
 wstring executeCommand(wchar_t* cmd)
 {
 	char buffer[128];
-	string tmp = "";
 	wstring result;
+
+	TRACE_ENTER();
+
+	string tmp = "";
 
 	FILE* pipe = _wpopen(cmd, L"r");
 	if (!pipe)
 	{
+		TRACE_PRINT("_wpopen: error");
+		TRACE_EXIT();
 		return L"";
 	}
 
@@ -98,6 +113,7 @@ wstring executeCommand(wchar_t* cmd)
 
 	result = ANSIToUnicode(tmp);
 
+	TRACE_EXIT();
 	return result;
 }
 
@@ -115,6 +131,8 @@ wstring executeCommand(wchar_t* cmd)
 //
 vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
 {
+	TRACE_ENTER();
+
 	vector<wstring> nResults;
 	size_t iLineStart;
 	size_t iLineEnd = 0;
@@ -129,6 +147,7 @@ vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
 	iLineEnd = strOutput.find(L'\n', iLineEnd);
 	if (iLineEnd == wstring::npos)
 	{
+		TRACE_EXIT();
 		return nResults;
 	}
 	iLineEnd ++;
@@ -136,6 +155,7 @@ vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
 	iLineEnd = strOutput.find(L'\n', iLineEnd);
 	if (iLineEnd == wstring::npos)
 	{
+		TRACE_EXIT();
 		return nResults;
 	}
 
@@ -148,6 +168,7 @@ vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
 		iStringStart = strOutput.rfind(L"    ", iLineEnd);
 		if (iStringStart < iLineStart)
 		{
+			TRACE_EXIT();
 			return nResults;
 		}
 		else
@@ -162,6 +183,7 @@ vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
 		iLineStart = iLineEnd;
 	}
 
+	TRACE_EXIT();
 	return nResults;
 }
 
@@ -198,57 +220,88 @@ vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
 
 void snapshotInterfaceListBeforeInstall()
 {
+	TRACE_ENTER();
+
 	wstring cmd = executeCommand(L"netsh.exe interface show interface");
 	g_InterfaceNameList1 = getInterfaceNamesFromNetshOutput(cmd);
+
+	TRACE_EXIT();
 }
 
 void snapshotInterfaceListAfterInstall()
 {
+	TRACE_ENTER();
+
 	wstring cmd = executeCommand(L"netsh.exe interface show interface");
 	g_InterfaceNameList2 = getInterfaceNamesFromNetshOutput(cmd);
+
+	TRACE_EXIT();
 }
 
 void PrepareRenameLoopbackNetwork2()
 {
+	TRACE_ENTER();
+
 	snapshotInterfaceListBeforeInstall();
+
+	TRACE_EXIT();
 }
 
 void changeLoopbackInterfaceMTU(wstring strInterfaceName)
 {
+	TRACE_ENTER();
+
 	wchar_t renameCmd[MAX_PATH];
 	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface ipv4 set subinterface \"%s\" mtu=%d store=persistent", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
 	executeCommand(renameCmd);
 	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface ipv6 set subinterface \"%s\" mtu=%d store=persistent", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
 	executeCommand(renameCmd);
+
+	TRACE_EXIT();
 }
 
 void renameLoopbackInterface(wstring strInterfaceName)
 {
+	TRACE_ENTER();
+
 	wchar_t renameCmd[MAX_PATH];
 	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface set interface name=\"%s\" newname=\"%s\"", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
 	executeCommand(renameCmd);
+
+	TRACE_EXIT();
 }
 
 BOOL DoRenameLoopbackNetwork2()
 {
+	TRACE_ENTER();
+
 	snapshotInterfaceListAfterInstall();
 	wstring strOriginalInterfaceName = getNpcapLoopbackAdapterName();
 	if (strOriginalInterfaceName.compare(L"") == 0)
 	{
+		TRACE_PRINT1("getNpcapLoopbackAdapterName: error, strOriginalInterfaceName = %ws.", L"NULL");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
 	changeLoopbackInterfaceMTU(strOriginalInterfaceName);
 	renameLoopbackInterface(strOriginalInterfaceName);
+
+	TRACE_EXIT();
 	return TRUE;
 }
 
 BOOL IsWindowsWin10()
 {
+	TRACE_ENTER();
+
 	OSVERSIONINFO osvi;
 	ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&osvi);
+
+	TRACE_PRINT1("getNpcapLoopbackAdapterName: osvi.dwMajorVersion = %d, expected value = 10.", osvi.dwMajorVersion);
+	TRACE_EXIT();
 	return osvi.dwMajorVersion >= 10;
 
 // 	wstring cmd = executeCommand(L"ver");

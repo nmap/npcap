@@ -345,22 +345,24 @@ BOOL RenableBindings()
 	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	if (FAILED(hr))
 	{
-		wprintf(L"CoInitializeEx 0x%08x\n", hr);
+		TRACE_PRINT1("CoInitializeEx: 0x%08x\n", hr);
 		TRACE_EXIT();
 		return 1;
 	}
 
-	BOOL ok = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME);
-	wprintf(ok ? L"Succeeded.\n" : L"Failed.\n");
+	BOOL bSucceed = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME);
+	if (!bSucceed)
+		TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 
 	if (bWiFiService)
 	{
-		ok = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, APP_NAME);
-		wprintf(ok ? L"Succeeded.\n" : L"Failed.\n");
+		bSucceed = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, APP_NAME);
+		if (!bSucceed)
+			TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
 	}
 
 	CoUninitialize();
 
 	TRACE_EXIT();
-	return ok;
+	return bSucceed;
 }
