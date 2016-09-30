@@ -110,6 +110,8 @@ DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
 	TCHAR szDrive[_MAX_DRIVE];
 	TCHAR szDir[_MAX_DIR];
 
+	TRACE_ENTER();
+
 	nResult = GetModuleFileName(NULL, lpFilename, nSize);
 
 	if (nResult == 0)
@@ -120,6 +122,9 @@ DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
 	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
+	TRACE_PRINT1("lpFilename = %ws", lpFilename);
+
+	TRACE_EXIT();
 
 	return (DWORD)_tcslen(lpFilename);
 }
@@ -131,6 +136,8 @@ DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize)
 	TCHAR szDrive[_MAX_DRIVE];
 	TCHAR szDir[_MAX_DIR];
 
+	TRACE_ENTER();
+
 	nResult = GetModuleFileName(NULL, lpFilename, nSize);
 
 	if (nResult == 0)
@@ -141,6 +148,9 @@ DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize)
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
 	_tmakepath(lpFilename, szDrive, szDir, WFP_CALLOUT_INF_FILE, _T(".inf"));
+	TRACE_PRINT1("lpFilename = %ws", lpFilename);
+
+	TRACE_EXIT();
 
 	return (DWORD)_tcslen(lpFilename);
 }
@@ -152,6 +162,8 @@ DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
 	TCHAR szDrive[_MAX_DRIVE];
 	TCHAR szDir[_MAX_DIR];
 
+	TRACE_ENTER();
+
 	nResult = GetModuleFileName(NULL, lpFilename, nSize);
 
 	if (nResult == 0)
@@ -162,6 +174,9 @@ DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
 	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".sys"));
+	TRACE_PRINT1("lpFilename = %ws", lpFilename);
+
+	TRACE_EXIT();
 
 	return (DWORD)_tcslen(lpFilename);
 }
@@ -187,6 +202,8 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR l
 	INetCfg* pnc;
 	LPTSTR lpszApp;
 	HRESULT hr;
+
+	TRACE_ENTER();
 
 	hr = HrGetINetCfg(TRUE, lpszAppName, &pnc, &lpszApp);
 
@@ -225,16 +242,17 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR l
 		}
 	}
 
+	TRACE_EXIT();
 	return hr;
 }
 
 DWORD InstallDriver()
 {
-	TRACE_ENTER();
-
 	DWORD nResult;
 	TCHAR szFileFullPath[_MAX_PATH];
 	HRESULT hr;
+
+	TRACE_ENTER();
 
 	// Get Path to Service INF File
 	// ----------------------------
@@ -263,11 +281,11 @@ DWORD InstallDriver()
 
 DWORD UninstallDriver()
 {
-	TRACE_ENTER();
-
 	INetCfg* pnc;
 	LPTSTR lpszApp;
 	HRESULT hr;
+
+	TRACE_ENTER();
 
 	hr = HrGetINetCfg(TRUE, APP_NAME, &pnc, &lpszApp);
 
@@ -320,13 +338,15 @@ BOOL RenableBindings()
 {
 	CComPtr<INetCfg> netcfg;
 	CComPtr<INetCfgLock> lock;
-
 	HRESULT hr;
+
+	TRACE_ENTER();
 
 	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	if (FAILED(hr))
 	{
 		wprintf(L"CoInitializeEx 0x%08x\n", hr);
+		TRACE_EXIT();
 		return 1;
 	}
 
@@ -341,5 +361,6 @@ BOOL RenableBindings()
 
 	CoUninitialize();
 
+	TRACE_EXIT();
 	return ok;
 }

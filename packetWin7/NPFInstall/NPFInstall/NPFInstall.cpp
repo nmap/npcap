@@ -12,6 +12,8 @@
 #include "WlanRecord.h"
 #include "RegUtil.h"
 
+#include "debug.h"
+
 extern BOOLEAN bWiFiService;
 
 BOOL PacketInstallDriver60();
@@ -207,8 +209,11 @@ BOOL PacketRenableBindings()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	TRACE_ENTER();
+
 	BOOL bSuccess = FALSE;
 	BOOL bNoWindow = FALSE;
+	int nStatus = 0;
 
 	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.org)"));
 	vector<tstring> strArgs;
@@ -234,12 +239,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	if (strArgs.size() == 1)
 	{
 		_tprintf(STR_COMMAND_USAGE);
-		return -1;
+		nStatus = -1;
+		goto _EXIT;
+
 	}
 	else if (strArgs.size() >= 3)
 	{
 		_tprintf(STR_INVALID_PARAMETER);
-		return -1;
+		nStatus = -1;
+		goto _EXIT;
 	}
 	else //strArgs.size() == 2
 	{
@@ -250,12 +258,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap LWF driver has been successfully installed!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap LWF driver has failed to be installed.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		if (strArgs[1] == _T("-i2"))
@@ -265,12 +275,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has been successfully installed!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be installed.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-u"))
@@ -280,12 +292,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap LWF driver has been successfully uninstalled!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap LWF driver has failed to be uninstalled.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-u2"))
@@ -295,12 +309,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has been successfully uninstalled!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be uninstalled.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-r"))
@@ -310,12 +326,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("The bindings of Npcap driver have been successfully restarted!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("The bindings of Npcap driver have failed to be restarted.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-r2"))
@@ -325,12 +343,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have been successfully restarted!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have failed to be restarted.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-ii"))
@@ -339,12 +359,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("NPF legacy driver has been successfully installed!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("NPF legacy driver has failed to be installed.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-uu"))
@@ -353,12 +375,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("NPF legacy driver has been successfully uninstalled!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("NPF legacy driver has failed to be uninstalled.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-il"))
@@ -367,12 +391,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap Loopback adapter has been successfully installed!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap Loopback adapter has failed to be installed.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-ul"))
@@ -381,12 +407,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap Loopback adapter has been successfully uninstalled!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap Loopback adapter has failed to be uninstalled.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-iw"))
@@ -395,12 +423,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap WFP callout driver has been successfully installed!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap WFP callout driver has failed to be installed.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-uw"))
@@ -409,12 +439,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap WFP callout driver has been successfully uninstalled!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-d"))
@@ -423,12 +455,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap service is pending to stop!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap service is not pending to stop.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-c"))
@@ -437,12 +471,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap driver cache in Driver Store has been successfully cleaned up!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap driver cache in Driver Store has failed to be cleaned up.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-wlan_check"))
@@ -452,12 +488,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (nstrAdapterGuids.size() != 0)
 			{
 				_tprintf(_T("Wlan adapters: %s\n"), printArray(nstrAdapterGuids).c_str());
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Wlan adapters: NULL\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-wlan_write_reg"))
@@ -466,12 +504,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Wlan adapters have been successfully written to registry!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Wlan adapters have failed to be written to registry.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-add_path"))
@@ -480,12 +520,14 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap folder has been successfully added to PATH!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap folder has failed to be added to PATH.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-remove_path"))
@@ -494,25 +536,31 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap folder has been successfully removed from PATH!\n"));
-				return 0;
+				nStatus = 0;
+				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("Npcap folder has failed to be removed from PATH.\n"));
-				return -1;
+				nStatus = -1;
+				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-h"))
 		{
 			_tprintf(STR_COMMAND_USAGE);
-			return -1;
+			nStatus = -1;
+			goto _EXIT;
 		}
 		else
 		{
 			_tprintf(STR_INVALID_PARAMETER);
-			return -1;
+			nStatus = -1;
+			goto _EXIT;
 		}
 	}
 
-	return 0;
+_EXIT:
+	TRACE_EXIT();
+	return nStatus;
 }
