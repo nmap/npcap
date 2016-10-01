@@ -32,7 +32,7 @@ This code is modified based on example: https://msdn.microsoft.com/en-us/library
 #define			NPCAP_LOOPBACK_INTERFACE_NAME			NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
 #define			BUF_SIZE								255
 
-BOOL DoTheWork(INetSharingManager *pNSM, wchar_t strDeviceName[])
+BOOL DoTheWork(INetSharingManager *pNSM, TCHAR strDeviceName[])
 {
 	TRACE_ENTER();
 
@@ -74,14 +74,14 @@ BOOL DoTheWork(INetSharingManager *pNSM, wchar_t strDeviceName[])
 						NETCON_PROPERTIES *pNETCON_PROPERTIES;
 						pNC->GetProperties(&pNETCON_PROPERTIES);
 
-						wchar_t currentGUID[BUF_SIZE];
+						TCHAR currentGUID[BUF_SIZE];
 						GUID guid = pNETCON_PROPERTIES->guidId;
-						wsprintf(currentGUID, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}", 
+						_stprintf_s(currentGUID, BUF_SIZE, _T("{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}"),
 							guid.Data1, guid.Data2, guid.Data3, 
 							guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
 							guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
 
-						if (wcscmp(currentGUID, strDeviceName) == 0)
+						if (_tcscmp(currentGUID, strDeviceName) == 0)
 						{
 							TRACE_PRINT2("INetConnection::Rename: executing, currentGUID = strDeviceName = %ws, pszwNewName = %ws.", currentGUID, NPCAP_LOOPBACK_INTERFACE_NAME);
 
@@ -126,7 +126,7 @@ BOOL DoTheWork(INetSharingManager *pNSM, wchar_t strDeviceName[])
 	}
 }
 
-BOOL RenameLoopbackNetwork(wchar_t strDeviceName[])
+BOOL RenameLoopbackNetwork(TCHAR strDeviceName[])
 {
 	TRACE_ENTER();
 

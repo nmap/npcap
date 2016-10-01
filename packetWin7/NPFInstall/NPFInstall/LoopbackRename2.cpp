@@ -201,25 +201,25 @@ vector<tstring> getInterfaceNamesFromNetshOutput(tstring strOutput)
 // Microsoft Windows [Version 10.0.10102]
 //
 // The "standard" GetWindowsVersionEx() way doesn't work out on Win10, because it returns 6.3 (Win8) on Win10.
-// wstring getMajorVersionNumberFromVerOutput(wstring strOutput)
+// tstring getMajorVersionNumberFromVerOutput(tstring strOutput)
 // {
 // 	size_t iStringStart;
 // 	size_t iStringEnd;
 //
-// 	iStringStart = strOutput.find(L"Version");
-// 	if (iStringStart == wstring::npos)
+// 	iStringStart = strOutput.find(_T("Version"));
+// 	if (iStringStart == tstring::npos)
 // 	{
-// 		return L"";
+// 		return _T("");
 // 	}
 // 	iStringStart += 8;
 //
-// 	iStringEnd = strOutput.find(L'.', iStringStart);
-// 	if (iStringEnd == wstring::npos)
+// 	iStringEnd = strOutput.find(_T('.'), iStringStart);
+// 	if (iStringEnd == tstring::npos)
 // 	{
-// 		return L"";
+// 		return _T("");
 // 	}
 //
-// 	wstring strNumber = strOutput.substr(iStringStart, iStringEnd - iStringStart);
+// 	tstring strNumber = strOutput.substr(iStringStart, iStringEnd - iStringStart);
 // 	return strNumber;
 // }
 
@@ -310,9 +310,9 @@ BOOL IsWindowsWin10()
 	TRACE_EXIT();
 	return osvi.dwMajorVersion >= 10;
 
-// 	wstring cmd = executeCommand(L"ver");
-// 	wstring strMajorVersionNumber = getMajorVersionNumberFromVerOutput(cmd);
-// 	if (strMajorVersionNumber.compare(L"10") == 0)
+// 	tstring cmd = executeCommand(_T("ver"));
+// 	tstring strMajorVersionNumber = getMajorVersionNumberFromVerOutput(cmd);
+// 	if (strMajorVersionNumber.compare(_T("10")) == 0)
 // 	{
 // 		return TRUE;
 // 	}

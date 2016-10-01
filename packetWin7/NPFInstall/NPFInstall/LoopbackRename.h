@@ -16,4 +16,6 @@ This code is modified based on example: https://msdn.microsoft.com/en-us/library
 
 #include "..\..\Common\WpcapNames.h"
 
-BOOL RenameLoopbackNetwork(wchar_t strDeviceName[]);
+#include <tchar.h>
+
+BOOL RenameLoopbackNetwork(TCHAR strDeviceName[]);

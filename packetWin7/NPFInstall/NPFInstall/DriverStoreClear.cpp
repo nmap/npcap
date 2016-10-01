@@ -41,26 +41,26 @@ This is used to clear the cache of Npcap driver in the Driver Store.
 // Driver date and version : 04 / 13 / 2016 12.3.27.285
 // Signer name : Insecure.Com LLC
 //
-vector<wstring> getInfNamesFromPnpUtilOutput(wstring strOutput)
+vector<tstring> getInfNamesFromPnpUtilOutput(tstring strOutput)
 {
 	TRACE_ENTER();
 
-	vector<wstring> nResults;
+	vector<tstring> nResults;
 
 	size_t iStart = -1;
 	size_t iEnd;
 	size_t iTime = 0;
-	wstring strInfFileName;
+	tstring strInfFileName;
 
-	while ((iStart = strOutput.find(L':', iStart + 1)) != wstring::npos)
+	while ((iStart = strOutput.find(_T(':'), iStart + 1)) != tstring::npos)
 	{
 		iStart ++;
-		while (strOutput[iStart] == L' ' || strOutput[iStart] == L'\t')
+		while (strOutput[iStart] == _T(' ') || strOutput[iStart] == _T('\t'))
 		{
 			iStart ++;
 		}
-		iEnd = strOutput.find(L'\n', iStart + 1);
-		wstring strText = strOutput.substr(iStart, iEnd - iStart);
+		iEnd = strOutput.find(_T('\n'), iStart + 1);
+		tstring strText = strOutput.substr(iStart, iEnd - iStart);
 
 		if (iTime == 0)
 		{
@@ -68,7 +68,7 @@ vector<wstring> getInfNamesFromPnpUtilOutput(wstring strOutput)
 		}
 		else if (iTime == 1)
 		{
-			if (strText == L"Nmap Project")
+			if (strText == _T("Nmap Project"))
 			{
 				TRACE_PRINT1("find: executing, strInfFileName = %ws.", strInfFileName.c_str());
 				nResults.push_back(strInfFileName);
@@ -90,14 +90,14 @@ BOOLEAN ClearDriverStore()
 {
 	TRACE_ENTER();
 
-	wstring cmd = executeCommand(L"pnputil.exe -e");
-	vector<wstring> nInfFileNameList = getInfNamesFromPnpUtilOutput(cmd);
+	tstring cmd = executeCommand(_T("pnputil.exe -e"));
+	vector<tstring> nInfFileNameList = getInfNamesFromPnpUtilOutput(cmd);
 
-	wchar_t renameCmd[MAX_PATH];
+	TCHAR renameCmd[MAX_PATH];
 	// "pnputil.exe -d oem1.inf"
 	for (size_t i = 0; i < nInfFileNameList.size(); i++)
 	{
-		swprintf_s(renameCmd, MAX_PATH, L"pnputil.exe -d %s", nInfFileNameList[i].c_str());
+		_stprintf_s(renameCmd, MAX_PATH, _T("pnputil.exe -d %s"), nInfFileNameList[i].c_str());
 		executeCommand(renameCmd);
 	}
 
