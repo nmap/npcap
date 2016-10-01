@@ -140,12 +140,12 @@ static BOOLEAN PacketGetLinkLayerFromRegistry(LPADAPTER AdapterObject, NetType *
 	PPACKET_OID_DATA  OidData;
 	PNDIS_LINK_SPEED LinkSpeed;
 
-	TRACE_ENTER("PacketGetLinkLayerFromRegistry");
+	TRACE_ENTER();
 
 	OidData=GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT,IoCtlBufferLength);
 	if (OidData == NULL) {
 		TRACE_PRINT("PacketGetLinkLayerFromRegistry failed");
-		TRACE_EXIT("PacketGetLinkLayerFromRegistry");
+		TRACE_EXIT();
 		return FALSE;
 	}
 	//get the link-layer type
@@ -173,7 +173,7 @@ static BOOLEAN PacketGetLinkLayerFromRegistry(LPADAPTER AdapterObject, NetType *
 		type->LinkType,
 		type->LinkSpeed);
 
-	TRACE_EXIT("PacketGetLinkLayerFromRegistry");
+	TRACE_EXIT();
 	return Status;
 }
 
@@ -218,13 +218,13 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 //	WCHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS];
 	WCHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
 	
-	TRACE_ENTER("PacketGetAddressesFromRegistry");
+	TRACE_ENTER();
 	
 #ifdef HAVE_IPHELPER_API
 	if (IsIPv4Enabled(AdapterNameA) == FALSE)
 	{
 		*ppItems = NULL;
-		TRACE_EXIT("PacketGetAddressesFromRegistry");
+		TRACE_EXIT();
 		return TRUE;
 	}
 #endif
@@ -536,7 +536,7 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 	}
 	
 	TRACE_PRINT("Successfully retrieved the addresses from the registry.");
-	TRACE_EXIT("PacketGetAddressesFromRegistry");
+	TRACE_EXIT();
 
 	*ppItems = pHead;
 
@@ -552,7 +552,7 @@ fail:
 	}
 
 	TRACE_PRINT("Failed retrieving the addresses from the registry.");
-	TRACE_EXIT("PacketGetAddressesFromRegistry");
+	TRACE_EXIT();
     return FALSE;
 }
 
@@ -567,13 +567,13 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 	BOOLEAN IPv4Enabled = FALSE;
 	CHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
 
-	TRACE_ENTER("IsIPv4Enabled");
+	TRACE_ENTER();
 
 	if(g_GetAdaptersAddressesPointer == NULL)	
 	{
 		TRACE_PRINT("GetAdaptersAddressesPointer not available on the system, simply returning success...");
 
-		TRACE_EXIT("IsIPv4Enabled");
+		TRACE_EXIT();
 		return TRUE;	// GetAdaptersAddresses() not present on this system,
 	}											// return immediately.
 
@@ -581,7 +581,7 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 	{
 		TRACE_PRINT("IsIPv4Enabled: GetAdaptersAddresses Failed while retrieving the needed buffer size");
 
-		TRACE_EXIT("IsIPv4Enabled");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -591,7 +591,7 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 	if (AdBuffer == NULL) 
 	{
 		TRACE_PRINT("IsIPv4Enabled: GlobalAlloc Failed");
-		TRACE_EXIT("IsIPv4Enabled");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -599,7 +599,7 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 	{
 		TRACE_PRINT("IsIPv4Enabled: GetAdaptersAddresses Failed while retrieving the addresses");
 		GlobalFreePtr(AdBuffer);
-		TRACE_EXIT("IsIPv4Enabled");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -632,7 +632,7 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 
 	GlobalFreePtr(AdBuffer);
 
-	TRACE_EXIT("IsIPv4Enabled");
+	TRACE_EXIT();
 	return IPv4Enabled;
 }
 
@@ -662,13 +662,13 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 //	CHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS];
 	CHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
 
-	TRACE_ENTER("PacketAddIP6Addresses");
+	TRACE_ENTER();
 
 	if(g_GetAdaptersAddressesPointer == NULL)	
 	{
 		TRACE_PRINT("GetAdaptersAddressesPointer not available on the system, simply returning success...");
 
-		TRACE_EXIT("PacketAddIP6Addresses");
+		TRACE_EXIT();
 		return TRUE;	// GetAdaptersAddresses() not present on this system,
 	}											// return immediately.
 
@@ -676,7 +676,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 	{
 		TRACE_PRINT("PacketAddIP6Addresses: GetAdaptersAddresses Failed while retrieving the needed buffer size");
 
-		TRACE_EXIT("PacketAddIP6Addresses");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -686,7 +686,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 	if (AdBuffer == NULL) 
 	{
 		TRACE_PRINT("PacketAddIP6Addresses: GlobalAlloc Failed");
-		TRACE_EXIT("PacketAddIP6Addresses");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -694,7 +694,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 	{
 		TRACE_PRINT("PacketGetIP6Addresses: GetAdaptersAddresses Failed while retrieving the addresses");
 		GlobalFreePtr(AdBuffer);
-		TRACE_EXIT("PacketAddIP6Addresses");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -737,7 +737,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 						{
 							GlobalFreePtr(AdBuffer);
 							TRACE_PRINT("failed to allocate memory for a new entry, failing");
-							TRACE_EXIT("PacketAddIP6Addresses");
+							TRACE_EXIT();
 							return FALSE;
 						}
 
@@ -769,7 +769,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 
 	GlobalFreePtr(AdBuffer);
 
-	TRACE_EXIT("PacketAddIP6Addresses");
+	TRACE_EXIT();
 	return TRUE;
 }
 #endif // HAVE_IPHELPER_API
@@ -785,14 +785,14 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 */
 BOOLEAN IsFireWire(TCHAR *AdapterDesc)
 {
-	TRACE_ENTER("IsFireWire");
+	TRACE_ENTER();
 	if(wcsstr(AdapterDesc, FIREWIRE_SUBSTR) != NULL)
 	{		
-		TRACE_EXIT("IsFireWire");
+		TRACE_EXIT();
 		return TRUE;
 	}
 
-	TRACE_EXIT("IsFireWire");
+	TRACE_EXIT();
 	return FALSE;
 }
 
@@ -819,7 +819,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 //	CHAR	npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS];
 	CHAR	npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
 
-	TRACE_ENTER("PacketAddAdapterIPH");
+	TRACE_ENTER();
 
 // Create the NPF device name from the original device name
 
@@ -893,7 +893,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 	if (TmpAdInfo == NULL) 
 	{
 		TRACE_PRINT("PacketAddAdapterIPH: GlobalAlloc Failed allocating memory for the AdInfo");
-		TRACE_EXIT("PacketAddAdapterIPH");
+		TRACE_EXIT();
 		return FALSE;
 	}
 	
@@ -985,7 +985,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 	
 SkipAd:
 
-	TRACE_EXIT("PacketAddAdapterIPH");
+	TRACE_EXIT();
 	return TRUE;
 }
 
@@ -1004,13 +1004,13 @@ static BOOLEAN PacketGetAdaptersIPH()
 	PIP_ADAPTER_INFO TmpAd;
 	ULONG OutBufLen=0;
 
-	TRACE_ENTER("PacketGetAdaptersIPH");
+	TRACE_ENTER();
 
 	// Find the size of the buffer filled by GetAdaptersInfo
 	if(GetAdaptersInfo(AdList, &OutBufLen) == ERROR_NOT_SUPPORTED)
 	{
 		TRACE_PRINT("IP Helper API not supported on this system!");
-		TRACE_EXIT("PacketGetAdaptersIPH");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -1021,7 +1021,7 @@ static BOOLEAN PacketGetAdaptersIPH()
 	if (AdList == NULL) 
 	{
 		TRACE_PRINT("PacketGetAdaptersIPH: GlobalAlloc Failed allocating the buffer for GetAdaptersInfo");
-		TRACE_EXIT("PacketGetAdaptersIPH");
+		TRACE_EXIT();
 		return FALSE;
 	}
 	
@@ -1039,7 +1039,7 @@ static BOOLEAN PacketGetAdaptersIPH()
 	
 	GlobalFreePtr(AdList);
 
-	TRACE_EXIT("PacketGetAdaptersIPH");
+	TRACE_EXIT();
 	return TRUE;
 }
 
@@ -1062,7 +1062,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	PADAPTER_INFO	TmpAdInfo;
 	PADAPTER_INFO TAdInfo;	
 	
-	TRACE_ENTER("PacketAddAdapterNPF");
+	TRACE_ENTER();
  	TRACE_PRINT1("Trying to add adapter %s", AdName);
 	
 	//
@@ -1072,7 +1072,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	if (strlen(AdName) + 1 > sizeof(TmpAdInfo->Name))
 	{
 		TRACE_PRINT("PacketAddAdapterNPF: adapter name is too long to be stored into ADAPTER_INFO::Name, simply skip it");
-		TRACE_EXIT("PacketAddAdapterNPF");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -1084,7 +1084,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		{
 			TRACE_PRINT("PacketAddAdapterNPF: Adapter already present in the list");
 			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT("PacketAddAdapterNPF");
+			TRACE_EXIT();
 			return TRUE;
 		}
 	}
@@ -1109,7 +1109,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 				TRACE_PRINT("PacketAddAdapterNPF: GlobalAlloc Failed allocating the buffer for the OID request to obtain the NIC description. Returning."); 				
 				PacketCloseAdapter(adapter);
 				ReleaseMutex(g_AdaptersInfoMutex);
-				TRACE_EXIT("PacketAddAdapterNPF");
+				TRACE_EXIT();
 				return FALSE;
 			}
 		}
@@ -1118,7 +1118,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 			TRACE_PRINT("NPF Adapter not available, do not add it to the global list");
 			// We are not able to open this adapter. Skip to the next one.
 			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT("PacketAddAdapterNPF");
+			TRACE_EXIT();
 			return FALSE;
 		}			
 	}
@@ -1142,7 +1142,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		}		
 		
 		ReleaseMutex(g_AdaptersInfoMutex);
-		TRACE_EXIT("PacketAddAdapterNPF");
+		TRACE_EXIT();
 		return FALSE;
 	}
 	
@@ -1190,7 +1190,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 			GlobalFreePtr(OidData);
 			GlobalFreePtr(TmpAdInfo);
 			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT("PacketAddAdapterNPF");
+			TRACE_EXIT();
 			return FALSE;
 		}
 		
@@ -1280,7 +1280,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	ReleaseMutex(g_AdaptersInfoMutex);
 
 	TRACE_PRINT("PacketAddAdapterNPF: Adapter successfully added to the list");
-	TRACE_EXIT("PacketAddAdapterNPF");
+	TRACE_EXIT();
 	return TRUE;
 }
 
@@ -1314,7 +1314,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 	CHAR		npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
 	CHAR		DeviceGuidName[256];
 
-	TRACE_ENTER("PacketGetAdaptersNPF");
+	TRACE_ENTER();
 	
 //  
 //	Old registry based WinPcap names
@@ -1463,7 +1463,7 @@ tcpip_linkage:
 		if (TcpBindingsMultiString == NULL)
 		{
 			TRACE_PRINT("GlobalAlloc failed allocating memory for the registry key, returning.");
-			TRACE_EXIT("PacketGetAdaptersNPF");
+			TRACE_EXIT();
 			return FALSE;
 		}
 		
@@ -1507,12 +1507,12 @@ tcpip_linkage:
 #ifdef _WINNT4
 		MessageBox(NULL,TEXT("Can not find TCP/IP bindings.\nIn order to run the packet capture driver you must install TCP/IP."),szWindowTitle,MB_OK);
 		TRACE_PRINT("Cannot find the TCP/IP bindings on NT4, no adapters.");
-		TRACE_EXIT("PacketGetAdaptersNPF");
+		TRACE_EXIT();
 		return FALSE;
 #endif		
 	}
 	
-	TRACE_EXIT("PacketGetAdaptersNPF");
+	TRACE_EXIT();
 	return TRUE;
 }
 
@@ -1533,7 +1533,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
 	AirpcapLinkType AirpcapLinkLayer;
 	BOOLEAN Result = TRUE;
 
-	TRACE_ENTER("PacketAddAdapterAirpcap");
+	TRACE_ENTER();
 	//XXX what about checking if the adapter already exists???
 	
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
@@ -1642,7 +1642,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 
-	TRACE_EXIT("PacketAddAdapterAirpcap");
+	TRACE_EXIT();
 	return Result;
 }
 
@@ -1658,13 +1658,13 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 	AirpcapDeviceDescription *Devs = NULL, *TmpDevs;
 	UINT i;
 	
-	TRACE_ENTER("PacketGetAdaptersAirpcap");
+	TRACE_ENTER();
 
 	if(!g_PAirpcapGetDeviceList(&Devs, Ebuf))
 	{
 		// No airpcap cards found on this system
 		TRACE_PRINT("No AirPcap adapters found");
-		TRACE_EXIT("PacketGetAdaptersAirpcap");
+		TRACE_EXIT();
 		return FALSE;
 	}
 	else
@@ -1677,7 +1677,7 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 	
 	g_PAirpcapFreeDeviceList(Devs);
 	
-	TRACE_EXIT("PacketGetAdaptersAirpcap");
+	TRACE_EXIT();
 	return TRUE;
 }
 #endif // HAVE_AIRPCAP_API
@@ -1700,7 +1700,7 @@ static BOOLEAN PacketAddAdapterNpfIm(PNPF_IM_DEVICE pDevice)
 	DWORD numAddresses;
 	DWORD i;
 
-	TRACE_ENTER("PacketAddAdapterNpfIm");
+	TRACE_ENTER();
 
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 
@@ -1892,7 +1892,7 @@ static BOOLEAN PacketAddAdapterNpfIm(PNPF_IM_DEVICE pDevice)
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 
-	TRACE_EXIT("PacketAddAdapterNpfIm");
+	TRACE_EXIT();
 	return (BOOLEAN)bResult;
 }
 
@@ -1907,13 +1907,13 @@ static BOOLEAN PacketGetAdaptersNpfIm()
 {
 	PNPF_IM_DEVICE pDevices = NULL, pDevCursor;
 	
-	TRACE_ENTER("PacketGetAdaptersNpfIm");
+	TRACE_ENTER();
 	// 
 	// We suppose that the DLL has been loaded successfully
 	// 
 	if (g_NpfImHandlers.NpfImGetDeviceList(&pDevices) == FALSE)
 	{
-		TRACE_EXIT("PacketGetAdaptersNpfIm");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -1924,7 +1924,7 @@ static BOOLEAN PacketGetAdaptersNpfIm()
 
     g_NpfImHandlers.NpfImFreeDeviceList(pDevices);
 	
-	TRACE_EXIT("PacketGetAdaptersNpfIm");
+	TRACE_EXIT();
 	return TRUE;
 }
 
@@ -1952,7 +1952,7 @@ BOOLEAN PacketAddAdapterDag(PCHAR name, PCHAR description, BOOLEAN IsAFile)
 	PADAPTER_INFO TmpAdInfo;
 	dagc_t *dagfd;
 
-	TRACE_ENTER("PacketAddAdapterDag");
+	TRACE_ENTER();
 	
 	//XXX what about checking if the adapter already exists???
 	
@@ -1964,7 +1964,7 @@ BOOLEAN PacketAddAdapterDag(PCHAR name, PCHAR description, BOOLEAN IsAFile)
 	if (TmpAdInfo == NULL) 
 	{
 		TRACE_PRINT("PacketAddAdapterDag: GlobalAlloc Failed allocating memory for the AdInfo structure.");
-		TRACE_EXIT("PacketAddAdapterDag");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -1990,7 +1990,7 @@ BOOLEAN PacketAddAdapterDag(PCHAR name, PCHAR description, BOOLEAN IsAFile)
 	if(!dagfd)
 	{
 		GlobalFreePtr(TmpAdInfo);
-		TRACE_EXIT("PacketAddAdapterDag");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -2029,7 +2029,7 @@ BOOLEAN PacketAddAdapterDag(PCHAR name, PCHAR description, BOOLEAN IsAFile)
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 
-	TRACE_EXIT("PacketAddAdapterDag");
+	TRACE_EXIT();
 	return TRUE;
 }
 
@@ -2072,7 +2072,7 @@ PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName)
 	//this function should NOT acquire the g_AdaptersInfoMutex, since it does return an ADAPTER_INFO structure
 	PADAPTER_INFO TAdInfo;
 
-	TRACE_ENTER("PacketFindAdInfo");
+	TRACE_ENTER();
 	
 	if (g_AdaptersInfoList == NULL)
 	{
@@ -2098,7 +2098,7 @@ PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName)
 		TRACE_PRINT1("NOT found AdInfo for adapter %s", AdapterName);
 	}
 
-	TRACE_EXIT("PacketFindAdInfo");
+	TRACE_EXIT();
 	return TAdInfo;
 }
 
@@ -2130,7 +2130,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 //	if (QueryWinPcapRegistryStringA(NPF_FAKE_NDISWAN_ADAPTER_NAME_REG_KEY, FakeNdisWanAdapterName, &RegQueryLen, FAKE_NDISWAN_ADAPTER_NAME) == FALSE && RegQueryLen == 0)
 //		return FALSE;
 	
-	TRACE_ENTER("PacketUpdateAdInfo");
+	TRACE_ENTER();
 
 	TRACE_PRINT1("Updating adapter info for adapter %s", AdapterName);
 	
@@ -2149,7 +2149,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 			if (strcmp(AdapterName, FakeNdisWanAdapterName) == 0)
 			{
 				ReleaseMutex(g_AdaptersInfoMutex);
-				TRACE_EXIT("PacketUpdateAdInfo");
+				TRACE_EXIT();
 				return TRUE;
 			}
 #endif
@@ -2194,7 +2194,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	//
 	if(PacketAddAdapterNPF(AdapterName, 0) == TRUE)
 	{
-		TRACE_EXIT("PacketUpdateAdInfo");
+		TRACE_EXIT();
 		return TRUE;
 	}
 
@@ -2239,7 +2239,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	}
 #endif // HAVE_DAG_API
 
-	TRACE_EXIT("PacketUpdateAdInfo");
+	TRACE_EXIT();
 	return TRUE;
 }
 
@@ -2255,7 +2255,7 @@ void PacketPopulateAdaptersInfoList()
 	PADAPTER_INFO TAdInfo;
 	PVOID Mem2;
 
-	TRACE_ENTER("PacketPopulateAdaptersInfoList");
+	TRACE_ENTER();
 
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 
@@ -2339,7 +2339,7 @@ void PacketPopulateAdaptersInfoList()
 #endif // HAVE_DAG_API
 
 	ReleaseMutex(g_AdaptersInfoMutex);
-	TRACE_EXIT("PacketPopulateAdaptersInfoList");
+	TRACE_EXIT();
 }
 
 #ifdef HAVE_WANPACKET_API
@@ -2357,7 +2357,7 @@ static BOOLEAN PacketAddFakeNdisWanAdapter()
 	CHAR DialupName[MAX_WINPCAP_KEY_CHARS] = FAKE_NDISWAN_ADAPTER_NAME;
 	CHAR DialupDesc[MAX_WINPCAP_KEY_CHARS] = FAKE_NDISWAN_ADAPTER_DESCRIPTION;
 
-	TRACE_ENTER("PacketAddFakeNdisWanAdapter");
+	TRACE_ENTER();
 
 //  
 //	Old registry based WinPcap names
@@ -2378,7 +2378,7 @@ static BOOLEAN PacketAddFakeNdisWanAdapter()
 	{
  		TRACE_PRINT("Cannot add the wan adapter, since it cannot be opened.");
   		//the adapter cannot be opened, we do not list it, but we return t
- 		TRACE_EXIT("PacketAddFakeNdisWanAdapter");
+ 		TRACE_EXIT();
   		return FALSE;
 	}
 
@@ -2390,7 +2390,7 @@ static BOOLEAN PacketAddFakeNdisWanAdapter()
 		{
 			TRACE_PRINT("PacketAddFakeNdisWanAdapter: Adapter already present in the list");
 			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT("PacketAddFakeNdisWanAdapter");
+			TRACE_EXIT();
 			return TRUE;
 		}
 	}
@@ -2400,7 +2400,7 @@ static BOOLEAN PacketAddFakeNdisWanAdapter()
 	{
 		TRACE_PRINT("PacketAddFakeNdisWanAdapter: GlobalAlloc Failed allocating memory for the AdInfo structure");
 		ReleaseMutex(g_AdaptersInfoMutex);
-		TRACE_EXIT("PacketAddFakeNdisWanAdapter");
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -2417,7 +2417,7 @@ static BOOLEAN PacketAddFakeNdisWanAdapter()
 	g_AdaptersInfoList = TmpAdInfo;
 	ReleaseMutex(g_AdaptersInfoMutex);
 
-	TRACE_EXIT("PacketAddFakeNdisWanAdapter");
+	TRACE_EXIT();
 	return TRUE;
 }
 
