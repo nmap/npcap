@@ -24,10 +24,10 @@ This code is based on the Windows built-in netsh.exe tool.
 #define			NPCAP_LOOPBACK_INTERFACE_MTU				65536
 #define			BUF_SIZE									255
 
-vector<wstring> g_InterfaceNameList1;
-vector<wstring> g_InterfaceNameList2;
+vector<tstring> g_InterfaceNameList1;
+vector<tstring> g_InterfaceNameList2;
 
-wstring getNpcapLoopbackAdapterName()
+tstring getNpcapLoopbackAdapterName()
 {
 	TRACE_ENTER();
 
@@ -88,20 +88,19 @@ wstring ANSIToUnicode(const string& str)
 	return rt;
 }
 
-wstring executeCommand(wchar_t* cmd)
+tstring executeCommand(TCHAR* strCmd)
 {
-	char buffer[128];
-	wstring result;
-
 	TRACE_ENTER();
-	TRACE_PRINT1("executeCommand: executing, cmd = %ws.", cmd);
+	TRACE_PRINT1("executeCommand: executing, strCmd = %ws.", strCmd);
 
+	tstring result;
+	char buffer[128];
 	string tmp = "";
 
-	FILE* pipe = _wpopen(cmd, L"r");
+	FILE* pipe = _tpopen(strCmd, _T("r"));
 	if (!pipe)
 	{
-		TRACE_PRINT("_wpopen: error");
+		TRACE_PRINT1("_tpopen: error, errCode = 0x%08x.", errno);
 		TRACE_EXIT();
 		return L"";
 	}
@@ -113,7 +112,11 @@ wstring executeCommand(wchar_t* cmd)
 	}
 	_pclose(pipe);
 
+#ifdef _UNICODE
 	result = ANSIToUnicode(tmp);
+#else
+	result = tmp;
+#endif
 
 	TRACE_EXIT();
 	return result;
@@ -131,31 +134,31 @@ wstring executeCommand(wchar_t* cmd)
 // Disabled       Disconnected   Dedicated        Ethernet
 // Enabled        Connected      Dedicated        Npcap Loopback Adapter
 //
-vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
+vector<tstring> getInterfaceNamesFromNetshOutput(tstring strOutput)
 {
 	TRACE_ENTER();
 
-	vector<wstring> nResults;
+	vector<tstring> nResults;
 	size_t iLineStart;
 	size_t iLineEnd = 0;
 	size_t iStringStart;
 	size_t iStringEnd;
 
-	while (iLineEnd < strOutput.length() && strOutput[iLineEnd] == L'\n')
+	while (iLineEnd < strOutput.length() && strOutput[iLineEnd] == _T('\n'))
 	{
 		iLineEnd ++;
 	}
 
-	iLineEnd = strOutput.find(L'\n', iLineEnd);
-	if (iLineEnd == wstring::npos)
+	iLineEnd = strOutput.find(_T('\n'), iLineEnd);
+	if (iLineEnd == tstring::npos)
 	{
 		TRACE_EXIT();
 		return nResults;
 	}
 	iLineEnd ++;
 
-	iLineEnd = strOutput.find(L'\n', iLineEnd);
-	if (iLineEnd == wstring::npos)
+	iLineEnd = strOutput.find(_T('\n'), iLineEnd);
+	if (iLineEnd == tstring::npos)
 	{
 		TRACE_EXIT();
 		return nResults;
@@ -164,10 +167,10 @@ vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
 	iLineEnd ++;
 	iLineStart = iLineEnd;
 
-	while ((iLineEnd = strOutput.find(L'\n', iLineEnd)) != wstring::npos)
+	while ((iLineEnd = strOutput.find(_T('\n'), iLineEnd)) != tstring::npos)
 	{
 		iStringEnd = iLineEnd;
-		iStringStart = strOutput.rfind(L"    ", iLineEnd);
+		iStringStart = strOutput.rfind(_T("    "), iLineEnd);
 		if (iStringStart < iLineStart)
 		{
 			TRACE_EXIT();
@@ -175,10 +178,10 @@ vector<wstring> getInterfaceNamesFromNetshOutput(wstring strOutput)
 		}
 		else
 		{
-			iStringStart += wcslen(L"    ");
+			iStringStart += wcslen(_T("    "));
 		}
 
-		wstring strInterfaceName = strOutput.substr(iStringStart, iStringEnd - iStringStart);
+		tstring strInterfaceName = strOutput.substr(iStringStart, iStringEnd - iStringStart);
 		nResults.push_back(strInterfaceName);
 
 		iLineEnd ++;
@@ -224,7 +227,7 @@ void snapshotInterfaceListBeforeInstall()
 {
 	TRACE_ENTER();
 
-	wstring cmd = executeCommand(L"netsh.exe interface show interface");
+	tstring cmd = executeCommand(_T("netsh.exe interface show interface"));
 	g_InterfaceNameList1 = getInterfaceNamesFromNetshOutput(cmd);
 
 	TRACE_EXIT();
@@ -234,7 +237,7 @@ void snapshotInterfaceListAfterInstall()
 {
 	TRACE_ENTER();
 
-	wstring cmd = executeCommand(L"netsh.exe interface show interface");
+	tstring cmd = executeCommand(L"netsh.exe interface show interface");
 	g_InterfaceNameList2 = getInterfaceNamesFromNetshOutput(cmd);
 
 	TRACE_EXIT();
@@ -249,25 +252,25 @@ void PrepareRenameLoopbackNetwork2()
 	TRACE_EXIT();
 }
 
-void changeLoopbackInterfaceMTU(wstring strInterfaceName)
+void changeLoopbackInterfaceMTU(tstring strInterfaceName)
 {
 	TRACE_ENTER();
 
-	wchar_t renameCmd[MAX_PATH];
-	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface ipv4 set subinterface \"%s\" mtu=%d store=persistent", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
+	TCHAR renameCmd[MAX_PATH];
+	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface ipv4 set subinterface \"%s\" mtu=%d store=persistent"), strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
 	executeCommand(renameCmd);
-	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface ipv6 set subinterface \"%s\" mtu=%d store=persistent", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
+	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface ipv6 set subinterface \"%s\" mtu=%d store=persistent"), strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
 	executeCommand(renameCmd);
 
 	TRACE_EXIT();
 }
 
-void renameLoopbackInterface(wstring strInterfaceName)
+void renameLoopbackInterface(tstring strInterfaceName)
 {
 	TRACE_ENTER();
 
-	wchar_t renameCmd[MAX_PATH];
-	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface set interface name=\"%s\" newname=\"%ws\"", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
+	TCHAR renameCmd[MAX_PATH];
+	swprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface set interface name=\"%s\" newname=\"%ws\""), strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
 	executeCommand(renameCmd);
 
 	TRACE_EXIT();
@@ -278,9 +281,9 @@ BOOL DoRenameLoopbackNetwork2()
 	TRACE_ENTER();
 
 	snapshotInterfaceListAfterInstall();
-	wstring strOriginalInterfaceName = getNpcapLoopbackAdapterName();
+	tstring strOriginalInterfaceName = getNpcapLoopbackAdapterName();
 	TRACE_PRINT1("getNpcapLoopbackAdapterName: executing, strOriginalInterfaceName = %ws.", strOriginalInterfaceName.c_str());
-	if (strOriginalInterfaceName.compare(L"") == 0)
+	if (strOriginalInterfaceName.compare(_T("")) == 0)
 	{
 		TRACE_PRINT("getNpcapLoopbackAdapterName: error, strOriginalInterfaceName = NULL.");
 		TRACE_EXIT();

@@ -75,7 +75,7 @@ typedef int (*CallbackFunc)(_In_ HDEVINFO Devs, _In_ PSP_DEVINFO_DATA DevInfo, _
 
 /*BOOL ListLoopbackAdapters();*/
 BOOL GetLoopbackINFFilePath(TCHAR strLoopbackInfPath[]);
-BOOL GetConfigFilePath(char strConfigPath[]);
+BOOL GetConfigFilePath(TCHAR strConfigPath[]);
 BOOL InstallLoopbackDeviceInternal();
 BOOL RemoveLoopbackDeviceInternal(int iDevID);
 BOOL SaveDevIDToFile(int iDevID);

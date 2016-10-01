@@ -1312,23 +1312,23 @@ BOOL GetLoopbackINFFilePath(TCHAR strLoopbackInfPath[])
 	return TRUE;
 }
 
-BOOL GetConfigFilePath(char strConfigPath[])
+BOOL GetConfigFilePath(TCHAR strConfigPath[])
 {
 	TRACE_ENTER();
 
-	char tmp[MAX_PATH];
-	char drive[_MAX_DRIVE];
-	char dir[_MAX_DIR];
-	if (!GetModuleFileNameA(NULL, tmp, MAX_PATH))
+	TCHAR tmp[MAX_PATH];
+	TCHAR drive[_MAX_DRIVE];
+	TCHAR dir[_MAX_DIR];
+	if (!GetModuleFileName(NULL, tmp, MAX_PATH))
 	{
-		TRACE_PRINT("GetModuleFileNameA: error, errCode = 0x%08x.", GetLastError());
+		TRACE_PRINT1("GetModuleFileName: error, errCode = 0x%08x.", GetLastError());
 		TRACE_EXIT();
 		return FALSE;
 	}
-	_splitpath_s(tmp, drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0);
-	sprintf_s(strConfigPath, MAX_PATH + 30, "%s%sloopback.ini", drive, dir);
+	_tsplitpath_s(tmp, drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0);
+	_stprintf_s(strConfigPath, MAX_PATH + 30, _T("%s%sloopback.ini"), drive, dir);
 
-	TRACE_PRINT1("GetModuleFileNameA: succeed, strConfigPath = %s.", strConfigPath);
+	TRACE_PRINT1("GetModuleFileName: succeed, strConfigPath = %ws.", strConfigPath);
 	TRACE_EXIT();
 	return TRUE;
 }
@@ -1386,7 +1386,7 @@ BOOL SaveDevIDToFile(int iDevID)
 {
 	TRACE_ENTER();
 
-	char strLoopbackIDFilePath[MAX_PATH + 30];
+	TCHAR strLoopbackIDFilePath[MAX_PATH + 30];
 	if (!GetConfigFilePath(strLoopbackIDFilePath))
 	{
 		TRACE_PRINT("GetConfigFilePath: error.");
@@ -1395,13 +1395,13 @@ BOOL SaveDevIDToFile(int iDevID)
 	}
 
 	FILE *fp;
-	if (fopen_s(&fp, strLoopbackIDFilePath, "w") != 0)
+	if (_tfopen_s(&fp, strLoopbackIDFilePath, _T("w")) != 0)
 	{
-		TRACE_PRINT("fopen_s: error.");
+		TRACE_PRINT1("_tfopen_s: error, errCode = 0x%08x.", errno);
 		TRACE_EXIT();
 		return FALSE;
 	}
-	fprintf(fp, "%d", iDevID);
+	_ftprintf(fp, _T("%d"), iDevID);
 	fclose(fp);
 
 	TRACE_EXIT();
@@ -1412,7 +1412,7 @@ int LoadDevIDFromFile()
 {
 	TRACE_ENTER();
 
-	char strLoopbackIDFilePath[MAX_PATH + 30];
+	TCHAR strLoopbackIDFilePath[MAX_PATH + 30];
 	if (!GetConfigFilePath(strLoopbackIDFilePath))
 	{
 		TRACE_PRINT("GetConfigFilePath: error.");
@@ -1422,13 +1422,13 @@ int LoadDevIDFromFile()
 
 	FILE *fp;
 	int iDevID;
-	if (fopen_s(&fp, strLoopbackIDFilePath, "r") != 0)
+	if (_tfopen_s(&fp, strLoopbackIDFilePath, _T("r")) != 0)
 	{
-		TRACE_PRINT("fopen_s: error.");
+		TRACE_PRINT1("_tfopen_s: error, errCode = 0x%08x.", errno);
 		TRACE_EXIT();
 		return -1;
 	}
-	fscanf_s(fp, "%d", &iDevID);
+	_ftscanf_s(fp, _T("%d"), &iDevID);
 	fclose(fp);
 
 	TRACE_EXIT();

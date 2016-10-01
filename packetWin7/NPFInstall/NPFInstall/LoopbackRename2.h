@@ -19,7 +19,10 @@ This code is based on the Windows built-in netsh.exe tool.
 #include <vector>
 using namespace std;
 
-wstring executeCommand(wchar_t* cmd);
+typedef std::basic_string<TCHAR> tstring;
+#include <tchar.h>
+
+tstring executeCommand(TCHAR* strCmd);
 
 void PrepareRenameLoopbackNetwork2();
 
