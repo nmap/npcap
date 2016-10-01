@@ -121,6 +121,7 @@ tstring executeCommand(TCHAR* strCmd)
 #else
 	result = tmp;
 #endif
+	TRACE_PRINT1("executeCommand: result = %s.", result.c_str());
 
 	TRACE_EXIT();
 	return result;
@@ -186,6 +187,7 @@ vector<tstring> getInterfaceNamesFromNetshOutput(tstring strOutput)
 		}
 
 		tstring strInterfaceName = strOutput.substr(iStringStart, iStringEnd - iStringStart);
+		TRACE_PRINT1("getInterfaceNamesFromNetshOutput: executing, strInterfaceName = %s.", strInterfaceName.c_str());
 		nResults.push_back(strInterfaceName);
 
 		iLineEnd ++;

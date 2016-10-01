@@ -81,6 +81,7 @@ BOOL DoTheWork(INetSharingManager *pNSM, TCHAR strDeviceName[])
 							guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
 							guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
 
+						TRACE_PRINT2("IEnumVARIANT::Next: executing, currentGUID = %s, strDeviceName = %s.", currentGUID, strDeviceName);
 						if (_tcscmp(currentGUID, strDeviceName) == 0)
 						{
 							TRACE_PRINT2("INetConnection::Rename: executing, currentGUID = strDeviceName = %s, pszwNewName = %s.", currentGUID, NPCAP_LOOPBACK_INTERFACE_NAME);
