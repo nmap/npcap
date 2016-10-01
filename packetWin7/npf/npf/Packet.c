@@ -130,9 +130,9 @@ ULONG g_NCpu;
 //
 // Global variables
 //
-NDIS_HANDLE         FilterDriverHandle; // NDIS handle for filter driver
-NDIS_HANDLE         FilterDriverHandle_WiFi; // NDIS handle for WiFi filter driver
-NDIS_HANDLE         FilterDriverObject; // Driver object for filter driver
+NDIS_HANDLE         FilterDriverHandle = NULL;			// NDIS handle for filter driver
+NDIS_HANDLE         FilterDriverHandle_WiFi = NULL;		// NDIS handle for WiFi filter driver
+NDIS_HANDLE         FilterDriverObject;					// Driver object for filter driver
 
 typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
 	USHORT Group
@@ -360,11 +360,13 @@ DriverEntry(
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter (WiFi) with NDIS, Status = %x", Status);
 
-		NdisFDeregisterFilterDriver(FilterDriverHandle);
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting the 1st Filter Handle = %p", FilterDriverHandle);
+		// We still run the driver even with the 2nd filter doesn't work.
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "We only use the 1st Filter Handle now, FilterDriverHandle_WiFi = %x.", FilterDriverHandle_WiFi);
+		// NdisFDeregisterFilterDriver(FilterDriverHandle);
+		// TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting the 1st Filter Handle = %p", FilterDriverHandle);
 
-		TRACE_EXIT();
-		return Status;
+		// TRACE_EXIT();
+		// return Status;
 	}
 	else
 	{
@@ -1020,7 +1022,7 @@ _Use_decl_annotations_
 VOID
 NPF_Unload(
 	IN PDRIVER_OBJECT      DriverObject
-	)
+)
 /*++
 
 Routine Description:
@@ -1105,11 +1107,27 @@ Return Value:
 		IoDeleteDevice(OldDeviceObject);
 	}
 
-	NdisFDeregisterFilterDriver(FilterDriverHandle);
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting Filter Handle = %p", FilterDriverHandle);
+	if (FilterDriverHandle)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting Filter Handle = %p", FilterDriverHandle);
+		NdisFDeregisterFilterDriver(FilterDriverHandle);
+		FilterDriverHandle = NULL;
+	}
+	else
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Filter Handle = NULL, no need to delete.");
+	}
 
-	NdisFDeregisterFilterDriver(FilterDriverHandle_WiFi);
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting Filter Handle (WiFi) = %p", FilterDriverHandle_WiFi);
+	if (FilterDriverHandle_WiFi)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting Filter Handle (WiFi) = %p", FilterDriverHandle_WiFi);
+		NdisFDeregisterFilterDriver(FilterDriverHandle_WiFi);
+		FilterDriverHandle_WiFi = NULL;
+	}
+	else
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Filter Handle (WiFi) = NULL, no need to delete.");
+	}
 
 	NPF_RemoveUnclosedAdapters();
 
