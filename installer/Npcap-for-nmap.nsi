@@ -292,8 +292,10 @@ do_silent:
 			Delete $0\rpcapd.exe
 			Delete $0\LICENSE
 			Delete $0\uninstall.exe
-			; Official 4.1 installer creates an install.log
+			; delete the logs
 			Delete $0\install.log
+			Delete $0\NPFInstall.log
+			Delete $0\Packet.log
 			RMDir "$0"
 			DeleteRegKey HKLM "Software\Npcap"
 
@@ -1561,8 +1563,10 @@ Section "Uninstall"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
 	DeleteRegKey HKLM "Software\Npcap"
 
-	; delete the installation log
+	; delete the logs
 	Delete $INSTDIR\install.log
+	Delete $0\NPFInstall.log
+	Delete $0\Packet.log
 
 	; delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
