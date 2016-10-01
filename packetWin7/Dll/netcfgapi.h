@@ -40,7 +40,7 @@ HRESULT HrGetINetCfg(IN BOOL fGetWriteLock, IN LPCTSTR lpszAppName, OUT INetCfg*
 
 HRESULT HrReleaseINetCfg(INetCfg* pnc, BOOL fHasWriteLock);
 
-HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const GUID* pguildClass, IN LPCTSTR lpszInfFullPath);
+HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguildClass, IN LPCTSTR lpszInfFullPath);
 
 HRESULT HrInstallComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const GUID* pguidClass);
 

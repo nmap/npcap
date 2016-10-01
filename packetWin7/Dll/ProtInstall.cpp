@@ -197,7 +197,7 @@ DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
 // Notes:
 //
 
-HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR lpszAppName, const GUID* pguidClass)
+HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszAppName, const GUID* pguidClass)
 {
 	INetCfg* pnc;
 	LPTSTR lpszApp;
@@ -212,11 +212,11 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR l
 		//
 		// Install the network component.
 		//
-		hr = HrInstallNetComponent(pnc, lpszPnpID, pguidClass, lpszInfFile);
+		hr = HrInstallNetComponent(pnc, pguidClass, lpszInfFile);
 
 		if ((hr == S_OK) || (hr == NETCFG_S_REBOOT))
 		{
-			hr = pnc->Apply();
+			// hr = pnc->Apply();
 		}
 		else
 		{
@@ -246,9 +246,9 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR l
 	return hr;
 }
 
-DWORD InstallDriver()
+BOOL InstallDriver()
 {
-	DWORD nResult;
+	BOOL bSucceed = TRUE;
 	TCHAR szFileFullPath[_MAX_PATH];
 	HRESULT hr;
 
@@ -258,29 +258,30 @@ DWORD InstallDriver()
 	// ----------------------------
 	// The INF file is assumed to be in the same folder as this application...
 	
-	nResult = GetServiceInfFilePath(szFileFullPath, MAX_PATH);
-
-	if (nResult == 0)
+	bSucceed = (BOOL) GetServiceInfFilePath(szFileFullPath, MAX_PATH);
+	if (!bSucceed)
 	{
 		TRACE_PRINT("Unable to get INF file path");
-		return 0;
+		TRACE_EXIT();
+		return bSucceed;
 	}
 
-	hr = InstallSpecifiedComponent(szFileFullPath, NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME, &GUID_DEVCLASS_NETSERVICE);
+	hr = InstallSpecifiedComponent(szFileFullPath, APP_NAME, &GUID_DEVCLASS_NETSERVICE);
 
 	if (hr != S_OK)
 	{
 		ErrMsg(hr, _T("InstallSpecifiedComponent\n"));
 		TRACE_EXIT();
-		return 0;
+		return FALSE;
 	}
 
 	TRACE_EXIT();
-	return 1;
+	return bSucceed;
 }
 
-DWORD UninstallDriver()
+BOOL UninstallDriver()
 {
+	BOOL bSucceed = TRUE;
 	INetCfg* pnc;
 	LPTSTR lpszApp;
 	HRESULT hr;
@@ -291,24 +292,29 @@ DWORD UninstallDriver()
 
 	if (hr == S_OK)
 	{
+		TRACE_PRINT1("bWiFiService = %d.", bWiFiService);
+		TRACE_PRINT1("HrUninstallNetComponent: executing, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 		hr = HrUninstallNetComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID);
 
 		if (hr != S_OK)
 		{
 			if (hr != HRESULT_FROM_WIN32(ERROR_CANCELLED))
 			{
+				bSucceed = FALSE;
 				ErrMsg(hr, _T("Couldn't uninstall the network component."));
 			}
 		}
 
 		if (bWiFiService)
 		{
+			TRACE_PRINT1("HrUninstallNetComponent: executing, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
 			hr = HrUninstallNetComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
 
 			if (hr != S_OK)
 			{
 				if (hr != HRESULT_FROM_WIN32(ERROR_CANCELLED))
 				{
+					bSucceed = FALSE;
 					ErrMsg(hr, _T("Couldn't uninstall the network component."));
 				}
 			}
@@ -318,6 +324,7 @@ DWORD UninstallDriver()
 	}
 	else
 	{
+		bSucceed = FALSE;
 		if ((hr == NETCFG_E_NO_WRITE_LOCK) && lpszApp)
 		{
 			ErrMsg(hr, _T("%s currently holds the lock, try later."), lpszApp);
@@ -331,7 +338,7 @@ DWORD UninstallDriver()
 	}
 
 	TRACE_EXIT();
-	return 0;
+	return bSucceed;
 }
 
 BOOL RenableBindings()

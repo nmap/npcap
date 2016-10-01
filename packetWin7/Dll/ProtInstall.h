@@ -73,8 +73,8 @@ extern "C"
 {
 #endif
 
-	DWORD InstallDriver();
-	DWORD UninstallDriver();
+	BOOL InstallDriver();
+	BOOL UninstallDriver();
 	BOOL RenableBindings();
 
 #ifdef __cplusplus

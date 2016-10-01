@@ -218,7 +218,7 @@ HRESULT HrReleaseINetCfg(IN INetCfg* pnc, IN BOOL fHasWriteLock)
 // Notes:
 //
 
-HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN const GUID* pguidClass, IN LPCTSTR lpszInfFullPath)
+HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguidClass, IN LPCTSTR lpszInfFullPath)
 {
 	TRACE_ENTER();
 
@@ -227,8 +227,6 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 	TCHAR szDrive[_MAX_DRIVE];
 	TCHAR szDir[_MAX_DIR];
 	TCHAR szDirWithDrive[_MAX_DRIVE + _MAX_DIR];
-
-	UNREFERENCED_PARAMETER(lpszComponentId);
 
 	//
 	// If full path to INF has been specified, the INF
