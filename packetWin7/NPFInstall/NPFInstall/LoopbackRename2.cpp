@@ -93,6 +93,7 @@ wstring executeCommand(wchar_t* cmd)
 	wstring result;
 
 	TRACE_ENTER();
+	TRACE_PRINT1("executeCommand: executing, cmd = %ws.", cmd);
 
 	string tmp = "";
 

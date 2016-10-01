@@ -12,6 +12,7 @@
 #include "WlanRecord.h"
 #include "RegUtil.h"
 
+#include "debug.h"
 
 HINSTANCE hinstLib = NULL;
 typedef DWORD
@@ -49,6 +50,8 @@ BOOL initWlanFunctions()
 {
 	BOOL bRet;
 
+	TRACE_ENTER();
+
 	// Get a handle to the packet DLL module.
 	hinstLib = LoadLibrary(TEXT("wlanapi.dll"));
 
@@ -70,16 +73,17 @@ BOOL initWlanFunctions()
 		}
 		else
 		{
+			TRACE_PRINT1("GetProcAddress: error, errCode = 0x%08x.", GetLastError());
 			bRet = FALSE;
 		}
-
-
 	}
 	else
 	{
+		TRACE_PRINT1("LoadLibrary: error, errCode = 0x%08x.", GetLastError());
 		bRet = FALSE;
 	}
 
+	TRACE_EXIT();
 	return bRet;
 }
 
@@ -100,6 +104,8 @@ tstring printArray(vector<tstring> nstr)
 // enumerate wireless interfaces
 UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 {
+	TRACE_ENTER();
+
 	DWORD dwError = ERROR_SUCCESS;
 	PWLAN_INTERFACE_INFO_LIST pIntfList = NULL;
 	UINT i = 0;
@@ -113,6 +119,7 @@ UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 			&pIntfList
 			)) != ERROR_SUCCESS)
 		{
+			TRACE_PRINT1("My_WlanEnumInterfaces: error, errCode = 0x%08x.", dwError);
 			__leave;
 		}
 
@@ -122,6 +129,8 @@ UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 			memcpy(&sInfo[i], &pIntfList->InterfaceInfo[i], sizeof(WLAN_INTERFACE_INFO));
 		}
 
+		TRACE_PRINT1("My_WlanEnumInterfaces: pIntfList->dwNumberOfItems = %d.", pIntfList->dwNumberOfItems);
+		TRACE_EXIT();
 		return pIntfList->dwNumberOfItems;
 	}
 	__finally
@@ -132,6 +141,9 @@ UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 			My_WlanFreeMemory(pIntfList);
 		}
 	}
+
+	TRACE_PRINT1("My_WlanEnumInterfaces: pIntfList->dwNumberOfItems = %d.", pIntfList->dwNumberOfItems);
+	TRACE_EXIT();
 	return 0;
 }
 
@@ -141,6 +153,8 @@ OpenHandleAndCheckVersion(
 PHANDLE phClient
 )
 {
+	TRACE_ENTER();
+
 	DWORD dwError = ERROR_SUCCESS;
 	DWORD dwServiceVersion;
 	HANDLE hClient = NULL;
@@ -157,6 +171,7 @@ PHANDLE phClient
 			&hClient
 			)) != ERROR_SUCCESS)
 		{
+			TRACE_PRINT1("My_WlanOpenHandle: error, errCode = 0x%08x.", dwError);
 			__leave;
 		}
 
@@ -184,11 +199,14 @@ PHANDLE phClient
 		}
 	}
 
+	TRACE_EXIT();
 	return dwError;
 }
 
 vector<tstring> getWlanAdapterGuids()
 {
+	TRACE_ENTER();
+
 	HANDLE hClient = NULL;
 	WLAN_INTERFACE_INFO sInfo[64];
 	RPC_TSTR strGuid = NULL;
@@ -196,13 +214,15 @@ vector<tstring> getWlanAdapterGuids()
 
 	if (!initWlanFunctions())
 	{
-		_tprintf(_T("getWlanAdapterGuids::initWlanFunctions error.\n"));
+		TRACE_PRINT("initWlanFunctions: error.");
+		TRACE_EXIT();
 		return nstrWlanAdapterGuids;
 	}
 
 	if (OpenHandleAndCheckVersion(&hClient) != ERROR_SUCCESS)
 	{
-		_tprintf(_T("getWlanAdapterGuids::OpenHandleAndCheckVersion error.\n"));
+		TRACE_PRINT("OpenHandleAndCheckVersion: error.");
+		TRACE_EXIT();
 		return nstrWlanAdapterGuids;
 	}
 
@@ -211,24 +231,32 @@ vector<tstring> getWlanAdapterGuids()
 	{
 		if (UuidToString(&sInfo[i].InterfaceGuid, &strGuid) == RPC_S_OK)
 		{
+			TRACE_PRINT1("EnumInterface: executing, strGuid = %ws.", (TCHAR*) strGuid);
 			nstrWlanAdapterGuids.push_back((TCHAR*) strGuid);
 			RpcStringFree(&strGuid);
 		}
 	}
 
+	TRACE_EXIT();
 	return nstrWlanAdapterGuids;
 }
 
 BOOL AddFlagToRegistry_Dot11Adapters(LPCTSTR strDeviceName)
 {
+	TRACE_ENTER();
+	TRACE_EXIT();
 	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME, NPCAP_REG_DOT11_VALUE_NAME, strDeviceName, KEY_WRITE);
 }
 
 BOOL writeWlanAdapterGuidsToRegistry()
 {
+	TRACE_ENTER();
+
 	vector<tstring> nstrWlanAdapterGuids = getWlanAdapterGuids();
 	if (nstrWlanAdapterGuids.size() == 0)
 	{
+		TRACE_PRINT1("getWlanAdapterGuids: error, nstrWlanAdapterGuids.size() = %d.", nstrWlanAdapterGuids.size());
+		TRACE_EXIT();
 		return FALSE;
 	}
 
@@ -238,6 +266,9 @@ BOOL writeWlanAdapterGuidsToRegistry()
 	}
 
 	tstring strGuidText = printAdapterNames(nstrWlanAdapterGuids);
+
+	TRACE_PRINT1("AddFlagToRegistry_Dot11Adapters: executing, strGuidText = %ws.", strGuidText.c_str());
+	TRACE_EXIT();
 	return AddFlagToRegistry_Dot11Adapters(strGuidText.c_str());
 
 }

@@ -190,20 +190,22 @@ static VOID OutputDebugStringVW(LPCWSTR Format, ...)
 #if defined(_DBG) || defined(_DEBUG_TO_FILE)
 
 #ifdef _DBG
-#define TRACE_PRINT_DLLMAIN(_x)			OutputDebugStringVA ("    " _x "\n")
+#define TRACE_PRINT_DLLMAIN(_x)							OutputDebugStringVA ("    " _x "\n")
 #else
-#define TRACE_PRINT_DLLMAIN(_x)			//we cannot use the _DEBUG_TO_FILE stuff from DllMain!!
+#define TRACE_PRINT_DLLMAIN(_x)							//we cannot use the _DEBUG_TO_FILE stuff from DllMain!!
 #endif
 
-#define TRACE_ENTER()					OutputDebugStringVA ("--> " __FUNCTION__ "\n")
-#define TRACE_EXIT()					OutputDebugStringVA ("<-- " __FUNCTION__ "\n")
-#define TRACE_PRINT(_x)					OutputDebugStringVA ("    " _x "\n")
-#define TRACE_PRINT1(_x, _y)			OutputDebugStringVA("    " _x "\n", _y)   		
-#define TRACE_PRINT2(_x, _p1, _p2)		OutputDebugStringVA("    " _x "\n", _p1, _p2)   		
-#define TRACE_PRINT4(_x, _p1, _p2, _p3, _p4) OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4) 
-#define TRACE_PRINT6(_x, _p1, _p2, _p3, _p4, _p5, _p6) OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4, _p5, _p6 )
+#define TRACE_ENTER()									OutputDebugStringVA ("--> " __FUNCTION__ "\n")
+#define TRACE_EXIT()									OutputDebugStringVA ("<-- " __FUNCTION__ "\n")
+#define TRACE_PRINT(_x)									OutputDebugStringVA ("    " _x "\n")
+#define TRACE_PRINT1(_x, _y)							OutputDebugStringVA("    " _x "\n", _y)
+#define TRACE_PRINT2(_x, _p1, _p2)						OutputDebugStringVA("    " _x "\n", _p1, _p2)
+#define TRACE_PRINT3(_x, _p1, _p2, _p3)					OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3)
+#define TRACE_PRINT4(_x, _p1, _p2, _p3, _p4)			OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4)
+#define TRACE_PRINT5(_x, _p1, _p2, _p3, _p4, _p5)		OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4, _p5)
+#define TRACE_PRINT6(_x, _p1, _p2, _p3, _p4, _p5, _p6)	OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4, _p5, _p6 )
 
-#define TRACE_PRINT_WIDECHAR(_x)		OutputDebugStringVW (L"    %ws\n", _x)
+#define TRACE_PRINT_WIDECHAR(_x)						OutputDebugStringVW (L"    %ws\n", _x)
 
 static __forceinline void TRACE_PRINT_OS_INFO()
 {

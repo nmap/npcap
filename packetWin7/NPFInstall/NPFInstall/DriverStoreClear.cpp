@@ -17,6 +17,8 @@ This is used to clear the cache of Npcap driver in the Driver Store.
 #include "DriverStoreClear.h"
 #include "LoopbackRename2.h"
 
+#include "debug.h"
+
 // getInfNamesFromPnpUtilOutput() function is used to get INF filenames from string like below:
 //
 // Microsoft PnP Utility
@@ -41,6 +43,8 @@ This is used to clear the cache of Npcap driver in the Driver Store.
 //
 vector<wstring> getInfNamesFromPnpUtilOutput(wstring strOutput)
 {
+	TRACE_ENTER();
+
 	vector<wstring> nResults;
 
 	size_t iStart = -1;
@@ -66,6 +70,7 @@ vector<wstring> getInfNamesFromPnpUtilOutput(wstring strOutput)
 		{
 			if (strText == L"Nmap Project")
 			{
+				TRACE_PRINT1("find: executing, strInfFileName = %ws.", strInfFileName.c_str());
 				nResults.push_back(strInfFileName);
 			}
 		}
@@ -77,11 +82,14 @@ vector<wstring> getInfNamesFromPnpUtilOutput(wstring strOutput)
 		}
 	}
 
+	TRACE_EXIT();
 	return nResults;
 }
 
 BOOLEAN ClearDriverStore()
 {
+	TRACE_ENTER();
+
 	wstring cmd = executeCommand(L"pnputil.exe -e");
 	vector<wstring> nInfFileNameList = getInfNamesFromPnpUtilOutput(cmd);
 
@@ -93,5 +101,6 @@ BOOLEAN ClearDriverStore()
 		executeCommand(renameCmd);
 	}
 
+	TRACE_EXIT();
 	return TRUE;
 }

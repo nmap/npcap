@@ -70,6 +70,7 @@ BOOL InstallWFPCallout()
 	TCHAR szCmd[_MAX_PATH * 2];
 	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("DefaultInstall 132 %s"), szFileFullPath);
 	InstallHinfSection(NULL, NULL, szCmd, 0);
+	TRACE_PRINT1("InstallHinfSection: executing, szCmd = %ws.", szCmd);
 
 	TRACE_EXIT();
 	return TRUE;
@@ -103,6 +104,7 @@ BOOL UninstallWFPCallout()
 	TCHAR szCmd[_MAX_PATH * 2];
 	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("DefaultUninstall 132 %s"), szFileFullPath);
 	InstallHinfSection(NULL, NULL, szCmd, 0);
+	TRACE_PRINT1("InstallHinfSection: executing, szCmd = %ws.", szCmd);
 
 	TRACE_EXIT();
 	return TRUE;

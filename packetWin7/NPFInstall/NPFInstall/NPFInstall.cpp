@@ -244,6 +244,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	for (int i = 0; i < argc; i++)
 	{
 		strTmp = argv[i];
+		TRACE_PRINT2("_tmain: executing, argv[%d] = %ws.", i, argv[i]);
 		if (strTmp == _T("-n"))
 		{
 			bNoWindow = TRUE;
@@ -262,7 +263,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	if (strArgs.size() == 1)
 	{
 		_tprintf(STR_COMMAND_USAGE);
-		nStatus = -1;
+		nStatus = 0;
 		goto _EXIT;
 
 	}
@@ -572,7 +573,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		else if (strArgs[1] == _T("-h"))
 		{
 			_tprintf(STR_COMMAND_USAGE);
-			nStatus = -1;
+			nStatus = 0;
 			goto _EXIT;
 		}
 		else
@@ -584,6 +585,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 _EXIT:
+	if (nStatus == -1)
+	{
+		TRACE_PRINT1("_tmain: error, nStatus = %d.", nStatus);
+	}
 	TRACE_EXIT();
 	return nStatus;
 }
