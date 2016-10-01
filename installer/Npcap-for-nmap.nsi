@@ -1177,22 +1177,22 @@ Function start_driver_service
 		${If} $winpcap_mode == "yes2"
 		${OrIf} $winpcap_mode == "yes"
 			DetailPrint "Starting the npf driver"
-			; nsExec::Exec "net start npf"
-			; nsExec::Exec "net stop npf"
+			nsExec::Exec "net start npf"
+			nsExec::Exec "net stop npf"
 			nsExec::Exec "net start npf"
 		${EndIf}
 
 		${If} $winpcap_mode == "no"
 		${OrIf} $winpcap_mode == "yes"
 			DetailPrint "Starting the npcap driver"
-			; nsExec::Exec "net start npcap"
-			; nsExec::Exec "net stop npcap"
+			nsExec::Exec "net start npcap"
+			nsExec::Exec "net stop npcap"
 			nsExec::Exec "net start npcap"
 		${EndIf}
 	${Else}
 		DetailPrint "Starting the npf driver"
-		; nsExec::Exec "net start npf"
-		; nsExec::Exec "net stop npf"
+		nsExec::Exec "net start npf"
+		nsExec::Exec "net stop npf"
 		nsExec::Exec "net start npf"
 	${EndIf}
 FunctionEnd
