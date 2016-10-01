@@ -1321,14 +1321,14 @@ BOOL GetConfigFilePath(char strConfigPath[])
 	char dir[_MAX_DIR];
 	if (!GetModuleFileNameA(NULL, tmp, MAX_PATH))
 	{
-		TRACE_PRINT("GetModuleFileNameA: error.");
+		TRACE_PRINT("GetModuleFileNameA: error, errCode = 0x%08x.", GetLastError());
 		TRACE_EXIT();
 		return FALSE;
 	}
 	_splitpath_s(tmp, drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0);
 	sprintf_s(strConfigPath, MAX_PATH + 30, "%s%sloopback.ini", drive, dir);
 
-	TRACE_PRINT1("GetModuleFileNameA: succeed, strConfigPath = %ws.", strConfigPath);
+	TRACE_PRINT1("GetModuleFileNameA: succeed, strConfigPath = %s.", strConfigPath);
 	TRACE_EXIT();
 	return TRUE;
 }

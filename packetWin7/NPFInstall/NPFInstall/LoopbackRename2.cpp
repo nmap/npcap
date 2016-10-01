@@ -33,7 +33,8 @@ wstring getNpcapLoopbackAdapterName()
 
 	if (g_InterfaceNameList1.size() != g_InterfaceNameList2.size() - 1)
 	{
-		TRACE_PRINT1("getNpcapLoopbackAdapterName: error, res = %ws.", L"NULL");
+		TRACE_PRINT2("getNpcapLoopbackAdapterName: error, g_InterfaceNameList1.size() = %d, g_InterfaceNameList2.size() = %d.",
+			g_InterfaceNameList1.size(), g_InterfaceNameList2.size());
 		TRACE_EXIT();
 		return L"";
 	}
@@ -51,13 +52,13 @@ wstring getNpcapLoopbackAdapterName()
 		}
 		if (found == 0)
 		{
-			TRACE_PRINT1("getNpcapLoopbackAdapterName: error, res = %ws.", g_InterfaceNameList2[i].c_str());
+			TRACE_PRINT1("getNpcapLoopbackAdapterName: found the new interface, i = %d.", i);
 			TRACE_EXIT();
 			return g_InterfaceNameList2[i];
 		}
 	}
 
-	TRACE_PRINT1("getNpcapLoopbackAdapterName: error, res = %ws.", L"NULL");
+	TRACE_PRINT("getNpcapLoopbackAdapterName: unknown error.");
 	TRACE_EXIT();
 	return L"";
 }
@@ -266,7 +267,7 @@ void renameLoopbackInterface(wstring strInterfaceName)
 	TRACE_ENTER();
 
 	wchar_t renameCmd[MAX_PATH];
-	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface set interface name=\"%s\" newname=\"%s\"", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
+	swprintf_s(renameCmd, MAX_PATH, L"netsh.exe interface set interface name=\"%s\" newname=\"%ws\"", strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
 	executeCommand(renameCmd);
 
 	TRACE_EXIT();
@@ -278,9 +279,10 @@ BOOL DoRenameLoopbackNetwork2()
 
 	snapshotInterfaceListAfterInstall();
 	wstring strOriginalInterfaceName = getNpcapLoopbackAdapterName();
+	TRACE_PRINT1("getNpcapLoopbackAdapterName: executing, strOriginalInterfaceName = %ws.", strOriginalInterfaceName.c_str());
 	if (strOriginalInterfaceName.compare(L"") == 0)
 	{
-		TRACE_PRINT1("getNpcapLoopbackAdapterName: error, strOriginalInterfaceName = %ws.", L"NULL");
+		TRACE_PRINT("getNpcapLoopbackAdapterName: error, strOriginalInterfaceName = NULL.");
 		TRACE_EXIT();
 		return FALSE;
 	}
@@ -301,7 +303,7 @@ BOOL IsWindowsWin10()
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&osvi);
 
-	TRACE_PRINT1("getNpcapLoopbackAdapterName: osvi.dwMajorVersion = %d, expected value = 10.", osvi.dwMajorVersion);
+	TRACE_PRINT1("GetVersionEx: osvi.dwMajorVersion = %d, expected value = 10.", osvi.dwMajorVersion);
 	TRACE_EXIT();
 	return osvi.dwMajorVersion >= 10;
 
