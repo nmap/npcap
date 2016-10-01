@@ -95,7 +95,7 @@ wstring ANSIToUnicode(const string& str)
 tstring executeCommand(TCHAR* strCmd)
 {
 	TRACE_ENTER();
-	TRACE_PRINT1("executeCommand: executing, strCmd = %ws.", strCmd);
+	TRACE_PRINT1("executeCommand: executing, strCmd = %s.", strCmd);
 
 	tstring result;
 	char buffer[128];
@@ -274,7 +274,7 @@ void renameLoopbackInterface(tstring strInterfaceName)
 	TRACE_ENTER();
 
 	TCHAR renameCmd[MAX_PATH];
-	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface set interface name=\"%s\" newname=\"%ws\""), (LPCTSTR) strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME);
+	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface set interface name=\"%s\" newname=\"%s\""), (LPCTSTR) strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME);
 	executeCommand(renameCmd);
 
 	TRACE_EXIT();
@@ -286,7 +286,7 @@ BOOL DoRenameLoopbackNetwork2()
 
 	snapshotInterfaceListAfterInstall();
 	tstring strOriginalInterfaceName = getNpcapLoopbackAdapterName();
-	TRACE_PRINT1("getNpcapLoopbackAdapterName: executing, strOriginalInterfaceName = %ws.", strOriginalInterfaceName.c_str());
+	TRACE_PRINT1("getNpcapLoopbackAdapterName: executing, strOriginalInterfaceName = %s.", strOriginalInterfaceName.c_str());
 	if (strOriginalInterfaceName.compare(_T("")) == 0)
 	{
 		TRACE_PRINT("getNpcapLoopbackAdapterName: error, strOriginalInterfaceName = NULL.");

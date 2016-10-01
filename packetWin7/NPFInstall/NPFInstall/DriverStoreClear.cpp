@@ -70,7 +70,7 @@ vector<tstring> getInfNamesFromPnpUtilOutput(tstring strOutput)
 		{
 			if (strText == _T("Nmap Project"))
 			{
-				TRACE_PRINT1("find: executing, strInfFileName = %ws.", strInfFileName.c_str());
+				TRACE_PRINT1("find: executing, strInfFileName = %s.", strInfFileName.c_str());
 				nResults.push_back(strInfFileName);
 			}
 		}

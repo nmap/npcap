@@ -122,7 +122,7 @@ DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
 	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
-	TRACE_PRINT1("lpFilename = %ws", lpFilename);
+	TRACE_PRINT1("lpFilename = %s", lpFilename);
 
 	TRACE_EXIT();
 
@@ -148,7 +148,7 @@ DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize)
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
 	_tmakepath(lpFilename, szDrive, szDir, WFP_CALLOUT_INF_FILE, _T(".inf"));
-	TRACE_PRINT1("lpFilename = %ws", lpFilename);
+	TRACE_PRINT1("lpFilename = %s", lpFilename);
 
 	TRACE_EXIT();
 
@@ -174,7 +174,7 @@ DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
 	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
 
 	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".sys"));
-	TRACE_PRINT1("lpFilename = %ws", lpFilename);
+	TRACE_PRINT1("lpFilename = %s", lpFilename);
 
 	TRACE_EXIT();
 
@@ -352,13 +352,13 @@ BOOL RenableBindings()
 
 	BOOL bSucceed = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME);
 	if (!bSucceed)
-		TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+		TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 
 	if (bWiFiService)
 	{
 		bSucceed = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, APP_NAME);
 		if (!bSucceed)
-			TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+			TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
 	}
 
 	CoUninitialize();

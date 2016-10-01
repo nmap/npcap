@@ -272,14 +272,14 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 		// Install the network component.
 		//
 		TRACE_PRINT1("bWiFiService = %d.", bWiFiService);
-		TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+		TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 		hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID, pguidClass);
 
 		if (hr == S_OK)
 		{
 			if (bWiFiService)
 			{
-				TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+				TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
 				hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, pguidClass);
 
 				if (hr == S_OK)
@@ -295,7 +295,7 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 				}
 				else
 				{
-					TRACE_PRINT1("HrInstallComponent: error, szComponentId = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+					TRACE_PRINT1("HrInstallComponent: error, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
 					// at least install the first service
 					hr = pnc->Apply();
 					if (hr != S_OK)
@@ -318,7 +318,7 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 		}
 		else
 		{
-			TRACE_PRINT1("HrInstallComponent: error, szComponentId = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+			TRACE_PRINT1("HrInstallComponent: error, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 		}
 	}
 
@@ -383,14 +383,14 @@ HRESULT HrInstallComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const G
 		}
 		else
 		{
-			TRACE_PRINT1("INetCfgClassSetup::Install: error, szComponentId = %ws.", szComponentId);
+			TRACE_PRINT1("INetCfgClassSetup::Install: error, szComponentId = %s.", szComponentId);
 		}
 
 		ReleaseRef(pncClassSetup);
 	}
 	else
 	{
-		TRACE_PRINT1("INetCfg::QueryNetCfgClass: error, szComponentId = %ws.", szComponentId);
+		TRACE_PRINT1("INetCfg::QueryNetCfgClass: error, szComponentId = %s.", szComponentId);
 	}
 
 	TRACE_EXIT();

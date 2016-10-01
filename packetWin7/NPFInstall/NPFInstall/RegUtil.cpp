@@ -33,7 +33,7 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDevi
 	HKEY hNpcapKey;
 
 	TRACE_ENTER();
-	TRACE_PRINT4("WriteStrToRegistry: executing, strSubKey = %ws, strValueName = %ws, strDeviceName = %ws, dwSamDesired = 0x%08x.",
+	TRACE_PRINT4("WriteStrToRegistry: executing, strSubKey = %s, strValueName = %s, strDeviceName = %s, dwSamDesired = 0x%08x.",
 		strSubKey, strValueName, strDeviceName, dwSamDesired);
 
 	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired, &hNpcapKey);

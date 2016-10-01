@@ -217,7 +217,7 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 //		wcout << L"\tPNP Device Node ID: " << wstring(pszPndDevNodeId) << L'\n';
 
 		int iDevID = getIntDevID(pszPndDevNodeId);
-		TRACE_PRINT4("INetCfgComponent::GetPnpDevNodeId: executing, pszPndDevNodeId = %ws, iDevID = %d, g_NpcapAdapterID = %d, pszBindName = %ws.",
+		TRACE_PRINT4("INetCfgComponent::GetPnpDevNodeId: executing, pszPndDevNodeId = %s, iDevID = %d, g_NpcapAdapterID = %d, pszBindName = %ws.",
 			pszPndDevNodeId, iDevID, g_NpcapAdapterID, pszBindName);
 		if (g_NpcapAdapterID == iDevID)
 		{

@@ -83,7 +83,7 @@ BOOL DoTheWork(INetSharingManager *pNSM, TCHAR strDeviceName[])
 
 						if (_tcscmp(currentGUID, strDeviceName) == 0)
 						{
-							TRACE_PRINT2("INetConnection::Rename: executing, currentGUID = strDeviceName = %ws, pszwNewName = %ws.", currentGUID, NPCAP_LOOPBACK_INTERFACE_NAME);
+							TRACE_PRINT2("INetConnection::Rename: executing, currentGUID = strDeviceName = %s, pszwNewName = %s.", currentGUID, NPCAP_LOOPBACK_INTERFACE_NAME);
 
 							hr = pNC->Rename(NPCAP_LOOPBACK_INTERFACE_NAME);
 							bFound = TRUE;

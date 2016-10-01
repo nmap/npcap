@@ -1307,7 +1307,7 @@ BOOL GetLoopbackINFFilePath(TCHAR strLoopbackInfPath[])
 	}
 	_stprintf_s(strLoopbackInfPath, MAX_PATH + 30, _T("%s\\inf\\netloop.inf"), tmp);
 
-	TRACE_PRINT1("SHGetSpecialFolderPath: succeed, strLoopbackInfPath = %ws.", strLoopbackInfPath);
+	TRACE_PRINT1("SHGetSpecialFolderPath: succeed, strLoopbackInfPath = %s.", strLoopbackInfPath);
 	TRACE_EXIT();
 	return TRUE;
 }
@@ -1328,7 +1328,7 @@ BOOL GetConfigFilePath(TCHAR strConfigPath[])
 	_tsplitpath_s(tmp, drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0);
 	_stprintf_s(strConfigPath, MAX_PATH + 30, _T("%s%sloopback.ini"), drive, dir);
 
-	TRACE_PRINT1("GetModuleFileName: succeed, strConfigPath = %ws.", strConfigPath);
+	TRACE_PRINT1("GetModuleFileName: succeed, strConfigPath = %s.", strConfigPath);
 	TRACE_EXIT();
 	return TRUE;
 }

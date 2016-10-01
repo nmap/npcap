@@ -29,13 +29,13 @@ BOOL isFileExist(TCHAR szFileFullPath[])
 	hFind = FindFirstFile(szFileFullPath, &FindFileData);
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
-		TRACE_PRINT2("FindFirstFile: error, szFileFullPath = %ws, errCode = 0x%08x.", szFileFullPath, GetLastError());
+		TRACE_PRINT2("FindFirstFile: error, szFileFullPath = %s, errCode = 0x%08x.", szFileFullPath, GetLastError());
 		TRACE_EXIT();
 		return FALSE;
 	}
 	else
 	{
-		TRACE_PRINT1("FindFirstFile: succeed, szFileFullPath = %ws.", szFileFullPath);
+		TRACE_PRINT1("FindFirstFile: succeed, szFileFullPath = %s.", szFileFullPath);
 		FindClose(hFind);
 		TRACE_EXIT();
 		return TRUE;
@@ -70,7 +70,7 @@ BOOL InstallWFPCallout()
 	TCHAR szCmd[_MAX_PATH * 2];
 	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("DefaultInstall 132 %s"), szFileFullPath);
 	InstallHinfSection(NULL, NULL, szCmd, 0);
-	TRACE_PRINT1("InstallHinfSection: executing, szCmd = %ws.", szCmd);
+	TRACE_PRINT1("InstallHinfSection: executing, szCmd = %s.", szCmd);
 
 	TRACE_EXIT();
 	return TRUE;
@@ -104,7 +104,7 @@ BOOL UninstallWFPCallout()
 	TCHAR szCmd[_MAX_PATH * 2];
 	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("DefaultUninstall 132 %s"), szFileFullPath);
 	InstallHinfSection(NULL, NULL, szCmd, 0);
-	TRACE_PRINT1("InstallHinfSection: executing, szCmd = %ws.", szCmd);
+	TRACE_PRINT1("InstallHinfSection: executing, szCmd = %s.", szCmd);
 
 	TRACE_EXIT();
 	return TRUE;

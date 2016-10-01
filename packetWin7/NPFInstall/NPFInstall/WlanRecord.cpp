@@ -231,7 +231,7 @@ vector<tstring> getWlanAdapterGuids()
 	{
 		if (UuidToString(&sInfo[i].InterfaceGuid, &strGuid) == RPC_S_OK)
 		{
-			TRACE_PRINT1("EnumInterface: executing, strGuid = %ws.", (TCHAR*) strGuid);
+			TRACE_PRINT1("EnumInterface: executing, strGuid = %s.", (TCHAR*) strGuid);
 			nstrWlanAdapterGuids.push_back((TCHAR*) strGuid);
 			RpcStringFree(&strGuid);
 		}
@@ -267,7 +267,7 @@ BOOL writeWlanAdapterGuidsToRegistry()
 
 	tstring strGuidText = printAdapterNames(nstrWlanAdapterGuids);
 
-	TRACE_PRINT1("AddFlagToRegistry_Dot11Adapters: executing, strGuidText = %ws.", strGuidText.c_str());
+	TRACE_PRINT1("AddFlagToRegistry_Dot11Adapters: executing, strGuidText = %s.", strGuidText.c_str());
 	TRACE_EXIT();
 	return AddFlagToRegistry_Dot11Adapters(strGuidText.c_str());
 

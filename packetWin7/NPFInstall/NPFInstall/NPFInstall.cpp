@@ -244,7 +244,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	for (int i = 0; i < argc; i++)
 	{
 		strTmp = argv[i];
-		TRACE_PRINT2("_tmain: executing, argv[%d] = %ws.", i, argv[i]);
+		TRACE_PRINT2("_tmain: executing, argv[%d] = %s.", i, argv[i]);
 		if (strTmp == _T("-n"))
 		{
 			bNoWindow = TRUE;
