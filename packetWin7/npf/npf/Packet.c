@@ -1109,24 +1109,24 @@ Return Value:
 
 	if (FilterDriverHandle)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting Filter Handle = %p", FilterDriverHandle);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Deleting Filter Handle = %p", FilterDriverHandle);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
 		FilterDriverHandle = NULL;
 	}
 	else
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Filter Handle = NULL, no need to delete.");
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Filter Handle = NULL, no need to delete.");
 	}
 
 	if (FilterDriverHandle_WiFi)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting Filter Handle (WiFi) = %p", FilterDriverHandle_WiFi);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Deleting Filter Handle (WiFi) = %p", FilterDriverHandle_WiFi);
 		NdisFDeregisterFilterDriver(FilterDriverHandle_WiFi);
 		FilterDriverHandle_WiFi = NULL;
 	}
 	else
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Filter Handle (WiFi) = NULL, no need to delete.");
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Filter Handle (WiFi) = NULL, no need to delete.");
 	}
 
 	NPF_RemoveUnclosedAdapters();
