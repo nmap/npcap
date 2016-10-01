@@ -466,38 +466,38 @@ HRESULT HrUninstallNetComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId)
 
 						if ((hr != S_OK) && (hr != NETCFG_S_REBOOT))
 						{
-							ErrMsg(hr, L"Couldn't apply the changes after uninstalling %s.", szComponentId);
+							ErrMsg(hr, _T("Couldn't apply the changes after uninstalling %s."), szComponentId);
 						}
 					}
 					else
 					{
-						ErrMsg(hr, L"Failed to uninstall %s.", szComponentId);
+						ErrMsg(hr, _T("Failed to uninstall %s."), szComponentId);
 					}
 
 					ReleaseRef(pncClassSetup);
 				}
 				else
 				{
-					ErrMsg(hr, L"Couldn't get an interface to setup class.");
+					ErrMsg(hr, _T("Couldn't get an interface to setup class."));
 				}
 
 				ReleaseRef(pncClass);
 			}
 			else
 			{
-				ErrMsg(hr, L"Couldn't get a pointer to class interface of %s.", szComponentId);
+				ErrMsg(hr, _T("Couldn't get a pointer to class interface of %s."), szComponentId);
 			}
 		}
 		else
 		{
-			ErrMsg(hr, L"Couldn't get the class guid of %s.", szComponentId);
+			ErrMsg(hr, _T("Couldn't get the class guid of %s."), szComponentId);
 		}
 
 		ReleaseRef(pncc);
 	}
 	else
 	{
-		ErrMsg(hr, L"Couldn't get an interface pointer to %s.", szComponentId);
+		ErrMsg(hr, _T("Couldn't get an interface pointer to %s."), szComponentId);
 	}
 
 	TRACE_EXIT();

@@ -20,7 +20,11 @@ This code is based on the Windows built-in netsh.exe tool.
 // Depress the GetVersionEx() call warning.
 #pragma warning (disable: 4996)
 
-#define			NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR		NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
+#ifdef _UNICODE
+#define			NPCAP_LOOPBACK_INTERFACE_NAME				NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
+#else
+#define			NPCAP_LOOPBACK_INTERFACE_NAME				NPF_DRIVER_NAME_NORMAL " Loopback Adapter"
+#endif
 #define			NPCAP_LOOPBACK_INTERFACE_MTU				65536
 #define			BUF_SIZE									255
 
@@ -36,7 +40,7 @@ tstring getNpcapLoopbackAdapterName()
 		TRACE_PRINT2("getNpcapLoopbackAdapterName: error, g_InterfaceNameList1.size() = %d, g_InterfaceNameList2.size() = %d.",
 			g_InterfaceNameList1.size(), g_InterfaceNameList2.size());
 		TRACE_EXIT();
-		return L"";
+		return _T("");
 	}
 
 	for (size_t i = 0; i < g_InterfaceNameList2.size(); i ++)
@@ -60,7 +64,7 @@ tstring getNpcapLoopbackAdapterName()
 
 	TRACE_PRINT("getNpcapLoopbackAdapterName: unknown error.");
 	TRACE_EXIT();
-	return L"";
+	return _T("");
 }
 
 wstring ANSIToUnicode(const string& str)
@@ -102,7 +106,7 @@ tstring executeCommand(TCHAR* strCmd)
 	{
 		TRACE_PRINT1("_tpopen: error, errCode = 0x%08x.", errno);
 		TRACE_EXIT();
-		return L"";
+		return _T("");
 	}
 
 	while (!feof(pipe))
@@ -178,7 +182,7 @@ vector<tstring> getInterfaceNamesFromNetshOutput(tstring strOutput)
 		}
 		else
 		{
-			iStringStart += wcslen(_T("    "));
+			iStringStart += _tcslen(_T("    "));
 		}
 
 		tstring strInterfaceName = strOutput.substr(iStringStart, iStringEnd - iStringStart);
@@ -237,7 +241,7 @@ void snapshotInterfaceListAfterInstall()
 {
 	TRACE_ENTER();
 
-	tstring cmd = executeCommand(L"netsh.exe interface show interface");
+	tstring cmd = executeCommand(_T("netsh.exe interface show interface"));
 	g_InterfaceNameList2 = getInterfaceNamesFromNetshOutput(cmd);
 
 	TRACE_EXIT();
@@ -270,7 +274,7 @@ void renameLoopbackInterface(tstring strInterfaceName)
 	TRACE_ENTER();
 
 	TCHAR renameCmd[MAX_PATH];
-	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface set interface name=\"%s\" newname=\"%ws\""), (LPCTSTR) strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
+	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface set interface name=\"%s\" newname=\"%ws\""), (LPCTSTR) strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME);
 	executeCommand(renameCmd);
 
 	TRACE_EXIT();

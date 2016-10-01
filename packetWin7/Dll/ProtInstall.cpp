@@ -87,7 +87,7 @@ VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...)
 		{
 			offset = (ULONG) _tcslen(buf);
 
-			_stprintf(buf + offset, L"\n\nPossible cause:\n\n");
+			_stprintf(buf + offset, _T("\n\nPossible cause:\n\n"));
 
 			offset = (ULONG) _tcslen(buf);
 
@@ -222,7 +222,7 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR l
 		{
 			if (hr != HRESULT_FROM_WIN32(ERROR_CANCELLED))
 			{
-				ErrMsg(hr, L"Couldn't install the network component.");
+				ErrMsg(hr, _T("Couldn't install the network component."));
 			}
 		}
 
@@ -232,13 +232,13 @@ HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszPnpID, LPTSTR l
 	{
 		if ((hr == NETCFG_E_NO_WRITE_LOCK) && lpszApp)
 		{
-			ErrMsg(hr, L"%s currently holds the lock, try later.", lpszApp);
+			ErrMsg(hr, _T("%s currently holds the lock, try later."), lpszApp);
 
 			CoTaskMemFree(lpszApp);
 		}
 		else
 		{
-			ErrMsg(hr, L"Couldn't the get notify object interface.");
+			ErrMsg(hr, _T("Couldn't the get notify object interface."));
 		}
 	}
 
@@ -270,7 +270,7 @@ DWORD InstallDriver()
 
 	if (hr != S_OK)
 	{
-		ErrMsg(hr, L"InstallSpecifiedComponent\n");
+		ErrMsg(hr, _T("InstallSpecifiedComponent\n"));
 		TRACE_EXIT();
 		return 0;
 	}
@@ -297,7 +297,7 @@ DWORD UninstallDriver()
 		{
 			if (hr != HRESULT_FROM_WIN32(ERROR_CANCELLED))
 			{
-				ErrMsg(hr, L"Couldn't uninstall the network component.");
+				ErrMsg(hr, _T("Couldn't uninstall the network component."));
 			}
 		}
 
@@ -309,7 +309,7 @@ DWORD UninstallDriver()
 			{
 				if (hr != HRESULT_FROM_WIN32(ERROR_CANCELLED))
 				{
-					ErrMsg(hr, L"Couldn't uninstall the network component.");
+					ErrMsg(hr, _T("Couldn't uninstall the network component."));
 				}
 			}
 		}
@@ -320,13 +320,13 @@ DWORD UninstallDriver()
 	{
 		if ((hr == NETCFG_E_NO_WRITE_LOCK) && lpszApp)
 		{
-			ErrMsg(hr, L"%s currently holds the lock, try later.", lpszApp);
+			ErrMsg(hr, _T("%s currently holds the lock, try later."), lpszApp);
 
 			CoTaskMemFree(lpszApp);
 		}
 		else
 		{
-			ErrMsg(hr, L"Couldn't get the notify object interface.");
+			ErrMsg(hr, _T("Couldn't get the notify object interface."));
 		}
 	}
 
