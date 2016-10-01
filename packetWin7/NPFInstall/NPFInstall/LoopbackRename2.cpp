@@ -257,9 +257,9 @@ void changeLoopbackInterfaceMTU(tstring strInterfaceName)
 	TRACE_ENTER();
 
 	TCHAR renameCmd[MAX_PATH];
-	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface ipv4 set subinterface \"%s\" mtu=%d store=persistent"), strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
+	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface ipv4 set subinterface \"%s\" mtu=%d store=persistent"), (LPCTSTR) strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
 	executeCommand(renameCmd);
-	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface ipv6 set subinterface \"%s\" mtu=%d store=persistent"), strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
+	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface ipv6 set subinterface \"%s\" mtu=%d store=persistent"), (LPCTSTR) strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_MTU);
 	executeCommand(renameCmd);
 
 	TRACE_EXIT();
@@ -270,7 +270,7 @@ void renameLoopbackInterface(tstring strInterfaceName)
 	TRACE_ENTER();
 
 	TCHAR renameCmd[MAX_PATH];
-	swprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface set interface name=\"%s\" newname=\"%ws\""), strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
+	_stprintf_s(renameCmd, MAX_PATH, _T("netsh.exe interface set interface name=\"%s\" newname=\"%ws\""), (LPCTSTR) strInterfaceName.c_str(), NPCAP_LOOPBACK_INTERFACE_NAME_WIDECHAR);
 	executeCommand(renameCmd);
 
 	TRACE_EXIT();
