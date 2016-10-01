@@ -585,7 +585,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 _EXIT:
-	if (nStatus == -1)
+	if (nStatus == 0)
+	{
+		TRACE_PRINT1("_tmain: succeed, nStatus = %d.", nStatus);
+	}
+	else
 	{
 		TRACE_PRINT1("_tmain: error, nStatus = %d.", nStatus);
 	}

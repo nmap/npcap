@@ -261,8 +261,8 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 		   )
 		{
 			dwError = GetLastError();
-
 			hr = HRESULT_FROM_WIN32(dwError);
+			TRACE_PRINT1("SetupCopyOEMInfW: error, errCode = 0x%08x.", hr);
 		}
 	}
 
@@ -271,12 +271,15 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 		//
 		// Install the network component.
 		//
+		TRACE_PRINT1("bWiFiService = %d.", bWiFiService);
+		TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 		hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID, pguidClass);
 
 		if (hr == S_OK)
 		{
 			if (bWiFiService)
 			{
+				TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
 				hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, pguidClass);
 
 				if (hr == S_OK)
@@ -285,12 +288,20 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 					// On success, apply the changes
 					//
 					hr = pnc->Apply();
+					if (hr != S_OK)
+					{
+						TRACE_PRINT1("INetCfg::Apply: error, errCode = 0x%08x.", hr);
+					}
 				}
 				else
 				{
-					TRACE_PRINT1("HrInstallComponent: error, PNP Device ID = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+					TRACE_PRINT1("HrInstallComponent: error, szComponentId = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
 					// at least install the first service
 					hr = pnc->Apply();
+					if (hr != S_OK)
+					{
+						TRACE_PRINT1("INetCfg::Apply: error, errCode = 0x%08x.", hr);
+					}
 				}
 			}
 			else
@@ -299,11 +310,15 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR lpszComponentId, IN co
 				// On success, apply the changes
 				//
 				hr = pnc->Apply();
+				if (hr != S_OK)
+				{
+					TRACE_PRINT1("INetCfg::Apply: error, errCode = 0x%08x.", hr);
+				}
 			}
 		}
 		else
 		{
-			TRACE_PRINT1("HrInstallComponent: error, PNP Device ID = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+			TRACE_PRINT1("HrInstallComponent: error, szComponentId = %ws.", NDISLWF_SERVICE_PNP_DEVICE_ID);
 		}
 	}
 
@@ -368,14 +383,14 @@ HRESULT HrInstallComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const G
 		}
 		else
 		{
-			TRACE_PRINT1("pncClassSetup->Install: error, szComponentId = %ws.", szComponentId);
+			TRACE_PRINT1("INetCfgClassSetup::Install: error, szComponentId = %ws.", szComponentId);
 		}
 
 		ReleaseRef(pncClassSetup);
 	}
 	else
 	{
-		TRACE_PRINT1("pnc->QueryNetCfgClass: error, szComponentId = %ws.", szComponentId);
+		TRACE_PRINT1("INetCfg::QueryNetCfgClass: error, szComponentId = %ws.", szComponentId);
 	}
 
 	TRACE_EXIT();
