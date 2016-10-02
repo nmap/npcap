@@ -250,8 +250,6 @@ NPF_Write(
 			{
 #endif
 				GroupOpen = Open->GroupHead->GroupNext;
-
-				NdisAcquireSpinLock(&Open->GroupHead->GroupOpenArrayLock);
 				while (GroupOpen != NULL)
 				{
 					TempOpen = GroupOpen;
@@ -262,7 +260,6 @@ NPF_Write(
 
 					GroupOpen = TempOpen->GroupNext;
 				}
-				NdisReleaseSpinLock(&Open->GroupHead->GroupOpenArrayLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			}
 #endif
@@ -622,7 +619,6 @@ NPF_BufferedWrite(
 		//receive the packets before sending them
 		GroupOpen = Open->GroupHead->GroupNext;
 
-		NdisAcquireSpinLock(&Open->GroupHead->GroupOpenArrayLock);
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
@@ -633,7 +629,6 @@ NPF_BufferedWrite(
 
 			GroupOpen = TempOpen->GroupNext;
 		}
-		NdisReleaseSpinLock(&Open->GroupHead->GroupOpenArrayLock);
 
 		pNetBufferList->SourceHandle = Open->AdapterHandle;
 		NPFSetNBLChildOpen(pNetBufferList, Open); //save the child open object in the packets

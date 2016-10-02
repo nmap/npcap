@@ -512,7 +512,6 @@ NPF_ReleaseOpenInstanceResources(
 	NdisFreeSpinLock(&pOpen->MachineLock);
 	NdisFreeSpinLock(&pOpen->AdapterHandleLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
-	NdisFreeSpinLock(&pOpen->GroupOpenArrayLock);
 
 	//
 	// Free the string with the name of the dump file
@@ -1022,7 +1021,6 @@ NPF_AddToGroupOpenArray(
 	{
 		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_EqualAdapterName(&CurOpen->AdapterName, &Open->AdapterName) == TRUE && CurOpen->DirectBinded)
 		{
-			NdisAcquireSpinLock(&CurOpen->GroupOpenArrayLock);
 			GroupRear = CurOpen;
 			while (GroupRear->GroupNext != NULL)
 			{
@@ -1030,7 +1028,6 @@ NPF_AddToGroupOpenArray(
 			}
 			GroupRear->GroupNext = Open;
 			Open->GroupHead = CurOpen;
-			NdisReleaseSpinLock(&CurOpen->GroupOpenArrayLock);
 			break;
 		}
 	}
@@ -1109,7 +1106,6 @@ NPF_RemoveFromGroupOpenArray(
 		return;
 	}
 
-	NdisAcquireSpinLock(&GroupHeadOpen->GroupOpenArrayLock);
 	GroupOpen = GroupHeadOpen;
 	while (GroupOpen)
 	{
@@ -1123,7 +1119,6 @@ NPF_RemoveFromGroupOpenArray(
 			else
 			{
 				GroupPrev->GroupNext = GroupOpen->GroupNext;
-				NdisReleaseSpinLock(&GroupHeadOpen->GroupOpenArrayLock);
 				TRACE_EXIT();
 				return;
 			}
@@ -1131,7 +1126,6 @@ NPF_RemoveFromGroupOpenArray(
 		GroupPrev = GroupOpen;
 		GroupOpen = GroupOpen->GroupNext;
 	}
-	NdisReleaseSpinLock(&GroupHeadOpen->GroupOpenArrayLock);
 
 	IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: never should be here.\n");)
 	TRACE_EXIT();
@@ -1417,8 +1411,6 @@ NPF_CreateOpenObject(
 	Open->ClosePending = FALSE;
 	Open->PausePending = FALSE;
 	NdisAllocateSpinLock(&Open->OpenInUseLock);
-
-	NdisAllocateSpinLock(&Open->GroupOpenArrayLock);
 
 	//
 	//allocate the spinlock for the statistic counters

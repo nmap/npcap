@@ -282,7 +282,6 @@ typedef struct _OPEN_INSTANCE
 	struct _OPEN_INSTANCE	*Next;
 	struct _OPEN_INSTANCE	*GroupNext;
 	struct _OPEN_INSTANCE	*GroupHead;
-	NDIS_SPIN_LOCK			GroupOpenArrayLock;
 
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
