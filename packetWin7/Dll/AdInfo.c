@@ -976,7 +976,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 	// Set the NdisMediumNull value for "Npcap Loopback Adapter".
 	if (strcmp(g_LoopbackAdapterNameForDLTNull, TmpAdInfo->Name) == 0)
 	{
-		TmpAdInfo->LinkLayer.LinkType = NdisMediumNull;
+		TmpAdInfo->LinkLayer.LinkType = (UINT) NdisMediumNull;
 	}
 	
 	// Update the AdaptersInfo list
