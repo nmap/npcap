@@ -1946,7 +1946,7 @@ NPF_IoControl(
 		//
 		// gain ownership of the Ndis Handle
 		//
-		if (NPF_StartUsingBinding(Open) == FALSE)
+		if (!Open->GroupHead || NPF_StartUsingBinding(Open->GroupHead) == FALSE)
 		{
 			//
 			// MAC unbindind or unbound
@@ -1963,7 +1963,7 @@ NPF_IoControl(
 			//
 			// Release ownership of the Ndis Handle
 			//
-			NPF_StopUsingBinding(Open);
+			NPF_StopUsingBinding(Open->GroupHead);
 
 			SET_FAILURE_NOMEM();
 			break;
@@ -2000,7 +2000,7 @@ NPF_IoControl(
 				//
 				// Release ownership of the Ndis Handle
 				//
-				NPF_StopUsingBinding(Open);
+				NPF_StopUsingBinding(Open->GroupHead);
 
 				ExInterlockedInsertTailList(&Open->RequestList,
 					&pRequest->ListElement,
@@ -2025,7 +2025,7 @@ NPF_IoControl(
 				//
 				// Release ownership of the Ndis Handle
 				//
-				NPF_StopUsingBinding(Open);
+				NPF_StopUsingBinding(Open->GroupHead);
 
 				ExInterlockedInsertTailList(&Open->RequestList,
 					&pRequest->ListElement,
@@ -2049,7 +2049,7 @@ NPF_IoControl(
 // 				//
 // 				// Release ownership of the Ndis Handle
 // 				//
-// 				NPF_StopUsingBinding(Open);
+// 				NPF_StopUsingBinding(Open->GroupHead);
 //
 // 				ExInterlockedInsertTailList(&Open->RequestList,
 // 					&pRequest->ListElement,
@@ -2075,7 +2075,7 @@ NPF_IoControl(
 				//
 				// Release ownership of the Ndis Handle
 				//
-				NPF_StopUsingBinding(Open);
+				NPF_StopUsingBinding(Open->GroupHead);
 
 				ExInterlockedInsertTailList(&Open->RequestList,
 					&pRequest->ListElement,
@@ -2104,7 +2104,7 @@ NPF_IoControl(
 				//
 				// Release ownership of the Ndis Handle
 				//
-				NPF_StopUsingBinding(Open);
+				NPF_StopUsingBinding(Open->GroupHead);
 
 				ExInterlockedInsertTailList(&Open->RequestList,
 					&pRequest->ListElement,
@@ -2154,35 +2154,18 @@ NPF_IoControl(
 
 			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
 			{
-				// ASSERT(Open->GroupHead != NULL);
-				if (Open->GroupHead)
+				ASSERT(Open->GroupHead != NULL);
+				Open->GroupHead->MyPacketFilter = *(ULONG*)OidData->Data;
+				if (Open->GroupHead->MyPacketFilter == NDIS_PACKET_TYPE_ALL_LOCAL)
 				{
-					Open->GroupHead->MyPacketFilter = *(ULONG*)OidData->Data;
-					if (Open->GroupHead->MyPacketFilter == NDIS_PACKET_TYPE_ALL_LOCAL)
-					{
-						Open->GroupHead->MyPacketFilter = 0;
-					}
+					Open->GroupHead->MyPacketFilter = 0;
+				}
 #ifdef HAVE_DOT11_SUPPORT
-					combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | Open->GroupHead->Dot11PacketFilter;
+				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | Open->GroupHead->Dot11PacketFilter;
 #else
-					combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
+				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
 #endif
-					pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
-				}
-				else
-				{
-					//
-					// Release ownership of the Ndis Handle
-					//
-					NPF_StopUsingBinding(Open);
-
-					ExInterlockedInsertTailList(&Open->RequestList,
-						&pRequest->ListElement,
-						&Open->RequestSpinLock);
-
-					SET_FAILURE_NOMEM();
-					break;
-				}
+				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 			}
 
 			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
@@ -2192,7 +2175,7 @@ NPF_IoControl(
 			//
 			// Release ownership of the Ndis Handle
 			//
-			NPF_StopUsingBinding(Open);
+			NPF_StopUsingBinding(Open->GroupHead);
 
 			ExInterlockedInsertTailList(&Open->RequestList,
 				&pRequest->ListElement,
@@ -2214,7 +2197,7 @@ NPF_IoControl(
 		//
 		// Release ownership of the Ndis Handle
 		//
-		NPF_StopUsingBinding(Open);
+		NPF_StopUsingBinding(Open->GroupHead);
 
 		//
 		// Complete the request

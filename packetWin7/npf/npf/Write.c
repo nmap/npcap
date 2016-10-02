@@ -119,7 +119,7 @@ NPF_Write(
 	// 
 	// Increment the ref counter of the binding handle, if possible
 	//
-	if (NPF_StartUsingBinding(Open) == FALSE)
+	if (!Open->GroupHead || NPF_StartUsingBinding(Open->GroupHead) == FALSE)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Adapter is probably unbinding, cannot send packets");
 
@@ -139,7 +139,7 @@ NPF_Write(
 		// Another write operation is currently in progress
 		NdisReleaseSpinLock(&Open->WriteLock);
 
-		NPF_StopUsingBinding(Open);
+		NPF_StopUsingBinding(Open->GroupHead);
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Another Send operation is in progress, aborting.");
 
@@ -209,10 +209,10 @@ NPF_Write(
 
 			// Attach the writes buffer to the packet
 
-			// ASSERT(Open->GroupHead != NULL);
+			ASSERT(Open->GroupHead != NULL);
 
 			NdisAcquireSpinLock(&Open->OpenInUseLock);
-			if (!Open->GroupHead || Open->GroupHead->AdapterBindingStatus != ADAPTER_BOUND || Open->GroupHead->PausePending)
+			if (Open->GroupHead->PausePending)
 			{
 				Status = NDIS_STATUS_PAUSED;
 			}
@@ -229,7 +229,7 @@ NPF_Write(
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "The adapter is pending to pause, unable to send the packets.");
 
 				NPF_FreePackets(pNetBufferList);
-				NPF_StopUsingBinding(Open);
+				NPF_StopUsingBinding(Open->GroupHead);
 				NPF_StopUsingOpenInstance(Open);
 
 				Irp->IoStatus.Information = 0;
@@ -249,28 +249,20 @@ NPF_Write(
 			if (Open->Loopback == FALSE)
 			{
 #endif
-				if (Open->GroupHead != NULL)
-				{
-					GroupOpen = Open->GroupHead->GroupNext;
+				GroupOpen = Open->GroupHead->GroupNext;
 
-					NdisAcquireSpinLock(&Open->GroupHead->GroupOpenArrayLock);
-					while (GroupOpen != NULL)
+				NdisAcquireSpinLock(&Open->GroupHead->GroupOpenArrayLock);
+				while (GroupOpen != NULL)
+				{
+					TempOpen = GroupOpen;
+					if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
 					{
-						TempOpen = GroupOpen;
-						if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
-						{
-							NPF_TapExForEachOpen(TempOpen, pNetBufferList);
-						}
-
-						GroupOpen = TempOpen->GroupNext;
+						NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 					}
-					NdisReleaseSpinLock(&Open->GroupHead->GroupOpenArrayLock);
+
+					GroupOpen = TempOpen->GroupNext;
 				}
-				else
-				{
-					//this is impossible
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_Write: never should be here.");
-				}
+				NdisReleaseSpinLock(&Open->GroupHead->GroupOpenArrayLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			}
 #endif
@@ -383,7 +375,7 @@ NPF_Write(
 	//
 	// all the packets have been transmitted, release the use of the adapter binding
 	//
-	NPF_StopUsingBinding(Open);
+	NPF_StopUsingBinding(Open->GroupHead);
 
 	//
 	// no more writes are in progress
@@ -442,7 +434,7 @@ NPF_BufferedWrite(
 
 	Open = (POPEN_INSTANCE) IrpSp->FileObject->FsContext;
 
-	if (NPF_StartUsingBinding(Open) == FALSE)
+	if (!Open->GroupHead || NPF_StartUsingBinding(Open->GroupHead) == FALSE)
 	{
 		// The Network adapter was removed. 
 		TRACE_EXIT();
@@ -455,7 +447,7 @@ NPF_BufferedWrite(
 		// 
 		// release ownership of the NdisAdapter binding
 		//
-		NPF_StopUsingBinding(Open);
+		NPF_StopUsingBinding(Open->GroupHead);
 		TRACE_EXIT();
 		return 0;
 	}
@@ -468,7 +460,7 @@ NPF_BufferedWrite(
 		// 
 		// release ownership of the NdisAdapter binding
 		//
-		NPF_StopUsingBinding(Open);
+		NPF_StopUsingBinding(Open->GroupHead);
 		TRACE_EXIT();
 		return 0;
 	}
@@ -603,10 +595,10 @@ NPF_BufferedWrite(
 
 		TmpMdl->Next = NULL;
 
-		// ASSERT(Open->GroupHead != NULL);
+		ASSERT(Open->GroupHead != NULL);
 
 		NdisAcquireSpinLock(&Open->OpenInUseLock);
-		if (!Open->GroupHead || Open->GroupHead->AdapterBindingStatus != ADAPTER_BOUND || Open->GroupHead->PausePending)
+		if (Open->GroupHead->PausePending)
 		{
 			Status = NDIS_STATUS_PAUSED;
 		}
@@ -628,28 +620,20 @@ NPF_BufferedWrite(
 		}
 
 		//receive the packets before sending them
-		if (Open->GroupHead != NULL)
-		{
-			GroupOpen = Open->GroupHead->GroupNext;
+		GroupOpen = Open->GroupHead->GroupNext;
 
-			NdisAcquireSpinLock(&Open->GroupHead->GroupOpenArrayLock);
-			while (GroupOpen != NULL)
+		NdisAcquireSpinLock(&Open->GroupHead->GroupOpenArrayLock);
+		while (GroupOpen != NULL)
+		{
+			TempOpen = GroupOpen;
+			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
 			{
-				TempOpen = GroupOpen;
-				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
-				{
-					NPF_TapExForEachOpen(TempOpen, pNetBufferList);
-				}
-
-				GroupOpen = TempOpen->GroupNext;
+				NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 			}
-			NdisReleaseSpinLock(&Open->GroupHead->GroupOpenArrayLock);
+
+			GroupOpen = TempOpen->GroupNext;
 		}
-		else
-		{
-			//this is impossible
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_BufferedWrite: never should be here.");
-		}
+		NdisReleaseSpinLock(&Open->GroupHead->GroupOpenArrayLock);
 
 		pNetBufferList->SourceHandle = Open->AdapterHandle;
 		NPFSetNBLChildOpen(pNetBufferList, Open); //save the child open object in the packets
@@ -746,7 +730,7 @@ NPF_BufferedWrite(
 	// 
 	// release ownership of the NdisAdapter binding
 	//
-	NPF_StopUsingBinding(Open);
+	NPF_StopUsingBinding(Open->GroupHead);
 
 	TRACE_EXIT();
 	return result;

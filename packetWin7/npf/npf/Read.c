@@ -111,14 +111,14 @@ NPF_Read(
 	// This is not critical, since we just want to have a quick way to have the
 	// dispatch read fail in case the adapter has been unbound
 
-	if (NPF_StartUsingBinding(Open) == FALSE)
+	if (!Open->GroupHead || NPF_StartUsingBinding(Open->GroupHead) == FALSE)
 	{
 		NPF_StopUsingOpenInstance(Open);
 		// The Network adapter has been removed or diasabled
 		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
-	NPF_StopUsingBinding(Open);
+	NPF_StopUsingBinding(Open->GroupHead);
 
 	if (Open->Size == 0)
 	{
