@@ -1371,8 +1371,6 @@ VOID NPF_StopUsingBinding(IN POPEN_INSTANCE pOpen);
 
 VOID NPF_CloseBinding(IN POPEN_INSTANCE pOpen);
 
-VOID NPF_CloseBindingAndAdapter(IN POPEN_INSTANCE pOpen);
-
 BOOLEAN NPF_StartUsingOpenInstance(IN POPEN_INSTANCE pOpen);
 
 VOID NPF_StopUsingOpenInstance(IN POPEN_INSTANCE pOpen);

@@ -180,63 +180,6 @@ NPF_CloseBinding(
 
 //-------------------------------------------------------------------
 
-VOID
-NPF_CloseBindingAndAdapter(
-	IN POPEN_INSTANCE pOpen
-	)
-{
-	NDIS_EVENT Event;
-	NDIS_STATUS Status;
-
-	ASSERT(pOpen != NULL);
-	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
-
-	NdisInitializeEvent(&Event);
-	NdisResetEvent(&Event);
-
-	NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
-
-	while (pOpen->AdapterHandleUsageCounter > 0)
-	{
-		NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
-		NdisWaitEvent(&Event, 1);
-		NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
-	}
-
-	//
-	// now the UsageCounter is 0
-	//
-
-	while (pOpen->AdapterBindingStatus == ADAPTER_UNBINDING)
-	{
-		NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
-		NdisWaitEvent(&Event, 1);
-		NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
-	}
-
-	//
-	// now the binding status is either bound or unbound
-	//
-
-	if (pOpen->AdapterBindingStatus == ADAPTER_UNBOUND)
-	{
-		NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
-		return;
-	}
-
-	ASSERT(pOpen->AdapterBindingStatus == ADAPTER_BOUND);
-
-	pOpen->AdapterBindingStatus = ADAPTER_UNBINDING;
-
-	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
-
-	NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
-	pOpen->AdapterBindingStatus = ADAPTER_UNBOUND;
-	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
-}
-
-//-------------------------------------------------------------------
-
 NTSTATUS
 NPF_OpenAdapter(
 	IN PDEVICE_OBJECT DeviceObject,
@@ -1933,7 +1876,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	{
 		if (GroupOpen->ReadEvent != NULL)
 			KeSetEvent(GroupOpen->ReadEvent, 0, FALSE);
-		NPF_CloseBindingAndAdapter(GroupOpen);
+		NPF_CloseBinding(GroupOpen);
 	}
 
 	NPF_RemoveFromOpenArray(Open); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
