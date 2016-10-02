@@ -244,16 +244,6 @@ NPF_OpenAdapter(
 		Open);
 #endif
 
-	//
-	// complete the open
-	//
-	localNumOpenedInstances = InterlockedIncrement(&g_NumOpenedInstances);
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened Instances: %u", localNumOpenedInstances);
-
-	// Get the absolute value of the system boot time.
-	// This is used for timestamp conversion.
-	TIME_SYNCHRONIZE(&G_Start_Time);
-
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (Open->Loopback)
 	{
@@ -345,6 +335,16 @@ NPF_OpenAdapter_End:;
 		//  Save or open here
 		IrpSp->FileObject->FsContext = Open;
 	}
+
+	//
+	// complete the open
+	//
+	localNumOpenedInstances = InterlockedIncrement(&g_NumOpenedInstances);
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened Instances: %u", localNumOpenedInstances);
+
+	// Get the absolute value of the system boot time.
+	// This is used for timestamp conversion.
+	TIME_SYNCHRONIZE(&G_Start_Time);
 
 	NPF_AddToOpenArray(Open);
 	NPF_AddToGroupOpenArray(Open);
