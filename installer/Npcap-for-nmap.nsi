@@ -1088,7 +1088,6 @@ Function un.remove_win7_driver
 		Delete $INSTDIR\npf.sys
 		Delete $INSTDIR\npf.inf
 		Delete $INSTDIR\npf_wfp.inf
-		Delete $INSTDIR\npf_wifi.inf
 		Delete $INSTDIR\npf.cat
 
 		Delete $SYSDIR\drivers\npf.sys
@@ -1099,7 +1098,6 @@ Function un.remove_win7_driver
 		Delete $INSTDIR\npcap.sys
 		Delete $INSTDIR\npcap.inf
 		Delete $INSTDIR\npcap_wfp.inf
-		Delete $INSTDIR\npcap_wifi.inf
 		Delete $INSTDIR\npcap.cat
 
 		Delete $SYSDIR\drivers\npcap.sys
