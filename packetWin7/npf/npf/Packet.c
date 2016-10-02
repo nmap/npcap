@@ -309,7 +309,7 @@ DriverEntry(
 	// Standard device driver entry points stuff.
 	//
 	DriverObject->MajorFunction[IRP_MJ_CREATE] = NPF_OpenAdapter;
-	DriverObject->MajorFunction[IRP_MJ_CLOSE] = NPF_FreeAdapter;
+	DriverObject->MajorFunction[IRP_MJ_CLOSE] = NPF_CloseAdapter;
 	DriverObject->MajorFunction[IRP_MJ_CLEANUP] = NPF_Cleanup;
 	DriverObject->MajorFunction[IRP_MJ_READ] = NPF_Read;
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;

@@ -871,7 +871,7 @@ NPF_GetCurrentFrequency_Wrapper(
 //-------------------------------------------------------------------
 
 NTSTATUS
-NPF_FreeAdapter(
+NPF_CloseAdapter(
 	IN PDEVICE_OBJECT DeviceObject,
 	IN PIRP Irp
 	)
