@@ -2087,28 +2087,31 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 
 #define DEVICE_PREFIX "\\Device\\"
 
-	if (LOWORD(GetVersion()) == 4)
+	// This code is only for NT4, and we are targeting Vista now at least, so it's useless and commented.
+// 	if (LOWORD(GetVersion()) == 4)
+// 	{
+// 		if (strlen(AdapterNameA) > strlen(DEVICE_PREFIX))
+// 		{
+// 			StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
+// 		}
+// 		else
+// 		{
+// 			ZeroMemory(SymbolicLinkA, sizeof(SymbolicLinkA));
+// 		}
+// 	}
+//  	else
+// 	{
+
+	if (strlen(AdapterNameA) > strlen(DEVICE_PREFIX))
 	{
-		if (strlen(AdapterNameA) > strlen(DEVICE_PREFIX))
-		{
-			StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
-		}
-		else
-		{
-			ZeroMemory(SymbolicLinkA, sizeof(SymbolicLinkA));
-		}
+		StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\Global\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
 	}
- 	else
+	else
 	{
-		if (strlen(AdapterNameA) > strlen(DEVICE_PREFIX))
-		{
-			StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\Global\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
-		}
-		else
-		{
-			ZeroMemory(SymbolicLinkA, sizeof(SymbolicLinkA));
-		}
+		ZeroMemory(SymbolicLinkA, sizeof(SymbolicLinkA));
 	}
+
+/*	}*/
 
 	//
 	// NOTE GV 20061114 This is a sort of breaking change. In the past we were putting what
