@@ -65,6 +65,7 @@ Var /GLOBAL npf_startup
 Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
 Var /GLOBAL admin_only
+Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
 Var /GLOBAL winpcap_mode
 
@@ -170,6 +171,7 @@ Function getInstallOptions
 	StrCpy $loopback_support "yes"
 	StrCpy $dlt_null "enforced"
 	StrCpy $admin_only "no"
+	StrCpy $dot11_support "disabled"
 	StrCpy $vlan_support "no"
 	StrCpy $winpcap_mode "no"
 	StrCpy $winpcap_installed "no"
@@ -179,7 +181,7 @@ Function getInstallOptions
 		FileRead $4 $cmd_line ; we read until the end of line (including carriage return and new line) and save it to $1
 		FileClose $4 ; and close the file
 	${Else}
-		${GetParameters} $cmd_line ; An example: $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /vlan_support=no /winpcap_mode=no'
+		${GetParameters} $cmd_line ; An example: $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
 	${EndIf}
 
 	${GetOptions} $cmd_line "/npf_startup=" $R0
@@ -208,6 +210,13 @@ Function getInstallOptions
 	${OrIf} $R0 S== "no"
 	${OrIf} $R0 S== "disabled"
 		StrCpy $admin_only $R0
+	${EndIf}
+
+	${GetOptions} $cmd_line "/dot11_support=" $R0
+	${If} $R0 S== "yes"
+	${OrIf} $R0 S== "no"
+	${OrIf} $R0 S== "disabled"
+		StrCpy $dot11_support $R0
 	${EndIf}
 
 	${GetOptions} $cmd_line "/vlan_support=" $R0
@@ -488,39 +497,51 @@ Function OptionsPage
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 4" "Flags" "DISABLED"
 	${EndIf}
 
-	${If} $vlan_support == "no"
+	${If} $dot11_support == "no"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
-	${ElseIf} $vlan_support == "yes"
+	${ElseIf} $dot11_support == "yes"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 1
-	${ElseIf} $vlan_support == "disabled"
+	${ElseIf} $dot11_support == "disabled"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 0
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
-	${ElseIf} $vlan_support == "enforced"
+	${ElseIf} $dot11_support == "enforced"
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "State" 1
 		WriteINIStr "$PLUGINSDIR\options.ini" "Field 5" "Flags" "DISABLED"
 	${EndIf}
 
+	${If} $vlan_support == "no"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
+	${ElseIf} $vlan_support == "yes"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
+	${ElseIf} $vlan_support == "disabled"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
+	${ElseIf} $vlan_support == "enforced"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
+	${EndIf}
+
 	${If} $winpcap_mode == "no"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 0
 	${ElseIf} $winpcap_mode == "yes"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 1
 	${ElseIf} $winpcap_mode == "yes2"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Text" "Install Npcap in Simple WinPcap API-compatible Mode"
 	${ElseIf} $winpcap_mode == "disabled"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 0
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Flags" "DISABLED"
 	${ElseIf} $winpcap_mode == "enforced"
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 1
-		WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Flags" "DISABLED"
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 1
+		WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Flags" "DISABLED"
 	${EndIf}
 
 	IfFileExists "$SYSDIR\wpcap.dll" winpcap_exist no_winpcap_exist
 winpcap_exist:
 	StrCpy $winpcap_installed "yes"
-	WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, WinPcap will be uninstalled first."
-	WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "State" 0
-	WriteINIStr "$PLUGINSDIR\options.ini" "Field 6" "Text" "Install Npcap in WinPcap API-compatible Mode (WinPcap will be uninstalled)"
+	WriteINIStr "$PLUGINSDIR\options.ini" "Field 8" "Text" "Npcap detected you have installed WinPcap, in order to Install Npcap \r\nin WinPcap API-compatible Mode, WinPcap will be uninstalled first."
+	WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "State" 0
+	WriteINIStr "$PLUGINSDIR\options.ini" "Field 7" "Text" "Install Npcap in WinPcap API-compatible Mode (WinPcap will be uninstalled)"
 no_winpcap_exist:
 	!insertmacro MUI_HEADER_TEXT "Installation Options" "Please review the following options before installing Npcap ${VERSION}"
 	!insertmacro MUI_INSTALLOPTIONS_DISPLAY "options.ini"
@@ -573,12 +594,19 @@ Function doOptions
 
 	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 5" "State"
 	${If} $0 == "0"
+		StrCpy $dot11_support "no"
+	${Else}
+		StrCpy $dot11_support "yes"
+	${EndIf}
+
+	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 6" "State"
+	${If} $0 == "0"
 		StrCpy $vlan_support "no"
 	${Else}
 		StrCpy $vlan_support "yes"
 	${EndIf}
 
-	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 6" "State"
+	ReadINIStr $0 "$PLUGINSDIR\options.ini" "Field 7" "State"
 	${If} $0 == "0"
 		StrCpy $winpcap_mode "no"
 	${Else}
