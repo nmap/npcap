@@ -359,13 +359,17 @@ BOOL RenableBindings()
 
 	BOOL bSucceed = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME);
 	if (!bSucceed)
+	{
 		TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+	}
 
 	if (bWiFiService)
 	{
 		bSucceed = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, APP_NAME);
 		if (!bSucceed)
+		{
 			TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+		}
 	}
 
 	CoUninitialize();
