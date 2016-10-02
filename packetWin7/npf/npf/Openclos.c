@@ -187,7 +187,7 @@ NPF_OpenAdapter(
 	)
 {
 	PDEVICE_EXTENSION		DeviceExtension;
-	POPEN_INSTANCE			OriginalOpen;
+	POPEN_INSTANCE			GroupHead;
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
 	NDIS_STATUS				Status = STATUS_SUCCESS;
@@ -200,9 +200,9 @@ NPF_OpenAdapter(
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
 	// Find the head adapter of the global open array.
-	OriginalOpen = NPF_GetOpenByAdapterName(&DeviceExtension->AdapterName);
+	GroupHead = NPF_GetOpenByAdapterName(&DeviceExtension->AdapterName);
 
-	if (OriginalOpen == NULL)
+	if (GroupHead == NULL)
 	{
 		// Can't find the adapter from the global open array.
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
@@ -215,7 +215,7 @@ NPF_OpenAdapter(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	if (NPF_StartUsingOpenInstance(OriginalOpen) == FALSE)
+	if (NPF_StartUsingBinding(GroupHead) == FALSE)
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 			"NPF_OpenAdapter: NPF_StartUsingOpenInstance error, AdapterName=%ws",
@@ -228,7 +228,7 @@ NPF_OpenAdapter(
 	}
 
 	// Create a group child adapter object from the head adapter.
-	Open = NPF_DuplicateOpenObject(OriginalOpen, DeviceExtension);
+	Open = NPF_DuplicateOpenObject(GroupHead, DeviceExtension);
 
 	Open->DeviceExtension = DeviceExtension;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -333,7 +333,7 @@ NPF_OpenAdapter_End:;
 		ExFreePool(Open);
 		Open = NULL;
 
-		NPF_StopUsingOpenInstance(OriginalOpen);
+		NPF_StopUsingBinding(GroupHead);
 
 		Irp->IoStatus.Status = Status;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -349,7 +349,7 @@ NPF_OpenAdapter_End:;
 	NPF_AddToOpenArray(Open);
 	NPF_AddToGroupOpenArray(Open);
 
-	NPF_StopUsingOpenInstance(OriginalOpen);
+	NPF_StopUsingBinding(GroupHead);
 
 	Irp->IoStatus.Status = Status;
 	Irp->IoStatus.Information = 0;
