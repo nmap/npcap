@@ -954,8 +954,7 @@ DRIVER_DISPATCH NPF_Cleanup;
   \param Open Pointer to open context structure
   \return The status of the operation. See ntstatus.h in the DDK.
 
-  This function is called by NPF_RemoveUnclosedAdapters().
-  Used together with NPF_CloseAdapterForUnclosed().
+  This function is called by NPF_Cleanup().
   It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
@@ -1257,16 +1256,6 @@ POPEN_INSTANCE
 NPF_GetOpenByAdapterName(
 	PNDIS_STRING pAdapterName
 	);
-
-
-/*!
-  \brief Check whether there are still unclosed open instances and close them if any.
-
-  This function is used by NPF_DetachAdapter().
-*/
-// void
-// NPF_RemoveUnclosedAdapters(
-// 	);
 
 
 /*!

@@ -1140,9 +1140,6 @@ Return Value:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Filter Handle (WiFi) = NULL, no need to delete.");
 	}
 
-	// If the code is correct, there shouldn't be any unclosed adapters.
-	// NPF_RemoveUnclosedAdapters();
-
 	// Free the adapters names
 	if (bindP != NULL)
 	{
