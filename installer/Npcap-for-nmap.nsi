@@ -69,8 +69,6 @@ Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
 Var /GLOBAL winpcap_mode
 
-Var /GLOBAL wifi_or_not
-
 Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
 Var /GLOBAL winpcap_installed
@@ -1150,8 +1148,8 @@ Function write_single_registry_service_options
 	${Endif}
 
 	; Npcap driver will read this option
-	${If} $wifi_or_not == "yes"
-		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when this is the WiFi service
+	${If} $dot11_support == "yes"
+		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 1 ; make "Dot11Support" = 1 only when "raw 802.11 support" is chosen
 	${Else}
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 0
 	${Endif}
@@ -1178,22 +1176,12 @@ Function write_registry_service_options
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
 		StrCpy $service_name "npf"
-		StrCpy $wifi_or_not "no"
-		Call write_single_registry_service_options
-
-		StrCpy $service_name "npf_wifi"
-		StrCpy $wifi_or_not "yes"
 		Call write_single_registry_service_options
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		StrCpy $service_name "npcap"
-		StrCpy $wifi_or_not "no"
-		Call write_single_registry_service_options
-
-		StrCpy $service_name "npcap_wifi"
-		StrCpy $wifi_or_not "yes"
 		Call write_single_registry_service_options
 	${EndIf}
 FunctionEnd
