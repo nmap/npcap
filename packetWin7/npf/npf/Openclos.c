@@ -326,9 +326,6 @@ NPF_OpenAdapter_End:;
 #endif
 	if (!NT_SUCCESS(Status))
 	{
-		// Close the binding
-		NPF_CloseBinding(Open);
-
 		// Free the open instance' resources
 		NPF_ReleaseOpenInstanceResources(Open);
 
@@ -898,8 +895,6 @@ NPF_Cleanup_Internal(
 
 	if (Open->ReadEvent != NULL)
 		KeSetEvent(Open->ReadEvent, 0, FALSE);
-
-	NPF_CloseBinding(Open);
 
 	// NOTE:
 	// code commented out because the kernel dump feature is disabled
@@ -1870,14 +1865,15 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
-	// 	if (Open->ReadEvent != NULL)
-	// 		KeSetEvent(Open->ReadEvent,0,FALSE);
 	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
 	{
+		NPF_CloseOpenInstance(GroupOpen);
+
 		if (GroupOpen->ReadEvent != NULL)
 			KeSetEvent(GroupOpen->ReadEvent, 0, FALSE);
-		NPF_CloseBinding(GroupOpen);
 	}
+
+	NPF_CloseBinding(Open);
 
 	NPF_RemoveFromOpenArray(Open); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
 	NPF_ReleaseOpenInstanceResources(Open);
