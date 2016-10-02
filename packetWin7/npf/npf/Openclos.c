@@ -1690,20 +1690,11 @@ NPF_Pause(
 	UNREFERENCED_PARAMETER(PauseParameters);
 	TRACE_ENTER();
 
-	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
-	{
-		if (GroupOpen->Multiple_Write_Counter > 0 || GroupOpen->TransmitPendingPackets > 0)
-		{
-			NdisAcquireSpinLock(&GroupOpen->OpenInUseLock);
-			GroupOpen->PausePending = TRUE;
-			NdisReleaseSpinLock(&GroupOpen->OpenInUseLock);
-			Status = NDIS_STATUS_PENDING;
-		}
-		else
-		{
-			Status = NDIS_STATUS_SUCCESS;
-		}
-	}
+	NdisAcquireSpinLock(&Open->AdapterHandleLock);
+	Open->PausePending = TRUE;
+	NdisReleaseSpinLock(&Open->AdapterHandleLock);
+
+	Status = NDIS_STATUS_SUCCESS;
 	
 	TRACE_EXIT();
 	return Status;
@@ -1766,12 +1757,9 @@ NPF_Restart(
 		NdisFIndicateStatus(Open->AdapterHandle, &indication);
 	}
 
-	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
-	{
-		NdisAcquireSpinLock(&GroupOpen->OpenInUseLock);
-		GroupOpen->PausePending = FALSE;
-		NdisReleaseSpinLock(&GroupOpen->OpenInUseLock);
-	}
+	NdisAcquireSpinLock(&Open->AdapterHandleLock);
+	Open->PausePending = FALSE;
+	NdisReleaseSpinLock(&Open->AdapterHandleLock);
 
 	Status = NDIS_STATUS_SUCCESS;
 	TRACE_EXIT();

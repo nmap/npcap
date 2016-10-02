@@ -971,7 +971,7 @@ NPF_SendCompleteExForEachOpen(
 		//TRACE_EXIT();
 	}
 
-	if (Open->Multiple_Write_Counter == 0 && Open->TransmitPendingPackets == 0 && Open->PausePending)
+	if (Open->Multiple_Write_Counter == 0 && Open->TransmitPendingPackets == 0 && Open->GroupHead->PausePending)
 	{
 		CompletePause = TRUE;
 	}
