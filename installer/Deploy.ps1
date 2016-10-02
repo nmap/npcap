@@ -61,7 +61,7 @@ $symbols_folder = ".\npcap-DebugSymbols\"
 
 ###########################################################
 # The npf/npcap driver.
-$driver_filename_array = "{0}.cat", "{0}.inf", "{0}_wfp.inf", "{0}_wifi.inf", "{0}.sys"
+$driver_filename_array = "{0}.cat", "{0}.inf", "{0}_wfp.inf", "{0}.sys"
 $driver_init_from_path_array = 
 	"..\packetWin7\npf\Win7 Release{0}\npf Package\",
 	"..\packetWin7\npf\x64\Win7 Release{0}\npf Package\",

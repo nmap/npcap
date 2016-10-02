@@ -119,16 +119,10 @@
     <Inf Include="npcap_wfp.inf">
       <Filter>Driver Files</Filter>
     </Inf>
-    <Inf Include="npcap_wifi.inf">
-      <Filter>Driver Files</Filter>
-    </Inf>
     <Inf Include="npf.inf">
       <Filter>Driver Files</Filter>
     </Inf>
     <Inf Include="npf_wfp.inf">
-      <Filter>Driver Files</Filter>
-    </Inf>
-    <Inf Include="npf_wifi.inf">
       <Filter>Driver Files</Filter>
     </Inf>
   </ItemGroup>
