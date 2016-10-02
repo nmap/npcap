@@ -1281,50 +1281,50 @@ NPF_GetOpenByAdapterName(
 
 //-------------------------------------------------------------------
 
-void
-NPF_RemoveUnclosedAdapters(
-	)
-{
-	POPEN_INSTANCE CurOpen;
-	POPEN_INSTANCE Open;
-	POPEN_INSTANCE TempOpen;
-	BOOLEAN NoDirectedBindedRemaining = TRUE;
-	TRACE_ENTER();
-
-// 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
+// void
+// NPF_RemoveUnclosedAdapters(
+// 	)
+// {
+// 	POPEN_INSTANCE CurOpen;
+// 	POPEN_INSTANCE Open;
+// 	POPEN_INSTANCE TempOpen;
+// 	BOOLEAN NoDirectedBindedRemaining = TRUE;
+// 	TRACE_ENTER();
+// 
+// // 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
+// // 	{
+// // 		if (CurOpen->DirectBinded)
+// // 		{
+// // 			NoDirectedBindedRemaining = FALSE;
+// // 		}
+// // 	}
+// //
+// // 	if (NoDirectedBindedRemaining)
+// // 	{
+// // 		for (CurOpen = g_arrOpen; CurOpen != NULL;)
+// // 		{
+// // 			TempOpen = CurOpen->Next;
+// // 			NPF_CleanupForUnclosed(CurOpen);
+// // 			NPF_CloseAdapterForUnclosed(CurOpen);
+// // 			CurOpen = TempOpen;
+// // 		}
+// // 	}
+// 
+// 	NdisAcquireSpinLock(&g_OpenArrayLock);
+// 	for (CurOpen = g_arrOpen; CurOpen != NULL;)
 // 	{
+// 		TempOpen = CurOpen->Next;
 // 		if (CurOpen->DirectBinded)
 // 		{
-// 			NoDirectedBindedRemaining = FALSE;
+// 			NPF_Cleanup_Internal(CurOpen);
+// 			ExFreePool(CurOpen);
 // 		}
+// 		CurOpen = TempOpen;
 // 	}
-//
-// 	if (NoDirectedBindedRemaining)
-// 	{
-// 		for (CurOpen = g_arrOpen; CurOpen != NULL;)
-// 		{
-// 			TempOpen = CurOpen->Next;
-// 			NPF_CleanupForUnclosed(CurOpen);
-// 			NPF_CloseAdapterForUnclosed(CurOpen);
-// 			CurOpen = TempOpen;
-// 		}
-// 	}
-
-	NdisAcquireSpinLock(&g_OpenArrayLock);
-	for (CurOpen = g_arrOpen; CurOpen != NULL;)
-	{
-		TempOpen = CurOpen->Next;
-		if (CurOpen->DirectBinded)
-		{
-			NPF_Cleanup_Internal(CurOpen);
-			ExFreePool(CurOpen);
-		}
-		CurOpen = TempOpen;
-	}
-	NdisReleaseSpinLock(&g_OpenArrayLock);
-
-	TRACE_EXIT();
-}
+// 	NdisReleaseSpinLock(&g_OpenArrayLock);
+// 
+// 	TRACE_EXIT();
+// }
 
 //-------------------------------------------------------------------
 

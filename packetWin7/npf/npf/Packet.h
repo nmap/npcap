@@ -1265,9 +1265,9 @@ NPF_GetOpenByAdapterName(
 
   This function is used by NPF_DetachAdapter().
 */
-void
-NPF_RemoveUnclosedAdapters(
-	);
+// void
+// NPF_RemoveUnclosedAdapters(
+// 	);
 
 
 /*!
