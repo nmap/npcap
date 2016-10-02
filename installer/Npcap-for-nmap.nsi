@@ -1162,8 +1162,6 @@ Function write_single_registry_service_options
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support" 0
 	${Endif}
 
-	; ExecWait '"$INSTDIR\NPFInstall.exe" -n -wlan_write_reg' $0
-
 	; Npcap driver will read this option
 	${If} $vlan_support == "yes"
 		WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "VlanSupport" 1 ; make "VlanSupport" = 1 only when "vlan support" is chosen
@@ -1191,6 +1189,11 @@ Function write_registry_service_options
 	${OrIf} $winpcap_mode == "yes"
 		StrCpy $service_name "npcap"
 		Call write_single_registry_service_options
+	${EndIf}
+
+	${If} $dot11_support == "yes"
+		DetailPrint "Identify the wireless adapters and write them into the registry"
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -wlan_write_reg' $0
 	${EndIf}
 FunctionEnd
 
