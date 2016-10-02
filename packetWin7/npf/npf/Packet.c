@@ -102,6 +102,7 @@ NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRxAdapters");
 #endif
 
 NDIS_STRING g_NPF_Prefix;
+NDIS_STRING g_NPF_Prefix_WIFI;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
 NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
 NDIS_STRING tcpLinkageKeyName = NDIS_STRING_CONST("\\Registry\\Machine\\System"
@@ -231,7 +232,7 @@ DriverEntry(
 	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
 	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
 	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
-	//g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
+	g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
 	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
 	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
 	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
@@ -258,21 +259,27 @@ DriverEntry(
 
 	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap" for standard driver
 	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap_wifi" for WiFi driver
-	g_Dot11SupportMode = 0;
-	for (USHORT i = 0; i < RegistryPath->Length / 2; i ++)
-	{
-		if (RegistryPath->Buffer[i] == L'_')
-		{
-			g_Dot11SupportMode = 1;
-			break;
-		}
-	}
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_Dot11SupportMode (based on RegistryPath) = %d\n", g_Dot11SupportMode);
 
+	//
+	// The Dot11 support is determined by whether the service is "npcap" or "npcap_wifi"
+	//
+// 	g_Dot11SupportMode = 0;
+// 	for (USHORT i = 0; i < RegistryPath->Length / 2; i ++)
+// 	{
+// 		if (RegistryPath->Buffer[i] == L'_')
+// 		{
+// 			g_Dot11SupportMode = 1;
+// 			break;
+// 		}
+// 	}
+// 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_Dot11SupportMode (based on RegistryPath) = %d\n", g_Dot11SupportMode);
+
+	// g_NPF_PrefixBuffer = "NPCAP_"
+	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
+
+	// g_NPF_PrefixBuffer_Wifi = "NPCAP_WIFI_"
 	if (g_Dot11SupportMode)
-		NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer_Wifi);
-	else
-		NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
+		NdisInitUnicodeString(&g_NPF_Prefix_WIFI, g_NPF_PrefixBuffer_Wifi);
 
 	//
 	// Initialize several CPU-related functions.
@@ -293,7 +300,8 @@ DriverEntry(
 	// Register as a service with NDIS
 	//
 	NPF_registerLWF(&FChars, FALSE);
-	NPF_registerLWF(&FChars_WiFi, TRUE);
+	if (g_Dot11SupportMode)
+		NPF_registerLWF(&FChars_WiFi, TRUE);
 
 	DriverObject->DriverUnload = NPF_Unload;
 
@@ -351,26 +359,29 @@ DriverEntry(
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %x", Status, FilterDriverHandle);
 	}
 
-	// Register the WiFi filter to NDIS.
-	Status = NdisFRegisterFilterDriver(DriverObject,
-		(NDIS_HANDLE) FilterDriverObject,
-		&FChars_WiFi,
-		&FilterDriverHandle_WiFi);
-	if (Status != NDIS_STATUS_SUCCESS)
+	if (g_Dot11SupportMode)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter (WiFi) with NDIS, Status = %x", Status);
+		// Register the WiFi filter to NDIS.
+		Status = NdisFRegisterFilterDriver(DriverObject,
+			(NDIS_HANDLE)FilterDriverObject,
+			&FChars_WiFi,
+			&FilterDriverHandle_WiFi);
+		if (Status != NDIS_STATUS_SUCCESS)
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter (WiFi) with NDIS, Status = %x", Status);
 
-		// We still run the driver even with the 2nd filter doesn't work.
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "We only use the 1st Filter Handle now, FilterDriverHandle_WiFi = %x.", FilterDriverHandle_WiFi);
-		// NdisFDeregisterFilterDriver(FilterDriverHandle);
-		// TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting the 1st Filter Handle = %p", FilterDriverHandle);
+			// We still run the driver even with the 2nd filter doesn't work.
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "We only use the 1st Filter Handle now, FilterDriverHandle_WiFi = %x.", FilterDriverHandle_WiFi);
+			// NdisFDeregisterFilterDriver(FilterDriverHandle);
+			// TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting the 1st Filter Handle = %p", FilterDriverHandle);
 
-		// TRACE_EXIT();
-		// return Status;
-	}
-	else
-	{
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter (WiFi) with NDIS, Status = %x, FilterDriverHandle_WiFi = %x", Status, FilterDriverHandle_WiFi);
+			// TRACE_EXIT();
+			// return Status;
+		}
+		else
+		{
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter (WiFi) with NDIS, Status = %x, FilterDriverHandle_WiFi = %x", Status, FilterDriverHandle_WiFi);
+		}
 	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT

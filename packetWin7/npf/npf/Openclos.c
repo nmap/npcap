@@ -54,6 +54,8 @@ extern ULONG g_Dot11SupportMode;
 	extern PDEVICE_OBJECT g_LoopbackDevObj;
 #endif
 
+extern NDIS_HANDLE FilterDriverHandle_WiFi; // NDIS handle for WiFi filter driver
+
 static
 VOID
 NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen);
@@ -1610,15 +1612,18 @@ NPF_AttachAdapter(
 			break;
 		}
 
-		// The WiFi driver will only bind to the 802.11 wirelress adapters.
+		// The WiFi filter will only bind to the 802.11 wirelress adapters.
 		if (g_Dot11SupportMode)
 		{
-			if (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
+			if (FilterDriverHandle_WiFi == NdisFilterHandle)
 			{
-				IF_LOUD(DbgPrint("Unsupported media type for the WiFi driver: MiniportMediaType = %d.\n", AttachParameters->MiniportMediaType);)
+				if (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
+				{
+					IF_LOUD(DbgPrint("NPF_AttachAdapter: Unsupported media type for the WiFi driver: MiniportMediaType = %d, expected = 16.\n", AttachParameters->MiniportMediaType);)
 
-				returnStatus = NDIS_STATUS_INVALID_PARAMETER;
-				break;
+						returnStatus = NDIS_STATUS_INVALID_PARAMETER;
+					break;
+				}
 			}
 		}
 
