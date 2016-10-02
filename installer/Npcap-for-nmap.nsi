@@ -965,7 +965,11 @@ ${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
 	ExecWait '"$INSTDIR\NPFInstall.exe" -n -iw' $0
 
 	; install the NDIS filter driver
-	ExecWait '"$INSTDIR\NPFInstall.exe" -n -i2' $0
+	${If} $dot11_support == "yes"
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -i2' $0
+	${Else}
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -i' $0
+	${EndIf}
 
 	; check the driver install result
 	${If} $0 == "0"
@@ -982,7 +986,11 @@ ${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
 		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -iw' $0
 
 		; install the NDIS filter driver
-		ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i2' $0
+		${If} $dot11_support == "yes"
+			ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i2' $0
+		${Else}
+			ExecWait '"$INSTDIR\NPFInstall2.exe" -n -i' $0
+		${EndIf}
 
 		; check the driver install result
 		${If} $0 == "0"
