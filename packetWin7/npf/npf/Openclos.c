@@ -1008,8 +1008,8 @@ NPF_RemoveFromOpenArray(
 	POPEN_INSTANCE Open
 	)
 {
-	POPEN_INSTANCE CurOpen;
-	POPEN_INSTANCE PrevOpen;
+	POPEN_INSTANCE CurOpen = NULL;
+	POPEN_INSTANCE PrevOpen = NULL;
 
 	TRACE_ENTER();
 
@@ -1047,7 +1047,7 @@ NPF_RemoveFromGroupOpenArray(
 	)
 {
 	POPEN_INSTANCE GroupOpen;
-	POPEN_INSTANCE GroupPrev;
+	POPEN_INSTANCE GroupPrev = NULL;
 
 	TRACE_ENTER();
 
