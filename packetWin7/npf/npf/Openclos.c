@@ -954,6 +954,7 @@ NPF_AddToOpenArray(
 	)
 {
 	POPEN_INSTANCE CurOpen;
+
 	TRACE_ENTER();
 
 	NdisAcquireSpinLock(&g_OpenArrayLock);
@@ -1007,14 +1008,10 @@ NPF_RemoveFromOpenArray(
 	POPEN_INSTANCE Open
 	)
 {
-	POPEN_INSTANCE CurOpen = NULL;
-	POPEN_INSTANCE PrevOpen = NULL;
-	TRACE_ENTER();
+	POPEN_INSTANCE CurOpen;
+	POPEN_INSTANCE PrevOpen;
 
-	if (Open == NULL)
-	{
-		return;
-	}
+	TRACE_ENTER();
 
 	NdisAcquireSpinLock(&g_OpenArrayLock);
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
@@ -1029,12 +1026,16 @@ NPF_RemoveFromOpenArray(
 			{
 				PrevOpen->Next = CurOpen->Next;
 			}
-			//return;
+
+			NdisReleaseSpinLock(&g_OpenArrayLock);
+			TRACE_EXIT();
+			return;
 		}
 		PrevOpen = CurOpen;
 	}
 	NdisReleaseSpinLock(&g_OpenArrayLock);
 
+	IF_LOUD(DbgPrint("NPF_RemoveFromOpenArray: never should be here.\n");)
 	TRACE_EXIT();
 }
 
@@ -1045,47 +1046,35 @@ NPF_RemoveFromGroupOpenArray(
 	POPEN_INSTANCE Open
 	)
 {
-	POPEN_INSTANCE GroupHeadOpen;
-	POPEN_INSTANCE CurOpen;
 	POPEN_INSTANCE GroupOpen;
-	POPEN_INSTANCE GroupPrev = NULL;
+	POPEN_INSTANCE GroupPrev;
+
 	TRACE_ENTER();
 
-	if (Open->DirectBinded)
+	if (!Open->GroupHead || Open->GroupHead == Open)
 	{
-		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: never should be here.\n");)
+		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open doesn't have a group head.\n");)
 		TRACE_EXIT();
 		return;
 	}
 
-	GroupHeadOpen = Open->GroupHead;
-	if (!GroupHeadOpen)
-	{
-		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: we don't remove the group head itself.\n");)
-		TRACE_EXIT();
-		return;
-	}
-
-	GroupOpen = GroupHeadOpen;
+	NdisAcquireSpinLock(&g_OpenArrayLock);
+	GroupOpen = Open->GroupHead;
 	while (GroupOpen)
 	{
 		if (GroupOpen == Open)
 		{
-			if (GroupPrev == NULL)
-			{
-				ASSERT(GroupPrev != NULL);
-				break;
-			}
-			else
-			{
-				GroupPrev->GroupNext = GroupOpen->GroupNext;
-				TRACE_EXIT();
-				return;
-			}
+			GroupPrev->GroupNext = GroupOpen->GroupNext;
+			GroupOpen->GroupHead = NULL;
+
+			NdisReleaseSpinLock(&g_OpenArrayLock);
+			TRACE_EXIT();
+			return;
 		}
 		GroupPrev = GroupOpen;
 		GroupOpen = GroupOpen->GroupNext;
 	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
 
 	IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: never should be here.\n");)
 	TRACE_EXIT();
