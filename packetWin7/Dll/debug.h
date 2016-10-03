@@ -138,8 +138,6 @@ static VOID OutputDebugStringV(LPCTSTR Format, ...)
 #define TRACE_PRINT5(_x, _p1, _p2, _p3, _p4, _p5)		OutputDebugStringV(_T("    ") _T(_x) _T("\n"), _p1, _p2, _p3, _p4, _p5)
 #define TRACE_PRINT6(_x, _p1, _p2, _p3, _p4, _p5, _p6)	OutputDebugStringV(_T("    ") _T(_x) _T("\n"), _p1, _p2, _p3, _p4, _p5, _p6)
 
-#define TRACE_PRINT_WIDECHAR(_x)						OutputDebugStringV(_T("    %s\n"), _x)
-
 static __forceinline void TRACE_PRINT_OS_INFO()
 {
 	HKEY	hKey;
