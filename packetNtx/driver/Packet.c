@@ -1364,6 +1364,13 @@ NTSTATUS NPF_IoControl(IN PDEVICE_OBJECT DeviceObject,IN PIRP Irp)
 		// Get the number of bytes to allocate
 		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
+		// verify that the provided size value is sensible
+		if (dim > NPF_MAX_BUFFER_SIZE)
+		{
+			SET_FAILURE_NOMEM();
+			break;
+		}
+		
 		if (dim / g_NCpu < sizeof(struct PacketHeader))
 		{
 			dim = 0;
