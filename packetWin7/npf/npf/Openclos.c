@@ -346,7 +346,7 @@ NPF_OpenAdapter_End:;
 	// This is used for timestamp conversion.
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
-	NPF_AddToGroupOpenArray(Open);
+	NPF_AddToGroupOpenArray(Open, GroupHead);
 
 	NPF_StopUsingBinding(GroupHead);
 
@@ -1000,41 +1000,24 @@ NPF_AddToOpenArray(
 
 void
 NPF_AddToGroupOpenArray(
-	POPEN_INSTANCE Open
+	POPEN_INSTANCE Open,
+	POPEN_INSTANCE GroupHead
 	)
 {
-	POPEN_INSTANCE CurOpen = NULL;
-	POPEN_INSTANCE GroupRear = NULL;
+	POPEN_INSTANCE GroupRear;
+
 	TRACE_ENTER();
 
-	if (Open->DirectBinded)
-	{
-		IF_LOUD(DbgPrint("NPF_AddToGroupOpenArray: never should be here.\n");)
-		TRACE_EXIT();
-		return;
-	}
-
 	NdisAcquireSpinLock(&g_OpenArrayLock);
-	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
+	GroupRear = GroupHead;
+	while (GroupRear->GroupNext != NULL)
 	{
-		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_EqualAdapterName(&CurOpen->AdapterName, &Open->AdapterName) == TRUE && CurOpen->DirectBinded)
-		{
-			GroupRear = CurOpen;
-			while (GroupRear->GroupNext != NULL)
-			{
-				GroupRear = GroupRear->GroupNext;
-			}
-			GroupRear->GroupNext = Open;
-			Open->GroupHead = CurOpen;
-			break;
-		}
+		GroupRear = GroupRear->GroupNext;
 	}
+	GroupRear->GroupNext = Open;
+	Open->GroupHead = GroupHead;
 	NdisReleaseSpinLock(&g_OpenArrayLock);
 
-	if (!GroupRear)
-	{
-		IF_LOUD(DbgPrint("NPF_AddToGroupOpenArray: never should be here.\n");)
-	}
 	TRACE_EXIT();
 }
 

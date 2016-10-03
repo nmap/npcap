@@ -1197,7 +1197,8 @@ NPF_AddToOpenArray(
 */
 void
 NPF_AddToGroupOpenArray(
-	POPEN_INSTANCE Open
+	POPEN_INSTANCE Open,
+	POPEN_INSTANCE GroupHead
 	);
 
 
