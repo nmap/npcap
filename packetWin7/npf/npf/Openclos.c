@@ -1564,16 +1564,18 @@ NPF_AttachAdapter(
 #endif
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
-			"Opening the device %ws, BindingContext=%p, Loopback=%d",
+		TRACE_MESSAGE4(PACKET_DEBUG_LOUD,
+			"Opening the device %ws, BindingContext=%p, Loopback=%d, dot11=%d",
 			AttachParameters->BaseMiniportName->Buffer,
 			Open,
-			Open->Loopback? 1 : 0);
+			Open->Loopback,
+			Open->Dot11);
 #else
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-			"Opening the device %ws, BindingContext=%p, Loopback=<Not supported>",
+		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+			"Opening the device %ws, BindingContext=%p, Loopback=<Not supported>, dot11=%d",
 			AttachParameters->BaseMiniportName->Buffer,
-			Open);
+			Open,
+			Open->Dot11);
 #endif
 
 		returnStatus = STATUS_SUCCESS;
