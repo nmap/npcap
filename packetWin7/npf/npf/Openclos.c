@@ -205,9 +205,10 @@ NPF_OpenAdapter(
 	if (GroupHead == NULL)
 	{
 		// Can't find the adapter from the global open array.
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_OpenAdapter: NPF_GetOpenByAdapterName error, AdapterName=%ws",
-			DeviceExtension->AdapterName.Buffer);
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+			"NPF_OpenAdapter: NPF_GetOpenByAdapterName error, wanted AdapterName=%ws, wanted Dot11=%d",
+			DeviceExtension->AdapterName.Buffer,
+			DeviceExtension->Dot11);
 
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -1589,21 +1590,6 @@ NPF_AttachAdapter(
 		}
 #endif
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		TRACE_MESSAGE4(PACKET_DEBUG_LOUD,
-			"Opening the device %ws, BindingContext=%p, Loopback=%d, dot11=%d",
-			AttachParameters->BaseMiniportName->Buffer,
-			Open,
-			Open->Loopback,
-			Open->Dot11);
-#else
-		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
-			"Opening the device %ws, BindingContext=%p, Loopback=<Not supported>, dot11=%d",
-			AttachParameters->BaseMiniportName->Buffer,
-			Open,
-			Open->Dot11);
-#endif
-
 		returnStatus = STATUS_SUCCESS;
 
 		NdisZeroMemory(&FilterAttributes, sizeof(NDIS_FILTER_ATTRIBUTES));
@@ -1620,7 +1606,7 @@ NPF_AttachAdapter(
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
 			returnStatus = Status;
-			IF_LOUD(DbgPrint("Failed to set attributes.\n");)
+			IF_LOUD(DbgPrint("NdisFSetAttributes: error, Status=%x.\n", Status);)
 			NPF_ReleaseOpenInstanceResources(Open);
 			//
 			// Free the open instance itself
@@ -1631,16 +1617,15 @@ NPF_AttachAdapter(
 		{
 			Open->AdapterHandle = NdisFilterHandle;
 			Open->HigherPacketFilter = NPF_GetPacketFilter(Open);
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-				"Opened the device, Status=%x, HigherPacketFilter=%x",
-				Status,
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"HigherPacketFilter=%x",
 				Open->HigherPacketFilter);
 
 #ifdef HAVE_DOT11_SUPPORT
-			if (Open->Medium == NdisMediumNative802_11 && g_Dot11SupportMode)
+			if (g_Dot11SupportMode && bDot11)
 			{
 				// Handling raw 802.11 packets need to set NDIS_PACKET_TYPE_802_11_RAW_DATA and NDIS_PACKET_TYPE_802_11_RAW_MGMT in the packet filter.
-				Open->Dot11 = TRUE;
+				Open->Dot11 = bDot11;
 				Open->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
 				ULONG combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
 				Status = NPF_SetPacketFilter(Open, combinedPacketFilter);
@@ -1650,6 +1635,21 @@ NPF_AttachAdapter(
 					Status,
 					Open->Dot11PacketFilter);
 			}
+#endif
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+			TRACE_MESSAGE4(PACKET_DEBUG_LOUD,
+				"Opened the device %ws, BindingContext=%p, Loopback=%d, dot11=%d",
+				AttachParameters->BaseMiniportName->Buffer,
+				Open,
+				Open->Loopback,
+				Open->Dot11);
+#else
+			TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+				"Opened the device %ws, BindingContext=%p, Loopback=<Not supported>, dot11=%d",
+				AttachParameters->BaseMiniportName->Buffer,
+				Open,
+				Open->Dot11);
 #endif
 
 			returnStatus = STATUS_SUCCESS;
