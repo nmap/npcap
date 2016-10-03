@@ -1241,6 +1241,7 @@ NPF_CreateOpenObject(
 
 #ifdef HAVE_DOT11_SUPPORT
 	Open->Dot11 = FALSE;
+	Open->Dot11PacketFilter = 0x0;
 	Open->HasDataRateMappingTable = FALSE;
 #endif
 
@@ -1618,12 +1619,12 @@ NPF_AttachAdapter(
 				Open->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
 				ULONG combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
 				Status = NPF_SetPacketFilter(Open, combinedPacketFilter);
-			}
 
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-				"NPF_SetPacketFilter, Status=%x, Dot11PacketFilter=%x",
-				Status,
-				Open->Dot11PacketFilter);
+				TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+					"NPF_SetPacketFilter, Status=%x, Dot11PacketFilter=%x",
+					Status,
+					Open->Dot11PacketFilter);
+			}
 #endif
 
 			returnStatus = STATUS_SUCCESS;
