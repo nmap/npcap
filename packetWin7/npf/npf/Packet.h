@@ -120,6 +120,9 @@ extern NDIS_HANDLE         FilterDriverObject;
 // An example is: \Device\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF};
 #define ADAPTER_NAME_SIZE_WITH_SEPARATOR	(ADAPTER_NAME_SIZE + 1)
 
+// Maximum pool size allowed in bytes (defence against bad BIOCSETBUFFERSIZE calls)
+#define NPF_MAX_BUFFER_SIZE 0x40000000L
+
 /*!
   \brief Header of a libpcap dump file.
 
