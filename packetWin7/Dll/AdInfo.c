@@ -169,7 +169,7 @@ static BOOLEAN PacketGetLinkLayerFromRegistry(LPADAPTER AdapterObject, NetType *
 
 	GlobalFreePtr (OidData);
 
-	TRACE_PRINT2("Media:%.010d" "\t" "Speed=%0.10I64u",
+	TRACE_PRINT2("Media:%.010d\tSpeed=%0.10I64u",
 		type->LinkType,
 		type->LinkSpeed);
 
@@ -1209,8 +1209,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 			memcpy(TmpAdInfo->MacAddress, OidData->Data, 6);
 			TmpAdInfo->MacAddressLen = 6;
 
-			TRACE_PRINT6("Successfully obtained the MAC address, it's "
-				"%.02x:%.02x:%.02x:%.02x:%.02x:%.02x",
+			TRACE_PRINT6("Successfully obtained the MAC address, it's %.02x:%.02x:%.02x:%.02x:%.02x:%.02x",
 				TmpAdInfo->MacAddress[0],
 				TmpAdInfo->MacAddress[1],
 				TmpAdInfo->MacAddress[2],
