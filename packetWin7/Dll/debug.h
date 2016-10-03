@@ -155,7 +155,7 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 	{
 		if (RegQueryValueEx(hKey, _T("PROCESSOR_ARCHITECTURE"), 0, &type, (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
-			OutputDebugStringV(_T("Architecture = %s\n"), buffer);
+			OutputDebugStringV(_T("Architecture = %hs\n"), buffer);
 		}
 		else
 		{
@@ -176,7 +176,7 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 	{
 		if (RegQueryValueEx(hKey, _T("CurrentVersion"), 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
-			OutputDebugStringV(_T("Windows version = %s\n"), buffer);
+			OutputDebugStringV(_T("Windows version = %hs\n"), buffer);
 		}
 		else
 		{
@@ -196,7 +196,7 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 	{
 		if (RegQueryValueEx(hKey, _T("CurrentType"), 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
-			OutputDebugStringV(_T("Windows CurrentType = %s\n"), buffer);
+			OutputDebugStringV(_T("Windows CurrentType = %hs\n"), buffer);
 		}
 		else
 		{

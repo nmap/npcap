@@ -851,7 +851,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd, BOOLEAN bDot11)
 	{
 		if(strcmp(TName, SAdInfo->Name) == 0)
 		{
-			TRACE_PRINT1("PacketAddAdapterIPH: Adapter %s already present in the list", TName);
+			TRACE_PRINT1("PacketAddAdapterIPH: Adapter %hs already present in the list", TName);
 			goto SkipAd;
 		}
 	}
@@ -869,18 +869,18 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd, BOOLEAN bDot11)
 	else
 	{
 
-		TRACE_PRINT1("Trying to open adapter %s to see if it's available...", TName);
+		TRACE_PRINT1("Trying to open adapter %hs to see if it's available...", TName);
 		adapter = PacketOpenAdapterNPF(TName);
 
 		if(adapter == NULL)
 		{
 			// We are not able to open this adapter. Skip to the next one.
-			TRACE_PRINT1("PacketAddAdapterIPH: unable to open the adapter %s", TName);
+			TRACE_PRINT1("PacketAddAdapterIPH: unable to open the adapter %hs", TName);
 			goto SkipAd;
 		}
 		else
 		{
-			TRACE_PRINT1("PacketAddAdapterIPH: adapter %s is available", TName);
+			TRACE_PRINT1("PacketAddAdapterIPH: adapter %hs is available", TName);
 			PacketCloseAdapter(adapter);
 		}
 	}	
@@ -888,7 +888,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd, BOOLEAN bDot11)
 	// 
 	// Adapter valid and not yet present in the list. Allocate the ADAPTER_INFO structure
 	//
-	TRACE_PRINT1("Adapter %s is available and should be added to the global list...", TName);
+	TRACE_PRINT1("Adapter %hs is available and should be added to the global list...", TName);
 
 	TmpAdInfo = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
 	if (TmpAdInfo == NULL) 
@@ -919,7 +919,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd, BOOLEAN bDot11)
 
 	TmpAdInfo->pNetworkAddresses = NULL;
 	
-	TRACE_PRINT1("Adding the IPv4 addresses to the adapter %s...", TName);
+	TRACE_PRINT1("Adding the IPv4 addresses to the adapter %hs...", TName);
 	// Scan the addresses, convert them to addrinfo structures and put each of them in the list
 	for(TmpAddrStr = &IphAd->IpAddressList, i = 0; TmpAddrStr != NULL; TmpAddrStr = TmpAddrStr->Next)
 	{
@@ -963,7 +963,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd, BOOLEAN bDot11)
 		}
 	}
 	
-	TRACE_PRINT1("Adding the IPv6 addresses to the adapter %s...", TName);
+	TRACE_PRINT1("Adding the IPv6 addresses to the adapter %hs...", TName);
 	// Now Add IPv6 Addresses
 	PacketAddIP6Addresses(TmpAdInfo);
 	
@@ -1065,7 +1065,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	PADAPTER_INFO TAdInfo;	
 	
 	TRACE_ENTER();
- 	TRACE_PRINT1("Trying to add adapter %s", AdName);
+ 	TRACE_PRINT1("Trying to add adapter %hs", AdName);
 	
 	//
 	// let's check that the adapter name will fit in the space available within ADAPTER_INFO::Name
@@ -1170,7 +1170,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 			TRACE_PRINT("AddAdapter: unable to get a valid adapter description from the NIC driver");
 		}
 		
-		TRACE_PRINT1("Adapter Description = %s",OidData->Data);
+		TRACE_PRINT1("Adapter Description = %hs",OidData->Data);
 		
 		// Copy the description
 		strncpy(TmpAdInfo->Description, (PCHAR)OidData->Data, sizeof(TmpAdInfo->Description)/ sizeof(TmpAdInfo->Description[0]) - 1);
@@ -1421,7 +1421,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 		//terminate the string, just in case
 		TAName[sizeof(TAName) - 1] = '\0';
 
-		TRACE_PRINT2("%d) Successfully retrieved info for adapter %s, trying to add it to the global list...", i, TAName);
+		TRACE_PRINT2("%d) Successfully retrieved info for adapter %hs, trying to add it to the global list...", i, TAName);
 		// If the adapter is valid, add it to the list.
 		PacketAddAdapterNPF(TAName, FireWireFlag);
 
@@ -1435,7 +1435,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 		//terminate the string, just in case
 		TAName[sizeof(TAName) - 1] = '\0';
 
-		TRACE_PRINT2("%d) Successfully retrieved info for adapter %s, trying to add it to the global list...", i, TAName);
+		TRACE_PRINT2("%d) Successfully retrieved info for adapter %hs, trying to add it to the global list...", i, TAName);
 		// If the adapter is valid, add it to the list.
 		PacketAddAdapterNPF(TAName, FireWireFlag);
 
@@ -1502,7 +1502,7 @@ tcpip_linkage:
 			StringCchPrintfA(TAName, sizeof(TAName), "%s%s", 
 				npfCompleteDriverPrefix,
 				TcpBindingsMultiString + i + strlen("\\Device\\"));
-			TRACE_PRINT1("Successfully retrieved info for adapter %s, trying to add it to the global list...", TAName);
+			TRACE_PRINT1("Successfully retrieved info for adapter %hs, trying to add it to the global list...", TAName);
 			// If the adapter is valid, add it to the list.
 			PacketAddAdapterNPF(TAName, 0);
 
@@ -1510,7 +1510,7 @@ tcpip_linkage:
 			StringCchPrintfA(TAName, sizeof(TAName), "%s%s",
 				npfCompleteDriverPrefix_WiFi,
 				TcpBindingsMultiString + i + strlen("\\Device\\"));
-			TRACE_PRINT1("Successfully retrieved info for adapter %s, trying to add it to the global list...", TAName);
+			TRACE_PRINT1("Successfully retrieved info for adapter %hs, trying to add it to the global list...", TAName);
 			// If the adapter is valid, add it to the list.
 			PacketAddAdapterNPF(TAName, 0);
 
@@ -2107,7 +2107,7 @@ PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName)
 	{
 		if(strcmp(TAdInfo->Name, AdapterName) == 0) 
 		{
-			TRACE_PRINT1("Found AdInfo for adapter %s", AdapterName);
+			TRACE_PRINT1("Found AdInfo for adapter %hs", AdapterName);
 			break;
 		}
 
@@ -2116,7 +2116,7 @@ PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName)
 
 	if (TAdInfo == NULL)
 	{
-		TRACE_PRINT1("NOT found AdInfo for adapter %s", AdapterName);
+		TRACE_PRINT1("NOT found AdInfo for adapter %hs", AdapterName);
 	}
 
 	TRACE_EXIT();
@@ -2153,7 +2153,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	
 	TRACE_ENTER();
 
-	TRACE_PRINT1("Updating adapter info for adapter %s", AdapterName);
+	TRACE_PRINT1("Updating adapter info for adapter %hs", AdapterName);
 	
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 	

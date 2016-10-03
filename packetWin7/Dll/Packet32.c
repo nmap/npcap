@@ -513,7 +513,7 @@ HANDLE NPcapRequestHandle(char *sMsg, DWORD *pdwError)
 	// Send a message to the pipe server.
 
 	cbToWrite = (DWORD) (strlen(lpvMessage) + 1)*sizeof(char);
-	TRACE_PRINT2("\nSending %d byte message: \"%s\"\n", cbToWrite, lpvMessage);
+	TRACE_PRINT2("\nSending %d byte message: \"%hs\"\n", cbToWrite, lpvMessage);
 
 	fSuccess = WriteFile(
 		hPipe,                  // pipe handle
@@ -699,7 +699,7 @@ Cleanup:
 		TRACE_PRINT1("IsProcessRunningAsAdminMode failed. GLE=%d\n", dwError);
 	}
 
-	TRACE_PRINT1("IsProcessRunningAsAdminMode result: %s\n", bIsRunAsAdmin ? "yes" : "no");
+	TRACE_PRINT1("IsProcessRunningAsAdminMode result: %hs\n", bIsRunAsAdmin ? "yes" : "no");
 	TRACE_EXIT();
 	return bIsRunAsAdmin;
 }
@@ -2054,7 +2054,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	// Create the NPF device name from the original device name
 	TRACE_ENTER();
 
-	TRACE_PRINT1("Trying to open adapter %s", AdapterNameA);
+	TRACE_PRINT1("Trying to open adapter %hs", AdapterNameA);
 
 	// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
 	if (!g_NpcapHelperTried)
@@ -2616,7 +2616,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
  
 	TRACE_PRINT_OS_INFO();
 	
-	TRACE_PRINT2("Packet DLL version %s, Driver version %s", PacketLibraryVersion, PacketDriverVersion);
+	TRACE_PRINT2("Packet DLL version %hs, Driver version %hs", PacketLibraryVersion, PacketDriverVersion);
 
 	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
 	TranslatedAdapterNameWA = NPcapAdapterNameNPF2NPCAP(AdapterNameWA);
@@ -2825,7 +2825,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 			// The adapter is flagged as not exported, probably because it's broken 
 			// or incompatible with WinPcap. We end here with an error.
 			//
-			TRACE_PRINT1("Trying to open the adapter %s which is flagged as not exported. Failing (BAD_UNIT)", AdapterNameA);
+			TRACE_PRINT1("Trying to open the adapter %hs which is flagged as not exported. Failing (BAD_UNIT)", AdapterNameA);
 			dwLastError = ERROR_BAD_UNIT;
 			
 			break;
@@ -4528,7 +4528,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 
 	TRACE_PRINT_OS_INFO();
 
-	TRACE_PRINT2("Packet DLL version %s, Driver version %s", PacketLibraryVersion, PacketDriverVersion);
+	TRACE_PRINT2("Packet DLL version %hs, Driver version %hs", PacketLibraryVersion, PacketDriverVersion);
 
 	TRACE_PRINT1("PacketGetAdapterNames: BufferSize=%u", *BufferSize);
 
