@@ -62,9 +62,9 @@ static VOID OutputDebugStringV(LPCTSTR Format, ...)
 	{
 
 #ifdef _CONSOLE
-		if (_wfopen_s(&f, _T("C:\\Program Files\\Npcap\\NPFInstall.log"), _T("a")) == 0)
+		if (_tfopen_s(&f, _T("C:\\Program Files\\Npcap\\NPFInstall.log"), _T("a")) == 0)
 #else
-		if (_wfopen_s(&f, _T("C:\\Program Files\\Npcap\\Packet.log"), _T("a")) == 0)
+		if (_tfopen_s(&f, _T("C:\\Program Files\\Npcap\\Packet.log"), _T("a")) == 0)
 #endif
 			break;
 
