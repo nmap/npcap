@@ -849,38 +849,13 @@ NPF_Cleanup(
 	POPEN_INSTANCE Open;
 	NDIS_STATUS Status;
 	PIO_STACK_LOCATION IrpSp;
+	LARGE_INTEGER ThreadDelay;
+	ULONG localNumOpenInstances;
 
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	Open = IrpSp->FileObject->FsContext;
-
-	Status = NPF_Cleanup_Internal(Open);
-
-	//
-	// and complete the IRP with status success
-	//
-	Irp->IoStatus.Information = 0;
-	Irp->IoStatus.Status = Status;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-	TRACE_EXIT();
-
-	return Status;
-}
-
-//-------------------------------------------------------------------
-
-NTSTATUS
-NPF_Cleanup_Internal(
-	POPEN_INSTANCE Open
-	)
-{
-	NDIS_STATUS Status;
-	LARGE_INTEGER ThreadDelay;
-	ULONG localNumOpenInstances;
-
-	TRACE_ENTER();
 
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
 
@@ -957,14 +932,18 @@ NPF_Cleanup_Internal(
 		TIME_DESYNCHRONIZE(&G_Start_Time);
 	}
 
+	Status = STATUS_SUCCESS;
 
 	//
 	// and complete the IRP with status success
 	//
+	Irp->IoStatus.Information = 0;
+	Irp->IoStatus.Status = Status;
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 	TRACE_EXIT();
 
-	return(STATUS_SUCCESS);
+	return Status;
 }
 
 //-------------------------------------------------------------------

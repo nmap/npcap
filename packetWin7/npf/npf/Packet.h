@@ -950,21 +950,6 @@ DRIVER_DISPATCH NPF_Cleanup;
 
 
 /*!
-  \brief Close an instance of the driver by NPF itself
-  \param Open Pointer to open context structure
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  This function is called by NPF_Cleanup().
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
-  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
-*/
-NTSTATUS
-NPF_Cleanup_Internal(
-	POPEN_INSTANCE Open
-);
-
-
-/*!
   \brief Closes an instance of the driver.
   \param DeviceObject Pointer to the device object utilized by the user.
   \param Irp Pointer to the IRP containing the user request.
