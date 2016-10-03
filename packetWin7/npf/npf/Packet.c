@@ -908,8 +908,8 @@ NPF_GetRegistryOption_String(
 
 BOOLEAN
 	NPF_CreateDevice(
-	IN OUT PDRIVER_OBJECT adriverObjectP,
-	IN PUNICODE_STRING amacNameP
+	IN OUT PDRIVER_OBJECT DriverObject,
+	IN PUNICODE_STRING AdapterName
 	)
 {
 	NTSTATUS status;
@@ -919,15 +919,15 @@ BOOLEAN
 
 	TRACE_ENTER();
 
-	IF_LOUD(DbgPrint("\n\ncreateDevice for MAC %ws\n", amacNameP->Buffer););
-	if (RtlCompareMemory(amacNameP->Buffer, devicePrefix.Buffer, devicePrefix.Length) < devicePrefix.Length)
+	IF_LOUD(DbgPrint("\n\ncreateDevice for MAC %ws\n", AdapterName->Buffer););
+	if (RtlCompareMemory(AdapterName->Buffer, devicePrefix.Buffer, devicePrefix.Length) < devicePrefix.Length)
 	{
 		TRACE_EXIT();
 		return FALSE;
 	}
 
 	deviceName.Length = 0;
-	deviceName.MaximumLength = (USHORT)(amacNameP->Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
+	deviceName.MaximumLength = (USHORT)(AdapterName->Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
 	deviceName.Buffer = ExAllocatePoolWithTag(PagedPool, deviceName.MaximumLength, '3PWA');
 
 	if (deviceName.Buffer == NULL)
@@ -937,7 +937,7 @@ BOOLEAN
 	}
 
 	deviceSymLink.Length = 0;
-	deviceSymLink.MaximumLength = (USHORT)(amacNameP->Length - devicePrefix.Length + symbolicLinkPrefix.Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
+	deviceSymLink.MaximumLength = (USHORT)(AdapterName->Length - devicePrefix.Length + symbolicLinkPrefix.Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
 
 	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, '3PWA');
 
@@ -950,11 +950,11 @@ BOOLEAN
 
 	RtlAppendUnicodeStringToString(&deviceName, &devicePrefix);
 	RtlAppendUnicodeStringToString(&deviceName, &g_NPF_Prefix);
-	RtlAppendUnicodeToString(&deviceName, amacNameP->Buffer + devicePrefix.Length / sizeof(WCHAR));
+	RtlAppendUnicodeToString(&deviceName, AdapterName->Buffer + devicePrefix.Length / sizeof(WCHAR));
 
 	RtlAppendUnicodeStringToString(&deviceSymLink, &symbolicLinkPrefix);
 	RtlAppendUnicodeStringToString(&deviceSymLink, &g_NPF_Prefix);
-	RtlAppendUnicodeToString(&deviceSymLink, amacNameP->Buffer + devicePrefix.Length / sizeof(WCHAR));
+	RtlAppendUnicodeToString(&deviceSymLink, AdapterName->Buffer + devicePrefix.Length / sizeof(WCHAR));
 
 	IF_LOUD(DbgPrint("Creating device name: %ws\n", deviceName.Buffer);)
 
@@ -962,12 +962,12 @@ BOOLEAN
 	{
 		UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"); // this SDDL means only permits System and Administrator to access the device.
 		const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
-		status = IoCreateDeviceSecure(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
+		status = IoCreateDeviceSecure(DriverObject, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
 			FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID)&guidClassNPF, &devObjP);
 	}
 	else
 	{
-		status = IoCreateDevice(adriverObjectP, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
+		status = IoCreateDevice(DriverObject, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
 			FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
 	}
 
@@ -981,7 +981,7 @@ BOOLEAN
 		// Determine whether this is our loopback adapter for the device.
 		if (g_LoopbackAdapterName.Buffer != NULL)
 		{
-			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, amacNameP->Buffer, amacNameP->Length) == amacNameP->Length)
+			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, AdapterName->Buffer, AdapterName->Length) == AdapterName->Length)
 			{
 				g_LoopbackDevObj = devObjP;
 			}
@@ -989,7 +989,7 @@ BOOLEAN
 #endif
 
 		devObjP->Flags |= DO_DIRECT_IO;
-		RtlInitUnicodeString(&devExtP->AdapterName, amacNameP->Buffer);
+		RtlInitUnicodeString(&devExtP->AdapterName, AdapterName->Buffer);
 
 		IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
 

@@ -904,8 +904,8 @@ NPF_GetRegistryOption_String(
 */
 BOOLEAN
 NPF_CreateDevice(
-	IN OUT PDRIVER_OBJECT adriverObjectP,
-	IN PUNICODE_STRING amacNameP
+	IN OUT PDRIVER_OBJECT DriverObject,
+	IN PUNICODE_STRING AdapterName
 	);
 
 
