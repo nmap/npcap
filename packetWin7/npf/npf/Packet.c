@@ -340,7 +340,7 @@ DriverEntry(
 	for (; *bindT != UNICODE_NULL; bindT += (macName.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR))
 	{
 		RtlInitUnicodeString(&macName, bindT);
-		NPF_CreateDevice(DriverObject, &macName);
+		NPF_CreateDevice(DriverObject, &macName, &g_NPF_Prefix);
 	}
 
 	// Register the filter to NDIS.
@@ -909,7 +909,8 @@ NPF_GetRegistryOption_String(
 BOOLEAN
 	NPF_CreateDevice(
 	IN OUT PDRIVER_OBJECT DriverObject,
-	IN PUNICODE_STRING AdapterName
+	IN PUNICODE_STRING AdapterName,
+	IN PUNICODE_STRING NPF_Prefix
 	)
 {
 	NTSTATUS status;
@@ -927,7 +928,7 @@ BOOLEAN
 	}
 
 	deviceName.Length = 0;
-	deviceName.MaximumLength = (USHORT)(AdapterName->Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
+	deviceName.MaximumLength = (USHORT)(AdapterName->Length + NPF_Prefix->Length + sizeof(UNICODE_NULL));
 	deviceName.Buffer = ExAllocatePoolWithTag(PagedPool, deviceName.MaximumLength, '3PWA');
 
 	if (deviceName.Buffer == NULL)
@@ -937,7 +938,7 @@ BOOLEAN
 	}
 
 	deviceSymLink.Length = 0;
-	deviceSymLink.MaximumLength = (USHORT)(AdapterName->Length - devicePrefix.Length + symbolicLinkPrefix.Length + g_NPF_Prefix.Length + sizeof(UNICODE_NULL));
+	deviceSymLink.MaximumLength = (USHORT)(AdapterName->Length - devicePrefix.Length + symbolicLinkPrefix.Length + NPF_Prefix->Length + sizeof(UNICODE_NULL));
 
 	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, '3PWA');
 
@@ -949,11 +950,11 @@ BOOLEAN
 	}
 
 	RtlAppendUnicodeStringToString(&deviceName, &devicePrefix);
-	RtlAppendUnicodeStringToString(&deviceName, &g_NPF_Prefix);
+	RtlAppendUnicodeStringToString(&deviceName, NPF_Prefix);
 	RtlAppendUnicodeToString(&deviceName, AdapterName->Buffer + devicePrefix.Length / sizeof(WCHAR));
 
 	RtlAppendUnicodeStringToString(&deviceSymLink, &symbolicLinkPrefix);
-	RtlAppendUnicodeStringToString(&deviceSymLink, &g_NPF_Prefix);
+	RtlAppendUnicodeStringToString(&deviceSymLink, NPF_Prefix);
 	RtlAppendUnicodeToString(&deviceSymLink, AdapterName->Buffer + devicePrefix.Length / sizeof(WCHAR));
 
 	IF_LOUD(DbgPrint("Creating device name: %ws\n", deviceName.Buffer);)

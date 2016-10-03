@@ -905,7 +905,8 @@ NPF_GetRegistryOption_String(
 BOOLEAN
 NPF_CreateDevice(
 	IN OUT PDRIVER_OBJECT DriverObject,
-	IN PUNICODE_STRING AdapterName
+	IN PUNICODE_STRING AdapterName,
+	IN PUNICODE_STRING NPF_Prefix
 	);
 
 
