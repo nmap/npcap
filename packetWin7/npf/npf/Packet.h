@@ -1243,7 +1243,8 @@ NPF_EqualAdapterName(
 */
 POPEN_INSTANCE
 NPF_GetOpenByAdapterName(
-	PNDIS_STRING pAdapterName
+	PNDIS_STRING pAdapterName,
+	BOOLEAN Dot11
 	);
 
 
