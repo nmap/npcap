@@ -804,7 +804,7 @@ BOOLEAN IsFireWire(TCHAR *AdapterDesc)
   \return If the function succeeds, the return value is TRUE.
   \note we suppose that we are called after having acquired the g_AdaptersInfoMutex mutex
 */
-static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
+static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd, BOOLEAN bDot11)
 {
 	PADAPTER_INFO TmpAdInfo, SAdInfo;
 	PIP_ADDR_STRING TmpAddrStr;
@@ -818,6 +818,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 //	UINT	RegQueryLen;
 //	CHAR	npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS];
 	CHAR	npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
+	CHAR	npfCompleteDriverPrefix_WiFi[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX_WIFI;
 
 	TRACE_ENTER();
 
@@ -840,9 +841,9 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 
 	// Create the NPF device name from the original device name
 	StringCchPrintfA(TName,
-		sizeof(TName) - strlen(npfCompleteDriverPrefix), 
+		256,
 		"%s%s",
-		npfCompleteDriverPrefix, 
+		bDot11 ? npfCompleteDriverPrefix_WiFi : npfCompleteDriverPrefix,
 		IphAd->AdapterName);
 
 	// Scan the adapters list to see if this one is already present
@@ -1034,7 +1035,8 @@ static BOOLEAN PacketGetAdaptersIPH()
 	// structure for every new adapter and put it in our global list
 	for(TmpAd = AdList; TmpAd != NULL; TmpAd = TmpAd->Next)
 	{
-		PacketAddAdapterIPH(TmpAd);
+		PacketAddAdapterIPH(TmpAd, FALSE);
+		PacketAddAdapterIPH(TmpAd, TRUE);
 	}
 	
 	GlobalFreePtr(AdList);
@@ -1312,6 +1314,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 //	UINT		RegQueryLen;
 
 	CHAR		npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
+	CHAR		npfCompleteDriverPrefix_WiFi[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX_WIFI;
 	CHAR		DeviceGuidName[256];
 
 	TRACE_ENTER();
@@ -1406,15 +1409,29 @@ static BOOLEAN PacketGetAdaptersNPF()
 			continue;
 		}
 
-		if (strlen(DeviceGuidName) >= strlen("\\Device\\"))
+		if (strlen(DeviceGuidName) < strlen("\\Device\\"))
 		{
-			// Put the \Device\NPF_ string at the beginning of the name
-			StringCchPrintfA(TAName, sizeof(TAName), "%s%s",
+			continue;
+		}
+
+		// Put the \Device\NPF_ string at the beginning of the name
+		StringCchPrintfA(TAName, sizeof(TAName), "%s%s",
 			npfCompleteDriverPrefix,
 			DeviceGuidName + strlen("\\Device\\"));
-		}
-		else
-			continue;
+
+		//terminate the string, just in case
+		TAName[sizeof(TAName) - 1] = '\0';
+
+		TRACE_PRINT2("%d) Successfully retrieved info for adapter %s, trying to add it to the global list...", i, TAName);
+		// If the adapter is valid, add it to the list.
+		PacketAddAdapterNPF(TAName, FireWireFlag);
+
+
+
+		// Put the \Device\NPF_WIFI_ string at the beginning of the name
+		StringCchPrintfA(TAName, sizeof(TAName), "%s%s",
+			npfCompleteDriverPrefix_WiFi,
+			DeviceGuidName + strlen("\\Device\\"));
 
 		//terminate the string, just in case
 		TAName[sizeof(TAName) - 1] = '\0';
@@ -1486,18 +1503,23 @@ tcpip_linkage:
 			StringCchPrintfA(TAName, sizeof(TAName), "%s%s", 
 				npfCompleteDriverPrefix,
 				TcpBindingsMultiString + i + strlen("\\Device\\"));
+			TRACE_PRINT1("Successfully retrieved info for adapter %s, trying to add it to the global list...", TAName);
+			// If the adapter is valid, add it to the list.
+			PacketAddAdapterNPF(TAName, 0);
+
+
+			StringCchPrintfA(TAName, sizeof(TAName), "%s%s",
+				npfCompleteDriverPrefix_WiFi,
+				TcpBindingsMultiString + i + strlen("\\Device\\"));
+			TRACE_PRINT1("Successfully retrieved info for adapter %s, trying to add it to the global list...", TAName);
+			// If the adapter is valid, add it to the list.
+			PacketAddAdapterNPF(TAName, 0);
 
 			//
 			// TODO GV: this cast to avoid a compilation warning is
-			//			actually stupid. We shouls check not to go over the buffer boundary!
+			//			actually stupid. We should check not to go over the buffer boundary!
 			// 
 			i += (INT)strlen(&TcpBindingsMultiString[i]) + 1;
-
-			TRACE_PRINT1("Successfully retrieved info for adapter %s, trying to add it to the global list...", TAName);
-
-			
-			// If the adapter is valid, add it to the list.
-			PacketAddAdapterNPF(TAName, 0);
 		}
 	
  		GlobalFreePtr(TcpBindingsMultiString);

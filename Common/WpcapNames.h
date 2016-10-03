@@ -92,7 +92,8 @@
 #define NPF_SERVICE_DESC_TCHAR_WIFI				NPF_SERVICE_DESC_TCHAR _T(" (WiFi version)")
 
 // Used in packetWin7\Dll
-#define NPF_DRIVER_COMPLETE_DEVICE_PREFIX		"\\Device\\" NPF_DRIVER_NAME "_"						///< (III) packet.dll
+#define NPF_DRIVER_COMPLETE_DEVICE_PREFIX		"\\Device\\" NPF_DEVICE_NAMES_PREFIX					///< (III) packet.dll
+#define NPF_DRIVER_COMPLETE_DEVICE_PREFIX_WIFI	NPF_DRIVER_COMPLETE_DEVICE_PREFIX "WIFI_"				///< (III) packet.dll
 // Used in packetWin7\Dll
 #define NPF_DRIVER_COMPLETE_PATH				"system32\\drivers\\" NPF_DRIVER_NAME ".sys"			///< (LLL) packet.dll
 
