@@ -340,7 +340,9 @@ DriverEntry(
 	for (; *bindT != UNICODE_NULL; bindT += (AdapterName.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR))
 	{
 		RtlInitUnicodeString(&AdapterName, bindT);
-		NPF_CreateDevice(DriverObject, &AdapterName, &g_NPF_Prefix);
+		NPF_CreateDevice(DriverObject, &AdapterName, &g_NPF_Prefix, FALSE);
+		if (g_Dot11SupportMode)
+			NPF_CreateDevice(DriverObject, &AdapterName, &g_NPF_Prefix_WIFI, TRUE);
 	}
 
 	// Register the filter to NDIS.
@@ -910,7 +912,8 @@ BOOLEAN
 	NPF_CreateDevice(
 	IN OUT PDRIVER_OBJECT DriverObject,
 	IN PUNICODE_STRING AdapterName,
-	IN PUNICODE_STRING NPF_Prefix
+	IN PUNICODE_STRING NPF_Prefix,
+	IN BOOLEAN Dot11
 	)
 {
 	NTSTATUS status;
@@ -991,6 +994,7 @@ BOOLEAN
 
 		devObjP->Flags |= DO_DIRECT_IO;
 		RtlInitUnicodeString(&devExtP->AdapterName, AdapterName->Buffer);
+		devExtP->Dot11 = Dot11;
 
 		IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
 

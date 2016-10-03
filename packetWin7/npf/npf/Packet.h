@@ -223,6 +223,7 @@ typedef struct _DEVICE_EXTENSION
 {
 	NDIS_STRING	AdapterName;			///< Name of the adapter.
 	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
+	BOOLEAN		Dot11;					///< whether the adapter is a raw 802.11 adapter or not.
 										///< to open this adapter through WinPcap.
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
@@ -906,7 +907,8 @@ BOOLEAN
 NPF_CreateDevice(
 	IN OUT PDRIVER_OBJECT DriverObject,
 	IN PUNICODE_STRING AdapterName,
-	IN PUNICODE_STRING NPF_Prefix
+	IN PUNICODE_STRING NPF_Prefix,
+	IN BOOLEAN Dot11
 	);
 
 
