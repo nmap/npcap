@@ -54,14 +54,6 @@
 #pragma NDIS_INIT_FUNCTION(DriverEntry)
 #endif // ALLOC_PRAGMA
 
-#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
-#define				FILTER_UNIQUE_NAME			L"{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"
-#define				FILTER_UNIQUE_NAME_WIFI		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501350}"
-#else
-#define				FILTER_UNIQUE_NAME			L"{7daf2ac8-e9f6-4765-a842-f1f5d2501341}"
-#define				FILTER_UNIQUE_NAME_WIFI		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501351}"
-#endif
-
 #if DBG
 // Declare the global debug flag for this driver.
 ULONG PacketDebugFlag = PACKET_DEBUG_LOUD;

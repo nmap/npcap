@@ -1419,8 +1419,9 @@ NPF_AttachAdapter(
 	POPEN_INSTANCE			Open = NULL;
 	NDIS_STATUS             Status;
 	NDIS_STATUS				returnStatus;
-	NDIS_FILTER_ATTRIBUTES  FilterAttributes;
-	BOOLEAN               bFalse = FALSE;
+	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
+	BOOLEAN					bFalse = FALSE;
+	BOOLEAN					bDot11;
 
 	TRACE_ENTER();
 
@@ -1456,18 +1457,53 @@ NPF_AttachAdapter(
 			break;
 		}
 
-		// The WiFi filter will only bind to the 802.11 wirelress adapters.
-		if (g_Dot11SupportMode)
-		{
-			if (FilterDriverHandle_WiFi == NdisFilterHandle)
-			{
-				if (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
-				{
-					IF_LOUD(DbgPrint("Unsupported media type for the WiFi driver: MiniportMediaType = %d, expected = 16 (NdisMediumNative802_11).\n", AttachParameters->MiniportMediaType);)
+		// An example:
+		// AdapterName = "\DEVICE\{4F4B4BD7-340D-45D3-8F59-8A1E167BC75D}"
+		// FilterModuleGuidName = "{4F4B4BD7-340D-45D3-8F59-8A1E167BC75D}-{7DAF2AC8-E9F6-4765-A842-F1F5D2501351}-0000"
+		IF_LOUD(DbgPrint("NPF_AttachAdapter: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
+			AttachParameters->BaseMiniportName->Buffer,
+			AttachParameters->CurrentMacAddress[0],
+			AttachParameters->CurrentMacAddress[1],
+			AttachParameters->CurrentMacAddress[2],
+			AttachParameters->CurrentMacAddress[3],
+			AttachParameters->CurrentMacAddress[4],
+			AttachParameters->CurrentMacAddress[5],
+			AttachParameters->MiniportMediaType);
+		);
 
-					returnStatus = NDIS_STATUS_INVALID_PARAMETER;
-					break;
-				}
+		IF_LOUD(DbgPrint("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%d]=%d\n",
+			AttachParameters->FilterModuleGuidName->Buffer,
+			SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME,
+			AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME]);
+		);
+
+		if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'4')
+		{
+			IF_LOUD(DbgPrint("NPF_AttachAdapter: This is the standard filter binding!\n");)
+			bDot11 = FALSE;
+		}
+		else if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'5')
+		{
+			IF_LOUD(DbgPrint("NPF_AttachAdapter: This is the WiFi filter binding!\n");)
+			bDot11 = TRUE;
+		}
+		else
+		{
+			IF_LOUD(DbgPrint("NPF_AttachAdapter: error, unrecognized filter binding!\n");)
+
+			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		// The WiFi filter will only bind to the 802.11 wirelress adapters.
+		if (g_Dot11SupportMode && bDot11)
+		{
+			if (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
+			{
+				IF_LOUD(DbgPrint("Unsupported media type for the WiFi filter: MiniportMediaType = %d, expected = 16 (NdisMediumNative802_11).\n", AttachParameters->MiniportMediaType);)
+
+				returnStatus = NDIS_STATUS_INVALID_PARAMETER;
+				break;
 			}
 		}
 
@@ -1479,17 +1515,6 @@ NPF_AttachAdapter(
 // 			returnStatus = NDIS_STATUS_NOT_SUPPORTED;
 // 			break;
 // 		}
-
-		IF_LOUD(DbgPrint("NPF_AttachAdapter: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
-			AttachParameters->BaseMiniportName->Buffer,
-			AttachParameters->CurrentMacAddress[0],
-			AttachParameters->CurrentMacAddress[1],
-			AttachParameters->CurrentMacAddress[2],
-			AttachParameters->CurrentMacAddress[3],
-			AttachParameters->CurrentMacAddress[4],
-			AttachParameters->CurrentMacAddress[5],
-			AttachParameters->MiniportMediaType);
-		)
 
 		// create the adapter object
 		Open = NPF_CreateOpenObject(AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType, NULL);
