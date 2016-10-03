@@ -1463,9 +1463,9 @@ NPF_AttachAdapter(
 			{
 				if (AttachParameters->MiniportMediaType != NdisMediumNative802_11)
 				{
-					IF_LOUD(DbgPrint("NPF_AttachAdapter: Unsupported media type for the WiFi driver: MiniportMediaType = %d, expected = 16.\n", AttachParameters->MiniportMediaType);)
+					IF_LOUD(DbgPrint("Unsupported media type for the WiFi driver: MiniportMediaType = %d, expected = 16 (NdisMediumNative802_11).\n", AttachParameters->MiniportMediaType);)
 
-						returnStatus = NDIS_STATUS_INVALID_PARAMETER;
+					returnStatus = NDIS_STATUS_INVALID_PARAMETER;
 					break;
 				}
 			}
@@ -1480,7 +1480,7 @@ NPF_AttachAdapter(
 // 			break;
 // 		}
 
-		IF_LOUD(DbgPrint("NPF_Attach: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
+		IF_LOUD(DbgPrint("NPF_AttachAdapter: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
 			AttachParameters->BaseMiniportName->Buffer,
 			AttachParameters->CurrentMacAddress[0],
 			AttachParameters->CurrentMacAddress[1],
@@ -1517,7 +1517,7 @@ NPF_AttachAdapter(
 		}
 		else
 		{
-			IF_LOUD(DbgPrint("NPF_Attach: g_LoopbackAdapterName.Buffer=NULL\n");)
+			IF_LOUD(DbgPrint("NPF_AttachAdapter: g_LoopbackAdapterName.Buffer=NULL\n");)
 		}
 #endif
 
