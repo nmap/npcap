@@ -346,7 +346,6 @@ NPF_OpenAdapter_End:;
 	// This is used for timestamp conversion.
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
-	NPF_AddToOpenArray(Open);
 	NPF_AddToGroupOpenArray(Open);
 
 	NPF_StopUsingBinding(GroupHead);
@@ -887,7 +886,6 @@ NPF_Cleanup_Internal(
 
 	ASSERT(Open != NULL);
 
-	NPF_RemoveFromOpenArray(Open); //Remove the adapter from the global adapter list
 	NPF_RemoveFromGroupOpenArray(Open); //Remove the adapter from the group adapter list
 
 	NPF_CloseOpenInstance(Open);
@@ -1199,10 +1197,20 @@ NPF_GetOpenByAdapterName(
 	NdisAcquireSpinLock(&g_OpenArrayLock);
 	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
 	{
-		if (CurOpen->AdapterBindingStatus == ADAPTER_BOUND && NPF_EqualAdapterName(&CurOpen->AdapterName, pAdapterName) == TRUE)
+		if (NPF_StartUsingBinding(CurOpen) == FALSE)
 		{
+			continue;
+		}
+
+		if (NPF_EqualAdapterName(&CurOpen->AdapterName, pAdapterName))
+		{
+			NPF_StopUsingBinding(CurOpen);
 			NdisReleaseSpinLock(&g_OpenArrayLock);
 			return CurOpen;
+		}
+		else
+		{
+			NPF_StopUsingBinding(CurOpen);
 		}
 	}
 	NdisReleaseSpinLock(&g_OpenArrayLock);
