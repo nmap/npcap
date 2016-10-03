@@ -209,7 +209,7 @@ DriverEntry(
 	
 	WCHAR* bindT;
 	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
-	UNICODE_STRING macName;
+	UNICODE_STRING AdapterName;
 	ULONG OsMajorVersion, OsMinorVersion;
 
 	NDIS_STRING strNdisGroupMaxProcessorCount;
@@ -337,10 +337,10 @@ DriverEntry(
 		bindT = bindP;
 	}
 
-	for (; *bindT != UNICODE_NULL; bindT += (macName.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR))
+	for (; *bindT != UNICODE_NULL; bindT += (AdapterName.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR))
 	{
-		RtlInitUnicodeString(&macName, bindT);
-		NPF_CreateDevice(DriverObject, &macName, &g_NPF_Prefix);
+		RtlInitUnicodeString(&AdapterName, bindT);
+		NPF_CreateDevice(DriverObject, &AdapterName, &g_NPF_Prefix);
 	}
 
 	// Register the filter to NDIS.
