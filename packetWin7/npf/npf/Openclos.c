@@ -1011,6 +1011,7 @@ NPF_RemoveFromOpenArray(
 {
 	POPEN_INSTANCE CurOpen = NULL;
 	POPEN_INSTANCE PrevOpen = NULL;
+	POPEN_INSTANCE GroupOpen;
 
 	TRACE_ENTER();
 
@@ -1028,15 +1029,24 @@ NPF_RemoveFromOpenArray(
 				PrevOpen->Next = CurOpen->Next;
 			}
 
-			NdisReleaseSpinLock(&g_OpenArrayLock);
-			TRACE_EXIT();
-			return;
+			break;
 		}
 		PrevOpen = CurOpen;
 	}
+
+	// Remove the links between group head and group members.
+	GroupOpen = Open->GroupNext;
+	while (GroupOpen)
+	{
+		GroupOpen->GroupHead = NULL;
+		GroupOpen = GroupOpen->GroupNext;
+	}
+	Open->GroupNext = NULL;
+
 	NdisReleaseSpinLock(&g_OpenArrayLock);
 
-	IF_LOUD(DbgPrint("NPF_RemoveFromOpenArray: never should be here.\n");)
+	if (!CurOpen)
+		IF_LOUD(DbgPrint("NPF_RemoveFromOpenArray: error, the open isn't in the global open list.\n");)
 	TRACE_EXIT();
 }
 
@@ -1077,7 +1087,7 @@ NPF_RemoveFromGroupOpenArray(
 	}
 	NdisReleaseSpinLock(&g_OpenArrayLock);
 
-	IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: never should be here.\n");)
+	IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");)
 	TRACE_EXIT();
 }
 
