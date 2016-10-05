@@ -27,6 +27,14 @@
   packet data stucture has changed (from <varname>NDIS_PACKET</varname> to <varname>NET_BUFFER_LIST</varname>)
   since Vista and NDIS 5 needs to handle extra packet structure conversion.</para></listitem>
 
+  <listitem><para><emphasis>Latest libpcap API Support</emphasis>: Npcap provides supoort
+  for the latest <ulink role="hidepdf" url="https://github.com/the-tcpdump-group/libpcap">libpcap API</ulink>
+  by accepting libpcap as a <ulink role="hidepdf" url="https://git-scm.com/docs/git-submodule">Git submodule</ulink>.
+  The latest libpcap 1.8.0 has integrated more fascinating features and functions than the
+  <ulink role="hidepdf" url="https://www.winpcap.org/misc/changelog.htm">deprecated libpcap 1.0.0 shipped by WinPcap</ulink>.
+  Moreover, since Linux already has a good support for latest libpcap API, using
+  Npcap on Windows facilitates your software to base on the same API on both Windows and Linux.</para></listitem>
+
   <listitem><para><emphasis><quote>Admin-only Mode</quote> Support</emphasis>: Npcap supports to restrict its
   use to Administrators for safety purpose. If Npcap is installed with
   the option <quote>Restrict Npcap driver's access to Administrators only</quote> checked,
