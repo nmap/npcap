@@ -69,6 +69,8 @@ Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
 Var /GLOBAL winpcap_mode
 
+Var /GLOBAL no_confirm
+
 Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
 Var /GLOBAL winpcap_installed
@@ -230,6 +232,19 @@ Function getInstallOptions
 	${OrIf} $R0 S== "no"
 	${OrIf} $R0 S== "disabled"
 		StrCpy $winpcap_mode $R0
+	${EndIf}
+FunctionEnd
+
+Function un.getInstallOptions
+	StrCpy $no_confirm "no"
+	
+	${GetParameters} $cmd_line ; An example: $cmd_line = '/Q'
+
+	${GetOptions} $cmd_line "/Q" $R0
+	${If} ${Errors}
+		StrCpy $no_confirm "no"
+	${Else}
+		StrCpy $no_confirm "yes"
 	${EndIf}
 FunctionEnd
 
@@ -440,6 +455,10 @@ try_uninstallers:
 	${EndIf}
 	; give up now, we've tried our hardest to determine a valid uninstaller!
 	Return
+FunctionEnd
+
+Function un.onInit
+	Call un.getInstallOptions
 FunctionEnd
 
 Function OptionsPage
