@@ -344,7 +344,13 @@ silent_uninstall:
 	${Else}
 		StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 	${EndIf}
-	ExecWait '$0 /S _?=$UNINSTDIR'
+	LogSet off
+	ExecWait '$0 /S _?=$UNINSTDIR' $2
+	LogSet on
+	; If the uninstaller fails, then quit the installation.
+	${If} $2 != 0
+		quit
+	${EndIf}
 	Return
 
 no_silent:
