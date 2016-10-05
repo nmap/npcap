@@ -363,8 +363,6 @@ try_uninstallers:
 	; check for UninstallString and use that in preference (should already have double quotes and uninstall.exe)
 	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
 	${If} $0 != ""
-		LogSet off
-
 		; Get the previous installation path.
 		ReadRegStr $1 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
 		${If} $1 != ""
@@ -372,6 +370,7 @@ try_uninstallers:
 		${Else}
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
+		LogSet off
 		ExecWait '$0 _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
@@ -385,8 +384,6 @@ try_uninstallers:
 	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap" "UninstallString"
 	${If} $0 != ""
 		MessageBox MB_OK "Using our old UninstallString, file exists"
-		LogSet off
-
 		; Get the previous installation path.
 		ReadRegStr $1 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
 		${If} $1 != ""
@@ -394,6 +391,7 @@ try_uninstallers:
 		${Else}
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
+		LogSet off
 		ExecWait '$0 _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
@@ -419,8 +417,6 @@ try_uninstallers:
 	${EndIf}
 
 	${If} ${FileExists} "$0\uninstall.exe"
-		LogSet off
-
 		; Get the previous installation path.
 		ReadRegStr $1 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath"
 		${If} $1 != ""
@@ -428,6 +424,7 @@ try_uninstallers:
 		${Else}
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
+		LogSet off
 		ExecWait '"$0\Uninstall.exe" _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
