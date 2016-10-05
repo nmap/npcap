@@ -372,12 +372,12 @@ try_uninstallers:
 		${Else}
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
-		ExecWait '$0 _?=$UNINSTDIR'
+		ExecWait '$0 _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
-		; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-			; quit
-		; ${EndIf}
+		${If} $2 != 0
+			quit
+		${EndIf}
 		Return
 	${EndIf}
 
@@ -394,12 +394,12 @@ try_uninstallers:
 		${Else}
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
-		ExecWait '$0 _?=$UNINSTDIR'
+		ExecWait '$0 _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
-		; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-			; quit
-		; ${EndIf}
+		${If} $2 != 0
+			quit
+		${EndIf}
 		Return
 	${EndIf}
 
@@ -428,12 +428,12 @@ try_uninstallers:
 		${Else}
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
-		ExecWait '"$0\Uninstall.exe" _?=$UNINSTDIR'
+		ExecWait '"$0\Uninstall.exe" _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
-		; ${If} ${FileExists} "$INSTDIR\NPFInstall.exe"
-			; quit
-		; ${EndIf}
+		${If} $2 != 0
+			quit
+		${EndIf}
 	${EndIf}
 	; give up now, we've tried our hardest to determine a valid uninstaller!
 	Return
