@@ -67,11 +67,15 @@ Npcap has provided a diagnostic utility called ``DiagReport``. It provides a lot
 
 For Vista users: ``DiagReport`` is a script written by [Windows PowerShell](https://msdn.microsoft.com/en-us/powershell/mt173057.aspx), and Vista doesn't have it installed by default. So if you are using Vista, you need to install ``PowerShell 2.0 (KB968930)`` on your system. Please download it [here for x86](https://www.microsoft.com/en-hk/download/details.aspx?id=9864) and [here for x64](https://www.microsoft.com/en-us/download/details.aspx?id=9239). Win7 and later systems have built-in PowerShell support and don't need to do anything about it.
 
-### Installation log
+### General installation log
 
 Npcap keeps track of the installation in a log file: ``C:\Program Files\Npcap\install.log``, please submit it together in your report if you encounter issues about the installation (e.g. the installer halts).
 
-There's also a driver installation log in: ``C:\Windows\INF\setupapi.dev.log``. If you encounter errors about the driver/service installation, please submit it together in your report.
+### Driver installation log
+
+Npcap keeps track of the driver installation (aka commands run by ``NPFInstall.exe``) in a log file: ``C:\Program Files\Npcap\NPFInstall.log``, please submit it together in your report if you encounter issues about the driver installation and ``Npcap Loopback Adapter``.
+
+There's another system-provided driver installation log in: ``C:\Windows\INF\setupapi.dev.log``. If you encounter errors about the driver/service installation, please copy the Npcap-related lines out and send them together in your report.
 
 ### Driver log
 

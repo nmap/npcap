@@ -912,7 +912,7 @@ managed
 
 	</sect2>
   <sect2 id="npcap-issues-installation-log">
-    <title>Installation log</title>
+    <title>General installation log</title>
 
     <para>
     Npcap keeps track of the installation in a log file:
@@ -920,10 +920,24 @@ managed
 	together in your report if you encounter issues about the installation
 	(e.g. the installer halts).
     </para>
+  </sect2>
+
+  <sect2 id="npcap-issues-driver-installation-log">
+    <title>Driver installation log</title>
 
     <para>
-    There's also a driver installation log in: <filename>C:\Windows\INF\setupapi.dev.log</filename>.
-	If you encounter errors about the driver/service installation, please submit it together in
+    Npcap keeps track of the driver installation (aka commands run by
+	<filename>NPFInstall.exe</filename>) in a log file:
+	<filename>C:\Program Files\Npcap\NPFInstall.log</filename>, please submit
+	it together in your report if you encounter issues about the driver
+	installation and <quote>Npcap Loopback Adapter</quote>.
+    </para>
+
+    <para>
+    There's another system-provided driver installation log in:
+	<filename>C:\Windows\INF\setupapi.dev.log</filename>.
+	If you encounter errors about the driver/service installation, please copy
+	the Npcap-related lines out and send them together in
 	your report.
     </para>
   </sect2>
