@@ -363,7 +363,6 @@ try_uninstallers:
 	; check for UninstallString and use that in preference (should already have double quotes and uninstall.exe)
 	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallString"
 	${If} $0 != ""
-	${AndIf} ${FileExists} $0
 		LogSet off
 
 		; Get the previous installation path.
@@ -385,7 +384,6 @@ try_uninstallers:
 	; didn't find an UninstallString, check for our old UninstallString and if uninstall.exe exists:
 	ReadRegStr $0 "HKLM" "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap" "UninstallString"
 	${If} $0 != ""
-	${AndIf} ${FileExists} $0
 		MessageBox MB_OK "Using our old UninstallString, file exists"
 		LogSet off
 
