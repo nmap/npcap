@@ -127,6 +127,14 @@ Get-NetAdapter
 
 #########################################################
 write_report ("`n")
+write_report ("*************************************************")
+write_report ("NDIS Light-Weight Filter (LWF) Info:")
+write_report ("*************************************************")
+
+(Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Network\{4d36e974-e325-11ce-bfc1-08002be10318}\*' | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+
+#########################################################
+write_report ("`n")
 "*************************************************"
 write_report ("File Info:")
 write_report ("*************************************************")
