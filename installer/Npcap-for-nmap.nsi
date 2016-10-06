@@ -145,6 +145,7 @@ VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2016 Insecure.Com LLC ($\
 Page custom OptionsPage doOptions
 ; Don't let user choose where to install the files. WinPcap doesn't let people, and it's one less thing for us to worry about.
 !insertmacro MUI_PAGE_INSTFILES
+!define MUI_PAGE_CUSTOMFUNCTION_PRE un.doPreConfirm
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 Page custom finalPage doFinal
@@ -165,6 +166,12 @@ ReserveFile "final.ini"
 
 !insertmacro GetParameters
 !insertmacro GetOptions
+
+Function un.doPreConfirm
+	${If} $no_confirm == "yes"
+		Abort
+	${EndIf}
+Functionend
 
 Function getInstallOptions
 	StrCpy $npf_startup "yes"
@@ -392,7 +399,7 @@ try_uninstallers:
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
 		LogSet off
-		ExecWait '$0 _?=$UNINSTDIR' $2
+		ExecWait '$0 /Q _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
 		${If} $2 != 0
@@ -413,7 +420,7 @@ try_uninstallers:
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
 		LogSet off
-		ExecWait '$0 _?=$UNINSTDIR' $2
+		ExecWait '$0 /Q _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
 		${If} $2 != 0
@@ -446,7 +453,7 @@ try_uninstallers:
 			StrCpy $UNINSTDIR $INSTDIR_DEFAULT
 		${EndIf}
 		LogSet off
-		ExecWait '"$0\Uninstall.exe" _?=$UNINSTDIR' $2
+		ExecWait '"$0\Uninstall.exe" /Q _?=$UNINSTDIR' $2
 		LogSet on
 		; If the uninstaller fails, then quit the installation.
 		${If} $2 != 0
