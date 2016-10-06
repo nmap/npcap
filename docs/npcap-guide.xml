@@ -27,7 +27,7 @@
   packet data stucture has changed (from <varname>NDIS_PACKET</varname> to <varname>NET_BUFFER_LIST</varname>)
   since Vista and NDIS 5 needs to handle extra packet structure conversion.</para></listitem>
 
-  <listitem><para><emphasis>Latest libpcap API Support</emphasis>: Npcap provides supoort
+  <listitem><para><emphasis>Latest libpcap API Support</emphasis>: Npcap provides support
   for the latest <ulink role="hidepdf" url="https://github.com/the-tcpdump-group/libpcap">libpcap API</ulink>
   by accepting libpcap as a <ulink role="hidepdf" url="https://git-scm.com/docs/git-submodule">Git submodule</ulink>.
   The latest libpcap 1.8.0 has integrated more fascinating features and functions than the
