@@ -4821,7 +4821,7 @@ BOOLEAN PacketGetNetType2(PCHAR AdapterName, NetType *type)
   \param AdapterObject The adapter on which information is needed.
   \return TRUE if yes, FALSE if no.
 */
-BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject)
+BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName)
 {
 	BOOLEAN ret;
 
@@ -4829,7 +4829,7 @@ BOOLEAN PacketIsLoopbackAdapter(LPADAPTER AdapterObject)
 
 	// Set the return value to TRUE for "Npcap Loopback Adapter".
 	if (strcmp(g_LoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
-		AdapterObject->Name + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1) == 0)
+		AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1) == 0)
 	{
 		ret = TRUE;
 	}
