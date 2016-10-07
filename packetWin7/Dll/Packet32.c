@@ -899,7 +899,7 @@ PCHAR NpcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 	return newstr;
 }
 
-PCHAR NpcapAdapterNameNPF2NPCAP(PCHAR AdapterName)
+PCHAR NpcapTranslateAdapterName_Npf2Npcap(PCHAR AdapterName)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
 	UNREFERENCED_PARAMETER(AdapterName);
@@ -909,7 +909,7 @@ PCHAR NpcapAdapterNameNPF2NPCAP(PCHAR AdapterName)
 #endif
 }
 
-PCHAR NpcapAdapterNameNPCAP2NPF(PCHAR AdapterName)
+PCHAR NpcapTranslateAdapterName_Npcap2Npf(PCHAR AdapterName)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
 	UNREFERENCED_PARAMETER(AdapterName);
@@ -919,7 +919,7 @@ PCHAR NpcapAdapterNameNPCAP2NPF(PCHAR AdapterName)
 #endif
 }
 
-PCHAR NpcapMemNPF2NPCAP(PCHAR pStr, int iBufSize)
+PCHAR NpcapTranslateMemory_Npf2Npcap(PCHAR pStr, int iBufSize)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
 	UNREFERENCED_PARAMETER(pStr);
@@ -930,7 +930,7 @@ PCHAR NpcapMemNPF2NPCAP(PCHAR pStr, int iBufSize)
 #endif
 }
 
-PCHAR NpcapMemNPCAP2NPF(PCHAR pStr, int iBufSize)
+PCHAR NpcapTranslateMemory_Npcap2Npf(PCHAR pStr, int iBufSize)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
 	UNREFERENCED_PARAMETER(pStr);
@@ -2619,7 +2619,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	TRACE_PRINT2("Packet DLL version %hs, Driver version %hs", PacketLibraryVersion, PacketDriverVersion);
 
 	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	TranslatedAdapterNameWA = NpcapAdapterNameNPF2NPCAP(AdapterNameWA);
+	TranslatedAdapterNameWA = NpcapTranslateAdapterName_Npf2Npcap(AdapterNameWA);
 	if (TranslatedAdapterNameWA)
 	{
 		AdapterNameWA = TranslatedAdapterNameWA;
@@ -4620,7 +4620,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	((PCHAR)pStr)[SizeNeeded + 1] = 0;
 
 	// Translate the adapter name string's "NPCAP_{XXX}" to "NPF_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	pStrTranslated = NpcapMemNPCAP2NPF(pStr, *BufferSize);
+	pStrTranslated = NpcapTranslateMemory_Npcap2Npf(pStr, *BufferSize);
 	if (pStrTranslated)
 	{
 		memcpy_s(((PCHAR)pStr), *BufferSize, pStrTranslated, *BufferSize);
@@ -4656,7 +4656,7 @@ BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntrie
 	TRACE_ENTER();
 
 	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	TranslatedAdapterName = NpcapAdapterNameNPF2NPCAP(AdapterName);
+	TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
 	if (TranslatedAdapterName)
 	{
 		AdapterName = TranslatedAdapterName;
