@@ -2132,6 +2132,11 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 				0, NULL, OPEN_EXISTING, 0, 0);
 			if (pSymbolicLinkA)
 				free(pSymbolicLinkA);
+
+			// If the monitor mode device fails to be opened, we then try the standard one.
+			if (!lpAdapter->hFile)
+				lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
+				0, NULL, OPEN_EXISTING, 0, 0);
 		}
 		else
 		{
