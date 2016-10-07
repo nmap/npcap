@@ -198,12 +198,21 @@ _Outptr_result_bytebuffer_(*pdwDataSize) PVOID *ppData,
 _Out_opt_ PWLAN_OPCODE_VALUE_TYPE pWlanOpcodeValueType
 );
 
+typedef DWORD
+(WINAPI *My_WLANGETINTERFACECAPABILITY)(
+_In_ HANDLE hClientHandle,
+_In_ const GUID  *pInterfaceGuid,
+_Reserved_ PVOID pReserved,
+_Out_ PWLAN_INTERFACE_CAPABILITY *ppCapability
+);
+
 MY_WLANOPENHANDLE My_WlanOpenHandle = NULL;
 MY_WLANCLOSEHANDLE My_WlanCloseHandle = NULL;
 MY_WLANENUMINTERFACES My_WlanEnumInterfaces = NULL;
 MY_WLANFREEMEMORY My_WlanFreeMemory = NULL;
 MY_WLANSETINTERFACE My_WlanSetInterface = NULL;
 My_WLANQUERYINTERFACE My_WlanQueryInterface = NULL;
+My_WLANGETINTERFACECAPABILITY My_WlanGetInterfaceCapability = NULL;
 
 BOOL initWlanFunctions()
 {
@@ -217,7 +226,8 @@ BOOL initWlanFunctions()
 		My_WlanEnumInterfaces != NULL &&
 		My_WlanFreeMemory != NULL &&
 		My_WlanSetInterface != NULL &&
-		My_WlanQueryInterface != NULL)
+		My_WlanQueryInterface != NULL &&
+		My_WlanGetInterfaceCapability != NULL)
 	{
 		return TRUE;
 	}
@@ -234,6 +244,7 @@ BOOL initWlanFunctions()
 		My_WlanFreeMemory = (MY_WLANFREEMEMORY)GetProcAddress(hinstLib, "WlanFreeMemory");
 		My_WlanSetInterface = (MY_WLANSETINTERFACE)GetProcAddress(hinstLib, "WlanSetInterface");
 		My_WlanQueryInterface = (My_WLANQUERYINTERFACE)GetProcAddress(hinstLib, "WlanQueryInterface");
+		My_WlanGetInterfaceCapability = (My_WLANGETINTERFACECAPABILITY)GetProcAddress(hinstLib, "WlanGetInterfaceCapability");
 		// If the function address is valid, call the function.  
 
 		if (My_WlanOpenHandle != NULL &&
@@ -241,7 +252,8 @@ BOOL initWlanFunctions()
 			My_WlanEnumInterfaces != NULL &&
 			My_WlanFreeMemory != NULL &&
 			My_WlanSetInterface != NULL &&
-			My_WlanQueryInterface != NULL)
+			My_WlanQueryInterface != NULL &&
+			My_WlanGetInterfaceCapability != NULL)
 		{
 			bRet = TRUE;
 		}
@@ -4990,7 +5002,17 @@ DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 
 	// Open Handle for the set operation
 	dwResult = My_WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
+	if (dwResult != ERROR_SUCCESS)
+	{
+		TRACE_PRINT1("SetInterface failed, My_WlanOpenHandle error, errCode = %x", dwResult);
+		TRACE_EXIT();
+		return dwResult;
+	}
 	dwResult = My_WlanSetInterface(hClient, InterfaceGuid, opcode, sizeof(ULONG), pData, NULL);
+	if (dwResult != ERROR_SUCCESS)
+	{
+		TRACE_PRINT1("SetInterface failed, My_WlanSetInterface error, errCode = %x", dwResult);
+	}
 	My_WlanCloseHandle(hClient, NULL);
 
 	TRACE_EXIT();
@@ -5016,7 +5038,51 @@ DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 
 	// Open Handle for the set operation
 	dwResult = My_WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
+	if (dwResult != ERROR_SUCCESS)
+	{
+		TRACE_PRINT1("GetInterface failed, My_WlanOpenHandle error, errCode = %x", dwResult);
+		TRACE_EXIT();
+		return dwResult;
+	}
 	dwResult = My_WlanQueryInterface(hClient, InterfaceGuid, opcode, NULL, &outsize, pData, &opCode);
+	if (dwResult != ERROR_SUCCESS)
+	{
+		TRACE_PRINT1("GetInterface failed, My_WlanQueryInterface error, errCode = %x", dwResult);
+	}
+	My_WlanCloseHandle(hClient, NULL);
+
+	TRACE_EXIT();
+	return dwResult;
+}
+
+DWORD GetInterfaceCapability(PWLAN_INTERFACE_CAPABILITY pWlanInterfaceCapability, GUID* InterfaceGuid)
+{
+	TRACE_ENTER();
+
+	DWORD dwResult = 0;
+	HANDLE hClient = NULL;
+	DWORD dwCurVersion = 0;
+
+	if (!initWlanFunctions())
+	{
+		TRACE_PRINT("SetInterface failed, initWlanFunctions error");
+		TRACE_EXIT();
+		return ERROR_INVALID_FUNCTION;
+	}
+
+	// Open Handle for the set operation
+	dwResult = My_WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
+	if (dwResult != ERROR_SUCCESS)
+	{
+		TRACE_PRINT1("GetInterfaceCapability failed, My_WlanOpenHandle error, errCode = %x", dwResult);
+		TRACE_EXIT();
+		return dwResult;
+	}
+	dwResult = My_WlanGetInterfaceCapability(hClient, InterfaceGuid, NULL, &pWlanInterfaceCapability);
+	if (dwResult != ERROR_SUCCESS)
+	{
+		TRACE_PRINT1("GetInterfaceCapability failed, My_WlanGetInterfaceCapability error, errCode = %x", dwResult);
+	}
 	My_WlanCloseHandle(hClient, NULL);
 
 	TRACE_EXIT();
