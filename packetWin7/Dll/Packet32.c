@@ -909,27 +909,6 @@ PCHAR NpcapTranslateAdapterName_Npf2Npcap(PCHAR AdapterName)
 #endif
 }
 
-PCHAR NpcapTranslateAdapterName_Npcap2Npf(PCHAR AdapterName)
-{
-#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
-	UNREFERENCED_PARAMETER(AdapterName);
-	return NULL;
-#else
-	return NpcapReplaceString(AdapterName, "NPCAP", "NPF");
-#endif
-}
-
-PCHAR NpcapTranslateMemory_Npf2Npcap(PCHAR pStr, int iBufSize)
-{
-#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
-	UNREFERENCED_PARAMETER(pStr);
-	UNREFERENCED_PARAMETER(iBufSize);
-	return NULL;
-#else
-	return NpcapReplaceMemory(pStr, iBufSize, "NPF", "NPCAP");
-#endif
-}
-
 PCHAR NpcapTranslateMemory_Npcap2Npf(PCHAR pStr, int iBufSize)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
