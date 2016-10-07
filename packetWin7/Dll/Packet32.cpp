@@ -256,12 +256,12 @@ BOOL initWlanFunctions()
 }
 
 #ifdef HAVE_IPHELPER_API
-typedef VOID (*GAAHandler)(
-  ULONG,
-  DWORD,
-  PVOID,
-  PIP_ADAPTER_ADDRESSES,
-  PULONG);
+typedef ULONG (WINAPI *GAAHandler)(
+	_In_    ULONG                 Family,
+	_In_    ULONG                 Flags,
+	_In_    PVOID                 Reserved,
+	_Inout_ PIP_ADAPTER_ADDRESSES AdapterAddresses,
+	_Inout_ PULONG                SizePointer);
 GAAHandler g_GetAdaptersAddressesPointer = NULL;
 #endif // HAVE_IPHELPER_API
 
@@ -923,7 +923,7 @@ PCHAR NpcapTranslateMemory_Npcap2Npf(PCHAR pStr, int iBufSize)
   \brief The main dll function.
 */
 
-BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
+BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 {
 	TRACE_ENTER();
 
@@ -977,7 +977,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 		// Retrieve packet.dll version information from the file
 		//
 		// XXX We want to replace this with a constant. We leave it out for the moment
-		if(GetModuleFileName(DllHandle, DllFileName, sizeof(DllFileName) / sizeof(DllFileName[0])) > 0)
+		if(GetModuleFileName((HMODULE) DllHandle, DllFileName, sizeof(DllFileName) / sizeof(DllFileName[0])) > 0)
 		{
 			PacketGetFileVersion(DllFileName, PacketLibraryVersion, sizeof(PacketLibraryVersion));
 		}
@@ -1470,7 +1470,7 @@ BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 
 	TRACE_ENTER();
 
-    OidData = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT,IoCtlBufferLength);
+	OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
     if (OidData == NULL) {
         TRACE_PRINT("PacketSetMaxLookaheadsize failed");
         Status = FALSE;
@@ -1643,7 +1643,7 @@ BOOLEAN PacketInstallDriver60()
 	BOOLEAN result = FALSE;
 	TRACE_ENTER();
 
-	result = (BOOLEAN) InstallDriver(FALSE);
+	result = (BOOLEAN) InstallDriver();
 
 	TRACE_EXIT();
 	return result;
@@ -1707,7 +1707,7 @@ BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLe
     dwVerInfoSize = GetFileVersionInfoSize(FileName, &dwVerHnd);
     if (dwVerInfoSize) 
 	{
-        lpstrVffInfo = GlobalAllocPtr(GMEM_MOVEABLE, dwVerInfoSize);
+        lpstrVffInfo = (LPTSTR) GlobalAllocPtr(GMEM_MOVEABLE, dwVerInfoSize);
 		if (lpstrVffInfo == NULL)
 		{
 			TRACE_PRINT("PacketGetFileVersion: failed to allocate memory");
@@ -1749,7 +1749,7 @@ BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLe
 		}
 
 		// Convert to ASCII
-		TmpStr = WChar2SChar(lpBuffer);
+		TmpStr = WChar2SChar((PWCHAR) lpBuffer);
 
 		if(strlen(TmpStr) >= VersionBuffLen)
 		{
@@ -2626,7 +2626,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 		//
 		size_t bufferSize = wcslen((PWCHAR)AdapterNameWA) + 1;
 		
-		AdapterNameA = GlobalAllocPtr(GPTR, bufferSize);
+		AdapterNameA = (PCHAR) GlobalAllocPtr(GPTR, bufferSize);
 
 		if (AdapterNameA == NULL)
 		{
@@ -3557,7 +3557,7 @@ BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
 
 BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void *name, int len)
 {
-	DWORD		BytesReturned;
+	DWORD	BytesReturned;
 	WCHAR	*FileName;
 	BOOLEAN	res;
 	WCHAR	NameWithPath[1024];
@@ -3573,28 +3573,33 @@ BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void *name, int len)
 		return FALSE;
 	}
 
-	if(((PUCHAR)name)[1]!=0 && len>1){ //ASCII
-		FileName=SChar2WChar(name);
-		len*=2;
+	if (((PUCHAR) name)[1] != 0 && len > 1)
+	{	// ASCII
+		FileName = SChar2WChar((PCHAR) name);
+		len *= 2;
 	} 
-	else {	//Unicode
-		FileName=name;
+	else
+	{
+		// Unicode
+		FileName = (WCHAR*) name;
 	}
 
-	TStrLen=GetFullPathName(FileName,1024,NameWithPath,&NamePos);
+	TStrLen = GetFullPathName(FileName, 1024, NameWithPath, &NamePos);
 
-	len=TStrLen*2+2;  //add the terminating null character
+	len = TStrLen * 2 + 2;  // add the terminating null character
 
 	// Try to catch malformed strings
-	if(len>2048){
-		if(((PUCHAR)name)[1]!=0 && len>1) GlobalFreePtr(FileName);
+	if (len > 2048)
+	{
+		if (((PUCHAR) name)[1] != 0 && len > 1) GlobalFreePtr(FileName);
 
 		TRACE_EXIT();
 		return FALSE;
 	}
 
-    res = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSETDUMPFILENAME,NameWithPath,len,NULL,0,&BytesReturned,NULL);
-	if(((PUCHAR)name)[1]!=0 && len>1) GlobalFreePtr(FileName);
+    res = (BOOLEAN) DeviceIoControl(AdapterObject->hFile, BIOCSETDUMPFILENAME, NameWithPath, len, NULL, 0, &BytesReturned, NULL);
+	if (((PUCHAR) name)[1]!=0 && len > 1)
+		GlobalFreePtr(FileName);
 
 	TRACE_EXIT();
 	return res;
@@ -4420,7 +4425,7 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 {
     BOOLEAN    Status;
-    ULONG      IoCtlBufferLength=(sizeof(PACKET_OID_DATA)+sizeof(ULONG)-1);
+    ULONG      IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1);
     PPACKET_OID_DATA  OidData;
 	
 	TRACE_ENTER();
@@ -4450,16 +4455,17 @@ BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
     
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
-		OidData=GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT,IoCtlBufferLength);
-		if (OidData == NULL) {
+		OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
+		if (OidData == NULL)
+		{
 	        TRACE_PRINT("PacketSetHwFilter: GlobalAlloc Failed");
 			TRACE_EXIT();
 	        return FALSE;
 		}
-		OidData->Oid=OID_GEN_CURRENT_PACKET_FILTER;
-		OidData->Length=sizeof(ULONG);
-	    *((PULONG)OidData->Data)=Filter;
-		Status=PacketRequest(AdapterObject,TRUE,OidData);
+		OidData->Oid = OID_GEN_CURRENT_PACKET_FILTER;
+		OidData->Length = sizeof(ULONG);
+	    *((PULONG) OidData->Data) = Filter;
+		Status = PacketRequest(AdapterObject, TRUE, OidData);
 		GlobalFreePtr(OidData);
 	}
 	else

@@ -79,7 +79,13 @@ PADAPTER_INFO g_AdaptersInfoList = NULL;				///< Head of the adapter information
 HANDLE g_AdaptersInfoMutex = NULL;						///< Mutex that protects the adapter information list. NOTE: every API that takes an ADAPTER_INFO as parameter assumes that it has been called with the mutex acquired.
 CHAR g_LoopbackAdapterNameForDLTNull[BUFSIZE] = "";		///< The name of "Npcap Loopback Adapter", used for recording the NdisMediumNull link type for this adapter.
 
-extern FARPROC g_GetAdaptersAddressesPointer;
+typedef ULONG (WINAPI *GAAHandler)(
+	_In_    ULONG                 Family,
+	_In_    ULONG                 Flags,
+	_In_    PVOID                 Reserved,
+	_Inout_ PIP_ADAPTER_ADDRESSES AdapterAddresses,
+	_Inout_ PULONG                SizePointer);
+extern GAAHandler g_GetAdaptersAddressesPointer;
 
 #ifdef HAVE_AIRPCAP_API
 extern AirpcapGetLastErrorHandler g_PAirpcapGetLastError;
@@ -142,7 +148,7 @@ static BOOLEAN PacketGetLinkLayerFromRegistry(LPADAPTER AdapterObject, NetType *
 
 	TRACE_ENTER();
 
-	OidData=GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT,IoCtlBufferLength);
+	OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
 	if (OidData == NULL) {
 		TRACE_PRINT("PacketGetLinkLayerFromRegistry failed");
 		TRACE_EXIT();
@@ -587,7 +593,7 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 
 	TRACE_PRINT("IsIPv4Enabled, retrieved needed storage for the call");
 
-	AdBuffer = GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
+	AdBuffer = (PIP_ADAPTER_ADDRESSES) GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
 	if (AdBuffer == NULL) 
 	{
 		TRACE_PRINT("IsIPv4Enabled: GlobalAlloc Failed");
@@ -682,7 +688,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 
 	TRACE_PRINT("PacketAddIP6Addresses, retrieved needed storage for the call");
 
-	AdBuffer = GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
+	AdBuffer = (PIP_ADAPTER_ADDRESSES) GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
 	if (AdBuffer == NULL) 
 	{
 		TRACE_PRINT("PacketAddIP6Addresses: GlobalAlloc Failed");
@@ -731,7 +737,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 					{
 						PNPF_IF_ADDRESS_ITEM pItem, pCursor;
 						
-						pItem = GlobalAllocPtr(GPTR, sizeof(NPF_IF_ADDRESS_ITEM));
+						pItem = (PNPF_IF_ADDRESS_ITEM) GlobalAllocPtr(GPTR, sizeof(NPF_IF_ADDRESS_ITEM));
 						
 						if (pItem == NULL)
 						{
@@ -890,7 +896,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd, BOOLEAN bDot11)
 	//
 	TRACE_PRINT1("Adapter %hs is available and should be added to the global list...", TName);
 
-	TmpAdInfo = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
+	TmpAdInfo = (PADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
 	if (TmpAdInfo == NULL) 
 	{
 		TRACE_PRINT("PacketAddAdapterIPH: GlobalAlloc Failed allocating memory for the AdInfo");
@@ -1018,7 +1024,7 @@ static BOOLEAN PacketGetAdaptersIPH()
 	TRACE_PRINT("PacketGetAdaptersIPH: retrieved needed bytes for IPH");
 
 	// Allocate the buffer
-	AdList = GlobalAllocPtr(GMEM_MOVEABLE, OutBufLen);
+	AdList = (PIP_ADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE, OutBufLen);
 	if (AdList == NULL) 
 	{
 		TRACE_PRINT("PacketGetAdaptersIPH: GlobalAlloc Failed allocating the buffer for GetAdaptersInfo");
@@ -1105,7 +1111,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		{
 			
 			// Allocate a buffer to get the vendor description from the driver
-			OidData = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT,512);
+			OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, 512);
 			if (OidData == NULL) 
 			{
 				TRACE_PRINT("PacketAddAdapterNPF: GlobalAlloc Failed allocating the buffer for the OID request to obtain the NIC description. Returning."); 				
@@ -1131,7 +1137,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	// In the adapter list
 	//
 	
-	TmpAdInfo = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
+	TmpAdInfo = (PADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
 	if (TmpAdInfo == NULL) 
 	{
 		TRACE_PRINT("AddAdapter: GlobalAlloc Failed");
@@ -1474,7 +1480,7 @@ tcpip_linkage:
 			&RegKeySize);
 
 		// Allocate the buffer
-		TcpBindingsMultiString = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, RegKeySize + 2);
+		TcpBindingsMultiString = (CHAR*) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, RegKeySize + 2);
 
 		if (TcpBindingsMultiString == NULL)
 		{
