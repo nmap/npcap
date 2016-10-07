@@ -904,6 +904,11 @@ PCHAR NpcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 	return newstr;
 }
 
+PCHAR NpcapTranslateAdapterName_Standard2Wifi(PCHAR AdapterName)
+{
+	return NpcapReplaceString(AdapterName, "_{", "_WIFI_{");
+}
+
 PCHAR NpcapTranslateAdapterName_Npf2Npcap(PCHAR AdapterName)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
@@ -2118,10 +2123,15 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	}
 	else
 	{
+		PCHAR pSymbolicLinkA = NULL;
+		if (g_nbAdapterMonitorModes[AdapterNameA] != 0)
+			pSymbolicLinkA = NpcapTranslateAdapterName_Standard2Wifi(SymbolicLinkA);
 		//try if it is possible to open the adapter immediately
-		lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
+		lpAdapter->hFile = CreateFileA(pSymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
 			0, NULL, OPEN_EXISTING, 0, 0);
-		TRACE_PRINT1("lpAdapter->hFile = %08x", lpAdapter->hFile);
+		if (pSymbolicLinkA)
+			free(pSymbolicLinkA);
+		TRACE_PRINT2("pSymbolicLinkA = %s, lpAdapter->hFile = %08x", pSymbolicLinkA, lpAdapter->hFile);
 	}
 	
 	if (lpAdapter->hFile != INVALID_HANDLE_VALUE) 
