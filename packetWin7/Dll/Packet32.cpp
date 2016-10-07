@@ -117,6 +117,12 @@ LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName);
 
 #include <WpcapNames.h>
 
+#include <map>
+using namespace std;
+
+// The states for all the wireless adapters that show whether it is in the monitor mode.
+map<string, int> g_nbAdapterMonitorModes;
+
 //
 // Current packet.dll version. It can be retrieved directly or through the PacketGetVersion() function.
 //
@@ -5033,6 +5039,8 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 	}
 	else
 	{
+		// Update the adapter's monitor mode in the global map.
+		g_nbAdapterMonitorModes[AdapterName] = mode;
 		TRACE_EXIT();
 		return 1;
 	}
@@ -5046,6 +5054,7 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 */
 int PacketGetMonitorMode(PCHAR AdapterName)
 {
+	int mode;
 	GUID ChoiceGUID;
 
 	TRACE_ENTER();
@@ -5054,10 +5063,9 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 	{
 		TRACE_PRINT("PacketGetMonitorMode failed, myGUIDFromString error");
 		TRACE_EXIT();
-		return FALSE;
+		return -1;
 	}
 
-	ULONG ulOperationMode = 0;
 	PULONG pOperationMode;
 	DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
@@ -5068,17 +5076,14 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 	}
 	else
 	{
-		ulOperationMode = *pOperationMode;
+		mode = (*pOperationMode == DOT11_OPERATION_MODE_NETWORK_MONITOR) ? 1 : 0;
 		My_WlanFreeMemory(pOperationMode);
+
+		// Update the adapter's monitor mode in the global map.
+		g_nbAdapterMonitorModes[AdapterName] = mode;
+
 		TRACE_EXIT();
-		if (ulOperationMode == DOT11_OPERATION_MODE_NETWORK_MONITOR)
-		{
-			return 1;
-		}
-		else
-		{
-			return 0;
-		}
+		return mode;
 	}
 }
 
