@@ -2123,15 +2123,22 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	}
 	else
 	{
+		// Try if it is possible to open the adapter immediately
 		PCHAR pSymbolicLinkA = NULL;
 		if (g_nbAdapterMonitorModes[AdapterNameA] != 0)
+		{
 			pSymbolicLinkA = NpcapTranslateAdapterName_Standard2Wifi(SymbolicLinkA);
-		//try if it is possible to open the adapter immediately
-		lpAdapter->hFile = CreateFileA(pSymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
-			0, NULL, OPEN_EXISTING, 0, 0);
-		if (pSymbolicLinkA)
-			free(pSymbolicLinkA);
-		TRACE_PRINT2("pSymbolicLinkA = %s, lpAdapter->hFile = %08x", pSymbolicLinkA, lpAdapter->hFile);
+			lpAdapter->hFile = CreateFileA(pSymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
+				0, NULL, OPEN_EXISTING, 0, 0);
+			if (pSymbolicLinkA)
+				free(pSymbolicLinkA);
+		}
+		else
+		{
+			lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
+				0, NULL, OPEN_EXISTING, 0, 0);
+		}
+		TRACE_PRINT3("SymbolicLinkA = %hs, pSymbolicLinkA = %hs, lpAdapter->hFile = %08x", SymbolicLinkA, pSymbolicLinkA, lpAdapter->hFile);
 	}
 	
 	if (lpAdapter->hFile != INVALID_HANDLE_VALUE) 
