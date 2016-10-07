@@ -15,16 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\AdInfo.c">
+    <ClCompile Include="..\AdInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\netcfgapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\NpfImExt.c">
+    <ClCompile Include="..\NpfImExt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Packet32.c">
+    <ClCompile Include="..\Packet32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\ProtInstall.cpp">

@@ -914,10 +914,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\AdInfo.c" />
+    <ClCompile Include="..\AdInfo.cpp" />
     <ClCompile Include="..\netcfgapi.cpp" />
-    <ClCompile Include="..\NpfImExt.c" />
-    <ClCompile Include="..\Packet32.c" />
+    <ClCompile Include="..\NpfImExt.cpp" />
+    <ClCompile Include="..\Packet32.cpp" />
     <ClCompile Include="..\ProtInstall.cpp" />
     <ClCompile Include="..\WanPacket\WanPacket.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon and AirPcap(WinPcap Mode)|Win32'">true</ExcludedFromBuild>
