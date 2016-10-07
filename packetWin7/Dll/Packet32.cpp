@@ -4867,39 +4867,6 @@ BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName)
 }
 
 /*!
-\brief Returns whether a wireless adapter supports monitor mode.
-\param AdapterObject The adapter on which information is needed.
-\return 1 if yes, 0 if no, -1 if the function fails.
-*/
-int PacketIsMonitorModeSupported(PCHAR AdapterName)
-{
-	int Status;
-	NetType Type;
-
-	TRACE_ENTER();
-
-	if (PacketGetNetType2(AdapterName, &Type) == FALSE)
-	{
-		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketGetNetType error");
-		Status = -1;
-	}
-	else
-	{
-		if (Type.LinkType == NdisMediumBare80211 || Type.LinkType == NdisMediumRadio80211)
-		{
-			Status = 1;
-		}
-		else
-		{
-			Status = 0;
-		}
-	}
-
-	TRACE_EXIT();
-	return Status;
-}
-
-/*!
 This code needs to send OID request, which requires the adapter to be opened first,
 but usually this function is called before opening, so we don't use it for now.
 */
@@ -5087,6 +5054,39 @@ DWORD GetInterfaceCapability(PWLAN_INTERFACE_CAPABILITY pWlanInterfaceCapability
 
 	TRACE_EXIT();
 	return dwResult;
+}
+
+/*!
+\brief Returns whether a wireless adapter supports monitor mode.
+\param AdapterObject The adapter on which information is needed.
+\return 1 if yes, 0 if no, -1 if the function fails.
+*/
+int PacketIsMonitorModeSupported(PCHAR AdapterName)
+{
+	int Status;
+	NetType Type;
+
+	TRACE_ENTER();
+
+	if (PacketGetNetType2(AdapterName, &Type) == FALSE)
+	{
+		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketGetNetType error");
+		Status = -1;
+	}
+	else
+	{
+		if (Type.LinkType == NdisMediumBare80211 || Type.LinkType == NdisMediumRadio80211)
+		{
+			Status = 1;
+		}
+		else
+		{
+			Status = 0;
+		}
+	}
+
+	TRACE_EXIT();
+	return Status;
 }
 
 /*!
