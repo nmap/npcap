@@ -4952,7 +4952,7 @@ BOOL myGUIDFromString(LPCSTR psz, LPGUID pguid)
 
 #define WLAN_CLIENT_VERSION_VISTA 2
 
-DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
+DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID pData, GUID* InterfaceGuid)
 {
 	TRACE_ENTER();
 
@@ -4986,7 +4986,7 @@ DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 	return dwResult;
 }
 
-DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
+DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* ppData, GUID* InterfaceGuid)
 {
 	TRACE_ENTER();
 
@@ -5011,7 +5011,7 @@ DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 		TRACE_EXIT();
 		return dwResult;
 	}
-	dwResult = My_WlanQueryInterface(hClient, InterfaceGuid, opcode, NULL, &outsize, pData, &opCode);
+	dwResult = My_WlanQueryInterface(hClient, InterfaceGuid, opcode, NULL, &outsize, ppData, &opCode);
 	if (dwResult != ERROR_SUCCESS)
 	{
 		TRACE_PRINT1("GetInterface failed, My_WlanQueryInterface error, errCode = %x", dwResult);
@@ -5022,7 +5022,7 @@ DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* pData, GUID* InterfaceGuid)
 	return dwResult;
 }
 
-DWORD GetInterfaceCapability(PWLAN_INTERFACE_CAPABILITY pWlanInterfaceCapability, GUID* InterfaceGuid)
+DWORD GetInterfaceCapability(PWLAN_INTERFACE_CAPABILITY *ppWlanInterfaceCapability, GUID* InterfaceGuid)
 {
 	TRACE_ENTER();
 
@@ -5045,7 +5045,7 @@ DWORD GetInterfaceCapability(PWLAN_INTERFACE_CAPABILITY pWlanInterfaceCapability
 		TRACE_EXIT();
 		return dwResult;
 	}
-	dwResult = My_WlanGetInterfaceCapability(hClient, InterfaceGuid, NULL, &pWlanInterfaceCapability);
+	dwResult = My_WlanGetInterfaceCapability(hClient, InterfaceGuid, NULL, ppWlanInterfaceCapability);
 	if (dwResult != ERROR_SUCCESS)
 	{
 		TRACE_PRINT1("GetInterfaceCapability failed, My_WlanGetInterfaceCapability error, errCode = %x", dwResult);
@@ -5110,7 +5110,7 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 
 	ULONG ulOperationMode = mode ? DOT11_OPERATION_MODE_NETWORK_MONITOR : DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
 
-	DWORD dwResult = SetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&ulOperationMode, &ChoiceGUID);
+	DWORD dwResult = SetInterface(wlan_intf_opcode_current_operation_mode, (PVOID)&ulOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
 	{
 		TRACE_PRINT("PacketSetMonitorMode failed, SetInterface error");
