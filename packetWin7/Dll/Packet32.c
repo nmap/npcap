@@ -379,7 +379,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 }
 #endif
 
-BOOL NPcapCreatePipe(char *pipeName, HANDLE moduleName)
+BOOL NpcapCreatePipe(char *pipeName, HANDLE moduleName)
 {
 	int pid = GetCurrentProcessId();
 	char params[BUFSIZE];
@@ -440,7 +440,7 @@ BOOL NPcapCreatePipe(char *pipeName, HANDLE moduleName)
 	}
 }
 
-HANDLE NPcapConnect(char *pipeName)
+HANDLE NpcapConnect(char *pipeName)
 {
 	HANDLE hPipe = INVALID_HANDLE_VALUE;
 	int tryTime = 0;
@@ -480,7 +480,7 @@ HANDLE NPcapConnect(char *pipeName)
 	return hPipe;
 }
 
-HANDLE NPcapRequestHandle(char *sMsg, DWORD *pdwError)
+HANDLE NpcapRequestHandle(char *sMsg, DWORD *pdwError)
 {
 	LPSTR lpvMessage = sMsg;
 	char  chBuf[BUFSIZE];
@@ -577,7 +577,7 @@ HANDLE NPcapRequestHandle(char *sMsg, DWORD *pdwError)
 	#define NPCAP_SOFTWARE_REGISTRY_KEY "SOFTWARE\\Wow6432Node\\" NPF_SOFT_REGISTRY_NAME
 #endif
 
-void NPcapGetLoopbackInterfaceName()
+void NpcapGetLoopbackInterfaceName()
 {
 	TRACE_ENTER();
 
@@ -607,7 +607,7 @@ void NPcapGetLoopbackInterfaceName()
 	TRACE_EXIT();
 }
 
-BOOL NPcapIsAdminOnlyMode()
+BOOL NpcapIsAdminOnlyMode()
 {
 	TRACE_ENTER();
 
@@ -655,7 +655,7 @@ BOOL NPcapIsAdminOnlyMode()
 	}
 }
 
-BOOL NPcapIsRunByAdmin()
+BOOL NpcapIsRunByAdmin()
 {
 	BOOL bIsRunAsAdmin = FALSE;
 	DWORD dwError = ERROR_SUCCESS;
@@ -704,21 +704,21 @@ Cleanup:
 	return bIsRunAsAdmin;
 }
 
-void NPcapStartHelper()
+void NpcapStartHelper()
 {
 	TRACE_ENTER();
 
 	g_NpcapHelperTried = TRUE;
 
 	// Check if Npcap is installed in "Admin-Only Mode".
-	if (!NPcapIsAdminOnlyMode())
+	if (!NpcapIsAdminOnlyMode())
 	{
 		g_IsRunByAdmin = TRUE;
 	}
 	else
 	{
 		// Check if this process is running in Administrator mode.
-		g_IsRunByAdmin = NPcapIsRunByAdmin();
+		g_IsRunByAdmin = NpcapIsRunByAdmin();
 	}
 
 	if (!g_IsRunByAdmin)
@@ -726,9 +726,9 @@ void NPcapStartHelper()
 		char pipeName[BUFSIZE];
 		int pid = GetCurrentProcessId();
 		sprintf_s(pipeName, BUFSIZE, "npcap-%d", pid);
-		if (NPcapCreatePipe(pipeName, g_DllHandle))
+		if (NpcapCreatePipe(pipeName, g_DllHandle))
 		{
-			g_NpcapHelperPipe = NPcapConnect(pipeName);
+			g_NpcapHelperPipe = NpcapConnect(pipeName);
 			if (g_NpcapHelperPipe == INVALID_HANDLE_VALUE)
 			{
 				// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
@@ -745,7 +745,7 @@ void NPcapStartHelper()
 	TRACE_EXIT();
 }
 
-void NPcapStopHelper()
+void NpcapStopHelper()
 {
 	TRACE_ENTER();
 
@@ -800,7 +800,7 @@ char* memstr(char* full_data, int full_data_len, char* substr)
 }
 
 // For memory block [mem], substitute all [source] strings with [destination], return the new memory block (need to free), if not found, return NULL.
-PCHAR NPcapReplaceMemory(PCHAR buf, int buf_size, PCHAR source, PCHAR destination)
+PCHAR NpcapReplaceMemory(PCHAR buf, int buf_size, PCHAR source, PCHAR destination)
 {
 	PCHAR tmp;
 	PCHAR newbuf;
@@ -850,7 +850,7 @@ PCHAR NPcapReplaceMemory(PCHAR buf, int buf_size, PCHAR source, PCHAR destinatio
 }
 
 // For [string], substitute all [source] strings with [destination], return the new string (need to free), if not found, return NULL.
-PCHAR NPcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
+PCHAR NpcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 {
 	PCHAR tmp;
 	PCHAR newstr;
@@ -899,45 +899,45 @@ PCHAR NPcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 	return newstr;
 }
 
-PCHAR NPcapAdapterNameNPF2NPCAP(PCHAR AdapterName)
+PCHAR NpcapAdapterNameNPF2NPCAP(PCHAR AdapterName)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
 	UNREFERENCED_PARAMETER(AdapterName);
 	return NULL;
 #else
-	return NPcapReplaceString(AdapterName, "NPF", "NPCAP");
+	return NpcapReplaceString(AdapterName, "NPF", "NPCAP");
 #endif
 }
 
-PCHAR NPcapAdapterNameNPCAP2NPF(PCHAR AdapterName)
+PCHAR NpcapAdapterNameNPCAP2NPF(PCHAR AdapterName)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
 	UNREFERENCED_PARAMETER(AdapterName);
 	return NULL;
 #else
-	return NPcapReplaceString(AdapterName, "NPCAP", "NPF");
+	return NpcapReplaceString(AdapterName, "NPCAP", "NPF");
 #endif
 }
 
-PCHAR NPcapMemNPF2NPCAP(PCHAR pStr, int iBufSize)
+PCHAR NpcapMemNPF2NPCAP(PCHAR pStr, int iBufSize)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
 	UNREFERENCED_PARAMETER(pStr);
 	UNREFERENCED_PARAMETER(iBufSize);
 	return NULL;
 #else
-	return NPcapReplaceMemory(pStr, iBufSize, "NPF", "NPCAP");
+	return NpcapReplaceMemory(pStr, iBufSize, "NPF", "NPCAP");
 #endif
 }
 
-PCHAR NPcapMemNPCAP2NPF(PCHAR pStr, int iBufSize)
+PCHAR NpcapMemNPCAP2NPF(PCHAR pStr, int iBufSize)
 {
 #ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
 	UNREFERENCED_PARAMETER(pStr);
 	UNREFERENCED_PARAMETER(iBufSize);
 	return NULL;
 #else
-	return NPcapReplaceMemory(pStr, iBufSize, "NPCAP", "NPF");
+	return NpcapReplaceMemory(pStr, iBufSize, "NPCAP", "NPF");
 #endif
 }
 
@@ -1012,7 +1012,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 		strcpy_s(PacketDriverName, 64, NPF_DRIVER_NAME);
 
 		// Get the name for "Npcap Loopback Adapter"
-		NPcapGetLoopbackInterfaceName();
+		NpcapGetLoopbackInterfaceName();
 		
 		break;
 		
@@ -1045,7 +1045,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 		if (!g_IsRunByAdmin)
 		{
 			// NpcapHelper De-Initialization.
-			NPcapStopHelper();
+			NpcapStopHelper();
 		}
 
 #ifdef WPCAP_OEM_UNLOAD_H 
@@ -2059,7 +2059,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
 	if (!g_NpcapHelperTried)
 	{
-		NPcapStartHelper();
+		NpcapStartHelper();
 	}
 
 	// Try NpcapHelper to start service if we are in Non-Admin mode.
@@ -2124,7 +2124,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	{
 		//try if it is possible to open the adapter immediately
 		DWORD dwErrorReceived;
-		lpAdapter->hFile = NPcapRequestHandle(SymbolicLinkA, &dwErrorReceived);
+		lpAdapter->hFile = NpcapRequestHandle(SymbolicLinkA, &dwErrorReceived);
 		TRACE_PRINT1("Driver handle from NpcapHelper = %08x", lpAdapter->hFile);
 		if (lpAdapter->hFile == INVALID_HANDLE_VALUE)
 		{
@@ -2619,7 +2619,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	TRACE_PRINT2("Packet DLL version %hs, Driver version %hs", PacketLibraryVersion, PacketDriverVersion);
 
 	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	TranslatedAdapterNameWA = NPcapAdapterNameNPF2NPCAP(AdapterNameWA);
+	TranslatedAdapterNameWA = NpcapAdapterNameNPF2NPCAP(AdapterNameWA);
 	if (TranslatedAdapterNameWA)
 	{
 		AdapterNameWA = TranslatedAdapterNameWA;
@@ -4620,7 +4620,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	((PCHAR)pStr)[SizeNeeded + 1] = 0;
 
 	// Translate the adapter name string's "NPCAP_{XXX}" to "NPF_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	pStrTranslated = NPcapMemNPCAP2NPF(pStr, *BufferSize);
+	pStrTranslated = NpcapMemNPCAP2NPF(pStr, *BufferSize);
 	if (pStrTranslated)
 	{
 		memcpy_s(((PCHAR)pStr), *BufferSize, pStrTranslated, *BufferSize);
@@ -4656,7 +4656,7 @@ BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntrie
 	TRACE_ENTER();
 
 	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	TranslatedAdapterName = NPcapAdapterNameNPF2NPCAP(AdapterName);
+	TranslatedAdapterName = NpcapAdapterNameNPF2NPCAP(AdapterName);
 	if (TranslatedAdapterName)
 	{
 		AdapterName = TranslatedAdapterName;
