@@ -55,22 +55,21 @@
 
 #include "debug.h"
 
-BOOL bUseNPF60 = FALSE;
-
 #define BUFSIZE 512
 #define MAX_SEM_COUNT 10
 #define MAX_TRY_TIME 50
 #define SLEEP_TIME 50
-// Handle for NpcapHelper named pipe.
-HANDLE g_NpcapHelperPipe = INVALID_HANDLE_VALUE;
-// Whether this process is running in Administrator mode.
-BOOL g_IsRunByAdmin = FALSE;
-// Whether we have already tried NpcapHelper.
-BOOL g_NpcapHelperTried = FALSE;
-// The handle to this DLL.
-HANDLE g_DllHandle = NULL;
-// The name of "Npcap Loopback Adapter".
-CHAR g_LoopbackAdapterName[BUFSIZE] = "";
+
+
+BOOL bUseNPF60							=	FALSE;					// Whether to use the new NDIS 6 driver.
+
+HANDLE g_hNpcapHelperPipe				=	INVALID_HANDLE_VALUE;	// Handle for NpcapHelper named pipe.
+BOOL g_bIsRunByAdmin					=	FALSE;					// Whether this process is running in Administrator mode.
+BOOL g_bNpcapHelperTried				=	FALSE;					// Whether we have already tried NpcapHelper.
+HANDLE g_hDllHandle						=	NULL;					// The handle to this DLL.
+
+CHAR g_strLoopbackAdapterName[BUFSIZE]	= "";						// The name of "Npcap Loopback Adapter".
+
 
 #ifdef _WINNT4
 #if (defined(HAVE_NPFIM_API) || defined(HAVE_WANPACKET_API) || defined (HAVE_AIRPCAP_API) || defined(HAVE_IPHELPER_API))
@@ -486,7 +485,7 @@ HANDLE NpcapRequestHandle(char *sMsg, DWORD *pdwError)
 	char  chBuf[BUFSIZE];
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
-	HANDLE hPipe = g_NpcapHelperPipe;
+	HANDLE hPipe = g_hNpcapHelperPipe;
 
 	TRACE_ENTER();
 
@@ -594,7 +593,7 @@ void NpcapGetLoopbackInterfaceName()
 	{
 		if (RegQueryValueExA(hKey, "LoopbackAdapter", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
-			strncpy_s(g_LoopbackAdapterName, 512, buffer, sizeof(g_LoopbackAdapterName)/ sizeof(g_LoopbackAdapterName[0]) - 1);
+			strncpy_s(g_strLoopbackAdapterName, 512, buffer, sizeof(g_strLoopbackAdapterName)/ sizeof(g_strLoopbackAdapterName[0]) - 1);
 		}
 
 		RegCloseKey(hKey);
@@ -708,37 +707,37 @@ void NpcapStartHelper()
 {
 	TRACE_ENTER();
 
-	g_NpcapHelperTried = TRUE;
+	g_bNpcapHelperTried = TRUE;
 
 	// Check if Npcap is installed in "Admin-Only Mode".
 	if (!NpcapIsAdminOnlyMode())
 	{
-		g_IsRunByAdmin = TRUE;
+		g_bIsRunByAdmin = TRUE;
 	}
 	else
 	{
 		// Check if this process is running in Administrator mode.
-		g_IsRunByAdmin = NpcapIsRunByAdmin();
+		g_bIsRunByAdmin = NpcapIsRunByAdmin();
 	}
 
-	if (!g_IsRunByAdmin)
+	if (!g_bIsRunByAdmin)
 	{
 		char pipeName[BUFSIZE];
 		int pid = GetCurrentProcessId();
 		sprintf_s(pipeName, BUFSIZE, "npcap-%d", pid);
-		if (NpcapCreatePipe(pipeName, g_DllHandle))
+		if (NpcapCreatePipe(pipeName, g_hDllHandle))
 		{
-			g_NpcapHelperPipe = NpcapConnect(pipeName);
-			if (g_NpcapHelperPipe == INVALID_HANDLE_VALUE)
+			g_hNpcapHelperPipe = NpcapConnect(pipeName);
+			if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
 			{
 				// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
-				g_IsRunByAdmin = TRUE;
+				g_bIsRunByAdmin = TRUE;
 			}
 		}
 		else
 		{
 			// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
-			g_IsRunByAdmin = TRUE;
+			g_bIsRunByAdmin = TRUE;
 		}
 	}
 
@@ -749,10 +748,10 @@ void NpcapStopHelper()
 {
 	TRACE_ENTER();
 
-	if (g_NpcapHelperPipe != INVALID_HANDLE_VALUE)
+	if (g_hNpcapHelperPipe != INVALID_HANDLE_VALUE)
 	{
-		CloseHandle(g_NpcapHelperPipe);
-		g_NpcapHelperPipe = INVALID_HANDLE_VALUE;
+		CloseHandle(g_hNpcapHelperPipe);
+		g_hNpcapHelperPipe = INVALID_HANDLE_VALUE;
 	}
 
 	TRACE_EXIT();
@@ -931,7 +930,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
     BOOLEAN Status=TRUE;
 	PADAPTER_INFO NewAdInfo;
 	TCHAR DllFileName[MAX_PATH];
-	g_DllHandle = DllHandle;
+	g_hDllHandle = DllHandle;
 
 	UNUSED(lpReserved);
 
@@ -1021,7 +1020,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle,DWORD Reason,LPVOID lpReserved)
 			g_AdaptersInfoList = NewAdInfo;
 		}
 
-		if (!g_IsRunByAdmin)
+		if (!g_bIsRunByAdmin)
 		{
 			// NpcapHelper De-Initialization.
 			NpcapStopHelper();
@@ -2036,7 +2035,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	TRACE_PRINT1("Trying to open adapter %hs", AdapterNameA);
 
 	// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
-	if (!g_NpcapHelperTried)
+	if (!g_bNpcapHelperTried)
 	{
 		NpcapStartHelper();
 	}
@@ -2099,7 +2098,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	ZeroMemory(lpAdapter->SymbolicLink, sizeof(lpAdapter->SymbolicLink));
 
 	// Try NpcapHelper to request handle if we are in Non-Admin mode.
-	if (!g_IsRunByAdmin)
+	if (!g_bIsRunByAdmin)
 	{
 		//try if it is possible to open the adapter immediately
 		DWORD dwErrorReceived;
@@ -4807,7 +4806,7 @@ BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName)
 	TRACE_ENTER();
 
 	// Set the return value to TRUE for "Npcap Loopback Adapter".
-	if (strcmp(g_LoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
+	if (strcmp(g_strLoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
 		AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1) == 0)
 	{
 		ret = TRUE;
