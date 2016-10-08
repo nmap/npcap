@@ -910,6 +910,9 @@ PCHAR NpcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 
 		memset(retstr, 0, size);
 		sk = strstr(newstr, source);
+
+		// We just need to replace only one substring, so we break here.
+		break;
 	}
 
 	free(retstr);
@@ -918,6 +921,8 @@ PCHAR NpcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 
 PCHAR NpcapTranslateAdapterName_Standard2Wifi(PCHAR AdapterName)
 {
+	TRACE_ENTER();
+	TRACE_EXIT();
 	return NpcapReplaceString(AdapterName, "_{", "_WIFI_{");
 }
 
@@ -5103,11 +5108,22 @@ int PacketIsMonitorModeSupported(PCHAR AdapterName)
 int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 {
 	GUID ChoiceGUID;
+	PCHAR TranslatedAdapterName;
 
 	TRACE_ENTER();
 
-	if (myGUIDFromString(AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
+	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+	TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
+	if (!TranslatedAdapterName)
 	{
+		TRACE_PRINT("PacketSetMonitorMode failed, NpcapTranslateAdapterName_Npf2Npcap error");
+		TRACE_EXIT();
+		return -1;
+	}
+
+	if (myGUIDFromString(TranslatedAdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
+	{
+		free(TranslatedAdapterName);
 		TRACE_PRINT("PacketSetMonitorMode failed, myGUIDFromString error");
 		TRACE_EXIT();
 		return -1;
@@ -5123,17 +5139,23 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 		// Monitor mode is not supported.
 		if (dwResult == ERROR_INVALID_PARAMETER)
 		{
+			free(TranslatedAdapterName);
+			TRACE_EXIT();
 			return 0;
 		}
 		else
 		{
+			free(TranslatedAdapterName);
+			TRACE_EXIT();
 			return -1;
 		}
 	}
 	else
 	{
 		// Update the adapter's monitor mode in the global map.
-		g_nbAdapterMonitorModes[AdapterName] = mode;
+		g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
+
+		free(TranslatedAdapterName);
 		TRACE_EXIT();
 		return 1;
 	}
@@ -5149,11 +5171,22 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 {
 	int mode;
 	GUID ChoiceGUID;
+	PCHAR TranslatedAdapterName;
 
 	TRACE_ENTER();
 
-	if (myGUIDFromString(AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
+	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+	TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
+	if (!TranslatedAdapterName)
 	{
+		TRACE_PRINT("PacketSetMonitorMode failed, NpcapTranslateAdapterName_Npf2Npcap error");
+		TRACE_EXIT();
+		return -1;
+	}
+
+	if (myGUIDFromString(TranslatedAdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
+	{
+		free(TranslatedAdapterName);
 		TRACE_PRINT("PacketGetMonitorMode failed, myGUIDFromString error");
 		TRACE_EXIT();
 		return -1;
@@ -5163,6 +5196,7 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 	DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
 	{
+		free(TranslatedAdapterName);
 		TRACE_PRINT("PacketGetMonitorMode failed, GetInterface error");
 		TRACE_EXIT();
 		return -1;
@@ -5173,8 +5207,9 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 		My_WlanFreeMemory(pOperationMode);
 
 		// Update the adapter's monitor mode in the global map.
-		g_nbAdapterMonitorModes[AdapterName] = mode;
+		g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
 
+		free(TranslatedAdapterName);
 		TRACE_EXIT();
 		return mode;
 	}
