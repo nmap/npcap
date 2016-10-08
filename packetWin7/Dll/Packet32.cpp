@@ -4810,36 +4810,6 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	return ret;
 }
 
-BOOLEAN PacketGetNetType2(PCHAR AdapterName, NetType *type)
-{
-	PADAPTER_INFO TAdInfo;
-	BOOLEAN ret;
-
-	TRACE_ENTER();
-
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-	// Find the PADAPTER_INFO structure associated with this adapter 
-	TAdInfo = PacketFindAdInfo(AdapterName);
-
-	if (TAdInfo != NULL)
-	{
-		TRACE_PRINT("Adapter found");
-		// Copy the data
-		memcpy(type, &(TAdInfo->LinkLayer), sizeof(struct NetType));
-		ret = TRUE;
-	}
-	else
-	{
-		TRACE_PRINT("PacketGetNetType2: Adapter not found");
-		ret = FALSE;
-	}
-
-	ReleaseMutex(g_AdaptersInfoMutex);
-
-	TRACE_EXIT();
-	return ret;
-}
-
 /*! 
   \brief Returns whether an adapter is a loopback adapter (like Npcap loopback adapter).
   \param AdapterObject The adapter on which information is needed.
@@ -5063,30 +5033,58 @@ DWORD GetInterfaceCapability(PWLAN_INTERFACE_CAPABILITY *ppWlanInterfaceCapabili
 */
 int PacketIsMonitorModeSupported(PCHAR AdapterName)
 {
-	int Status;
-	NetType Type;
+	LPADAPTER pAdapter;
+	BOOLEAN    Status;
+	ULONG      IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1);
+	PPACKET_OID_DATA  OidData;
+	PDOT11_OPERATION_MODE_CAPABILITY pOperationModeCapability;
+	int mode;
 
 	TRACE_ENTER();
 
-	if (PacketGetNetType2(AdapterName, &Type) == FALSE)
+	pAdapter = PacketOpenAdapter(AdapterName);
+	if (!pAdapter)
 	{
-		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketGetNetType error");
-		Status = -1;
+		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketOpenAdapter error");
+		TRACE_EXIT();
+		return -1;
 	}
-	else
+
+	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
+	if (OidData == NULL) {
+		TRACE_PRINT("PacketIsMonitorModeSupported failed, GlobalAllocPtr error");
+		TRACE_EXIT();
+		return -1;
+	}
+	//get the link-layer type
+	OidData->Oid = OID_DOT11_OPERATION_MODE_CAPABILITY;
+	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
+	Status = PacketRequest(pAdapter, FALSE, OidData);
+	if (Status == TRUE)
 	{
-		if (Type.LinkType == NdisMediumBare80211 || Type.LinkType == NdisMediumRadio80211)
+		pOperationModeCapability = (PDOT11_OPERATION_MODE_CAPABILITY) OidData->Data;
+		if ((pOperationModeCapability->uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
 		{
-			Status = 1;
+			mode = 1;
 		}
 		else
 		{
-			Status = 0;
+			mode = 0;
 		}
 	}
+	else
+	{
+		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketRequest error");
+		mode = -1;
+	}
+
+	GlobalFreePtr(OidData);
+	PacketCloseAdapter(pAdapter);
+
+	TRACE_PRINT2("PacketIsMonitorModeSupported: AdapterName = %hs, mode = %d", AdapterName, mode);
 
 	TRACE_EXIT();
-	return Status;
+	return mode;
 }
 
 /*!
