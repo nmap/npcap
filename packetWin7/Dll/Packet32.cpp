@@ -53,6 +53,9 @@
 #include "wanpacket/wanpacket.h"
 #endif //HAVE_WANPACKET_API
 
+#include <map>
+using namespace std;
+
 #include "debug.h"
 
 #define BUFSIZE 512
@@ -69,6 +72,8 @@ BOOL g_bNpcapHelperTried				=	FALSE;					// Whether we have already tried NpcapH
 HANDLE g_hDllHandle						=	NULL;					// The handle to this DLL.
 
 CHAR g_strLoopbackAdapterName[BUFSIZE]	= "";						// The name of "Npcap Loopback Adapter".
+
+map<string, int> g_nbAdapterMonitorModes;							// The states for all the wireless adapters that show whether it is in the monitor mode.
 
 
 #ifdef _WINNT4
@@ -117,11 +122,6 @@ LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName);
 
 #include <WpcapNames.h>
 
-#include <map>
-using namespace std;
-
-// The states for all the wireless adapters that show whether it is in the monitor mode.
-map<string, int> g_nbAdapterMonitorModes;
 
 //
 // Current packet.dll version. It can be retrieved directly or through the PacketGetVersion() function.
@@ -2137,6 +2137,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	{
 		// Try if it is possible to open the adapter immediately
 		PCHAR pSymbolicLinkA = NULL;
+		// Check whether it is a WLAN adapter in monitor mode.
 		if (g_nbAdapterMonitorModes[AdapterNameA] != 0)
 		{
 			pSymbolicLinkA = NpcapTranslateAdapterName_Standard2Wifi(SymbolicLinkA);
@@ -4805,6 +4806,12 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	}
 
 	ReleaseMutex(g_AdaptersInfoMutex);
+
+	// Check whether it is a WLAN adapter in monitor mode.
+	if (type->LinkType == NdisMedium802_3 && g_nbAdapterMonitorModes[AdapterObject->Name] != 0)
+	{
+		type->LinkType = (UINT)NdisMediumRadio80211;
+	}
 
 	TRACE_EXIT();
 	return ret;
