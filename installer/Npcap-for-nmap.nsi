@@ -178,7 +178,7 @@ Function getInstallOptions
 	StrCpy $loopback_support "yes"
 	StrCpy $dlt_null "enforced"
 	StrCpy $admin_only "no"
-	StrCpy $dot11_support "disabled"
+	StrCpy $dot11_support "no"
 	StrCpy $vlan_support "no"
 	StrCpy $winpcap_mode "no"
 	StrCpy $winpcap_installed "no"
