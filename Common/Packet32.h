@@ -60,6 +60,9 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 #include <dagc.h>
 #endif /* HAVE_DAG_API */
 
+// Libpcap/wpcap recognizes this macro and knows Npcap Packet API is provided for compilation.
+#define HAVE_NPCAP_PACKET_API
+
 // Working modes
 #define PACKET_MODE_CAPT 0x0 ///< Capture mode
 #define PACKET_MODE_STAT 0x1 ///< Statistical mode
