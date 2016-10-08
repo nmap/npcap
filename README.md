@@ -3,7 +3,7 @@ Npcap
 
 [![Build status](https://ci.appveyor.com/api/projects/status/01yoks5rn14wgny2?svg=true)](https://ci.appveyor.com/project/hsluoyz/npcap)
 ![Environment](https://img.shields.io/badge/Windows-Vista, 7, 8, 10-brightgreen.svg)
-![Release](https://img.shields.io/github/release/nmap/npcap.svg)
+[![Release](https://img.shields.io/github/release/nmap/npcap.svg)](https://github.com/nmap/npcap/releases)
 ![License](https://img.shields.io/github/license/nmap/npcap.svg)
 ![Downloads](https://img.shields.io/github/downloads/nmap/npcap/latest/total.svg)
 ![TotalDownloads](https://img.shields.io/github/downloads/nmap/npcap/total.svg)
