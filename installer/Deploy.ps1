@@ -404,12 +404,14 @@ elseif ($args.count -eq 1)
 	elseif ($args[0] -eq "debug-deploy")
 	{
 		$driver_init_from_path_array = $driver_init_from_path_array.replace("Release", "Debug")
+		$packet_init_from_path_array = $packet_init_from_path_array.replace("Release", "Debug")
 		do_deploy
 	}
 	elseif ($args[0] -eq "debug-deploy-no_timestamp")
 	{
 		$has_timestamp = 0
 		$driver_init_from_path_array = $driver_init_from_path_array.replace("Release", "Debug")
+		$packet_init_from_path_array = $packet_init_from_path_array.replace("Release", "Debug")
 		do_deploy
 	}
 	elseif ($args[0] -eq "deploy-symbols")
