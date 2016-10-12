@@ -122,12 +122,6 @@ static VOID OutputDebugStringV(LPCTSTR Format, ...)
 
 #if defined(_DBG) || defined(_DEBUG_TO_FILE)
 
-#ifdef _DBG
-#define TRACE_PRINT_DLLMAIN(_x)							OutputDebugStringVA ("    " _x "\n")
-#else
-#define TRACE_PRINT_DLLMAIN(_x)							//we cannot use the _DEBUG_TO_FILE stuff from DllMain!!
-#endif
-
 #define TRACE_ENTER()									OutputDebugStringV(_T("--> ") _T(__FUNCTION__) _T("\n"))
 #define TRACE_EXIT()									OutputDebugStringV(_T("<-- ") _T(__FUNCTION__) _T("\n"))
 #define TRACE_PRINT(_x)									OutputDebugStringV(_T("    ") _T(_x) _T("\n"))
@@ -217,7 +211,6 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 #else
 
 #define TRACE_ENTER()
-#define TRACE_PRINT_DLLMAIN(_x)
 #define TRACE_EXIT()
 #define TRACE_PRINT(_x)
 #define TRACE_PRINT1(_x, _p1)

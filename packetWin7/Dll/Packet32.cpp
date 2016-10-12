@@ -972,7 +972,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
     {
 	case DLL_PROCESS_ATTACH:
 
-		TRACE_PRINT_DLLMAIN("************Packet32: DllMain************");
+		TRACE_PRINT("************Packet32: DllMain************");
 
 #if 0
 #ifdef WPCAP_OEM
