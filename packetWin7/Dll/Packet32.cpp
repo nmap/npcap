@@ -778,12 +778,12 @@ void NpcapStopHelper()
 // find [substr] from a fixed-length buffer
 // [full_data] will be treated as binary data buffer)
 // return NULL if not found
-char* memstr(char* full_data, int full_data_len, char* substr)
+char* memstr(char* full_data, size_t full_data_len, char* substr)
 {
-	int sublen;
+	size_t sublen;
 	int i;
 	char* cur;
-	int last_possible;
+	size_t last_possible;
 
 	if (full_data == NULL || full_data_len <= 0 || substr == NULL)
 	{
@@ -846,7 +846,7 @@ PCHAR NpcapReplaceMemory(PCHAR buf, int buf_size, PCHAR source, PCHAR destinatio
 
 	while (sk != NULL)
 	{
-		int pos = 0;
+		size_t pos = 0;
 		memcpy(retbuf + pos, newbuf, sk - newbuf);
 		pos += sk - newbuf;
 		sk += strlen(source);
@@ -896,7 +896,7 @@ PCHAR NpcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 
 	while (sk != NULL)
 	{
-		int pos = 0;
+		size_t pos = 0;
 		memcpy(retstr + pos, newstr, sk - newstr);
 		pos += sk - newstr;
 		sk += strlen(source);

@@ -33,7 +33,7 @@
 #ifndef __PACKET_DEBUG_393073863432093179878957
 #define __PACKET_DEBUG_393073863432093179878957
 
-#ifdef _DEBUG_TO_FILE
+#if defined(_DBG) || defined(_DEBUG_TO_FILE)
 
 #include <stdio.h>
 #include <windows.h>
