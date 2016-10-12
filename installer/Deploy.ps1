@@ -6,6 +6,11 @@
 
 ###########################################################
 # The variables about deployment.
+
+# Set the script path to be the current directory
+$script_dir =  (Split-Path ((Get-Variable MyInvocation -Scope 0).Value).MyCommand.Path) + "\"
+cd $script_dir
+
 $file_name_array = @()
 $from_path_array = @()
 $to_path_array = @()
@@ -325,7 +330,7 @@ function sign_driver_sha256_WoSign($file_path_name)
 
 function generate_installer($install_script, $installer_name)
 {
-	&$nsis_compiler_tool $install_script
+	&$nsis_compiler_tool ("`"/XOutFile " + $installer_name + "`"") $install_script
 
 	sign_driver_sha256_WoSign $installer_name
 }
@@ -405,6 +410,7 @@ elseif ($args.count -eq 1)
 	{
 		$driver_init_from_path_array = $driver_init_from_path_array.replace("Release", "Debug")
 		$packet_init_from_path_array = $packet_init_from_path_array.replace("Release", "Debug")
+		$installer_name = $installer_name.replace(".exe", "-debug.exe")
 		do_deploy
 	}
 	elseif ($args[0] -eq "debug-deploy-no_timestamp")
@@ -412,6 +418,7 @@ elseif ($args.count -eq 1)
 		$has_timestamp = 0
 		$driver_init_from_path_array = $driver_init_from_path_array.replace("Release", "Debug")
 		$packet_init_from_path_array = $packet_init_from_path_array.replace("Release", "Debug")
+		$installer_name = $installer_name.replace(".exe", "-debug.exe")
 		do_deploy
 	}
 	elseif ($args[0] -eq "deploy-symbols")

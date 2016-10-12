@@ -48,7 +48,7 @@ SetCompressor /SOLID /FINAL lzma
 Name "Npcap ${VERSION} (beta)"
 
 ; The file to write
-OutFile "npcap-${INSTALLER_VERSION}.exe"
+; OutFile "npcap-${INSTALLER_VERSION}.exe"
 
 Var /GLOBAL inst_ver
 Var /GLOBAL my_ver
