@@ -463,6 +463,9 @@ _T("  channel\t\t\t\t: Get interface channel\n")\
 _T("  channel <1-14>\t\t\t: Set interface channel (only works in monitor mode)\n")\
 _T("  freq\t\t\t\t\t: Get interface frequency\n")\
 _T("  freq <VALUE>\t\t\t\t: Set interface frequency (only works in monitor mode)\n")\
+_T("  modu\t\t\t\t\t: Get interface modulation\n")\
+_T("  modu <dsss|fhss|irbaseband|ofdm|hrdsss|erp|ht|vht|ihv (VALUE)|..>\t: Set interface modulation\n")\
+_T("  modus\t\t\t\t\t: Get all modulations supported by the interface, comma-separated\n")\
 _T("\n")\
 _T("COMMANDS:\n")\
 _T("  -i\t\t\t\t\t: Enter the interactive mode\n")\
@@ -476,7 +479,7 @@ _T("  wfd_device\t: The Wi-Fi Direct Device operation mode (supported from Windo
 _T("  wfd_owner\t: The Wi-Fi Direct Group Owner operation mode (supported from Windows 8 and later)\n")\
 _T("  wfd_client\t: The Wi-Fi Direct Client operation mode (supported from Windows 8 and later)\n")\
 _T("\n")\
-_T("802.11 PHY LAYERS (https://en.wikipedia.org/wiki/IEEE_802.11):\n")\
+_T("802.11 MODULATIONS (https://en.wikipedia.org/wiki/IEEE_802.11):\n")\
 _T("  802.11-1997\t: dsss, fhss\n")\
 _T("  802.11a\t: ofdm\n")\
 _T("  802.11b\t: dsss\n")\
@@ -679,6 +682,19 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			int ulFrequency = _ttoi(strArgs[3].c_str());
 			if (SetCurrentFrequency(getGuidFromAdapterName_Wrapper(strArgs[1]), ulFrequency))
+			{
+				_tprintf(_T("Success\n"));
+				return 0;
+			}
+			else
+			{
+				_tprintf(_T("Failure\n"));
+				return -1;
+			}
+		}
+		else if (strArgs[2] == _T("modu"))
+		{
+			if (SetCurrentPhyID(getGuidFromAdapterName_Wrapper(strArgs[1]), strArgs[3]))
 			{
 				_tprintf(_T("Success\n"));
 				return 0;

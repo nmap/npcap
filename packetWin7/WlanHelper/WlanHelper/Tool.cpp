@@ -85,10 +85,6 @@ tstring PhyType2String(ULONG PhyType)
 	{
 		return _T("unknown");
 	}
-	else if (PhyType == dot11_phy_type_any)
-	{
-		return _T("any");
-	}
 	else if (PhyType == dot11_phy_type_fhss)
 	{
 		return _T("fhss");
@@ -123,11 +119,64 @@ tstring PhyType2String(ULONG PhyType)
 	}
 	else if (dot11_phy_type_IHV_start <= PhyType && PhyType <= dot11_phy_type_IHV_end)
 	{
-		return _T("ihv");
+		return _T("ihv (") + itos(PhyType) + _T(")");
 	}
 	else
 	{
 		return _T("undefined");
+	}
+}
+
+ULONG String2PhyType(tstring strPhyType)
+{
+	if (strPhyType == _T("fhss"))
+	{
+		return dot11_phy_type_fhss;
+	}
+	else if (strPhyType == _T("dsss"))
+	{
+		return dot11_phy_type_dsss;
+	}
+	else if (strPhyType == _T("irbaseband"))
+	{
+		return dot11_phy_type_irbaseband;
+	}
+	else if (strPhyType == _T("ofdm"))
+	{
+		return dot11_phy_type_ofdm;
+	}
+	else if (strPhyType == _T("hrdsss"))
+	{
+		return dot11_phy_type_hrdsss;
+	}
+	else if (strPhyType == _T("erp"))
+	{
+		return dot11_phy_type_erp;
+	}
+	else if (strPhyType == _T("ht"))
+	{
+		return dot11_phy_type_ht;
+	}
+	else if (strPhyType == _T("vht"))
+	{
+		return dot11_phy_type_vht;
+	}
+	else if (strPhyType.size() > 5 && strPhyType.substr(0, 5) == _T("ihv ("))
+	{
+		ULONG ulPhyType;
+		_stscanf_s(strPhyType.c_str(), _T("ihv (%d)"), &ulPhyType);
+		if (dot11_phy_type_IHV_start <= ulPhyType && ulPhyType <= dot11_phy_type_IHV_end)
+		{
+			return ulPhyType;
+		}
+		else
+		{
+			return dot11_phy_type_unknown;
+		}
+	}
+	else
+	{
+		return dot11_phy_type_unknown;
 	}
 }
 
@@ -674,17 +723,19 @@ BOOL GetDesiredPhyList(tstring strGUID, vector<tstring> &nstrPhyList)
 BOOL GetCurrentPhyID(tstring strGUID, tstring &strPhyID)
 {
 	BOOL bResult;
-	ULONG CurrentPhyID;
+	ULONG CurrentPhyID = -1;
 
 	bResult = makeOIDRequest(strGUID, OID_DOT11_CURRENT_PHY_ID, FALSE, &CurrentPhyID, sizeof(ULONG));
-	if (bResult)
-	{
-		strPhyID = PhyType2String(CurrentPhyID);
-	}
-	else
-	{
-		strPhyID = PhyType2String((ULONG) -1);
-	}
+	strPhyID = PhyType2String(CurrentPhyID);
+	return bResult;
+}
 
+BOOL SetCurrentPhyID(tstring strGUID, tstring strPhyID)
+{
+	BOOL bResult;
+	ULONG ulPhyID;
+
+	ulPhyID = String2PhyType(strPhyID);
+	bResult = makeOIDRequest(strGUID, OID_DOT11_CURRENT_PHY_ID, TRUE, &ulPhyID, sizeof(ULONG));
 	return bResult;
 }
