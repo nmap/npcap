@@ -476,6 +476,14 @@ _T("  wfd_device\t: The Wi-Fi Direct Device operation mode (supported from Windo
 _T("  wfd_owner\t: The Wi-Fi Direct Group Owner operation mode (supported from Windows 8 and later)\n")\
 _T("  wfd_client\t: The Wi-Fi Direct Client operation mode (supported from Windows 8 and later)\n")\
 _T("\n")\
+_T("802.11 PHY LAYERS (https://en.wikipedia.org/wiki/IEEE_802.11):\n")\
+_T("  802.11-1997\t: dsss, fhss\n")\
+_T("  802.11a\t: ofdm\n")\
+_T("  802.11b\t: dsss\n")\
+_T("  802.11g\t: ofdm\n")\
+_T("  802.11n\t: mimo-ofdm\n")\
+_T("  802.11ac\t: mimo-ofdm\n")\
+_T("\n")\
 _T("EXAMPLES:\n")\
 _T("  WlanHelper Wi-Fi mode\n")\
 _T("  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11\n")\
@@ -620,10 +628,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else if (strArgs[2] == _T("modu"))
 		{
-			ULONG ulPhyID;
+			tstring ulPhyID;
 			if (GetCurrentPhyID(getGuidFromAdapterName_Wrapper(strArgs[1]), ulPhyID))
 			{
-				_tprintf(_T("%u\n"), ulPhyID);
+				_tprintf(_T("%s\n"), ulPhyID);
 				return 0;
 			}
 			else

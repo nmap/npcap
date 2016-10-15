@@ -615,12 +615,18 @@ BOOL SetCurrentFrequency(tstring strGUID, ULONG ulFrequency)
 	return bResult;
 }
 
+typedef struct _MY_DOT11_SUPPORTED_PHY_TYPES {
+	ULONG uNumOfEntries;
+	ULONG uTotalNumOfEntries;
+	DOT11_PHY_TYPE dot11PHYType[64];
+} MY_DOT11_SUPPORTED_PHY_TYPES, *PMY_DOT11_SUPPORTED_PHY_TYPES;
+
 BOOL GetSupportedPhyTypes(tstring strGUID, vector<tstring> &nstrPhyTypes)
 {
 	BOOL bResult;
-	DOT11_SUPPORTED_PHY_TYPES SupportedPhyTypes;
+	MY_DOT11_SUPPORTED_PHY_TYPES SupportedPhyTypes;
 
-	bResult = makeOIDRequest(strGUID, OID_DOT11_SUPPORTED_PHY_TYPES, FALSE, &SupportedPhyTypes, sizeof(DOT11_SUPPORTED_PHY_TYPES));
+	bResult = makeOIDRequest(strGUID, OID_DOT11_SUPPORTED_PHY_TYPES, FALSE, &SupportedPhyTypes, sizeof(MY_DOT11_SUPPORTED_PHY_TYPES));
 	if (bResult)
 	{
 		nstrPhyTypes.clear();
@@ -634,31 +640,38 @@ BOOL GetSupportedPhyTypes(tstring strGUID, vector<tstring> &nstrPhyTypes)
 	return bResult;
 }
 
+typedef struct MY_DOT11_PHY_ID_LIST {
+	NDIS_OBJECT_HEADER Header;
+	ULONG uNumOfEntries;
+	ULONG uTotalNumOfEntries;
+	ULONG dot11PhyId[64];
+} MY_DOT11_PHY_ID_LIST, *PMY_DOT11_PHY_ID_LIST;
+
 BOOL GetDesiredPhyList(tstring strGUID, vector<tstring> &nstrPhyList)
 {
 	BOOL bResult;
-	DOT11_PHY_ID_LIST DesiredPhyList;
+	MY_DOT11_PHY_ID_LIST DesiredPhyList;
 
 	if (g_nstrPhyTypes.size() == 0)
 	{
 		GetSupportedPhyTypes(strGUID, g_nstrPhyTypes);
 	}
 
-	bResult = makeOIDRequest(strGUID, OID_DOT11_DESIRED_PHY_LIST, FALSE, &DesiredPhyList, sizeof(DOT11_PHY_ID_LIST));
+	bResult = makeOIDRequest(strGUID, OID_DOT11_DESIRED_PHY_LIST, FALSE, &DesiredPhyList, sizeof(MY_DOT11_PHY_ID_LIST));
 	if (bResult)
 	{
 		nstrPhyList.clear();
 		for (size_t i = 0; i < DesiredPhyList.uNumOfEntries; i++)
 		{
 			
-			nstrPhyList.push_back(itos(DesiredPhyList.dot11PhyId[i]));
+			nstrPhyList.push_back(PhyType2String(DesiredPhyList.dot11PhyId[i]));
 		}
 	}
 
 	return bResult;
 }
 
-BOOL GetCurrentPhyID(tstring strGUID, ULONG &ulPhyID)
+BOOL GetCurrentPhyID(tstring strGUID, tstring &strPhyID)
 {
 	BOOL bResult;
 	ULONG CurrentPhyID;
@@ -666,11 +679,11 @@ BOOL GetCurrentPhyID(tstring strGUID, ULONG &ulPhyID)
 	bResult = makeOIDRequest(strGUID, OID_DOT11_CURRENT_PHY_ID, FALSE, &CurrentPhyID, sizeof(ULONG));
 	if (bResult)
 	{
-		ulPhyID = CurrentPhyID;
+		strPhyID = PhyType2String(CurrentPhyID);
 	}
 	else
 	{
-		ulPhyID = (ULONG)-1;
+		strPhyID = PhyType2String((ULONG) -1);
 	}
 
 	return bResult;

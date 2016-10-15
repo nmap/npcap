@@ -44,4 +44,4 @@ BOOL SetCurrentFrequency(tstring strGUID, ULONG ulFrequency);
 
 BOOL GetSupportedPhyTypes(tstring strGUID, vector<tstring> &strPhyTypes);
 BOOL GetDesiredPhyList(tstring strGUID, vector<tstring> &nstrPhyList);
-BOOL GetCurrentPhyID(tstring strGUID, ULONG &ulPhyID);
+BOOL GetCurrentPhyID(tstring strGUID, tstring &strPhyID);
