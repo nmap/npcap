@@ -4457,7 +4457,7 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 			OidData->Length,
 			Set,
 			Result,
-			GetLastError());
+			GetLastError() & ~(1 << 29));
 	}
 
 	TRACE_EXIT();

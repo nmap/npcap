@@ -1180,6 +1180,7 @@ Return Value:
 #define SET_FAILURE_CUSTOM(__b__) do{\
 	Information = 0; \
 	Status = __b__; \
+	Status |= 1 << 29; \
 } while(FALSE)
 
 //-------------------------------------------------------------------
@@ -2263,7 +2264,9 @@ NPF_IoControl(
 		else
 		{
 			// Return the error code of NdisFOidRequest() to the application.
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Original NdisFOidRequest() Status = %p", Status);
 			SET_FAILURE_CUSTOM(Status);
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Custom NdisFOidRequest() Status = %p", Status);
 		}
 
 		break;
@@ -2287,7 +2290,6 @@ NPF_IoControl(
 	Irp->IoStatus.Information = Information;
 	Irp->IoStatus.Status = Status;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
 
 	TRACE_EXIT();
 
