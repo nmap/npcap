@@ -123,7 +123,7 @@ tstring PhyType2String(ULONG PhyType)
 	}
 	else
 	{
-		return _T("undefined");
+		return _T("");
 	}
 }
 
@@ -783,10 +783,10 @@ BOOL GetDesiredPhyList(tstring strGUID, vector<tstring> &nstrPhyList)
 	BOOL bResult;
 	MY_DOT11_PHY_ID_LIST DesiredPhyList;
 
-	if (g_nstrPhyTypes.size() == 0)
-	{
-		GetSupportedPhyTypes(strGUID, g_nstrPhyTypes);
-	}
+// 	if (g_nstrPhyTypes.size() == 0)
+// 	{
+// 		GetSupportedPhyTypes(strGUID, g_nstrPhyTypes);
+// 	}
 
 	bResult = makeOIDRequest(strGUID, OID_DOT11_DESIRED_PHY_LIST, FALSE, &DesiredPhyList, sizeof(MY_DOT11_PHY_ID_LIST));
 	if (bResult)
@@ -805,7 +805,7 @@ BOOL GetDesiredPhyList(tstring strGUID, vector<tstring> &nstrPhyList)
 BOOL GetCurrentPhyID(tstring strGUID, tstring &strPhyID)
 {
 	BOOL bResult;
-	ULONG CurrentPhyID = -1;
+	ULONG CurrentPhyID = 0x0fffffff;
 
 	bResult = makeOIDRequest(strGUID, OID_DOT11_CURRENT_PHY_ID, FALSE, &CurrentPhyID, sizeof(ULONG));
 	strPhyID = PhyType2String(CurrentPhyID);
