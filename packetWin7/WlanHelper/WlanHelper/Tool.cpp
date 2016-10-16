@@ -180,11 +180,47 @@ ULONG String2PhyType(tstring strPhyType)
 	}
 }
 
+// NDIS_STATUS definitions returned by NdisOidRequest() from ndis.h in WDK.
+#define NDIS_STATUS_NOT_RECOGNIZED              ((NDIS_STATUS)0x00010001L)
+#define NDIS_STATUS_NOT_ACCEPTED                ((NDIS_STATUS)0x00010003L)
+#define NDIS_STATUS_CLOSING                     ((NDIS_STATUS)0xC0010002L)
+#define NDIS_STATUS_RESET_IN_PROGRESS           ((NDIS_STATUS)0xC001000DL)
+#define NDIS_STATUS_CLOSING_INDICATING          ((NDIS_STATUS)0xC001000EL)
+#define NDIS_STATUS_INVALID_LENGTH              ((NDIS_STATUS)0xC0010014L)
+#define NDIS_STATUS_INVALID_DATA                ((NDIS_STATUS)0xC0010015L)
+#define NDIS_STATUS_BUFFER_TOO_SHORT            ((NDIS_STATUS)0xC0010016L)
+#define NDIS_STATUS_INVALID_OID                 ((NDIS_STATUS)0xC0010017L)
+
+// The error messages are retrieved from: https://msdn.microsoft.com/en-us/library/windows/hardware/ff563710%28v=vs.85%29.aspx
 tstring NdisStatus2Message(DWORD dwStatus)
 {
-	if (dwStatus == 0xc0010017)
+	if (dwStatus == NDIS_STATUS_NOT_RECOGNIZED)
 	{
-		return _T("NDIS_STATUS_INVALID_OID: The OID_XXX code specified in the Oid member of the NDIS_OID_REQUEST-structured buffer at OidRequest is invalid or unsupported by the underlying driver.");
+		return _T("The underlying driver does not support the requested operation.");
+	}
+	else if (dwStatus == NDIS_STATUS_NOT_ACCEPTED)
+	{
+		return _T("The underlying driver attempted the requested operation, usually a set on a NIC, but it failed. For example, an attempt to set too many multicast addresses might cause the return of this value.");
+	}
+	else if (dwStatus == NDIS_STATUS_CLOSING || dwStatus == NDIS_STATUS_CLOSING_INDICATING)
+	{
+		return _T("The underlying driver failed the requested operation because a close operation is in progress.");
+	}
+	else if (dwStatus == NDIS_STATUS_RESET_IN_PROGRESS)
+	{
+		return _T("The underlying miniport driver cannot satisfy the request at this time because it is currently resetting the affected NIC. The caller's ProtocolStatusEx function was or will be called with NDIS_STATUS_RESET_START to indicate that a reset is in progress. This return value does not necessarily indicate that the same request, submitted later, will be failed for the same reason.");
+	}
+	else if (dwStatus == NDIS_STATUS_INVALID_LENGTH || dwStatus == NDIS_STATUS_BUFFER_TOO_SHORT)
+	{
+		return _T("The value specified in the InformationBufferLength member of the NDIS_OID_REQUEST-structured buffer at OidRequest does not match the requirements for the given OID_XXX code. If the information buffer is too small, the BytesNeeded member contains the correct value for InformationBufferLength on return from NdisOidRequest.");
+	}
+	else if (dwStatus == NDIS_STATUS_INVALID_DATA)
+	{
+		return _T("The data supplied at InformationBuffer in the given NDIS_OID_REQUEST structure is invalid for the given OID_XXX code.");
+	}
+	else if (dwStatus == NDIS_STATUS_INVALID_OID)
+	{
+		return _T("The OID_XXX code specified in the Oid member of the NDIS_OID_REQUEST-structured buffer at OidRequest is invalid or unsupported by the underlying driver.");
 	}
 	else
 	{
