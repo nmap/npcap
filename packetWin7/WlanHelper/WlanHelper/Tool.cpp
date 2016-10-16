@@ -83,7 +83,7 @@ tstring PhyType2String(ULONG PhyType)
 {
 	if (PhyType == dot11_phy_type_unknown)
 	{
-		return _T("unknown");
+		return _T("unknown or any");
 	}
 	else if (PhyType == dot11_phy_type_fhss)
 	{
