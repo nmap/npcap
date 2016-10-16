@@ -489,7 +489,16 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 	Status = My_PacketRequest(pAdapter, bSet, OidData);
 	if (!Status)
 	{
-		_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, error code = %d\n"), GetLastError());
+		LPTSTR strErrorText = NULL;
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL, GetLastError(), 0, (PTSTR) &strErrorText, 0, NULL);
+		if (strErrorText[_tcslen(strErrorText) - 2] == _T('\r') && strErrorText[_tcslen(strErrorText) - 1] == _T('\n'))
+		{
+			strErrorText[_tcslen(strErrorText) - 2] = 0x0;
+			strErrorText[_tcslen(strErrorText) - 1] = 0x0;
+		}
+
+		_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, error code = %d (%s)\n"), GetLastError(), strErrorText);
 	}
 	else
 	{

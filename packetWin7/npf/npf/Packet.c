@@ -1177,6 +1177,11 @@ Return Value:
 	Status = STATUS_INSUFFICIENT_RESOURCES; \
 } while(FALSE)
 
+#define SET_FAILURE_CUSTOM(__b__) do{\
+	Information = 0; \
+	Status = __b__; \
+} while(FALSE)
+
 //-------------------------------------------------------------------
 
 _Use_decl_annotations_
@@ -1942,7 +1947,18 @@ NPF_IoControl(
 	case BIOCQUERYOID:
 	case BIOCSETOID:
 
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID - BIOCQUERYOID");
+		if (FunctionCode == BIOCQUERYOID)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCQUERYOID");
+		}
+		else if (FunctionCode == BIOCSETOID)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID");
+		}
+		else
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown OID in BIOCQUERYOID - BIOCSETOID");
+		}
 
 		//
 		// gain ownership of the Ndis Handle
@@ -2246,7 +2262,8 @@ NPF_IoControl(
 		}
 		else
 		{
-			SET_FAILURE_INVALID_REQUEST();
+			// Return the error code of NdisFOidRequest() to the application.
+			SET_FAILURE_CUSTOM(Status);
 		}
 
 		break;

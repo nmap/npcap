@@ -4442,11 +4442,23 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
                            sizeof(PACKET_OID_DATA)-1+OidData->Length,&BytesReturned,NULL);
     
 	// output some debug info
-	TRACE_PRINT4("PacketRequest, OID=%.08x Length=%.05d Set=%.04d Res=%.04d",
-		OidData->Oid,
-		OidData->Length,
-		Set,
-		Result);
+	if (Result)
+	{
+		TRACE_PRINT4("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, Result = %d",
+			OidData->Oid,
+			OidData->Length,
+			Set,
+			Result);
+	}
+	else
+	{
+		TRACE_PRINT5("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, Result = %d, ErrCode = 0x%.08x",
+			OidData->Oid,
+			OidData->Length,
+			Set,
+			Result,
+			GetLastError());
+	}
 
 	TRACE_EXIT();
 	return Result;
