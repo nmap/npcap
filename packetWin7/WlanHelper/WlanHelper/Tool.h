@@ -16,6 +16,9 @@ tstring OperationMode2String(ULONG OperationMode);
 ULONG String2OperationMode(tstring strOperationMode);
 
 tstring PhyType2String(ULONG PhyType);
+ULONG String2PhyType(tstring strPhyType);
+
+tstring NdisStatus2Message(DWORD dwStatus);
 
 tstring printArray(vector<tstring> nstr);
 

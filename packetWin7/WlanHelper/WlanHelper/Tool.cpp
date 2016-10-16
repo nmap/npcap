@@ -180,6 +180,18 @@ ULONG String2PhyType(tstring strPhyType)
 	}
 }
 
+tstring NdisStatus2Message(DWORD dwStatus)
+{
+	if (dwStatus == 0xc0010017)
+	{
+		return _T("NDIS_STATUS_INVALID_OID: The OID_XXX code specified in the Oid member of the NDIS_OID_REQUEST-structured buffer at OidRequest is invalid or unsupported by the underlying driver.");
+	}
+	else
+	{
+		return "";
+	}
+}
+
 tstring printArray(vector<tstring> nstr)
 {
 	tstring strResult;
@@ -509,8 +521,16 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 		}
 		else
 		{
-			_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (NULL)\n%s0x%x or find its definition in your ndis.h if you installed WDK.\n"), dwErrorCode,
-				_T("The error message can't be found, please google the error code: "), dwErrorCode);
+			tstring tstrErrorText = NdisStatus2Message(dwErrorCode);
+			if (tstrErrorText != _T(""))
+			{
+				_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (%s)\n"), dwErrorCode, tstrErrorText.c_str());
+			}
+			else
+			{
+				_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (NULL)\n%s0x%x or find its definition in your ndis.h if you installed WDK.\n"), dwErrorCode,
+					_T("The error message can't be found, please google the error code: "), dwErrorCode);
+			}
 		}
 
 		// Free the buffer allocated by the system.
