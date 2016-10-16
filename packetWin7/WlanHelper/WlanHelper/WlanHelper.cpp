@@ -406,7 +406,16 @@ BOOL GetWlanOperationMode(tstring strGUID, tstring &strMode)
 	DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
 	{
-		_tprintf(_T("Error: GetWlanOperationMode::GetInterface error, error code = %d\n"), dwResult);
+		LPTSTR strErrorText = NULL;
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL, dwResult, 0, (PTSTR)&strErrorText, 0, NULL);
+		if (strErrorText[_tcslen(strErrorText) - 2] == _T('\r') && strErrorText[_tcslen(strErrorText) - 1] == _T('\n'))
+		{
+			strErrorText[_tcslen(strErrorText) - 2] = 0x0;
+			strErrorText[_tcslen(strErrorText) - 1] = 0x0;
+		}
+
+		_tprintf(_T("Error: GetWlanOperationMode::GetInterface error, error code = %d (%s)\n"), dwResult, strErrorText);
 		return FALSE;
 	}
 	else
@@ -441,7 +450,16 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 	DWORD dwResult = SetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&ulOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
 	{
-		_tprintf(_T("Error: SetWlanOperationMode::SetInterface error, error code = %d\n"), dwResult);
+		LPTSTR strErrorText = NULL;
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL, dwResult, 0, (PTSTR)&strErrorText, 0, NULL);
+		if (strErrorText[_tcslen(strErrorText) - 2] == _T('\r') && strErrorText[_tcslen(strErrorText) - 1] == _T('\n'))
+		{
+			strErrorText[_tcslen(strErrorText) - 2] = 0x0;
+			strErrorText[_tcslen(strErrorText) - 1] = 0x0;
+		}
+
+		_tprintf(_T("Error: SetWlanOperationMode::SetInterface error, error code = %d (%s)\n"), dwResult, strErrorText);
 		return FALSE;
 	}
 	else
