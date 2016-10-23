@@ -275,8 +275,15 @@ BOOL NetCfg::GetNetworkConfiguration()
 
 int getIntDevID(TCHAR strDevID[]) //DevID is in form like: "ROOT\\NET\\0008"
 {
-	int iDevID;
-	_stscanf_s(strDevID, _T("ROOT\\NET\\%04d"), &iDevID);
+	TRACE_ENTER();
+
+	int iDevID = -1;
+	int iMatched = _stscanf_s(strDevID, _T("ROOT\\NET\\%04d"), &iDevID);
+	TRACE_PRINT2("_stscanf_s: iMatched = %d, iDevID = %d.", iMatched, iDevID);
+	if (iMatched != 1)
+		iDevID = -1;
+
+	TRACE_EXIT();
 	return iDevID;
 }
 
