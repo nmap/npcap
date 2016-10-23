@@ -1706,7 +1706,7 @@ uninstall_win7_64bit:
 
 npfdeleted:
 	RMDir "$INSTDIR"
-	
+
 	; Close the system restore point
 	; ${If} $restore_point_success == "yes"
 		; DetailPrint "Finish setting system restore point: ${RESTORE_POINT_NAME_UNINSTALL}"
@@ -1716,7 +1716,11 @@ npfdeleted:
 		; DetailPrint "Error occured when finishing setting system restore point, return value=|$0|"
 		; ${EndIf}
 	; ${EndIf}
-	
+
+	${If} $no_confirm == "yes"
+		SetAutoClose true
+	${EndIf}
+
 uninstall_fail:
 
 SectionEnd
