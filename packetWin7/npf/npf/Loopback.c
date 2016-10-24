@@ -242,7 +242,7 @@ NPF_NetworkClassify(
 	UINT32				bytesRetreatedEthernet = 0;
 	BOOLEAN				bIPv4;
 	BOOLEAN				bInnerIPv4;
-	INT32				iDrection = -1;
+	BOOLEAN				bInbound;
 	BOOLEAN				bSelfSent = FALSE;
 	PVOID				pContiguousData = NULL;
 	NET_BUFFER*			pNetBuffer = 0;
@@ -280,17 +280,28 @@ NPF_NetworkClassify(
 	{
 		bIPv4 = TRUE;
 	}
-	else // if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
 	{
 		bIPv4 = FALSE;
 	}
+	else
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_NetworkClassify: bIPv4 cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
+	}
+
 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
 	{
-		iDrection = 0;
+		bInbound = FALSE;
 	}
-	else // if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
 	{
-		iDrection = 1;
+		bInbound = TRUE;
+	}
+	else
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_NetworkClassify: bInbound cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
 	}
 
 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_IP_HEADER_SIZE)
@@ -315,7 +326,7 @@ NPF_NetworkClassify(
 	// Outbound: Initial offset is at the IP Header, so just retreat the size of the Ethernet Header.
 	// We retreated the packet in two phases: 1) retreat the IP Header (if has), 2) clone the packet and retreat the Ethernet Header.
 	// We must NOT retreat the Ethernet Header on the original packet, or this will lead to BAD_POOL_CALLER Bluescreen.
-	bytesRetreated = iDrection ? ipHeaderSize : 0;
+	bytesRetreated = bInbound ? ipHeaderSize : 0;
 
 	status = NdisRetreatNetBufferListDataStart(pNetBufferList,
 		bytesRetreated,
@@ -333,8 +344,12 @@ NPF_NetworkClassify(
 		return;
 	}
 
+	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NPF_NetworkClassify: bIPv4 = %d, bInbound = %d\n", bIPv4, bInbound);
+	TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "NPF_NetworkClassify: inFixedValues->layerId = %d, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %d, inMetaValues->compartmentId = 0x%x\n",
+		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
+
 	//bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN)bIPv4);
-	bSelfSent = (iDrection == 0) ? FALSE : NPF_IsPacketSelfSent(pNetBufferList, bIPv4, &bInnerIPv4);
+	bSelfSent = bInbound ? NPF_IsPacketSelfSent(pNetBufferList, bIPv4, &bInnerIPv4) : FALSE;
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 		"NPF_NetworkClassify: NPF_IsPacketSelfSent() [bSelfSent: %#x]\n",
 		bSelfSent);
@@ -510,30 +525,6 @@ Exit_WSK_IP_Retreated:
 		bytesRetreated,
 		FALSE,
 		0);
-
-// 	// print "protocol, direction, fragment, reassembled" info for the current packet.
-// 
-// 	int iFragment = -1;
-// 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_FRAGMENT_DATA)
-// 	{
-// 		iFragment = 1;
-// 	}
-// 	else
-// 	{
-// 		iFragment = 0;
-// 	}
-// 
-// 	int iReassembled = -1;
-// 	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_REASSEMBLED)
-// 	{
-// 		iReassembled = 1;
-// 	}
-// 	else
-// 	{
-// 		iReassembled = 0;
-// 	}
-// 	IF_LOUD(DbgPrint("\n\nNPF_NetworkClassify: Loopback packet found !!! protocol=[%d] (ipv4=0, ipv6=1), direction=[%d] (out=0, in=1), fragment=[%d], reassembled=[%d]\n", iProtocol, iDrection, iFragment, iReassembled);)
-
 
 	TRACE_EXIT();
 	return;
