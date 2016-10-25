@@ -119,6 +119,39 @@ typedef struct _IP6_HEADER
 */
 #define	IPV6_HDR_LEN		sizeof(IP6_HEADER)
 
+/*
+* Structure of a ICMP header
+* https://www.cymru.com/Documents/ip_icmp.h
+*/
+typedef struct _ICMP4_HEADER
+{
+	UCHAR icmp_Type;				/* Message type */
+	UCHAR icmp_Code;				/* Type sub-code */
+	USHORT icmp_Checksum;
+	union
+	{
+		struct _icmp_Echo
+		{
+			USHORT	icmp_Id;
+			USHORT	icmp_Sequence;
+		} icmp_Echo;				/* Echo datagram */
+		ULONG	icmp_Gateway;		/* Gateway address */
+		struct _icmp_Frag
+		{
+			USHORT	icmp_Unused;
+			USHORT	icmp_Mtu;
+		} icmp_Frag;				/* Path MTU discovery */
+	} icmp_Un;
+} ICMP4_HEADER, *PICMP4_HEADER;
+
+#define ICMP_TYPE_DEST_UNREACH	3	/* Destination Unreachable	*/
+#define ICMP_CODE_PROT_UNREACH	2	/* Protocol Unreachable		*/
+
+/*
+* The length of the IPv6 header.
+*/
+#define	ICMP_HDR_LEN		sizeof(ICMP4_HEADER)
+
 #pragma pack(pop)
 
 //

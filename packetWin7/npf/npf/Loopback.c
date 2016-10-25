@@ -118,14 +118,15 @@ BOOLEAN
 NPF_IsPacketSelfSent(
 	_In_ PNET_BUFFER_LIST pNetBufferList,
 	_In_ BOOLEAN bIPv4,
-	_Out_ BOOLEAN *pbInnerIPv4
+	_Out_ BOOLEAN *pbInnerIPv4,
+	_Out_ UCHAR *puProto
 	)
 {
 	NTSTATUS			status = STATUS_SUCCESS;
 	NET_BUFFER*			pNetBuffer = 0;
 	PVOID				pContiguousData = NULL;
 	UCHAR				pPacketData[IPV6_HDR_LEN];
-	UCHAR				iProtocol;
+	UCHAR				uProto;
 
 	TRACE_ENTER();
 
@@ -150,10 +151,68 @@ NPF_IsPacketSelfSent(
 		}
 		else
 		{
-			iProtocol = bIPv4 ? ((PIP_HEADER) pContiguousData)->ip_Protocol : ((PIP6_HEADER) pContiguousData)->ip6_CTL.ip6_HeaderCtl.ip6_NextHeader;
-			if (iProtocol == IPPROTO_NPCAP_LOOPBACK)
+			uProto = bIPv4 ? ((PIP_HEADER) pContiguousData)->ip_Protocol : ((PIP6_HEADER) pContiguousData)->ip6_CTL.ip6_HeaderCtl.ip6_NextHeader;
+			*puProto = uProto;
+			if (uProto == IPPROTO_NPCAP_LOOPBACK)
 			{
 				*pbInnerIPv4 = bIPv4;
+				TRACE_EXIT();
+				return TRUE;
+			}
+			else
+			{
+				TRACE_EXIT();
+				return FALSE;
+			}
+		}
+
+		pNetBuffer = pNetBuffer->Next;
+	}
+
+	TRACE_EXIT();
+	return FALSE;
+}
+
+BOOLEAN
+NPF_IsICMPProtocolUnreachablePacket(
+	_In_ PNET_BUFFER_LIST pNetBufferList
+)
+{
+	NTSTATUS			status = STATUS_SUCCESS;
+	NET_BUFFER*			pNetBuffer = 0;
+	PVOID				pContiguousData = NULL;
+	UCHAR				pPacketData[IP_HDR_LEN + ICMP_HDR_LEN];
+	PIP_HEADER			pIPHeader;
+	PICMP4_HEADER		pICMPHeader;
+
+	TRACE_ENTER();
+
+	pNetBuffer = NET_BUFFER_LIST_FIRST_NB(pNetBufferList);
+	while (pNetBuffer)
+	{
+		pContiguousData = NdisGetDataBuffer(pNetBuffer,
+			IP_HDR_LEN + ICMP_HDR_LEN,
+			pPacketData,
+			1,
+			0);
+		if (!pContiguousData)
+		{
+			status = STATUS_UNSUCCESSFUL;
+
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_IsICMPProtocolUnreachablePacket: NdisGetDataBuffer() [status: %#x]\n",
+				status);
+
+			TRACE_EXIT();
+			return FALSE;
+		}
+		else
+		{
+			pIPHeader = (PIP_HEADER)pContiguousData;
+			pICMPHeader = (PICMP4_HEADER)((PUCHAR)pContiguousData + IP_HDR_LEN);
+			if (*((PUCHAR)(&pIPHeader->ip_Src)) == 0x7F && *((PUCHAR)(&pIPHeader->ip_Src)) == 0x7F &&
+				pICMPHeader->icmp_Type == ICMP_TYPE_DEST_UNREACH && pICMPHeader->icmp_Code == ICMP_CODE_PROT_UNREACH)
+			{
 				TRACE_EXIT();
 				return TRUE;
 			}
@@ -244,6 +303,8 @@ NPF_NetworkClassify(
 	BOOLEAN				bInnerIPv4;
 	BOOLEAN				bInbound;
 	BOOLEAN				bSelfSent = FALSE;
+	UCHAR				uIPProto;
+	BOOLEAN				bICMPProtocolUnreachable = FALSE;
 	PVOID				pContiguousData = NULL;
 	NET_BUFFER*			pNetBuffer = 0;
 	UCHAR				pPacketData[ETHER_HDR_LEN];
@@ -349,10 +410,21 @@ NPF_NetworkClassify(
 		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
 
 	//bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, (BOOLEAN)bIPv4);
-	bSelfSent = bInbound ? NPF_IsPacketSelfSent(pNetBufferList, bIPv4, &bInnerIPv4) : FALSE;
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-		"NPF_NetworkClassify: NPF_IsPacketSelfSent() [bSelfSent: %#x]\n",
-		bSelfSent);
+	bSelfSent = bInbound ? NPF_IsPacketSelfSent(pNetBufferList, bIPv4, &bInnerIPv4, &uIPProto) : FALSE;
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_NetworkClassify: bSelfSent = %d\n", bSelfSent);
+
+	if (bInbound && bIPv4 && !bSelfSent && uIPProto == IPPROTO_ICMP)
+	{
+		bICMPProtocolUnreachable = NPF_IsICMPProtocolUnreachablePacket(pNetBufferList);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_NetworkClassify: bICMPProtocolUnreachable = %d\n", bICMPProtocolUnreachable);
+		if (bICMPProtocolUnreachable)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+				"NPF_NetworkClassify: this packet is the ICMPv4 protocol unreachable error packet caused by our \"nping 127.0.0.1\" command, discard it\n");
+
+			goto Exit_WSK_IP_Retreated;
+		}
+	}
 
 	if (bSelfSent)
 	{
