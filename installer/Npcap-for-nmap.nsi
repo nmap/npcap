@@ -68,6 +68,7 @@ Var /GLOBAL admin_only
 Var /GLOBAL dot11_support
 Var /GLOBAL vlan_support
 Var /GLOBAL winpcap_mode
+Var /GLOBAL sign_mode
 
 Var /GLOBAL no_confirm
 
@@ -181,6 +182,7 @@ Function getInstallOptions
 	StrCpy $dot11_support "no"
 	StrCpy $vlan_support "no"
 	StrCpy $winpcap_mode "no"
+	StrCpy $sign_mode ""
 	StrCpy $winpcap_installed "no"
 
 	${If} ${FileExists} "C:\npcap_install_options.txt"
@@ -188,7 +190,7 @@ Function getInstallOptions
 		FileRead $4 $cmd_line ; we read until the end of line (including carriage return and new line) and save it to $1
 		FileClose $4 ; and close the file
 	${Else}
-		${GetParameters} $cmd_line ; An example: $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no'
+		${GetParameters} $cmd_line ; An example: $cmd_line = '/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no /sign_mode=sha2'
 	${EndIf}
 
 	${GetOptions} $cmd_line "/npf_startup=" $R0
@@ -239,6 +241,12 @@ Function getInstallOptions
 	${OrIf} $R0 S== "no"
 	${OrIf} $R0 S== "disabled"
 		StrCpy $winpcap_mode $R0
+	${EndIf}
+
+	${GetOptions} $cmd_line "/sign_mode=" $R0
+	${If} $R0 S== "sha1"
+	${OrIf} $R0 S== "sha2"
+		StrCpy $sign_mode $R0
 	${EndIf}
 FunctionEnd
 
@@ -762,6 +770,14 @@ Function ${un}checkWindowsVersion
 	${Else} ; XP and eariler
 		StrCpy $os_ver 'XP'
 		StrCpy $ndis6_driver "no"
+	${EndIf}
+
+	${If} $sign_mode == "sha1"
+		DetailPrint "Enforcing to install SHA1-signed drivers"
+		StrCpy $sha2_signed "no"
+	${ElseIf} $sign_mode == "sha2"
+		DetailPrint "Enforcing to install SHA2-signed drivers"
+		StrCpy $sha2_signed "yes"
 	${EndIf}
 FunctionEnd
 !macroend
