@@ -741,7 +741,7 @@ Function ${un}checkWindowsVersion
 		${ElseIf} $R0 == "6.2"
 			StrCpy $os_ver "Win8"
 			StrCpy $ndis6_driver "yes"
-			StrCpy $sha2_signed "yes"
+			StrCpy $sha2_signed "no"
 		${ElseIf} $R0 == "6.3"
 			ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentMajorVersionNumber
 			${If} $R1 == ""
