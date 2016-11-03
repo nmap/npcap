@@ -702,6 +702,9 @@ NPF_AddFilter(
 	// 	}
 	else
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_AddFilter: invalid iFlag, iFlag = %d\n",
+			iFlag);
 		TRACE_EXIT();
 		return status;
 	}
@@ -758,6 +761,9 @@ FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
 		);
 	if (!NT_SUCCESS(status))
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_RegisterCallout: FwpsCalloutRegister() [status: %#x]\n",
+			status);
 		goto Exit;
 	}
 	calloutRegistered = TRUE;
@@ -777,30 +783,45 @@ FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
 		);
 	if (!NT_SUCCESS(status))
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_RegisterCallout: FwpmCalloutAdd() [status: %#x]\n",
+			status);
 		goto Exit;
 	}
 
 	status = NPF_AddFilter(layerKey, calloutKey, 0);
 	if (!NT_SUCCESS(status))
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_RegisterCallout: NPF_AddFilter() [status: %#x]\n",
+			status);
 		goto Exit;
 	}
 
 	status = NPF_AddFilter(layerKey, calloutKey, 1);
 	if (!NT_SUCCESS(status))
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_RegisterCallout: NPF_AddFilter() [status: %#x]\n",
+			status);
 		goto Exit;
 	}
 #if(NTDDI_VERSION >= NTDDI_VISTASP1)
 	status = NPF_AddFilter(layerKey, calloutKey, 2);
 	if (!NT_SUCCESS(status))
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_RegisterCallout: NPF_AddFilter() [status: %#x]\n",
+			status);
 		goto Exit;
 	}
 #endif
 	status = NPF_AddFilter(layerKey, calloutKey, 3);
 	if (!NT_SUCCESS(status))
 	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_RegisterCallout: NPF_AddFilter() [status: %#x]\n",
+			status);
 		goto Exit;
 	}
 
