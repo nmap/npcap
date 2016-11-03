@@ -841,6 +841,7 @@ managed
   <listitem><para>Killer Network Manager (<ulink role="hidepdf" url="https://github.com/nmap/nmap/issues/430">BSoD</ulink>)</para></listitem>
   <listitem><para>Trend Micro OfficeScan Anti-virus (<ulink role="hidepdf" url="http://seclists.org/nmap-dev/2016/q4/25">No IP under DHCP</ulink>)</para></listitem>
   <listitem><para>Junos Pulse (<ulink role="hidepdf" url="https://github.com/nmap/nmap/issues/571">Cannot connect to any Wi-Fi network</ulink>)</para></listitem>
+  <listitem><para>Netscout Sniffer Portable (<ulink role="hidepdf" url="https://github.com/nmap/nmap/issues/567">No IP stack</ulink>)</para></listitem>
   </itemizedlist>
 </sect1>
 
