@@ -207,7 +207,7 @@ NPF_OpenAdapter(
 	{
 		// Can't find the adapter from the global open array.
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-			"NPF_OpenAdapter: NPF_GetOpenByAdapterName error, wanted AdapterName=%ws, wanted Dot11=%d",
+			"NPF_GetOpenByAdapterName error, GroupHead=NULL, AdapterName=%ws, Dot11=%d",
 			DeviceExtension->AdapterName.Buffer,
 			DeviceExtension->Dot11);
 
@@ -220,7 +220,7 @@ NPF_OpenAdapter(
 	if (NPF_StartUsingBinding(GroupHead) == FALSE)
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_OpenAdapter: NPF_StartUsingOpenInstance error, AdapterName=%ws",
+			"NPF_StartUsingOpenInstance error, AdapterName=%ws",
 			DeviceExtension->AdapterName.Buffer);
 
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
@@ -341,6 +341,7 @@ NPF_OpenAdapter_End:;
 	//
 	// complete the open
 	//
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
 	localNumOpenedInstances = InterlockedIncrement(&g_NumOpenedInstances);
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened Instances: %u", localNumOpenedInstances);
 

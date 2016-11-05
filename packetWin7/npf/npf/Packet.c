@@ -1948,17 +1948,9 @@ NPF_IoControl(
 	case BIOCQUERYOID:
 	case BIOCSETOID:
 
-		if (FunctionCode == BIOCQUERYOID)
+		if (FunctionCode != BIOCQUERYOID && FunctionCode != BIOCSETOID)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCQUERYOID");
-		}
-		else if (FunctionCode == BIOCSETOID)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID");
-		}
-		else
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown OID in BIOCQUERYOID - BIOCSETOID");
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Unknown FunctionCode: %x", FunctionCode);
 		}
 
 		//
@@ -1998,7 +1990,14 @@ NPF_IoControl(
 			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA)) &&
 			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA) - 1 + OidData->Length))
 		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCSETOID|BIOCQUERYOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
+			if (FunctionCode == BIOCQUERYOID)
+			{
+				TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCQUERYOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
+			}
+			else
+			{
+				TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCSETOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
+			}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			if (Open->Loopback && (OidData->Oid == OID_GEN_MAXIMUM_TOTAL_SIZE || OidData->Oid == OID_GEN_TRANSMIT_BUFFER_SPACE || OidData->Oid == OID_GEN_RECEIVE_BUFFER_SPACE))
