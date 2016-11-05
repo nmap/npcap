@@ -1633,6 +1633,11 @@ NPF_AttachAdapter(
 				"HigherPacketFilter=%x",
 				Open->HigherPacketFilter);
 
+			Open->PhysicalMedium = NPF_GetPhysicalMedium(Open);
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"PhysicalMedium=%x",
+				Open->PhysicalMedium);
+
 #ifdef HAVE_DOT11_SUPPORT
 			if (g_Dot11SupportMode && bDot11)
 			{
@@ -2373,6 +2378,43 @@ Return Value:
 
    return Status;
 }
+
+//-------------------------------------------------------------------
+
+ULONG
+NPF_GetPhysicalMedium(
+	NDIS_HANDLE FilterModuleContext
+)
+{
+	TRACE_ENTER();
+
+	ULONG PhysicalMedium = 0;
+	ULONG BytesProcessed = 0;
+
+	// get the PhysicalMedium when filter driver loads
+	NPF_DoInternalRequest(FilterModuleContext,
+		NdisRequestQueryInformation,
+		OID_GEN_PHYSICAL_MEDIUM,
+		&PhysicalMedium,
+		sizeof(PhysicalMedium),
+		0,
+		0,
+		&BytesProcessed
+	);
+
+	if (BytesProcessed != sizeof(PhysicalMedium))
+	{
+		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PhysicalMedium), BytesProcessed = %x, sizeof(PhysicalMedium) = %x\n", BytesProcessed, sizeof(PhysicalMedium));)
+			TRACE_EXIT();
+		return 0;
+	}
+	else
+	{
+		TRACE_EXIT();
+		return PhysicalMedium;
+	}
+}
+
 
 //-------------------------------------------------------------------
 

@@ -300,6 +300,7 @@ typedef struct _OPEN_INSTANCE
 
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
+	ULONG					PhysicalMedium;
 #ifdef HAVE_DOT11_SUPPORT
 	BOOLEAN					Dot11;
 	ULONG					Dot11PacketFilter;
@@ -730,6 +731,19 @@ FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
 // 	NPF_SetModuleOptions(
 // 	NDIS_HANDLE             FilterModuleContext
 // 	);
+
+/*!
+\brief Get the physical medium of the adapter.
+\param FilterModuleContext Pointer to the filter context structure.
+\return the physical medium.
+
+This function is used to get the original adapter physical medium with
+a NPF_AttachAdapter().
+*/
+ULONG
+NPF_GetPhysicalMedium(
+	NDIS_HANDLE FilterModuleContext
+	);
 
 /*!
   \brief Get the packet filter of the adapter.
