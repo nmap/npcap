@@ -2567,7 +2567,7 @@ NPF_DoInternalRequest(
 		}
 	}
 
-	IF_LOUD(DbgPrint("Status = %x\n", Status);)
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %p", Status);
 	TRACE_EXIT();
 	return Status;
 }

@@ -1948,9 +1948,20 @@ NPF_IoControl(
 	case BIOCQUERYOID:
 	case BIOCSETOID:
 
-		if (FunctionCode != BIOCQUERYOID && FunctionCode != BIOCSETOID)
+		OidData = Irp->AssociatedIrp.SystemBuffer;
+		if (FunctionCode == BIOCQUERYOID)
 		{
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Unknown FunctionCode: %x", FunctionCode);
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCQUERYOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
+		}
+		else if (FunctionCode == BIOCSETOID)
+		{
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCSETOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
+		}
+		else
+		{
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Unknown FunctionCode: %x, Oid=%08lx", FunctionCode, OidData->Oid);
+			SET_FAILURE_INVALID_REQUEST();
+			break;
 		}
 
 		//
@@ -1961,6 +1972,7 @@ NPF_IoControl(
 			//
 			// MAC unbindind or unbound
 			//
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open->GroupHead is unavailable or cannot bind, Open->GroupHead=%p", Open->GroupHead);
 			SET_FAILURE_INVALID_REQUEST();
 			break;
 		}
@@ -1975,6 +1987,7 @@ NPF_IoControl(
 			//
 			NPF_StopUsingBinding(Open->GroupHead);
 
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "RequestListEntry=NULL");
 			SET_FAILURE_NOMEM();
 			break;
 		}
@@ -1984,21 +1997,10 @@ NPF_IoControl(
 		//
 		//  See if it is an Ndis request
 		//
-		OidData = Irp->AssociatedIrp.SystemBuffer;
-
 		if ((IrpSp->Parameters.DeviceIoControl.InputBufferLength == IrpSp->Parameters.DeviceIoControl.OutputBufferLength) &&
 			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA)) &&
 			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA) - 1 + OidData->Length))
 		{
-			if (FunctionCode == BIOCQUERYOID)
-			{
-				TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCQUERYOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
-			}
-			else
-			{
-				TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCSETOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
-			}
-
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			if (Open->Loopback && (OidData->Oid == OID_GEN_MAXIMUM_TOTAL_SIZE || OidData->Oid == OID_GEN_TRANSMIT_BUFFER_SPACE || OidData->Oid == OID_GEN_RECEIVE_BUFFER_SPACE))
 			{
@@ -2201,6 +2203,7 @@ NPF_IoControl(
 			//
 			//  buffer too small
 			//
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "buffer is too small");
 			SET_FAILURE_BUFFER_SMALL();
 			break;
 		}
@@ -2290,8 +2293,8 @@ NPF_IoControl(
 	Irp->IoStatus.Status = Status;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %p", Status);
 	TRACE_EXIT();
-
 	return Status;
 }
 
