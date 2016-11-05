@@ -1669,6 +1669,7 @@ NPF_AttachAdapter(
 	}
 	while (bFalse);
 
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "returnStatus=%x", returnStatus);
 	TRACE_EXIT();
 	return returnStatus;
 }
@@ -2044,7 +2045,7 @@ Arguments:
 	//
 	if (OriginalRequest == NULL)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status= %p", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %p", Status);
 		NPF_InternalRequestComplete(Open, Request, Status);
 		TRACE_EXIT();
 		return;
@@ -2379,6 +2380,8 @@ NPF_GetPacketFilter(
 	NDIS_HANDLE FilterModuleContext
 	)
 {
+	TRACE_ENTER();
+
 	ULONG PacketFilter = 0;
 	ULONG BytesProcessed = 0;
 
@@ -2395,10 +2398,13 @@ NPF_GetPacketFilter(
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
+		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %x, sizeof(PacketFilter) = %x\n", BytesProcessed, sizeof(PacketFilter));)
+		TRACE_EXIT();
 		return 0;
 	}
 	else
 	{
+		TRACE_EXIT();
 		return PacketFilter;
 	}
 }
@@ -2411,6 +2417,8 @@ NPF_SetPacketFilter(
 	ULONG PacketFilter
 )
 {
+	TRACE_ENTER();
+
 	NDIS_STATUS Status;
 	ULONG BytesProcessed = 0;
 
@@ -2427,13 +2435,16 @@ NPF_SetPacketFilter(
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
-		Status = NDIS_STATUS_SUCCESS;
+		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %x, sizeof(PacketFilter) = %x\n", BytesProcessed, sizeof(PacketFilter));)
+		TRACE_EXIT();
+		Status = NDIS_STATUS_FAILURE;
 		return Status;
 	}
 	else
 	{
-		Status = NDIS_STATUS_FAILURE;
-		return TRUE;
+		TRACE_EXIT();
+		Status = NDIS_STATUS_SUCCESS;
+		return Status;
 	}
 }
 
@@ -2452,12 +2463,13 @@ NPF_DoInternalRequest(
 	_Out_ PULONG                      pBytesProcessed
 	)
 {
+	TRACE_ENTER();
+
 	POPEN_INSTANCE				Open = (POPEN_INSTANCE) FilterModuleContext;
 	INTERNAL_REQUEST            FilterRequest;
 	PNDIS_OID_REQUEST           NdisRequest = &FilterRequest.Request;
-	NDIS_STATUS                 Status;
+	NDIS_STATUS                 Status = NDIS_STATUS_FAILURE;
 	BOOLEAN                     bFalse;
-
 
 	bFalse = FALSE;
 	*pBytesProcessed = 0;
@@ -2479,51 +2491,43 @@ NPF_DoInternalRequest(
 	switch (RequestType)
 	{
 		case NdisRequestQueryInformation:
-			 NdisRequest->DATA.QUERY_INFORMATION.Oid = Oid;
-			 NdisRequest->DATA.QUERY_INFORMATION.InformationBuffer =
-									InformationBuffer;
-			 NdisRequest->DATA.QUERY_INFORMATION.InformationBufferLength =
-									InformationBufferLength;
+			NdisRequest->DATA.QUERY_INFORMATION.Oid = Oid;
+			NdisRequest->DATA.QUERY_INFORMATION.InformationBuffer = InformationBuffer;
+			NdisRequest->DATA.QUERY_INFORMATION.InformationBufferLength = InformationBufferLength;
 			break;
 
 		case NdisRequestSetInformation:
-			 NdisRequest->DATA.SET_INFORMATION.Oid = Oid;
-			 NdisRequest->DATA.SET_INFORMATION.InformationBuffer =
-									InformationBuffer;
-			 NdisRequest->DATA.SET_INFORMATION.InformationBufferLength =
-									InformationBufferLength;
+			NdisRequest->DATA.SET_INFORMATION.Oid = Oid;
+			NdisRequest->DATA.SET_INFORMATION.InformationBuffer = InformationBuffer;
+			NdisRequest->DATA.SET_INFORMATION.InformationBufferLength = InformationBufferLength;
 			break;
 
 		case NdisRequestMethod:
-			 NdisRequest->DATA.METHOD_INFORMATION.Oid = Oid;
-			 NdisRequest->DATA.METHOD_INFORMATION.MethodId = MethodId;
-			 NdisRequest->DATA.METHOD_INFORMATION.InformationBuffer =
-									InformationBuffer;
-			 NdisRequest->DATA.METHOD_INFORMATION.InputBufferLength =
-									InformationBufferLength;
-			 NdisRequest->DATA.METHOD_INFORMATION.OutputBufferLength = OutputBufferLength;
-			 break;
-
-
+			NdisRequest->DATA.METHOD_INFORMATION.Oid = Oid;
+			NdisRequest->DATA.METHOD_INFORMATION.MethodId = MethodId;
+			NdisRequest->DATA.METHOD_INFORMATION.InformationBuffer = InformationBuffer;
+			NdisRequest->DATA.METHOD_INFORMATION.InputBufferLength = InformationBufferLength;
+			NdisRequest->DATA.METHOD_INFORMATION.OutputBufferLength = OutputBufferLength;
+			break;
 
 		default:
-			ASSERT(bFalse);
-			break;
+			IF_LOUD(DbgPrint("Unsupported RequestType: %d\n", RequestType);)
+			IF_LOUD(DbgPrint("Status = %x\n", Status);)
+			TRACE_EXIT();
+			return Status;
+			// ASSERT(bFalse);
+			// break;
 	}
 
 	NdisRequest->RequestId = (PVOID)NPF_REQUEST_ID;
 
-	Status = NdisFOidRequest(Open->AdapterHandle,
-							NdisRequest);
-
+	Status = NdisFOidRequest(Open->AdapterHandle, NdisRequest);
 
 	if (Status == NDIS_STATUS_PENDING)
 	{
-
 		NdisWaitEvent(&FilterRequest.InternalRequestCompletedEvent, 0);
 		Status = FilterRequest.RequestStatus;
 	}
-
 
 	if (Status == NDIS_STATUS_SUCCESS)
 	{
@@ -2555,7 +2559,6 @@ NPF_DoInternalRequest(
 		}
 		else
 		{
-
 			if (*pBytesProcessed > InformationBufferLength)
 			{
 				*pBytesProcessed = InformationBufferLength;
@@ -2563,7 +2566,8 @@ NPF_DoInternalRequest(
 		}
 	}
 
-
+	IF_LOUD(DbgPrint("Status = %x\n", Status);)
+	TRACE_EXIT();
 	return Status;
 }
 
@@ -2605,6 +2609,7 @@ Return Value:
 	// Set the request result
 	//
 	pRequest->RequestStatus = Status;
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "pRequest->RequestStatus = Status = %x", Status);
 
 	//
 	// and awake the caller
