@@ -652,7 +652,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			tstring ulPhyID;
 			if (GetCurrentPhyID(getGuidFromAdapterName_Wrapper(strArgs[1]), ulPhyID))
 			{
-				_tprintf(_T("%s\n"), ulPhyID);
+				_tprintf(_T("%s\n"), ulPhyID.c_str());
 				return 0;
 			}
 			else
