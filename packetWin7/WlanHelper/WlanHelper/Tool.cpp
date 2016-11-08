@@ -8,7 +8,7 @@
 
 #include "../../../Common/WpcapNames.h"
 // "\\Device\\NPF_{%s}" or "\\Device\\NPCAP_{%s}"
-#define NPF_DRIVER_FORMAT_STR	_T("\\Device\\") _T(NPF_DRIVER_NAME) _T("_WIFI_{%s}")
+#define NPF_DRIVER_FORMAT_STR	"\\Device\\" NPF_DRIVER_NAME "_WIFI_{%s}"
 
 vector<tstring> g_strAdapterNames;
 vector<tstring> g_strAdapterGUIDs;
@@ -224,7 +224,7 @@ tstring NdisStatus2Message(DWORD dwStatus)
 	}
 	else
 	{
-		return "";
+		return _T("");
 	}
 }
 
@@ -286,37 +286,27 @@ BOOL wstring2string(const std::wstring &wstr, std::string &str)
 	return TRUE;
 }
 
-wstring any2wstring_a(string &str)
+wstring tstring2wstring(tstring &str)
 {
+#ifdef UNICODE
+	return str;
+#else
 	wstring wstr;
 	string2wstring(str, wstr);
 	return wstr;
-}
-
-wstring any2wstring_w(wstring &wstr)
-{
-	return wstr;
-}
-
-string any2string_a(string &str)
-{
-	return str;
-}
-
-string any2string_w(wstring &wstr)
-{
-	string str;
-	wstring2string(wstr, str);
-	return str;
-}
-
-#ifdef UNICODE
-#define any2wstring any2wstring_w
-#define any2string any2string_w
-#else
-#define any2wstring any2wstring_a
-#define any2string any2string_a
 #endif
+}
+
+string tstring2string(tstring &str)
+{
+#ifdef UNICODE
+	string astr;
+	wstring2string(str, astr);
+	return astr;
+#else
+	return str;
+#endif
+}
 
 tstring itos(int i)
 {
@@ -506,7 +496,7 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 	}
 
 	char strAdapterName[256];
-	sprintf_s(strAdapterName, 256, NPF_DRIVER_FORMAT_STR, any2string(strAdapterGUID).c_str());
+	sprintf_s(strAdapterName, 256, NPF_DRIVER_FORMAT_STR, tstring2string(strAdapterGUID).c_str());
 
 	LPADAPTER pAdapter = My_PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
@@ -542,7 +532,7 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 		DWORD dwErrorCode = GetLastError() & ~(1 << 29);
 
 		LPTSTR strErrorText;
-		HMODULE hModule = LoadLibrary("NTDLL.DLL");
+		HMODULE hModule = LoadLibrary(_T("NTDLL.DLL"));
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE,
 			hModule, dwErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&strErrorText, 0, NULL);
 		if (strErrorText != NULL && strErrorText[_tcslen(strErrorText) - 2] == _T('\r') && strErrorText[_tcslen(strErrorText) - 1] == _T('\n'))
