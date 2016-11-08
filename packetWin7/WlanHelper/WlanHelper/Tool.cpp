@@ -495,6 +495,13 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 		goto makeOIDRequest_Exit3;
 	}
 
+	if (strAdapterGUID == _T(""))
+	{
+		_tprintf(_T("Error: makeOIDRequest::strAdapterGUID error, the adapter name is incorrect.\n"));
+		Status = FALSE;
+		goto makeOIDRequest_Exit3;
+	}
+
 	char strAdapterName[256];
 	sprintf_s(strAdapterName, 256, NPF_DRIVER_FORMAT_STR, tstring2string(strAdapterGUID).c_str());
 
