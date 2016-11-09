@@ -587,6 +587,34 @@ managed
       </sect4>
     </sect3>
   </sect2>
+
+  <sect2 id="npcap-feature-dot11-wireshark">
+    <title>How to use Wireshark to capture raw 802.11 traffic in <quote>Monitor Mode</quote></title>
+
+    <para>
+    The latest Wireshark has already integrated the support for Npcap's <quote>Monitor Mode</quote> capture.
+	If you want to use Wireshark to capture raw 802.11 traffic in <quote>Monitor Mode</quote>, you need to
+	<emphasis>switch on the monitor mode inside the Wireshark UI instead of using WlanHelper</emphasis>.
+	This is because Wireshark only recognizes the monitor mode set by itself. So when you turn
+	on monitor mode outside Wireshark (like in <filename>WlanHelper</filename>), Wireshark will not know the adapter
+	has been in monitor mode, and will still try to capture in Ethernet mode, which will get no traffic.
+	So after all, the correct steps are:
+    </para>
+
+	<itemizedlist>
+    <listitem><para>Install latest version Wireshark and latest version Npcap with
+	<option>Support raw 802.11 traffic</option> option checked.</para></listitem>
+
+    <listitem><para>Launch Wireshark QT UI (GTK version is similar), go to <quote>Capture options</quote>.
+	Then toggle the checkbox in the <quote>Monitor Mode</quote> column of your wireless adapter's row.
+	Click the <quote>Start</quote> button. If you see a horizontal line instead of the checkbox,
+	then it probably means that your adapter doesn't support monitor mode. You can use the
+	<filename>WlanHelper</filename> tool to double-check this fact.</para></listitem>
+
+    <listitem><para>Stop the capture in Wireshark UI when you finishes capturing, the monitor mode
+	will be turned off automatically by Npcap.</para></listitem>
+    </itemizedlist>
+  </sect2>
 </sect1>
 
 <sect1 id="npcap-get-code">
