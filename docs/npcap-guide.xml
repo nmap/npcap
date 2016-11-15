@@ -89,9 +89,10 @@
   mode) for wireless adapters</option> option in the installation wizard to enable
   this feature. When your adapter is in <quote>Monitor Mode</quote>, Npcap will supply all
   <emphasis>802.11 data + control + management</emphasis> packets with radiotap headers. When
-  your adapter is in <quote>Managed Mode</quote>, Npcap will only supply <emphasis>802.11 data</emphasis>
-  packets with radiotap headers. Moreover, Npcap provides the <filename>WlanHelper.exe</filename>
-  tool to help you switch to <quote>Monitor Mode</quote> on Windows. See more details
+  your adapter is in <quote>Managed Mode</quote>, Npcap will only supply <emphasis>Ethernet</emphasis>
+  packets. Npcap directly supports to use Wireshark to capture in <quote>Monitor Mode</quote>.
+  Meantime, Npcap also provides the <filename>WlanHelper.exe</filename>
+  tool to help you switch to <quote>Monitor Mode</quote> on your own. See more details
   about this feature in section <quote>For software that use Npcap raw 802.11
   feature</quote>. See more details about radiotap here:
   <ulink role="hidepdf" url="http://www.radiotap.org/">http://www.radiotap.org/</ulink></para></listitem>
