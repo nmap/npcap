@@ -24,7 +24,7 @@ Npcap
 
 ## Documentation
 
-[Npcap Users' Guide](https://htmlpreview.github.io/?https://github.com/nmap/npcap/blob/master/docs/npcap-guide-wrapper.html)
+[Npcap Users' Guide](https://rawgit.com/nmap/npcap/master/docs/npcap-guide-wrapper.html)
 
 ## Get the code
 
