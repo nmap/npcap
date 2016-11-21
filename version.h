@@ -30,6 +30,7 @@
  * 0.8.0.724  -->  Npcap  0.08 beta
  * 0.9.0.831  -->  Npcap  0.09 beta
  * 0.10.0.921 -->  Npcap  0.10 beta
+ * 0.11.0.1121-->  Npcap  0.11 beta
  */
 
 #define /*
@@ -37,11 +38,11 @@
 #define /*
  !define /**/ WINPCAP_MINOR				0
 #define /*
- !define /**/ WINPCAP_REV				10
+ !define /**/ WINPCAP_REV				11
 #define /*
- !define /**/ WINPCAP_BUILD				921
+ !define /**/ WINPCAP_BUILD				1121
 #define /*
- !define /**/ WINPCAP_VER_STRING		"0.10 r18"
+ !define /**/ WINPCAP_VER_STRING		"0.11"
 
 #define WINPCAP_PACKET9x_STRING_VERSION	WINPCAP_VER_STRING
 #define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
