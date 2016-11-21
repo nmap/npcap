@@ -9,7 +9,7 @@
 #---------------------------------#
 
 # version format
-version: 0.05.{build}
+version: 0.10.{build}
 
 # branches to build
 branches:
@@ -34,8 +34,12 @@ environment:
   SignTool: C:\Program Files (x86)\Windows Kits\10\bin\x64
 
 # scripts that run after cloning repository
-# install:
-  
+install:
+  # clone the submodules
+  - cmd: git submodule update --init --recursive
+  # install Win-Flex-Bison
+  - cmd: cinst winflexbison -y
+
 #---------------------------------#
 #       build configuration       #
 #---------------------------------#
@@ -53,9 +57,7 @@ environment:
 build_script:
   - cmd: cd installer
   - cmd: echo .| Build.bat
-  - cmd: echo .| Deploy_WinPcap_WithTimeStamp.bat
-  - cmd: echo .| Deploy_WithTimeStamp.bat
-  - cmd: echo .| Gen_Installer_Only.bat
+  - cmd: echo .| Deploy.bat
 
 # to disable automatic builds
 # build: off
