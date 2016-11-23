@@ -1086,7 +1086,6 @@ Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\DiagReport.bat
 	Delete $INSTDIR\DiagReport.ps1
-	Delete $INSTDIR\DiagReport.txt
 	Delete $INSTDIR\NPFInstall.exe
 	Delete $INSTDIR\loopback.ini
 
@@ -1631,10 +1630,10 @@ Section "Uninstall"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
 	DeleteRegKey HKLM "Software\Npcap"
 
-	; delete the logs
-	Delete $INSTDIR\install.log
-	Delete $0\NPFInstall.log
-	Delete $0\Packet.log
+	; we do not delete the logs, because some logs also contain uninstall infos
+	; Delete $INSTDIR\install.log
+	; Delete $INSTDIR\NPFInstall.log
+	; Delete $INSTDIR\Packet.log
 
 	; delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
