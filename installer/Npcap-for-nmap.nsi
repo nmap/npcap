@@ -71,6 +71,7 @@ Var /GLOBAL winpcap_mode
 Var /GLOBAL sign_mode
 
 Var /GLOBAL no_confirm
+Var /GLOBAL err_flag
 
 Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
@@ -278,6 +279,7 @@ Function .onInit
 	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "final.ini"
 
 	StrCpy $my_ver "${VERSION}"
+	StrCpy $err_flag ""
 
 	; On 64-bit Windows, $PROGRAMFILES is "C:\Program Files (x86)" and
 	; $PROGRAMFILES64 is "C:\Program Files". We want "C:\Program Files"
@@ -1111,7 +1113,15 @@ Function un.remove_win7_XXbit_system_dlls
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
 		Delete $SYSDIR\wpcap.dll
+		${If} ${Errors}
+			StrCpy $err_flag "$SYSDIR\wpcap.dll"
+			Return
+		${EndIf}
 		Delete $SYSDIR\Packet.dll
+		${If} ${Errors}
+			StrCpy $err_flag "$SYSDIR\Packet.dll"
+			Return
+		${EndIf}
 		Delete $SYSDIR\NpcapHelper.exe
 		Delete $SYSDIR\WlanHelper.exe
 	${EndIf}
@@ -1119,7 +1129,15 @@ Function un.remove_win7_XXbit_system_dlls
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		Delete $SYSDIR\Npcap\wpcap.dll
+		${If} ${Errors}
+			StrCpy $err_flag "$SYSDIR\Npcap\wpcap.dll"
+			Return
+		${EndIf}
 		Delete $SYSDIR\Npcap\Packet.dll
+		${If} ${Errors}
+			StrCpy $err_flag "$SYSDIR\Npcap\Packet.dll"
+			Return
+		${EndIf}
 		Delete $SYSDIR\Npcap\NpcapHelper.exe
 		Delete $SYSDIR\Npcap\WlanHelper.exe
 		RMDir "$SYSDIR\Npcap"
@@ -1625,19 +1643,6 @@ Section "Uninstall"
 		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 	${EndIf}
 
-	; delete our winpcap-nmap and any WinPcapInst registry keys
-	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
-	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
-	DeleteRegKey HKLM "Software\Npcap"
-
-	; we do not delete the logs, because some logs also contain uninstall infos
-	; Delete $INSTDIR\install.log
-	; Delete $INSTDIR\NPFInstall.log
-	; Delete $INSTDIR\Packet.log
-
-	; delete the uninstaller
-	Delete $INSTDIR\uninstall.exe
-
 	Call un.is64bit
 	${If} $0 == "0" ; 32bit
 		${If} $ndis6_driver == "yes"
@@ -1692,6 +1697,11 @@ uninstall_win7_32bit:
 
 	; delete the 32-bit DLLs and EXEs in System folder
 	Call un.remove_win7_XXbit_system_dlls
+	${If} $err_flag != ""
+		MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+		DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+		Goto uninstall_fail
+	${EndIf}
 
 	; delete the driver
 	Call un.remove_win7_driver
@@ -1704,12 +1714,22 @@ uninstall_win7_64bit:
 
 	; delete the 32-bit DLLs and EXEs in System folder
 	Call un.remove_win7_XXbit_system_dlls
+	${If} $err_flag != ""
+		MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+		DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+		Goto uninstall_fail
+	${EndIf}
 
 	; disable Wow64FsRedirection
 	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
 	; delete the 64-bit DLLs and EXEs in System folder
 	Call un.remove_win7_XXbit_system_dlls
+	${If} $err_flag != ""
+		MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+		DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+		Goto uninstall_fail
+	${EndIf}
 
 	; delete the driver
 	Call un.remove_win7_driver
@@ -1720,6 +1740,19 @@ uninstall_win7_64bit:
 	Goto npfdeleted
 
 npfdeleted:
+	; delete our winpcap-nmap and any WinPcapInst registry keys
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
+	DeleteRegKey HKLM "Software\Npcap"
+
+	; we do not delete the logs, because some logs also contain uninstall infos
+	; Delete $INSTDIR\install.log
+	; Delete $INSTDIR\NPFInstall.log
+	; Delete $INSTDIR\Packet.log
+
+	; delete the uninstaller
+	Delete $INSTDIR\uninstall.exe
+
 	RMDir "$INSTDIR"
 
 	; Close the system restore point
