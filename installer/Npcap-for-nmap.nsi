@@ -1704,18 +1704,6 @@ Section "Uninstall"
 	; Remove "C:\Windows\System32\Npcap" from PATH
 	; Call un.clear_env_var
 
-	; Uninstall the driver
-	${If} $ndis6_driver == "yes"
-		Call un.registerServiceAPI_win7
-	${Else}
-		Call un.registerServiceAPI_xp
-	${EndIf}
-
-	; Remove "Npcap Loopback Adapter" if it exists
-	${If} $ndis6_driver == "yes"
-		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
-	${EndIf}
-
 	; Remove the files
 	${If} $ndis6_driver == "yes"
 		; uninstall_win7_32bit
@@ -1797,6 +1785,18 @@ Section "Uninstall"
 			; re-enable Wow64FsRedirection
 			System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
 		${EndIf}
+	${EndIf}
+
+	; Uninstall the driver
+	${If} $ndis6_driver == "yes"
+		Call un.registerServiceAPI_win7
+	${Else}
+		Call un.registerServiceAPI_xp
+	${EndIf}
+
+	; Remove "Npcap Loopback Adapter" if it exists
+	${If} $ndis6_driver == "yes"
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 	${EndIf}
 
 	; Delete our winpcap-nmap and any WinPcapInst registry keys
