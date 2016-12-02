@@ -1717,15 +1717,15 @@ Section "Uninstall"
 	${EndIf}
 
 	; Remove the files
-	${If} $is_64bit == "no" ; 32bit
-		${If} $ndis6_driver == "yes"
+	${If} $ndis6_driver == "yes"
+		${If} $is_64bit == "no"
 			Goto uninstall_win7_32bit
 		${Else}
-			Goto uninstall_xp_32bit
-		${EndIf}
-	${Else} ; 64bit
-		${If} $ndis6_driver == "yes"
 			Goto uninstall_win7_64bit
+		${EndIf}
+	${Else}
+		${If} $is_64bit == "no"
+			Goto uninstall_xp_32bit
 		${Else}
 			Goto uninstall_xp_64bit
 		${EndIf}
