@@ -1695,8 +1695,8 @@ Section "Uninstall"
 	${If} $ndis6_driver == "yes"
 		ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
 		${If} $0 == "0"
-			MessageBox MB_OK "Failed to stop the driver, uninstallation aborts now. Please stop using Npcap first"
-			DetailPrint "Failed to stop the driver, uninstallation aborts now. Please stop using Npcap first"
+			MessageBox MB_OK "Failed to stop the driver. Uninstall aborted. Please close any programs that may be using Npcap and try again."
+			DetailPrint "Failed to stop the driver. Uninstall aborted. Please close any programs that may be using Npcap and try again."
 			Goto uninstall_fail
 		${EndIf}
 	${EndIf}
@@ -1715,8 +1715,8 @@ Section "Uninstall"
 			StrCpy $cur_system_folder "System32"
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
-				MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-				DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
+				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
 				Goto uninstall_fail
 			${EndIf}
 
@@ -1731,8 +1731,8 @@ Section "Uninstall"
 			StrCpy $cur_system_folder "SysWOW64"
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
-				MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-				DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
+				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
 				Goto uninstall_fail
 			${EndIf}
 
@@ -1743,8 +1743,8 @@ Section "Uninstall"
 			StrCpy $cur_system_folder "System32"
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
-				MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-				DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
+				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
 				Goto uninstall_fail
 			${EndIf}
 
