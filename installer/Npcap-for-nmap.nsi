@@ -1718,104 +1718,87 @@ Section "Uninstall"
 
 	; Remove the files
 	${If} $ndis6_driver == "yes"
+		; uninstall_win7_32bit
 		${If} $is_64bit == "no"
-			Goto uninstall_win7_32bit
+			; delete the 32-bit DLLs and EXEs in home folder
+			Call un.remove_win7_XXbit_home_dlls
+
+			; delete the 32-bit DLLs and EXEs in System folder
+			StrCpy $cur_system_folder "System32"
+			Call un.remove_win7_XXbit_system_dlls
+			${If} $err_flag != ""
+				MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				Goto uninstall_fail
+			${EndIf}
+
+			; delete the driver
+			Call un.remove_win7_driver
+		; uninstall_win7_64bit
 		${Else}
-			Goto uninstall_win7_64bit
+			; delete the 32-bit DLLs and EXEs in home folder
+			Call un.remove_win7_XXbit_home_dlls
+
+			; delete the 32-bit DLLs and EXEs in System folder
+			StrCpy $cur_system_folder "SysWOW64"
+			Call un.remove_win7_XXbit_system_dlls
+			${If} $err_flag != ""
+				MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				Goto uninstall_fail
+			${EndIf}
+
+			; disable Wow64FsRedirection
+			System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
+
+			; delete the 64-bit DLLs and EXEs in System folder
+			StrCpy $cur_system_folder "System32"
+			Call un.remove_win7_XXbit_system_dlls
+			${If} $err_flag != ""
+				MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
+				Goto uninstall_fail
+			${EndIf}
+
+			; delete the driver
+			Call un.remove_win7_driver
+
+			; re-enable Wow64FsRedirection
+			System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
 		${EndIf}
 	${Else}
+		; uninstall_xp_32bit
 		${If} $is_64bit == "no"
-			Goto uninstall_xp_32bit
+			; delete the 32-bit DLLs and EXEs in home folder
+			Call un.remove_xp_XXbit_home_dlls
+
+			; delete the 32-bit DLLs and EXEs in System folder
+			Call un.remove_xp_XXbit_system_dlls
+
+			; delete the driver
+			Call un.remove_xp_driver
+		; uninstall_xp_64bit
 		${Else}
-			Goto uninstall_xp_64bit
+			; delete the 32-bit DLLs and EXEs in home folder
+			Call un.remove_xp_XXbit_home_dlls
+
+			; delete the 32-bit DLLs and EXEs in System folder
+			Call un.remove_xp_XXbit_system_dlls
+
+			; disable Wow64FsRedirection
+			System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
+
+			; delete the 64-bit DLLs and EXEs in System folder
+			Call un.remove_xp_XXbit_system_dlls
+
+			; delete the driver
+			Call un.remove_xp_driver
+
+			; re-enable Wow64FsRedirection
+			System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
 		${EndIf}
 	${EndIf}
 
-uninstall_xp_32bit:
-	; delete the 32-bit DLLs and EXEs in home folder
-	Call un.remove_xp_XXbit_home_dlls
-
-	; delete the 32-bit DLLs and EXEs in System folder
-	Call un.remove_xp_XXbit_system_dlls
-
-	; delete the driver
-	Call un.remove_xp_driver
-
-	Goto npfdeleted
-
-uninstall_xp_64bit:
-	; delete the 32-bit DLLs and EXEs in home folder
-	Call un.remove_xp_XXbit_home_dlls
-
-	; delete the 32-bit DLLs and EXEs in System folder
-	Call un.remove_xp_XXbit_system_dlls
-
-	; disable Wow64FsRedirection
-	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
-
-	; delete the 64-bit DLLs and EXEs in System folder
-	Call un.remove_xp_XXbit_system_dlls
-
-	; delete the driver
-	Call un.remove_xp_driver
-
-	; re-enable Wow64FsRedirection
-	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-
-	Goto npfdeleted
-
-uninstall_win7_32bit:
-	; delete the 32-bit DLLs and EXEs in home folder
-	Call un.remove_win7_XXbit_home_dlls
-
-	; delete the 32-bit DLLs and EXEs in System folder
-	StrCpy $cur_system_folder "System32"
-	Call un.remove_win7_XXbit_system_dlls
-	${If} $err_flag != ""
-		MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-		DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-		Goto uninstall_fail
-	${EndIf}
-
-	; delete the driver
-	Call un.remove_win7_driver
-
-	Goto npfdeleted
-
-uninstall_win7_64bit:
-	; delete the 32-bit DLLs and EXEs in home folder
-	Call un.remove_win7_XXbit_home_dlls
-
-	; delete the 32-bit DLLs and EXEs in System folder
-	StrCpy $cur_system_folder "SysWOW64"
-	Call un.remove_win7_XXbit_system_dlls
-	${If} $err_flag != ""
-		MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-		DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-		Goto uninstall_fail
-	${EndIf}
-
-	; disable Wow64FsRedirection
-	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
-
-	; delete the 64-bit DLLs and EXEs in System folder
-	StrCpy $cur_system_folder "System32"
-	Call un.remove_win7_XXbit_system_dlls
-	${If} $err_flag != ""
-		MessageBox MB_OK "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-		DetailPrint "Failed to delete: $err_flag, uninstallation aborts now. Please stop using Npcap first"
-		Goto uninstall_fail
-	${EndIf}
-
-	; delete the driver
-	Call un.remove_win7_driver
-
-	; re-enable Wow64FsRedirection
-	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-
-	Goto npfdeleted
-
-npfdeleted:
 	; delete our winpcap-nmap and any WinPcapInst registry keys
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
