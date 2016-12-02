@@ -55,6 +55,7 @@ Var /GLOBAL my_ver
 Var /GLOBAL UNINSTDIR
 Var /GLOBAL INSTDIR_DEFAULT
 
+Var /GLOBAL is_64bit
 Var /GLOBAL os_ver
 Var /GLOBAL ndis6_driver
 Var /GLOBAL sha2_signed
@@ -88,7 +89,7 @@ Function ${un}is64bit
 FunctionEnd
 !macroend
 !insertmacro MACRO_is64bit ""
-!insertmacro MACRO_is64bit "un."
+; !insertmacro MACRO_is64bit "un."
 
 !define StrRep "!insertmacro StrRep"
 !macro StrRep output string old new
@@ -354,6 +355,12 @@ Function .onInit
 	; on 32-bit or 64-bit.
 	Call is64bit
 	${If} $0 == "0"
+		StrCpy $is_64bit "no"
+	${Else}
+		StrCpy $is_64bit "yes"
+	${EndIf}
+
+	${If} $is_64bit == "no"
 		StrCpy $INSTDIR_DEFAULT "$PROGRAMFILES\Npcap"
 	${Else}
 		StrCpy $INSTDIR_DEFAULT "$PROGRAMFILES64\Npcap"
@@ -1473,15 +1480,13 @@ Section "WinPcap" SecWinPcap
 	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
 	${If} $ndis6_driver == "yes"
-		Call is64bit
-		${If} $0 == "0"
+		${If} $is_64bit == "no"
 			Goto install_win7_32bit
 		${Else}
 			Goto install_win7_64bit
 		${EndIf}
 	${Else}
-		Call is64bit
-		${If} $0 == "0"
+		${If} $is_64bit == "no"
 			Goto install_xp_32bit
 		${Else}
 			Goto install_xp_64bit
@@ -1711,8 +1716,8 @@ Section "Uninstall"
 		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 	${EndIf}
 
-	Call un.is64bit
-	${If} $0 == "0" ; 32bit
+	; Remove the files
+	${If} $is_64bit == "no" ; 32bit
 		${If} $ndis6_driver == "yes"
 			Goto uninstall_win7_32bit
 		${Else}
