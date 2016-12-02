@@ -1689,10 +1689,9 @@ Section "Uninstall"
 	Call un.checkWindowsVersion
 	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
 
-	; stop npf before we delete the service from the registry
+	; Stop the driver service before we uninstall it
 	DetailPrint "Trying to stop the driver.."
 	Call un.stop_driver_service
-
 	${If} $ndis6_driver == "yes"
 		ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
 		${If} $0 == "0"
@@ -1702,17 +1701,18 @@ Section "Uninstall"
 		${EndIf}
 	${EndIf}
 
-	; remove "C:\Windows\System32\Npcap" directory in PATH
+	; Remove "C:\Windows\System32\Npcap" from PATH
 	; Call un.clear_env_var
 
+	; Uninstall the driver
 	${If} $ndis6_driver == "yes"
 		Call un.registerServiceAPI_win7
 	${Else}
 		Call un.registerServiceAPI_xp
 	${EndIf}
 
+	; Remove "Npcap Loopback Adapter" if it exists
 	${If} $ndis6_driver == "yes"
-		; remove "Npcap Loopback Adapter" if exists
 		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 	${EndIf}
 
@@ -1799,17 +1799,17 @@ Section "Uninstall"
 		${EndIf}
 	${EndIf}
 
-	; delete our winpcap-nmap and any WinPcapInst registry keys
+	; Delete our winpcap-nmap and any WinPcapInst registry keys
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst"
 	DeleteRegKey HKLM "Software\Npcap"
 
-	; we do not delete the logs, because some logs also contain uninstall infos
+	; We do not delete the logs, because some logs also contain uninstall infos
 	; Delete $INSTDIR\install.log
 	; Delete $INSTDIR\NPFInstall.log
 	; Delete $INSTDIR\Packet.log
 
-	; delete the uninstaller
+	; Delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
 
 	RMDir "$INSTDIR"
