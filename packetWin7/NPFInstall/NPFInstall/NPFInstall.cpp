@@ -11,6 +11,7 @@
 #include "DriverStoreClear.h"
 #include "WlanRecord.h"
 #include "RegUtil.h"
+#include "ProcessUtil.h"
 
 #include "debug.h"
 
@@ -39,6 +40,7 @@ _T("  -uu\t\t\t: Uninstall the legacy driver (for XP)\n")\
 _T("  -r\t\t\t: Restart all bindings\n")\
 _T("  -r2\t\t\t: Restart all bindings (with Wi-Fi support)\n")\
 _T("  -d\t\t\t: Detect whether the driver service is pending to stop\n")\
+_T("  -check_dll\t\t\t: Detect whether the Npcap DLLs are still used by any processes, will list them if yes\n")\
 _T("  -c\t\t\t: Clear all the driverstore cache for the driver\n")\
 _T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n")\
 _T("  -wlan_write_reg\t: Write the names of all wireless adapters to registry\n")\
@@ -486,6 +488,24 @@ int _tmain(int argc, _TCHAR* argv[])
 			{
 				_tprintf(_T("Npcap service is not pending to stop.\n"));
 				nStatus = -1;
+				goto _EXIT;
+			}
+		}
+		else if (strArgs[1] == _T("-check_dll"))
+		{
+			tstring strInUseProcesses = getInUseProcesses();
+			if (strInUseProcesses == _T(""))
+			{
+				_tprintf(_T("<NULL>\n"));
+				nStatus = 0;
+				system("PAUSE");
+				goto _EXIT;
+			}
+			else
+			{
+				_tprintf(_T("%s\n"), strInUseProcesses.c_str());
+				nStatus = -1;
+				system("PAUSE");
 				goto _EXIT;
 			}
 		}
