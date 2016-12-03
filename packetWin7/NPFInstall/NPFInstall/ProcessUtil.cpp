@@ -128,12 +128,14 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 
 vector<tstring> enumProcesses()
 {
+	TRACE_ENTER();
+
 	vector<tstring> strArrProcessNames;
 
 	enableDebugPrivilege(TRUE);
 
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
-	if (hSnapshot)
+	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
 		PROCESSENTRY32 PEInfo;
 		PEInfo.dwSize = sizeof(PEInfo);
@@ -153,7 +155,14 @@ vector<tstring> enumProcesses()
 
 		CloseHandle(hSnapshot);
 	}
+	else
+	{
+		TRACE_PRINT1("enumProcesses::CreateToolhelp32Snapshot: error, errCode = 0x%08x.", GetLastError());
+		TRACE_EXIT();
+		return strArrProcessNames;
+	}
 
+	TRACE_EXIT();
 	return strArrProcessNames;
 }
 
