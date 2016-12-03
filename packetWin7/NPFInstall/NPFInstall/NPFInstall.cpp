@@ -498,14 +498,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			{
 				_tprintf(_T("<NULL>\n"));
 				nStatus = 0;
-				system("PAUSE");
 				goto _EXIT;
 			}
 			else
 			{
 				_tprintf(_T("%s\n"), strInUseProcesses.c_str());
 				nStatus = -1;
-				system("PAUSE");
 				goto _EXIT;
 			}
 		}

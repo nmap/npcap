@@ -22,9 +22,7 @@ Get processes which are using Npcap DLLs.
 using namespace std;
 
 #include "ProcessUtil.h"
-
-#define STRTOLOWER(x) std::transform(x.begin(), x.end(), x.begin(), ::tolower)
-#define STRTOUPPER(x) std::transform(x.begin(), x.end(), x.begin(), ::toupper)
+#include "debug.h"
 
 
 tstring getProcessName(HANDLE hProcess)
@@ -50,7 +48,7 @@ BOOL checkModulePathName(tstring strModulePathName)
 	size_t iStart = strModulePathName.find_last_of(_T('\\'));
 	if (iStart == tstring::npos)
 	{
-
+		TRACE_PRINT1("checkModulePathName::find_last_of: error, strModulePathName = %s.", strModulePathName.c_str());
 		return FALSE;
 	}
 	else
@@ -64,7 +62,6 @@ BOOL checkModulePathName(tstring strModulePathName)
 		{
 			return FALSE;
 		}
-
 	}
 }
 
@@ -81,6 +78,11 @@ tstring enumDLLs(DWORD dwProcessID)
 	// Get a list of all the modules in this process.
 
 	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcessID);
+	if (!hProcess)
+	{
+		TRACE_PRINT2("enumDLLs::OpenProcess: error, errCode = 0x%08x, dwProcessID = %d.", GetLastError(), dwProcessID);
+		return strProcessName;
+	}
 
 	if (EnumProcessModules(hProcess, hArrModules, sizeof(hArrModules), &cbNeeded))
 	{
@@ -102,10 +104,21 @@ tstring enumDLLs(DWORD dwProcessID)
 				if (checkModulePathName(strModulePathName))
 				{
 					strProcessName = getProcessName(hProcess);
+					TRACE_PRINT2("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.", strProcessName.c_str(), strModulePathName.c_str());
 					// _tprintf(_T("\t%s, %s\n"), strModulePathName.c_str(), strProcessName.c_str());
 				}
+// 				else
+// 				{
+// 					strProcessName = getProcessName(hProcess);
+// 					TRACE_PRINT1("enumDLLs: succeed, strProcessName = %s, strModulePathName = <NULL>.", strProcessName.c_str());
+// 				}
 			}
 		}
+	}
+	else
+	{
+		TRACE_PRINT1("EnumProcessModules: error, errCode = 0x%08x.", GetLastError());
+		return strProcessName;
 	}
 
 	CloseHandle(hProcess);
@@ -115,6 +128,8 @@ tstring enumDLLs(DWORD dwProcessID)
 
 vector<tstring> enumProcesses()
 {
+	TRACE_ENTER();
+
 	vector<tstring> strArrProcessNames;
 	DWORD dwArrProcessIDs[2048];
 	DWORD cbNeeded;
@@ -123,6 +138,8 @@ vector<tstring> enumProcesses()
 	// Get the list of process identifiers.
 	if (!EnumProcesses(dwArrProcessIDs, sizeof(dwArrProcessIDs), &cbNeeded))
 	{
+		TRACE_PRINT1("EnumProcesses: error, errCode = 0x%08x.", GetLastError());
+		TRACE_EXIT();
 		return strArrProcessNames;
 	}
 
@@ -139,11 +156,14 @@ vector<tstring> enumProcesses()
 		}
 	}
 
+	TRACE_EXIT();
 	return strArrProcessNames;
 }
 
 tstring getInUseProcesses()
 {
+	TRACE_ENTER();
+
 	tstring strResult;
 	vector<tstring> strArrProcessNames;
 	
@@ -158,5 +178,6 @@ tstring getInUseProcesses()
 		}
 	}
 
+	TRACE_EXIT();
 	return strResult;
 }
