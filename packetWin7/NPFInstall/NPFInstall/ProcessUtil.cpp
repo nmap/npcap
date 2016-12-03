@@ -26,6 +26,24 @@ using namespace std;
 #include "debug.h"
 
 
+BOOL enableDebugPrivilege(BOOL bEnable)
+{
+	HANDLE hToken = nullptr;
+	LUID luid;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)) return FALSE;
+	if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) return FALSE;
+
+	TOKEN_PRIVILEGES tokenPriv;
+	tokenPriv.PrivilegeCount = 1;
+	tokenPriv.Privileges[0].Luid = luid;
+	tokenPriv.Privileges[0].Attributes = bEnable ? SE_PRIVILEGE_ENABLED : 0;
+
+	if (!AdjustTokenPrivileges(hToken, FALSE, &tokenPriv, sizeof(TOKEN_PRIVILEGES), NULL, NULL)) return FALSE;
+
+	return TRUE;
+}
+
 BOOL checkModulePathName(tstring strModulePathName)
 {
 	size_t iStart = strModulePathName.find_last_of(_T('\\'));
@@ -107,6 +125,8 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 vector<tstring> enumProcesses()
 {
 	vector<tstring> strArrProcessNames;
+
+	enableDebugPrivilege(TRUE);
 
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 	if (hSnapshot)
