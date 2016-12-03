@@ -22,6 +22,8 @@ Get processes which are using Npcap DLLs.
 #include <string>
 using namespace std;
 
+#include "..\..\Common\WpcapNames.h"
+
 #include "ProcessUtil.h"
 #include "debug.h"
 
@@ -42,6 +44,62 @@ BOOL enableDebugPrivilege(BOOL bEnable)
 	if (!AdjustTokenPrivileges(hToken, FALSE, &tokenPriv, sizeof(TOKEN_PRIVILEGES), NULL, NULL)) return FALSE;
 
 	return TRUE;
+}
+
+tstring getFileProductName(tstring strFilePath)
+{
+	DWORD dwLen, dwUseless;
+	LPTSTR lpVI;
+	tstring strProductName = _T("");
+
+	TRACE_ENTER();
+
+	dwLen = GetFileVersionInfoSize((LPTSTR) strFilePath.c_str(), &dwUseless);
+	if (dwLen == 0)
+	{
+		TRACE_PRINT1("GetFileVersionInfoSize: error, errCode = 0x%08x.", GetLastError());
+		TRACE_EXIT();
+		return _T("");
+	}
+
+	lpVI = (LPTSTR)GlobalAlloc(GPTR, dwLen);
+	if (lpVI)
+	{
+		BOOL bRet = FALSE;
+		WORD* langInfo;
+		UINT cbLang;
+		TCHAR tszVerStrName[128];
+		LPVOID lpt;
+		UINT cbBufSize;
+
+		GetFileVersionInfo((LPTSTR) strFilePath.c_str(), NULL, dwLen, lpVI);
+
+		// Get the Product Name.
+		// First, to get string information, we need to get language information.
+		VerQueryValue(lpVI, _T("\\VarFileInfo\\Translation"), (LPVOID*)&langInfo, &cbLang);
+		// Prepare the label -- default lang is bytes 0 & 1 of langInfo
+		_stprintf_s(tszVerStrName, 128, _T("\\StringFileInfo\\%04x%04x\\%s"), langInfo[0], langInfo[1], _T("ProductName"));
+		//Get the string from the resource data
+		if (VerQueryValue(lpVI, tszVerStrName, &lpt, &cbBufSize))
+		{
+			strProductName.assign((LPTSTR)lpt);
+		}
+		else
+		{
+			TRACE_PRINT("VerQueryValue: error.");
+		}
+		//Cleanup
+		GlobalFree((HGLOBAL)lpVI);
+
+		TRACE_EXIT();
+		return strProductName;
+	}
+	else
+	{
+		TRACE_PRINT1("GlobalAlloc: error, errCode = 0x%08x.", GetLastError());
+		TRACE_EXIT();
+		return _T("");
+	}
 }
 
 BOOL checkModulePathName(tstring strModulePathName)
@@ -102,7 +160,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 // 				if (strProcessName != _T("nmap.exe"))
 // 					continue;
 
-				if (checkModulePathName(strModulePathName))
+				if (checkModulePathName(strModulePathName) && getFileProductName(strModulePathName) == _T(NPF_DRIVER_NAME_NORMAL))
 				{
 					TRACE_PRINT2("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.", strProcessName.c_str(), strModulePathName.c_str());
 					// _tprintf(_T("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.\n"), strProcessName.c_str(), strModulePathName.c_str());
