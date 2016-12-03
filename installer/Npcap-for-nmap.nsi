@@ -1703,9 +1703,6 @@ Section "Uninstall"
 	${If} $ndis6_driver == "yes"
 		; uninstall_win7_32bit
 		${If} $is_64bit == "no"
-			; delete the 32-bit DLLs and EXEs in home folder
-			Call un.remove_win7_XXbit_home_dlls
-
 			; delete the 32-bit DLLs and EXEs in System folder
 			StrCpy $cur_system_folder "System32"
 			Call un.remove_win7_XXbit_system_dlls
@@ -1722,11 +1719,11 @@ Section "Uninstall"
 
 			; delete the driver
 			Call un.remove_win7_driver
+
+			; delete the DLLs and EXEs in home folder
+			Call un.remove_win7_XXbit_home_dlls
 		; uninstall_win7_64bit
 		${Else}
-			; delete the 32-bit DLLs and EXEs in home folder
-			Call un.remove_win7_XXbit_home_dlls
-
 			; delete the 32-bit DLLs and EXEs in System folder
 			StrCpy $cur_system_folder "SysWOW64"
 			Call un.remove_win7_XXbit_system_dlls
@@ -1763,6 +1760,9 @@ Section "Uninstall"
 
 			; re-enable Wow64FsRedirection
 			System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
+
+			; delete the DLLs and EXEs in home folder
+			Call un.remove_win7_XXbit_home_dlls
 		${EndIf}
 	${Else}
 		; uninstall_xp_32bit
