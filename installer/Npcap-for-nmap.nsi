@@ -1690,8 +1690,13 @@ Section "Uninstall"
 	${If} $ndis6_driver == "yes"
 		ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
 		${If} $0 == "0"
-			MessageBox MB_OK "Failed to stop the driver. Uninstall aborted. Please close any programs that may be using Npcap and try again."
-			DetailPrint "Failed to stop the driver. Uninstall aborted. Please close any programs that may be using Npcap and try again."
+			; get the processes that are using Npcap
+			nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+			Pop $0
+			Pop $1
+			StrCpy $1 $1 -2
+			MessageBox MB_OK "Failed to stop the driver. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+			DetailPrint "Failed to stop the driver. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
 			Goto uninstall_fail
 		${EndIf}
 	${EndIf}
