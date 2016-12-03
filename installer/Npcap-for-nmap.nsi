@@ -1163,12 +1163,7 @@ Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\DiagReport.bat
 	Delete $INSTDIR\DiagReport.ps1
-	Delete $INSTDIR\NPFInstall.exe
 	Delete $INSTDIR\loopback.ini
-
-	${If} $winpcap_mode == "yes"
-		Delete $INSTDIR\NPFInstall2.exe
-	${EndIf}
 FunctionEnd
 
 Function un.remove_xp_XXbit_system_dlls
@@ -1808,6 +1803,12 @@ Section "Uninstall"
 	; Delete $INSTDIR\install.log
 	; Delete $INSTDIR\NPFInstall.log
 	; Delete $INSTDIR\Packet.log
+
+	; Delete NPFInstall.exe
+	Delete $INSTDIR\NPFInstall.exe
+	${If} $winpcap_mode == "yes"
+		Delete $INSTDIR\NPFInstall2.exe
+	${EndIf}
 
 	; Delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
