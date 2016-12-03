@@ -86,7 +86,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 		return FALSE;
 	}
 
-	if (EnumProcessModules(hProcess, hArrModules, sizeof(hArrModules), &cbNeeded))
+	if (EnumProcessModulesEx(hProcess, hArrModules, sizeof(hArrModules), &cbNeeded, LIST_MODULES_ALL))
 	{
 		for (DWORD i = 0; i < cbNeeded / sizeof(HMODULE); i ++)
 		{
@@ -98,6 +98,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 				tstring strModulePathName = szModName;
 				transform(strModulePathName.begin(), strModulePathName.end(), strModulePathName.begin(), ::tolower);
 
+// 				transform(strProcessName.begin(), strProcessName.end(), strProcessName.begin(), ::tolower);
 // 				if (strProcessName != _T("nmap.exe"))
 // 					continue;
 
@@ -117,7 +118,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 	}
 	else
 	{
-		TRACE_PRINT1("EnumProcessModules: error, errCode = 0x%08x.", GetLastError());
+		TRACE_PRINT1("EnumProcessModulesEx: error, errCode = 0x%08x.", GetLastError());
 		return FALSE;
 	}
 
