@@ -68,6 +68,7 @@ BOOL checkModulePathName(tstring strModulePathName)
 
 BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 {
+	BOOL bResult = FALSE;
 	HMODULE hArrModules[1024];
 	HANDLE hProcess;
 	DWORD cbNeeded;
@@ -81,7 +82,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 	if (!hProcess)
 	{
 		TRACE_PRINT3("enumDLLs::OpenProcess: error, errCode = 0x%08x, strProcessName = %s, dwProcessID = %d.", GetLastError(), strProcessName.c_str(), dwProcessID);
-		_tprintf(_T("enumDLLs::OpenProcess: error, errCode = 0x % 08x, strProcessName = %s, dwProcessID = %d.\n"), GetLastError(), strProcessName.c_str(), dwProcessID);
+		// _tprintf(_T("enumDLLs::OpenProcess: error, errCode = 0x%08x, strProcessName = %s, dwProcessID = %d.\n"), GetLastError(), strProcessName.c_str(), dwProcessID);
 		return FALSE;
 	}
 
@@ -97,16 +98,19 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 				tstring strModulePathName = szModName;
 				transform(strModulePathName.begin(), strModulePathName.end(), strModulePathName.begin(), ::tolower);
 
+// 				if (strProcessName != _T("nmap.exe"))
+// 					continue;
+
 				if (checkModulePathName(strModulePathName))
 				{
 					TRACE_PRINT2("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.", strProcessName.c_str(), strModulePathName.c_str());
 					// _tprintf(_T("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.\n"), strProcessName.c_str(), strModulePathName.c_str());
-					return TRUE;
+					bResult = TRUE;
 				}
 				else
 				{
-					TRACE_PRINT1("enumDLLs: succeed, strProcessName = %s, strModulePathName = <NULL>.", strProcessName.c_str());
-					// _tprintf(_T("enumDLLs: succeed, strProcessName = %s, strModulePathName = <NULL>.\n"), strProcessName.c_str());
+					// TRACE_PRINT2("enumDLLs: negative, strProcessName = %s, strModulePathName = %s.", strProcessName.c_str(), strModulePathName.c_str());
+					// _tprintf(_T("enumDLLs: negative, strProcessName = %s, strModulePathName = %s.\n"), strProcessName.c_str(), strModulePathName.c_str());
 				}
 			}
 		}
@@ -119,7 +123,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 
 	CloseHandle(hProcess);
 
-	return FALSE;
+	return bResult;
 }
 
 vector<tstring> enumProcesses()
