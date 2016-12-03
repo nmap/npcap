@@ -1710,8 +1710,13 @@ Section "Uninstall"
 			StrCpy $cur_system_folder "System32"
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
-				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
-				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
+				; get the processes that are using Npcap
+				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+				Pop $0
+				Pop $1
+				StrCpy $1 $1 -2
+				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
 				Goto uninstall_fail
 			${EndIf}
 
@@ -1726,8 +1731,13 @@ Section "Uninstall"
 			StrCpy $cur_system_folder "SysWOW64"
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
-				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
-				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
+				; get the processes that are using Npcap
+				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+				Pop $0
+				Pop $1
+				StrCpy $1 $1 -2
+				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
 				Goto uninstall_fail
 			${EndIf}
 
@@ -1738,8 +1748,13 @@ Section "Uninstall"
 			StrCpy $cur_system_folder "System32"
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
-				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
-				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close any programs that may be using Npcap and try again."
+				; get the processes that are using Npcap
+				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+				Pop $0
+				Pop $1
+				StrCpy $1 $1 -2
+				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
 				Goto uninstall_fail
 			${EndIf}
 
