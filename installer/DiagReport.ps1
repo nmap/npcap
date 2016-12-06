@@ -162,6 +162,23 @@ if ($os_bit -eq "64-bit")
 #########################################################
 write_report ("`n")
 write_report ("*************************************************")
+write_report ("WinPcap Info:")
+write_report ("*************************************************")
+
+if ($os_bit -eq "32-bit")
+{
+    write_report ("HKLM:\SOFTWARE\WinPcap:")
+    (Get-ItemProperty HKLM:\SOFTWARE\WinPcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+}
+else
+{
+    write_report ("HKLM:\SOFTWARE\WOW6432Node\WinPcap:")
+    (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\WinPcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+}
+
+#########################################################
+write_report ("`n")
+write_report ("*************************************************")
 write_report ("Registry Info:")
 write_report ("*************************************************")
 
