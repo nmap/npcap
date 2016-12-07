@@ -100,7 +100,7 @@ write_report ("*************************************************")
 write_report ("Memory Info:")
 write_report ("*************************************************")
 
-"Size:`t`t`t`t" + [int]((Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory / 1024 / 1024) + " MB" + " (" + (Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory + “ Bytes)”
+"Size:`t`t`t`t" + [int]((Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory / 1024 / 1024) + " MB" + " (" + (Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory + " Bytes)"
 
 #########################################################
 write_report ("`n")
@@ -143,20 +143,20 @@ write_report ("*************************************************")
 dir $install_path
 
 # write_report ("C:\Windows\System32:")
-dir "C:\Windows\System32\" NpcapHelper.exe
-dir "C:\Windows\System32\" Packet.dll
-dir "C:\Windows\System32\" WlanHelper.exe
-dir "C:\Windows\System32\" wpcap.dll
-dir "C:\Windows\System32\Npcap\"
+dir ($env:WinDir + "\System32\") NpcapHelper.exe
+dir ($env:WinDir + "\System32\") Packet.dll
+dir ($env:WinDir + "\System32\") WlanHelper.exe
+dir ($env:WinDir + "\System32\") wpcap.dll
+dir ($env:WinDir + "\System32\Npcap\")
 
 if ($os_bit -eq "64-bit")
 {
     # write_report ("C:\Windows\SysWOW64:")
-    dir "C:\Windows\SysWOW64\" NpcapHelper.exe
-    dir "C:\Windows\SysWOW64\" Packet.dll
-    dir "C:\Windows\SysWOW64\" WlanHelper.exe
-    dir "C:\Windows\SysWOW64\" wpcap.dll
-    dir "C:\Windows\SysWOW64\Npcap\"
+    dir ($env:WinDir + "\SysWOW64\") NpcapHelper.exe
+    dir ($env:WinDir + "\SysWOW64\") Packet.dll
+    dir ($env:WinDir + "\SysWOW64\") WlanHelper.exe
+    dir ($env:WinDir + "\SysWOW64\") wpcap.dll
+    dir ($env:WinDir + "\SysWOW64\Npcap\")
 }
 
 #########################################################
