@@ -18,3 +18,5 @@ using namespace std;
 typedef std::basic_string<TCHAR> tstring;
 
 tstring getInUseProcesses();
+
+BOOL killInUseProcesses();

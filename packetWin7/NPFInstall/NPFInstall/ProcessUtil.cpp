@@ -225,6 +225,46 @@ vector<tstring> enumProcesses()
 	return strArrProcessNames;
 }
 
+vector<DWORD> enumProcesses_PID()
+{
+	TRACE_ENTER();
+
+	vector<DWORD> strArrProcessIDs;
+
+	enableDebugPrivilege(TRUE);
+
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+	if (hSnapshot != INVALID_HANDLE_VALUE)
+	{
+		PROCESSENTRY32 PEInfo;
+		PEInfo.dwSize = sizeof(PEInfo);
+		BOOL bHasNextProcess = Process32First(hSnapshot, &PEInfo);
+		bool found = false;
+		while (bHasNextProcess)
+		{
+			bHasNextProcess = Process32Next(hSnapshot, &PEInfo);
+			tstring strProcessName = PEInfo.szExeFile;
+			// _tprintf(_T("szExeFile = %s, th32ProcessID = %d\n"), PEInfo.szExeFile, PEInfo.th32ProcessID);
+			BOOL bHasNpcapDLL = enumDLLs(strProcessName, PEInfo.th32ProcessID);
+			if (bHasNpcapDLL)
+			{
+				strArrProcessIDs.push_back(PEInfo.th32ProcessID);
+			}
+		}
+
+		CloseHandle(hSnapshot);
+	}
+	else
+	{
+		TRACE_PRINT1("enumProcesses_PID::CreateToolhelp32Snapshot: error, errCode = 0x%08x.", GetLastError());
+		TRACE_EXIT();
+		return strArrProcessIDs;
+	}
+
+	TRACE_EXIT();
+	return strArrProcessIDs;
+}
+
 tstring getInUseProcesses()
 {
 	TRACE_ENTER();
@@ -245,4 +285,46 @@ tstring getInUseProcesses()
 
 	TRACE_EXIT();
 	return strResult;
+}
+
+BOOL killProcess(DWORD dwProcessID)
+{
+	TRACE_ENTER();
+
+	// When the all operation fail this function terminate the "winlogon" Process for force exit the system.
+	HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, dwProcessID);
+	
+	BOOL bRes = TerminateProcess(hProcess, 0);
+	if (!bRes)
+	{
+		TRACE_PRINT2("killProcess::TerminateProcess: error, errCode = 0x%08x, dwProcessID = %d.", GetLastError(), dwProcessID);
+		TRACE_EXIT();
+		return FALSE;
+	}
+	else
+	{
+		TRACE_EXIT();
+		return TRUE;
+	}
+}
+
+BOOL killInUseProcesses()
+{
+	TRACE_ENTER();
+
+	BOOL bResult = TRUE;
+	vector<DWORD> strArrProcessIDs;
+
+	strArrProcessIDs = enumProcesses_PID();
+
+	for (size_t i = 0; i < strArrProcessIDs.size(); i++)
+	{
+		if (!killProcess(strArrProcessIDs[i]))
+		{
+			bResult = FALSE;
+		}
+	}
+
+	TRACE_EXIT();
+	return bResult;
 }
