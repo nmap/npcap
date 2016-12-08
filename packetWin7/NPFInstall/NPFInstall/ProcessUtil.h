@@ -22,3 +22,5 @@ tstring getInUseProcesses();
 BOOL killInUseProcesses();
 
 BOOL killInUseProcesses_Soft();
+
+BOOL killInUseProcesses_Polite();

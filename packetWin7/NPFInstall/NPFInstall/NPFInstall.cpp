@@ -42,7 +42,8 @@ _T("  -r2\t\t\t: Restart all bindings (with Wi-Fi support)\n")\
 _T("  -d\t\t\t: Detect whether the driver service is pending to stop\n")\
 _T("  -check_dll\t\t: Detect whether the Npcap DLLs are still used by any processes, will list them if yes\n")\
 _T("  -kill_proc\t\t: Terminate all the processes that are still using Npcap DLLs\n")\
-_T("  -kill_proc_soft\t: Gracefully terminate all the processes that are still using Npcap DLLs (only for GUI processes, CLI processes will still be terminiated immediatelly)\n")\
+_T("  -kill_proc_soft\t: Gracefully terminate all the processes that are still using Npcap DLLs (only for GUI processes, CLI processes will not be terminated)\n")\
+_T("  -kill_proc_polite\t: Politely terminate all the processes that are still using Npcap DLLs (wait for 15 seconds for GUI processes to close themselves, CLI processes will still be terminiated immediatelly)\n")\
 _T("  -c\t\t\t: Clear all the driverstore cache for the driver\n")\
 _T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n")\
 _T("  -wlan_write_reg\t: Write the names of all wireless adapters to registry\n")\
@@ -537,6 +538,22 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				_tprintf(_T("Some of the processes that are still using Npcap DLLs have failed to be terminated gracefully.\n"));
+				nStatus = -1;
+				goto _EXIT;
+			}
+		}
+		else if (strArgs[1] == _T("-kill_proc_polite"))
+		{
+			bSuccess = killInUseProcesses_Polite();
+			if (bSuccess)
+			{
+				_tprintf(_T("All the processes that are still using Npcap DLLs have been successfully terminated politely!\n"));
+				nStatus = 0;
+				goto _EXIT;
+			}
+			else
+			{
+				_tprintf(_T("Some of the processes that are still using Npcap DLLs have failed to be terminated politely.\n"));
 				nStatus = -1;
 				goto _EXIT;
 			}

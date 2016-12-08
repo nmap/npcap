@@ -312,6 +312,7 @@ BOOL killProcess(DWORD dwProcessID)
 	}
 	else
 	{
+		TRACE_PRINT1("killProcess::TerminateProcess: succeeds, dwProcessID = %d.", dwProcessID);
 		TRACE_EXIT();
 		return TRUE;
 	}
@@ -342,8 +343,6 @@ BOOL killProcess_Soft(DWORD dwProcessID)
 {
 	TRACE_ENTER();
 
-	tstring strSuccess = _T("SUCCESS");
-
 	tstring strCommand = _T("taskkill /pid ");
 	strCommand += itos(dwProcessID);
 
@@ -351,11 +350,13 @@ BOOL killProcess_Soft(DWORD dwProcessID)
 
 	if (_tcsncmp(strResult.c_str(), _T("SUCCESS"), _tcslen(_T("SUCCESS"))) == 0)
 	{
+		TRACE_PRINT1("killProcess_Soft: gracefully kill process, bResult = 1, dwProcessID = %d.", dwProcessID);
 		TRACE_EXIT();
 		return TRUE;
 	}
 	else
 	{
+		TRACE_PRINT1("killProcess_Soft: gracefully kill process, bResult = 0, dwProcessID = %d.", dwProcessID);
 		TRACE_EXIT();
 		return FALSE;
 	}
@@ -375,6 +376,30 @@ BOOL killInUseProcesses_Soft()
 		if (!killProcess_Soft(strArrProcessIDs[i]))
 		{
 			bResult = FALSE;
+		}
+	}
+
+	TRACE_EXIT();
+	return bResult;
+}
+
+BOOL killInUseProcesses_Polite()
+{
+	TRACE_ENTER();
+
+	BOOL bResult = TRUE;
+	vector<DWORD> strArrProcessIDs;
+
+	strArrProcessIDs = enumProcesses_PID();
+
+	for (size_t i = 0; i < strArrProcessIDs.size(); i++)
+	{
+		if (!killProcess_Soft(strArrProcessIDs[i]))
+		{
+			if (!killProcess(strArrProcessIDs[i]))
+			{
+				bResult = FALSE;
+			}
 		}
 	}
 
