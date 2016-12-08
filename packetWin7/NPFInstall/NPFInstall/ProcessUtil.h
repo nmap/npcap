@@ -20,3 +20,5 @@ typedef std::basic_string<TCHAR> tstring;
 tstring getInUseProcesses();
 
 BOOL killInUseProcesses();
+
+BOOL killInUseProcesses_Soft();

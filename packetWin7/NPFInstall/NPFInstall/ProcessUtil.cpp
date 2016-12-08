@@ -25,8 +25,17 @@ using namespace std;
 #include "..\..\Common\WpcapNames.h"
 
 #include "ProcessUtil.h"
+#include "LoopbackRename2.h"
 #include "debug.h"
 
+
+tstring itos(int i)
+{
+	TCHAR buf[256];
+	_itot_s(i, buf, 10);
+	tstring res = buf;
+	return res;
+}
 
 BOOL enableDebugPrivilege(BOOL bEnable)
 {
@@ -320,6 +329,50 @@ BOOL killInUseProcesses()
 	for (size_t i = 0; i < strArrProcessIDs.size(); i++)
 	{
 		if (!killProcess(strArrProcessIDs[i]))
+		{
+			bResult = FALSE;
+		}
+	}
+
+	TRACE_EXIT();
+	return bResult;
+}
+
+BOOL killProcess_Soft(DWORD dwProcessID)
+{
+	TRACE_ENTER();
+
+	tstring strSuccess = _T("SUCCESS");
+
+	tstring strCommand = _T("taskkill /pid ");
+	strCommand += itos(dwProcessID);
+
+	tstring strResult = executeCommand((TCHAR*)strCommand.c_str());
+
+	if (_tcsncmp(strResult.c_str(), _T("SUCCESS"), _tcslen(_T("SUCCESS"))) == 0)
+	{
+		TRACE_EXIT();
+		return TRUE;
+	}
+	else
+	{
+		TRACE_EXIT();
+		return FALSE;
+	}
+}
+
+BOOL killInUseProcesses_Soft()
+{
+	TRACE_ENTER();
+
+	BOOL bResult = TRUE;
+	vector<DWORD> strArrProcessIDs;
+
+	strArrProcessIDs = enumProcesses_PID();
+
+	for (size_t i = 0; i < strArrProcessIDs.size(); i++)
+	{
+		if (!killProcess_Soft(strArrProcessIDs[i]))
 		{
 			bResult = FALSE;
 		}
