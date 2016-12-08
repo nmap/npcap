@@ -1688,16 +1688,19 @@ Section "Uninstall"
 	DetailPrint "Trying to stop the driver.."
 	Call un.stop_driver_service
 	${If} $ndis6_driver == "yes"
+		terminate_back_1:
 		ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
 		${If} $0 == "0"
 			; get the processes that are using Npcap
-			nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+			nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
 			Pop $0
 			Pop $1
 			StrCpy $1 $1 -2
-			MessageBox MB_OK "Failed to stop the driver. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
-			DetailPrint "Failed to stop the driver. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
-			Goto uninstall_fail
+			DetailPrint "Failed to stop the driver. Please close programs: $1 which may be using Npcap and try again."
+			MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_1 IDNO uninstall_fail
+			terminate_retry_1:
+			ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+			Goto terminate_back_1
 		${EndIf}
 	${EndIf}
 
@@ -1710,16 +1713,20 @@ Section "Uninstall"
 		${If} $is_64bit == "no"
 			; delete the 32-bit DLLs and EXEs in System folder
 			StrCpy $cur_system_folder "System32"
+			terminate_back_2:
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
+				StrCpy $err_flag ""
 				; get the processes that are using Npcap
-				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
 				Pop $0
 				Pop $1
 				StrCpy $1 $1 -2
-				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
-				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
-				Goto uninstall_fail
+				DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
+				MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_2 IDNO uninstall_fail
+				terminate_retry_2:
+				ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+				Goto terminate_back_2
 			${EndIf}
 
 			; delete the driver
@@ -1731,16 +1738,20 @@ Section "Uninstall"
 		${Else}
 			; delete the 32-bit DLLs and EXEs in System folder
 			StrCpy $cur_system_folder "SysWOW64"
+			terminate_back_3:
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
+				StrCpy $err_flag ""
 				; get the processes that are using Npcap
-				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
 				Pop $0
 				Pop $1
 				StrCpy $1 $1 -2
-				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
-				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
-				Goto uninstall_fail
+				DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
+				MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_3 IDNO uninstall_fail
+				terminate_retry_3:
+				ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+				Goto terminate_back_3
 			${EndIf}
 
 			; disable Wow64FsRedirection
@@ -1748,16 +1759,20 @@ Section "Uninstall"
 
 			; delete the 64-bit DLLs and EXEs in System folder
 			StrCpy $cur_system_folder "System32"
+			terminate_back_4:
 			Call un.remove_win7_XXbit_system_dlls
 			${If} $err_flag != ""
+				StrCpy $err_flag ""
 				; get the processes that are using Npcap
-				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
 				Pop $0
 				Pop $1
 				StrCpy $1 $1 -2
-				MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
-				DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
-				Goto uninstall_fail
+				DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
+				MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_4 IDNO uninstall_fail
+				terminate_retry_4:
+				ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+				Goto terminate_back_4
 			${EndIf}
 
 			; delete the driver
