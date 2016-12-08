@@ -302,6 +302,20 @@ BOOL killProcess(DWORD dwProcessID)
 
 	// When the all operation fail this function terminate the "winlogon" Process for force exit the system.
 	HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, dwProcessID);
+	if (!hProcess)
+	{
+		DWORD dwError = GetLastError();
+		if (dwError == ERROR_INVALID_PARAMETER)
+		{
+			TRACE_PRINT1("killProcess: the process terminates itself, dwProcessID = %d.", dwProcessID);
+			return TRUE;
+		}
+		else
+		{
+			TRACE_PRINT2("killProcess::OpenProcess: error, errCode = 0x%08x, dwProcessID = %d.", dwError, dwProcessID);
+			return FALSE;
+		}
+	}
 	
 	BOOL bRes = TerminateProcess(hProcess, 0);
 	if (!bRes)
@@ -383,6 +397,63 @@ BOOL killInUseProcesses_Soft()
 	return bResult;
 }
 
+DWORD dwTimeout = 15000;
+
+BOOL killProcess_Wait(DWORD dwProcessID)
+{
+	TRACE_ENTER();
+
+	// When the all operation fail this function terminate the "winlogon" Process for force exit the system.
+	HANDLE hProcess = OpenProcess(SYNCHRONIZE | PROCESS_TERMINATE, FALSE, dwProcessID);
+	if (!hProcess)
+	{
+		DWORD dwError = GetLastError();
+		if (dwError == ERROR_INVALID_PARAMETER)
+		{
+			TRACE_PRINT1("killProcess_Wait: the process terminates itself, dwProcessID = %d.", dwProcessID);
+			return TRUE;
+		}
+		else
+		{
+			TRACE_PRINT2("killProcess_Wait::OpenProcess: error, errCode = 0x%08x, dwProcessID = %d.", dwError, dwProcessID);
+			return FALSE;
+		}
+	}
+
+	DWORD dwTickBefore = GetTickCount();
+	if (WaitForSingleObject(hProcess, dwTimeout) != WAIT_OBJECT_0)
+	{
+		dwTimeout = 0;
+		BOOL bRes = TerminateProcess(hProcess, 0);
+		if (!bRes)
+		{
+			TRACE_PRINT2("killProcess_Wait::TerminateProcess: error, errCode = 0x%08x, dwProcessID = %d.", GetLastError(), dwProcessID);
+			TRACE_EXIT();
+			return FALSE;
+		}
+		else
+		{
+			TRACE_PRINT1("killProcess_Wait::TerminateProcess: succeeds, dwProcessID = %d.", dwProcessID);
+			TRACE_EXIT();
+			return TRUE;
+		}
+	}
+
+	DWORD dwTickAfter = GetTickCount();
+	if (dwTimeout <= dwTickAfter - dwTickBefore)
+	{
+		dwTimeout = 0;
+	}
+	else
+	{
+		dwTimeout -= (dwTickAfter - dwTickBefore);
+	}
+
+	TRACE_PRINT2("killProcess_Wait: the process terminates itself, dwProcessID = %d, dwTimeout = %d.", dwProcessID, dwTimeout);
+	TRACE_EXIT();
+	return TRUE;
+}
+
 BOOL killInUseProcesses_Polite()
 {
 	TRACE_ENTER();
@@ -396,10 +467,15 @@ BOOL killInUseProcesses_Polite()
 	{
 		if (!killProcess_Soft(strArrProcessIDs[i]))
 		{
-			if (!killProcess(strArrProcessIDs[i]))
-			{
-				bResult = FALSE;
-			}
+			killProcess(strArrProcessIDs[i]);
+		}
+	}
+
+	for (size_t i = 0; i < strArrProcessIDs.size(); i++)
+	{
+		if (!killProcess_Wait(strArrProcessIDs[i]))
+		{
+			bResult = FALSE;
 		}
 	}
 
