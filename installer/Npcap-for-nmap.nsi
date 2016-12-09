@@ -1883,7 +1883,10 @@ Section "Uninstall"
 	${If} $no_confirm == "yes"
 		SetAutoClose true
 	${EndIf}
+	Goto uninstall_ok
 
 uninstall_fail:
+	Abort
+uninstall_ok:
 
 SectionEnd
