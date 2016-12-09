@@ -74,6 +74,7 @@ Var /GLOBAL sign_mode
 Var /GLOBAL no_confirm
 Var /GLOBAL err_flag
 Var /GLOBAL cur_system_folder
+Var /GLOBAL install_ok
 
 Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
@@ -1026,6 +1027,7 @@ ${!defineifexist} EV_CERT_EXISTS "C:\Insecure-EV.cer"
 		DetailPrint "Failed to create the npcap service for Win7, Win8 and Win10"
 		${IfNot} ${Silent}
 			MessageBox MB_OK "Failed to create the npcap service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+			StrCpy $install_ok "no"
 		${EndIf}
 	${EndIf}
 
@@ -1042,11 +1044,12 @@ ${!defineifexist} EV_CERT_EXISTS "C:\Insecure-EV.cer"
 
 		; check the driver install result
 		${If} $0 == "0"
-			DetailPrint "The npcap2 service for Win7, Win8 and Win10 was successfully created"
+			DetailPrint "The npf service for Win7, Win8 and Win10 was successfully created"
 		${Else}
-			DetailPrint "Failed to create the npcap2 service for Win7, Win8 and Win10"
+			DetailPrint "Failed to create the npf service for Win7, Win8 and Win10"
 			${IfNot} ${Silent}
-				MessageBox MB_OK "Failed to create the npcap2 service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+				MessageBox MB_OK "Failed to create the npf service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
+				StrCpy $install_ok "no"
 			${EndIf}
 		${EndIf}
 	${EndIf}
@@ -1064,6 +1067,7 @@ Function un.uninstall_win7_XXbit_driver
 		DetailPrint "The npcap service for Win7, Win8 and Win10 was successfully deleted"
 	${Else}
 		DetailPrint "Failed to delete the npcap service for Win7, Win8 and Win10"
+		StrCpy $install_ok "no"
 	${EndIf}
 
 	${If} $winpcap_mode == "yes"
@@ -1075,9 +1079,10 @@ Function un.uninstall_win7_XXbit_driver
 
 		; check the driver uninstall result
 		${If} $0 == "0"
-			DetailPrint "The npcap2 service for Win7, Win8 and Win10 was successfully deleted"
+			DetailPrint "The npf service for Win7, Win8 and Win10 was successfully deleted"
 		${Else}
-			DetailPrint "Failed to delete the npcap2 service for Win7, Win8 and Win10"
+			DetailPrint "Failed to delete the npf service for Win7, Win8 and Win10"
+			StrCpy $install_ok "no"
 		${EndIf}
 	${EndIf}
 FunctionEnd
@@ -1331,7 +1336,8 @@ FunctionEnd */
 
 ;--------------------------------
 ; The stuff to install
-Section "WinPcap" SecWinPcap	
+Section "WinPcap" SecWinPcap
+	StrCpy $install_ok "yes"
 	; stop the service, in case it's still registered, so files can be
 	; safely overwritten and the service can be deleted.
 	Call stop_driver_service
@@ -1360,6 +1366,7 @@ Section "WinPcap" SecWinPcap
 		Call uninstallWinPcap
 		${If} $R0 == "false"
 			DetailPrint "Error occured when uninstalling WinPcap, Npcap installation quits"
+			StrCpy $install_ok "no"
 			Goto install_fail
 		${EndIf}
 	${EndIf}
@@ -1478,6 +1485,10 @@ install_fail:
 			DetailPrint "Error occured when finishing setting system restore point, return value=|$0|"
 		${EndIf}
 	${EndIf}
+	
+	${If} $install_ok == "no"
+		Abort
+	${EndIf}
 SectionEnd ; end the section
 
 
@@ -1485,6 +1496,7 @@ SectionEnd ; end the section
 ;Uninstaller Section
 
 Section "Uninstall"
+	StrCpy $install_ok "yes"
 	; Delete the system restore point, disabled for now.
 	; This is because not many softwares delete restore points, this job should be done by users themselves.
 	; DetailPrint "Delete system restore point: ${RESTORE_POINT_NAME_INSTALL}"
@@ -1684,5 +1696,8 @@ Section "Uninstall"
 uninstall_fail:
 	Abort
 uninstall_ok:
+	${If} $install_ok == "no"
+		Abort
+	${EndIf}
 
 SectionEnd
