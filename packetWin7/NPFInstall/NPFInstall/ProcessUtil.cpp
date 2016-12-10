@@ -326,6 +326,7 @@ BOOL killProcess(DWORD dwProcessID)
 	}
 	else
 	{
+		WaitForSingleObject(hProcess, 5000); // Make sure the process has terminated.
 		TRACE_PRINT1("killProcess::TerminateProcess: succeeds, dwProcessID = %d.", dwProcessID);
 		TRACE_EXIT();
 		return TRUE;
@@ -433,6 +434,7 @@ BOOL killProcess_Wait(DWORD dwProcessID)
 		}
 		else
 		{
+			WaitForSingleObject(hProcess, 5000); // Make sure the process has terminated.
 			TRACE_PRINT1("killProcess_Wait::TerminateProcess: succeeds, dwProcessID = %d.", dwProcessID);
 			TRACE_EXIT();
 			return TRUE;
