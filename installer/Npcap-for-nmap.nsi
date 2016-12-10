@@ -1180,7 +1180,6 @@ Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\DiagReport.bat
 	Delete $INSTDIR\DiagReport.ps1
-	Delete $INSTDIR\loopback.ini
 FunctionEnd
 
 Function un.remove_xp_XXbit_system_dlls
@@ -1952,9 +1951,7 @@ Section "Uninstall"
 
 	; Remove "Npcap Loopback Adapter" if it exists
 	${If} $ndis6_driver == "yes"
-		${If} $loopback_support == "yes"
-			ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
-		${EndIf}
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 		
 		; delete the driver files in home folder
 		Call un.remove_win7_driver
@@ -1978,6 +1975,8 @@ Section "Uninstall"
 
 	; Delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
+	
+	Delete $INSTDIR\loopback.ini
 
 	RMDir "$INSTDIR"
 
