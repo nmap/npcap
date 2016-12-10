@@ -1103,7 +1103,6 @@ Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\DiagReport.bat
 	Delete $INSTDIR\DiagReport.ps1
-	Delete $INSTDIR\loopback.ini
 FunctionEnd
 
 Function un.remove_win7_XXbit_system_dlls
@@ -1805,6 +1804,8 @@ Section "Uninstall"
 
 	; Delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
+	
+	Delete $INSTDIR\loopback.ini
 
 	RMDir "$INSTDIR"
 
