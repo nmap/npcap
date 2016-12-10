@@ -1332,6 +1332,65 @@ Function write_registry_service_options
 	${EndIf}
 FunctionEnd
 
+Function un.read_single_registry_service_options
+	; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
+	WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Start" 1
+
+	; Copy the "Loopback" option from software key to services key
+	; Npcap driver will read this option
+	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "LoopbackAdapter"
+	${If} $0 == "1"
+		StrCpy $loopback_support "yes"
+	${Else}
+		StrCpy $loopback_support "no"
+	${EndIf}
+
+	; Npcap driver will read this option
+	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "DltNull"
+	${If} $0 == "1"
+		StrCpy $dlt_null "yes"
+	${Else}
+		StrCpy $dlt_null "no"
+	${EndIf}
+
+	; Npcap driver will read this option
+	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "AdminOnly"
+	${If} $0 == "1"
+		StrCpy $admin_only "yes"
+	${Else}
+		StrCpy $admin_only "no"
+	${EndIf}
+
+	; Npcap driver will read this option
+	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support"
+	${If} $0 == "1"
+		StrCpy $dot11_support "yes"
+	${Else}
+		StrCpy $dot11_support "no"
+	${EndIf}
+
+	; Npcap driver will read this option
+	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "VlanSupport"
+	${If} $0 == "1"
+		StrCpy $vlan_support "yes"
+	${Else}
+		StrCpy $vlan_support "no"
+	${EndIf}
+
+	; Wireshark will read this option
+	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "WinPcapCompatible"
+	${If} $0 == "1"
+		StrCpy $winpcap_mode "yes"
+	${Else}
+		StrCpy $winpcap_mode "no"
+	${EndIf}
+FunctionEnd
+
+Function un.read_registry_service_options
+	StrCpy $service_name "npcap"
+	Call un.read_single_registry_service_options
+FunctionEnd
+
 Function start_driver_service
 	${If} $ndis6_driver == "yes"
 		${If} $winpcap_mode == "yes2"
@@ -1661,6 +1720,10 @@ SectionEnd ; end the section
 ;Uninstaller Section
 
 Section "Uninstall"
+	; read options from registry "service" key
+	DetailPrint "Reading service options from registry"
+	Call un.read_registry_service_options
+
 	StrCpy $install_ok "yes"
 	; Delete the system restore point, disabled for now.
 	; This is because not many softwares delete restore points, this job should be done by users themselves.
@@ -1682,7 +1745,8 @@ Section "Uninstall"
 	; StrCpy $restore_point_success "yes"
 	; ${Endif}
 
-	${If} ${FileExists} "$INSTDIR\npf.sys"
+	; we do not use this code any more after we call un.read_registry_service_options
+/* 	${If} ${FileExists} "$INSTDIR\npf.sys"
 		${If} ${FileExists} "$INSTDIR\npcap.sys"
 			StrCpy $winpcap_mode "yes"
 		${Else}
@@ -1690,7 +1754,7 @@ Section "Uninstall"
 		${EndIf}
 	${Else}
 		StrCpy $winpcap_mode "no"
-	${EndIf}
+	${EndIf} */
 
 	; Check windows version
 	Call un.checkWindowsVersion
