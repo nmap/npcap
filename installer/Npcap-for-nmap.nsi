@@ -1784,18 +1784,20 @@ Section "Uninstall"
 			Pop $0
 			Pop $1
 			StrCpy $1 $1 -2
-			DetailPrint "Failed to stop the driver. Please close programs: $1 which may be using Npcap and try again."
-			${IfNot} ${Silent}
-				MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_1 IDNO uninstall_fail
-				terminate_retry_1:
-				ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-				Goto terminate_back_1
-			${Else}
-				${If} $no_kill == "no"
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+			${If} $1 != "<NULL>"
+				DetailPrint "Failed to stop the driver. Please close programs: $1 which may be using Npcap and try again."
+				${IfNot} ${Silent}
+					MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_1 IDNO uninstall_fail
+					terminate_retry_1:
+					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+					Goto terminate_back_1
 				${Else}
-					Goto uninstall_fail
+					${If} $no_kill == "no"
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+					${Else}
+						Goto uninstall_fail
+					${EndIf}
 				${EndIf}
 			${EndIf}
 		${EndIf}
@@ -1818,19 +1820,21 @@ Section "Uninstall"
 				Pop $0
 				Pop $1
 				StrCpy $1 $1 -2
-				DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
-				StrCpy $err_flag ""
-				${IfNot} ${Silent}
-					MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_2 IDNO uninstall_fail
-					terminate_retry_2:
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-					Goto terminate_back_2
-				${Else}
-					${If} $no_kill == "no"
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-						Call un.remove_win7_XXbit_system_dlls
+				${If} $1 != "<NULL>"
+					DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
+					StrCpy $err_flag ""
+					${IfNot} ${Silent}
+						MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_2 IDNO uninstall_fail
+						terminate_retry_2:
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+						Goto terminate_back_2
 					${Else}
-						Goto uninstall_fail
+						${If} $no_kill == "no"
+							ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+							Call un.remove_win7_XXbit_system_dlls
+						${Else}
+							Goto uninstall_fail
+						${EndIf}
 					${EndIf}
 				${EndIf}
 			${EndIf}
@@ -1849,19 +1853,21 @@ Section "Uninstall"
 				Pop $0
 				Pop $1
 				StrCpy $1 $1 -2
-				DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
-				StrCpy $err_flag ""
-				${IfNot} ${Silent}
-					MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_3 IDNO uninstall_fail
-					terminate_retry_3:
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-					Goto terminate_back_3
-				${Else}
-					${If} $no_kill == "no"
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-						Call un.remove_win7_XXbit_system_dlls
+				${If} $1 != "<NULL>"
+					DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
+					StrCpy $err_flag ""
+					${IfNot} ${Silent}
+						MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_3 IDNO uninstall_fail
+						terminate_retry_3:
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+						Goto terminate_back_3
 					${Else}
-						Goto uninstall_fail
+						${If} $no_kill == "no"
+							ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+							Call un.remove_win7_XXbit_system_dlls
+						${Else}
+							Goto uninstall_fail
+						${EndIf}
 					${EndIf}
 				${EndIf}
 			${EndIf}
@@ -1879,19 +1885,21 @@ Section "Uninstall"
 				Pop $0
 				Pop $1
 				StrCpy $1 $1 -2
-				DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
-				StrCpy $err_flag ""
-				${IfNot} ${Silent}
-					MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_4 IDNO uninstall_fail
-					terminate_retry_4:
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-					Goto terminate_back_4
-				${Else}
-					${If} $no_kill == "no"
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-						Call un.remove_win7_XXbit_system_dlls
+				${If} $1 != "<NULL>"
+					DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
+					StrCpy $err_flag ""
+					${IfNot} ${Silent}
+						MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_4 IDNO uninstall_fail
+						terminate_retry_4:
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+						Goto terminate_back_4
 					${Else}
-						Goto uninstall_fail
+						${If} $no_kill == "no"
+							ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+							Call un.remove_win7_XXbit_system_dlls
+						${Else}
+							Goto uninstall_fail
+						${EndIf}
 					${EndIf}
 				${EndIf}
 			${EndIf}
