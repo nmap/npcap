@@ -62,6 +62,7 @@ Var /GLOBAL sha2_signed
 Var /GLOBAL cmd_line
 Var /GLOBAL service_name
 
+; Installer options:
 Var /GLOBAL npf_startup
 Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
@@ -71,7 +72,11 @@ Var /GLOBAL vlan_support
 Var /GLOBAL winpcap_mode
 Var /GLOBAL sign_mode
 
+; Uninstaller options:
 Var /GLOBAL no_confirm
+Var /GLOBAL no_kill
+
+; For internal use:
 Var /GLOBAL err_flag
 Var /GLOBAL cur_system_folder
 Var /GLOBAL install_ok
@@ -323,7 +328,8 @@ FunctionEnd
 
 Function un.getInstallOptions
 	StrCpy $no_confirm "no"
-	
+	StrCpy $no_kill "no"
+
 	${GetParameters} $cmd_line ; An example: $cmd_line = '/Q'
 
 	${GetOptions} $cmd_line "/Q" $R0
@@ -331,6 +337,12 @@ Function un.getInstallOptions
 		StrCpy $no_confirm "no"
 	${Else}
 		StrCpy $no_confirm "yes"
+	${EndIf}
+
+	${GetOptions} $cmd_line "/no_kill=" $R0
+	${If} $R0 S== "yes"
+	${OrIf} $R0 S== "no"
+		StrCpy $no_kill $R0
 	${EndIf}
 FunctionEnd
 
@@ -1779,8 +1791,12 @@ Section "Uninstall"
 				ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
 				Goto terminate_back_1
 			${Else}
-				ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-				ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+				${If} $no_kill == "no"
+					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+					ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+				${Else}
+					Goto uninstall_fail
+				${EndIf}
 			${EndIf}
 		${EndIf}
 	${EndIf}
@@ -1810,8 +1826,12 @@ Section "Uninstall"
 					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
 					Goto terminate_back_2
 				${Else}
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-					Call un.remove_win7_XXbit_system_dlls
+					${If} $no_kill == "no"
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+						Call un.remove_win7_XXbit_system_dlls
+					${Else}
+						Goto uninstall_fail
+					${EndIf}
 				${EndIf}
 			${EndIf}
 
@@ -1837,8 +1857,12 @@ Section "Uninstall"
 					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
 					Goto terminate_back_3
 				${Else}
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-					Call un.remove_win7_XXbit_system_dlls
+					${If} $no_kill == "no"
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+						Call un.remove_win7_XXbit_system_dlls
+					${Else}
+						Goto uninstall_fail
+					${EndIf}
 				${EndIf}
 			${EndIf}
 
@@ -1863,8 +1887,12 @@ Section "Uninstall"
 					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
 					Goto terminate_back_4
 				${Else}
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-					Call un.remove_win7_XXbit_system_dlls
+					${If} $no_kill == "no"
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+						Call un.remove_win7_XXbit_system_dlls
+					${Else}
+						Goto uninstall_fail
+					${EndIf}
 				${EndIf}
 			${EndIf}
 
