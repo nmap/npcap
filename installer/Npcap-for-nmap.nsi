@@ -1815,9 +1815,6 @@ Section "Uninstall"
 				${EndIf}
 			${EndIf}
 
-			; delete the driver
-			Call un.remove_win7_driver
-
 			; delete the DLLs and EXEs in home folder
 			Call un.remove_win7_XXbit_home_dlls
 		; uninstall_win7_64bit
@@ -1871,9 +1868,6 @@ Section "Uninstall"
 				${EndIf}
 			${EndIf}
 
-			; delete the driver
-			Call un.remove_win7_driver
-
 			; re-enable Wow64FsRedirection
 			System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
 
@@ -1922,7 +1916,12 @@ Section "Uninstall"
 
 	; Remove "Npcap Loopback Adapter" if it exists
 	${If} $ndis6_driver == "yes"
-		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
+		${If} $loopback_support == "yes"
+			ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
+		${EndIf}
+		
+		; delete the driver files in home folder
+		Call un.remove_win7_driver
 	${EndIf}
 
 	; Delete our winpcap-nmap and any WinPcapInst registry keys
