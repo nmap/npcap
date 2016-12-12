@@ -674,17 +674,20 @@ managed
   </para>
 
   <para>
-  The Npcap installer is friendly for redistribution by supporting two installation
+  The Npcap installer and uninstaller are friendly for redistribution by supporting two
   ways: <quote>GUI Mode</quote> (direct run) and <quote>Silent Mode</quote> (run with
-  <option>/s</option> parameter).
+  <option>/S</option> parameter).
   </para>
 
   <sect2 id="npcap-redistribution-options">
-    <title>Installation options</title>
+    <title>Installer options</title>
     <para>
-    The installation options are key-value pairs. The keys can be one of these values:
+    The installer options are used when you install Npcap. They are key-value pairs. The keys can be one of these values:
 	<option>/npf_startup, /loopback_support, /dlt_null, /admin_only, /dot11_support, /vlan_support, /winpcap_mode</option>,
 	representing the options in the GUI. The values can be one of these four values: <option>yes, no, enforced, disabled</option>.
+	There are also some options that does not appear in GUI, which are: <option>/sign_mode</option>, its value can be
+	<option>sha1</option> or <option>sha2</option>. It means the signing method for the Npcap driver. By default, we install
+	SHA1 drivers on Vista, Win7, Win8, and install  SHA2 drivers on Win8, Win10. You can override this behavior by specifying this option.
     </para>
     <itemizedlist>
     <listitem><para><option>yes</option>: select the option</para></listitem>
@@ -694,7 +697,7 @@ managed
     </itemizedlist>
 
     <para>
-    An example of Npcap installation options is (for both <quote>GUI Mode</quote> and <quote>Silent Mode</quote>):
+    An example of Npcap installer options is (for both <quote>GUI Mode</quote> and <quote>Silent Mode</quote>):
     </para>
 
     <para>
@@ -713,7 +716,40 @@ managed
     <listitem><para><option>/dot11_support=yes</option>: Support raw 802.11 traffic (and <quote>Monitor Mode</quote>) for wireless adapters</para></listitem>
     <listitem><para><option>/vlan_support=yes</option>: Support 802.1Q VLAN tag when capturing and sending data</para></listitem>
     <listitem><para><option>/winpcap_mode=yes</option>: Install Npcap in WinPcap API-compatible Mode</para></listitem>
+    <listitem><para><option>/sign_mode=sha1</option>: Install the SHA1-signed Npcap driver</para></listitem>
     </itemizedlist>
+  </sect2>
+
+  <sect2 id="npcap-redistribution-uninstall-options">
+    <title>Uninstaller options</title>
+    <para>
+    The uninstaller options are used when you uninstall Npcap. They are key-value pairs. The keys can be one of these values:
+	<option>/Q /no_kill</option>. These options are not showing in the GUI. So you have to specify them in command-line.
+	<option>/Q</option> means to skip the confirmation page and finish page in the uninstall wizard. So this option is
+	only meaninful for <quote>GUI Mode</quote>. It has no value. <option>/no_kill</option> means whether to kill the
+	processes that are using Npcap. The value of <option>/no_kill</option> can be one of these two values: <option>yes, no</option>.
+	if <option>yes</option> is specified, then Npcap uninstaller will fail if there are still applications using Npcap driver or DLLs.
+	If <option>no</option> is specified, Npcap uninstaller will immediately terminate any command-line processes that are using
+	Npcap (like a Nmap process that is still scanning), and wait for at most 15 seconds to gracefully terminate any GUI processes
+	that are using Npcap (like Wireshark UI that is still capturing). <quote>gracefully</quote> means that if you are
+	still capturing via Wireshark, Wireshark UI will prompt the user about whether to save the current capture to a pcap.
+	So the user have 15 seconds to save his session. Note: although Npcap uninstaller won't terminate Wireshark UI processe
+	immediately, the live capture stops immediately. This is because Wireshark UI uses command-line processes named
+	<varname>dumpcap.exe</varname> to capture. And that command-line process will be terminated immediately. The default
+	value for <option>/no_kill</option> is <option>no</option>.
+    </para>
+    <itemizedlist>
+    <listitem><para><option>yes</option>: select the option</para></listitem>
+    <listitem><para><option>no</option>: unselect the option</para></listitem>
+    </itemizedlist>
+
+    <para>
+    An example of Npcap uninstaller options is:
+    </para>
+
+    <para>
+    <option>/S /Q /no_kill=yes</option>
+    </para>
   </sect2>
 
   <sect2 id="npcap-redistribution-options-disabled">
