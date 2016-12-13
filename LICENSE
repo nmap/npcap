@@ -146,7 +146,8 @@ breach of this Agreement and/or acts or omissions.
 GOVERNING LAW, JURISDICTION AND COSTS
 
 This Agreement is governed by the laws the United States of America
-and Washington State, without regard to Washington's conflict or choice of law provisions.
+and Washington State, without regard to Washington's conflict or
+choice of law provisions.
 
 SEVERABILITY
 
@@ -157,10 +158,16 @@ are not permitted by applicable laws, these express or implied
 restrictions shall remain in force and effect to the maximum extent
 permitted by such applicable laws.
 
-WINPCAP ATTRIBUTION
+WINPCAP & LIBPCAP ATTRIBUTION
 
 Much of the Npcap code is originally from WinPcap software
 (http://www.winpcap.org/). See
 https://github.com/nmap/npcap/blob/master/WinPcap-License-And-Acknowledgements.txt
 for further information and attribution related to that.
+
+Npcap also includes and depends on the Libpcap packet capturing
+library, which is under a 3-clause BSD license allowing free
+redistribution and use in other software. The Libpcap license can be
+found at:
+https://github.com/nmap/npcap/blob/master/Libpcap-License.txt
 
