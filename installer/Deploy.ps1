@@ -314,7 +314,7 @@ function do_deploy($installer_or_symbols = 1)
 		$has_file_updated += $res
 		# echo ($file_name_array[$i] + ", " + $from_path_array[$i] + ", " + $to_path_array[$i])
 	}
-    if ($has_file_update > 0)
+    if ($has_file_updated -gt 0)
     {
         dual_sign_driver_arr([ref]$arr_to_sign)
     }
