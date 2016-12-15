@@ -1,0 +1,33 @@
+;*** Submission.ddf multiple driver example
+;
+.OPTION EXPLICIT     ; Generate errors
+.Set CabinetFileCountThreshold=0
+.Set FolderFileCountThreshold=0
+.Set FolderSizeThreshold=0
+.Set MaxCabinetSize=0
+.Set MaxDiskFileCount=0
+.Set MaxDiskSize=0
+.Set CompressionType=MSZIP
+.Set Cabinet=on
+.Set Compress=on
+;Specify file name for new cab file
+.Set CabinetNameTemplate=Npcap.cab
+;Specify files to be included in cab file
+; First Driver
+.Set DestinationDir=npcap-x64
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below\x64\npcap.sys
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below\x64\npcap.inf
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below\x64\npcap.cat
+; Second driver
+.Set DestinationDir=npcap-x86
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below\x86\npcap.sys
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below\x86\npcap.inf
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below\x86\npcap.cat
+.Set DestinationDir=npcap-winpcap-x86
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below_winpcap\x86\npf.sys
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below_winpcap\x86\npf.inf
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below_winpcap\x86\npf.cat
+.Set DestinationDir=npcap-winpcap-x64
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below_winpcap\x64\npf.sys
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below_winpcap\x64\npf.inf
+C:\Users\nmap\Source\Repos\npcap\installer\win8_below_winpcap\x64\npf.cat

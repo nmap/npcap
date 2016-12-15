@@ -58,11 +58,10 @@ Var /GLOBAL INSTDIR_DEFAULT
 Var /GLOBAL is_64bit
 Var /GLOBAL os_ver
 Var /GLOBAL ndis6_driver
-Var /GLOBAL sha2_signed
+Var /GLOBAL attestation_signed
 Var /GLOBAL cmd_line
 Var /GLOBAL service_name
 
-; Installer options:
 Var /GLOBAL npf_startup
 Var /GLOBAL loopback_support
 Var /GLOBAL dlt_null
@@ -72,14 +71,9 @@ Var /GLOBAL vlan_support
 Var /GLOBAL winpcap_mode
 Var /GLOBAL sign_mode
 
-; Uninstaller options:
 Var /GLOBAL no_confirm
-Var /GLOBAL no_kill
-
-; For internal use:
 Var /GLOBAL err_flag
 Var /GLOBAL cur_system_folder
-Var /GLOBAL install_ok
 
 Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
@@ -328,8 +322,7 @@ FunctionEnd
 
 Function un.getInstallOptions
 	StrCpy $no_confirm "no"
-	StrCpy $no_kill "no"
-
+	
 	${GetParameters} $cmd_line ; An example: $cmd_line = '/Q'
 
 	${GetOptions} $cmd_line "/Q" $R0
@@ -337,12 +330,6 @@ Function un.getInstallOptions
 		StrCpy $no_confirm "no"
 	${Else}
 		StrCpy $no_confirm "yes"
-	${EndIf}
-
-	${GetOptions} $cmd_line "/no_kill=" $R0
-	${If} $R0 S== "yes"
-	${OrIf} $R0 S== "no"
-		StrCpy $no_kill $R0
 	${EndIf}
 FunctionEnd
 
@@ -386,6 +373,13 @@ Function .onInit
 
 	; write the installation log to $INSTDIR\install.log
 	LogSet on
+
+    Call checkWindowsVersion
+	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
+    ${If} $ndis6_driver == "no"
+        MessageBox MB_OK|MB_ICONEXCLAMATION "NDIS6 is not supported in Windows XP and earlier. Npcap cannot be installed." /SD IDOK
+        quit
+    ${EndIf}
 
 	StrCpy $has_wlan_card "0"
 	; SetOutPath $PLUGINSDIR
@@ -749,42 +743,6 @@ Function doFinal
  ; don't need to do anything
 FunctionEnd
 
-Function registerServiceAPI_xp
-	; delete the npf service to avoid an error message later if it already exists
-	System::Call 'advapi32::OpenSCManagerA(,,i ${SC_MANAGER_ALL_ACCESS})i.r0'
-	System::Call 'advapi32::OpenServiceA(i r0,t "npf", i ${SERVICE_ALL_ACCESS}) i.r1'
-	System::Call 'advapi32::DeleteService(i r1) i.r6'
-	System::Call 'advapi32::CloseServiceHandle(i r1) n'
-	System::Call 'advapi32::CloseServiceHandle(i r0) n'
-	; create the new npf service
-	System::Call 'advapi32::OpenSCManagerA(,,i ${SC_MANAGER_ALL_ACCESS})i.R0'
-	System::Call 'advapi32::CreateServiceA(i R0,t "npf",t "NetGroup Packet Filter Driver",i ${SERVICE_ALL_ACCESS},i ${SERVICE_KERNEL_DRIVER}, i ${SERVICE_DEMAND_START},i ${SERVICE_ERROR_NORMAL}, t "system32\drivers\npf.sys",,,,,) i.r1'
-
-	${If} $1 == "0"
-		DetailPrint "Failed to create the npf service for XP"
-		${IfNot} ${Silent}
-			MessageBox MB_OK "Failed to create the npf service for XP. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
-		${EndIf}
-	${Else}
-		DetailPrint "The npf service for XP was successfully created"
-	${EndIf}
-	System::Call 'advapi32::CloseServiceHandle(i R0) n'
-FunctionEnd
-
-Function un.registerServiceAPI_xp
-	System::Call 'advapi32::OpenSCManagerA(,,i ${SC_MANAGER_ALL_ACCESS})i.r0'
-	System::Call 'advapi32::OpenServiceA(i r0,t "npf", i ${SERVICE_ALL_ACCESS}) i.r1'
-	System::Call 'advapi32::DeleteService(i r1) i.r6'
-
-	${If} $6 == "0"
-		DetailPrint "Failed to delete the npf service for XP"
-	${Else}
-		DetailPrint "The npf service for XP was successfully deleted"
-	${EndIf}
-	System::Call 'advapi32::CloseServiceHandle(i r1) n'
-	System::Call 'advapi32::CloseServiceHandle(i r0) n'
-FunctionEnd
-
 Function registerServiceAPI_win7
 	; install the driver
 	Call install_win7_XXbit_driver
@@ -831,54 +789,36 @@ Function ${un}checkWindowsVersion
 		${If} $R0 == "6.0"
 			StrCpy $os_ver "Vista"
 			StrCpy $ndis6_driver "yes"
-			StrCpy $sha2_signed "no"
 		${ElseIf} $R0 == "6.1"
 			StrCpy $os_ver "Win7"
 			StrCpy $ndis6_driver "yes"
-			StrCpy $sha2_signed "no"
 		${ElseIf} $R0 == "6.2"
 			StrCpy $os_ver "Win8"
 			StrCpy $ndis6_driver "yes"
-			StrCpy $sha2_signed "no"
 		${ElseIf} $R0 == "6.3"
 			ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentMajorVersionNumber
 			${If} $R1 == ""
 				StrCpy $os_ver "Win8.1"
 				StrCpy $ndis6_driver "yes"
-				StrCpy $sha2_signed "yes"
 			${Else}
 				StrCpy $R0 "10.0"
 				StrCpy $os_ver "Win10"
 				StrCpy $ndis6_driver "yes"
-				StrCpy $sha2_signed "yes"
+				StrCpy $attestation_signed "yes"
 			${EndIf}
 		${Else}
 			StrCpy $os_ver 'Unknown OS'
 			StrCpy $ndis6_driver "yes"
-			StrCpy $sha2_signed "yes"
 		${EndIf}
 	${Else} ; XP and eariler
 		StrCpy $os_ver 'XP'
 		StrCpy $ndis6_driver "no"
 	${EndIf}
 
-	${If} $sign_mode == "sha1"
-		DetailPrint "Enforcing to install SHA1-signed drivers"
-		StrCpy $sha2_signed "no"
-	${ElseIf} $sign_mode == "sha2"
-		DetailPrint "Enforcing to install SHA2-signed drivers"
-		StrCpy $sha2_signed "yes"
-	${EndIf}
 FunctionEnd
 !macroend
 !insertmacro MACRO_checkWindowsVersion ""
 !insertmacro MACRO_checkWindowsVersion "un."
-
-Function copy_xp_XXbit_home_dlls
-	SetOutPath $INSTDIR
-	File ..\LICENSE
-	File xp\x86\rpcapd.exe
-FunctionEnd
 
 Function copy_win7_32bit_home_dlls
 	SetOutPath $INSTDIR
@@ -887,16 +827,16 @@ Function copy_win7_32bit_home_dlls
 	File DiagReport.ps1
 
 	${If} $winpcap_mode == "yes"
-		File /oname=NPFInstall2.exe win8_above\x86\NPFInstall.exe
-		File win8_above_winpcap\x86\NPFInstall.exe
+		File /oname=NPFInstall2.exe win8_below\x86\NPFInstall.exe
+		File win8_below_winpcap\x86\NPFInstall.exe
 	${EndIf}
 
 	${If} $winpcap_mode == "yes2"
-		File win8_above_winpcap\x86\NPFInstall.exe
+		File win8_below_winpcap\x86\NPFInstall.exe
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
-		File win8_above\x86\NPFInstall.exe
+		File win8_below\x86\NPFInstall.exe
 	${EndIf}
 FunctionEnd
 
@@ -907,57 +847,36 @@ Function copy_win7_64bit_home_dlls
 	File DiagReport.ps1
 
 	${If} $winpcap_mode == "yes"
-		File /oname=NPFInstall2.exe win8_above\x64\NPFInstall.exe
-		File win8_above_winpcap\x64\NPFInstall.exe
+		File /oname=NPFInstall2.exe win8_below\x64\NPFInstall.exe
+		File win8_below_winpcap\x64\NPFInstall.exe
 	${EndIf}
 
 	${If} $winpcap_mode == "yes2"
-		File win8_above_winpcap\x64\NPFInstall.exe
+		File win8_below_winpcap\x64\NPFInstall.exe
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
-		File win8_above\x64\NPFInstall.exe
+		File win8_below\x64\NPFInstall.exe
 	${EndIf}
-FunctionEnd
-
-Function copy_xp_32bit_system_dlls
-	${If} $winpcap_mode == "yes"
-		SetOutPath $SYSDIR
-	${Else}
-		SetOutPath $SYSDIR\Npcap
-	${EndIf}
-	File xp\x86\wpcap.dll
-	File xp\x86\Packet.dll
-	File xp\x86\pthreadVC.dll
-FunctionEnd
-
-Function copy_xp_64bit_system_dlls
-	${If} $winpcap_mode == "yes"
-		SetOutPath $SYSDIR
-	${Else}
-		SetOutPath $SYSDIR\Npcap
-	${EndIf}
-	File xp\x64\wpcap.dll
-	File xp\x64\Packet.dll
 FunctionEnd
 
 Function copy_win7_32bit_system_dlls
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR
-		File win8_above_winpcap\x86\wpcap.dll
-		File win8_above_winpcap\x86\Packet.dll
-		File win8_above_winpcap\x86\NpcapHelper.exe
-		File win8_above_winpcap\x86\WlanHelper.exe
+		File win8_below_winpcap\x86\wpcap.dll
+		File win8_below_winpcap\x86\Packet.dll
+		File win8_below_winpcap\x86\NpcapHelper.exe
+		File win8_below_winpcap\x86\WlanHelper.exe
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR\Npcap
-		File win8_above\x86\wpcap.dll
-		File win8_above\x86\Packet.dll
-		File win8_above\x86\NpcapHelper.exe
-		File win8_above\x86\WlanHelper.exe
+		File win8_below\x86\wpcap.dll
+		File win8_below\x86\Packet.dll
+		File win8_below\x86\NpcapHelper.exe
+		File win8_below\x86\WlanHelper.exe
 	${EndIf}
 FunctionEnd
 
@@ -965,19 +884,19 @@ Function copy_win7_64bit_system_dlls
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR
-		File win8_above_winpcap\x64\wpcap.dll
-		File win8_above_winpcap\x64\Packet.dll
-		File win8_above_winpcap\x64\NpcapHelper.exe
-		File win8_above_winpcap\x64\WlanHelper.exe
+		File win8_below_winpcap\x64\wpcap.dll
+		File win8_below_winpcap\x64\Packet.dll
+		File win8_below_winpcap\x64\NpcapHelper.exe
+		File win8_below_winpcap\x64\WlanHelper.exe
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
 		SetOutPath $SYSDIR\Npcap
-		File win8_above\x64\wpcap.dll
-		File win8_above\x64\Packet.dll
-		File win8_above\x64\NpcapHelper.exe
-		File win8_above\x64\WlanHelper.exe
+		File win8_below\x64\wpcap.dll
+		File win8_below\x64\Packet.dll
+		File win8_below\x64\NpcapHelper.exe
+		File win8_below\x64\WlanHelper.exe
 	${EndIf}
 FunctionEnd
 
@@ -985,31 +904,31 @@ Function copy_win7_32bit_driver
 	SetOutPath $INSTDIR
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $sha2_signed == "no"
-			File win7_winpcap\x86\npf.sys
-			File win7_winpcap\x86\npf.cat
-			File win7_winpcap\x86\npf.inf
-			File win7_winpcap\x86\npf_wfp.inf
-		${Else} ; "win8_above"
-			File win8_above_winpcap\x86\npf.sys
-			File win8_above_winpcap\x86\npf.cat
-			File win8_above_winpcap\x86\npf.inf
-			File win8_above_winpcap\x86\npf_wfp.inf
+		${If} $attestation_signed == "yes"
+			File win10_winpcap\x86\npf.sys
+			File win10_winpcap\x86\npf.cat
+			File win10_winpcap\x86\npf.inf
+			File win10_winpcap\x86\npf_wfp.inf
+		${Else}
+			File win8_below_winpcap\x86\npf.sys
+			File win8_below_winpcap\x86\npf.cat
+			File win8_below_winpcap\x86\npf.inf
+			File win8_below_winpcap\x86\npf_wfp.inf
 		${EndIf}
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $sha2_signed == "no"
-			File win7\x86\npcap.sys
-			File win7\x86\npcap.cat
-			File win7\x86\npcap.inf
-			File win7\x86\npcap_wfp.inf
-		${Else} ; "win8_above"
-			File win8_above\x86\npcap.sys
-			File win8_above\x86\npcap.cat
-			File win8_above\x86\npcap.inf
-			File win8_above\x86\npcap_wfp.inf
+		${If} $attestation_signed == "yes"
+			File win10\x86\npcap.sys
+			File win10\x86\npcap.cat
+			File win10\x86\npcap.inf
+			File win10\x86\npcap_wfp.inf
+		${Else}
+			File win8_below\x86\npcap.sys
+			File win8_below\x86\npcap.cat
+			File win8_below\x86\npcap.inf
+			File win8_below\x86\npcap_wfp.inf
 		${EndIf}
 	${EndIf}
 FunctionEnd
@@ -1018,31 +937,31 @@ Function copy_win7_64bit_driver
 	SetOutPath $INSTDIR
 	${If} $winpcap_mode == "yes2"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $sha2_signed == "no"
-			File win7_winpcap\x64\npf.sys
-			File win7_winpcap\x64\npf.cat
-			File win7_winpcap\x64\npf.inf
-			File win7_winpcap\x64\npf_wfp.inf
-		${Else} ; "win8_above"
-			File win8_above_winpcap\x64\npf.sys
-			File win8_above_winpcap\x64\npf.cat
-			File win8_above_winpcap\x64\npf.inf
-			File win8_above_winpcap\x64\npf_wfp.inf
+		${If} $attestation_signed == "yes"
+			File win10_winpcap\x64\npf.sys
+			File win10_winpcap\x64\npf.cat
+			File win10_winpcap\x64\npf.inf
+			File win10_winpcap\x64\npf_wfp.inf
+		${Else}
+			File win8_below_winpcap\x64\npf.sys
+			File win8_below_winpcap\x64\npf.cat
+			File win8_below_winpcap\x64\npf.inf
+			File win8_below_winpcap\x64\npf_wfp.inf
 		${EndIf}
 	${EndIf}
 
 	${If} $winpcap_mode == "no"
 	${OrIf} $winpcap_mode == "yes"
-		${If} $sha2_signed == "no"
-			File win7\x64\npcap.sys
-			File win7\x64\npcap.cat
-			File win7\x64\npcap.inf
-			File win7\x64\npcap_wfp.inf
-		${Else} ; "win8_above"
-			File win8_above\x64\npcap.sys
-			File win8_above\x64\npcap.cat
-			File win8_above\x64\npcap.inf
-			File win8_above\x64\npcap_wfp.inf
+		${If} $attestation_signed == "yes"
+			File win10\x64\npcap.sys
+			File win10\x64\npcap.cat
+			File win10\x64\npcap.inf
+			File win10\x64\npcap_wfp.inf
+		${Else}
+			File win8_below\x64\npcap.sys
+			File win8_below\x64\npcap.cat
+			File win8_below\x64\npcap.inf
+			File win8_below\x64\npcap_wfp.inf
 		${EndIf}
 	${EndIf}
 FunctionEnd
@@ -1066,7 +985,6 @@ Function install_win7_XXbit_driver
 
 ${!defineifexist} SHA1_CERT_EXISTS "C:\Insecure-SHA1.cer"
 !ifdef SHA1_CERT_EXISTS
-	${If} $sha2_signed == "no"
 		SetOutPath $TEMP
 		File "C:\Insecure-SHA1.cer"
 		; add Npcap's SHA1 cert into the certificate manager, it's used to
@@ -1074,20 +992,17 @@ ${!defineifexist} SHA1_CERT_EXISTS "C:\Insecure-SHA1.cer"
 		; this file can be generated based on this link:
 		; http://www.migee.com/2010/09/24/solution-for-unattendedsilent-installs-and-would-you-like-to-install-this-device-software/
 		ExecWait 'certutil -addstore "TrustedPublisher" "$TEMP\Insecure-SHA1.cer"' $0
-	${EndIf}
 !endif
 
-${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
-!ifdef SHA2_CERT_EXISTS
-	${If} $sha2_signed == "yes"
+${!defineifexist} EV_CERT_EXISTS "C:\Insecure-EV.cer"
+!ifdef EV_CERT_EXISTS
 		SetOutPath $TEMP
-		File "C:\Insecure-SHA2.cer"
-		; add Npcap's SHA2 cert into the certificate manager, it's used to
+		File "C:\Insecure-EV.cer"
+		; add Npcap's EV cert into the certificate manager, it's used to
 		; remove the “Would you like to install this device software?” prompt
 		; this file can be generated based on this link:
 		; http://www.migee.com/2010/09/24/solution-for-unattendedsilent-installs-and-would-you-like-to-install-this-device-software/
-		ExecWait 'certutil -addstore "TrustedPublisher" "$TEMP\Insecure-SHA2.cer"' $0
-	${EndIf}
+		ExecWait 'certutil -addstore "TrustedPublisher" "$TEMP\Insecure-EV.cer"' $0
 !endif
 
 	; clear the driver cache in Driver Store
@@ -1111,7 +1026,6 @@ ${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
 		DetailPrint "Failed to create the npcap service for Win7, Win8 and Win10"
 		${IfNot} ${Silent}
 			MessageBox MB_OK "Failed to create the npcap service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
-			StrCpy $install_ok "no"
 		${EndIf}
 	${EndIf}
 
@@ -1128,14 +1042,13 @@ ${!defineifexist} SHA2_CERT_EXISTS "C:\Insecure-SHA2.cer"
 
 		; check the driver install result
 		${If} $0 == "0"
-			DetailPrint "The npf service for Win7, Win8 and Win10 was successfully created"
+			DetailPrint "The npcap2 service for Win7, Win8 and Win10 was successfully created"
 		${Else}
-			DetailPrint "Failed to create the npf service for Win7, Win8 and Win10"
+			DetailPrint "Failed to create the npcap2 service for Win7, Win8 and Win10"
 			${IfNot} ${Silent}
-				MessageBox MB_OK "Failed to create the npf service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
-				StrCpy $install_ok "no"
-			${EndIf}
+				MessageBox MB_OK "Failed to create the npcap2 service for Win7, Win8 and Win10. Please try installing Npcap again, or use the official Npcap installer from https://github.com/nmap/npcap/releases"
 		${EndIf}
+	${EndIf}
 	${EndIf}
 FunctionEnd
 
@@ -1151,7 +1064,6 @@ Function un.uninstall_win7_XXbit_driver
 		DetailPrint "The npcap service for Win7, Win8 and Win10 was successfully deleted"
 	${Else}
 		DetailPrint "Failed to delete the npcap service for Win7, Win8 and Win10"
-		StrCpy $install_ok "no"
 	${EndIf}
 
 	${If} $winpcap_mode == "yes"
@@ -1163,36 +1075,18 @@ Function un.uninstall_win7_XXbit_driver
 
 		; check the driver uninstall result
 		${If} $0 == "0"
-			DetailPrint "The npf service for Win7, Win8 and Win10 was successfully deleted"
+			DetailPrint "The npcap2 service for Win7, Win8 and Win10 was successfully deleted"
 		${Else}
-			DetailPrint "Failed to delete the npf service for Win7, Win8 and Win10"
-			StrCpy $install_ok "no"
+			DetailPrint "Failed to delete the npcap2 service for Win7, Win8 and Win10"
 		${EndIf}
 	${EndIf}
-FunctionEnd
-
-Function un.remove_xp_XXbit_home_dlls
-	Delete $INSTDIR\LICENSE
-	Delete $INSTDIR\rpcapd.exe
 FunctionEnd
 
 Function un.remove_win7_XXbit_home_dlls
 	Delete $INSTDIR\LICENSE
 	Delete $INSTDIR\DiagReport.bat
 	Delete $INSTDIR\DiagReport.ps1
-FunctionEnd
-
-Function un.remove_xp_XXbit_system_dlls
-	${If} $winpcap_mode == "yes"
-		Delete $SYSDIR\wpcap.dll
-		Delete $SYSDIR\Packet.dll
-		Delete $SYSDIR\pthreadVC.dll
-	${Else}
-		Delete $SYSDIR\Npcap\wpcap.dll
-		Delete $SYSDIR\Npcap\Packet.dll
-		Delete $SYSDIR\Npcap\pthreadVC.dll
-		RMDir "$SYSDIR\Npcap"
-	${EndIf}
+	Delete $INSTDIR\loopback.ini
 FunctionEnd
 
 Function un.remove_win7_XXbit_system_dlls
@@ -1228,10 +1122,6 @@ Function un.remove_win7_XXbit_system_dlls
 		Delete $SYSDIR\Npcap\WlanHelper.exe
 		RMDir "$SYSDIR\Npcap"
 	${EndIf}
-FunctionEnd
-
-Function un.remove_xp_driver
-	Delete $SYSDIR\drivers\npf.sys
 FunctionEnd
 
 Function un.remove_win7_driver
@@ -1343,108 +1233,37 @@ Function write_registry_service_options
 	${EndIf}
 FunctionEnd
 
-Function un.read_single_registry_service_options
-	; Create the default NPF startup setting of 1 (SERVICE_SYSTEM_START)
-	WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Start" 1
-
-	; Copy the "Loopback" option from software key to services key
-	; Npcap driver will read this option
-	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "LoopbackAdapter"
-	${If} $0 == "1"
-		StrCpy $loopback_support "yes"
-	${Else}
-		StrCpy $loopback_support "no"
-	${EndIf}
-
-	; Npcap driver will read this option
-	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "DltNull"
-	${If} $0 == "1"
-		StrCpy $dlt_null "yes"
-	${Else}
-		StrCpy $dlt_null "no"
-	${EndIf}
-
-	; Npcap driver will read this option
-	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "AdminOnly"
-	${If} $0 == "1"
-		StrCpy $admin_only "yes"
-	${Else}
-		StrCpy $admin_only "no"
-	${EndIf}
-
-	; Npcap driver will read this option
-	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "Dot11Support"
-	${If} $0 == "1"
-		StrCpy $dot11_support "yes"
-	${Else}
-		StrCpy $dot11_support "no"
-	${EndIf}
-
-	; Npcap driver will read this option
-	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "VlanSupport"
-	${If} $0 == "1"
-		StrCpy $vlan_support "yes"
-	${Else}
-		StrCpy $vlan_support "no"
-	${EndIf}
-
-	; Wireshark will read this option
-	ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Services\$service_name" "WinPcapCompatible"
-	${If} $0 == "1"
-		StrCpy $winpcap_mode "yes"
-	${Else}
-		StrCpy $winpcap_mode "no"
-	${EndIf}
-FunctionEnd
-
-Function un.read_registry_service_options
-	StrCpy $service_name "npcap"
-	Call un.read_single_registry_service_options
-FunctionEnd
-
 Function start_driver_service
-	${If} $ndis6_driver == "yes"
-		${If} $winpcap_mode == "yes2"
-		${OrIf} $winpcap_mode == "yes"
-			DetailPrint "Starting the npf driver"
-			nsExec::Exec "net start npf"
-			nsExec::Exec "net stop npf"
-			nsExec::Exec "net start npf"
-		${EndIf}
+    ${If} $winpcap_mode == "yes2"
+    ${OrIf} $winpcap_mode == "yes"
+        DetailPrint "Starting the npf driver"
+        nsExec::Exec "net start npf"
+        nsExec::Exec "net stop npf"
+        nsExec::Exec "net start npf"
+    ${EndIf}
 
-		${If} $winpcap_mode == "no"
-		${OrIf} $winpcap_mode == "yes"
-			DetailPrint "Starting the npcap driver"
-			nsExec::Exec "net start npcap"
-			nsExec::Exec "net stop npcap"
-			nsExec::Exec "net start npcap"
-		${EndIf}
-	${Else}
-		DetailPrint "Starting the npf driver"
-		nsExec::Exec "net start npf"
-		nsExec::Exec "net stop npf"
-		nsExec::Exec "net start npf"
-	${EndIf}
+    ${If} $winpcap_mode == "no"
+    ${OrIf} $winpcap_mode == "yes"
+        DetailPrint "Starting the npcap driver"
+        nsExec::Exec "net start npcap"
+        nsExec::Exec "net stop npcap"
+        nsExec::Exec "net start npcap"
+    ${EndIf}
 FunctionEnd
 
 !macro MACRO_stop_driver_service un
 Function ${un}stop_driver_service
-	${If} $ndis6_driver == "yes"
-		${If} $winpcap_mode == "yes2"
-		${OrIf} $winpcap_mode == "yes"
-			DetailPrint "Stopping the npf driver"
-			nsExec::Exec "net stop npf"
-		${EndIf}
+    ${If} $winpcap_mode == "yes2"
+    ${OrIf} $winpcap_mode == "yes"
+        DetailPrint "Stopping the npf driver"
+        nsExec::Exec "net stop npf"
+    ${EndIf}
 
-		${If} $winpcap_mode == "no"
-		${OrIf} $winpcap_mode == "yes"
-			DetailPrint "Stopping the npcap driver"
-			nsExec::Exec "net stop npcap"
-		${EndIf}
-	${Else}
-		DetailPrint "Stopping the npf driver"
-		nsExec::Exec "net stop npf"
-	${EndIf}
+    ${If} $winpcap_mode == "no"
+    ${OrIf} $winpcap_mode == "yes"
+        DetailPrint "Stopping the npcap driver"
+        nsExec::Exec "net stop npcap"
+    ${EndIf}
 FunctionEnd
 !macroend
 !insertmacro MACRO_stop_driver_service ""
@@ -1512,8 +1331,7 @@ FunctionEnd */
 
 ;--------------------------------
 ; The stuff to install
-Section "WinPcap" SecWinPcap
-	StrCpy $install_ok "yes"
+Section "WinPcap" SecWinPcap	
 	; stop the service, in case it's still registered, so files can be
 	; safely overwritten and the service can be deleted.
 	Call stop_driver_service
@@ -1542,28 +1360,15 @@ Section "WinPcap" SecWinPcap
 		Call uninstallWinPcap
 		${If} $R0 == "false"
 			DetailPrint "Error occured when uninstalling WinPcap, Npcap installation quits"
-			StrCpy $install_ok "no"
 			Goto install_fail
 		${EndIf}
 	${EndIf}
 
-	; Check windows version
-	Call checkWindowsVersion
-	DetailPrint "Windows CurrentVersion: $R0 ($os_ver)"
-
-	${If} $ndis6_driver == "yes"
-		${If} $is_64bit == "no"
-			Goto install_win7_32bit
-		${Else}
-			Goto install_win7_64bit
-		${EndIf}
-	${Else}
-		${If} $is_64bit == "no"
-			Goto install_xp_32bit
-		${Else}
-			Goto install_xp_64bit
-		${EndIf}
-	${EndIf}
+    ${If} $is_64bit == "no"
+        Goto install_win7_32bit
+    ${Else}
+        Goto install_win7_64bit
+    ${EndIf}
 
 	; Note, NSIS states: "You should always quote the path to make sure spaces
 	; in the path will not disrupt Windows to find the uninstaller."
@@ -1571,47 +1376,6 @@ Section "WinPcap" SecWinPcap
 	; This matches (most) Windows installations. Rather inconsistently,
 	; DisplayIcon doesn't usually have quotes (even on Microsoft installations) and
 	; HKLM Software\PackageName doesn't usually have quotes either.
-
-install_xp_32bit:
-	; copy the 32-bit DLLs into home folder
-	Call copy_xp_XXbit_home_dlls
-
-	WriteUninstaller "$INSTDIR\uninstall.exe"
-	DetailPrint "Installing NDIS5.x x86 driver for XP"
-
-	; copy the 32-bit driver
-	SetOutPath $SYSDIR\drivers
-	File xp\x86\npf.sys
-
-	; copy the 32-bit DLLs into System folder
-	Call copy_xp_32bit_system_dlls
-
-	WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
-	Goto npfdone
-
-install_xp_64bit:
-	; copy the 32-bit DLLs into home folder
-	Call copy_xp_XXbit_home_dlls
-
-	WriteUninstaller "$INSTDIR\uninstall.exe"
-	DetailPrint "Installing NDIS5.x x64 driver for XP"
-
-	; copy the 32-bit DLLs into System folder
-	Call copy_xp_32bit_system_dlls
-
-	; copy the 64-bit driver
-	SetOutPath $SYSDIR\drivers
-	; disable Wow64FsRedirection
-	System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
-	File xp\x64\npf.sys
-
-	; copy the 64-bit DLLs into System folder
-	Call copy_xp_64bit_system_dlls
-
-	WriteRegStr HKLM "Software\Npcap" "" "$INSTDIR"
-	; re-enable Wow64FsRedirection
-	System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-	Goto npfdone
 
 install_win7_32bit:
 	; copy the 32-bit DLLs and EXEs into home folder
@@ -1665,12 +1429,10 @@ npfdone:
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "DisplayIcon" "$INSTDIR\uninstall.exe"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NpcapInst" "UninstallPath" $INSTDIR
 
-	${If} $ndis6_driver == "yes"
-		${If} $loopback_support == "yes"
-			; create "Npcap Loopback Adapter", used for capturing loopback packets
-			ExecWait '"$INSTDIR\NPFInstall.exe" -n -il'
-		${Endif}
-	${Endif}
+    ${If} $loopback_support == "yes"
+        ; create "Npcap Loopback Adapter", used for capturing loopback packets
+        ExecWait '"$INSTDIR\NPFInstall.exe" -n -il'
+    ${Endif}
 
 	; write options to registry "service" key
 	DetailPrint "Writting service options to registry"
@@ -1678,11 +1440,7 @@ npfdone:
 
 	; register the driver as a system service using Windows API calls
 	; this will work on Windows 2000 (that lacks sc.exe) and higher
-	${If} $ndis6_driver == "yes"
-		Call registerServiceAPI_win7
-	${Else}
-		Call registerServiceAPI_xp
-	${EndIf}
+    Call registerServiceAPI_win7
 
 	; add "C:\Windows\System32\Npcap" directory to PATH
 	; Call write_env_var
@@ -1720,10 +1478,6 @@ install_fail:
 			DetailPrint "Error occured when finishing setting system restore point, return value=|$0|"
 		${EndIf}
 	${EndIf}
-	
-	${If} $install_ok == "no"
-		Abort
-	${EndIf}
 SectionEnd ; end the section
 
 
@@ -1731,11 +1485,6 @@ SectionEnd ; end the section
 ;Uninstaller Section
 
 Section "Uninstall"
-	; read options from registry "service" key
-	DetailPrint "Reading service options from registry"
-	Call un.read_registry_service_options
-
-	StrCpy $install_ok "yes"
 	; Delete the system restore point, disabled for now.
 	; This is because not many softwares delete restore points, this job should be done by users themselves.
 	; DetailPrint "Delete system restore point: ${RESTORE_POINT_NAME_INSTALL}"
@@ -1756,8 +1505,7 @@ Section "Uninstall"
 	; StrCpy $restore_point_success "yes"
 	; ${Endif}
 
-	; we do not use this code any more after we call un.read_registry_service_options
-/* 	${If} ${FileExists} "$INSTDIR\npf.sys"
+	${If} ${FileExists} "$INSTDIR\npf.sys"
 		${If} ${FileExists} "$INSTDIR\npcap.sys"
 			StrCpy $winpcap_mode "yes"
 		${Else}
@@ -1765,7 +1513,7 @@ Section "Uninstall"
 		${EndIf}
 	${Else}
 		StrCpy $winpcap_mode "no"
-	${EndIf} */
+	${EndIf}
 
 	; Check windows version
 	Call un.checkWindowsVersion
@@ -1774,188 +1522,91 @@ Section "Uninstall"
 	; Stop the driver service before we uninstall it
 	DetailPrint "Trying to stop the driver.."
 	Call un.stop_driver_service
-	${If} $ndis6_driver == "yes"
-		terminate_back_1:
-		ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
-		${If} $0 == "0"
-			; get the processes that are using Npcap
-			nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
-			Pop $0
-			Pop $1
-			StrCpy $1 $1 -2
-			${If} $1 != "<NULL>"
-				DetailPrint "Failed to stop the driver. Please close programs: $1 which may be using Npcap and try again."
-				${IfNot} ${Silent}
-					MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_1 IDNO uninstall_fail
-					terminate_retry_1:
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-					Goto terminate_back_1
-				${Else}
-					${If} $no_kill == "no"
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
-					${Else}
-						Goto uninstall_fail
-					${EndIf}
-				${EndIf}
-			${EndIf}
-		${EndIf}
-	${EndIf}
+    ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+    ${If} $0 == "0"
+        ; get the processes that are using Npcap
+        nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+        Pop $0
+        Pop $1
+        StrCpy $1 $1 -2
+        MessageBox MB_OK "Failed to stop the driver. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+        DetailPrint "Failed to stop the driver. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+        Goto uninstall_fail
+    ${EndIf}
 
 	; Remove "C:\Windows\System32\Npcap" from PATH
 	; Call un.clear_env_var
 
 	; Remove the files
-	${If} $ndis6_driver == "yes"
-		; uninstall_win7_32bit
-		${If} $is_64bit == "no"
-			; delete the 32-bit DLLs and EXEs in System folder
-			StrCpy $cur_system_folder "System32"
-			terminate_back_2:
-			Call un.remove_win7_XXbit_system_dlls
-			${If} $err_flag != ""
-				; get the processes that are using Npcap
-				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
-				Pop $0
-				Pop $1
-				StrCpy $1 $1 -2
-				${If} $1 != "<NULL>"
-					DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
-					StrCpy $err_flag ""
-					${IfNot} ${Silent}
-						MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_2 IDNO uninstall_fail
-						terminate_retry_2:
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-						Goto terminate_back_2
-					${Else}
-						${If} $no_kill == "no"
-							ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-							Call un.remove_win7_XXbit_system_dlls
-						${Else}
-							Goto uninstall_fail
-						${EndIf}
-					${EndIf}
-				${EndIf}
-			${EndIf}
+    ; uninstall_win7_32bit
+    ${If} $is_64bit == "no"
+        ; delete the 32-bit DLLs and EXEs in System folder
+        StrCpy $cur_system_folder "System32"
+        Call un.remove_win7_XXbit_system_dlls
+        ${If} $err_flag != ""
+            ; get the processes that are using Npcap
+            nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+            Pop $0
+            Pop $1
+            StrCpy $1 $1 -2
+            MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+            DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+            Goto uninstall_fail
+        ${EndIf}
 
-			; delete the DLLs and EXEs in home folder
-			Call un.remove_win7_XXbit_home_dlls
-		; uninstall_win7_64bit
-		${Else}
-			; delete the 32-bit DLLs and EXEs in System folder
-			StrCpy $cur_system_folder "SysWOW64"
-			terminate_back_3:
-			Call un.remove_win7_XXbit_system_dlls
-			${If} $err_flag != ""
-				; get the processes that are using Npcap
-				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
-				Pop $0
-				Pop $1
-				StrCpy $1 $1 -2
-				${If} $1 != "<NULL>"
-					DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
-					StrCpy $err_flag ""
-					${IfNot} ${Silent}
-						MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_3 IDNO uninstall_fail
-						terminate_retry_3:
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-						Goto terminate_back_3
-					${Else}
-						${If} $no_kill == "no"
-							ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-							Call un.remove_win7_XXbit_system_dlls
-						${Else}
-							Goto uninstall_fail
-						${EndIf}
-					${EndIf}
-				${EndIf}
-			${EndIf}
+        ; delete the driver
+        Call un.remove_win7_driver
 
-			; disable Wow64FsRedirection
-			System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
+        ; delete the DLLs and EXEs in home folder
+        Call un.remove_win7_XXbit_home_dlls
+    ; uninstall_win7_64bit
+    ${Else}
+        ; delete the 32-bit DLLs and EXEs in System folder
+        StrCpy $cur_system_folder "SysWOW64"
+        Call un.remove_win7_XXbit_system_dlls
+        ${If} $err_flag != ""
+            ; get the processes that are using Npcap
+            nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+            Pop $0
+            Pop $1
+            StrCpy $1 $1 -2
+            MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+            DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+            Goto uninstall_fail
+        ${EndIf}
 
-			; delete the 64-bit DLLs and EXEs in System folder
-			StrCpy $cur_system_folder "System32"
-			terminate_back_4:
-			Call un.remove_win7_XXbit_system_dlls
-			${If} $err_flag != ""
-				; get the processes that are using Npcap
-				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
-				Pop $0
-				Pop $1
-				StrCpy $1 $1 -2
-				${If} $1 != "<NULL>"
-					DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
-					StrCpy $err_flag ""
-					${IfNot} ${Silent}
-						MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_4 IDNO uninstall_fail
-						terminate_retry_4:
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-						Goto terminate_back_4
-					${Else}
-						${If} $no_kill == "no"
-							ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-							Call un.remove_win7_XXbit_system_dlls
-						${Else}
-							Goto uninstall_fail
-						${EndIf}
-					${EndIf}
-				${EndIf}
-			${EndIf}
+        ; disable Wow64FsRedirection
+        System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
-			; re-enable Wow64FsRedirection
-			System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
+        ; delete the 64-bit DLLs and EXEs in System folder
+        StrCpy $cur_system_folder "System32"
+        Call un.remove_win7_XXbit_system_dlls
+        ${If} $err_flag != ""
+            ; get the processes that are using Npcap
+            nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -check_dll'
+            Pop $0
+            Pop $1
+            StrCpy $1 $1 -2
+            MessageBox MB_OK "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+            DetailPrint "Failed to delete: $err_flag. Uninstall aborted. Please close programs: $1 which may be using Npcap and try again."
+            Goto uninstall_fail
+        ${EndIf}
 
-			; delete the DLLs and EXEs in home folder
-			Call un.remove_win7_XXbit_home_dlls
-		${EndIf}
-	${Else}
-		; uninstall_xp_32bit
-		${If} $is_64bit == "no"
-			; delete the 32-bit DLLs and EXEs in home folder
-			Call un.remove_xp_XXbit_home_dlls
+        ; delete the driver
+        Call un.remove_win7_driver
 
-			; delete the 32-bit DLLs and EXEs in System folder
-			Call un.remove_xp_XXbit_system_dlls
+        ; re-enable Wow64FsRedirection
+        System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
 
-			; delete the driver
-			Call un.remove_xp_driver
-		; uninstall_xp_64bit
-		${Else}
-			; delete the 32-bit DLLs and EXEs in home folder
-			Call un.remove_xp_XXbit_home_dlls
-
-			; delete the 32-bit DLLs and EXEs in System folder
-			Call un.remove_xp_XXbit_system_dlls
-
-			; disable Wow64FsRedirection
-			System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
-
-			; delete the 64-bit DLLs and EXEs in System folder
-			Call un.remove_xp_XXbit_system_dlls
-
-			; delete the driver
-			Call un.remove_xp_driver
-
-			; re-enable Wow64FsRedirection
-			System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-		${EndIf}
-	${EndIf}
+        ; delete the DLLs and EXEs in home folder
+        Call un.remove_win7_XXbit_home_dlls
+    ${EndIf}
 
 	; Uninstall the driver
-	${If} $ndis6_driver == "yes"
-		Call un.registerServiceAPI_win7
-	${Else}
-		Call un.registerServiceAPI_xp
-	${EndIf}
+    Call un.registerServiceAPI_win7
 
 	; Remove "Npcap Loopback Adapter" if it exists
-	${If} $ndis6_driver == "yes"
-		ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
-		
-		; delete the driver files in home folder
-		Call un.remove_win7_driver
-	${EndIf}
+    ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
 
 	; Delete our winpcap-nmap and any WinPcapInst registry keys
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
@@ -1975,8 +1626,6 @@ Section "Uninstall"
 
 	; Delete the uninstaller
 	Delete $INSTDIR\uninstall.exe
-	
-	Delete $INSTDIR\loopback.ini
 
 	RMDir "$INSTDIR"
 
@@ -1993,13 +1642,7 @@ Section "Uninstall"
 	${If} $no_confirm == "yes"
 		SetAutoClose true
 	${EndIf}
-	Goto uninstall_ok
 
 uninstall_fail:
-	Abort
-uninstall_ok:
-	${If} $install_ok == "no"
-		Abort
-	${EndIf}
 
 SectionEnd

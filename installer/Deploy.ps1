@@ -17,15 +17,14 @@ $to_path_array = @()
 
 $cert_sign_tool = "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe"
 $cert_ms_cross_cert = "C:\DigiCert High Assurance EV Root CA.crt"
-$cert_hash_vista = "67cdca7703a01b25e6e0426072ec08b0046eb5f8"
-$cert_hash_win7_above = "928101b5d0631c8e1ada651478e41afaac798b4c"
+$cert_digi_root_ev = "C:\digicert-ev-code-signing.cer"
+$cert_hash_sha1_digi = "67cdca7703a01b25e6e0426072ec08b0046eb5f8"
+$cert_hash_sha256_digi = "928101b5d0631c8e1ada651478e41afaac798b4c"
+$cert_hash_ev = "ec2ae51775f3252541b266c40528daa77baa072f"
+$cert_hash_modern = $cert_hash_ev
 
 # The DigiCert timestamp server (also for RFC3161)
 $cert_timestamp_server_DigiCert = "http://timestamp.digicert.com"
-# The WoSign timestamp server
-$cert_timestamp_server_WoSign = "http://timestamp.wosign.com/timestamp"
-# The WoSign timestamp server (for RFC3161)
-$cert_timestamp_rfc3161_server_WoSign = "http://timestamp.wosign.com/rfc3161"
 
 $has_timestamp = 1
 $header_name = "..\version.h"
@@ -45,7 +44,7 @@ function get_version()
         }
     }
 	Write-Warning "Error: no valid version found, use 0.00 instead."
-    return "0.00“
+    return "0.00"
 }
 
 $version_no = get_version
@@ -60,7 +59,6 @@ $nsis_compiler_tool = "C:\Program Files (x86)\NSIS\makensis.exe"
 
 ###########################################################
 # The variables about generating the symbols.
-$archive_7zip_tool = "C:\Program Files\7-Zip\7z.exe"
 $symbols_zip_name = $installer_name.Replace(".exe", "-DebugSymbols.zip")
 $symbols_folder = ".\npcap-DebugSymbols\"
 
@@ -73,16 +71,16 @@ $driver_init_from_path_array =
 	"..\packetWin7\npf\Win7 Release{0}\npf Package\",
 	"..\packetWin7\npf\x64\Win7 Release{0}\npf Package\"
 $driver_init_to_path_array = 
-	".\win8_above{0}\x86\",
-	".\win8_above{0}\x64\",
-	".\win7{0}\x86\",
-	".\win7{0}\x64\"
+	".\win8_below{0}\x86\",
+	".\win8_below{0}\x64\",
+    ".\win10{0}\x86\",
+    ".\win10{0}\x64\"
 
 ###########################################################
 # Common intial to_path_array
 $init_to_path_array =
-".\win8_above{0}\x86\",
-".\win8_above{0}\x64\"
+".\win8_below{0}\x86\",
+".\win8_below{0}\x64\"
 
 ###########################################################
 # wpcap.dll
@@ -118,6 +116,17 @@ $wlanhelper_filename = "WlanHelper.exe"
 $wlanhelper_init_from_path_array =
 "..\packetWin7\WlanHelper\release\",
 "..\packetWin7\WlanHelper\x64\release\"
+
+# http://stackoverflow.com/a/13302548/1183387
+# Author: @Eld
+function ZipFiles( $zipfilename, $sourcedir )
+{
+    write-host ("Zipping " + $sourcedir + " to " + $zipfilename)
+       Add-Type -Assembly System.IO.Compression.FileSystem
+          $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
+             [System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir,
+                     $zipfilename, $compressionLevel, $false)
+}
 
 
 function initialize_list([ref]$file_name_array, [ref]$from_path_array, [ref]$to_path_array)
@@ -219,7 +228,8 @@ function initialize_list([ref]$file_name_array, [ref]$from_path_array, [ref]$to_
 	$to_path_array.value = $my_to_path_array
 }
 
-function copy_and_sign($file_name, $from_path, $to_path)
+
+function copy_and_sign($file_name, $from_path, $to_path, [ref]$arr_to_sign)
 {
 	if (!(Test-Path ($from_path + $file_name)))
 	{
@@ -239,92 +249,40 @@ function copy_and_sign($file_name, $from_path, $to_path)
 	{
 		$null = New-Item $to_path -Type Directory
 	}
-	Copy-Item ($from_path + $file_name) $to_path
-	Write-Host ("Info: copy source path to deployment folder, source path = " + $from_path + $file_name)
-
-	if ($file_name -match ".sys" -or $file_name -match ".cat")
-	{
-		if ($to_path -match ".\win8_above")
-		{
-			$null = sign_driver_sha256_DigiCert ($to_path + $file_name)
-			# We used WoSign for now, because DigiCert is blocked in my side.
-			# $null = sign_driver_sha256_WoSign ($to_path + $file_name)
-		}
-		else
-		{
-			$null = sign_driver_sha1_DigiCert ($to_path + $file_name)
-			# We used WoSign for now, because DigiCert is blocked in my side.
-			# $null = sign_driver_sha1_WoSign ($to_path + $file_name)
-		}
-	}
-	elseif ($file_name -match ".inf" -or $file_name -match ".pdb")
-	{
-
-	}
-	else
-	{
-		if ($to_path -match ".\win8_above")
-		{
-			$null = sign_driver_sha256_WoSign ($to_path + $file_name)
-		}
-		else
-		{
-			$null = sign_driver_sha1_WoSign ($to_path + $file_name)
-		}
-	}
+    Copy-Item ($from_path + $file_name) $to_path
+    Write-Host ("Info: copy source path to deployment folder, source path = " + $from_path + $file_name)
+    if ($file_name -notmatch ".inf" -and $file_name -notmatch ".pdb")
+    {
+        # Don't sign the .inf or .pdb
+        $arr_to_sign.value += ($to_path + $file_name)
+    }
 
 	return 1
 }
 
-function sign_driver_sha1_DigiCert($file_path_name)
+function sign_driver_modern($file_path_name)
 {
 	if ($has_timestamp)
 	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server_DigiCert, $file_path_name
+		&$cert_sign_tool "sign", "/ac", $cert_digi_root_ev, "/sha1", $cert_hash_modern, "/fd", "sha256", "/tr", $cert_timestamp_server_DigiCert, "/td", "sha256", $file_path_name
 	}
 	else
 	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", $file_path_name
+		&$cert_sign_tool "sign", "/ac", $cert_digi_root_ev, "/sha1", $cert_hash_modern, "/fd", "sha256", $file_path_name
 	}
 }
 
-function sign_driver_sha256_DigiCert($file_path_name)
+function dual_sign_driver_arr([ref]$file_path_name)
 {
 	if ($has_timestamp)
 	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_server_DigiCert, "/td", "sha256", $file_path_name
-	}
+        &$cert_sign_tool ("sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_sha1_digi, "/fd", "sha1", "/t", $cert_timestamp_server_DigiCert) $file_path_name.value
+		&$cert_sign_tool ("sign", "/ac", $cert_ms_cross_cert, "/as", "/sha1", $cert_hash_modern, "/fd", "sha256", "/tr", $cert_timestamp_server_DigiCert, "/td", "sha256") $file_path_name.value
+	} 
 	else
 	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", $file_path_name
-	}
-}
-
-function sign_driver_sha1_WoSign($file_path_name)
-{
-	if ($has_timestamp)
-	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", "/t", $cert_timestamp_server_WoSign, $file_path_name
-	}
-	else
-	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_vista, "/fd", "sha1", $file_path_name
-	}
-}
-
-function sign_driver_sha256_WoSign($file_path_name)
-{
-	if ($has_timestamp)
-	{
-		# The WoSign timestamped version doesn't work on Win8.1 x64.
-		# &$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/t", $cert_timestamp_server_WoSign, $file_path_name
-
-		# The WoSign RFC3161 timestamped version doesn't work.
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", "/tr", $cert_timestamp_rfc3161_server_WoSign, "/td", "sha256", $file_path_name
-	}
-	else
-	{
-		&$cert_sign_tool "sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_win7_above, "/fd", "sha256", $file_path_name
+        &$cert_sign_tool ("sign", "/ac", $cert_ms_cross_cert, "/sha1", $cert_hash_sha1_digi, "/fd", "sha1") $file_path_name.value
+		&$cert_sign_tool ("sign", "/ac", $cert_ms_cross_cert, "/as", "/sha1", $cert_hash_modern, "/fd", "sha256") $file_path_name.value
 	}
 }
 
@@ -332,12 +290,7 @@ function generate_installer($install_script, $installer_name)
 {
 	&$nsis_compiler_tool ("`"/XOutFile " + $installer_name + "`"") $install_script
 
-	sign_driver_sha256_WoSign $installer_name
-}
-
-function generate_symbols($symbols_folder, $symbols_zip_name)
-{
-	&$archive_7zip_tool "a" $symbols_zip_name $symbols_folder
+	sign_driver_modern $installer_name
 }
 
 function do_deploy($installer_or_symbols = 1)
@@ -354,46 +307,35 @@ function do_deploy($installer_or_symbols = 1)
 	initialize_list ([ref]$file_name_array) ([ref]$from_path_array) ([ref]$to_path_array)
 
 	$has_file_updated = 0
+    $arr_to_sign = @()
 	for ($i = 0; $i -lt $file_name_array.Count; $i ++)
 	{
-		$res = copy_and_sign $file_name_array[$i] $from_path_array[$i] $to_path_array[$i]
+		$res = copy_and_sign $file_name_array[$i] $from_path_array[$i] $to_path_array[$i] ([ref]$arr_to_sign)
 		$has_file_updated += $res
 		# echo ($file_name_array[$i] + ", " + $from_path_array[$i] + ", " + $to_path_array[$i])
 	}
-	Write-Host ("Info: Updated file count: " + $has_file_updated)
-
-	if ($installer_or_symbols)
-	{
-		$install_script = ".\" + $install_script
-		$installer_name = ".\" + $installer_name
-		if ((Test-Path $installer_name) -and ($has_file_updated -eq 0))
-		{
-			Write-Host ("Info: no deployment change, installer not generated.")
-			return
-		}
-		else
-		{
-			generate_installer (".\" + $install_script) (".\" + $installer_name)
-		}
-	}
-	else
-	{
-		$symbols_zip_name = ".\" + $symbols_zip_name
-		if ((Test-Path $symbols_zip_name) -and ($has_file_updated -eq 0))
-		{
-			Write-Host ("Info: no deployment change, symbols not generated.")
-			return
-		}
-		else
-		{
-			generate_symbols ($symbols_folder + "*") $symbols_zip_name
-		}
-	}
+    if ($has_file_update > 0)
+    {
+        dual_sign_driver_arr([ref]$arr_to_sign)
+    }
+    Write-Host ("Info: Updated file count: " + $has_file_updated)
+    return $res
 }
 
 if ($args.count -eq 0)
 {
-	do_deploy
+	$has_file_updated = do_deploy
+    $install_script = ".\" + $install_script
+    $installer_name = ".\" + $installer_name
+    if ((Test-Path $installer_name) -and ($has_file_updated -eq 0))
+    {
+        Write-Host ("Info: no deployment change, installer not generated.")
+            return
+    }
+    else
+    {
+        generate_installer (".\" + $install_script) (".\" + $installer_name)
+    }
 }
 elseif ($args.count -eq 1)
 {
@@ -435,7 +377,18 @@ elseif ($args.count -eq 1)
 		$npcaphelper_filename = $npcaphelper_filename.replace(".exe", ".pdb")
 		$wlanhelper_filename = $wlanhelper_filename.replace(".exe", ".pdb")
 
-		do_deploy 0
+        $has_file_updated = do_deploy 0
+		$symbols_zip_name = ".\" + $symbols_zip_name
+		if ((Test-Path $symbols_zip_name) -and ($has_file_updated -eq 0))
+		{
+			Write-Host ("Info: no deployment change, symbols not generated.")
+			return
+		}
+		else
+		{
+            # Requires full path
+            ZipFiles ($script_dir + $symbols_zip_name) ($script_dir + $symbols_folder)
+		}
 	}
 	elseif ($args[0] -eq "installer")
 	{
