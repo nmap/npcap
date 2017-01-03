@@ -98,6 +98,8 @@
 #define NPF_DISABLE_LOOPBACK	1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
 #define NPF_ENABLE_LOOPBACK		2	///< Tells the driver to capture the packets sent by itself.
 
+#define NPF_MAX_BUFFER_SIZE 0x40000000L		// Maximum pool size allowed in bytes (defence against bad BIOCSETBUFFERSIZE calls)
+
 /*!
   \brief Header of a libpcap dump file.
 
