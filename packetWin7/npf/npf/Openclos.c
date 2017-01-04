@@ -1063,6 +1063,12 @@ NPF_RemoveFromOpenArray(
 	POPEN_INSTANCE PrevOpen = NULL;
 	POPEN_INSTANCE GroupOpen;
 
+	if (!Open)
+	{
+		IF_LOUD(DbgPrint("NPF_RemoveFromOpenArray: Open is NULL.\n");)
+		return;
+	}
+
 	TRACE_ENTER();
 
 	NdisAcquireSpinLock(&g_OpenArrayLock);
@@ -1125,7 +1131,14 @@ NPF_RemoveFromGroupOpenArray(
 	{
 		if (GroupOpen == Open)
 		{
-			GroupPrev->GroupNext = GroupOpen->GroupNext;
+			if (GroupPrev)
+			{
+				GroupPrev->GroupNext = GroupOpen->GroupNext;
+			}
+			else
+			{
+				Open->GroupHead = GroupOpen->GroupNext;
+			}
 			GroupOpen->GroupHead = NULL;
 
 			NdisReleaseSpinLock(&g_OpenArrayLock);
