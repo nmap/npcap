@@ -668,11 +668,13 @@ NPF_TapExForEachOpen(
 // 		return;
 // 	}
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (Open->Loopback && g_DltNullMode)
 	{
 		DataLinkHeaderSize = DLT_NULL_HDR_LEN;
 	}
 	else
+#endif
 	{
 		DataLinkHeaderSize = ETHER_HDR_LEN;
 	}

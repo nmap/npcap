@@ -1814,11 +1814,13 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	NPF_CloseBinding(Open);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// "Npcap Loopback Adapter" is going to be detached, invalidate its global pointer as well. 
 	if (Open->Loopback && Open == g_LoopbackOpenGroupHead)
 	{
 		g_LoopbackOpenGroupHead = NULL;
 	}
+#endif
 
 	NPF_RemoveFromOpenArray(Open); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
 	NPF_ReleaseOpenInstanceResources(Open);
