@@ -45,7 +45,7 @@ SetCompressor /SOLID /FINAL lzma
 !define RESTORE_POINT_NAME_UNINSTALL "Before uninstallation of Npcap ${VERSION}"
 
 ; The name of the installer
-Name "Npcap ${VERSION} (beta)"
+Name "Npcap ${VERSION}"
 
 ; The file to write
 ; OutFile "npcap-${INSTALLER_VERSION}.exe"
