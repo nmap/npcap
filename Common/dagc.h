@@ -1,3 +1,5 @@
+/***********************IMPORTANT NPCAP LICENSE TERMS***********************
+ ***************************************************************************/
 /*
  * Copyright (c) 2003
  * NetGroup, Politecnico di Torino (Italy)
