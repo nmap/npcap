@@ -1,3 +1,4 @@
+*~
 *.ncb
 *.suo
 *.sdf
@@ -41,13 +42,13 @@ sdv-map.h
 staticdv.job
 StaticDVTrace.log
 npcap.res
-/installer/vista/
-/installer/vista_winpcap/
-/installer/win7/
-/installer/win7_winpcap/
-/installer/win8_above/
-/installer/win8_above_winpcap/
-/installer/DiagReport*.txt
+/installer/win10/
+/installer/win10_winpcap/
+/installer/win8_below/
+/installer/win8_below_winpcap/
+/installer/disk1/
+/installer/setup.inf
+/installer/setup.rpt
 /npcap-sdk/
 /dox/prj/
 /packetWin7/Dll/Project/Debug*/
@@ -57,4 +58,3 @@ npcap.res
 /wpcap/libpcap/Win32/Prj/Debug*/
 /wpcap/libpcap/Win32/Prj/Release*/
 *.VC.opendb
-!/installer/xp/*/*
