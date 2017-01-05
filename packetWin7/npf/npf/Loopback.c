@@ -176,7 +176,7 @@ UINT32 g_InboundIPPacketV6 = 0;
 HANDLE g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
 HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 
-
+_Success_(return)
 BOOLEAN
 NPF_IsPacketSelfSent(
 	_In_ PNET_BUFFER_LIST pNetBufferList,
@@ -412,6 +412,7 @@ NPF_NetworkClassify(
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 			"NPF_NetworkClassify: bIPv4 cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
+		bIPv4 = FALSE;
 	}
 
 	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
@@ -426,6 +427,7 @@ NPF_NetworkClassify(
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 			"NPF_NetworkClassify: bInbound cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
+		bInbound = FALSE;
 	}
 
 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_IP_HEADER_SIZE)
