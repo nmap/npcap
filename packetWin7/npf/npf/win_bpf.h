@@ -85,7 +85,6 @@
  *
  *  	@(#)bpf.h   	7.1 (Berkeley) 5/7/91
  *
- * @(#) $Header: /usr/cvsroot_private/winpcap/packetNtx/driver/win_bpf.h,v 1.4 2007/11/12 23:12:12 gianlucav Exp $ (LBL)
  */
 
 #ifndef BPF_MAJOR_VERSION

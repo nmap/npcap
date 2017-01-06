@@ -123,10 +123,6 @@
 #define NPF_DEVICE_NAMES_PREFIX_WIFI			NPF_DEVICE_NAMES_PREFIX "WIFI_"
 #define NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI	NPF_DEVICE_NAMES_PREFIX_WIDECHAR L"WIFI_"
 
-// Only used in packetNtx\Dll
-#define NPF_EVENTS_NAMES						NPF_DRIVER_NAME											///< (BBB) 
-#define NPF_EVENTS_NAMES_WIDECHAR				NPF_DRIVER_NAME_WIDECHAR								///< (BBB) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
-
 // Used in packetWin7\Dll
 #define FAKE_NDISWAN_ADAPTER_NAME				"\\Device\\" NPF_DRIVER_NAME "_GenericDialupAdapter"	///< (CCC) Name of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
 #define FAKE_NDISWAN_ADAPTER_DESCRIPTION		"Adapter for generic dialup and VPN capture"			///< (DDD) Description of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets
@@ -159,8 +155,6 @@
 //
 #define NPF_DEVICES_PREFIX_REG_KEY				"NpfDeviceNamesPrefix"		///< (AAA) 
 #define NPF_DEVICES_PREFIX_REG_KEY_WC			L"NpfDeviceNamesPrefix"		///< (AAA) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
-#define NPF_EVENTS_NAMES_REG_KEY				"NpfEventsNames"			///< (BBB) 
-#define NPF_EVENTS_NAMES_REG_KEY_WC				L"NpfEventsNames"			///< (BBB) used by the NPF driver, that does not accept the TEXT(a) macro correctly.	
 #define NPF_FAKE_NDISWAN_ADAPTER_NAME_REG_KEY	"NdiswanAdapterName"		///< (CCC) packet.dll
 #define NPF_FAKE_NDISWAN_ADAPTER_DESC_REG_KEY	"NdiswanAdapterDescription"	///< (DDD) packet.dll
 #define NPF_SERVICE_DESC_REG_KEY				"NpfServiceDescription"		///< (FFF) packet.dll
