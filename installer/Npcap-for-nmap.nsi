@@ -18,8 +18,6 @@
 ;; Yang Luo
 ;; Updated to 4.1.3, August 2013
 
-SetCompressor /SOLID /FINAL lzma
-
 ;--------------------------------
 ;Include Modern UI
 
@@ -47,8 +45,47 @@ SetCompressor /SOLID /FINAL lzma
 ; The name of the installer
 Name "Npcap ${VERSION}"
 
+;--------------------------------
+; Sign the uninstaller
+; http://nsis.sourceforge.net/Signing_an_Uninstaller
+
+!ifdef INNER
+  !echo "Inner invocation"                  ; just to see what's going on
+  OutFile "$%TEMP%\tempinstaller.exe"       ; not really important where this is
+  SetCompress off                           ; for speed
+!else
+  !echo "Outer invocation"
+
+  !ifndef SIGNCMD
+    !echo "Need to define SIGNCMD"
+    quit
+  !endif
+  !warning "SIGNCMD=>${SIGNCMD}<"
+  ; Call makensis again, defining INNER.  This writes an installer for us which, when
+  ; it is invoked, will just write the uninstaller to some location, and then exit.
+  ; Be sure to substitute the name of this script here.
+
+  !system "$\"${NSISDIR}\makensis$\" /DINNER Npcap-for-nmap.nsi" = 0
+
+  ; So now run that installer we just created as %TEMP%\tempinstaller.exe.  Since it
+  ; calls quit the return value isn't zero.
+
+  !system "$\"$%TEMP%\tempinstaller.exe$\"" = 2
+
+  ; That will have written an uninstaller binary for us.  Now we sign it with your
+  ; favourite code signing tool.
+
+  ;!system "icacls.exe $\"$%TEMP%\Uninstall.exe$\" /grant $\"$%USER%$\":M"
+  !system "copy /b $\"$%TEMP%\Uninstall.exe$\" Uninstall.exe"
+  !system "$\"${SIGNCMD}$\" ${SIGNARGS} Uninstall.exe" = 0
+
+  ; Good.  Now we can carry on writing the real installer.
+
 ; The file to write
 ; OutFile "npcap-${INSTALLER_VERSION}.exe"
+  SetCompressor /SOLID /FINAL lzma
+!endif
+
 
 Var /GLOBAL inst_ver
 Var /GLOBAL my_ver
@@ -85,7 +122,10 @@ Var /GLOBAL restore_point_success
 Var /GLOBAL has_wlan_card
 Var /GLOBAL winpcap_installed
 
+!ifndef INNER
+; Avoid elevation dialog during build process
 RequestExecutionLevel admin
+!endif
 
 ; These leave either "1" or "0" in $0.
 !macro MACRO_is64bit un
@@ -357,6 +397,15 @@ FunctionEnd
 ; replace it or not.
 
 Function .onInit
+  !ifdef INNER
+    ; If INNER is defined, then we aren't supposed to do anything except write out
+    ; the installer.  This is better than processing a command line option as it means
+    ; this entire code path is not present in the final (real) installer.
+
+    WriteUninstaller "$%TEMP%\Uninstall.exe"
+    Quit  ; just bail out quickly when running the "inner" installer
+  !endif
+  
 	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "options.ini"
 	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "final.ini"
 
@@ -1461,7 +1510,13 @@ install_win7_32bit:
 	; copy the 32-bit driver
 	Call copy_win7_32bit_driver
 
-	WriteUninstaller "$INSTDIR\uninstall.exe"
+  !ifndef INNER
+    SetOutPath $INSTDIR
+
+    ; this packages the signed uninstaller
+
+    File "Uninstall.exe"
+  !endif
 	DetailPrint "Installing NDIS6.x x86 driver for Win7, Win8 and Win10"
 
 	; copy the 32-bit DLLs and EXEs into System folder
@@ -1480,7 +1535,13 @@ install_win7_64bit:
 	; copy the 64-bit driver
 	Call copy_win7_64bit_driver
 
-	WriteUninstaller "$INSTDIR\uninstall.exe"
+  !ifndef INNER
+    SetOutPath $INSTDIR
+
+    ; this packages the signed uninstaller
+
+    File "Uninstall.exe"
+  !endif
 	DetailPrint "Installing NDIS6.x x64 driver for Win7, Win8 and Win10"
 
 	; copy the 32-bit DLLs and EXEs into System folder
@@ -1565,6 +1626,7 @@ SectionEnd ; end the section
 ;--------------------------------
 ;Uninstaller Section
 
+!ifdef INNER
 Section "Uninstall"
 	; read options from registry "service" key
 	DetailPrint "Reading service options from registry"
@@ -1609,27 +1671,29 @@ Section "Uninstall"
 	; Stop the driver service before we uninstall it
 	DetailPrint "Trying to stop the driver.."
 	Call un.stop_driver_service
-	terminate_back_1:
-	ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
-	${If} $0 == "0"
-		; get the processes that are using Npcap
-		nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
-		Pop $0
-		Pop $1
-		StrCpy $1 $1 -2
-		${If} $1 != "<NULL>"
-			DetailPrint "Failed to stop the driver. Please close programs: $1 which may be using Npcap and try again."
-			${IfNot} ${Silent}
-				MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_1 IDNO uninstall_fail
-				terminate_retry_1:
-				ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-				Goto terminate_back_1
-			${Else}
-				${If} $no_kill == "no"
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+	${If} $ndis6_driver == "yes"
+		terminate_back_1:
+		ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+		${If} $0 == "0"
+			; get the processes that are using Npcap
+			nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
+			Pop $0
+			Pop $1
+			StrCpy $1 $1 -2
+			${If} $1 != "<NULL>"
+				DetailPrint "Failed to stop the driver. Please close programs: $1 which may be using Npcap and try again."
+				${IfNot} ${Silent}
+					MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_1 IDNO uninstall_fail
+					terminate_retry_1:
+					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+					Goto terminate_back_1
 				${Else}
-					Goto uninstall_fail
+					${If} $no_kill == "no"
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -d' $0
+					${Else}
+						Goto uninstall_fail
+					${EndIf}
 				${EndIf}
 			${EndIf}
 		${EndIf}
@@ -1670,86 +1734,83 @@ Section "Uninstall"
 			${EndIf}
 		${EndIf}
 
-		; delete the DLLs and EXEs in home folder
-		Call un.remove_win7_XXbit_home_dlls
+			; delete the DLLs and EXEs in home folder
+			Call un.remove_win7_XXbit_home_dlls
 		; uninstall_win7_64bit
-	${Else}
-		; delete the 32-bit DLLs and EXEs in System folder
-		StrCpy $cur_system_folder "SysWOW64"
-		terminate_back_3:
-		Call un.remove_win7_XXbit_system_dlls
-		${If} $err_flag != ""
-			; get the processes that are using Npcap
-			nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
-			Pop $0
-			Pop $1
-			StrCpy $1 $1 -2
-			${If} $1 != "<NULL>"
-				DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
-				StrCpy $err_flag ""
-				${IfNot} ${Silent}
-					MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_3 IDNO uninstall_fail
-					terminate_retry_3:
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-					Goto terminate_back_3
-				${Else}
-					${If} $no_kill == "no"
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-						Call un.remove_win7_XXbit_system_dlls
+		${Else}
+			; delete the 32-bit DLLs and EXEs in System folder
+			StrCpy $cur_system_folder "SysWOW64"
+			terminate_back_3:
+			Call un.remove_win7_XXbit_system_dlls
+			${If} $err_flag != ""
+				; get the processes that are using Npcap
+				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
+				Pop $0
+				Pop $1
+				StrCpy $1 $1 -2
+				${If} $1 != "<NULL>"
+					DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
+					StrCpy $err_flag ""
+					${IfNot} ${Silent}
+						MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_3 IDNO uninstall_fail
+						terminate_retry_3:
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+						Goto terminate_back_3
 					${Else}
-						Goto uninstall_fail
+						${If} $no_kill == "no"
+							ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+							Call un.remove_win7_XXbit_system_dlls
+						${Else}
+							Goto uninstall_fail
+						${EndIf}
 					${EndIf}
 				${EndIf}
 			${EndIf}
-		${EndIf}
 
-		; disable Wow64FsRedirection
-		System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
+			; disable Wow64FsRedirection
+			System::Call kernel32::Wow64EnableWow64FsRedirection(i0)
 
-		; delete the 64-bit DLLs and EXEs in System folder
-		StrCpy $cur_system_folder "System32"
-		terminate_back_4:
-		Call un.remove_win7_XXbit_system_dlls
-		${If} $err_flag != ""
-			; get the processes that are using Npcap
-			nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
-			Pop $0
-			Pop $1
-			StrCpy $1 $1 -2
-			${If} $1 != "<NULL>"
-				DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
-				StrCpy $err_flag ""
-				${IfNot} ${Silent}
-					MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_4 IDNO uninstall_fail
-					terminate_retry_4:
-					ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
-					Goto terminate_back_4
-				${Else}
-					${If} $no_kill == "no"
-						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
-						Call un.remove_win7_XXbit_system_dlls
+			; delete the 64-bit DLLs and EXEs in System folder
+			StrCpy $cur_system_folder "System32"
+			terminate_back_4:
+			Call un.remove_win7_XXbit_system_dlls
+			${If} $err_flag != ""
+				; get the processes that are using Npcap
+				nsExec::ExecToStack '"$INSTDIR\NPFInstall.exe" -n -check_dll'
+				Pop $0
+				Pop $1
+				StrCpy $1 $1 -2
+				${If} $1 != "<NULL>"
+					DetailPrint "Failed to delete: $err_flag. Please close programs: $1 which may be using Npcap and try again."
+					StrCpy $err_flag ""
+					${IfNot} ${Silent}
+						MessageBox MB_YESNO "Failed to uninstall Npcap because it is in use by application(s): $1. You may choose the Yes button to terminate that software now, or hit No, close the software manually, and restart the Npcap uninstaller." IDYES terminate_retry_4 IDNO uninstall_fail
+						terminate_retry_4:
+						ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc' $0
+						Goto terminate_back_4
 					${Else}
-						Goto uninstall_fail
+						${If} $no_kill == "no"
+							ExecWait '"$INSTDIR\NPFInstall.exe" -n -kill_proc_polite' $0
+							Call un.remove_win7_XXbit_system_dlls
+						${Else}
+							Goto uninstall_fail
+						${EndIf}
 					${EndIf}
 				${EndIf}
 			${EndIf}
+
+			; re-enable Wow64FsRedirection
+			System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
+
+			; delete the DLLs and EXEs in home folder
+			Call un.remove_win7_XXbit_home_dlls
 		${EndIf}
-
-		; re-enable Wow64FsRedirection
-		System::Call kernel32::Wow64EnableWow64FsRedirection(i1)
-
-		; delete the DLLs and EXEs in home folder
-		Call un.remove_win7_XXbit_home_dlls
-	${EndIf}
 
 	; Uninstall the driver
     Call un.registerServiceAPI_win7
 
 	; Remove "Npcap Loopback Adapter" if it exists
   ExecWait '"$INSTDIR\NPFInstall.exe" -n -ul' $0
-
-	; delete the driver files in home folder
-	Call un.remove_win7_driver
 
 	; Delete our winpcap-nmap and any WinPcapInst registry keys
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\npcap-nmap"
@@ -1797,3 +1858,4 @@ uninstall_ok:
 	${EndIf}
 
 SectionEnd
+!endif

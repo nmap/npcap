@@ -288,7 +288,8 @@ function dual_sign_driver_arr([ref]$file_path_name)
 
 function generate_installer($install_script, $installer_name)
 {
-	&$nsis_compiler_tool ("`"/XOutFile " + $installer_name + "`"") $install_script
+	$signargs = "sign /ac $cert_digi_root_ev /sha1 $cert_hash_modern /fd sha256 /tr $cert_timestamp_server_DigiCert /td sha256"
+	&$nsis_compiler_tool "`"/XOutFile $installer_name`"" "`"/DSIGNCMD=$cert_sign_tool`"" "`"/DSIGNARGS=$signargs`"" $install_script
 
 	sign_driver_modern $installer_name
 }
