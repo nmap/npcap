@@ -1,3 +1,9 @@
+Npcap 0.80 [2017-01-09]
+
+* Signed the uninstaller executable.
+
+* Removed the legacy code supporting Windows XP and earlier.
+
 * Added this CHANGELOG
 
 * Fixed a few null pointer dereferences that may have led to Blue Screens under
