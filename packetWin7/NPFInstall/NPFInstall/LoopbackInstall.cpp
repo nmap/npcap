@@ -66,6 +66,7 @@ Abstract:
 #include "debug.h"
 
 #include <shlobj.h>
+#include <ntddndis.h>
 
 #define BUF_SIZE 255
 #define ADAPTER_SIZE 255
@@ -1118,11 +1119,13 @@ Return Value:
     newdevMod = LoadLibrary(TEXT("newdev.dll"));
     if (!newdevMod)
 	{
+		TRACE_PRINT1("LoadLibrary failed: %x", GetLastError());
         goto final;
     }
     UpdateFn = (UpdateDriverForPlugAndPlayDevicesProto) GetProcAddress(newdevMod, UPDATEDRIVERFORPLUGANDPLAYDEVICES);
     if (!UpdateFn)
     {
+		TRACE_PRINT1("GetProcAddress failed to get UpdateDriverForPlugAndPlayDevices: %x", GetLastError());
         goto final;
     }
 
@@ -1130,6 +1133,7 @@ Return Value:
 
     if (!UpdateFn(NULL, hwid, inf, flags, &reboot))
 	{
+		TRACE_PRINT1("UpdateFn failed: %x", GetLastError());
         goto final;
     }
 
@@ -1314,6 +1318,26 @@ Return Value:
     // update the driver for the device we just created
     //
     failcode = cmdUpdate(BaseName, Machine, Flags, argc, argv);
+
+	// Mark device as an endpoint, not a network
+	HKEY DevRegKey = SetupDiCreateDevRegKey(DeviceInfoSet,
+		&DeviceInfoData,
+		DICS_FLAG_GLOBAL,
+		0,
+		DIREG_DRV,
+		NULL,
+		NULL
+		);
+	if (DevRegKey != INVALID_HANDLE_VALUE)
+	{
+		DWORD devtype = NDIS_DEVICE_TYPE_ENDPOINT; // 1
+		if (ERROR_SUCCESS != RegSetValueEx(DevRegKey,
+			TEXT("*NdisDeviceType"), 0, REG_DWORD, (const BYTE *)&devtype, sizeof(devtype))) {
+			TRACE_PRINT1("Couldn't set *NdisDeviceType: %x", GetLastError());// Oops. Hope this isn't a problem.
+		}
+		RegCloseKey(DevRegKey);
+	}
+	else{ TRACE_PRINT1("Couldn't create/open dev reg key: %x", GetLastError()); }
 
 final:
 
