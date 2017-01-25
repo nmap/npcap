@@ -320,6 +320,7 @@ BOOL InstallDriver()
 	{
 		ErrMsg(hr, _T("InstallSpecifiedComponent\n"));
 		TRACE_EXIT();
+		SetLastError(hr);
 		return FALSE;
 	}
 

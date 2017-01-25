@@ -60,6 +60,7 @@
 #include "WlanRecord.h"
 #include "RegUtil.h"
 #include "ProcessUtil.h"
+#include <Netcfgx.h>
 
 #include "debug.h"
 
@@ -340,6 +341,13 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				if (err == NETCFG_E_MAX_FILTER_LIMIT) {
+					_tprintf(_T("Too many filters installed!\n"));
+				}
+				else {
+					_tprintf(_T("Unknown error! %x\n"), err);
+				}
 				_tprintf(_T("Npcap LWF driver has failed to be installed.\n"));
 				nStatus = -1;
 				goto _EXIT;
@@ -357,6 +365,13 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				if (err == NETCFG_E_MAX_FILTER_LIMIT) {
+					_tprintf(_T("Too many filters installed!\n"));
+				}
+				else {
+					_tprintf(_T("Unknown error! %x\n"), err);
+				}
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be installed.\n"));
 				nStatus = -1;
 				goto _EXIT;
