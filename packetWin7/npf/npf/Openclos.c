@@ -1072,22 +1072,24 @@ NPF_RemoveFromOpenArray(
 	TRACE_ENTER();
 
 	NdisAcquireSpinLock(&g_OpenArrayLock);
-	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
-	{
-		if (CurOpen == Open)
+	if (g_arrOpen == Open) {
+		g_arrOpen = Open->Next;
+		// CurOpen must be set or a later check will fail.
+		CurOpen = g_arrOpen;
+	}
+	else {
+		PrevOpen = g_arrOpen;
+		CurOpen = PrevOpen->Next;
+		while (CurOpen)
 		{
-			if (CurOpen == g_arrOpen)
-			{
-				g_arrOpen = CurOpen->Next;
-			}
-			else
+			if (CurOpen == Open)
 			{
 				PrevOpen->Next = CurOpen->Next;
+				break;
 			}
-
-			break;
+			PrevOpen = CurOpen;
+			CurOpen = CurOpen->Next;
 		}
-		PrevOpen = CurOpen;
 	}
 
 	// Remove the links between group head and group members.
@@ -1126,19 +1128,13 @@ NPF_RemoveFromGroupOpenArray(
 	}
 
 	NdisAcquireSpinLock(&g_OpenArrayLock);
-	GroupOpen = Open->GroupHead;
+	GroupPrev = Open->GroupHead;
+	GroupOpen = GroupPrev->GroupNext;
 	while (GroupOpen)
 	{
 		if (GroupOpen == Open)
 		{
-			if (GroupPrev)
-			{
-				GroupPrev->GroupNext = GroupOpen->GroupNext;
-			}
-			else
-			{
-				Open->GroupHead = GroupOpen->GroupNext;
-			}
+			GroupPrev->GroupNext = GroupOpen->GroupNext;
 			GroupOpen->GroupHead = NULL;
 
 			NdisReleaseSpinLock(&g_OpenArrayLock);

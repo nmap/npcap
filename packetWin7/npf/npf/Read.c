@@ -525,9 +525,11 @@ NPF_SendEx(
 
 	TRACE_ENTER();
 
+  ASSERT(Open->GroupHead != NULL);
 	if (Open->GroupHead != NULL)
 	{
 		// Should not come here, because Open called by NDIS will always be a group head itself, so its GroupHead member is NULL.
+		IF_LOUD(DbgPrint("NPF_SendEx: Open->GroupHead != NULL\n");)
 		GroupOpen = Open->GroupHead->GroupNext;
 	}
 	else
