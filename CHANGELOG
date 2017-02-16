@@ -1,3 +1,13 @@
+Npcap 0.81 [2017-02-16]
+
+* Moved distribution of executable installer to http://npcap.org/ from Github.
+
+* Write log files in UTF-8 encoding to preserve localized error messages.
+
+* Report human-readable error when LWF filter fails to be installed.
+
+* Add *NdisDeviceType=1 key to registry for Loopback adapter. Fixes #653
+
 Npcap 0.80 [2017-01-09]
 
 * Signed the uninstaller executable.
