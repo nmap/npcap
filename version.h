@@ -87,17 +87,26 @@
 #define /*
  !define /**/ WINPCAP_MINOR				0
 #define /*
- !define /**/ WINPCAP_REV				80
+ !define /**/ WINPCAP_REV				81
 #define /*
- !define /**/ WINPCAP_BUILD				105
+ !define /**/ WINPCAP_BUILD				215
 #define /*
- !define /**/ WINPCAP_VER_STRING		"0.80"
+ !define /**/ WINPCAP_VER_STRING		"0.81"
 
 #define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
 
 #define WINPCAP_COMPANY_NAME 			"Insecure.Com LLC."
 
-#define WINPCAP_PRODUCT_NAME 			"Npcap"
+#ifdef /*
+ !ifdef /**/ NPCAP_OEM
+#define /*
+ !define /**/ WINPCAP_PRODUCT_NAME 			"Npcap OEM"
+#else /*
+ !else /**/
+#define /*
+ !define /**/ WINPCAP_PRODUCT_NAME 			"Npcap"
+#endif /*
+ !endif /**/
 
 #define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2017, Insecure.Com LLC.  All rights reserved."
 #define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright (c) 2017, Insecure.Com LLC.  All rights reserved."
