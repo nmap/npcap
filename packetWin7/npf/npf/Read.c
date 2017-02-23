@@ -518,41 +518,48 @@ NPF_SendEx(
 	)
 {
 	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
-	POPEN_INSTANCE		GroupOpen;
+	OPEN_ARRAY *TempArray;
 	POPEN_INSTANCE		TempOpen;
 	PVOID i = 0;
 	PVOID j = 0;
 
 	TRACE_ENTER();
 
-  ASSERT(Open->GroupHead == NULL);
-	if (Open->GroupHead != NULL)
-	{
-		// Should not come here, because Open called by NDIS will always be a group head itself, so its GroupHead member is NULL.
-		IF_LOUD(DbgPrint("NPF_SendEx: Open->GroupHead != NULL\n");)
-		GroupOpen = Open->GroupHead->GroupNext;
-	}
-	else
-	{
-		//get the 1st group adapter child
-		GroupOpen = Open->GroupNext;
-	}
+	ASSERT(Open->GroupHead == NULL);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// Do not capture the normal NDIS send traffic, if this is our loopback adapter.
 	if (Open->Loopback == FALSE)
 	{
 #endif
-		while (GroupOpen != NULL)
-		{
-			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
-			{
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+		/* Lock the group */
+		NdisAcquireSpinLock(&Open->GroupLock);
+		/* Grab a local pointer to the copy we're using */
+		TempArray = Open->Group;
+		/* Double-check there is even a group here */
+		if (TempArray) {
+			/* Increment the refcount on this so nobody frees it while we're iterating */
+			TempArray->refcount++;
+			/* Release the lock, allow others to replace the list if necessary */
+			NdisReleaseSpinLock(&Open->GroupLock);
+
+			for (unsigned int i=0; i < TempArray->length; i++) {
+				TempOpen = TempArray->array[i];
+				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+				{
+					NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+				}
 			}
 
-			GroupOpen = TempOpen->GroupNext;
+			/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
+			NdisAcquireSpinLock(&Open->GroupLock);
+			/* Decrement the refcount and check if we were the last ones using this copy */
+			if (--TempArray->refcount == 0) {
+				ExFreePool(TempArray);
+			}
 		}
+		/* Release the spin lock no matter what. */
+		NdisReleaseSpinLock(&Open->GroupLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif
@@ -576,7 +583,7 @@ NPF_TapEx(
 {
 
 	POPEN_INSTANCE      Open = (POPEN_INSTANCE) FilterModuleContext;
-	POPEN_INSTANCE		GroupOpen;
+	OPEN_ARRAY *TempArray;
 	POPEN_INSTANCE		TempOpen;
 	ULONG				ReturnFlags = 0;
 
@@ -590,33 +597,43 @@ NPF_TapEx(
 		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
 	}
 
-	if (Open->GroupHead != NULL)
-	{
-		// Should not come here, because Open called by NDIS will always be a group head itself, so its GroupHead member is NULL.
-		GroupOpen = Open->GroupHead->GroupNext;
-	}
-	else
-	{
-		//get the 1st group adapter child
-		GroupOpen = Open->GroupNext;
-	}
+	// Should not come here, because Open called by NDIS will always be a group head itself, so its GroupHead member is NULL.
+	ASSERT(Open->GroupHead == NULL);
 
 	// Do not capture the normal NDIS receive traffic, if this is our loopback adapter.
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (Open->Loopback == FALSE)
 	{
 #endif
-		while (GroupOpen != NULL)
-		{
-			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
-			{
-				//let every group adapter receive the packets
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+		/* Lock the group */
+		NdisAcquireSpinLock(&Open->GroupLock);
+		/* Grab a local pointer to the copy we're using */
+		TempArray = Open->Group;
+		/* Double-check there is even a group here */
+		if (TempArray) {
+			/* Increment the refcount on this so nobody frees it while we're iterating */
+			TempArray->refcount++;
+			/* Release the lock, allow others to replace the list if necessary */
+			NdisReleaseSpinLock(&Open->GroupLock);
+
+			for (unsigned int i=0; i < TempArray->length; i++) {
+				TempOpen = TempArray->array[i];
+				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+				{
+					//let every group adapter receive the packets
+					NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+				}
 			}
 
-			GroupOpen = TempOpen->GroupNext;
+			/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
+			NdisAcquireSpinLock(&Open->GroupLock);
+			/* Decrement the refcount and check if we were the last ones using this copy */
+			if (--TempArray->refcount == 0) {
+				ExFreePool(TempArray);
+			}
 		}
+		/* Release the spin lock no matter what. */
+		NdisReleaseSpinLock(&Open->GroupLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif

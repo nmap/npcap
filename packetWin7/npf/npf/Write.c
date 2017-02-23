@@ -98,7 +98,7 @@ NPF_Write(
 	)
 {
 	POPEN_INSTANCE		Open;
-	POPEN_INSTANCE		GroupOpen;
+	OPEN_ARRAY *TempArray;
 	POPEN_INSTANCE		TempOpen;
 	PIO_STACK_LOCATION	IrpSp;
 	ULONG				SendFlags = 0;
@@ -297,17 +297,34 @@ NPF_Write(
 			if (Open->Loopback == FALSE)
 			{
 #endif
-				GroupOpen = Open->GroupHead->GroupNext;
-				while (GroupOpen != NULL)
-				{
-					TempOpen = GroupOpen;
-					if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
-					{
-						NPF_TapExForEachOpen(TempOpen, pNetBufferList);
+				/* Lock the group */
+				NdisAcquireSpinLock(&Open->GroupHead->GroupLock);
+				/* Grab a local pointer to the copy we're using */
+				TempArray = Open->GroupHead->Group;
+				/* Double-check there is even a group here */
+				if (TempArray) {
+					/* Increment the refcount on this so nobody frees it while we're iterating */
+					TempArray->refcount++;
+					/* Release the lock, allow others to replace the list if necessary */
+					NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
+
+					for (unsigned int i=0; i < TempArray->length; i++) {
+						TempOpen = TempArray->array[i];
+						if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
+						{
+							NPF_TapExForEachOpen(TempOpen, pNetBufferList);
+						}
 					}
 
-					GroupOpen = TempOpen->GroupNext;
+					/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
+					NdisAcquireSpinLock(&Open->GroupHead->GroupLock);
+					/* Decrement the refcount and check if we were the last ones using this copy */
+					if (--TempArray->refcount == 0) {
+						ExFreePool(TempArray);
+					}
 				}
+				/* Release the spin lock no matter what. */
+				NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			}
 #endif
@@ -453,7 +470,7 @@ NPF_BufferedWrite(
 	BOOLEAN Sync)
 {
 	POPEN_INSTANCE			Open;
-	POPEN_INSTANCE			GroupOpen;
+	OPEN_ARRAY *TempArray;
 	POPEN_INSTANCE			TempOpen;
 	PIO_STACK_LOCATION		IrpSp;
 	PNET_BUFFER_LIST		pNetBufferList = NULL;
@@ -665,18 +682,34 @@ NPF_BufferedWrite(
 		}
 
 		//receive the packets before sending them
-		GroupOpen = Open->GroupHead->GroupNext;
+		/* Lock the group */
+		NdisAcquireSpinLock(&Open->GroupHead->GroupLock);
+		/* Grab a local pointer to the copy we're using */
+		TempArray = Open->GroupHead->Group;
+		/* Double-check there is even a group here */
+		if (TempArray) {
+			/* Increment the refcount on this so nobody frees it while we're iterating */
+			TempArray->refcount++;
+			/* Release the lock, allow others to replace the list if necessary */
+			NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 
-		while (GroupOpen != NULL)
-		{
-			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
-			{
-				NPF_TapExForEachOpen(TempOpen, pNetBufferList);
+			for (unsigned int i=0; i < TempArray->length; i++) {
+				TempOpen = TempArray->array[i];
+				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
+				{
+					NPF_TapExForEachOpen(TempOpen, pNetBufferList);
+				}
 			}
 
-			GroupOpen = TempOpen->GroupNext;
+			/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
+			NdisAcquireSpinLock(&Open->GroupHead->GroupLock);
+			/* Decrement the refcount and check if we were the last ones using this copy */
+			if (--TempArray->refcount == 0) {
+				ExFreePool(TempArray);
+			}
 		}
+		/* Release the spin lock no matter what. */
+		NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 
 		pNetBufferList->SourceHandle = Open->AdapterHandle;
 		NPFSetNBLChildOpen(pNetBufferList, Open); //save the child open object in the packets
@@ -895,7 +928,7 @@ Return Value:
 --*/
 {
 	POPEN_INSTANCE		ChildOpen;
-	POPEN_INSTANCE		GroupOpen;
+	OPEN_ARRAY *TempArray;
 	POPEN_INSTANCE		TempOpen;
 	BOOLEAN				FreeBufAfterWrite;
 	PNET_BUFFER_LIST    pNetBufList;
@@ -927,28 +960,37 @@ Return Value:
 			NPF_FreePackets(pNetBufList);
 
 			// this if should always be false, as Open is always the GroupHead itself, only GroupHead is known by NDIS and get invoked in NPF_SendCompleteEx() function.
-			if (Open->GroupHead != NULL)
-			{
-				GroupOpen = Open->GroupHead->GroupNext;
-			}
-			else
-			{
-				GroupOpen = Open->GroupNext;
-			}
+			ASSERT(Open->GroupHead == NULL);
 
-			//GroupOpen = Open->GroupNext;
+			/* Lock the group */
+			NdisAcquireSpinLock(&Open->GroupLock);
+			/* Grab a local pointer to the copy we're using */
+			TempArray = Open->Group;
+			/* Double-check there is even a group here */
+			if (TempArray) {
+				/* Increment the refcount on this so nobody frees it while we're iterating */
+				TempArray->refcount++;
+				/* Release the lock, allow others to replace the list if necessary */
+				NdisReleaseSpinLock(&Open->GroupLock);
 
-			while (GroupOpen != NULL)
-			{
-				TempOpen = GroupOpen;
-				if (ChildOpen == TempOpen) //only indicate the specific child open object
-				{
-					NPF_SendCompleteExForEachOpen(TempOpen, FreeBufAfterWrite);
-					break;
+				for (unsigned int i=0; i < TempArray->length; i++) {
+					TempOpen = TempArray->array[i];
+					if (ChildOpen == TempOpen) //only indicate the specific child open object
+					{
+						NPF_SendCompleteExForEachOpen(TempOpen, FreeBufAfterWrite);
+						break;
+					}
 				}
 
-				GroupOpen = TempOpen->GroupNext;
+				/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
+				NdisAcquireSpinLock(&Open->GroupLock);
+				/* Decrement the refcount and check if we were the last ones using this copy */
+				if (--TempArray->refcount == 0) {
+					ExFreePool(TempArray);
+				}
 			}
+			/* Release the spin lock no matter what. */
+			NdisReleaseSpinLock(&Open->GroupLock);
 		}
 		else
 		{

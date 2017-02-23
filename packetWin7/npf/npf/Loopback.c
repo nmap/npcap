@@ -356,7 +356,7 @@ NPF_NetworkClassify(
 #endif
 
 {
-	POPEN_INSTANCE		GroupOpen;
+	OPEN_ARRAY *TempArray;
 	POPEN_INSTANCE		TempOpen;
 	NTSTATUS			status = STATUS_SUCCESS;
 	UINT32				ipHeaderSize = 0;
@@ -605,28 +605,36 @@ NPF_NetworkClassify(
 	}
 
 	// Send the loopback packets data to the user-mode code.
-	if (g_LoopbackOpenGroupHead)
-	{
-		//get the 1st group adapter child
-		GroupOpen = g_LoopbackOpenGroupHead->GroupNext;
-	}
-	else
-	{
-		// Should not come here
-		GroupOpen = NULL;
-	}
+	ASSERT(g_LoopbackOpenGroupHead);
 
-	while (GroupOpen != NULL)
-	{
-		TempOpen = GroupOpen;
-		if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
-		{
-			//let every group adapter receive the packets
-			NPF_TapExForEachOpen(TempOpen, pClonedNetBufferList);
+	/* Lock the group */
+	NdisAcquireSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
+	/* Grab a local pointer to the copy we're using */
+	TempArray = g_LoopbackOpenGroupHead->Group;
+	/* Double-check there is even a group here */
+	if (TempArray) {
+		/* Increment the refcount on this so nobody frees it while we're iterating */
+		TempArray->refcount++;
+		/* Release the lock, allow others to replace the list if necessary */
+		NdisReleaseSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
+
+		for (unsigned int i=0; i < TempArray->length; i++) {
+			TempOpen = TempArray->array[i];
+			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+			{
+				NPF_TapExForEachOpen(TempOpen, pClonedNetBufferList);
+			}
 		}
 
-		GroupOpen = TempOpen->GroupNext;
+		/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
+		NdisAcquireSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
+		/* Decrement the refcount and check if we were the last ones using this copy */
+		if (--TempArray->refcount == 0) {
+			ExFreePool(TempArray);
+		}
 	}
+	/* Release the spin lock no matter what. */
+	NdisReleaseSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
 
 Exit_Ethernet_Retreated:
 	// Advance the offset back to the original position.

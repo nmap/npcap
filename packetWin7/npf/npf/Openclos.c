@@ -559,6 +559,7 @@ NPF_ReleaseOpenInstanceResources(
 	NdisFreeSpinLock(&pOpen->OIDLock);
 	NdisFreeSpinLock(&pOpen->CountersLock);
 	NdisFreeSpinLock(&pOpen->WriteLock);
+	NdisFreeSpinLock(&pOpen->GroupLock);
 	NdisFreeSpinLock(&pOpen->MachineLock);
 	NdisFreeSpinLock(&pOpen->AdapterHandleLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
@@ -1035,19 +1036,45 @@ NPF_AddToGroupOpenArray(
 	POPEN_INSTANCE GroupHead
 	)
 {
-	POPEN_INSTANCE GroupRear;
+	OPEN_ARRAY *tempArray = NULL;
+	unsigned int newLen = 1;
 
 	TRACE_ENTER();
 
-	NdisAcquireSpinLock(&g_OpenArrayLock);
-	GroupRear = GroupHead;
-	while (GroupRear->GroupNext != NULL)
-	{
-		GroupRear = GroupRear->GroupNext;
+	NdisAcquireSpinLock(&GroupHead->GroupLock);
+
+	if (GroupHead->Group) {
+		newLen = GroupHead->Group->length + 1;
 	}
-	GroupRear->GroupNext = Open;
 	Open->GroupHead = GroupHead;
-	NdisReleaseSpinLock(&g_OpenArrayLock);
+
+	/* Make a new OPEN_ARRAY with room for all the current Opens plus the new one */
+	tempArray = ExAllocatePoolWithTag(NonPagedPool, sizeof(OPEN_ARRAY) + newLen * sizeof(OPEN_INSTANCE *), 'PAOG');
+	if (tempArray == NULL) {
+		// no memory
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate memory pool");
+		NdisReleaseSpinLock(&GroupHead->GroupLock);
+		TRACE_EXIT();
+		return;
+	}
+
+  /* Copy over the old array */
+	if (GroupHead->Group) {
+		RtlCopyMemory(tempArray->array, GroupHead->Group->array, (GroupHead->Group->length) * sizeof(OPEN_INSTANCE *));
+		/* If we're the last ones using the old copy, free it */
+		if (--GroupHead->Group->refcount == 0) {
+			ExFreePool(GroupHead->Group);
+		}
+	}
+
+	/* Assign the new Open to the last slot in the array */
+	tempArray->array[newLen - 1] = Open;
+	/* Initialize length and refcount and swap in */
+	tempArray->length = newLen;
+	tempArray->refcount = 1;
+	GroupHead->Group = tempArray;
+
+	NdisReleaseSpinLock(&GroupHead->GroupLock);
 
 	TRACE_EXIT();
 }
@@ -1093,13 +1120,16 @@ NPF_RemoveFromOpenArray(
 	}
 
 	// Remove the links between group head and group members.
-	GroupOpen = Open->GroupNext;
-	while (GroupOpen)
-	{
-		GroupOpen->GroupHead = NULL;
-		GroupOpen = GroupOpen->GroupNext;
+	NdisAcquireSpinLock(&Open->GroupLock);
+	if (Open->Group) {
+		for (unsigned int i=0; i < Open->Group->length; i++) {
+			Open->Group->array[i]->GroupHead = NULL;
+		}
+		if(--Open->Group->refcount == 0) {
+			ExFreePool(Open->Group);
+		}
 	}
-	Open->GroupNext = NULL;
+	NdisReleaseSpinLock(&Open->GroupLock);
 
 	NdisReleaseSpinLock(&g_OpenArrayLock);
 
@@ -1115,8 +1145,10 @@ NPF_RemoveFromGroupOpenArray(
 	POPEN_INSTANCE Open
 	)
 {
-	POPEN_INSTANCE GroupOpen;
-	POPEN_INSTANCE GroupPrev = NULL;
+	POPEN_INSTANCE GroupHead = NULL;
+	OPEN_ARRAY *tempArray = NULL;
+	unsigned int newLen = 0;
+	unsigned int curr = 0;
 
 	TRACE_ENTER();
 
@@ -1126,27 +1158,55 @@ NPF_RemoveFromGroupOpenArray(
 		TRACE_EXIT();
 		return;
 	}
+	GroupHead = Open->GroupHead;
 
-	NdisAcquireSpinLock(&g_OpenArrayLock);
-	GroupPrev = Open->GroupHead;
-	GroupOpen = GroupPrev->GroupNext;
-	while (GroupOpen)
-	{
-		if (GroupOpen == Open)
-		{
-			GroupPrev->GroupNext = GroupOpen->GroupNext;
-			GroupOpen->GroupHead = NULL;
+	NdisAcquireSpinLock(&GroupHead->GroupLock);
 
-			NdisReleaseSpinLock(&g_OpenArrayLock);
-			TRACE_EXIT();
-			return;
-		}
-		GroupPrev = GroupOpen;
-		GroupOpen = GroupOpen->GroupNext;
+	if (GroupHead->Group) {
+		newLen = GroupHead->Group->length - 1;
 	}
-	NdisReleaseSpinLock(&g_OpenArrayLock);
 
-	IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");)
+	/* Make a new OPEN_ARRAY with room for all the current Opens minus this one */
+	/* Because the OPEN_ARRAY contains space for one Open pointer already, this
+	 * space is one too large, but that's ok because it means we don't write off
+	 * the end when copying over in the unexpected case where Open is not
+	 * actually in this group. */
+	tempArray = ExAllocatePoolWithTag(NonPagedPool, sizeof(OPEN_ARRAY) + newLen * sizeof(OPEN_INSTANCE *), 'PAOG');
+	if (tempArray == NULL) {
+		// no memory
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate memory pool");
+		NdisReleaseSpinLock(&GroupHead->GroupLock);
+		TRACE_EXIT();
+		return;
+	}
+
+  /* Copy over the old array */
+	if (GroupHead->Group) {
+		for (unsigned int i=0; i < GroupHead->Group->length; i++) {
+			if (GroupHead->Group->array[i] == Open) {
+				/* pass */;
+			}
+			else {
+				tempArray->array[curr++] = GroupHead->Group->array[i];
+			}
+		}
+		/* If we're the last ones using the old copy, free it */
+		if (--GroupHead->Group->refcount == 0) {
+			ExFreePool(GroupHead->Group);
+		}
+	}
+
+	/* Initialize length and refcount and swap in */
+	tempArray->length = newLen;
+	tempArray->refcount = 1;
+	GroupHead->Group = tempArray;
+
+	NdisReleaseSpinLock(&GroupHead->GroupLock);
+
+	if (curr > newLen) {
+		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");)
+	}
+
 	TRACE_EXIT();
 }
 
@@ -1340,6 +1400,7 @@ NPF_CreateOpenObject(
 	NdisInitializeEvent(&Open->DumpEvent);
 	NdisAllocateSpinLock(&Open->MachineLock);
 	NdisAllocateSpinLock(&Open->WriteLock);
+	NdisAllocateSpinLock(&Open->GroupLock);
 	Open->WriteInProgress = FALSE;
 
 	for (i = 0; i < g_NCpu; i++)
@@ -1747,7 +1808,6 @@ NPF_Pause(
 	)
 {
 	POPEN_INSTANCE          Open = (POPEN_INSTANCE)FilterModuleContext;
-	POPEN_INSTANCE			GroupOpen;
 	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
 
 	UNREFERENCED_PARAMETER(PauseParameters);
@@ -1788,7 +1848,6 @@ NPF_Restart(
 	// below is the "disable offload" version of NPF_Restart() function.
 
 	POPEN_INSTANCE	Open = (POPEN_INSTANCE) FilterModuleContext;
-	POPEN_INSTANCE	GroupOpen;
 	NDIS_STATUS		Status;
 
 	TRACE_ENTER();
@@ -1857,17 +1916,39 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 {
 	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
 	POPEN_INSTANCE		GroupOpen;
+	OPEN_ARRAY *TempArray = NULL;
 	BOOLEAN				bFalse = FALSE;
 
 	TRACE_ENTER();
 
-	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
-	{
-		NPF_CloseOpenInstance(GroupOpen);
+  /* Lock the group */
+	NdisAcquireSpinLock(&Open->GroupLock);
+	/* Grab a local pointer to the copy we're using */
+	TempArray = Open->Group;
+	/* Double-check there is even a group here */
+	if (TempArray) {
+		/* Increment the refcount on this so nobody frees it while we're iterating */
+		TempArray->refcount++;
+		/* Release the lock, allow others to replace the list if necessary */
+		NdisReleaseSpinLock(&Open->GroupLock);
 
-		if (GroupOpen->ReadEvent != NULL)
-			KeSetEvent(GroupOpen->ReadEvent, 0, FALSE);
+		for (unsigned int i=0; i < TempArray->length; i++) {
+			GroupOpen = TempArray->array[i];
+			NPF_CloseOpenInstance(GroupOpen);
+
+			if (GroupOpen->ReadEvent != NULL)
+				KeSetEvent(GroupOpen->ReadEvent, 0, FALSE);
+		}
+
+		/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
+		NdisAcquireSpinLock(&Open->GroupLock);
+		/* Decrement the refcount and check if we were the last ones using this copy */
+		if (--TempArray->refcount == 0) {
+			ExFreePool(TempArray);
+		}
 	}
+	/* Release the spin lock no matter what. */
+	NdisReleaseSpinLock(&Open->GroupLock);
 
 	NPF_CloseBinding(Open);
 
