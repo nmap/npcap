@@ -1,3 +1,10 @@
+Npcap 0.82 [2017-02-23]
+
+* Fix a crash that happened when many concurrent processes were using Npcap.
+  If several of these quit during processing of a packet, the linked list of
+  processes could become corrupted. Solved this by using a fixed array with
+  copy-and-swap instead.
+
 Npcap 0.81 [2017-02-16]
 
 * Moved distribution of executable installer to http://npcap.org/ from Github.
