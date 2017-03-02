@@ -1119,6 +1119,10 @@ NPF_RemoveFromOpenArray(
 		}
 	}
 
+	if (Open == g_LoopbackOpenGroupHead) {
+	  g_LoopbackOpenGroupHead = NULL;
+	}
+
 	// Remove the links between group head and group members.
 	NdisAcquireSpinLock(&Open->GroupLock);
 	if (Open->Group) {

@@ -605,36 +605,39 @@ NPF_NetworkClassify(
 	}
 
 	// Send the loopback packets data to the user-mode code.
-	ASSERT(g_LoopbackOpenGroupHead);
+	// Can't assert this because a sleep could happen, detaching the adapter and making this pointer invalid.
+	//ASSERT(g_LoopbackOpenGroupHead);
+	if (g_LoopbackOpenGroupHead) {
 
-	/* Lock the group */
-	NdisAcquireSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
-	/* Grab a local pointer to the copy we're using */
-	TempArray = g_LoopbackOpenGroupHead->Group;
-	/* Double-check there is even a group here */
-	if (TempArray) {
-		/* Increment the refcount on this so nobody frees it while we're iterating */
-		TempArray->refcount++;
-		/* Release the lock, allow others to replace the list if necessary */
-		NdisReleaseSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
+		/* Lock the group */
+		NdisAcquireSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
+		/* Grab a local pointer to the copy we're using */
+		TempArray = g_LoopbackOpenGroupHead->Group;
+		/* Double-check there is even a group here */
+		if (TempArray) {
+			/* Increment the refcount on this so nobody frees it while we're iterating */
+			TempArray->refcount++;
+			/* Release the lock, allow others to replace the list if necessary */
+			NdisReleaseSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
 
-		for (unsigned int i=0; i < TempArray->length; i++) {
-			TempOpen = TempArray->array[i];
-			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
-			{
-				NPF_TapExForEachOpen(TempOpen, pClonedNetBufferList);
+			for (unsigned int i=0; i < TempArray->length; i++) {
+				TempOpen = TempArray->array[i];
+				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+				{
+					NPF_TapExForEachOpen(TempOpen, pClonedNetBufferList);
+				}
+			}
+
+			/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
+			NdisAcquireSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
+			/* Decrement the refcount and check if we were the last ones using this copy */
+			if (--TempArray->refcount == 0) {
+				ExFreePool(TempArray);
 			}
 		}
-
-		/* Reacquire the lock to make sure nobody mucks with refcount after we check it */
-		NdisAcquireSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
-		/* Decrement the refcount and check if we were the last ones using this copy */
-		if (--TempArray->refcount == 0) {
-			ExFreePool(TempArray);
-		}
+		/* Release the spin lock no matter what. */
+		NdisReleaseSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
 	}
-	/* Release the spin lock no matter what. */
-	NdisReleaseSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
 
 Exit_Ethernet_Retreated:
 	// Advance the offset back to the original position.
