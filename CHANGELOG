@@ -1,3 +1,13 @@
+Npcap 0.83 [2017-03-04]
+
+* Fix a crash caused by recieving loopback traffic after Windows starts to
+  sleep. nmap/nmap#721
+
+* Don't override CLI installer options like `/wpcap_mode` when WinPcap is
+  found. nmap/nmap#717
+
+* Restore the uninstaller instruction that deletes the npcap driver files.
+
 Npcap 0.82 [2017-02-23]
 
 * Fix a crash that happened when many concurrent processes were using Npcap.
@@ -13,7 +23,7 @@ Npcap 0.81 [2017-02-16]
 
 * Report human-readable error when LWF filter fails to be installed.
 
-* Add *NdisDeviceType=1 key to registry for Loopback adapter. Fixes #653
+* Add *NdisDeviceType=1 key to registry for Loopback adapter. Fixes nmap/nmap#653
 
 Npcap 0.80 [2017-01-09]
 
