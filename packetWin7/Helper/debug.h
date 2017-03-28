@@ -108,10 +108,7 @@ static VOID OutputDebugStringVA(LPCSTR Format, ...)
 														
 	do
 	{
-		
-		f = fopen(g_LogFileName, "a");
-		
-		if (f != NULL)
+		if (fopen_s(&f, "C:\\Program Files\\Npcap\\NpcapHelper.log", "a") == 0)
 			break;
 
 		Sleep(0);
