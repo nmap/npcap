@@ -624,8 +624,8 @@ HANDLE NpcapRequestHandle(char *sMsg, DWORD *pdwError)
 	if (cbRead != 0)
 	{
 		HANDLE hd;
-		sscanf_s(chBuf, "%x,%d", &hd, pdwError);
-		TRACE_PRINT1("Received Driver Handle: 0x%08x\n", hd);
+		sscanf_s(chBuf, "%p,%d", &hd, pdwError);
+		TRACE_PRINT1("Received Driver Handle: %0p\n", hd);
 		TRACE_EXIT();
 		return hd;
 	}
@@ -1586,6 +1586,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 
 	if (AdapterObject->ReadEvent != NULL)
 	{
+		TRACE_PRINT("ReadEvent is not NULL");
 		SetLastError(ERROR_INVALID_FUNCTION);
 		return FALSE;
 	}
@@ -1594,6 +1595,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 
 	if (hEvent == NULL)
 	{
+		TRACE_PRINT("Error in CreateEvent");
 		//SetLastError done by CreateEvent	
  		TRACE_EXIT();
 		return FALSE;
@@ -1609,6 +1611,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 			NULL)==FALSE) 
 	{
 		DWORD dwLastError = GetLastError();
+		TRACE_PRINT("Error in DeviceIoControl");
 
 		CloseHandle(hEvent);
 

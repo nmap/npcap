@@ -96,27 +96,35 @@ HANDLE getDeviceHandleInternal(char *SymbolicLinkA, DWORD *pdwError)
 	HANDLE hFileDup;
 	DWORD dwError;
 	BOOL bResult;
+	HANDLE hClientProcess;
 
-	printf("Original handle: %08p.\n", hFile);
+	TRACE_PRINT1("Original handle: %08p.\n", hFile);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		*pdwError = dwError = GetLastError();
-		printf("CreateFileA failed, GLE=%d.\n", dwError); 
+		TRACE_PRINT1("CreateFileA failed, GLE=%d.\n", dwError);
+		return INVALID_HANDLE_VALUE;
+	}
+	hClientProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, g_sourcePID);
+	if (hClientProcess == NULL)
+	{
+		*pdwError = dwError = GetLastError();
+		TRACE_PRINT1("OpenProcess failed, GLE=%d.\n", dwError);
 		return INVALID_HANDLE_VALUE;
 	}
 
 	bResult = DuplicateHandle(GetCurrentProcess(), 
 		hFile, 
-		OpenProcess(PROCESS_ALL_ACCESS, FALSE, g_sourcePID),
+		hClientProcess,
 		&hFileDup, 
 		GENERIC_WRITE | GENERIC_READ,
 		FALSE,
 		DUPLICATE_CLOSE_SOURCE);
-	printf("Duplicated handle: %08p.\n", hFileDup);
+	TRACE_PRINT1("Duplicated handle: %08p.\n", hFileDup);
 
 	if (!bResult)
 	{
-		printf("CreateNamedPipe failed, GLE=%d.\n", GetLastError());
+		TRACE_PRINT1("CreateNamedPipe failed, GLE=%d.\n", GetLastError());
 		*pdwError = 1234;
 		return INVALID_HANDLE_VALUE;
 	}
@@ -148,7 +156,7 @@ BOOL createPipe(char *pipeName)
 		SetSecurityDescriptorDacl(&sd, TRUE, 0, FALSE);
 		SECURITY_ATTRIBUTES sa = { sizeof sa, &sd, FALSE };
 
-		printf("\nPipe Server: Main thread awaiting client connection on %s\n", lpszPipename);
+		TRACE_PRINT1("\nPipe Server: Main thread awaiting client connection on %s\n", lpszPipename);
 		hPipe = CreateNamedPipeA( 
 			lpszPipename,             // pipe name 
 			PIPE_ACCESS_DUPLEX,       // read/write access 
@@ -163,7 +171,7 @@ BOOL createPipe(char *pipeName)
 
 		if (hPipe == INVALID_HANDLE_VALUE) 
 		{
-			printf("CreateNamedPipe failed, GLE=%d.\n", GetLastError()); 
+			TRACE_PRINT1("CreateNamedPipe failed, GLE=%d.\n", GetLastError());
 			return FALSE;
 		}
 
@@ -175,7 +183,7 @@ BOOL createPipe(char *pipeName)
 
 		if (fConnected) 
 		{ 
-			printf("Client connected, creating a processing thread.\n"); 
+			TRACE_PRINT("Client connected, creating a processing thread.\n");
 
 			// Create a thread for this client. 
 			hThread = CreateThread( 
@@ -188,7 +196,7 @@ BOOL createPipe(char *pipeName)
 
 			if (hThread == NULL) 
 			{
-				printf("CreateThread failed, GLE=%d.\n", GetLastError()); 
+				TRACE_PRINT1("CreateThread failed, GLE=%d.\n", GetLastError());
 				return FALSE;
 			}
 			else CloseHandle(hThread); 
@@ -215,15 +223,16 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 	DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0; 
 	BOOL fSuccess = FALSE;
 	HANDLE hPipe  = NULL;
+	TRACE_ENTER();
 
 	// Do some extra error checking since the app will keep running even if this
 	// thread fails.
 
 	if (lpvParam == NULL)
 	{
-		printf( "\nERROR - Pipe Server Failure:\n");
-		printf( "   InstanceThread got an unexpected NULL value in lpvParam.\n");
-		printf( "   InstanceThread exitting.\n");
+		TRACE_PRINT( "\nERROR - Pipe Server Failure:\n");
+		TRACE_PRINT( "   InstanceThread got an unexpected NULL value in lpvParam.\n");
+		TRACE_PRINT( "   InstanceThread exitting.\n");
 		if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
 		if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
 		return (DWORD)-1;
@@ -231,24 +240,24 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 
 	if (pchRequest == NULL)
 	{
-		printf( "\nERROR - Pipe Server Failure:\n");
-		printf( "   InstanceThread got an unexpected NULL heap allocation.\n");
-		printf( "   InstanceThread exitting.\n");
+		TRACE_PRINT( "\nERROR - Pipe Server Failure:\n");
+		TRACE_PRINT( "   InstanceThread got an unexpected NULL heap allocation.\n");
+		TRACE_PRINT( "   InstanceThread exitting.\n");
 		if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
 		return (DWORD)-1;
 	}
 
 	if (pchReply == NULL)
 	{
-		printf( "\nERROR - Pipe Server Failure:\n");
-		printf( "   InstanceThread got an unexpected NULL heap allocation.\n");
-		printf( "   InstanceThread exitting.\n");
+		TRACE_PRINT( "\nERROR - Pipe Server Failure:\n");
+		TRACE_PRINT( "   InstanceThread got an unexpected NULL heap allocation.\n");
+		TRACE_PRINT( "   InstanceThread exitting.\n");
 		if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
 		return (DWORD)-1;
 	}
 
 	// Print verbose messages. In production code, this should be for debugging only.
-	printf("InstanceThread created, receiving and processing messages.\n");
+	TRACE_PRINT("InstanceThread created, receiving and processing messages.\n");
 
 	// The thread's parameter is a handle to a pipe object instance. 
 
@@ -270,11 +279,11 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 		{   
 			if (GetLastError() == ERROR_BROKEN_PIPE)
 			{
-				_tprintf(TEXT("InstanceThread: client disconnected.\n"), GetLastError()); 
+				TRACE_PRINT("InstanceThread: client disconnected.\n");
 			}
 			else
 			{
-				_tprintf(TEXT("InstanceThread ReadFile failed, GLE=%d.\n"), GetLastError()); 
+				TRACE_PRINT1("InstanceThread ReadFile failed, GLE=%d.\n", GetLastError());
 			}
 			break;
 		}
@@ -292,7 +301,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 
 		if (!fSuccess || cbReplyBytes != cbWritten)
 		{   
-			_tprintf(TEXT("InstanceThread WriteFile failed, GLE=%d.\n"), GetLastError()); 
+			TRACE_PRINT1("InstanceThread WriteFile failed, GLE=%d.\n", GetLastError());
 			break;
 		}
 	}
@@ -308,7 +317,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 	HeapFree(hHeap, 0, pchRequest);
 	HeapFree(hHeap, 0, pchReply);
 
-	printf("InstanceThread exitting.\n");
+	TRACE_EXIT();
 	terminateSelf();
 	return 1;
 }
@@ -322,11 +331,11 @@ VOID GetAnswerToRequest( LPSTR pchRequest,
 						// of an instance thread. Keep in mind the main thread will continue to wait for
 						// and receive other client connections while the instance thread is working.
 {
-	printf("Client Request String:\"%s\"\n", pchRequest);
+	TRACE_PRINT1("Client Request String:\"%s\"\n", pchRequest);
 
 	DWORD dwError;
 	HANDLE hFile = getDeviceHandleInternal(pchRequest, &dwError);
-	printf("Driver Handle: 0x%08p\n", hFile);
+	TRACE_PRINT1("Driver Handle: %0p\n", hFile);
 	if (hFile)
 	{
 		char buf[BUFSIZE];
@@ -341,7 +350,7 @@ VOID GetAnswerToRequest( LPSTR pchRequest,
 		{
 			*pchBytes = 0;
 			pchReply[0] = 0;
-			printf("StringCchCopy failed, no outgoing message.\n");
+			TRACE_PRINT("StringCchCopy failed, no outgoing message.\n");
 			return;
 		}
 		*pchBytes = (DWORD) (strlen(pchReply) + 1) * sizeof(char);
