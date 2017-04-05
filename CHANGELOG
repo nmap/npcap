@@ -1,4 +1,4 @@
-Npcap 0.83 [2017-03-28]
+Npcap 0.84 [2017-03-28]
 
 * Fix a failure of 64-bit Npcap when installed in Admin-Only mode.
   nmap/nmap#814
