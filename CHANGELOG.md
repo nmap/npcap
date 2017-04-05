@@ -1,26 +1,26 @@
-Npcap 0.84 [2017-03-28]
+## Npcap 0.84 [2017-03-28]
 
 * Fix a failure of 64-bit Npcap when installed in Admin-Only mode.
-  nmap/nmap#814
+  [#814](http://issues.nmap.org/814)
 
-Npcap 0.83 [2017-03-04]
+## Npcap 0.83 [2017-03-04]
 
 * Fix a crash caused by recieving loopback traffic after Windows starts to
-  sleep. nmap/nmap#721
+  sleep. [#721](http://issues.nmap.org/721)
 
 * Don't override CLI installer options like `/wpcap_mode` when WinPcap is
-  found. nmap/nmap#717
+  found. [#717](http://issues.nmap.org/717)
 
 * Restore the uninstaller instruction that deletes the npcap driver files.
 
-Npcap 0.82 [2017-02-23]
+## Npcap 0.82 [2017-02-23]
 
 * Fix a crash that happened when many concurrent processes were using Npcap.
   If several of these quit during processing of a packet, the linked list of
   processes could become corrupted. Solved this by using a fixed array with
   copy-and-swap instead.
 
-Npcap 0.81 [2017-02-16]
+## Npcap 0.81 [2017-02-16]
 
 * Moved distribution of executable installer to http://npcap.org/ from Github.
 
@@ -28,9 +28,9 @@ Npcap 0.81 [2017-02-16]
 
 * Report human-readable error when LWF filter fails to be installed.
 
-* Add *NdisDeviceType=1 key to registry for Loopback adapter. Fixes nmap/nmap#653
+* Add `*NdisDeviceType=1` key to registry for Loopback adapter. Fixes [#653](http://issues.nmap.org/653)
 
-Npcap 0.80 [2017-01-09]
+## Npcap 0.80 [2017-01-09]
 
 * Signed the uninstaller executable.
 
@@ -44,116 +44,116 @@ Npcap 0.80 [2017-01-09]
 * Restored changes from 0.78 r2 through 0.78 r4 that were accidentally omitted
   from 0.78 r5.
 
-Npcap 0.78 r5 [2016-12-15]
+## Npcap 0.78 r5 [2016-12-15]
 
 * Microsoft Attestation-signed drivers for Windows 10, required in Win10 1607.
-  See nmap/nmap#492
+  See [#492](http://issues.nmap.org/492)
 
 * Removed Windows XP support from the executable installer. XP users can use
   WinPcap instead, as that is all that we were installing on that platform.
 
-Npcap 0.78 r4 [2016-12-10]
+## Npcap 0.78 r4 [2016-12-10]
 
 * Fixed the bug that "Npcap Loopback Adapter" can't be uninstalled.
 
-Npcap 0.78 r3 [2016-12-10]
+## Npcap 0.78 r3 [2016-12-10]
 
 * The uninstaller allows users to terminate processes that are using Npcap.
 
-Npcap 0.78 r2 [2016-12-03]
+## Npcap 0.78 r2 [2016-12-03]
 
 * The uninstaller lists the processes that are currently using Npcap,
   preventing a clean uninstall.
 
-Npcap 0.78 [2016-11-23]
+## Npcap 0.78 [2016-11-23]
 
 * The uninstaller warns when it is unable to delete DLLs that are in use by
   applications.
 
-Npcap 0.11 [2016-11-21]
+## Npcap 0.11 [2016-11-21]
 
 * Updated the WDK from 10.0.10586 to 10.0.14393.
 
-Npcap 0.10 r18 [2016-11-08]
+## Npcap 0.10 r18 [2016-11-08]
 
 * Improved the error message of invalid adapter name in WlanHelper.
 
-Npcap 0.10 r17 [2016-11-07]
+## Npcap 0.10 r17 [2016-11-07]
 
 * Built WlanHelper.exe in Unicode instead of Multi-Byte. This will fix the
   wrong display of non-English characters.
 
-Npcap 0.10 r16 [2016-11-07]
+## Npcap 0.10 r16 [2016-11-07]
 
 * Fixed the bug that some functions of WlanHelper.exe doesn't work.
 
-Npcap 0.10 r15 [2016-11-05]
+## Npcap 0.10 r15 [2016-11-05]
 
 * Fixed the bug that using Npcap to capture at the first time causes limited
   connectivity on Wi-Fi adapters.
 
-Npcap 0.10 r14 [2016-11-03]
+## Npcap 0.10 r14 [2016-11-03]
 
 * Fixed the bug that Npcap mode and WinPcap compatible mode can't use the
   loopback interface at the same time.
 
-Npcap 0.10 r13 [2016-11-01]
+## Npcap 0.10 r13 [2016-11-01]
 
-* Added the /sign_mode option for installer to choose to install SHA1-signed or
+* Added the `/sign_mode` option for installer to choose to install SHA1-signed or
   SHA2-signed drivers.
 
-Npcap 0.10 r12 [2016-10-25]
+## Npcap 0.10 r12 [2016-10-25]
 
 * Fixed the issue that Nping shows both protocol unreachable and successful
   replies for "nping <Local IP>".
 
-Npcap 0.10 r11 [2016-10-24]
+## Npcap 0.10 r11 [2016-10-24]
 
 * Fixed the issue that Nping shows both protocol unreachable and successful
   replies for "nping 127.0.0.1".
 
-Npcap 0.10 r10 [2016-10-23]
+## Npcap 0.10 r10 [2016-10-23]
 
 * The uninstaller will not show the finish page if run with "/Q".
 
-Npcap 0.10 r9 [2016-10-17]
+## Npcap 0.10 r9 [2016-10-17]
 
 * Fixed the BSoD that happens when the OS sleeps after using Npcap Loopback
   Adapter.
 
-Npcap 0.10 r8 [2016-10-16]
+## Npcap 0.10 r8 [2016-10-16]
 
 * Improved the error messages of WlanHelper.exe.
 
-Npcap 0.10 r7 [2016-10-08]
+## Npcap 0.10 r7 [2016-10-08]
 
 * Raw 802.11 capture is provided without re-installing the driver!
 
-Npcap 0.10 r6 [2016-10-04]
+## Npcap 0.10 r6 [2016-10-04]
 
-* Fixed the BSoD that NPF_RemoveFromGroupOpenArray() referenced the freed group
+* Fixed the BSoD that `NPF_RemoveFromGroupOpenArray()` referenced the freed group
   head.
 
-Npcap 0.10 r5 [2016-10-03]
+## Npcap 0.10 r5 [2016-10-03]
 
 * Fixed the "PAGE FAULT IN NONPAGED AREA" BSoD about the group adapter removal
   reported by Pavel.
 
-Npcap 0.10 r4 [2016-10-02]
+## Npcap 0.10 r4 [2016-10-02]
 
 * Fixed some BSoDs that causes the system to halt.
 
-Npcap 0.10 r3 [2016-10-02]
+## Npcap 0.10 r3 [2016-10-02]
 
 * Now NPFInstall debug traces will be logged into
   C:\Program Files\Npcap\NPFInstall.log
 
-Npcap 0.10 r2 [2016-09-21]
+## Npcap 0.10 r2 [2016-09-21]
 
-* Fixed the BSoD that NPF_TapEx() accessed the CPU buffer of the OPEN_INSTANCE
+* Fixed the BSoD that `NPF_TapEx()` accessed the CPU buffer of the `OPEN_INSTANCE`
   that was released.
 
-Npcap 0.10 [2016-09-20]
+## Npcap 0.10 [2016-09-20]
 
-* Fixed the bug that PacketGetNetType() doesn't return the correct DLT_NULL
+* Fixed the bug that `PacketGetNetType()` doesn't return the correct `DLT_NULL`
   value on Nmap.
