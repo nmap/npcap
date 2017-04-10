@@ -319,14 +319,6 @@ typedef struct __CPU_Private_Data
 } CpuPrivateData;
 
 
-struct _OPEN_INSTANCE;
-typedef struct _OPEN_ARRAY
-{
-  unsigned int refcount;
-  unsigned int length;
-  struct _OPEN_INSTANCE *array[1];
-} OPEN_ARRAY;
-
 /*!
   \brief Contains the state of a running instance of the NPF driver.
 
@@ -351,9 +343,9 @@ typedef struct _OPEN_INSTANCE
 #endif
 
 	struct _OPEN_INSTANCE	*Next;
+	struct _OPEN_INSTANCE	*GroupNext;
 	struct _OPEN_INSTANCE	*GroupHead;
-  NDIS_SPIN_LOCK GroupLock;
-	OPEN_ARRAY *Group;
+	NDIS_SPIN_LOCK GroupLock;
 
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
