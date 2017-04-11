@@ -1143,9 +1143,9 @@ NPF_RemoveFromGroupOpenArray(
 		if (GroupOpen == Open)
 		{
 			GroupPrev->GroupNext = GroupOpen->GroupNext;
+			NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 			GroupOpen->GroupHead = NULL;
 
-			NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 			TRACE_EXIT();
 			return;
 
