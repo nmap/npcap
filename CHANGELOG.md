@@ -1,3 +1,8 @@
+## Npcap 0.85 [2017-04-10]
+
+* Fix BSOD by reverting to simpler pre-0.82 data structures but retaining the
+  spinlock improvement that was the core of that fix.
+
 ## Npcap 0.84 [2017-03-28]
 
 * Fix a failure of 64-bit Npcap when installed in Admin-Only mode.
