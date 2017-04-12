@@ -1,3 +1,7 @@
+## Npcap 0.86 [2017-04-12]
+
+* Fix BSOD introduced in 0.85; wrong driver build had been packaged. Fixes [#840](http://issues.nmap.org/840)
+
 ## Npcap 0.85 [2017-04-10]
 
 * Fix BSOD by reverting to simpler pre-0.82 data structures but retaining the
