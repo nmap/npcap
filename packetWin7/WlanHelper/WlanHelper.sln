@@ -9,6 +9,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
+		OEM Release|Win32 = OEM Release|Win32
+		OEM Release|x64 = OEM Release|x64
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
 	EndGlobalSection
@@ -17,6 +19,10 @@ Global
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug|Win32.Build.0 = Debug|Win32
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug|x64.ActiveCfg = Debug|x64
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug|x64.Build.0 = Debug|x64
+		{044CB4DC-827D-4134-B14B-DE114E884BB9}.OEM Release|Win32.ActiveCfg = OEM Release|Win32
+		{044CB4DC-827D-4134-B14B-DE114E884BB9}.OEM Release|Win32.Build.0 = OEM Release|Win32
+		{044CB4DC-827D-4134-B14B-DE114E884BB9}.OEM Release|x64.ActiveCfg = OEM Release|x64
+		{044CB4DC-827D-4134-B14B-DE114E884BB9}.OEM Release|x64.Build.0 = OEM Release|x64
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Release|Win32.ActiveCfg = Release|Win32
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Release|Win32.Build.0 = Release|Win32
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Release|x64.ActiveCfg = Release|x64

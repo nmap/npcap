@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NpcapHelper", "NpcapHelper\NpcapHelper.vcxproj", "{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NpcapHelperTest", "NpcapHelperTest\NpcapHelperTest.vcxproj", "{3F697FA8-4C35-416C-A381-2631AAB79D39}"
@@ -9,6 +11,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
+		OEM Release|Win32 = OEM Release|Win32
+		OEM Release|x64 = OEM Release|x64
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
 	EndGlobalSection
@@ -17,6 +21,10 @@ Global
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug|Win32.Build.0 = Debug|Win32
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug|x64.ActiveCfg = Debug|x64
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug|x64.Build.0 = Debug|x64
+		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.OEM Release|Win32.ActiveCfg = OEM Release|Win32
+		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.OEM Release|Win32.Build.0 = OEM Release|Win32
+		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.OEM Release|x64.ActiveCfg = OEM Release|x64
+		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.OEM Release|x64.Build.0 = OEM Release|x64
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Release|Win32.ActiveCfg = Release|Win32
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Release|Win32.Build.0 = Release|Win32
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Release|x64.ActiveCfg = Release|x64
@@ -25,6 +33,10 @@ Global
 		{3F697FA8-4C35-416C-A381-2631AAB79D39}.Debug|Win32.Build.0 = Debug|Win32
 		{3F697FA8-4C35-416C-A381-2631AAB79D39}.Debug|x64.ActiveCfg = Debug|x64
 		{3F697FA8-4C35-416C-A381-2631AAB79D39}.Debug|x64.Build.0 = Debug|x64
+		{3F697FA8-4C35-416C-A381-2631AAB79D39}.OEM Release|Win32.ActiveCfg = Release|Win32
+		{3F697FA8-4C35-416C-A381-2631AAB79D39}.OEM Release|Win32.Build.0 = Release|Win32
+		{3F697FA8-4C35-416C-A381-2631AAB79D39}.OEM Release|x64.ActiveCfg = Release|x64
+		{3F697FA8-4C35-416C-A381-2631AAB79D39}.OEM Release|x64.Build.0 = Release|x64
 		{3F697FA8-4C35-416C-A381-2631AAB79D39}.Release|Win32.ActiveCfg = Release|Win32
 		{3F697FA8-4C35-416C-A381-2631AAB79D39}.Release|Win32.Build.0 = Release|Win32
 		{3F697FA8-4C35-416C-A381-2631AAB79D39}.Release|x64.ActiveCfg = Release|x64

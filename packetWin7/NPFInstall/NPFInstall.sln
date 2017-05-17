@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NPFInstall", "NPFInstall\NPFInstall.vcxproj", "{5D8A2717-4F35-4402-B868-45612D27291B}"
 EndProject
 Global
@@ -9,6 +11,10 @@ Global
 		Debug(WinPcap Mode)|x64 = Debug(WinPcap Mode)|x64
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
+		OEM Release(WinPcap Mode)|Win32 = OEM Release(WinPcap Mode)|Win32
+		OEM Release(WinPcap Mode)|x64 = OEM Release(WinPcap Mode)|x64
+		OEM Release|Win32 = OEM Release|Win32
+		OEM Release|x64 = OEM Release|x64
 		Release(WinPcap Mode)|Win32 = Release(WinPcap Mode)|Win32
 		Release(WinPcap Mode)|x64 = Release(WinPcap Mode)|x64
 		Release|Win32 = Release|Win32
@@ -23,6 +29,14 @@ Global
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug|Win32.Build.0 = Debug|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug|x64.ActiveCfg = Debug|x64
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug|x64.Build.0 = Debug|x64
+		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release(WinPcap Mode)|Win32.ActiveCfg = OEM Release(WinPcap Mode)|Win32
+		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release(WinPcap Mode)|Win32.Build.0 = OEM Release(WinPcap Mode)|Win32
+		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release(WinPcap Mode)|x64.ActiveCfg = OEM Release(WinPcap Mode)|x64
+		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release(WinPcap Mode)|x64.Build.0 = OEM Release(WinPcap Mode)|x64
+		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release|Win32.ActiveCfg = OEM Release|Win32
+		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release|Win32.Build.0 = OEM Release|Win32
+		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release|x64.ActiveCfg = OEM Release|x64
+		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release|x64.Build.0 = OEM Release|x64
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release(WinPcap Mode)|Win32.ActiveCfg = Release(WinPcap Mode)|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release(WinPcap Mode)|Win32.Build.0 = Release(WinPcap Mode)|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release(WinPcap Mode)|x64.ActiveCfg = Release(WinPcap Mode)|x64

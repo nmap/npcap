@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Packet", "Packet.vcxproj", "{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}"
 EndProject
 Global
@@ -13,6 +15,10 @@ Global
 		Debug No NetMon|x64 = Debug No NetMon|x64
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
+		OEM Release No NetMon and AirPcap(WinPcap Mode)|Win32 = OEM Release No NetMon and AirPcap(WinPcap Mode)|Win32
+		OEM Release No NetMon and AirPcap(WinPcap Mode)|x64 = OEM Release No NetMon and AirPcap(WinPcap Mode)|x64
+		OEM Release No NetMon and AirPcap|Win32 = OEM Release No NetMon and AirPcap|Win32
+		OEM Release No NetMon and AirPcap|x64 = OEM Release No NetMon and AirPcap|x64
 		Release LOG_TO_FILE|Win32 = Release LOG_TO_FILE|Win32
 		Release LOG_TO_FILE|x64 = Release LOG_TO_FILE|x64
 		Release No NetMon and AirPcap(WinPcap Mode)|Win32 = Release No NetMon and AirPcap(WinPcap Mode)|Win32
@@ -43,6 +49,14 @@ Global
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug|Win32.Build.0 = Debug|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug|x64.ActiveCfg = Debug|x64
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug|x64.Build.0 = Debug|x64
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.OEM Release No NetMon and AirPcap(WinPcap Mode)|Win32.ActiveCfg = OEM Release No NetMon and AirPcap(WinPcap Mode)|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.OEM Release No NetMon and AirPcap(WinPcap Mode)|Win32.Build.0 = OEM Release No NetMon and AirPcap(WinPcap Mode)|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.OEM Release No NetMon and AirPcap(WinPcap Mode)|x64.ActiveCfg = OEM Release No NetMon and AirPcap(WinPcap Mode)|x64
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.OEM Release No NetMon and AirPcap(WinPcap Mode)|x64.Build.0 = OEM Release No NetMon and AirPcap(WinPcap Mode)|x64
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.OEM Release No NetMon and AirPcap|Win32.ActiveCfg = OEM Release No NetMon and AirPcap|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.OEM Release No NetMon and AirPcap|Win32.Build.0 = OEM Release No NetMon and AirPcap|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.OEM Release No NetMon and AirPcap|x64.ActiveCfg = OEM Release No NetMon and AirPcap|x64
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.OEM Release No NetMon and AirPcap|x64.Build.0 = OEM Release No NetMon and AirPcap|x64
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release LOG_TO_FILE|Win32.ActiveCfg = Release LOG_TO_FILE|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release LOG_TO_FILE|Win32.Build.0 = Release LOG_TO_FILE|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Release LOG_TO_FILE|x64.ActiveCfg = Release LOG_TO_FILE|x64
