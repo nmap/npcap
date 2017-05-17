@@ -1870,8 +1870,8 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
-  /* Lock the group */
-	NdisAcquireSpinLock(&Open->GroupLock);
+  /* No need to lock the group since we are paused. Also, can't lock because
+   * that raises IRQL and NPF_CloseOpenInstance requires PASSIVE_LEVEL */
 	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
 	{
 		NPF_CloseOpenInstance(GroupOpen);
@@ -1879,8 +1879,6 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		if (GroupOpen->ReadEvent != NULL)
 			KeSetEvent(GroupOpen->ReadEvent, 0, FALSE);
 	}
-	/* Release the spin lock no matter what. */
-	NdisReleaseSpinLock(&Open->GroupLock);
 
 	NPF_CloseBinding(Open);
 
