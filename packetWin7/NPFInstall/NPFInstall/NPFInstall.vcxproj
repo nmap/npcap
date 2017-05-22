@@ -255,7 +255,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -268,7 +268,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -284,7 +284,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -297,7 +297,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
@@ -309,7 +309,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -320,7 +320,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -334,7 +334,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OEM Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -345,7 +345,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -362,7 +362,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -373,7 +373,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -390,7 +390,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -401,7 +401,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -416,7 +416,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -429,7 +429,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -445,7 +445,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -458,7 +458,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
@@ -470,7 +470,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release(WinPcap Mode)|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -481,7 +481,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -495,7 +495,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OEM Release(WinPcap Mode)|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -506,7 +506,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -523,7 +523,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -534,7 +534,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -551,7 +551,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;NPF_NPCAP_RUN_IN_WINPCAP_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -562,7 +562,7 @@
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN7;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;Rpcrt4.lib;version.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
