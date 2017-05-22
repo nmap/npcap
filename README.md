@@ -10,8 +10,6 @@ Npcap
 
 [**Npcap**](http://www.npcap.org) is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-Weight Filter (LWF)**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx) technique. It supports **Windows Vista, 7, 8 and 10**. It is sponsored by the [**Nmap Project**](http://nmap.org/) and developed by [**Yang Luo**](http://www.veotax.com/) under [**Google Summer of Code 2013**](https://www.google-melange.com/gsoc/project/details/google/gsoc2013/hsluoyz/5727390428823552) and [**2015**](https://www.google-melange.com/gsoc/project/details/google/gsoc2015/hsluoyz/5723971634855936). It also received many helpful tests from [**Wireshark**](https://www.wireshark.org/), [**libpcap**](https://github.com/the-tcpdump-group/libpcap) and [**NetScanTools**](http://www.netscantools.com/).
 
-![Npcap Logo](installer/npcap-logo.png)
-
 ## Features
 
 1. **NDIS 6 Support**: Npcap makes use of new [NDIS 6 Light-Weight Filter (LWF)](https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx) API in Windows Vista and later (the legacy driver is used on XP). It's faster than the deprecated [NDIS 5](https://msdn.microsoft.com/en-us/library/windows/hardware/ff557012(v=vs.85).aspx) API, which Microsoft could remove at any time.
