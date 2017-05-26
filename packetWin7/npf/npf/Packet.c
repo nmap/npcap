@@ -2227,26 +2227,6 @@ NPF_IoControl(
 				{
 					Open->GroupHead->MyPacketFilter = 0;
 				}
-
-				// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
-				if (Open->GroupHead->PhysicalMedium == NdisPhysicalMediumNative802_11)
-				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %p, MyPacketFilter = %p",
-						*(ULONG*)OidData->Data, Open->GroupHead->MyPacketFilter);
-					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-
-					//
-					// Release ownership of the Ndis Handle
-					//
-					NPF_StopUsingBinding(Open->GroupHead);
-
-					ExInterlockedInsertTailList(&Open->RequestList,
-						&pRequest->ListElement,
-						&Open->RequestSpinLock);
-
-					break;
-				}
-
 #ifdef HAVE_DOT11_SUPPORT
 				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | Open->GroupHead->Dot11PacketFilter;
 #else
