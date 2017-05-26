@@ -1,3 +1,10 @@
+## Npcap 0.90 [2017-05-26]
+
+* Fix BSOD introduced in 0.85; Locking while being cleaned up is bad.
+
+* Fix WiFi interruption on Windows 7 in some circumstances, as demonstrated by
+  inability to connect when Kaspersky Internet Security is installed.
+
 ## Npcap 0.86 [2017-04-12]
 
 * Fix BSOD introduced in 0.85; wrong driver build had been packaged. Fixes [#840](http://issues.nmap.org/840)
