@@ -1947,19 +1947,20 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 											&ClonedRequest);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "FilerOidRequest: Cannot Clone Request\n");
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "FilterOidRequest: Cannot Clone Request\n");
 			break;
 		}
 
 		if (Request->RequestType == NdisRequestSetInformation && Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER)
 		{
+
 			Open->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
 #ifdef HAVE_DOT11_SUPPORT
-			combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
+			Open->LowerPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
 #else
-			combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter;
+			Open->LowerPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter;
 #endif
-			ClonedRequest->DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
+			ClonedRequest->DATA.SET_INFORMATION.InformationBuffer = &Open->LowerPacketFilter;
 		}
 
 		Context = (PFILTER_REQUEST_CONTEXT)(&ClonedRequest->SourceReserved[0]);
