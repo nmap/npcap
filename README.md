@@ -2,15 +2,13 @@ Npcap
 ==========
 
 [![Build status](https://ci.appveyor.com/api/projects/status/01yoks5rn14wgny2?svg=true)](https://ci.appveyor.com/project/hsluoyz/npcap)
-![Environment](https://img.shields.io/badge/Windows-Vista, 7, 8, 10-brightgreen.svg)
+![Environment](https://img.shields.io/badge/Windows-Vista,%207,%208,%2010-brightgreen.svg)
 [![Release](https://img.shields.io/github/release/nmap/npcap.svg)](https://github.com/nmap/npcap/releases)
 ![License](https://img.shields.io/github/license/nmap/npcap.svg)
 ![Downloads](https://img.shields.io/github/downloads/nmap/npcap/latest/total.svg)
 ![TotalDownloads](https://img.shields.io/github/downloads/nmap/npcap/total.svg)
 
 [**Npcap**](http://www.npcap.org) is an update of [**WinPcap**](http://www.winpcap.org/) to [**NDIS 6 Light-Weight Filter (LWF)**](https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx) technique. It supports **Windows Vista, 7, 8 and 10**. It is sponsored by the [**Nmap Project**](http://nmap.org/) and developed by [**Yang Luo**](http://www.veotax.com/) under [**Google Summer of Code 2013**](https://www.google-melange.com/gsoc/project/details/google/gsoc2013/hsluoyz/5727390428823552) and [**2015**](https://www.google-melange.com/gsoc/project/details/google/gsoc2015/hsluoyz/5723971634855936). It also received many helpful tests from [**Wireshark**](https://www.wireshark.org/), [**libpcap**](https://github.com/the-tcpdump-group/libpcap) and [**NetScanTools**](http://www.netscantools.com/).
-
-![Npcap Logo](installer/npcap-logo.png)
 
 ## Features
 
