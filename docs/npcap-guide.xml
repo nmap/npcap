@@ -903,6 +903,14 @@ managed
   drivers</quote>, see solution
   <ulink role="hidepdf" url="https://social.technet.microsoft.com/Forums/windows/en-US/4deb27fc-33ce-4fc0-a26f-3fec5b57733d/is-there-a-maximum-number-of-network-filter-drivers-in-windows-7?forum=w7itpronetworking">here</ulink>.
   </para></listitem>
+  <listitem><para>Npcap Loopback Adapter is missing:
+  Npcap Loopback Adapter is actually a wrapper of Microsoft Loopback Adapter.
+  Such adapters won't show up in Wireshark if the <varname>Basic Filtering Enging (BFE)</varname>
+  service was not running. To fix this issue, you should start this service at <varname>services.msc</varname>
+  manually and restart the Npcap service by running <command>net stop npcap</command>
+  and <command>net start npcap</command>. See details about this issue
+  <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues/802">here</ulink>.
+  </para></listitem>
   </itemizedlist>
 </sect1>
 
