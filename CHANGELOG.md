@@ -1,3 +1,8 @@
+## Npcap 0.91 [2017-06-06]
+
+* Fix WiFi interruption with certain hardware. This is a regression introduced
+  in Npcap 0.90, which had optimistically removed the fix from 0.10-r15.
+
 ## Npcap 0.90 [2017-05-26]
 
 * Fix BSOD introduced in 0.85; Locking while being cleaned up is bad.
