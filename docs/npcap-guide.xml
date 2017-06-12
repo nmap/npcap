@@ -682,13 +682,32 @@ managed
   <sect2 id="npcap-redistribution-options">
     <title>Installer options</title>
     <para>
-    The installer options are used when you install Npcap. They are key-value pairs. The keys can be one of these values:
-	<option>/npf_startup, /loopback_support, /dlt_null, /admin_only, /dot11_support, /vlan_support, /winpcap_mode</option>,
-	representing the options in the GUI. The values can be one of these four values: <option>yes, no, enforced, disabled</option>.
-	There are also some options that does not appear in GUI, which are: <option>/sign_mode</option>, its value can be
-	<option>sha1</option> or <option>sha2</option>. It means the signing method for the Npcap driver. By default, we install
-	SHA1 drivers on Vista, Win7, Win8, and install  SHA2 drivers on Win8, Win10. You can override this behavior by specifying this option.
-    </para>
+	    The installer options are used when you install Npcap. They are
+	    key-value pairs. The keys can be one of these values:
+	    <option>/npf_startup</option>, <option>/loopback_support</option>,
+	    <option>/dlt_null</option>, <option>/admin_only</option>,
+	    <option>/dot11_support</option>, <option>/vlan_support</option>,
+	    and <option>/winpcap_mode</option>, representing the options in the
+	    GUI.  There are also some options that does not appear in GUI,
+	    which are:</para>
+    <itemizedlist>
+	    <listitem><para><option>/sign_mode</option>, its value can be
+			    <option>sha1</option> or <option>sha2</option>. It
+			    means the signing method for the Npcap driver. By
+			    default, we install SHA1 drivers on Vista, Win7,
+			    Win8, and install  SHA2 drivers on Win8, Win10. You
+			    can override this behavior by specifying this
+			    option.
+	    </para></listitem>
+	    <listitem><para><option>/disable_restore_point</option>, when set to
+			    <option>yes</option>, will prevent the installer from setting a
+			    system restore point. Windows may independently create a
+			    restore point because of the driver installation independent
+			    from this option.
+	    </para></listitem>
+    </itemizedlist>
+    <para>The values for the other commandline options can be one of these four
+	    values:</para>
     <itemizedlist>
     <listitem><para><option>yes</option>: select the option</para></listitem>
     <listitem><para><option>no</option>: unselect the option</para></listitem>
