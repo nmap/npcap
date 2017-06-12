@@ -1,3 +1,12 @@
+## Npcap 0.92 [2017-06-12]
+
+* Force overwrite of files in installer, since uninstallers from versions
+  0.78r5 through 0.81 do not remove npcap.sys, leading to mismatched driver vs
+  DLL versions.
+
+* New installer commandline option to skip setting a restore point:
+  `/disable_restore_point=yes`
+
 ## Npcap 0.91 [2017-06-06]
 
 * Fix WiFi interruption with certain hardware. This is a regression introduced
