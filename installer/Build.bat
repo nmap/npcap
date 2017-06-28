@@ -1,4 +1,4 @@
-SET NPCAPDIR="..\npcap"
+SET NPCAPDIR=".."
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Use VS2013's MSBuild to build wpcap.dll, Packet.dll, NPFInstall.exe, NpcapHelper.exe and WlanHelper.exe
 call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat"
