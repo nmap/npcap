@@ -724,6 +724,7 @@ managed
     <listitem><para><option>/loopback_support=yes</option>: Support loopback traffic (<quote>Npcap Loopback Adapter</quote> will be created)</para></listitem>
     <listitem><para><option>/dlt_null=no</option>: Use <varname>DLT_EN10MB</varname> (Ethernet) as the
         <quote>Npcap Loopback Adapter</quote>'s link layer protocol instead of the default <varname>DLT_NULL</varname>.
+	</para></listitem>
     <listitem><para><option>/admin_only=yes</option>: Restrict Npcap driver's access to Administrators only</para></listitem>
     <listitem><para><option>/dot11_support=yes</option>: Support raw 802.11 traffic (and <quote>Monitor Mode</quote>) for wireless adapters</para></listitem>
     <listitem><para><option>/vlan_support=yes</option>: Support 802.1Q VLAN tag when capturing and sending data</para></listitem>
