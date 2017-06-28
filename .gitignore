@@ -42,13 +42,6 @@ sdv-map.h
 staticdv.job
 StaticDVTrace.log
 npcap.res
-/installer/win10/
-/installer/win10_winpcap/
-/installer/win8_below/
-/installer/win8_below_winpcap/
-/installer/disk1/
-/installer/setup.inf
-/installer/setup.rpt
 /npcap-sdk/
 /dox/prj/
 /packetWin7/Dll/Project/Debug*/
