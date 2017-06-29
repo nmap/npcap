@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Npcap Users' Guide</title><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /></head><body><div class="article"><div class="titlepage"><div><div><h1 class="title"><a id="idm140118070016096"></a>Npcap Users' Guide</h1></div></div><hr /></div><div class="toc"><p><strong>Table of Contents</strong></p><dl class="toc"><dt><span class="sect1"><a href="#npcap-overview">Npcap: Nmap Project's packet sniffing library for Windows, based on WinPcap/Libpcap improved with NDIS 6 and LWF</a></span></dt><dt><span class="sect1"><a href="#ncat-features">Features</a></span></dt><dt><span class="sect1"><a href="#npcap-architecture">Architecture</a></span></dt><dt><span class="sect1"><a href="#npcap-detect">How to detect what version Npcap/WinPcap you are using?</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-detect-version">Npcap version</a></span></dt><dt><span class="sect2"><a href="#npcap-detect-install-time">Install-time detection</a></span></dt><dt><span class="sect2"><a href="#npcap-detect-run-time">Run-time detection</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-feature-native">For software that want to use Npcap first when Npcap and WinPcap coexist</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-feature-native-dll">DLL loading</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-native-servicename">Service name</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-feature-loopback">For software that use Npcap loopback feature</a></span></dt><dt><span class="sect1"><a href="#npcap-feature-dot11">For software that use Npcap raw 802.11 feature</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-feature-dot11-steps">Steps</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-dot11-tips">Tips</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-dot11-terminology">Terminology</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-dot11-wlanhelper">WlanHelper</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-dot11-wireshark">How to use Wireshark to capture raw 802.11 traffic in <span class="quote">“<span class="quote">Monitor Mode</span>”</span></a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-get-code">Get the code</a></span></dt><dt><span class="sect1"><a href="#npcap-build">Build</a></span></dt><dt><span class="sect1"><a href="#npcap-packaging">Packaging</a></span></dt><dt><span class="sect1"><a href="#npcap-symbols">Generating debug symbols (optional)</a></span></dt><dt><span class="sect1"><a href="#npcap-redistribution">Redistribution</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-redistribution-options">Installer options</a></span></dt><dt><span class="sect2"><a href="#npcap-redistribution-uninstall-options">Uninstaller options</a></span></dt><dt><span class="sect2"><a href="#npcap-redistribution-options-disabled">Disabled and enforced options for GUI Mode</a></span></dt><dt><span class="sect2"><a href="#npcap-redistribution-options-gui">How to change options for GUI Mode</a></span></dt><dt><span class="sect2"><a href="#npcap-redistribution-options-silent">How to change options for Silent Mode</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-download">Downloads</a></span></dt><dt><span class="sect1"><a href="#npcap-development">Development</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-sdk">SDK</a></span></dt><dt><span class="sect2"><a href="#npcap-documentation">Documentation</a></span></dt><dt><span class="sect2"><a href="#npcap-examples">Examples</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-qa">Q &amp; A</a></span></dt><dt><span class="sect1"><a href="#npcap-license">License</a></span></dt><dt><span class="sect1"><a href="#npcap-issues">Bug report</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-issues-diagreport">Diagnostic report</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-installation-log">General installation log</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-driver-installation-log">Driver installation log</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-packet-log">Dynamic link library (DLL) log</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-driver-log">Driver log</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-bsod">Blue screen of death (BSoD) dump</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-list">Contact</a></span></dt></dl></div><a id="npcap-indexterm" class="indexterm"></a><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-overview"></a>Npcap: Nmap Project's packet sniffing library for Windows, based on WinPcap/Libpcap improved with NDIS 6 and LWF</h2></div></div></div><p>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Npcap Users' Guide</title><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /></head><body><div class="article"><div class="titlepage"><div><div><h1 class="title"><a id="idm46174043312720"></a>Npcap Users' Guide</h1></div></div><hr /></div><div class="toc"><p><strong>Table of Contents</strong></p><dl class="toc"><dt><span class="sect1"><a href="#npcap-overview">Npcap: Nmap Project's packet sniffing library for Windows</a></span></dt><dt><span class="sect1"><a href="#npcap-features">Features</a></span></dt><dt><span class="sect1"><a href="#npcap-architecture">Architecture</a></span></dt><dt><span class="sect1"><a href="#npcap-detect">How to detect what version Npcap/WinPcap you are using?</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-detect-version">Npcap version</a></span></dt><dt><span class="sect2"><a href="#npcap-detect-install-time">Install-time detection</a></span></dt><dt><span class="sect2"><a href="#npcap-detect-run-time">Run-time detection</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-feature-native">For software that want to use Npcap first when Npcap and WinPcap coexist</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-feature-native-dll">DLL loading</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-native-servicename">Service name</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-feature-loopback">For software that uses Npcap loopback feature</a></span></dt><dt><span class="sect1"><a href="#npcap-feature-dot11">For software that uses Npcap raw 802.11 feature</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-feature-dot11-steps">Steps</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-dot11-tips">Tips</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-dot11-terminology">Terminology</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-dot11-wlanhelper">WlanHelper</a></span></dt><dt><span class="sect2"><a href="#npcap-feature-dot11-wireshark">How to use Wireshark to capture raw 802.11 traffic in <span class="quote">“<span class="quote">Monitor Mode</span>”</span></a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-get-code">Get the code</a></span></dt><dt><span class="sect1"><a href="#npcap-build">Build</a></span></dt><dt><span class="sect1"><a href="#npcap-packaging">Packaging</a></span></dt><dt><span class="sect1"><a href="#npcap-symbols">Generating debug symbols (optional)</a></span></dt><dt><span class="sect1"><a href="#npcap-installation">Installation</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-installation-options">Installer options</a></span></dt><dt><span class="sect2"><a href="#npcap-installation-uninstall-options">Uninstaller options</a></span></dt><dt><span class="sect2"><a href="#npcap-installation-options-disabled">Disabled and enforced options for GUI Mode</a></span></dt><dt><span class="sect2"><a href="#npcap-installation-options-gui">How to change options for GUI Mode</a></span></dt><dt><span class="sect2"><a href="#npcap-installation-options-silent">How to change options for Silent Mode</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-download">Downloads</a></span></dt><dt><span class="sect1"><a href="#npcap-development">Development</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-sdk">SDK</a></span></dt><dt><span class="sect2"><a href="#npcap-documentation">Documentation</a></span></dt><dt><span class="sect2"><a href="#npcap-examples">Examples</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-qa">Q &amp; A</a></span></dt><dt><span class="sect1"><a href="#npcap-license">License</a></span></dt><dt><span class="sect1"><a href="#npcap-issues">Reporting Bugs</a></span></dt><dd><dl><dt><span class="sect2"><a href="#npcap-issues-diagreport">Diagnostic report</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-installation-log">General installation log</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-driver-installation-log">Driver installation log</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-packet-log">Dynamic link library (DLL) log</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-driver-log">Driver log</a></span></dt><dt><span class="sect2"><a href="#npcap-issues-bsod">Blue screen of death (BSoD) dump</a></span></dt></dl></dd><dt><span class="sect1"><a href="#npcap-list">Contact</a></span></dt></dl></div><a id="npcap-indexterm" class="indexterm"></a><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-overview"></a>Npcap: Nmap Project's packet sniffing library for Windows</h2></div></div></div><p>
   Npcap is an update of <a class="ulink" href="http://www.winpcap.org/" target="_top">WinPcap</a>
-  to <a class="ulink" href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx" target="_top">NDIS 6 Light-Weight Filter (LWF)</a> technique.
+  to the <a class="ulink" href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx" target="_top">NDIS 6 Light-Weight Filter (LWF)</a> API.
   It supports <span class="command"><strong>Windows Vista, 7, 8 and 10</strong></span>. It is sponsored
   by the <a class="ulink" href="http://nmap.org/" target="_top">Nmap Project</a>
-  and developed by <a class="ulink" href="http://www.veotax.com/" target="_top">Yang Luo</a>
+  and developed by Yang Luo
   under <a class="ulink" href="https://www.google-melange.com/gsoc/project/details/google/gsoc2013/hsluoyz/5727390428823552" target="_top">Google Summer of Code 2013</a> and
   <a class="ulink" href="https://www.google-melange.com/gsoc/project/details/google/gsoc2015/hsluoyz/5723971634855936" target="_top">2015</a>.
   It also received many helpful tests from <a class="ulink" href="https://www.wireshark.org/" target="_top">Wireshark</a>
   and <a class="ulink" href="http://www.netscantools.com/" target="_top">NetScanTools</a>.
-  </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="ncat-features"></a>Features</h2></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><span class="emphasis"><em>NDIS 6 Support</em></span>: Npcap makes use of new LWF driver in
-  Windows Vista and later (the legacy driver is used on XP). It's faster
+  </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-features"></a>Features</h2></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><span class="emphasis"><em>NDIS 6 Support</em></span>: Npcap makes use of new LWF driver in
+  Windows Vista and later. It's faster
   than the legacy <a class="ulink" href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff557012(v=vs.85).aspx" target="_top">NDIS 5 Intermediate</a>
   technique. One reason is that
   packet data stucture has changed (from <code class="varname">NDIS_PACKET</code> to <code class="varname">NET_BUFFER_LIST</code>)
   since Vista and NDIS 5 needs to handle extra packet structure conversion.</p></li><li class="listitem"><p><span class="emphasis"><em>Latest libpcap API Support</em></span>: Npcap provides support
   for the latest <a class="ulink" href="https://github.com/the-tcpdump-group/libpcap" target="_top">libpcap API</a>
   by accepting libpcap as a <a class="ulink" href="https://git-scm.com/docs/git-submodule" target="_top">Git submodule</a>.
-  The latest libpcap 1.8.0 has integrated more fascinating features and functions than the
+  The latest libpcap 1.8 has integrated more fascinating features and functions than the
   <a class="ulink" href="https://www.winpcap.org/misc/changelog.htm" target="_top">deprecated libpcap 1.0.0 shipped by WinPcap</a>.
   Moreover, since Linux already has a good support for latest libpcap API, using
   Npcap on Windows facilitates your software to base on the same API on both Windows and Linux.</p></li><li class="listitem"><p><span class="emphasis"><em><span class="quote">“<span class="quote">Admin-only Mode</span>”</span> Support</em></span>: Npcap supports to restrict its
@@ -27,40 +27,22 @@
   the <a class="ulink" href="http://windows.microsoft.com/en-us/windows/what-is-user-account-control#1TC=windows-7" target="_top">User Account Control (UAC)</a>
   dialog will prompt asking for Administrator privilege. Only when the end
   user chooses Yes, the driver can be accessed. This is similar to UNIX
-  where you need root access to capture packets.</p></li><li class="listitem"><p><span class="emphasis"><em><span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>
-  Support</em></span>: <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span> is used to decide whether Npcap should coexist With WinPcap or
-  be compatible with WinPcap. With <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span> OFF, Npcap
-  can coexist with WinPcap and share the DLL binary interface with WinPcap.
-  So the applications unaware of Npcap <span class="emphasis"><em>SHOULD</em></span> be able to use Npcap
-  automatically if WinPcap is unavailable. The applications who knows
-  Npcap's existence can choose to use Npcap or WinPcap first. The key
-  about which is loaded first is DLL Search Path. With <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span> OFF, Npcap installs its DLLs into <code class="filename">C:\Windows\System32\Npcap\</code>
-  instead of WinPcap's <code class="filename">C:\Windows\System32\</code>. So applications who want
-  to load Npcap first must make <code class="filename">C:\Windows\System32\Npcap\</code> precedent
-  to other paths in ways such as calling <code class="function">SetDllDirectory</code>, etc. Another
-  point is Npcap uses service name <span class="quote">“<span class="quote">npcap</span>”</span> instead of WinPcap's <span class="quote">“<span class="quote">npf</span>”</span> with
-  <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span> OFF. So applications using <span class="command"><strong>net start npf</strong></span>
-  for starting service must use <span class="command"><strong>net start npcap</strong></span> instead. If you want
-  100% compatibility with WinPcap, you should install Npcap choosing
-  <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span> (<span class="quote">“<span class="quote">Install Npcap in WinPcap API-compatible Mode</span>”</span>).
-  In this mode, Npcap will install its Dlls in WinPcap's <code class="filename">C:\Windows\System32\</code>
-  and use the <span class="quote">“<span class="quote">npf</span>”</span> service name. It's notable that before installing in
-  this mode, you must uninstall WinPcap first (the installer wizard will
-  prompt you that).</p></li><li class="listitem"><p><span class="emphasis"><em>Loopback Packets Capture Support</em></span>: Now Npcap is able to
-  see Windows loopback packets using <a class="ulink" href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa366510(v=vs.85).aspx" target="_top">Windows Filtering Platform (WFP)</a>
-  technique. After installation, Npcap will create an adapter named <span class="quote">“<span class="quote">Npcap
+  where you need root access to capture packets.</p></li><li class="listitem"><p><span class="emphasis"><em>Loopback Packet Capture</em></span>: Npcap is able to
+  see Windows loopback packets using the
+  <a class="ulink" href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa366510(v=vs.85).aspx" target="_top">
+  Windows Filtering Platform (WFP)</a>. After installation, Npcap will create an
+  adapter named <span class="quote">“<span class="quote">Npcap
   Loopback Adapter</span>”</span> for you. If you are a Wireshark user, choose this adapter
   to capture, you will see all loopback traffic the same way as other
   non-loopback adapters. Try it by typing in commands like <span class="command"><strong>ping 127.0.0.1</strong></span>
-  (IPv4) or <span class="command"><strong>ping ::1</strong></span> (IPv6).</p></li><li class="listitem"><p><span class="emphasis"><em>Loopback Packets Send Support</em></span>: Besides loopback packets
-  capturing, Npcap can also send out loopback packets based on
+  (IPv4) or <span class="command"><strong>ping ::1</strong></span> (IPv6).</p></li><li class="listitem"><p><span class="emphasis"><em>Loopback Packets Injection</em></span>: Besides loopback packets
+  capturing, Npcap can also send out loopback packets using the
   <a class="ulink" href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff556958(v=vs.85).aspx" target="_top">Winsock Kernel (WSK)</a>
   technique. A user software (e.g. Nmap) can just send packets
   out using <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> like other adapters.
   <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span>
   will automatically remove the packet's Ethernet header and
-  inject the payload into Windows TCP/IP stack, so this kind of loopback
-  packet never go out of the machine.</p></li><li class="listitem"><p><span class="emphasis"><em>Raw 802.11 Packets Capture Support</em></span>: Npcap is able to see
+  inject the payload into Windows TCP/IP stack.</p></li><li class="listitem"><p><span class="emphasis"><em>Raw 802.11 Packets Capture Support</em></span>: Npcap is able to see
   <span class="emphasis"><em>802.11</em></span> packets instead of <span class="emphasis"><em>fake Ethernet</em></span> packets on ordinary wireless
   adapters. You need to select the <code class="option">Support raw 802.11 traffic (and monitor
   mode) for wireless adapters</code> option in the installation wizard to enable
@@ -70,48 +52,45 @@
   packets. Npcap directly supports to use Wireshark to capture in <span class="quote">“<span class="quote">Monitor Mode</span>”</span>.
   Meantime, Npcap also provides the <code class="filename">WlanHelper.exe</code>
   tool to help you switch to <span class="quote">“<span class="quote">Monitor Mode</span>”</span> on your own. See more details
-  about this feature in section <span class="quote">“<span class="quote">For software that use Npcap raw 802.11
-  feature</span>”</span>. See more details about radiotap here:
-  <a class="ulink" href="http://www.radiotap.org/" target="_top">http://www.radiotap.org/</a></p></li></ul></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-architecture"></a>Architecture</h2></div></div></div><p>
-  Npcap tries to <span class="emphasis"><em>keep the original WinPcap architecture as much as possible</em></span>.
+  about this feature in section
+  <span class="quote">“<span class="quote"><a class="link" href="#npcap-feature-dot11" title="For software that uses Npcap raw 802.11 feature">For software that uses Npcap raw 802.11 feature</a></span>”</span>.
+  See more details about radiotap here:
+  <a class="ulink" href="http://www.radiotap.org/" target="_top">http://www.radiotap.org/</a></p></li><li class="listitem"><p><span class="emphasis"><em><span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>
+  Support</em></span>: <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span> makes Npcap a
+  strict WinPcap replacement by using the same DLL location and service name as
+  WinPcap. This is useful for testing or migrating from software that only uses
+  WinPcap, but because Npcap is masquerading as WinPcap, software will not be
+  able to be aware of and use Npcap's newer features.  It's notable that before
+  installing in
+  this mode, you must uninstall WinPcap first (the installer wizard will
+  prompt you that).</p></li></ul></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-architecture"></a>Architecture</h2></div></div></div><p>
+  Npcap tries to keep the original WinPcap architecture as much as possible.
   As the table shows, you will find it very similar with WinPcap.
-  </p><div class="table"><a id="idm140118068459296"></a><p class="title"><strong>Table 1. Npcap Architecture</strong></p><div class="table-contents"><table class="table" summary="Npcap Architecture" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th align="left">Binary</th><th align="left">Source</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">wpcap.dll</td><td align="left">wpcap</td><td align="left">the libpcap API, added "loopback support" to original WinPcap</td></tr><tr><td align="left">Packet.dll</td><td align="left">packetWin7\Dll</td><td align="left">the Packet API for Windows, added "Admin-only Mode" to original WinPcap</td></tr><tr><td align="left"><em class="replaceable"><code>npf</code></em>.sys (or <em class="replaceable"><code>npcap</code></em>.sys)</td><td align="left">packetWin7\npf</td><td align="left">the driver, ported from NDIS 5 to NDIS 6, we support two names: <em class="replaceable"><code>npf</code></em> or <em class="replaceable"><code>npcap</code></em>, based on whether Npcap is installed in <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span></td></tr><tr><td align="left">NPFInstall.exe</td><td align="left">packetWin7\NPFInstall</td><td align="left">a LWF &amp; WFP driver installation tool we added to Npcap</td></tr><tr><td align="left">NpcapHelper.exe</td><td align="left">packetWin7\Helper</td><td align="left">the helper program for <span class="quote">“<span class="quote">Admin-only Mode</span>”</span>, will run under <span class="emphasis"><em>Administrator</em></span> rights</td></tr><tr><td align="left">WlanHelper.exe</td><td align="left">packetWin7\WlanHelper</td><td align="left">a tool is used to set/get the operation mode (like <span class="quote">“<span class="quote">Monitor Mode</span>”</span>) for a wireless adapter, will run under <span class="emphasis"><em>Administrator</em></span> rights</td></tr></tbody></table></div></div><br class="table-break" /></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-detect"></a>How to detect what version Npcap/WinPcap you are using?</h2></div></div></div><p>
-  Sometimes, our user software needs to detect the existence of Npcap/WinPcap at install-time or run-time. Although Npcap's GUI installer has the ability to handle this, you may want to handle it by yourself in some conditions, like you run Npcap installer in silent-mode.
-  The run-time detection is even more useful. Your software probably has some functions that rely on Npcap's particular features (like the loopback interface). You need to know if you are running on top of Npcap or the legacy WinPcap to control whether to switch your functions on.
-  Fortunately, Npcap provides you some methods to detect Npcap/WinPcap at install-time and run-time.
-  </p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-detect-version"></a>Npcap version</h3></div></div></div><p>
-    You may notice that Npcap has several version strings. The installer name can be something
-	like <code class="filename">npcap-0.07-r5.exe</code>. <span class="quote">“<span class="quote">0.07</span>”</span> is the version number, and
-	<span class="quote">“<span class="quote">r5</span>”</span> is the revision number. We use a version number less than <span class="quote">“<span class="quote">1.00</span>”</span>
-	to imply that it's still a beta release. This naming follows the Nmap's convension. However,
-	WinPcap follows a different version system. It has three dotted figures like <span class="quote">“<span class="quote">4.1.3</span>”</span>,
-	which is more Wireshark-like. One thing you need to know here is that Npcap starts the
-	development based on the latest WinPcap <span class="quote">“<span class="quote">4.1.3</span>”</span>. So any Npcap release is more
-	<span class="emphasis"><em>advanced</em></span> than WinPcap's latest release. Another thing needs to notice is
-	that, the <span class="quote">“<span class="quote">0.07</span>”</span> version number can be obtained from the
-	<code class="function">pcap_lib_version</code> function. The <span class="quote">“<span class="quote">r5</span>”</span> revision number
-	<span class="emphasis"><em>only</em></span> appears in the installer filename, it doesn't show its existence
-	in any code or functions. So you'd better not determine anything based on Npcap revision
-	number. Just use the latest release.
-    </p><p>
-    The executable file version (aka e-version in this document) is another thing we need to notice.
-	A e-version has four dotted figures on Windows. Npcap's e-version is something like
-	<span class="quote">“<span class="quote">5.0.7.424</span>”</span>. <span class="quote">“<span class="quote">5</span>”</span> here is used to advance Npcap version than the legacy
-	WinPcap's e-version <span class="quote">“<span class="quote">4.1.0.2980</span>”</span> because <span class="quote">“<span class="quote">5.0.7.424</span>”</span> is larger than
-	<span class="quote">“<span class="quote">4.1.0.2980</span>”</span>. The legacy WinPcap installer and Wireshark uses e-version to check
-	the version of WinPcap. Usually these legacy codes don't even know Npcap. So Npcap needs to
-	make them simply think Npcap is a newer version of WinPcap. <span class="quote">“<span class="quote">0</span>”</span> and <span class="quote">“<span class="quote">7</span>”</span>
-	in Npcap's e-version corresponds to Npcap's version <span class="quote">“<span class="quote">0.07</span>”</span>. <span class="quote">“<span class="quote">424</span>”</span> means
-	that this release is built at date <span class="quote">“<span class="quote">4.24</span>”</span> (aka 24th, April). When Npcap version jumps
-	to a new version (like from <span class="quote">“<span class="quote">0.06</span>”</span> to <span class="quote">“<span class="quote">0.07</span>”</span>), the e-version will also
-	change (like from <span class="quote">“<span class="quote">0.6.0.301</span>”</span> to <span class="quote">“<span class="quote">0.7.0.424</span>”</span>). A revision update won't
-	cause a change of version or e-version.
-    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-detect-install-time"></a>Install-time detection</h3></div></div></div><p>
-    You can check the existence of <code class="filename">C:\Program Files\Npcap\NPFInstall.exe</code> to
-	detect Npcap's existence. If Npcap exists, you can check the file version of
-	<code class="filename">C:\Program Files\Npcap\NPFInstall.exe</code> to detect Npcap e-version. The
-	e-version also gives you the version. The NSIS code is shown below. <code class="varname">$inst_ver</code>
-	is an e-version string like <span class="quote">“<span class="quote">5.0.7.424</span>”</span>
+  </p><div class="table"><a id="idm46174038998128"></a><p class="title"><strong>Table 1. Npcap Architecture</strong></p><div class="table-contents"><table summary="Npcap Architecture" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th align="left">Binary</th><th align="left">Source</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">wpcap.dll</td><td align="left">wpcap</td><td align="left">the libpcap API, added "loopback support" to original WinPcap</td></tr><tr><td align="left">Packet.dll</td><td align="left">packetWin7\Dll</td><td align="left">the Packet API for Windows, added "Admin-only Mode" to original WinPcap</td></tr><tr><td align="left">npcap.sys</td><td align="left">packetWin7\npf</td><td align="left">the filter driver. If Npcap is installed in <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>, the driver name is <em class="replaceable"><code>npf</code></em>.sys</td></tr><tr><td align="left">NPFInstall.exe</td><td align="left">packetWin7\NPFInstall</td><td align="left">a LWF and WFP driver installation tool</td></tr><tr><td align="left">NpcapHelper.exe</td><td align="left">packetWin7\Helper</td><td align="left">the helper program for <span class="quote">“<span class="quote">Admin-only Mode</span>”</span>, will run under <span class="emphasis"><em>Administrator</em></span> rights</td></tr><tr><td align="left">WlanHelper.exe</td><td align="left">packetWin7\WlanHelper</td><td align="left">a tool is used to set/get the operation mode (like <span class="quote">“<span class="quote">Monitor Mode</span>”</span>) for a wireless adapter, will run under <span class="emphasis"><em>Administrator</em></span> rights</td></tr></tbody></table></div></div><br class="table-break" /></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-detect"></a>How to detect what version Npcap/WinPcap you are using?</h2></div></div></div><p>
+  Sometimes, our user software needs to detect the existence of Npcap/WinPcap
+  at install-time or run-time. Although Npcap's GUI installer has the ability
+  to handle this, you may want to handle it by yourself in some conditions,
+  like you run Npcap installer in silent-mode.  The run-time detection is even
+  more useful. Your software probably has some functions that rely on Npcap's
+  particular features (like the loopback interface). You need to know if you
+  are running on top of Npcap or the legacy WinPcap to control whether to
+  switch your functions on.  Fortunately, Npcap provides you some methods to
+  detect Npcap/WinPcap at install-time and run-time.
+  </p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-detect-version"></a>Npcap version</h3></div></div></div><p> Npcap has a version number that is independent of WinPcap. The last
+      release of WinPcap was version 4.1.3, but Npcap started over counting
+      versions from 0.00. In order to make it clear to the installers and other
+      software that Npcap is newer and more advanced, the executable
+      <span class="quote">“<span class="quote">file version</span>”</span> was advanced to <span class="quote">“<span class="quote">5.0.0.000</span>”</span> at
+      that point. The major version will always be <span class="quote">“<span class="quote">5</span>”</span> to
+      distinguish Npcap from WinPcap. The minor version is Npcap's major
+      version; the revision is Npcap's minor version; and the build number is
+      an encoding of the build date. So a file version of
+      <span class="quote">“<span class="quote">5.0.92.612</span>”</span> is Npcap 0.92, built on June 12th.</p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-detect-install-time"></a>Install-time detection</h3></div></div></div><p>
+      You can check the existence of <code class="filename">C:\Program Files\Npcap\NPFInstall.exe</code> to
+      detect Npcap's existence. If Npcap exists, you can check the file version of
+      <code class="filename">C:\Program Files\Npcap\NPFInstall.exe</code> to detect Npcap e-version. The
+      e-version also gives you the version. The NSIS code is shown below. <code class="varname">$inst_ver</code>
+      is an e-version string like <span class="quote">“<span class="quote">5.0.7.424</span>”</span>
     </p><pre class="screen">
 GetDllVersion "C:\Program Files\Npcap\NPFInstall.exe" $R0 $R1
 IntOp $R2 $R0 / 0x00010000
@@ -120,35 +99,31 @@ IntOp $R4 $R1 / 0x00010000
 IntOp $R5 $R1 &amp; 0x0000FFFF
 StrCpy $inst_ver "$R2.$R3.$R4.$R5"
 </pre><p>
-    You can check the installation options of an already installed Npcap by reading the registry
-	key: <code class="filename">HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npf</code>
-	(WinPcap compatible mode) or <code class="filename">HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap</code>
-	(Non-WinPcap compatible mode). the entries like <code class="filename">AdminOnly</code>,
-	<code class="filename">Loopback</code>, <code class="filename">DltNull</code>,<code class="filename">Dot11Support</code>,
-	<code class="filename">VlanSupport</code>, <code class="filename">WinPcapCompatible</code>, etc. show the installation options.
-	<code class="filename">Loopback</code> is <code class="code">REG_SZ</code> type. A non-NULL value indicates the option is
-	<span class="emphasis"><em>CHECKED</em></span>. All other entries are <code class="code">REG_DWORD</code> type. A 0x00000001 value
-	indicates the option is <span class="emphasis"><em>CHECKED</em></span>.
+      You can check the installation options of an already installed Npcap by reading the registry
+      key: <code class="filename">HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap</code>.
+      The entries like <code class="filename">AdminOnly</code>,
+      <code class="filename">Loopback</code>, <code class="filename">DltNull</code>,<code class="filename">Dot11Support</code>,
+      <code class="filename">VlanSupport</code>, <code class="filename">WinPcapCompatible</code>, etc. show the installation options.
+      <code class="filename">Loopback</code> is <code class="code">REG_SZ</code> type. A non-NULL value indicates the option is
+      <span class="emphasis"><em>CHECKED</em></span>. All other entries are <code class="code">REG_DWORD</code> type. A 0x00000001 value
+      indicates the option is <span class="emphasis"><em>CHECKED</em></span>.
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-detect-run-time"></a>Run-time detection</h3></div></div></div><p>
-    Npcap and WinPcap can be installed together on a symtem. Which capture library is used by the
-	user software relies on the DLL loading path. If Npcap's <code class="filename">wpcap.dll</code> is loaded first, then you
-	are using Npcap, vice versa. However, it's difficult and fragile to check the DLL loading path by yourself.
-  Fortunately, you can use <code class="function">pcap_lib_version</code> to get the Npcap/WinPcap version string.
+      Npcap and WinPcap can be installed together on a system. Which capture
+      library is used by the user software relies on the DLL loading path. If
+      Npcap's <code class="filename">wpcap.dll</code> is loaded first, then you are using
+      Npcap, vice versa. However, it's difficult and fragile to check the DLL
+      loading path by yourself.  Fortunately, you can use
+      <code class="function">pcap_lib_version</code> to get the Npcap/WinPcap version
+      string.
   </p><pre class="screen">
 char *pcap_version = pcap_lib_version();
 printf("%s", pcap_version);
-// Npcap output: "Npcap version 0.08, based on libpcap version 1.8.0"
+// Npcap output: "Npcap version 0.92, based on libpcap version 1.8.1"
 // WinPcap output: "WinPcap version 4.1.3"
-</pre><p>Considering Npcap has different driver service names for different modes, we provide a
-  way to get the current service name. You can query the registry key:
-  <code class="filename">HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Npcap\WinPcapCompatible</code> for x64
-  systems (or <code class="filename">HKEY_LOCAL_MACHINE\SOFTWARE\Npcap\WinPcapCompatible</code> for x86
-  systems). If it's 1, it means Npcap is installed in <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>. In this mode both
-  <code class="varname">npcap</code> and <code class="varname">npf</code> services (drivers) are installed. If
-  the key value is 0, it means Npcap is installed in <span class="quote">“<span class="quote">Non-WinPcap Compatible Mode</span>”</span>.
-  In this mode only <code class="varname">npcap</code> service (driver) is installed. We
-  <span class="emphasis"><em>recommend</em></span> our users to use the <code class="varname">npcap</code> service instead
-  of <code class="varname">npf</code>. Given that <code class="varname">npcap</code> service is always installed
+</pre><p>Npcap requires the <code class="varname">npcap</code> service to be running. If
+  installed in <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>, the
+  <code class="varname">npf</code> service can be started instead.  Given that
+  <code class="varname">npcap</code> service is always installed
   in both modes, a good practice is just trying the <code class="varname">npcap</code> service first.
   If it fails, then try the <code class="varname">npf</code> service. This is also what most of our users
   do in their software based on our investigation. A code sample from Nmap is
@@ -157,16 +132,16 @@ printf("%s", pcap_version);
   Prerequisite: Uncheck the <code class="option">Install Npcap in WinPcap API-compatible Mode</code> option at
   install-time (which is by default).
   </p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-feature-native-dll"></a>DLL loading</h3></div></div></div><p>Npcap installs its DLLs into <code class="filename">C:\Windows\System32\Npcap\</code>
-    instead of WinPcap's <code class="filename">C:\Windows\System32\</code>. Based on the design
-    of <a class="ulink" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms686203(v=vs.85).aspx" target="_top">DLL search path</a>,
+    instead of WinPcap's <code class="filename">C:\Windows\System32\</code>. Because of how Windows'
+    <a class="ulink" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms686203(v=vs.85).aspx" target="_top">DLL search path</a> works,
     your application will use WinPcap first by default when Npcap and WinPcap coexist,
     as <code class="filename">C:\Windows\System32\</code> is prior to <code class="filename">C:\Windows\System32\Npcap\</code>.
     So when Npcap and WinPcap coexist, an application that want to use Npcap instead
     of WinPcap must make <code class="filename">C:\Windows\System32\Npcap\</code> precedent to the
-    <code class="filename">C:\Windows\System32\</code> in Dll search path. here we provide ways
-    to modify this search path to make your application load Npcap's DLLs first.
-    Here are two conditions based on how your application links Npcap/WinPcap's library
-    (<code class="filename">wpcap.dll</code>).</p><div class="sect3"><div class="titlepage"><div><div><h4 class="title"><a id="npcap-feature-native-dll-implicitly"></a>If the application <span class="emphasis"><em>implicitly</em></span> link <code class="filename">wpcap.dll</code>:</h4></div></div></div><p>Implicitly linking means that either you specified <code class="filename">wpcap.lib</code>
+    <code class="filename">C:\Windows\System32\</code> in the DLL search path. Here are two ways
+    to modify this search path to make your application load Npcap's DLLs first,
+    based on how your application links Npcap/WinPcap's library
+    (<code class="filename">wpcap.dll</code>).</p><div class="sect3"><div class="titlepage"><div><div><h4 class="title"><a id="npcap-feature-native-dll-implicitly"></a>If the application <span class="emphasis"><em>implicitly</em></span> links <code class="filename">wpcap.dll</code></h4></div></div></div><p>Implicit linking means that either you specified <code class="filename">wpcap.lib</code>
       in your <code class="option">Project Properties</code> -&gt; <code class="option">Configuration Properties</code>
       -&gt; <code class="option">Linker</code> -&gt; <code class="option">Input</code> -&gt; <code class="option">Additional Dependencies</code> in Visual Studio,
       or specified <code class="code">#pragma comment(linker, "wpcap.lib")</code> in your code.</p><p>You need to do the following two steps:</p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>Specify <code class="filename">wpcap.dll</code> as a delay-loaded DLL: In
@@ -176,23 +151,24 @@ printf("%s", pcap_version);
       in that option.</p></li><li class="listitem"><p>Before calling any <code class="filename">wpcap.dll</code> functions,
       call <code class="function">SetDllDirectory</code> to add <code class="filename">C:\Windows\System32\Npcap\</code>
       to DLL search path.</p></li></ul></div><p><a class="ulink" href="https://github.com/hsluoyz/WinDump/" target="_top">Here</a>
-      is an example called WinDump, it's a simple packet capture tool using Npcap/WinPcap.
+      is an example called WinDump, a simple packet capture tool using Npcap/WinPcap.
       And <a class="ulink" href="https://github.com/hsluoyz/WinDump/commit/dffe2eaa520fc3b449ec0a90dcfa24f96359bbfa" target="_top">this commit</a>
-      makes it able to use Npcap first when Npcap and WinPcap coexist.</p></div><div class="sect3"><div class="titlepage"><div><div><h4 class="title"><a id="npcap-feature-native-dll-explicitly"></a>If the application <span class="emphasis"><em>explicitly</em></span> link <code class="filename">wpcap.dll</code>:</h4></div></div></div><p>Explicitly linking means that you exlicitly called <code class="function">LoadLibrary</code>
+      makes it able to use Npcap first when Npcap and WinPcap coexist.</p></div><div class="sect3"><div class="titlepage"><div><div><h4 class="title"><a id="npcap-feature-native-dll-explicitly"></a>If the application <span class="emphasis"><em>explicitly</em></span> links <code class="filename">wpcap.dll</code></h4></div></div></div><p>Explicit linking means that you explicitly called <code class="function">LoadLibrary</code>
       to load <code class="filename">wpcap.dll</code> and called <code class="function">GetProcAddress</code> to get the
       function pointers.</p><p>You need to do the following one step:</p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>Before calling <code class="function">LoadLibrary</code> to load <code class="filename">wpcap.dll</code>,
       call <code class="function">SetDllDirectory</code> to add <code class="filename">C:\Windows\System32\Npcap\</code>
       to DLL search path.</p></li></ul></div><p>The function <code class="function">init_npcap_dll_path</code> is provided in the following example:
       <a class="ulink" href="https://github.com/hsluoyz/WinDump/commit/dffe2eaa520fc3b449ec0a90dcfa24f96359bbfa" target="_top">WinDump</a></p></div></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-feature-native-servicename"></a>Service name</h3></div></div></div><p>Npcap uses service name <span class="quote">“<span class="quote">npcap</span>”</span> instead of WinPcap's <span class="quote">“<span class="quote">npf</span>”</span> with
-    <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span> OFF. So applications using <span class="command"><strong>net start npf</strong></span>
-    for starting service must change to this: run <span class="command"><strong>net start npcap</strong></span> first, if it
-	fails, then try <span class="command"><strong>net start npf</strong></span>.</p></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-feature-loopback"></a>For software that use Npcap loopback feature</h2></div></div></div><p>
+    <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span> OFF. So applications using
+    <span class="command"><strong>net start npf</strong></span> for starting service must change to this:
+    run <span class="command"><strong>net start npcap</strong></span> first, if it fails, then try
+    <span class="command"><strong>net start npf</strong></span>.</p></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-feature-loopback"></a>For software that uses Npcap loopback feature</h2></div></div></div><p>
   Prerequisite: Check the <code class="option">Support loopback traffic ("Npcap Loopback Adapter" will be created)</code> option at install-time.
   </p><p>
   Npcap's loopback adapter device is based on <span class="quote">“<span class="quote">Microsoft KM-TEST Loopback Adapter</span>”</span>
   (Win8 and Win10) or <span class="quote">“<span class="quote">Microsoft Loopback Adapter</span>”</span> (Vista, Win7). It is an Ethernet
-  adapter, and Npcap has changed its behavior and rename it to <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span>,
-  to make it see the real loopback traffic only. The traffic captured by original WinPcap will not appear here.
+  adapter, and Npcap has changed its behavior and renamed it to <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span>,
+  to make it see the real loopback traffic only.
   </p><p>
   The IP address of <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> is usually like 169.254.x.x. However,
   this IP is totally meaningless. Software using Npcap should regard this interface's IP address
@@ -207,11 +183,12 @@ printf("%s", pcap_version);
   will be ignored. But notice that ether_type in Ethernet header should be set correctly. Only <code class="option">IPv4</code>
   and <code class="option">IPv6</code> are accepted. Other values like <code class="option">ARP</code> will be ignored. (You don't need an ARP request for
   loopback interface)
+  
   </p><p>
   The MTU of <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> is hard-coded to 65536 by Npcap. Software
   using Npcap should get this value automatically and no special handling is needed. This value is
-  determined personally by me and doesn't mean Windows loopback stack can only support packet size
-  as large as 65536. So don't feel weird if you have captured packets whose size are larger than it.
+  arbitrary and does not imply a limitation on the Windows loopback stack,
+  so it may be possible to capture packets with a size larger than the adapter's MTU.
   </p><p>
   Don't try to make OID requests to <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> except
   <code class="varname">OID_GEN_MAXIMUM_TOTAL_SIZE</code> (MTU). Those requests will still succeed like
@@ -222,76 +199,108 @@ printf("%s", pcap_version);
   </p><p>
   To conclude, a software that wants to support Npcap loopback feature should do these steps:
   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>Detect Npcap Loopback Adapter's presence, by reading registry value Loopback
-  at key <code class="filename">HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\<em class="replaceable"><code>npf</code></em></code>
-  (or <em class="replaceable"><code>npcap</code></em> if you installed Npcap With <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>
-  OFF). If <code class="filename">Loopback value</code> exsits, it means <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> is OK.
+  at key <code class="filename">HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap</code>.
+  If <code class="filename">LoopbackSupport</code> is 0x00000001, then the adapter's device name is in the <code class="filename">LoopbackAdapter</code> REG_SZ value.
   Then perform the following steps.</p></li><li class="listitem"><p>Treat the IP address of <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> as 127.0.0.1 (IPv4) and ::1 (IPv6).</p></li><li class="listitem"><p>Treat the MAC address of <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> as 00:00:00:00:00:00.</p></li><li class="listitem"><p>If you use IP Helper API to get adapter list, you will get an interface named
   like <span class="quote">“<span class="quote">Loopback Pseudo-Interface 1</span>”</span>. This interface is a DUMMY interface by Microsoft
   and can't be seen in NDIS layer. And it also takes the 127.0.0.1/::1 IP address. A good practice
   for software is merging the entry of <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> and the entry of
   <span class="quote">“<span class="quote">Loopback Pseudo-Interface 1</span>”</span> into one entry, like what I have implemented for Nmap (see the
   <span class="quote">“<span class="quote">Other code (for developers)</span>”</span> part).</p></li><li class="listitem"><p>Don't make use of OID requests for <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span>
-  except <code class="varname">OID_GEN_MAXIMUM_TOTAL_SIZE</code> requests.</p></li></ul></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-feature-dot11"></a>For software that use Npcap raw 802.11 feature</h2></div></div></div><p>
+  except <code class="varname">OID_GEN_MAXIMUM_TOTAL_SIZE</code> requests.</p></li></ul></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-feature-dot11"></a>For software that uses Npcap raw 802.11 feature</h2></div></div></div><p>
   Prerequisite: Check the <code class="option">Support raw 802.11 traffic (and monitor mode) for wireless adapters</code> option at install-time.
   </p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-feature-dot11-steps"></a>Steps</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>Install the latest version Npcap with the
-	<code class="option">Support raw 802.11 traffic (and monitor mode) for wireless adapters</code> option
-	checked in the installation wizard. With this option checked, Npcap will see packets with
-	<span class="emphasis"><em>Radiotap + 802.11</em></span> headers for wireless adapters. Otherwise, Npcap
-	will see packets with <span class="emphasis"><em>fake Ethernet</em></span> headers for wireless adapters.</p></li><li class="listitem"><p>Run <code class="filename">WlanHelper.exe</code> with <span class="emphasis"><em>Administrator privilege</em></span>. Type in
-	the index of your wireless adapter (usually <span class="keycap"><strong>Enter</strong></span>) and press <span class="keycap"><strong>Enter</strong></span>.
-	Then type in <span class="keycap"><strong>Enter</strong></span> and press <span class="keycap"><strong>Enter</strong></span> to switch on the <span class="quote">“<span class="quote">Monitor Mode</span>”</span>.
-	<code class="filename">WlanHelper.exe</code> also supports parameters to be used in an API manner, run
-	<span class="command"><strong>WlanHelper.exe -h</strong></span> for details.</p></li><li class="listitem"><p>An example: launch Wireshark and capture on the wireless adapter, you will
-	see all 802.11 packets (<span class="emphasis"><em>data + control + management</em></span>). Here you should
-	make your software interact with Npcap using the WinPcap API (open the adapter, read packets,
-	send packets, etc).</p></li><li class="listitem"><p>If you need to return to <span class="quote">“<span class="quote">Managed Mode</span>”</span>, run <span class="command"><strong>WlanHelper.exe</strong></span>
-	again and input the index of the adapter, then type in <span class="keycap"><strong>Enter</strong></span> and press
-	<span class="keycap"><strong>Enter</strong></span> to switch off the <span class="quote">“<span class="quote">Monitor Mode</span>”</span>.</p></li></ul></div></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-feature-dot11-tips"></a>Tips</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>You need to use <code class="filename">WlanHelper.exe</code> tool to switch on
-	the <span class="quote">“<span class="quote">Monitor Mode</span>”</span> in order to see <span class="emphasis"><em>802.11 control and management</em></span>
-	packets in Wireshark (also <span class="emphasis"><em>encrypted 802.11 data</em></span> packets, you need
-	to specify the decipher key in Wireshark in order to decrypt those packets), otherwise you will
-	only see 802.11 data packets.</p></li><li class="listitem"><p>Switching on the <span class="quote">“<span class="quote">Monitor Mode</span>”</span> will disconnect your wireless
-	network from the AP, you can switch back to <span class="quote">“<span class="quote">Managed Mode</span>”</span> using the same
-	<code class="filename">WlanHelper.exe</code> tool.</p></li><li class="listitem"><p>The <code class="filename">WlanHelper.exe</code> tool automatically installed to your
-	system path after installing Npcap.</p></li></ul></div></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-feature-dot11-terminology"></a>Terminology</h3></div></div></div><p>
+      <code class="option">Support raw 802.11 traffic (and monitor mode) for wireless
+      adapters</code> option checked in the installation wizard. With this
+      option checked, Npcap will see packets with <span class="emphasis"><em>Radiotap +
+      802.11</em></span> headers for wireless adapters. Otherwise, Npcap will
+      see packets with <span class="emphasis"><em>fake Ethernet</em></span> headers for wireless
+      adapters.</p></li><li class="listitem"><p>Run <code class="filename">WlanHelper.exe</code> with
+      <span class="emphasis"><em>Administrator privilege</em></span>. If you use
+      <code class="option">-i</code>, follow the interactive prompts to choose your
+      wireless adapter and select <span class="quote">“<span class="quote">Network Monitor</span>”</span> mode.
+      <code class="filename">WlanHelper.exe</code> also supports parameters to be used
+      in an API manner, run <span class="command"><strong>WlanHelper.exe -h</strong></span> for
+      details.</p></li><li class="listitem"><p>Use the Npcap API from your user software as usual. For
+      example, launch Wireshark and capture on the wireless adapter, viewingall
+      802.11 packets (<span class="emphasis"><em>data + control + management</em></span>).
+  </p></li><li class="listitem"><p>If you need to return to <span class="quote">“<span class="quote">Managed Mode</span>”</span>, run
+      <span class="command"><strong>WlanHelper.exe</strong></span> again, following the prompts or
+      selecting the appropriate command-line options to switch off the
+      <span class="quote">“<span class="quote">Monitor Mode</span>”</span>.</p></li></ul></div></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-feature-dot11-tips"></a>Tips</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>You need to use <code class="filename">WlanHelper.exe</code> tool to
+        switch on the <span class="quote">“<span class="quote">Monitor Mode</span>”</span> in order to see
+        <span class="emphasis"><em>802.11 control and management</em></span> packets in Wireshark
+        (also <span class="emphasis"><em>encrypted 802.11 data</em></span> packets, you need to
+        specify the decipher key in Wireshark in order to decrypt those
+        packets), otherwise you will only see 802.11 data
+        packets.</p></li><li class="listitem"><p>Switching on the <span class="quote">“<span class="quote">Monitor Mode</span>”</span> will
+        disconnect your wireless network from the AP, you can switch back to
+        <span class="quote">“<span class="quote">Managed Mode</span>”</span> using the same
+        <code class="filename">WlanHelper.exe</code> tool.</p></li><li class="listitem"><p>The <code class="filename">WlanHelper.exe</code> tool is
+        installed to <span class="quote">“<span class="quote">%SYSTEMROOT%\System32\Npcap</span>”</span> after installing Npcap.</p></li></ul></div></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-feature-dot11-terminology"></a>Terminology</h3></div></div></div><p>
       <span class="quote">“<span class="quote">Managed Mode</span>”</span> (for Linux) = <span class="quote">“<span class="quote">Extensible Station Mode</span>”</span> (aka <span class="quote">“<span class="quote">ExtSTA</span>”</span>, for Windows)
     </p><p>
       <span class="quote">“<span class="quote">Monitor Mode</span>”</span> (for Linux) = <span class="quote">“<span class="quote">Network Monitor Mode</span>”</span> (aka <span class="quote">“<span class="quote">NetMon</span>”</span>, for Windows)
     </p><p>
       <span class="quote">“<span class="quote">Master Mode</span>”</span> (for Linux) = <span class="quote">“<span class="quote">Extensible Access Point</span>”</span> (aka <span class="quote">“<span class="quote">ExtAP</span>”</span>, for Windows)
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-feature-dot11-wlanhelper"></a>WlanHelper</h3></div></div></div><p>
-      WlanHelper is used to set/get the operation mode (like <span class="quote">“<span class="quote">Monitor Mode</span>”</span>) for a wireless adapter on Windows.
-	  WlanHelper tries to follow the grammar of <code class="filename">iwconfig</code>, a wireless management tool
-	  for Linux. So if you rename <code class="filename">WlanHelper.exe</code> to <code class="filename">iwconfig.exe</code>,
-	  your command lines for WlanHelper will be exactly the same with the iwconfig tool.
+      WlanHelper is used to set/get the operation mode (like <span class="quote">“<span class="quote">Monitor
+      Mode</span>”</span>) for a wireless adapter on Windows.  WlanHelper tries to
+      follow the grammar of <code class="filename">iwconfig</code>, a wireless
+      management tool for Linux. So if you rename
+      <code class="filename">WlanHelper.exe</code> to <code class="filename">iwconfig.exe</code>,
+      your command lines for WlanHelper will be exactly the same with the
+      iwconfig tool.
+    
     </p><div class="sect3"><div class="titlepage"><div><div><h4 class="title"><a id="npcap-feature-dot11-wlanhelper-usage"></a>WlanHelper's Usage</h4></div></div></div><p>
         Note: <span class="command"><strong>WlanHelper</strong></span> must run under <span class="emphasis"><em>Administrator privilege</em></span>.
       </p><div class="sect4"><div class="titlepage"><div><div><h5 class="title"><a id="npcap-feature-dot11-wlanhelper-usage-interactive"></a>Interactive way</h5></div></div></div><p>
-          Run <span class="command"><strong>WlanHelper</strong></span> without parameters.
+          Run <span class="command"><strong>WlanHelper</strong></span> with the <code class="option">-i</code> option.
         </p></div><div class="sect4"><div class="titlepage"><div><div><h5 class="title"><a id="npcap-feature-dot11-wlanhelper-usage-api"></a>Command-line API way</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>Run <span class="command"><strong>netsh wlan show interfaces</strong></span>, get the <code class="option">Name</code> or <code class="option">GUID</code> for the interface.</p></li><li class="listitem"><p>Run <span class="command"><strong>WlanHelper -h</strong></span> to see the man page.</p></li></ul></div><div class="example"><a id="npcap-ex-wlanhelper-man"></a><p class="title"><strong>Example 1. WlanHelper Man</strong></p><div class="example-contents"><pre class="screen">
 C:\&gt; <strong class="userinput"><code>WlanHelper.exe</code></strong>
-WlanHelper for Npcap 0.07 (http://npcap.org)
-Usage: WlanHelper {Interface Name or GUID} [Options]
-Options:
-  mode: get interface operation mode
-  mode &lt;managed|monitor|master|wfd_device|wfd_owner|wfd_client&gt;: set interface operation mode
-  modes: get all operation modes supported by the interface, comma-separated
-  channel: get interface channel
-  channel &lt;1-11&gt;: set interface channel (only works at monitor mode)
-  freq: get interface frequency
-  freq &lt;0-200&gt;: set interface frequency (only works at monitor mode)
-Operation Modes:
-  managed - the Extensible Station (ExtSTA) operation mode
-  monitor - the Network Monitor (NetMon) operation mode
-  master - the Extensible Access Point (ExtAP) operation mode (supported for Windows 7 and later)
-  wfd_device - the Wi-Fi Direct Device operation mode (supported for Windows 8 and later)
-  wfd_owner - the Wi-Fi Direct Group Owner operation mode (supported for Windows 8 and later)
-  wfd_client - the Wi-Fi Direct Client operation mode (supported for Windows 8 and later)
-Examples:
-  WlanHelper wi-fi mode
+WlanHelper for Npcap 0.91 ( http://npcap.org )
+Usage: WlanHelper [Commands]
+   or: WlanHelper {Interface Name or GUID} [Options]
+
+OPTIONS:
+  mode                  : Get interface operation mode
+  mode &lt;managed|monitor|master|..&gt;  : Set interface operation mode
+  modes                 : Get all operation modes supported by the interface, comma-separated
+  channel               : Get interface channel
+  channel &lt;1-14&gt;            : Set interface channel (only works in monitor mode)
+  freq                  : Get interface frequency
+  freq &lt;VALUE&gt;              : Set interface frequency (only works in monitor mode)
+  modu                  : Get interface modulation
+  modu &lt;dsss|fhss|irbaseband|ofdm|hrdsss|erp|ht|vht|ihv (VALUE)|..&gt; : Set interface modulation
+  modus                 : Get all modulations supported by the interface, comma-separated
+
+COMMANDS:
+  -i                    : Enter the interactive mode
+  -h                    : Print this help summary page
+
+OPERATION MODES:
+  managed   : The Extensible Station (ExtSTA) operation mode
+  monitor   : The Network Monitor (NetMon) operation mode
+  master    : The Extensible Access Point (ExtAP) operation mode (supported from Windows 7 and later)
+  wfd_device    : The Wi-Fi Direct Device operation mode (supported from Windows 8 and later)
+  wfd_owner : The Wi-Fi Direct Group Owner operation mode (supported from Windows 8 and later)
+  wfd_client    : The Wi-Fi Direct Client operation mode (supported from Windows 8 and later)
+
+802.11 MODULATIONS (https://en.wikipedia.org/wiki/IEEE_802.11):
+  802.11-1997   : dsss, fhss
+  802.11a   : ofdm
+  802.11b   : dsss
+  802.11g   : ofdm
+  802.11n   : mimo-ofdm
+  802.11ac  : mimo-ofdm
+
+EXAMPLES:
+  WlanHelper Wi-Fi mode
   WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11
   WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2
-See the MAN Page (https://github.com/nmap/npcap) for more options and examples
+  WlanHelper "Wireless Network Connection" mode monitor
+
+SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPLES
         </pre></div></div><br class="example-break" /><p>
           An example:
         </p><div class="example"><a id="npcap-ex-wlanhelper-api"></a><p class="title"><strong>Example 2. WlanHelper API Usage</strong></p><div class="example-contents"><pre class="screen">
@@ -336,6 +345,7 @@ managed
 	This is because Wireshark only recognizes the monitor mode set by itself. So when you turn
 	on monitor mode outside Wireshark (like in <code class="filename">WlanHelper</code>), Wireshark will not know the adapter
 	has been in monitor mode, and will still try to capture in Ethernet mode, which will get no traffic.
+
 	So after all, the correct steps are:
     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>Install latest version Wireshark and latest version Npcap with
 	<code class="option">Support raw 802.11 traffic</code> option checked.</p></li><li class="listitem"><p>Launch Wireshark QT UI (GTK version is similar), go to <span class="quote">“<span class="quote">Capture options</span>”</span>.
@@ -350,67 +360,70 @@ managed
   </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-build"></a>Build</h2></div></div></div><p>
   Run <span class="command"><strong>installer\Build.bat</strong></span>: build all DLLs and the driver. The DLLs need to be built
   using Visual Studio 2013. And the driver needs to be built using Visual Studio 2015 with Windows SDK
-  10 10586 &amp; Windows Driver Kit 10 10586. The build of <code class="filename">wpcap.dll</code> also requires
+  10 10586 &amp; Windows Driver Kit 10 10586.
+  
+  
+  The build of <code class="filename">wpcap.dll</code> also requires
   to install <a class="ulink" href="https://sourceforge.net/projects/winflexbison/" target="_top">Win flex-bison</a>.
   Please unzip the downloaded package and add the directory to the <code class="filename">PATH</code>
   environment variable.
   </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-packaging"></a>Packaging</h2></div></div></div><p>
-  Run <span class="command"><strong>installer\Deploy.bat</strong></span>: copy the files from build directories to
-  deployment directories and sign the files. Generate an installer named
-  <code class="filename">npcap-%VERSION%.exe</code> using
-  <a class="ulink" href="http://nsis.sourceforge.net/Main_Page" target="_top">NSIS 2.51</a> with
-  the <a class="ulink" href="http://nsis.sourceforge.net/Special_Builds#Advanced_logging" target="_top">advanced logging special build</a>
-  and <a class="ulink" href="https://github.com/hsluoyz/SysRestore" target="_top">SysRestore
-  plug-in (special build for Npcap)</a> and sign the installer.
+    The Npcap installer is built and signed privately and distributed only from Npcap.org.
   </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-symbols"></a>Generating debug symbols (optional)</h2></div></div></div><p>
-  Run <span class="command"><strong>installer\Deploy_Symbols.bat</strong></span>: copy the debug symbol files (.PDB)
-  from build directories to deployment directories and package them into a zip file named
-  <code class="filename">npcap-&lt;VERSION&gt;-DebugSymbols.zip</code> using
-  <a class="ulink" href="http://www.7-zip.org/" target="_top">7-Zip</a>.
-  </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-redistribution"></a>Redistribution</h2></div></div></div><p>
-  (You need to first notice our <a class="ulink" href="http://www.npcap.org/" target="_top">LICENSE</a> before distributing Npcap)
+    Debug symbols for Npcap releases are distributed from Npcap.org. Visual
+    Studio will generate <code class="filename">.pdb</code> symbol files as part of the
+    build process.
+  </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-installation"></a>Installation</h2></div></div></div><p>
+  Please refer to <a class="ulink" href="http://www.npcap.org/#License" target="_top">the Npcap License</a> for terms of use and redistribution.
   </p><p>
-  The Npcap installer and uninstaller are friendly for redistribution by supporting two
-  ways: <span class="quote">“<span class="quote">GUI Mode</span>”</span> (direct run) and <span class="quote">“<span class="quote">Silent Mode</span>”</span> (run with
+  The Npcap installer and uninstaller are easy to use in
+  <span class="quote">“<span class="quote">Graphical Mode</span>”</span> (direct run) and <span class="quote">“<span class="quote">Silent Mode</span>”</span> (run with
   <code class="option">/S</code> parameter).
-  </p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-redistribution-options"></a>Installer options</h3></div></div></div><p>
-    The installer options are used when you install Npcap. They are key-value pairs. The keys can be one of these values:
-	<code class="option">/npf_startup, /loopback_support, /dlt_null, /admin_only, /dot11_support, /vlan_support, /winpcap_mode</code>,
-	representing the options in the GUI. The values can be one of these four values: <code class="option">yes, no, enforced, disabled</code>.
-	There are also some options that does not appear in GUI, which are: <code class="option">/sign_mode</code>, its value can be
-	<code class="option">sha1</code> or <code class="option">sha2</code>. It means the signing method for the Npcap driver. By default, we install
-	SHA1 drivers on Vista, Win7, Win8, and install  SHA2 drivers on Win8, Win10. You can override this behavior by specifying this option.
-    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><code class="option">yes</code>: select the option</p></li><li class="listitem"><p><code class="option">no</code>: unselect the option</p></li><li class="listitem"><p><code class="option">enforced</code>: select the option and make it unchangable in the <span class="quote">“<span class="quote">GUI Mode</span>”</span></p></li><li class="listitem"><p><code class="option">disabled</code>: unselect the option and make it unchangable in the <span class="quote">“<span class="quote">GUI Mode</span>”</span></p></li></ul></div><p>
+  </p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-installation-options"></a>Installer options</h3></div></div></div><p>
+      The installer accepts several command-line options that correspond to the
+      options presented in the graphical interface (GUI).  The options take the form
+      <code class="option">/<em class="replaceable"><code>name</code></em>=<em class="replaceable"><code>value</code></em></code>,
+      where <em class="replaceable"><code>name</code></em> is one of
+      <code class="option">/npf_startup</code>, <code class="option">/loopback_support</code>,
+      <code class="option">/dlt_null</code>, <code class="option">/admin_only</code>,
+      <code class="option">/dot11_support</code>, <code class="option">/vlan_support</code>,
+      or <code class="option">/winpcap_mode</code>.
+    </p><p>The values for these options must be one of:
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><code class="option">yes</code>: select the option</p></li><li class="listitem"><p><code class="option">no</code>: unselect the option</p></li><li class="listitem"><p><code class="option">enforced</code>: select the option and make it unchangable in the GUI</p></li><li class="listitem"><p><code class="option">disabled</code>: unselect the option and make it unchangable in the GUI</p></li></ul></div><p>There is also one option that does not appear in the GUI, which is
+      <code class="option">/disable_restore_point=yes</code>, which will prevent the
+      installer from setting a system restore point. Windows may independently
+      create a restore point because of the driver installation independent
+      from this option.
+    </p><p>
     An example of Npcap installer options is (for both <span class="quote">“<span class="quote">GUI Mode</span>”</span> and <span class="quote">“<span class="quote">Silent Mode</span>”</span>):
     </p><p>
-    <code class="option">/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=no</code>
-    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><code class="option">/npf_startup=yes</code>: Automatically start the Npcap driver at boot time</p></li><li class="listitem"><p><code class="option">/loopback_support=yes</code>: Support loopback traffic (<span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> will be created)</p></li><li class="listitem"><p><code class="option">/dlt_null=yes</code>: Use <code class="varname">DLT_NULL</code> as the loopback interface' link layer
-	protocol instead of <code class="varname">DLT_EN10MB</code>, so when capturing on <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span>,
-	the received packets will have <a class="ulink" href="http://www.tcpdump.org/linktypes.html" target="_top">DLT_NULL</a>
-	header instead of Ethernet header. Notice: many softwares on Windows still only support the Ethernet header,
-	so don't enable this option if you have no idea whether your software supports it or not</p></li><li class="listitem"><p><code class="option">/admin_only=yes</code>: Restrict Npcap driver's access to Administrators only</p></li><li class="listitem"><p><code class="option">/dot11_support=yes</code>: Support raw 802.11 traffic (and <span class="quote">“<span class="quote">Monitor Mode</span>”</span>) for wireless adapters</p></li><li class="listitem"><p><code class="option">/vlan_support=yes</code>: Support 802.1Q VLAN tag when capturing and sending data</p></li><li class="listitem"><p><code class="option">/winpcap_mode=yes</code>: Install Npcap in WinPcap API-compatible Mode</p></li><li class="listitem"><p><code class="option">/sign_mode=sha1</code>: Install the SHA1-signed Npcap driver</p></li></ul></div></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-redistribution-uninstall-options"></a>Uninstaller options</h3></div></div></div><p>
-    The uninstaller options are used when you uninstall Npcap. They are key-value pairs. The keys can be one of these values:
-	<code class="option">/Q /no_kill</code>. These options are not showing in the GUI. So you have to specify them in command-line.
-	<code class="option">/Q</code> means to skip the confirmation page and finish page in the uninstall wizard. So this option is
-	only meaninful for <span class="quote">“<span class="quote">GUI Mode</span>”</span>. It has no value. <code class="option">/no_kill</code> means whether to kill the
-	processes that are using Npcap. The value of <code class="option">/no_kill</code> can be one of these two values: <code class="option">yes, no</code>.
-	if <code class="option">yes</code> is specified, then Npcap uninstaller will fail if there are still applications using Npcap driver or DLLs.
-	If <code class="option">no</code> is specified, Npcap uninstaller will immediately terminate any command-line processes that are using
+    <code class="option">/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=yes /dot11_support=yes /vlan_support=yes /winpcap_mode=yes</code>
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><code class="option">/npf_startup=yes</code>: Automatically start the Npcap driver at boot time</p></li><li class="listitem"><p><code class="option">/loopback_support=yes</code>: Support loopback traffic (<span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span> will be created)</p></li><li class="listitem"><p><code class="option">/dlt_null=no</code>: Use <code class="varname">DLT_EN10MB</code> (Ethernet) as the
+        <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span>'s link layer protocol instead of the default <code class="varname">DLT_NULL</code>.
+	</p></li><li class="listitem"><p><code class="option">/admin_only=yes</code>: Restrict Npcap driver's access to Administrators only</p></li><li class="listitem"><p><code class="option">/dot11_support=yes</code>: Support raw 802.11 traffic (and <span class="quote">“<span class="quote">Monitor Mode</span>”</span>) for wireless adapters</p></li><li class="listitem"><p><code class="option">/vlan_support=yes</code>: Support 802.1Q VLAN tag when capturing and sending data</p></li><li class="listitem"><p><code class="option">/winpcap_mode=yes</code>: Install Npcap in WinPcap API-compatible Mode</p></li></ul></div></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-installation-uninstall-options"></a>Uninstaller options</h3></div></div></div><p>
+    The uninstaller provided with Npcap also accepts some command-line options.
+  The <code class="option">/Q</code> flag means to skip the confirmation page and finish page in the uninstall wizard. So this option is
+	only meaningful for <span class="quote">“<span class="quote">GUI Mode</span>”</span>. The <code class="option">/no_kill</code> controls how the uninstaller handles
+	processes that are still using Npcap at the time of uninstall. If <code class="option">/no_kill=yes</code>
+	 is specified, then Npcap uninstaller will fail if there are still applications using Npcap driver or DLLs.
+   If <code class="option">/no_kill=no</code> is specified in silent mode, Npcap uninstaller will immediately terminate any command-line processes that are using
 	Npcap (like a Nmap process that is still scanning), and wait for at most 15 seconds to gracefully terminate any GUI processes
 	that are using Npcap (like Wireshark UI that is still capturing). <span class="quote">“<span class="quote">gracefully</span>”</span> means that if you are
 	still capturing via Wireshark, Wireshark UI will prompt the user about whether to save the current capture to a pcap.
 	So the user have 15 seconds to save his session. Note: although Npcap uninstaller won't terminate Wireshark UI processe
 	immediately, the live capture stops immediately. This is because Wireshark UI uses command-line processes named
-	<code class="varname">dumpcap.exe</code> to capture. And that command-line process will be terminated immediately. The default
-	value for <code class="option">/no_kill</code> is <code class="option">no</code>.
-    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><code class="option">yes</code>: select the option</p></li><li class="listitem"><p><code class="option">no</code>: unselect the option</p></li></ul></div><p>
+	<code class="varname">dumpcap.exe</code> to capture, and that command-line process will be terminated immediately. The default
+  value for <code class="option">/no_kill</code> is <code class="option">no</code>, but if the
+  graphical interface is used (without <code class="option">/S</code>), the user will be
+  prompted for what to do.
+    </p><p>
     An example of Npcap uninstaller options is:
     </p><p>
     <code class="option">/S /Q /no_kill=yes</code>
-    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-redistribution-options-disabled"></a>Disabled and enforced options for GUI Mode</h3></div></div></div><p>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-installation-options-disabled"></a>Disabled and enforced options for GUI Mode</h3></div></div></div><p>
 	We may disable or enforce certain options in the installer GUI to make them unselectable. This
-	usually means that those options can easily cause compatible issues and are considered
-	not suitable for beginners, or we think we need to enforce some rules for the Npcap API. Advanced users can still change their states via command-line
+	usually means that those options can easily cause compatibility issues and are considered
+	not suitable for most users, or we think we need to enforce some rules for the Npcap API. Advanced users can still change their states via command-line
 	parameters, which is described in following sections.
     </p><p>
 	Fortunately, if a distributor wants to start the Npcap installer GUI and disable or enforce
@@ -419,64 +432,52 @@ managed
 	For example, the following command will start an installer GUI with the
 	<code class="option">dlt_null</code> disabled and unselected:
     </p><p>
-    <span class="command"><strong>npcap-<em class="replaceable"><code>0.08</code></em>.exe /dlt_null=disabled</strong></span>
-    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-redistribution-options-gui"></a>How to change options for GUI Mode</h3></div></div></div><p>
+    <span class="command"><strong>npcap-<em class="replaceable"><code>version</code></em>.exe /dlt_null=disabled</strong></span>
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-installation-options-gui"></a>How to change options for GUI Mode</h3></div></div></div><p>
     Default options for Npcap installer GUI can be changed. An example is:
     </p><p>
-    <span class="command"><strong>npcap-<em class="replaceable"><code>0.08</code></em>.exe /npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</strong></span>
+    <span class="command"><strong>npcap-<em class="replaceable"><code>version</code></em>.exe /npf_startup=yes /loopback_support=yes /dlt_null=yes /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</strong></span>
     </p><p>
-    or even simpler:
+    Because most of these are the default values for these options, this example could be even simpler:
     </p><p>
-    <span class="command"><strong>npcap-<em class="replaceable"><code>0.08</code></em>.exe /winpcap_mode=yes</strong></span>
+    <span class="command"><strong>npcap-<em class="replaceable"><code>version</code></em>.exe /winpcap_mode=yes</strong></span>
     </p><p>
-    As the default option of <code class="option">/winpcap_mode</code> is no. Running the installer
+     Running the installer
 	directly without options will see <code class="option">Install Npcap in WinPcap API-compatible Mode</code>
 	<span class="emphasis"><em>UNCHECKED</em></span> by default in the <span class="quote">“<span class="quote">Installation Options</span>”</span> page.
 	However, the above two commands will launch the installer GUI, and in the <span class="quote">“<span class="quote">Installation Options</span>”</span> page, the
 	<code class="option">Install Npcap in WinPcap API-compatible Mode</code> option will be <span class="emphasis"><em>CHECKED</em></span> by default.
-    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-redistribution-options-silent"></a>How to change options for Silent Mode</h3></div></div></div><p>
-    An example of changing option feature for silent installation is:
+    </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-installation-options-silent"></a>How to change options for Silent Mode</h3></div></div></div><p>
+    An example of changing option features for silent installation is:
     </p><p>
-    <span class="command"><strong>npcap-<em class="replaceable"><code>0.08</code></em>.exe /S /npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</strong></span>
-    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>If you doesn't specify a paramter key, it will take the default value.
+    <span class="command"><strong>npcap-<em class="replaceable"><code>version</code></em>.exe /S /admin_only=yes /dot11_support=yes /vlan_support=yes</strong></span>
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>If you doesn't specify a parameter key, it will take the default value.
     This is the same with the GUI.</p></li><li class="listitem"><p>The keys are <span class="emphasis"><em>case-insensitive</em></span>.</p></li><li class="listitem"><p>The values are <span class="emphasis"><em>case-sensitive</em></span>, only two values are
     permitted: <code class="option">yes</code> or <code class="option">no</code>.</p></li></ul></div></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-download"></a>Downloads</h2></div></div></div><p>
-  Latest Npcap installer: <a class="ulink" href="https://github.com/nmap/npcap/releases" target="_top">Npcap Releases</a>
+    <a class="ulink" href="http://npcap.org/#download" target="_top">Latest Npcap release</a>.
   </p><p>
-  Archived Npcap installers (prior to <code class="option">0.05</code>):
-  <a class="ulink" href="https://svn.nmap.org/nmap-exp/yang/NPcap-LWF/npcap_history_versions/" target="_top">Npcap Releases (SVN)</a>
+  <a class="ulink" href="http://nmap.org/npcap/dist/" target="_top">Archived Npcap releases</a>.
   </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-development"></a>Development</h2></div></div></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-sdk"></a>SDK</h3></div></div></div><p>
-    Npcap has its own SDK for <span class="quote">“<span class="quote">Non-WinPcap Compatible Mode</span>”</span>.
-    By using it, your software will run under <span class="quote">“<span class="quote">Non-WinPcap Compatible Mode</span>”</span>.
-    We don't update the SDK as frequently as the binaries. The latest SDK is <a class="ulink" href="https://github.com/nmap/npcap/releases/tag/v0.07-r9" target="_top">Npcap SDK 0.07 r9</a>.
-    </p><p>
-    If you only want to build your software under <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>
-    (which is <span class="emphasis"><em>NOT</em></span> recommended), please use the legacy
-    <a class="ulink" href="http://www.winpcap.org/devel.htm" target="_top">WinPcap 4.1.2 Developer's Pack</a> instead.
+      To build software that uses Npcap, use the latest version of the Npcap Software Development Kit (SDK).
+    The latest SDK can be downloaded on <a class="ulink" href="http://npcap.org/#download" target="_top">Npcap.org</a>.
+    Updates to the SDK are much less frequent than updates to the Npcap binaries.
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-documentation"></a>Documentation</h3></div></div></div><p>
-    This document currently only addresses the Npcap particular features. It doesn't
-	show you the basics about the general WinPcap usage. As Npcap shares the libpcap
-	API with WinPcap, you can always refer to the
-	<a class="ulink" href="https://www.winpcap.org/docs/default.htm" target="_top">WinPcap documentation</a>
-	for general usage of Npcap.
+      This document addresses Npcap's latest features and installation. For details on how to write software using Npcap, refer to the
+      <a class="ulink" href="https://cdn.rawgit.com/nmap/npcap/v0.92/dox/intro.htm" target="_top">API documentation</a>.
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-examples"></a>Examples</h3></div></div></div><p>
-    You can refer to <a class="ulink" href="https://github.com/nmap/npcap/tree/master/Examples" target="_top">WinPcap's examples</a> to see the usage.
+    Examples of applications using Npcap are available <a class="ulink" href="https://github.com/nmap/npcap/tree/master/Examples" target="_top">in the Examples directory</a> in the source distribution.
     </p><p>
-    I also provided an example:
+    Npcap developer Yang Luo has also provided an example:
 	<a class="ulink" href="https://github.com/hsluoyz/UserBridge/" target="_top">UserBridge</a>,
-	which is a tool to redirect all packets from an interface to another.
+	which is a tool to redirect all packets from one interface to another.
     </p></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-qa"></a>Q &amp; A</h2></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>Network disconnects after installing Npcap: As Microsoft states
   <a class="ulink" href="https://support.microsoft.com/en-us/kb/2019184" target="_top">here</a>,
   <span class="emphasis"><em>an optional NDIS light-weight filter (LWF) driver like Npcap could cause
   90-second delay in network availability</em></span>. Some solutions you could try
   are: 1) wait for 90 seconds; 2) disable and re-enable the adapter icon in
-  <span class="command"><strong>ncpa.cpl</strong></span>; 3) reboot. If this doesn't help you, you should
-  consider that you have <span class="emphasis"><em>installed some incompatible software</em></span>.
-  It can be a <span class="emphasis"><em>VPN, anti-virus, firewall or other network related</em></span>
-  software. We are maintaining an incompatible software list in the previous section.
-  So you can uninstall all those potential software one by one, and see which one
-  exactly causes the issue. Don't forget to report it to me, so I could add it to
-  this list.</p></li><li class="listitem"><p>Installation fails with error code <code class="varname">0x8004a029</code>:
+  <span class="command"><strong>ncpa.cpl</strong></span>; 3) reboot. If this doesn't work,
+  please <a class="ulink" href="http://issues.nmap.org/new?title=Npcap+Bug+Report" target="_top">file a bug report</a>.
+  </p></li><li class="listitem"><p>Installation fails with error code <code class="varname">0x8004a029</code>:
   The cause is that you have <span class="quote">“<span class="quote">reached the maximum number of network filter
   drivers</span>”</span>, see solution
   <a class="ulink" href="https://social.technet.microsoft.com/Forums/windows/en-US/4deb27fc-33ce-4fc0-a26f-3fec5b57733d/is-there-a-maximum-number-of-network-filter-drivers-in-windows-7?forum=w7itpronetworking" target="_top">here</a>.
@@ -488,15 +489,15 @@ managed
   and <span class="command"><strong>net start npcap</strong></span>. See details about this issue
   <a class="ulink" href="https://github.com/nmap/nmap/issues/802" target="_top">here</a>.
   </p></li></ul></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-license"></a>License</h2></div></div></div><p>
-  See: <a class="ulink" href="https://github.com/nmap/npcap/blob/master/LICENSE" target="_top">LICENSE</a>
-  </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-issues"></a>Bug report</h2></div></div></div><p>
-  Please report any bugs or issues about Npcap at:
-  <a class="ulink" href="https://github.com/nmap/nmap/issues" target="_top">Nmap issues on GitHub</a>.
+    See: <a class="ulink" href="http://npcap.org/#License" target="_top">Npcap License</a>
+  </p></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-issues"></a>Reporting Bugs</h2></div></div></div><p>
+  Please report any bugs or issues about Npcap on
+  <a class="ulink" href="http://issues.nmap.org/new?title=Npcap+Bug+Report" target="_top">the Nmap Project's Issues tracker</a>.
   In your report, please provide your <span class="emphasis"><em>DiagReport</em></span> output, user
-  software version (e.g. Nmap, Wireshark), reproduce steps and other information
-  you think necessary. If your issue occurs only on a special OS version (e.g. Win10
+  software version (e.g. Nmap, Wireshark), steps to reproduce the problem, and other information
+  you think necessary. If your issue occurs only on a particular OS version (e.g. Win10
   1511, 1607), please mention it in the report.
-  </p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-issues-diagreport"></a>Diagnostic report</h3></div></div></div><p>
+</p><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-issues-diagreport"></a>Diagnostic report</h3></div></div></div><p>
     Npcap has provided a diagnostic utility called <code class="filename">DiagReport</code>.
 	It provides a lot of information including OS metadata, Npcap related files,
 	install options, registry values, services, etc. You can simply click the
@@ -504,7 +505,7 @@ managed
 	It will pop up a text report via Notepad (it's stored in: <code class="filename">C:\Program Files\Npcap\DiagReport.txt</code>).
 	Please always submit it to us if you encounter any issues.
     </p><p>
-    For Vista users: <code class="filename">DiagReport</code> is a script written by
+    For Vista users: <code class="filename">DiagReport</code> is a script written for
 	<a class="ulink" href="https://msdn.microsoft.com/en-us/powershell/mt173057.aspx" target="_top">Windows PowerShell</a>,
 	and Vista doesn't have it installed by default. So if you are using Vista,
 	you need to install <span class="emphasis"><em>PowerShell 2.0 (KB968930)</em></span> on your
@@ -514,61 +515,52 @@ managed
 	to do anything about it.
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-issues-installation-log"></a>General installation log</h3></div></div></div><p>
     Npcap keeps track of the installation in a log file:
-	<code class="filename">C:\Program Files\Npcap\install.log</code>, please submit it
-	together in your report if you encounter issues about the installation
+	<code class="filename">C:\Program Files\Npcap\install.log</code>. Please submit it
+	together in your report if you encounter issues during the installation
 	(e.g. the installer halts).
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-issues-driver-installation-log"></a>Driver installation log</h3></div></div></div><p>
     Npcap keeps track of the driver installation (aka commands run by
 	<code class="filename">NPFInstall.exe</code>) in a log file:
 	<code class="filename">C:\Program Files\Npcap\NPFInstall.log</code>, please submit
-	it together in your report if you encounter issues about the driver
-	installation and <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span>.
+	it together in your report if you encounter issues during the driver
+	installation or problems with the <span class="quote">“<span class="quote">Npcap Loopback Adapter</span>”</span>.
     </p><p>
     There's another system-provided driver installation log in:
 	<code class="filename">C:\Windows\INF\setupapi.dev.log</code>.
-	If you encounter errors about the driver/service installation, please copy
+	If you encounter errors during the driver/service installation, please copy
 	the Npcap-related lines out and send them together in
 	your report.
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-issues-packet-log"></a>Dynamic link library (DLL) log</h3></div></div></div><p>
-    If you think the dynamic link library (<code class="filename">Packet.dll</code>) doesn't
-	function well, you can refer to <code class="filename">Packet.dll</code>'s log. It's
-	also stored in Npcap's installation folder: <code class="filename">C:\Program Files\Npcap\Packet.log</code>.
-	We don't enable this log feature in regular releases. You have two ways: If you
-	are a Npcap developer, you can build the <code class="filename">Packet.sln</code> project
-	with the <code class="varname">_DEBUG_TO_FILE</code> macro defined. If you are only a
-	Npcap user, you can download the packet-debug version Npcap from our releases.
-	Currently, the latest packet-debug version is
-	<a class="ulink" href="https://github.com/nmap/npcap/releases/tag/v0.08-r4" target="_top">Npcap 0.08 r4</a>.
-	You can also ask me to build a packet-debug version Npcap for a specific version Npcap.
-	I'll be glad to do it. Note, the (<code class="filename">Packet.log</code>) file is written
-	in an appending manner. So you may want to delete it after an amount of time, or
-	save your output to another place before it gets too large.
+      For problems with Npcap's regular operation, you may need to obtain a
+      debug log from <code class="filename">Packet.dll</code>.  To do this, you will
+      need a debug build of Npcap.  If you are a Npcap developer, you can build
+      the <code class="filename">Packet.sln</code> project with the
+      <code class="varname">_DEBUG_TO_FILE</code> macro defined. If you are an end user,
+      you can contact the Npcap development team for the latest Npcap debug
+      build.  The debugging process will continue to append to the debug log
+      (<code class="filename">C:\Program Files\Npcap\Packet.log</code>), so you may want
+      to delete it after an amount of time, or save your output to another
+      place before it gets too large.
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-issues-driver-log"></a>Driver log</h3></div></div></div><p>
-    If you think the driver doesn't function well, you can open an
-	<span class="emphasis"><em>Administrator</em></span> command prompt,  enter
-	<span class="command"><strong>sc query npcap</strong></span> to query the driver status and
-	<span class="command"><strong>net start npcap</strong></span> to start the driver (replace
-	<em class="replaceable"><code>npcap</code></em> with <em class="replaceable"><code>npf</code></em>
-	if you installed Npcap in <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>).
-	The command output will inform you whether there's an error. If
-	the driver is running well, but the issue still exists, then you
-	need to check the driver's log. Normal Npcap releases don't switch
-	on the driver log function for performance. So you have to install
-	a driver-debug version Npcap. We don't build a driver-debug version for every
-	release. Currently, the latest driver-debug version is
-	<a class="ulink" href="https://github.com/nmap/npcap/releases/tag/v0.08-r7" target="_top">Npcap 0.08 r7</a>.
-	If the currently available driver-debug version Npcap doesn't have your
-	issue, you can ask me to build a driver-debug version Npcap for a specific
-	version in mail. I'll be happy to do that. When you have got an
-	appropriate driver-debug version Npcap, you need to use
-	<a class="ulink" href="https://technet.microsoft.com/en-us/sysinternals/debugview.aspx" target="_top">DbgView</a>
-	to read the Windows kernel log (which contains our driver log).
-	You may need to turn on DbgView before installing Npcap, if the
-	error occurs when the driver loads. When done, save the DbgView
-	output to a file and submit it in your report.
+    If there is an issue with the Npcap driver, you can open an
+    <span class="emphasis"><em>Administrator</em></span> command prompt,  enter <span class="command"><strong>sc query
+      npcap</strong></span> to query the driver status and <span class="command"><strong>net start
+      npcap</strong></span> to start the driver (replace
+    <em class="replaceable"><code>npcap</code></em> with <em class="replaceable"><code>npf</code></em> if you
+    installed Npcap in <span class="quote">“<span class="quote">WinPcap Compatible Mode</span>”</span>).  The command
+    output will inform you whether there's an error. If the driver is running
+    well, but the issue still exists, then you may need to check the driver's
+    log. Normal Npcap releases don't switch on the driver log function for
+    performance. Contact the Npcap development team to obtain a driver-debug
+    version of the Npcap installer.  When you have got an appropriate
+    driver-debug version Npcap, you need to use <a class="ulink" href="https://technet.microsoft.com/en-us/sysinternals/debugview.aspx" target="_top">DbgView</a>
+    to read the Windows kernel log (which contains our driver log).  You may
+    need to turn on DbgView before installing Npcap, if the error occurs when
+    the driver loads. When done, save the DbgView output to a file and submit
+    it in your report.
     </p></div><div class="sect2"><div class="titlepage"><div><div><h3 class="title"><a id="npcap-issues-bsod"></a>Blue screen of death (BSoD) dump</h3></div></div></div><p>
 	If you encountered BSoD when using Npcap, please attach the minidump
-	file (in <code class="filename">C:\Windows\Minidump</code>) to your report
+	file (in <code class="filename">C:\Windows\Minidump\</code>) to your report
 	together with the Npcap version. We may ask you to provide the full
 	dump (<code class="filename">C:\Windows\MEMORY.DMP</code>) for further troubleshooting.
-    </p></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-list"></a>Contact</h2></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><a class="ulink" href="mailto:dev@nmap.org" target="_top">dev@nmap.org</a> (Nmap development list, this is <span class="emphasis"><em>preferred</em></span>)</p></li><li class="listitem"><p><a class="ulink" href="mailto:hsluoyz@gmail.com" target="_top">hsluoyz@gmail.com</a> (Yang Luo's email, if your issue needs to be kept private, please contact me via this mail)</p></li></ul></div></div></div></body></html>
+    </p></div></div><div class="sect1"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="npcap-list"></a>Contact</h2></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><a class="ulink" href="mailto:dev@nmap.org" target="_top">dev@nmap.org</a> - The Nmap development mailing list is the preferred place for general inquiries on Npcap usage, development, or issues.</p></li><li class="listitem"><p><a class="ulink" href="mailto:sales@nmap.com" target="_top">sales@nmap.com</a> - for information about redistribution and licensing.</p></li></ul></div></div></div></body></html>
