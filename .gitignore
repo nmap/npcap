@@ -18,8 +18,16 @@
 *.VC.db
 Debug/
 Release/
+Debug No NetMon and AirPcap*/
+Release No NetMon and AirPcap*/
 Debug(*)/
 Release(*)/
+OEM Debug/
+OEM Release/
+OEM Debug No NetMon and AirPcap*/
+OEM Release No NetMon and AirPcap*/
+OEM Debug(*)/
+OEM Release(*)/
 Vista Debug/
 Vista Release/
 Vista Debug(*)/
@@ -28,6 +36,10 @@ Win7 Debug/
 Win7 Release/
 Win7 Debug(*)/
 Win7 Release(*)/
+OEM Win7 Debug/
+OEM Win7 Release/
+OEM Win7 Debug(*)/
+OEM Win7 Release(*)/
 Win7 Release SDV/
 Win7DebugAdmin-onlyMode/
 Win7ReleaseAdmin-onlyMode/
@@ -44,10 +56,4 @@ StaticDVTrace.log
 npcap.res
 /npcap-sdk/
 /dox/prj/
-/packetWin7/Dll/Project/Debug*/
-/packetWin7/Dll/Project/Release*/
-/packetWin7/Dll/Project/x64/Debug*/
-/packetWin7/Dll/Project/x64/Release*/
-/wpcap/libpcap/Win32/Prj/Debug*/
-/wpcap/libpcap/Win32/Prj/Release*/
 *.VC.opendb
