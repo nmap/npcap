@@ -203,6 +203,8 @@ StrCpy $inst_ver "$R2.$R3.$R4.$R5"
       <emphasis>CHECKED</emphasis>. All other entries are <code>REG_DWORD</code> type. A 0x00000001 value
       indicates the option is <emphasis>CHECKED</emphasis>.
     </para>
+    <para>Note: Prior to Npcap 0.93, these values were stored in the
+	    <filename>Services\npcap</filename> key directly.</para>
   </sect2>
 
   <sect2 id="npcap-detect-run-time">
