@@ -1,3 +1,16 @@
+## Npcap 0.93 [2017-07-27]
+
+* Move the driver's Service Registry values from the
+  `HKLM:\SYSTEM\CurrentControlSet\Services\npcap` key to the `Parameters`
+  subkey. Applying Windows upgrades such as Windows 10 Creators Update deletes
+  nonstandard values from the service key; the Parameters subkey is where these
+  should be stored instead.
+
+* Prevent the installer/uninstaller from crashing when faced with an incomplete
+  Npcap installation, such as that created by applying a Windows version
+  upgrade. Safely distinguish between old WinPcap installations and broken
+  Npcap-in-WinPcap-API-mode installations. Fixes [#906](http://issues.nmap.org/906)
+
 ## Npcap 0.92 [2017-06-12]
 
 * Force overwrite of files in installer, since uninstallers from versions
