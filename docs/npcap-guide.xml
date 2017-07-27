@@ -195,7 +195,7 @@ StrCpy $inst_ver "$R2.$R3.$R4.$R5"
 
     <para>
       You can check the installation options of an already installed Npcap by reading the registry
-      key: <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap</filename>.
+      key: <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap\Parameters</filename>.
       The entries like <filename>AdminOnly</filename>,
       <filename>Loopback</filename>, <filename>DltNull</filename>,<filename>Dot11Support</filename>,
       <filename>VlanSupport</filename>, <filename>WinPcapCompatible</filename>, etc. show the installation options.
@@ -375,7 +375,7 @@ printf("%s", pcap_version);
   
   <itemizedlist>
   <listitem><para>Detect Npcap Loopback Adapter's presence, by reading registry value Loopback
-  at key <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap</filename>.
+  at key <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap\Parameters</filename>.
   If <filename>LoopbackSupport</filename> is 0x00000001, then the adapter's device name is in the <filename>LoopbackAdapter</filename> REG_SZ value.
   Then perform the following steps.</para></listitem>
 

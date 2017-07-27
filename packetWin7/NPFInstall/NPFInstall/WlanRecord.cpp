@@ -293,7 +293,7 @@ BOOL AddFlagToRegistry_Dot11Adapters(LPCTSTR strDeviceName)
 {
 	TRACE_ENTER();
 	TRACE_EXIT();
-	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME, NPCAP_REG_DOT11_VALUE_NAME, strDeviceName, KEY_WRITE);
+	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME _T("\\Parameters"), NPCAP_REG_DOT11_VALUE_NAME, strDeviceName, KEY_WRITE);
 }
 
 BOOL writeWlanAdapterGuidsToRegistry()

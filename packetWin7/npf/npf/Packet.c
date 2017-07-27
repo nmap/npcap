@@ -242,6 +242,7 @@ DriverEntry(
 {
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars; // The specification for the filter.
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars_WiFi; // The specification for the WiFi filter.
+	UNICODE_STRING parametersPath;
 	NTSTATUS Status = STATUS_SUCCESS;
 
 	// Use NonPaged Pool instead of No-Execute (NX) Nonpaged Pool for Win8 and later, this is for security purpose.
@@ -264,38 +265,53 @@ DriverEntry(
 	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
 
-	// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
-	// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
-	g_AdminOnlyMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_AdminOnlyRegValueName);
-	// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
-	// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
-	g_DltNullMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_DltNullRegValueName);
-	// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
-	// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
-	g_Dot11SupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_Dot11SupportRegValueName);
-	// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
-	// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
-	g_VlanSupportMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_VlanSupportRegValueName);
-	// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
-	// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
-	g_TimestampMode = NPF_GetRegistryOption_Integer(RegistryPath, &g_TimestampRegValueName);
+	RtlInitUnicodeString(&parametersPath, NULL);
+	parametersPath.MaximumLength=RegistryPath->Length+wcslen(L"\\Parameters")*sizeof(WCHAR)+sizeof(UNICODE_NULL);
+	parametersPath.Buffer=ExAllocatePool(PagedPool, parametersPath.MaximumLength);
+	if (!parametersPath.Buffer) {
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+	RtlZeroMemory(parametersPath.Buffer, parametersPath.MaximumLength);
+	RtlCopyUnicodeString(&parametersPath, RegistryPath);
+	RtlAppendUnicodeToString(&parametersPath, L"\\Parameters");
+
+	Status = RtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE,
+			parametersPath.Buffer);
+	if (NT_SUCCESS(Status)) {
+		// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
+		// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
+		g_AdminOnlyMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_AdminOnlyRegValueName);
+		// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
+		// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
+		g_DltNullMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_DltNullRegValueName);
+		// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
+		// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
+		g_Dot11SupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_Dot11SupportRegValueName);
+		// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
+		// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
+		g_VlanSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_VlanSupportRegValueName);
+		// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
+		// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
+		g_TimestampMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_TimestampRegValueName);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	NPF_GetRegistryOption_String(RegistryPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
-	if (g_LoopbackAdapterName.Buffer != NULL && g_LoopbackAdapterName.Length != ADAPTER_NAME_SIZE * 2)
-	{
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_LoopbackAdapterName is invalid, g_LoopbackAdapterName.Length = %d, ADAPTER_NAME_SIZE * 2 = %d\n",
-			g_LoopbackAdapterName.Length, ADAPTER_NAME_SIZE * 2);
-		ExFreePool(g_LoopbackAdapterName.Buffer);
-		g_LoopbackAdapterName.Buffer = NULL;
-		g_LoopbackAdapterName.Length = 0;
-		g_LoopbackAdapterName.MaximumLength = 0;
-	}
+		NPF_GetRegistryOption_String(&parametersPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
+		if (g_LoopbackAdapterName.Buffer != NULL && g_LoopbackAdapterName.Length != ADAPTER_NAME_SIZE * 2)
+		{
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_LoopbackAdapterName is invalid, g_LoopbackAdapterName.Length = %d, ADAPTER_NAME_SIZE * 2 = %d\n",
+					g_LoopbackAdapterName.Length, ADAPTER_NAME_SIZE * 2);
+			ExFreePool(g_LoopbackAdapterName.Buffer);
+			g_LoopbackAdapterName.Buffer = NULL;
+			g_LoopbackAdapterName.Length = 0;
+			g_LoopbackAdapterName.MaximumLength = 0;
+		}
 #endif
 #ifdef HAVE_RX_SUPPORT
-	NPF_GetRegistryOption_String(RegistryPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
-	NPF_GetRegistryOption_String(RegistryPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
+		NPF_GetRegistryOption_String(&parametersPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
+		NPF_GetRegistryOption_String(&parametersPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
 #endif
+	}
+	if (parametersPath.Buffer) ExFreePool(parametersPath.Buffer);
 
 	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap" for standard driver
 	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap_wifi" for WiFi driver

@@ -46,11 +46,6 @@ function get_os_bit()
     return (Get-WmiObject Win32_OperatingSystem).OSArchitecture
 }
 
-function get_winpcap_mode()
-{
-    return (Get-Item HKLM:\SYSTEM\CurrentControlSet\Services\npcap).GetValue("WinPcapCompatible")
-}
-
 function get_install_path()
 {
     if ($os_bit -eq "32-bit")
@@ -64,7 +59,6 @@ function get_install_path()
 }
 
 $os_bit = get_os_bit
-$winpcap_mode = get_winpcap_mode
 $install_path = get_install_path
 
 
@@ -195,16 +189,22 @@ else
 
 write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap:")
 (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap\Parameters:")
+(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap\Parameters | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
 write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi:")
 (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi\Parameters:")
+(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi\Parameters | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
 
-if ($winpcap_mode -eq 1)
-{
-    write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf:")
-    (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
-    write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi:")
-    (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
-}
+# WinPcap registry items
+write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf:")
+(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf\Parameters:")
+(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf\Parameters | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi:")
+(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi\Parameters:")
+(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi\Parameters | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
 
 #########################################################
 write_report ("`n")
@@ -214,10 +214,7 @@ write_report ("*************************************************")
 
 Get-Service npcap
 
-if ($winpcap_mode)
-{
-    Get-Service npf
-}
+Get-Service npf
 
 #########################################################
 write_report ("`n")

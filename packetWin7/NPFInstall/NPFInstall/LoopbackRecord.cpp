@@ -344,7 +344,7 @@ BOOL AddFlagToRegistry_Service(tstring strDeviceName)
 {
 	TRACE_ENTER();
 	TRACE_EXIT();
-	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME, NPCAP_REG_LOOPBACK_VALUE_NAME, tstring(_T("\\Device\\") + strDeviceName).c_str(), KEY_WRITE);
+	return WriteStrToRegistry(NPCAP_SERVICE_REG_KEY_NAME _T("\\Parameters"), NPCAP_REG_LOOPBACK_VALUE_NAME, tstring(_T("\\Device\\") + strDeviceName).c_str(), KEY_WRITE);
 }
 
 BOOL RecordLoopbackDevice(int iNpcapAdapterID)
