@@ -1782,20 +1782,6 @@ NPF_Restart(
 	PNDIS_FILTER_RESTART_PARAMETERS RestartParameters
 	)
 {
-// 	NDIS_STATUS Status;
-//
-// 	UNREFERENCED_PARAMETER(FilterModuleContext);
-// 	TRACE_ENTER();
-//
-// 	TIME_DESYNCHRONIZE(&G_Start_Time);
-// 	TIME_SYNCHRONIZE(&G_Start_Time);
-//
-// 	Status = NDIS_STATUS_SUCCESS;
-// 	TRACE_EXIT();
-// 	return Status;
-
-	// above is the original version of NPF_Restart() function.
-	// below is the "disable offload" version of NPF_Restart() function.
 
 	POPEN_INSTANCE	Open = (POPEN_INSTANCE) FilterModuleContext;
 	NDIS_STATUS		Status;
@@ -1805,29 +1791,6 @@ NPF_Restart(
 	TIME_DESYNCHRONIZE(&G_Start_Time);
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
-	/* disable offload */
-	{
-		NDIS_STATUS_INDICATION indication;
-		NDIS_OFFLOAD offload;
-
-		NdisZeroMemory(&indication, sizeof(indication));
-		indication.Header.Type = NDIS_OBJECT_TYPE_STATUS_INDICATION;
-		indication.Header.Revision = NDIS_STATUS_INDICATION_REVISION_1;
-		indication.Header.Size = NDIS_SIZEOF_STATUS_INDICATION_REVISION_1;
-		indication.SourceHandle = Open->AdapterHandle;
-		indication.StatusCode = NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG;
-		indication.StatusBuffer = &offload;
-		indication.StatusBufferSize = sizeof(offload);
-
-		NdisZeroMemory(&offload, sizeof(offload));
-		offload.Header.Type = NDIS_OBJECT_TYPE_OFFLOAD;
-		offload.Header.Revision = NDIS_OFFLOAD_REVISION_1;
-		offload.Header.Size = sizeof(offload);
-
-		IF_LOUD(DbgPrint("NDIS_OBJECT_TYPE_OFFLOAD signaled\n");)
-
-		NdisFIndicateStatus(Open->AdapterHandle, &indication);
-	}
 
 	NdisAcquireSpinLock(&Open->AdapterHandleLock);
 	Open->PausePending = FALSE;
@@ -2203,24 +2166,7 @@ NOTE: called at <= DISPATCH_LEVEL
 // 	TRACE_ENTER();
 // 	IF_LOUD(DbgPrint("NPF: Status Indication\n");)
 
-	/* disable offload */
-	if (StatusIndication->StatusCode == NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG)
-	{
-		PNDIS_OFFLOAD offload = StatusIndication->StatusBuffer;
-		IF_LOUD(DbgPrint("status NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG!!!\n");)
-
-		if (StatusIndication->StatusBufferSize == sizeof(NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG) && (offload->Header.Type = NDIS_OBJECT_TYPE_OFFLOAD))
-		{
-			memset(&offload->Checksum, 0, sizeof(NDIS_TCP_IP_CHECKSUM_OFFLOAD));
-			memset(&offload->LsoV1, 0, sizeof(NDIS_TCP_LARGE_SEND_OFFLOAD_V1));
-
-			IF_LOUD(DbgPrint("status NDIS_STATUS_TASK_OFFLOAD_CURRENT_CONFIG disabled\n");)
-		}
-	}
-	else
-	{
-		IF_LOUD(DbgPrint("status %x\n", StatusIndication->StatusCode);)
-	}
+	IF_LOUD(DbgPrint("status %x\n", StatusIndication->StatusCode);)
 
 	//
 	// The filter may do processing on the status indication here, including
