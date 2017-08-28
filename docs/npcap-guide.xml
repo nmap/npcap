@@ -921,6 +921,17 @@ managed
   and <command>net start npcap</command>. See details about this issue
   <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues/802">here</ulink>.
   </para></listitem>
+
+  <listitem><para>Npcap only captures TCP handshake and teardown, but not data packets.
+  Some network adapters support offloading of tasks to free up CPU time for
+  performance reasons. When this happens, Npcap may not receive all of the
+  packets, or may receive them in a different form than is actually sent on the
+  wire. To avoid this issue, you may disable TCP Chimney, IP Checksum
+  Offloading, and Large Send Offloading in the network adapter properites on
+  Windows. See details about this issue in
+  <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues/989">issue
+	  #989</ulink> on our tracker.
+  </para></listitem>
   </itemizedlist>
 </sect1>
 
