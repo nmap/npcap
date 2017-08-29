@@ -1,3 +1,11 @@
+## Npcap 0.94 [2017-08-29]
+
+* Npcap no longer prevents checksum offloading and Large Send Offloading on
+  adapters that support them. This may cause problems with sniffing outgoing
+  packets on those interfaces when those features are enabled, but users can
+  disable them through standard Windows configuration means. Fixes
+  [#989](http://issues.nmap.org/989)
+
 ## Npcap 0.93 [2017-07-27]
 
 * Move the driver's Service Registry values from the
