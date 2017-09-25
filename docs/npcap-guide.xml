@@ -204,6 +204,18 @@
       create a restore point because of the driver installation independent
       from this option.
     </para>
+
+    <para>The destination directory for installation can also be overridden by
+    the <option>/D</option> option, with a few restrictions. First, it will
+    only affect where Npcap keeps its installation logs and helper utilities.
+    The driver and DLLs will always be installed into the appropriate
+    directories below <command>%SYSTEMROOT%\System32\</command>. Second, the
+    <option>/D</option> must be the last option in the command, and the path
+    must not contain quotes. For example, to change the installation directory
+    to <filename>C:\Path With Spaces\</filename>, the invocation would be:
+    <command>npcap-<replaceable>version</replaceable>.exe /D=C:\Path With Spaces</command>
+    </para>
+
     <para>
     An example of Npcap installer options is (for both <quote>GUI Mode</quote> and <quote>Silent Mode</quote>):
     </para>
