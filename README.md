@@ -89,5 +89,6 @@ See: [LICENSE](https://github.com/nmap/npcap/blob/master/LICENSE)
 
 ## Contact
 
-* ``dev@nmap.org`` (Nmap development list, this is **preferred**)
-* ``hsluoyz@gmail.com`` (Yang Luo's email, if your issue needs to be kept private, please contact me via this mail)
+* ``dev@nmap.org`` (Nmap development list, for technical issues and discussion)
+* ``sales@nmap.com`` (Sales address for commercial/licensing issues)
+* [Npcap Issues Tracker](https://github.com/nmap/nmap/issues/) (Bugs can be filed on this shared Nmap/Npcap tracker)
