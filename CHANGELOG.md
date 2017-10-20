@@ -1,3 +1,20 @@
+## Npcap 0.95 [2017-10-19]
+
+* When upgrading, existing installation options will be retrieved from the
+  Registry. Command-line installer options will still override these.
+
+* The installer detects Win10pcap as distinct from WinPcap; since the installer
+  cannot uninstall Win10pcap, WinPcap API-compatible mode will be disabled in
+  the installer when it is present. Fixes [#999](https://issues.nmap.org/999).
+
+* The npcap.cat file is no longer dual-signed; since it was not a PE
+  executable, only one signature is supported. The invalid signature was
+  causing some installation failures. Fixes [#994](https://issues.nmap.org/994).
+
+* Silent installs will not downgrade the Npcap version unless the new
+  `/downgrade=yes` option is given. Any version of [Npcap OEM](https://nmap.org/npcap/oem/)
+   will be considered a "newer version" than any non-OEM version.
+
 ## Npcap 0.94 [2017-08-29]
 
 * Npcap no longer prevents checksum offloading and Large Send Offloading on

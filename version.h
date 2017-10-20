@@ -87,11 +87,11 @@
 #define /*
  !define /**/ WINPCAP_MINOR				0
 #define /*
- !define /**/ WINPCAP_REV				94
+ !define /**/ WINPCAP_REV				95
 #define /*
- !define /**/ WINPCAP_BUILD				829
+ !define /**/ WINPCAP_BUILD				1019
 #define /*
- !define /**/ WINPCAP_VER_STRING		"0.94"
+ !define /**/ WINPCAP_VER_STRING		"0.95"
 
 #define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
 
