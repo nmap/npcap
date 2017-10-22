@@ -267,7 +267,7 @@ DriverEntry(
 
 	RtlInitUnicodeString(&parametersPath, NULL);
 	parametersPath.MaximumLength=RegistryPath->Length+wcslen(L"\\Parameters")*sizeof(WCHAR)+sizeof(UNICODE_NULL);
-	parametersPath.Buffer=ExAllocatePool(PagedPool, parametersPath.MaximumLength);
+	parametersPath.Buffer=ExAllocatePoolWithTag(PagedPool, parametersPath.MaximumLength, '4PWA');
 	if (!parametersPath.Buffer) {
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
