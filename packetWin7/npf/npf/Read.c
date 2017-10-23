@@ -1219,11 +1219,8 @@ NPF_TapExForEachOpen(
 						Header->header.bh_caplen += Dot11RadiotapHeaderSize;
 						Header->header.bh_datalen += Dot11RadiotapHeaderSize;
 
-						if (Open->Size - LocalData->P < Dot11RadiotapHeaderSize) //we check that the available, AND contiguous, space in the buffer will fit
+						if (Open->Size - LocalData->P < Dot11RadiotapHeaderSize)
 						{
-							// the NewHeader structure, at least, otherwise we skip the producer
-							increment += Open->Size - LocalData->P; // at the beginning of the buffer (p = 0), and decrement the free bytes appropriately
-							LocalData->P = 0;
 							//the Radiotap header will be fragmented in the buffer (aka, it will skip the buffer boundary)
 							ToCopy = Open->Size - LocalData->P;
 							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, ToCopy);
