@@ -1158,7 +1158,11 @@ NPF_TapExForEachOpen(
 					if (fres > TotalPacketSize)
 						fres = TotalPacketSize;
 
-					if (fres + sizeof(struct PacketHeader) > LocalData->Free)
+					if (fres + sizeof(struct PacketHeader)
+#ifdef HAVE_DOT11_SUPPORT
+							+ Dot11RadiotapHeaderSize
+#endif
+							> LocalData->Free)
 					{
 						LocalData->Dropped++;
 						IF_LOUD(DbgPrint("LocalData->Dropped++, fres = %d, LocalData->Free = %d\n", fres, LocalData->Free);)
@@ -1220,10 +1224,17 @@ NPF_TapExForEachOpen(
 							// the NewHeader structure, at least, otherwise we skip the producer
 							increment += Open->Size - LocalData->P; // at the beginning of the buffer (p = 0), and decrement the free bytes appropriately
 							LocalData->P = 0;
+							//the Radiotap header will be fragmented in the buffer (aka, it will skip the buffer boundary)
+							ToCopy = Open->Size - LocalData->P;
+							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, ToCopy);
+							NdisMoveMappedMemory(LocalData->Buffer + 0, Dot11RadiotapHeader + ToCopy, Dot11RadiotapHeaderSize - ToCopy);
+							LocalData->P = Dot11RadiotapHeaderSize - ToCopy;
 						}
-
-						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, Dot11RadiotapHeaderSize);
-						LocalData->P += Dot11RadiotapHeaderSize;
+						else
+						{
+							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, Dot11RadiotapHeaderSize);
+							LocalData->P += Dot11RadiotapHeaderSize;
+						}
 						if (LocalData->P == Open->Size)
 							LocalData->P = 0;
 						increment += Dot11RadiotapHeaderSize;
