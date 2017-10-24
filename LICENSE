@@ -2,18 +2,19 @@
 NPCAP COPYRIGHT / END USER LICENSE AGREEMENT
 
 Npcap is a Windows packet sniffing driver and library and is copyright
-(c) 2013-2016 by Insecure.Com LLC ("The Nmap Project").  All rights
+(c) 2013-2017 by Insecure.Com LLC ("The Nmap Project").  All rights
 reserved.
 
-Even though Npcap source code is publicly available for review, it is
-not open source software and my not be redistributed without special
-permission from the Nmap Project.  We fund the Npcap project by
-selling a commercial license which allows companies to redistribute
-Npcap with their products and also provides for support, warranty, and
-indemnification rights.  For details on obtaining such a license,
-please contact:
-
-sales@nmap.com
+Even though Npcap source code is publicly available for review,
+it is not open source software and my not be redistributed
+without special permission from the Nmap Project.  We fund the
+Npcap project by selling a commercial OEM license which allows
+companies to redistribute Npcap with their products and also
+provides for support, warranty, and indemnification rights.
+Further details about Npcap OEM are available from
+https://nmap.org/npcap/oem/, and you are also welcome to contact
+us at sales@nmap.com to ask any questions or set up a license for
+your organization.
 
 Free and open source software producers are also welcome to contact us
 for redistribution requests.  However, we normally recommend that such
@@ -49,22 +50,28 @@ not install, use, or copy the Software.
 
 LICENSE GRANT
 
-This Agreement entitles you to install and use one copy of the
-Software. In addition, you may make one archival copy of the
+This Agreement entitles you to install and use five (5) copies of
+the Software. In addition, you may make archival copies of the
 Software which may only be used for the reinstallation of the
 Software. This Agreement does not permit the installation or use
-of multiple copies of the Software, or the installation of the
-Software on more than one computer at any given time, on a system
-that allows shared used of applications, on a multi-user network,
-or on any configuration or system of computers that allows
-multiple users. A user may only have one instance of this
+of more than 5 copies of the Software, or the installation of the
+Software on more than five computer at any given time, on a
+system that allows shared used of applications by more than five
+users, or on any configuration or system of computers that allows
+more than five users. A user may only have one instance of this
 Agreement active at once.  For example, downloading the software
 multiple times, downloading multiple versions of the software,
 and/or executing the software installer multiple times do not
-grant any additional rights such as using the software on
-multiple machines.  Multiple copy use or installation is only
-allowed if you obtain an appropriate licensing agreement by
-contacting sales@nmap.com.
+grant any additional rights such as using the software on more
+machines.  Users wishing to redistribute this software or exceed
+the usage limits imposed by this free license should contact
+sales@nmap.com to obtain an appropriate commercial license
+agreement.  More details on our OEM edition is also available
+from https://nmap.org/npcap/oem/.
+
+The terms "computer" and "machine" in this license include any
+computing device, including software computing instances such as
+virtual machines.
 
 DISCLAIMER OF WARRANTIES AND LIMITATION OF LIABILITY
 
@@ -82,16 +89,16 @@ or otherwise transfer your rights to the Software Product.
 RESTRICTIONS ON USE
 
 You may not use, copy, or install the Software Product on any system
-with more than one computer, or permit the use, copying, or
-installation of the Software Product by more than one user or on more
-than one computer.
+with more than five computers, or permit the use, copying, or
+installation of the Software Product by more than five users or on more
+than five computers.
 
 RESTRICTIONS ON COPYING
 
 You may not copy any part of the Software except to the extent that
 licensed use inherently demands the creation of a temporary copy
 stored in computer memory and not permanently affixed on storage
-medium. You may make one archival copy as well.
+medium. You may make archival copies as well.
 
 DISCLAIMER OF WARRANTIES AND LIMITATION OF LIABILITY
 
