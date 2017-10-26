@@ -1314,10 +1314,6 @@ Return Value:
     }
 
     FormatToStream(stdout,MSG_INSTALL_UPDATE);
-    //
-    // update the driver for the device we just created
-    //
-    failcode = cmdUpdate(BaseName, Machine, Flags, argc, argv);
 
 	// Mark device as an endpoint, not a network
 	HKEY DevRegKey = SetupDiCreateDevRegKey(DeviceInfoSet,
@@ -1330,14 +1326,38 @@ Return Value:
 		);
 	if (DevRegKey != INVALID_HANDLE_VALUE)
 	{
+		// https://docs.microsoft.com/en-us/windows-hardware/drivers/network/keywords-not-displayed-in-the-user-interface
 		DWORD devtype = NDIS_DEVICE_TYPE_ENDPOINT; // 1
 		if (ERROR_SUCCESS != RegSetValueEx(DevRegKey,
 			TEXT("*NdisDeviceType"), 0, REG_DWORD, (const BYTE *)&devtype, sizeof(devtype))) {
 			TRACE_PRINT1("Couldn't set *NdisDeviceType: %x", GetLastError());// Oops. Hope this isn't a problem.
 		}
+		// https://msdn.microsoft.com/library/windows/hardware/ff565767
+		devtype = IF_TYPE_SOFTWARE_LOOPBACK; // 24
+		if (ERROR_SUCCESS != RegSetValueEx(DevRegKey,
+			TEXT("*IfType"), 0, REG_DWORD, (const BYTE *)&devtype, sizeof(devtype))) {
+			TRACE_PRINT1("Couldn't set *IfType: %x", GetLastError());// Oops. Hope this isn't a problem.
+		}
+		// https://docs.microsoft.com/en-us/windows-hardware/drivers/network/oid-gen-media-supported
+		devtype = NdisMediumLoopback; // 17
+		if (ERROR_SUCCESS != RegSetValueEx(DevRegKey,
+			TEXT("*MediaType"), 0, REG_DWORD, (const BYTE *)&devtype, sizeof(devtype))) {
+			TRACE_PRINT1("Couldn't set *MediaType: %x", GetLastError());// Oops. Hope this isn't a problem.
+		}
+		// https://docs.microsoft.com/en-us/windows-hardware/drivers/network/oid-gen-physical-medium
+		devtype = NdisPhysicalMediumUnspecified; // 0
+		if (ERROR_SUCCESS != RegSetValueEx(DevRegKey,
+			TEXT("*PhysicalMediaType"), 0, REG_DWORD, (const BYTE *)&devtype, sizeof(devtype))) {
+			TRACE_PRINT1("Couldn't set *PhysicalMediaType: %x", GetLastError());// Oops. Hope this isn't a problem.
+		}
 		RegCloseKey(DevRegKey);
 	}
 	else{ TRACE_PRINT1("Couldn't create/open dev reg key: %x", GetLastError()); }
+
+	//
+	// update the driver for the device we just created
+	//
+	failcode = cmdUpdate(BaseName, Machine, Flags, argc, argv);
 
 final:
 
