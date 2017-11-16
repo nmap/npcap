@@ -173,7 +173,7 @@ permitted by such applicable laws.
 
 WINPCAP & LIBPCAP ATTRIBUTION
 
-Much of the Npcap code is originally from WinPcap software
+Some of the Npcap code is originally from WinPcap software
 (http://www.winpcap.org/). See
 https://github.com/nmap/npcap/blob/master/WinPcap-License-And-Acknowledgements.txt
 for further information and attribution related to that.
