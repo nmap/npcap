@@ -813,23 +813,27 @@ NPF_TapExForEachOpen(
 			// Size: 1 byte, Alignment: 1 byte.
 			// Looking up the ucDataRate field's value in the data rate mapping table.
 			// If not found, return 0.
+			IF_LOUD(DbgPrint("pwInfo->ucDataRate = %d\n", pwInfo->ucDataRate);)
 			USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open, pwInfo->ucDataRate);
-			pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
-			// The miniport might be providing data rate values > 127.5 Mb/s, but radiotap's "Rate" field is only 8 bits,
-			// so we at least make it the maximum value instead of overflowing it.
-			if (usDataRateValue > 255)
-			{
-				usDataRateValue = 255;
+			if (usDataRateValue != 0) {
+				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
+				// The miniport might be providing data rate values > 127.5 Mb/s, but radiotap's "Rate" field is only 8 bits,
+				// so we at least make it the maximum value instead of overflowing it.
+				if (usDataRateValue > 255)
+				{
+					usDataRateValue = 255;
+				}
+				*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) usDataRateValue;
+				cur += sizeof(UCHAR) / sizeof(UCHAR);
 			}
-			*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) usDataRateValue;
-			cur += sizeof(UCHAR) / sizeof(UCHAR);
 
-			NPF_AlignProtocolField(2, &cur);
-			// [Radiotap] "Channel" field.
-			// Size: 2 bytes + 2 bytes, Alignment: 2 bytes.
-			if (TRUE)
+			if (pwInfo->uPhyId || pwInfo->uChCenterFrequency)
 			{
 				USHORT flags = 0;
+				NPF_AlignProtocolField(2, &cur);
+				// [Radiotap] "Channel" field.
+				// Size: 2 bytes + 2 bytes, Alignment: 2 bytes.
+				IF_LOUD(DbgPrint("pwInfo->uPhyId = %x\n", pwInfo->uPhyId);)
 				if (pwInfo->uPhyId == dot11_phy_type_fhss)
 				{
 					flags = IEEE80211_CHAN_GFSK; // 0x0800
@@ -860,6 +864,7 @@ NPF_TapExForEachOpen(
 				}
 
 				// If the frequency is higher than 65535, radiotap can't hold this value because "Frequency" field is only 16 bits, we just leave it the maximum value 65535.
+				IF_LOUD(DbgPrint("pwInfo->uChCenterFrequency = %d\n", pwInfo->uChCenterFrequency);)
 				if (pwInfo->uChCenterFrequency <= 65535)
 				{
 					*((USHORT*)Dot11RadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
