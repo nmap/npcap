@@ -1,5 +1,19 @@
 ## Npcap 0.96 [2017-10-31]
 
+* Only include data rate and channel fields in the RadioTap header if they are
+  reported by the underlying WiFi card driver. See
+  [#1036](http://issues.nmap.org/1036).
+
+* When the Npcap installer detects that WinPcap is present, it will default to
+  installing in WinPcap API-compatible mode, replacing WinPcap. This can be
+  changed by the user in the interactive installer, or by setting the
+  `/winpcap_mode=no` command-line option.
+
+* The Silent installation feature of the Npcap installer is now limited to the
+  [Npcap OEM edition](https://nmap.org/npcap/oem/).
+
+## Npcap 0.96 [2017-10-31]
+
 * Set the `*IfType`, `*MediaType`, and `*PhysicalMediaType` registry values for
   the Npcap Loopback Adapter. The values set should reduce the amount of
   configuration that Windows attempts to do on the adapter, preventing it from
