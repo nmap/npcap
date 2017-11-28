@@ -100,7 +100,6 @@
 #ifdef /*
  !ifdef /**/ NPCAP_OEM
 #define /*
- !define NPCAP_OEM 1
  !define /**/ WINPCAP_PRODUCT_NAME 			"Npcap OEM"
 #else /*
  !else /**/
