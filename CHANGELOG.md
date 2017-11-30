@@ -1,4 +1,4 @@
-## Npcap 0.96 [2017-10-31]
+## Npcap 0.97 [2017-11-27]
 
 * Only include data rate and channel fields in the RadioTap header if they are
   reported by the underlying WiFi card driver. See
