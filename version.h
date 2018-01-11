@@ -87,11 +87,11 @@
 #define /*
  !define /**/ WINPCAP_MINOR				0
 #define /*
- !define /**/ WINPCAP_REV				97
+ !define /**/ WINPCAP_REV				98
 #define /*
- !define /**/ WINPCAP_BUILD				1127
+ !define /**/ WINPCAP_BUILD				110
 #define /*
- !define /**/ WINPCAP_VER_STRING		"0.97"
+ !define /**/ WINPCAP_VER_STRING		"0.98"
 
 #define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
 
@@ -108,10 +108,10 @@
 #endif /*
  !endif /**/
 
-#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2017, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright (c) 2017, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2017, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2017, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2018, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright (c) 2018, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2018, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2018, Insecure.Com LLC.  All rights reserved."
 
 #define WINPCAP_BUILD_DESCRIPTION 		""
 #define WINPCAP_PRIVATE_BUILD			""

@@ -1,3 +1,9 @@
+## Npcap 0.98 [2018-01-10]
+
+* Fix digital signatures for some files: OEM drivers were missing the Microsoft
+  Attestation signature required for Windows 10 1703, and the installer was
+  missing the SHA-1 signature required for Windows Vista.
+
 ## Npcap 0.97 [2017-11-27]
 
 * Only include data rate and channel fields in the RadioTap header if they are
