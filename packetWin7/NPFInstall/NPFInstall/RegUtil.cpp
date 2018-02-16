@@ -88,7 +88,7 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDevi
 		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strDeviceName, (lstrlen(strDeviceName) + 1) * sizeof(TCHAR));
 		if (Status != ERROR_SUCCESS)
 		{
-			TRACE_PRINT1("RegSetValueEx: error, errCode = 0x%08x.", GetLastError());
+			TRACE_PRINT1("RegSetValueEx: error, errCode = 0x%08x.", Status);
 			RegCloseKey(hNpcapKey);
 			TRACE_EXIT();
 			return FALSE;
@@ -97,7 +97,7 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDevi
 	}
 	else
 	{
-		TRACE_PRINT1("RegOpenKeyEx: error, errCode = 0x%08x.", GetLastError());
+		TRACE_PRINT1("RegOpenKeyEx: error, errCode = 0x%08x.", Status);
 		TRACE_EXIT();
 		return FALSE;
 	}
