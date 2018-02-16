@@ -2197,13 +2197,14 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 		if (g_nbAdapterMonitorModes[AdapterNameA] != 0)
 		{
 			pSymbolicLinkA = NpcapTranslateAdapterName_Standard2Wifi(SymbolicLinkA);
-			lpAdapter->hFile = CreateFileA(pSymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
-				0, NULL, OPEN_EXISTING, 0, 0);
-			if (pSymbolicLinkA)
+			if (pSymbolicLinkA) {
+				lpAdapter->hFile = CreateFileA(pSymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
+						0, NULL, OPEN_EXISTING, 0, 0);
 				free(pSymbolicLinkA);
+			}
 
 			// If the monitor mode device fails to be opened, we then try the standard one.
-			if (!lpAdapter->hFile)
+			if (!lpAdapter->hFile || lpAdapter->hFile == INVALID_HANDLE_VALUE)
 				lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
 				0, NULL, OPEN_EXISTING, 0, 0);
 		}
@@ -2212,7 +2213,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 			lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
 				0, NULL, OPEN_EXISTING, 0, 0);
 		}
-		TRACE_PRINT3("SymbolicLinkA = %hs, pSymbolicLinkA = %hs, lpAdapter->hFile = %08x", SymbolicLinkA, pSymbolicLinkA, lpAdapter->hFile);
+		TRACE_PRINT2("SymbolicLinkA = %hs, lpAdapter->hFile = %08x", SymbolicLinkA, lpAdapter->hFile);
 	}
 	
 	if (lpAdapter->hFile != INVALID_HANDLE_VALUE) 
