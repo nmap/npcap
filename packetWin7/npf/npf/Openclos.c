@@ -259,22 +259,22 @@ NPF_OpenAdapter(
 			DeviceExtension->AdapterName.Buffer,
 			DeviceExtension->Dot11);
 
-		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+		Irp->IoStatus.Status = STATUS_NDIS_INTERFACE_NOT_FOUND;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
-		return STATUS_INSUFFICIENT_RESOURCES;
+		return STATUS_NDIS_INTERFACE_NOT_FOUND;
 	}
 
 	if (NPF_StartUsingBinding(GroupHead) == FALSE)
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_StartUsingOpenInstance error, AdapterName=%ws",
+			"NPF_StartUsingBinding error, AdapterName=%ws",
 			DeviceExtension->AdapterName.Buffer);
 
-		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+		Irp->IoStatus.Status = STATUS_NDIS_OPEN_FAILED;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
-		return STATUS_INSUFFICIENT_RESOURCES;
+		return STATUS_NDIS_OPEN_FAILED;
 	}
 
 	// Create a group child adapter object from the head adapter.

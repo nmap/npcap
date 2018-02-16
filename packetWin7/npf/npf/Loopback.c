@@ -768,7 +768,7 @@ NPF_AddFilter(
 			"NPF_AddFilter: invalid iFlag, iFlag = %d\n",
 			iFlag);
 		TRACE_EXIT();
-		return status;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	filter.numFilterConditions = conditionIndex;
