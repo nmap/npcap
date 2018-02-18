@@ -1386,12 +1386,12 @@ static BOOLEAN PacketGetAdaptersNPF()
 	
 	if ( Status != ERROR_SUCCESS ){
 		TRACE_PRINT("PacketGetAdaptersNPF: RegOpenKeyEx ( Class\\{networkclassguid} ) Failed");
-		goto tcpip_linkage;
+		TRACE_EXIT();
+		return FALSE;
 	}
 
 	i = 0;
 
-	TRACE_PRINT("PacketGetAdaptersNPF: RegOpenKeyEx ( Class\\{networkclassguid} ) was successful");
 	TRACE_PRINT("PacketGetAdaptersNPF: Cycling through the adapters in the registry:");
 
 	// 
@@ -1482,85 +1482,6 @@ static BOOLEAN PacketGetAdaptersNPF()
 	} // while enum reg keys
 
 	RegCloseKey(AdapKey);
-
-tcpip_linkage:
-	//
-	// no adapters were found under {4D36E972-E325-11CE-BFC1-08002BE10318}. This means with great probability
-	// that we are under Windows NT 4, so we try to look under the tcpip bindings.
-	//
-	
-	TRACE_PRINT("Adapters not found under SYSTEM\\CurrentControlSet\\Control\\Class. Using the TCP/IP bindings.");
-		
-	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-		TEXT("SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Linkage"),
-		0,
-		KEY_READ,
-		&LinkageKey);
-
-	if (Status == ERROR_SUCCESS)
-	{
-		// Retrieve the length of th binde key
-		// This key contains the name of the devices as \device\foo
-		//in ASCII, separated by a single '\0'. The list is terminated
-		//by another '\0'
-		Status=RegQueryValueExA(LinkageKey,
-			"bind",
-			NULL,
-			&RegType,
-			NULL,
-			&RegKeySize);
-
-		// Allocate the buffer
-		TcpBindingsMultiString = (CHAR*) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, RegKeySize + 2);
-
-		if (TcpBindingsMultiString == NULL)
-		{
-			TRACE_PRINT("GlobalAlloc failed allocating memory for the registry key, returning.");
-			TRACE_EXIT();
-			return FALSE;
-		}
-		
-		// Query the key again to get its content		
-		Status = RegQueryValueExA(LinkageKey,
-			"bind",
-			NULL,
-			&RegType,
-			(LPBYTE)TcpBindingsMultiString,
-			&RegKeySize);
-		
-		RegCloseKey(LinkageKey);
-
-		// Scan the buffer with the device names
-		for(i = 0;;)
-		{
-			if (TcpBindingsMultiString[i] == '\0')
-				break;
-			
-			StringCchPrintfA(TAName, sizeof(TAName), "%s%s", 
-				npfCompleteDriverPrefix,
-				TcpBindingsMultiString + i + strlen("\\Device\\"));
-			TRACE_PRINT1("Successfully retrieved info for adapter %hs, trying to add it to the global list...", TAName);
-			// If the adapter is valid, add it to the list.
-			PacketAddAdapterNPF(TAName, 0);
-
-			//
-			// TODO GV: this cast to avoid a compilation warning is
-			//			actually stupid. We should check not to go over the buffer boundary!
-			// 
-			i += (INT)strlen(&TcpBindingsMultiString[i]) + 1;
-		}
-	
- 		GlobalFreePtr(TcpBindingsMultiString);
-	}
-	
-	else{
-#ifdef _WINNT4
-		MessageBox(NULL,TEXT("Can not find TCP/IP bindings.\nIn order to run the packet capture driver you must install TCP/IP."),szWindowTitle,MB_OK);
-		TRACE_PRINT("Cannot find the TCP/IP bindings on NT4, no adapters.");
-		TRACE_EXIT();
-		return FALSE;
-#endif		
-	}
 	
 	TRACE_EXIT();
 	return TRUE;
