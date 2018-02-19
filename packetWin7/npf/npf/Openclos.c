@@ -279,6 +279,13 @@ NPF_OpenAdapter(
 
 	// Create a group child adapter object from the head adapter.
 	Open = NPF_DuplicateOpenObject(GroupHead, DeviceExtension);
+	if (Open == NULL)
+  {
+		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+    TRACE_EXIT();
+    return STATUS_INSUFFICIENT_RESOURCES;
+  }
 
 	Open->DeviceExtension = DeviceExtension;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -1263,6 +1270,11 @@ NPF_DuplicateOpenObject(
 	TRACE_ENTER();
 
 	Open = NPF_CreateOpenObject(&OriginalOpen->AdapterName, OriginalOpen->Medium, DeviceExtension);
+	if (Open == NULL)
+	{
+	  TRACE_EXIT();
+	  return NULL;
+  }
 	Open->AdapterHandle = OriginalOpen->AdapterHandle;
 	Open->DirectBinded = FALSE;
 	Open->MaxFrameSize = OriginalOpen->MaxFrameSize;
