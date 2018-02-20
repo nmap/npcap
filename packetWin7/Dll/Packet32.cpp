@@ -651,11 +651,7 @@ void NpcapGetLoopbackInterfaceName()
 	char buffer[BUFSIZE];
 	DWORD size = sizeof(buffer);
 
-#ifndef _X86_
-	Wow64EnableWow64FsRedirection(FALSE);
-#endif
-
-	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueExA(hKey, "LoopbackAdapter", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
@@ -664,10 +660,6 @@ void NpcapGetLoopbackInterfaceName()
 
 		RegCloseKey(hKey);
 	}
-
-#ifndef _X86_
-	Wow64EnableWow64FsRedirection(TRUE);
-#endif
 
 	TRACE_EXIT();
 }
@@ -682,11 +674,7 @@ BOOL NpcapIsAdminOnlyMode()
 	DWORD size = sizeof(buffer);
 	DWORD dwAdminOnlyMode = 0;
 
-#ifndef _X86_
-	Wow64EnableWow64FsRedirection(FALSE);
-#endif
-
-	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueExA(hKey, "AdminOnly", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_DWORD)
 		{
@@ -703,10 +691,6 @@ BOOL NpcapIsAdminOnlyMode()
 	{
 		dwAdminOnlyMode = 0;
 	}
-
-#ifndef _X86_
-	Wow64EnableWow64FsRedirection(TRUE);
-#endif
 
 	if (dwAdminOnlyMode != 0)
 	{
@@ -1909,7 +1893,7 @@ BOOL PacketStartService()
 		KeyRes = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
 			NpfServiceLocation,
 			0,
-			KEY_READ,
+			KEY_READ | KEY_WOW64_64KEY,
 			&PathKey);
 
 		if (KeyRes != ERROR_SUCCESS)

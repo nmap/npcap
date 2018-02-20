@@ -82,7 +82,7 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDevi
 	TRACE_PRINT4("WriteStrToRegistry: executing, strSubKey = %s, strValueName = %s, strDeviceName = %s, dwSamDesired = 0x%08x.",
 		strSubKey, strValueName, strDeviceName, dwSamDesired);
 
-	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired, &hNpcapKey);
+	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired | KEY_WOW64_64KEY, &hNpcapKey);
 	if (Status == ERROR_SUCCESS)
 	{
 		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strDeviceName, (lstrlen(strDeviceName) + 1) * sizeof(TCHAR));
