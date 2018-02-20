@@ -1181,7 +1181,7 @@ NPF_TapExForEachOpen(
 						//in order to avoid buffer corruption, we drop the packet
 						//
 						LocalData->Dropped++;
-						IF_LOUD(DbgPrint("LocalData->Dropped++, LocalData->TransferMdl1 = %d\n", LocalData->TransferMdl1);)
+						IF_LOUD(DbgPrint("LocalData->Dropped++, LocalData->TransferMdl1 = %p\n", LocalData->TransferMdl1);)
 						break;
 					}
 

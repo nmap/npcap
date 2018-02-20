@@ -359,7 +359,7 @@ NPF_WSKSendPacket_NBL(
 	}
 	else
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket_NBL()::NetBufferList->FirstNetBuffer->CurrentMdl failed with pMdl 0x%08X\n", pMdl);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket_NBL()::NetBufferList->FirstNetBuffer->CurrentMdl failed with pMdl 0x%p\n", pMdl);
 
 		TRACE_EXIT();
 		return status;
@@ -371,7 +371,7 @@ NPF_WSKSendPacket_NBL(
 		//  The system is low on resources. Set up to handle failure
 		//  below.
 		//
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket_NBL()::NdisQueryMdl() failed with pEthernetHdr 0x%08X\n", pEthernetHdr);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKSendPacket_NBL()::NdisQueryMdl() failed with pEthernetHdr 0x%p\n", pEthernetHdr);
 
 		TRACE_EXIT();
 		return status;

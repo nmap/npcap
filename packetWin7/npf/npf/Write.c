@@ -375,7 +375,7 @@ NPF_Write(
 #ifdef HAVE_RX_SUPPORT
 				if (Open->SendToRxPath == TRUE)
 				{
-					IF_LOUD(DbgPrint("NPF_Write::SendToRxPath, Open->AdapterHandle=%p, pNetBufferList=%u\n", Open->AdapterHandle, pNetBufferList);)
+					IF_LOUD(DbgPrint("NPF_Write::SendToRxPath, Open->AdapterHandle=%p, pNetBufferList=%p\n", Open->AdapterHandle, pNetBufferList);)
 					// pretend to receive these packets from network and indicate them to upper layers
 					NdisFIndicateReceiveNetBufferLists(
 						Open->AdapterHandle,
@@ -704,7 +704,7 @@ NPF_BufferedWrite(
 #ifdef HAVE_RX_SUPPORT
 			if (Open->SendToRxPath == TRUE)
 			{
-				IF_LOUD(DbgPrint("NPF_BufferedWrite::SendToRxPath, Open->AdapterHandle=%p, pNetBufferList=%u\n", Open->AdapterHandle, pNetBufferList);)
+				IF_LOUD(DbgPrint("NPF_BufferedWrite::SendToRxPath, Open->AdapterHandle=%p, pNetBufferList=%p\n", Open->AdapterHandle, pNetBufferList);)
 				// pretend to receive these packets from network and indicate them to upper layers
 				NdisFIndicateReceiveNetBufferLists(
 					Open->AdapterHandle,

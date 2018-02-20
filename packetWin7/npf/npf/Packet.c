@@ -414,7 +414,7 @@ DriverEntry(
 	}
 	else
 	{
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %x", Status, FilterDriverHandle);
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %p", Status, FilterDriverHandle);
 	}
 
 	if (g_Dot11SupportMode)
@@ -429,7 +429,7 @@ DriverEntry(
 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter (WiFi) with NDIS, Status = %x", Status);
 
 			// We still run the driver even with the 2nd filter doesn't work.
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "We only use the 1st Filter Handle now, FilterDriverHandle_WiFi = %x.", FilterDriverHandle_WiFi);
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "We only use the 1st Filter Handle now, FilterDriverHandle_WiFi = %p.", FilterDriverHandle_WiFi);
 			// NdisFDeregisterFilterDriver(FilterDriverHandle);
 			// TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting the 1st Filter Handle = %p", FilterDriverHandle);
 
@@ -438,7 +438,7 @@ DriverEntry(
 		}
 		else
 		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter (WiFi) with NDIS, Status = %x, FilterDriverHandle_WiFi = %x", Status, FilterDriverHandle_WiFi);
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter (WiFi) with NDIS, Status = %x, FilterDriverHandle_WiFi = %p", Status, FilterDriverHandle_WiFi);
 		}
 	}
 
@@ -2247,7 +2247,7 @@ NPF_IoControl(
 				// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
 				if (Open->GroupHead->PhysicalMedium == NdisPhysicalMediumNative802_11)
 				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %p, MyPacketFilter = %p",
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %p",
 						*(ULONG*)OidData->Data, Open->GroupHead->MyPacketFilter);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 
@@ -2350,9 +2350,9 @@ NPF_IoControl(
 		else
 		{
 			// Return the error code of NdisFOidRequest() to the application.
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Original NdisFOidRequest() Status = %p", Status);
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Original NdisFOidRequest() Status = %#x", Status);
 			SET_FAILURE_CUSTOM(Status);
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Custom NdisFOidRequest() Status = %p", Status);
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Custom NdisFOidRequest() Status = %#x", Status);
 		}
 
 		break;
@@ -2377,7 +2377,7 @@ NPF_IoControl(
 	Irp->IoStatus.Status = Status;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %p", Status);
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %#x", Status);
 	TRACE_EXIT();
 	return Status;
 }

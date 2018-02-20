@@ -1564,7 +1564,7 @@ NPF_AttachAdapter(
 			AttachParameters->MiniportMediaType);
 		);
 
-		IF_LOUD(DbgPrint("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%d]=%d\n",
+		IF_LOUD(DbgPrint("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%I64u]=%d\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
 			SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME,
 			AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME]);
@@ -2097,7 +2097,7 @@ Arguments:
 	//
 	if (OriginalRequest == NULL)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %p", Status);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %#x", Status);
 		NPF_InternalRequestComplete(Open, Request, Status);
 		TRACE_EXIT();
 		return;
@@ -2638,7 +2638,7 @@ NPF_DoInternalRequest(
 		}
 	}
 
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %p", Status);
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %#x", Status);
 	TRACE_EXIT();
 	return Status;
 }
