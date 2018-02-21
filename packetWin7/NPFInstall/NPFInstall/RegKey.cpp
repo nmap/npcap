@@ -296,8 +296,8 @@ bool RegKey::EnumerateKeys(LPTSTR pszSubkeyName, const DWORD dwIndex)
 	TCHAR subkeyNameBuffer[2048] = { '\0' };
 	TCHAR classNameBuffer[2048] = { '\0' };
 
-	DWORD sizeOfSubkeyName = sizeof(subkeyNameBuffer) - 1;
-	DWORD sizeOfClassName = sizeof(classNameBuffer) - 1;
+	DWORD sizeOfSubkeyName = sizeof(subkeyNameBuffer) / sizeof(TCHAR) - 1;
+	DWORD sizeOfClassName = sizeof(classNameBuffer) / sizeof(TCHAR) - 1;
 
 	LONG lRetValue = RegEnumKeyEx(hTheKey_, dwIndex, subkeyNameBuffer
 		, &sizeOfSubkeyName, NULL, classNameBuffer, &sizeOfClassName, &obLastWriteTime_);
@@ -305,7 +305,6 @@ bool RegKey::EnumerateKeys(LPTSTR pszSubkeyName, const DWORD dwIndex)
 	if (lRetValue == ERROR_NO_MORE_ITEMS)
 	{
 		iLastErrorCode_ = ERROR_NO_MORE_ITEMS;
-		_tcscpy_s(pszSubkeyName, 2048, subkeyNameBuffer);
 		return false;
 	}
 
@@ -442,12 +441,11 @@ bool RegKey::EnumerateValues(LPTSTR pszValueName, LPBYTE lpValue, DWORD& dwValue
 
 	TCHAR tmpName[2048] = { '\0' };
 
-	DWORD dwTmpNameSize = sizeof(tmpName);
+	DWORD dwTmpNameSize = sizeof(tmpName) / sizeof(TCHAR);
 
 	LONG lRetValue = RegEnumValue(hTheKey_, dwIndex, tmpName, &dwTmpNameSize, NULL, &dwValueType, lpValue, &dwValueSize);
 	if (lRetValue == ERROR_NO_MORE_ITEMS)
 	{
-		_tcscpy_s(pszValueName, 2048, tmpName);
 		iLastErrorCode_ = ERROR_NO_MORE_ITEMS;
 		return false;
 	}
@@ -562,12 +560,12 @@ bool RegKey::IntGetValue(LPCTSTR pszValueName, BYTE& pValue, DWORD& dwValueLengt
 
 	dwValueLength = dwValueLength * sizeof(TCHAR);
 	LONG lRetValue = RegQueryValueEx(hTheKey_, pszValueName, NULL, &dwType, (LPBYTE)&pValue, &dwValueLength);
-	dwValueLength = dwValueLength / sizeof(TCHAR);
 	if (lRetValue != ERROR_SUCCESS)
 	{
 		iLastErrorCode_ = GetLastError();
 		return false;
 	}
+	dwValueLength = dwValueLength / sizeof(TCHAR);
 
 	iLastErrorCode_ = ERROR_SUCCESS;
 	return true;
@@ -753,7 +751,7 @@ DWORD RegKey::GetSizeOfValue(LPCTSTR pszKeyName, LPCTSTR pszValueName, HKEY hBas
 		if (lRetValue == ERROR_SUCCESS || lRetValue == ERROR_MORE_DATA)
 			dwCount = dwValueLength / sizeof(TCHAR);
 
-		CloseKey(); // Close it as we have finnished
+		CloseKey(); // Close it as we have finished
 	}
 
 	return dwCount;

@@ -139,7 +139,7 @@ HRESULT HrGetINetCfg(IN BOOL fGetWriteLock, IN LPCTSTR lpszAppName, OUT INetCfg*
 					//
 
 					hr = pncLock->AcquireWriteLock(LOCK_TIME_OUT, lpszAppName, lpszLockedBy);
-					if (hr == S_FALSE)
+					if (!SUCCEEDED(hr))
 					{
 						hr = NETCFG_E_NO_WRITE_LOCK;
 					}

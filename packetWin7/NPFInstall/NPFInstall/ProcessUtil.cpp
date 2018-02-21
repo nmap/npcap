@@ -206,7 +206,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 			TCHAR szModName[MAX_PATH];
 
 			// Get the full path to the module's file.
-			if (GetModuleFileNameEx(hProcess, hArrModules[i], szModName, sizeof(szModName)))
+			if (GetModuleFileNameEx(hProcess, hArrModules[i], szModName, MAX_PATH))
 			{
 				tstring strModulePathName = szModName;
 				transform(strModulePathName.begin(), strModulePathName.end(), strModulePathName.begin(), ::tolower);

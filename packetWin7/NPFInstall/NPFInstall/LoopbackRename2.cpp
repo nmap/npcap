@@ -134,7 +134,7 @@ wstring ANSIToUnicode(const string& str)
 		unicodeLen);
 	wstring rt;
 	rt = (wchar_t*) pUnicode;
-	delete pUnicode;
+	delete[] pUnicode;
 	return rt;
 }
 
@@ -347,29 +347,4 @@ BOOL DoRenameLoopbackNetwork2()
 
 	TRACE_EXIT();
 	return TRUE;
-}
-
-BOOL IsWindowsWin10()
-{
-	TRACE_ENTER();
-
-	OSVERSIONINFO osvi;
-	ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&osvi);
-
-	TRACE_PRINT1("GetVersionEx: osvi.dwMajorVersion = %d, expected value = 10.", osvi.dwMajorVersion);
-	TRACE_EXIT();
-	return osvi.dwMajorVersion >= 10;
-
-// 	tstring cmd = executeCommand(_T("ver"));
-// 	tstring strMajorVersionNumber = getMajorVersionNumberFromVerOutput(cmd);
-// 	if (strMajorVersionNumber.compare(_T("10")) == 0)
-// 	{
-// 		return TRUE;
-// 	}
-// 	else
-// 	{
-// 		return FALSE;
-// 	}
 }

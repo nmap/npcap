@@ -87,7 +87,7 @@ BOOL DoTheWork(INetSharingManager *pNSM, TCHAR strDeviceName[])
 	BOOL bError = FALSE;
 	INetSharingEveryConnectionCollection * pNSECC = NULL;
 	HRESULT hr = pNSM->get_EnumEveryConnection (&pNSECC);
-	if (!pNSECC)
+	if (!SUCCEEDED(hr) || !pNSECC)
 	{
 		TRACE_PRINT1("INetSharingManager::get_EnumEveryConnection: error, errCode = 0x%08x.", hr);
 	}
@@ -97,7 +97,7 @@ BOOL DoTheWork(INetSharingManager *pNSM, TCHAR strDeviceName[])
 		IEnumVARIANT * pEV = NULL;
 		IUnknown * pUnk = NULL;
 		hr = pNSECC->get__NewEnum (&pUnk);
-		if (pUnk) {
+		if (SUCCEEDED(hr) && pUnk) {
 			hr = pUnk->QueryInterface (__uuidof(IEnumVARIANT),
 				(void**)&pEV);
 			pUnk->Release();
@@ -118,38 +118,44 @@ BOOL DoTheWork(INetSharingManager *pNSM, TCHAR strDeviceName[])
 						(void**)&pNC);
 					if (pNC) {
 						NETCON_PROPERTIES *pNETCON_PROPERTIES;
-						pNC->GetProperties(&pNETCON_PROPERTIES);
-
-						TCHAR currentGUID[BUF_SIZE];
-						GUID guid = pNETCON_PROPERTIES->guidId;
-						_stprintf_s(currentGUID, BUF_SIZE, _T("{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}"),
-							guid.Data1, guid.Data2, guid.Data3, 
-							guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-							guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-
-						TRACE_PRINT2("IEnumVARIANT::Next: executing, currentGUID = %s, strDeviceName = %s.", currentGUID, strDeviceName);
-						if (_tcscmp(currentGUID, strDeviceName) == 0)
+						hr = pNC->GetProperties(&pNETCON_PROPERTIES);
+						if (SUCCEEDED(hr))
 						{
-							TRACE_PRINT2("INetConnection::Rename: executing, currentGUID = strDeviceName = %s, pszwNewName = %s.", currentGUID, NPCAP_LOOPBACK_INTERFACE_NAME);
 
-							hr = pNC->Rename(NPCAP_LOOPBACK_INTERFACE_NAME);
-							bFound = TRUE;
-							if (hr == HRESULT_FROM_WIN32(ERROR_TRANSACTIONAL_CONFLICT))
+							TCHAR currentGUID[BUF_SIZE];
+							GUID guid = pNETCON_PROPERTIES->guidId;
+							_stprintf_s(currentGUID, BUF_SIZE, _T("{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}"),
+								guid.Data1, guid.Data2, guid.Data3,
+								guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+								guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+
+							TRACE_PRINT2("IEnumVARIANT::Next: executing, currentGUID = %s, strDeviceName = %s.", currentGUID, strDeviceName);
+							if (_tcscmp(currentGUID, strDeviceName) == 0)
 							{
-								TRACE_PRINT1("INetConnection::Rename: error, errCode = 0x%08x.", hr);
-								bError = TRUE;
-							}
-							else if (hr != S_OK)
-							{
-								TRACE_PRINT1("INetConnection::Rename: error, errCode = 0x%08x.", hr);
-								bError = TRUE;
-							}
-							else
-							{
-								bError = FALSE;
+								TRACE_PRINT2("INetConnection::Rename: executing, currentGUID = strDeviceName = %s, pszwNewName = %s.", currentGUID, NPCAP_LOOPBACK_INTERFACE_NAME);
+
+								hr = pNC->Rename(NPCAP_LOOPBACK_INTERFACE_NAME);
+								bFound = TRUE;
+								if (hr == HRESULT_FROM_WIN32(ERROR_TRANSACTIONAL_CONFLICT))
+								{
+									TRACE_PRINT1("INetConnection::Rename: error, errCode = 0x%08x.", hr);
+									bError = TRUE;
+								}
+								else if (hr != S_OK)
+								{
+									TRACE_PRINT1("INetConnection::Rename: error, errCode = 0x%08x.", hr);
+									bError = TRUE;
+								}
+								else
+								{
+									bError = FALSE;
+								}
 							}
 						}
-						
+						else
+						{
+							bError = TRUE;
+						}
 						pNC->Release();
 					}
 				}
@@ -178,16 +184,23 @@ BOOL RenameLoopbackNetwork(TCHAR strDeviceName[])
 	TRACE_ENTER();
 
 	BOOL bResult = FALSE;
+	HRESULT hr = S_OK;
 /*	CoInitialize (NULL);*/
 
 	// init security to enum RAS connections
-	CoInitializeSecurity (NULL, -1, NULL, NULL, 
+	hr = CoInitializeSecurity (NULL, -1, NULL, NULL, 
 		RPC_C_AUTHN_LEVEL_PKT, 
 		RPC_C_IMP_LEVEL_IMPERSONATE,
 		NULL, EOAC_NONE, NULL);
+	if (!SUCCEEDED(hr))
+	{
+		TRACE_PRINT1("CoInitializeSecurity: error, errCode = 0x%08x.", hr);
+		TRACE_EXIT();
+		return FALSE;
+	}
 
 	INetSharingManager * pNSM = NULL;    
-	HRESULT hr = ::CoCreateInstance (__uuidof(NetSharingManager),
+	hr = ::CoCreateInstance (__uuidof(NetSharingManager),
 		NULL,
 		CLSCTX_ALL,
 		__uuidof(INetSharingManager),

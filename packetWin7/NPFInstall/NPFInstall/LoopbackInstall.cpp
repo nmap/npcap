@@ -67,6 +67,7 @@ Abstract:
 
 #include <shlobj.h>
 #include <ntddndis.h>
+#include <VersionHelpers.h>
 
 #define BUF_SIZE 255
 #define ADAPTER_SIZE 255
@@ -209,8 +210,7 @@ Return Value:
                           0,              // minimum size of buffer
                           &arglist);
 
-    if(locbuffer) {
-        if(count) {
+       if(count) {
             int c;
             int back = 0;
             //
@@ -228,10 +228,9 @@ Return Value:
             //
             // now write to apropriate stream
             //
-            _fputts(locbuffer,stream);
+			_fputts(locbuffer, stream);
+			LocalFree(locbuffer);
         }
-        LocalFree(locbuffer);
-    }
 }
 
 IdEntry GetIdType(_In_ LPCTSTR Id)
@@ -1224,11 +1223,11 @@ Return Value:
     // Inf must be a full pathname
     //
 	res = GetFullPathName(inf, MAX_PATH, InfPath, NULL);
-	if (res >= MAX_PATH)
+	if (res >= MAX_PATH || res == 0)
 	{
         //
         // inf pathname too long
-        //
+        // or other error (GetLastError)
 		TRACE_PRINT1("GetFullPathName: error, res = %d.", res);
 		TRACE_EXIT();
         return EXIT_FAIL;
@@ -1563,7 +1562,7 @@ BOOL SaveDevIDToFile(int iDevID)
 	}
 
 	FILE *fp;
-	if (_tfopen_s(&fp, strLoopbackIDFilePath, _T("w")) != 0)
+	if (_tfopen_s(&fp, strLoopbackIDFilePath, _T("w")) != 0 || !fp)
 	{
 		TRACE_PRINT1("_tfopen_s: error, errCode = 0x%08x.", errno);
 		TRACE_EXIT();
@@ -1590,7 +1589,7 @@ int LoadDevIDFromFile()
 
 	FILE *fp;
 	int iDevID;
-	if (_tfopen_s(&fp, strLoopbackIDFilePath, _T("r")) != 0)
+	if (_tfopen_s(&fp, strLoopbackIDFilePath, _T("r")) != 0 || !fp)
 	{
 		TRACE_PRINT1("_tfopen_s: error, errCode = 0x%08x.", errno);
 		TRACE_EXIT();
@@ -1607,7 +1606,7 @@ BOOL InstallLoopbackAdapter()
 {
 	TRACE_ENTER();
 
-	BOOL isWin10 = IsWindowsWin10();
+	BOOL isWin10 = IsWindowsVersionOrGreater(10, 0, 0);
 
 	if (isWin10)
 	{

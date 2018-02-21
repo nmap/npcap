@@ -73,5 +73,3 @@ tstring executeCommand(TCHAR* strCmd);
 void PrepareRenameLoopbackNetwork2();
 
 BOOL DoRenameLoopbackNetwork2();
-
-BOOL IsWindowsWin10();

@@ -93,8 +93,8 @@
 
 static VOID OutputDebugStringV(LPCTSTR Format, ...)
 {
-	FILE *f;											
-	SYSTEMTIME LocalTime;								
+	FILE *f;
+	SYSTEMTIME LocalTime;
 	va_list Marker;
 	DWORD dwThreadId;
 	int loops = 0;
@@ -103,9 +103,9 @@ static VOID OutputDebugStringV(LPCTSTR Format, ...)
 	dwThreadId = GetCurrentThreadId();
 
 	va_start(Marker, Format); /* Initialize variable arguments. */
-														
-	GetLocalTime(&LocalTime);							
-														
+
+	GetLocalTime(&LocalTime);
+
 	do
 	{
 
@@ -118,14 +118,13 @@ static VOID OutputDebugStringV(LPCTSTR Format, ...)
 
 		Sleep(0);
 		loops++;
+	} while (loops <= 10);
 
-		if (loops > 10)
-		{
-			SetLastError(dwLastError);
-			return;
-		}
+	if (loops > 10 || !f)
+	{
+		SetLastError(dwLastError);
+		return;
 	}
-	while(1);
 
 	_ftprintf(f, _T("[%.08X] %.04u-%.02u-%.02u %.02u:%02u:%02u "),
 			dwThreadId,
@@ -192,7 +191,6 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 
 	TRACE_PRINT("********************* OS info.*********************");
 	buffer[size-1] = 0;
-	size = sizeof(buffer);
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment"), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueEx(hKey, _T("PROCESSOR_ARCHITECTURE"), 0, &type, (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
@@ -211,8 +209,8 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 		OutputDebugStringV(_T("Architecture = <UNKNOWN>\n"));
 	}
 
-	buffer[size-1] = 0;
 	size = sizeof(buffer);
+	buffer[size-1] = 0;
 
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
@@ -232,8 +230,8 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 		OutputDebugStringV(_T("Windows version = <UNKNOWN>\n"));
 	}
 
-	buffer[size-1] = 0;
 	size = sizeof(buffer);
+	buffer[size-1] = 0;
 	if(	RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueEx(hKey, _T("CurrentType"), 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)

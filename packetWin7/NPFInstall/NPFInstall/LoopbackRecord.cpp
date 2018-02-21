@@ -259,7 +259,13 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 // 			<< guid.Data3 << '-' << (unsigned int) guid.Data4 << '\n';
 
 		LPWSTR pszPndDevNodeId = NULL;
-		pINetCfgComponent->GetPnpDevNodeId(&pszPndDevNodeId);
+		hr = pINetCfgComponent->GetPnpDevNodeId(&pszPndDevNodeId);
+		if (!SUCCEEDED(hr))
+		{
+			TRACE_PRINT1("GetPnpDevNodeId failed: %#x", hr);
+			TRACE_EXIT();
+			return FALSE;
+		}
 //		wcout << L"\tPNP Device Node ID: " << wstring(pszPndDevNodeId) << L'\n';
 
 		int iDevID = getIntDevID(pszPndDevNodeId);
