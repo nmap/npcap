@@ -312,6 +312,7 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 			RegCloseKey(UnderTcpKey);
 			goto fail;
 		}
+		RegCloseKey(UnderTcpKey);
 	}
 	else
 	{
@@ -322,21 +323,18 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 		status = RegOpenKeyEx(SystemKey,IfNameW,0,KEY_READ,&InterfaceKey);
 		if (status != ERROR_SUCCESS) {
 			RegCloseKey(SystemKey);
-			RegCloseKey(UnderTcpKey);
 			goto fail;
 		}
 		RegCloseKey(SystemKey);
 		status = RegOpenKeyEx(InterfaceKey,TEXT("Parameters"),0,KEY_READ,&ParametersKey);
 		if (status != ERROR_SUCCESS) {
 			RegCloseKey(InterfaceKey);
-			RegCloseKey(UnderTcpKey);
 			goto fail;
 		}
 		RegCloseKey(InterfaceKey);
 		status = RegOpenKeyEx(ParametersKey,TEXT("TcpIp"),0,KEY_READ,&TcpIpKey);
 		if (status != ERROR_SUCCESS) {
 			RegCloseKey(ParametersKey);
-			RegCloseKey(UnderTcpKey);
 			goto fail;
 		}
 		RegCloseKey(ParametersKey);

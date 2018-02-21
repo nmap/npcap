@@ -407,7 +407,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
   {
 	res = GetSystemDirectory(path, MAX_PATH);
 
-	if (res == 0)
+	if (res == 0 || !path)
 	{
 		//
 		// some bad failure occurred;
