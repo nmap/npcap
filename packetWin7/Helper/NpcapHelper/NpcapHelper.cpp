@@ -283,7 +283,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 // client connections.
 { 
 	HANDLE hHeap      = GetProcessHeap();
-	char* pchRequest = (char*) HeapAlloc(hHeap, 0, BUFSIZE * sizeof(char));
+	char* pchRequest = (char*) HeapAlloc(hHeap, 0, BUFSIZE * sizeof(TCHAR));
 	char* pchReply   = (char*) HeapAlloc(hHeap, 0, BUFSIZE * sizeof(char));
 
 	DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0; 
