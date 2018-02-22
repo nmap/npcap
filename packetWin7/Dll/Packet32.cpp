@@ -678,6 +678,7 @@ BOOL NpcapIsAdminOnlyMode()
 		}
 		else
 		{
+			TRACE_PRINT1("RegQueryValueExA(AdminOnly) failed or not REG_DWORD: %#x\n", GetLastError());
 			dwAdminOnlyMode = 0;
 		}
 
@@ -685,6 +686,7 @@ BOOL NpcapIsAdminOnlyMode()
 	}
 	else
 	{
+		TRACE_PRINT1("RegOpenKeyExA(Software\\Npcap) failed: %#x\n", GetLastError());
 		dwAdminOnlyMode = 0;
 	}
 
@@ -758,12 +760,14 @@ void NpcapStartHelper()
 	// Check if Npcap is installed in "Admin-Only Mode".
 	if (!NpcapIsAdminOnlyMode())
 	{
+		TRACE_PRINT("Not admin-only mode\n");
 		g_bIsRunByAdmin = TRUE;
 	}
 	else
 	{
 		// Check if this process is running in Administrator mode.
 		g_bIsRunByAdmin = NpcapIsRunByAdmin();
+		TRACE_PRINT1("Admin-only mode. Already admin? %d\n", g_bIsRunByAdmin);
 	}
 
 	if (!g_bIsRunByAdmin)
@@ -777,12 +781,14 @@ void NpcapStartHelper()
 			if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
 			{
 				// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
+				TRACE_PRINT("NpcapHelper returned invalid handle.\n");
 				g_bIsRunByAdmin = TRUE;
 			}
 		}
 		else
 		{
 			// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
+			TRACE_PRINT("NpcapCreatePipe failed.\n");
 			g_bIsRunByAdmin = TRUE;
 		}
 	}

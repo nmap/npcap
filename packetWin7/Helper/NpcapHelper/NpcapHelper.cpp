@@ -223,7 +223,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 	DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0; 
 	BOOL fSuccess = FALSE;
 	HANDLE hPipe  = NULL;
-	TRACE_ENTER();
+	TRACE_ENTER("InstanceThread");
 
 	// Do some extra error checking since the app will keep running even if this
 	// thread fails.
@@ -317,7 +317,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 	HeapFree(hHeap, 0, pchRequest);
 	HeapFree(hHeap, 0, pchReply);
 
-	TRACE_EXIT();
+	TRACE_EXIT("InstanceThread");
 	terminateSelf();
 	return 1;
 }
