@@ -142,7 +142,76 @@ BOOL createPipe(char *pipeName)
 	HANDLE hPipe = INVALID_HANDLE_VALUE, hThread = NULL; 
 	char lpszPipename[BUFSIZE];
 	sprintf_s(lpszPipename, BUFSIZE, "\\\\.\\pipe\\%s", pipeName);
-
+	
+	// Create a DACL that allows only the same user as the PID we were given to access the pipe
+	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, g_sourcePID);
+	if (hProc == NULL)
+	{
+		TRACE_PRINT1("OpenProcess(PROCESS_QUERY_INFORMATION) failed: %#x\n", GetLastError());
+		return FALSE;
+	}
+	HANDLE hToken;
+	if (!OpenProcessToken(hProc, TOKEN_READ, &hToken))
+	{
+		TRACE_PRINT1("OpenProcessToken(TOKEN_READ) failed: %#x\n", GetLastError());
+		CloseHandle(hProc);
+		return FALSE;
+	}
+	DWORD dwTokenSize;
+	GetTokenInformation(hToken, TokenOwner, NULL, 0, &dwTokenSize);
+	PTOKEN_OWNER pOwner = (PTOKEN_OWNER) new BYTE[dwTokenSize];
+	if (!GetTokenInformation(hToken, TokenOwner, (LPVOID)&pOwner, dwTokenSize, &dwTokenSize))
+	{
+		TRACE_PRINT1("GetTokenInformation failed: %#x\n", GetLastError());
+		CloseHandle(hToken);
+		CloseHandle(hProc);
+		delete[] pOwner;
+		return FALSE;
+	}
+	CloseHandle(hToken);
+	CloseHandle(hProc);
+	if (!IsValidSid(pOwner->Owner))
+	{
+		TRACE_PRINT("Invalid owner SID\n");
+		delete[] pOwner;
+		return FALSE;
+	}
+	SECURITY_DESCRIPTOR sd;
+	if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
+	{
+		TRACE_PRINT1("InitializeSecurityDescriptor failed: %#x\n", GetLastError());
+		delete[] pOwner;
+		return FALSE;
+	}
+	DWORD cbDacl = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD);
+	cbDacl += GetLengthSid(pOwner->Owner);
+	PACL pDacl = (PACL) new BYTE[cbDacl];
+	if (pDacl == NULL)
+	{
+		TRACE_PRINT("Allocate for DACL failed\n");
+		delete[] pOwner;
+		return FALSE;
+	}
+	if (!InitializeAcl(pDacl,cbDacl,ACL_REVISION))
+	{
+		TRACE_PRINT1("InitializeACL failed: %#x\n", GetLastError());
+		delete[] pDacl;
+		delete[] pOwner;
+		return FALSE;
+	}
+	if (!AddAccessAllowedAce(pDacl, ACL_REVISION, GENERIC_ALL, pOwner->Owner))
+	{
+		TRACE_PRINT1("AddAccessAllowedAce failed: %#x\n", GetLastError());
+		delete[] pDacl;
+		delete[] pOwner;
+		return FALSE;
+	}
+	if (!SetSecurityDescriptorDacl(&sd, TRUE, pDacl, FALSE))
+	{
+		TRACE_PRINT1("SetSecurityDescriptorDacl failed: %#x\n", GetLastError());
+		return FALSE;
+	}
+	SECURITY_ATTRIBUTES sa = { sizeof sa, &sd, FALSE };
 	// The main loop creates an instance of the named pipe and 
 	// then waits for a client to connect to it. When the client 
 	// connects, a thread is created to handle communications 
@@ -151,10 +220,6 @@ BOOL createPipe(char *pipeName)
 
 	for (;;) 
 	{ 
-		SECURITY_DESCRIPTOR sd;
-		InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
-		SetSecurityDescriptorDacl(&sd, TRUE, 0, FALSE);
-		SECURITY_ATTRIBUTES sa = { sizeof sa, &sd, FALSE };
 
 		TRACE_PRINT1("\nPipe Server: Main thread awaiting client connection on %s\n", lpszPipename);
 		hPipe = CreateNamedPipeA( 
@@ -205,7 +270,8 @@ BOOL createPipe(char *pipeName)
 			// The client could not connect, so close the pipe. 
 			CloseHandle(hPipe); 
 	} 
-
+	delete[] pDacl;
+	delete[] pOwner;
 	return TRUE; 
 }
 
