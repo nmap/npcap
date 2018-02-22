@@ -113,14 +113,14 @@ static VOID OutputDebugStringVA(LPCSTR Format, ...)
 
 		Sleep(0);
 		loops++;
-
-		if (loops > 10)
-		{
-			SetLastError(dwLastError);
-			return;
-		}
 	}
-	while(1);
+	while(loops <= 10);
+
+	if (loops > 10 || !f)
+	{
+		SetLastError(dwLastError);
+		return;
+	}
 
 	fprintf(f, "[%.08X] %.04u-%.02u-%.02u %.02u:%02u:%02u ",
 			dwThreadId,
@@ -191,7 +191,6 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 
 	TRACE_PRINT("********************* OS info.*********************");
 	buffer[size-1] = 0;
-	size = sizeof(buffer);
 	if(	RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueExA(hKey, "PROCESSOR_ARCHITECTURE", 0, &type, (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
@@ -210,8 +209,8 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 		OutputDebugStringVA("Architecture = <UNKNOWN>\n");
 	}
 
-	buffer[size-1] = 0;
 	size = sizeof(buffer);
+	buffer[size-1] = 0;
 
 	if(	RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
@@ -231,8 +230,8 @@ static __forceinline void TRACE_PRINT_OS_INFO()
 		OutputDebugStringVA("Windows version = <UNKNOWN>\n");
 	}
 
-	buffer[size-1] = 0;
 	size = sizeof(buffer);
+	buffer[size-1] = 0;
 	if(	RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueExA(hKey, "CurrentType", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)

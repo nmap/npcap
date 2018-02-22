@@ -408,6 +408,7 @@ int main(int argc, char* argv[])
 			0,NULL,OPEN_EXISTING,0,0);
 	}
 
+#pragma warning(suppress: 6031)
 	getchar();
 
 	if (!g_IsAdminMode)

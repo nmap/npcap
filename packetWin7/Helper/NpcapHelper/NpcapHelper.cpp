@@ -405,7 +405,7 @@ VOID GetAnswerToRequest( LPSTR pchRequest,
 	if (hFile)
 	{
 		char buf[BUFSIZE];
-		sprintf_s(buf, BUFSIZE, "%p,%d", hFile, dwError);
+		sprintf_s(buf, BUFSIZE, "%p,%lu", hFile, dwError);
 		strcpy_s(pchReply, BUFSIZE, buf);
 		*pchBytes = (DWORD) strlen(buf) * sizeof(char);
 	}
@@ -438,6 +438,7 @@ int main(int argc, char* argv[])
 
 	createPipe(pipeName);
 
+#pragma warning(suppress: 6031)
 	getchar();
 	return 0;
 }
