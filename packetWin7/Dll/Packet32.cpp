@@ -636,11 +636,7 @@ HANDLE NpcapRequestHandle(char *sMsg, DWORD *pdwError)
 	}
 }
 
-#ifdef _X86_
-	#define NPCAP_SOFTWARE_REGISTRY_KEY "SOFTWARE\\" NPF_SOFT_REGISTRY_NAME
-#else // AMD64
-	#define NPCAP_SOFTWARE_REGISTRY_KEY "SOFTWARE\\Wow6432Node\\" NPF_SOFT_REGISTRY_NAME
-#endif
+#define NPCAP_SOFTWARE_REGISTRY_KEY "SOFTWARE\\" NPF_SOFT_REGISTRY_NAME
 
 void NpcapGetLoopbackInterfaceName()
 {
