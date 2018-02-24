@@ -48,7 +48,14 @@ function get_os_bit()
 
 function get_install_path()
 {
-	return (Get-ItemProperty HKLM:\SOFTWARE\Npcap).'(default)'
+    if ($os_bit -eq "32-bit")
+    {
+        return (Get-ItemProperty HKLM:\SOFTWARE\Npcap).'(default)'
+    }
+    else
+    {
+        return (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\Npcap).'(default)'
+    }
 }
 
 $os_bit = get_os_bit
@@ -169,8 +176,16 @@ write_report ("*************************************************")
 write_report ("Registry Info:")
 write_report ("*************************************************")
 
+if ($os_bit -eq "32-bit")
+{
     write_report ("HKLM:\SOFTWARE\Npcap:")
     (Get-ItemProperty HKLM:\SOFTWARE\Npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+}
+else
+{
+    write_report ("HKLM:\SOFTWARE\WOW6432Node\Npcap:")
+    (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\Npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })
+}
 
 write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap:")
 (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap | out-string -stream | ? { $_ -NOTMATCH '^ps.+' })

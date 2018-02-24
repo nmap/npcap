@@ -126,10 +126,10 @@ bool RegKey::OpenKey(LPCTSTR pszKeyName, bool bCreateIfNoExist /* = false */, HK
 		DWORD dwDisp; // Disposition
 
 		lRetValue = RegCreateKeyEx(hBaseKey_, pszKeyName, 0, NULL, REG_OPTION_NON_VOLATILE
-			, KEY_ALL_ACCESS | KEY_WOW64_64KEY, NULL, &hTheKey_, &dwDisp);
+			, KEY_ALL_ACCESS | KEY_WOW64_32KEY, NULL, &hTheKey_, &dwDisp);
 	}
 	else
-		lRetValue = RegOpenKeyEx(hBaseKey_, pszKeyName, NULL, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hTheKey_);
+		lRetValue = RegOpenKeyEx(hBaseKey_, pszKeyName, NULL, KEY_ALL_ACCESS | KEY_WOW64_32KEY, &hTheKey_);
 
 	if (lRetValue != ERROR_SUCCESS)
 	{
@@ -178,7 +178,7 @@ bool RegKey::RecursiveDelete(RegKey* pTheCallingClass, HKEY hTheKey, LPCTSTR psz
 	LPTSTR pszTempKeyName = NULL;
 
 	// Open the child
-	long lRetValue = RegOpenKeyEx(hTheKey, pszKeyName, NULL, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hChildHandle);
+	long lRetValue = RegOpenKeyEx(hTheKey, pszKeyName, NULL, KEY_ALL_ACCESS | KEY_WOW64_32KEY, &hChildHandle);
 	if (lRetValue != ERROR_SUCCESS)
 	{
 		pTheCallingClass->iLastErrorCode_ = GetLastError();
@@ -252,7 +252,7 @@ bool RegKey::DeleteKey(LPCTSTR pszKeyName)
 		LPTSTR pszParentKey = (TCHAR*)pszCopy;
 		HKEY hTempKey;
 
-		LONG retValue = RegOpenKeyEx(hTheKey_, pszParentKey, NULL, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hTempKey);
+		LONG retValue = RegOpenKeyEx(hTheKey_, pszParentKey, NULL, KEY_ALL_ACCESS | KEY_WOW64_32KEY, &hTempKey);
 		if (retValue == ERROR_SUCCESS)
 		{
 			bRetValue = RecursiveDelete(this, hTempKey, pszChildKeyName);
@@ -1012,7 +1012,7 @@ bool RegKey::MoveKey(LPCTSTR pszSourceKey, LPCTSTR pszDestKey, HKEY hBaseKey /* 
 	HKEY hDest = NULL;
 
 	// Open the source key
-	LONG lRetValue = RegOpenKeyEx(hBaseKey, pszSourceKey, NULL, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hSource);
+	LONG lRetValue = RegOpenKeyEx(hBaseKey, pszSourceKey, NULL, KEY_ALL_ACCESS | KEY_WOW64_32KEY, &hSource);
 
 	if (lRetValue != ERROR_SUCCESS)
 	{
@@ -1023,7 +1023,7 @@ bool RegKey::MoveKey(LPCTSTR pszSourceKey, LPCTSTR pszDestKey, HKEY hBaseKey /* 
 	// Open/Create the destination key
 	DWORD dwDisp; // Disposition
 
-	lRetValue = RegCreateKeyEx(hBaseKey, pszDestKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_64KEY, NULL, &hDest, &dwDisp);
+	lRetValue = RegCreateKeyEx(hBaseKey, pszDestKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_32KEY, NULL, &hDest, &dwDisp);
 	if (lRetValue != ERROR_SUCCESS)
 	{
 		iLastErrorCode_ = GetLastError();
@@ -1153,7 +1153,7 @@ bool RegKey::QuickDeleteKey(LPCTSTR pszKeyName, HKEY hBaseKey /* = HKEY_CURRENT_
 		LPTSTR pszParentKey = (TCHAR*)pszCopy;
 		HKEY hTempKey;
 
-		LONG retValue = RegOpenKeyEx(hBaseKey, pszParentKey, NULL, KEY_ALL_ACCESS | KEY_WOW64_64KEY, &hTempKey);
+		LONG retValue = RegOpenKeyEx(hBaseKey, pszParentKey, NULL, KEY_ALL_ACCESS | KEY_WOW64_32KEY, &hTempKey);
 
 		if (retValue == ERROR_SUCCESS)
 		{

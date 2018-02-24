@@ -647,7 +647,7 @@ void NpcapGetLoopbackInterfaceName()
 	char buffer[BUFSIZE];
 	DWORD size = sizeof(buffer);
 
-	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS)
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ | KEY_WOW64_32KEY, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueExA(hKey, "LoopbackAdapter", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
@@ -670,7 +670,7 @@ BOOL NpcapIsAdminOnlyMode()
 	DWORD size = sizeof(buffer);
 	DWORD dwAdminOnlyMode = 0;
 
-	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey) == ERROR_SUCCESS)
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ | KEY_WOW64_32KEY, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueExA(hKey, "AdminOnly", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_DWORD)
 		{
@@ -1895,7 +1895,7 @@ BOOL PacketStartService()
 		KeyRes = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
 			NpfServiceLocation,
 			0,
-			KEY_READ | KEY_WOW64_64KEY,
+			KEY_READ | KEY_WOW64_32KEY,
 			&PathKey);
 
 		if (KeyRes != ERROR_SUCCESS)
