@@ -115,8 +115,6 @@ using namespace std;
 BOOL bUseNPF60							=	FALSE;					// Whether to use the new NDIS 6 driver.
 
 HANDLE g_hNpcapHelperPipe				=	INVALID_HANDLE_VALUE;	// Handle for NpcapHelper named pipe.
-BOOL g_bIsRunByAdmin					=	FALSE;					// Whether this process is running in Administrator mode.
-BOOL g_bNpcapHelperTried				=	FALSE;					// Whether we have already tried NpcapHelper.
 HANDLE g_hDllHandle						=	NULL;					// The handle to this DLL.
 
 CHAR g_strLoopbackAdapterName[BUFSIZE]	= "";						// The name of "Npcap Loopback Adapter".
@@ -746,42 +744,51 @@ void NpcapStartHelper()
 {
 	TRACE_ENTER();
 
-	g_bNpcapHelperTried = TRUE;
+	// Only run this function once.
+	// This may be a mistake; what if the helper gets killed?
+	static BOOL NpcapHelperTried = FALSE;
 
-	// Check if Npcap is installed in "Admin-Only Mode".
-	if (!NpcapIsAdminOnlyMode())
+	if (NpcapHelperTried)
 	{
-		TRACE_PRINT("Not admin-only mode\n");
-		g_bIsRunByAdmin = TRUE;
+		TRACE_PRINT("NpcapHelper already tried\n");
+		TRACE_EXIT();
+		return;
+	}
+
+	// Don't try again.
+	NpcapHelperTried = TRUE;
+
+	// If it's already started, use that instead
+	if (g_hNpcapHelperPipe != INVALID_HANDLE_VALUE)
+	{
+		TRACE_PRINT("NpcapHelper already started\n");
+		TRACE_EXIT();
+		return;
+	}
+
+
+	// Check if this process is running in Administrator mode.
+	if (NpcapIsRunByAdmin())
+	{
+		TRACE_PRINT("Already running as admin.\n");
+		TRACE_EXIT();
+		return;
+	}
+
+	char pipeName[BUFSIZE];
+	int pid = GetCurrentProcessId();
+	sprintf_s(pipeName, BUFSIZE, "npcap-%d", pid);
+	if (NpcapCreatePipe(pipeName, g_hDllHandle))
+	{
+		g_hNpcapHelperPipe = NpcapConnect(pipeName);
+		if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
+		{
+			TRACE_PRINT("Failed to connect to NpcapHelper.\n");
+		}
 	}
 	else
 	{
-		// Check if this process is running in Administrator mode.
-		g_bIsRunByAdmin = NpcapIsRunByAdmin();
-		TRACE_PRINT1("Admin-only mode. Already admin? %d\n", g_bIsRunByAdmin);
-	}
-
-	if (!g_bIsRunByAdmin)
-	{
-		char pipeName[BUFSIZE];
-		int pid = GetCurrentProcessId();
-		sprintf_s(pipeName, BUFSIZE, "npcap-%d", pid);
-		if (NpcapCreatePipe(pipeName, g_hDllHandle))
-		{
-			g_hNpcapHelperPipe = NpcapConnect(pipeName);
-			if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
-			{
-				// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
-				TRACE_PRINT("NpcapHelper returned invalid handle.\n");
-				g_bIsRunByAdmin = TRUE;
-			}
-		}
-		else
-		{
-			// NpcapHelper failed, let g_IsAdminMode be TRUE to avoid next requestHandleFromNpcapHelper() calls.
-			TRACE_PRINT("NpcapCreatePipe failed.\n");
-			g_bIsRunByAdmin = TRUE;
-		}
+		TRACE_PRINT("NpcapCreatePipe failed.\n");
 	}
 
 	TRACE_EXIT();
@@ -1073,11 +1080,8 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 			g_AdaptersInfoList = NewAdInfo;
 		}
 
-		if (!g_bIsRunByAdmin)
-		{
-			// NpcapHelper De-Initialization.
-			NpcapStopHelper();
-		}
+		// NpcapHelper De-Initialization.
+		NpcapStopHelper();
 
 #ifdef WPCAP_OEM_UNLOAD_H 
 		if(g_WoemLeaveDllH)
@@ -2075,21 +2079,18 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 
 	TRACE_PRINT1("Trying to open adapter %hs", AdapterNameA);
 
-	// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
-	if (!g_bNpcapHelperTried)
+	// Try starting the service first
+	// TODO: check if it's running in some safe, fast way
+	PacketStartService();
+
+	// Got the features device, now check for AdminOnly
+	// Though don't bother if we already have a valid pipe to NpcapHelper
+	if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE && NpcapIsAdminOnlyMode())
 	{
+		// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
 		NpcapStartHelper();
 	}
 
-	// Try NpcapHelper to start service if we are in Non-Admin mode.
-// 	if (!g_IsAdminMode)
-// 	{
-// 		
-// 	}
-// 	else
-	{
-		PacketStartService();
-	}
 
 	lpAdapter=(LPADAPTER)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER));
 	if (lpAdapter==NULL)
@@ -2139,7 +2140,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	ZeroMemory(lpAdapter->SymbolicLink, sizeof(lpAdapter->SymbolicLink));
 
 	// Try NpcapHelper to request handle if we are in Non-Admin mode.
-	if (!g_bIsRunByAdmin)
+	if (g_hNpcapHelperPipe != INVALID_HANDLE_VALUE)
 	{
 		//try if it is possible to open the adapter immediately
 		DWORD dwErrorReceived;
