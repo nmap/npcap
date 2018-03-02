@@ -4851,9 +4851,11 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 }
 
 /*! 
-  \brief Returns whether an adapter is a loopback adapter (like Npcap loopback adapter).
+  \brief Returns whether an adapter is the Npcap Loopback Adapter
   \param AdapterObject The adapter on which information is needed.
   \return TRUE if yes, FALSE if no.
+
+  Other software loopback adapters may exist, but they will not be identified with this function.
 */
 BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName)
 {
