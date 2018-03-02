@@ -123,6 +123,8 @@ CHAR g_strLoopbackAdapterName[BUFSIZE]	= "";						// The name of "Npcap Loopback
 
 map<string, int> g_nbAdapterMonitorModes;							// The states for all the wireless adapters that show whether it is in the monitor mode.
 
+#define SERVICES_REG_KEY "SYSTEM\\CurrentControlSet\\Services\\"
+#define NPCAP_SERVICE_REGISTRY_KEY SERVICES_REG_KEY NPF_DRIVER_NAME
 
 #ifdef _WINNT4
 #if (defined(HAVE_NPFIM_API) || defined(HAVE_WANPACKET_API) || defined (HAVE_AIRPCAP_API) || defined(HAVE_IPHELPER_API))
@@ -636,8 +638,6 @@ HANDLE NpcapRequestHandle(char *sMsg, DWORD *pdwError)
 	}
 }
 
-#define NPCAP_SOFTWARE_REGISTRY_KEY "SOFTWARE\\" NPF_SOFT_REGISTRY_NAME
-
 void NpcapGetLoopbackInterfaceName()
 {
 	TRACE_ENTER();
@@ -646,8 +646,7 @@ void NpcapGetLoopbackInterfaceName()
 	DWORD type;
 	char buffer[BUFSIZE];
 	DWORD size = sizeof(buffer);
-
-	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ | KEY_WOW64_32KEY, &hKey) == ERROR_SUCCESS)
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SERVICE_REGISTRY_KEY "\\Parameters", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueExA(hKey, "LoopbackAdapter", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
@@ -670,7 +669,7 @@ BOOL NpcapIsAdminOnlyMode()
 	DWORD size = sizeof(buffer);
 	DWORD dwAdminOnlyMode = 0;
 
-	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SOFTWARE_REGISTRY_KEY, 0, KEY_READ | KEY_WOW64_32KEY, &hKey) == ERROR_SUCCESS)
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SERVICE_REGISTRY_KEY "\\Parameters", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
 	{
 		if (RegQueryValueExA(hKey, "AdminOnly", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_DWORD)
 		{
@@ -686,20 +685,12 @@ BOOL NpcapIsAdminOnlyMode()
 	}
 	else
 	{
-		TRACE_PRINT1("RegOpenKeyExA(Software\\Npcap) failed: %#x\n", GetLastError());
+		TRACE_PRINT1("RegOpenKeyExA(Services\\Npcap\\Parameters) failed: %#x\n", GetLastError());
 		dwAdminOnlyMode = 0;
 	}
-
-	if (dwAdminOnlyMode != 0)
-	{
-		TRACE_EXIT();
-		return TRUE;
-	}
-	else
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
+ 
+	TRACE_EXIT();
+	return (dwAdminOnlyMode != 0);
 }
 
 BOOL NpcapIsRunByAdmin()
@@ -1863,7 +1854,7 @@ BOOL PacketStartService()
 	//	UINT	RegQueryLen;
 
 	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_NAME;
-	CHAR	NpfServiceLocation[MAX_WINPCAP_KEY_CHARS];
+	CHAR	NpfServiceLocation[MAX_WINPCAP_KEY_CHARS] = SERVICES_REG_KEY NPF_DRIVER_NAME;
 
 
 	scmHandle = OpenSCManager(NULL, NULL, GENERIC_READ);
@@ -1875,21 +1866,6 @@ BOOL PacketStartService()
 	}
 	else
 	{
-		//  
-		//	Old registry based WinPcap names
-		//
-		//		RegQueryLen = sizeof(NpfDriverName)/sizeof(NpfDriverName[0]);
-		//		if (QueryWinPcapRegistryStringA(NPF_DRIVER_NAME_REG_KEY, NpfDriverName, &RegQueryLen, NPF_DRIVER_NAME) == FALSE && RegQueryLen == 0)
-		//		{
-		//			//just use an empty string string for the service name
-		//			NpfDriverName[0] = '\0';
-		//		}
-
-		//
-		// Create the name of the registry key containing the service.
-		//
-		StringCchPrintfA(NpfServiceLocation, sizeof(NpfServiceLocation), "SYSTEM\\CurrentControlSet\\Services\\%s", NpfDriverName);
-
 		// check if the NPF registry key is already present
 		// this means that the driver is already installed and that we don't need to call PacketInstallDriver
 		KeyRes = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
