@@ -2071,7 +2071,7 @@ BOOL PacketStartService()
 LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 {
 	DWORD error;
-    LPADAPTER lpAdapter;
+	LPADAPTER lpAdapter;
 	
 	CHAR SymbolicLinkA[MAX_PATH];
 
@@ -2080,16 +2080,16 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 
 	TRACE_PRINT1("Trying to open adapter %hs", AdapterNameA);
 
-	// Try starting the service first
-	// TODO: check if it's running in some safe, fast way
-	PacketStartService();
-
-	// Got the features device, now check for AdminOnly
+	// Start the driver service and/or Helper if needed
 	// Though don't bother if we already have a valid pipe to NpcapHelper
-	if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE && NpcapIsAdminOnlyMode())
+	if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
 	{
-		// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
-		NpcapStartHelper();
+		PacketStartService();
+		if (NpcapIsAdminOnlyMode())
+		{
+			// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
+			NpcapStartHelper();
+		}
 	}
 
 
