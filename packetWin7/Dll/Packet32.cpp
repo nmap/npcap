@@ -1867,6 +1867,7 @@ BOOL PacketStartService()
 	{
 		error = GetLastError();
 		TRACE_PRINT1("OpenSCManager failed! LastError=%8.8x", error);
+		Result = FALSE;
 	}
 	else
 	{
@@ -2056,7 +2057,7 @@ BOOL PacketStartService()
 	if (scmHandle != NULL) CloseServiceHandle(scmHandle);
 
 	TRACE_EXIT();
-	return TRUE;
+	return Result;
 }
 
 /*! 
