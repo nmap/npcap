@@ -970,6 +970,7 @@ Return Value:
         pControlContext->count++;
     }
     _tprintf(TEXT("%-60s: %s\n"),devID,action);
+    TRACE_PRINT2("RemoveCallback: devID=%s, action=%s\n");
 
     return EXIT_OK;
 }
@@ -1427,24 +1428,27 @@ Return Value:
     failcode = EnumerateDevices(BaseName, Machine, DIGCF_PRESENT, argc, argv, RemoveCallback, &context);
 
     if (failcode == EXIT_OK)
-	{
-        if (!context.count)
-		{
-            FormatToStream(stdout, MSG_REMOVE_TAIL_NONE);
-        }
-		else if (!context.reboot)
-		{
-            FormatToStream(stdout, MSG_REMOVE_TAIL, context.count);
-        }
-		else
-		{
-            FormatToStream(stdout, MSG_REMOVE_TAIL_REBOOT, context.count);
-            failcode = EXIT_REBOOT;
-        }
+    {
+	    TRACE_PRINT("cmdRemove: %d devices removed", context.count);
+	    if (!context.count)
+	    {
+		    FormatToStream(stdout, MSG_REMOVE_TAIL_NONE);
+	    }
+	    else if (!context.reboot)
+	    {
+		    FormatToStream(stdout, MSG_REMOVE_TAIL, context.count);
+	    }
+	    else
+	    {
+		    FormatToStream(stdout, MSG_REMOVE_TAIL_REBOOT, context.count);
+		    TRACE_PRINT("cmdRemove: requires reboot.");
+		    failcode = EXIT_REBOOT;
+	    }
     }
 
-	TRACE_PRINT1("cmdRemove: failcode = %d.", failcode);
-	TRACE_EXIT();
+    if (failcode != EXIT_OK)
+	    TRACE_PRINT1("cmdRemove: failcode = %d.", failcode);
+    TRACE_EXIT();
     return failcode;
 }
 
@@ -1533,6 +1537,7 @@ BOOL RemoveLoopbackDeviceInternal(int iDevID)
 
 	TCHAR strDevID[BUF_SIZE];
 	_stprintf_s(strDevID, BUF_SIZE, _T("@ROOT\\NET\\%04d"), iDevID);
+	TRACE_PRINT1("Removing loopback device: %s\n", strDevID);
 
 	// devcon.exe remove @ROOT\NET\000X
 	TCHAR *strArgVs[1] = {strDevID}; // Device ID: @ROOT\NET\000X
