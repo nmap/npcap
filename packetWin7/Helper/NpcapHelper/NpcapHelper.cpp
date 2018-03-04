@@ -157,53 +157,50 @@ BOOL createPipe(char *pipeName)
 		CloseHandle(hProc);
 		return FALSE;
 	}
+	struct {
+		TOKEN_USER tokenUser;
+		BYTE buffer[SECURITY_MAX_SID_SIZE];
+	} tokenInfoBuffer;
 	DWORD dwTokenSize;
-	GetTokenInformation(hToken, TokenOwner, NULL, 0, &dwTokenSize);
-	PTOKEN_OWNER pOwner = (PTOKEN_OWNER) new BYTE[dwTokenSize];
-	if (!GetTokenInformation(hToken, TokenOwner, (LPVOID)&pOwner, dwTokenSize, &dwTokenSize))
+	ZeroMemory(&tokenInfoBuffer, sizeof(tokenInfoBuffer));
+	if (!GetTokenInformation(hToken, TokenUser, &tokenInfoBuffer.tokenUser, sizeof(tokenInfoBuffer), &dwTokenSize))
 	{
 		TRACE_PRINT1("GetTokenInformation failed: %#x\n", GetLastError());
 		CloseHandle(hToken);
 		CloseHandle(hProc);
-		delete[] pOwner;
 		return FALSE;
 	}
 	CloseHandle(hToken);
 	CloseHandle(hProc);
-	if (!IsValidSid(pOwner->Owner))
+	if (!IsValidSid(tokenInfoBuffer.tokenUser.User.Sid))
 	{
 		TRACE_PRINT("Invalid owner SID\n");
-		delete[] pOwner;
 		return FALSE;
 	}
 	SECURITY_DESCRIPTOR sd;
 	if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
 	{
 		TRACE_PRINT1("InitializeSecurityDescriptor failed: %#x\n", GetLastError());
-		delete[] pOwner;
 		return FALSE;
 	}
 	DWORD cbDacl = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD);
-	cbDacl += GetLengthSid(pOwner->Owner);
+	cbDacl += GetLengthSid(tokenInfoBuffer.tokenUser.User.Sid);
 	PACL pDacl = (PACL) new BYTE[cbDacl];
 	if (pDacl == NULL)
 	{
 		TRACE_PRINT("Allocate for DACL failed\n");
-		delete[] pOwner;
 		return FALSE;
 	}
 	if (!InitializeAcl(pDacl,cbDacl,ACL_REVISION))
 	{
 		TRACE_PRINT1("InitializeACL failed: %#x\n", GetLastError());
 		delete[] pDacl;
-		delete[] pOwner;
 		return FALSE;
 	}
-	if (!AddAccessAllowedAce(pDacl, ACL_REVISION, GENERIC_ALL, pOwner->Owner))
+	if (!AddAccessAllowedAce(pDacl, ACL_REVISION, GENERIC_ALL, tokenInfoBuffer.tokenUser.User.Sid))
 	{
 		TRACE_PRINT1("AddAccessAllowedAce failed: %#x\n", GetLastError());
 		delete[] pDacl;
-		delete[] pOwner;
 		return FALSE;
 	}
 	if (!SetSecurityDescriptorDacl(&sd, TRUE, pDacl, FALSE))
@@ -271,7 +268,6 @@ BOOL createPipe(char *pipeName)
 			CloseHandle(hPipe); 
 	} 
 	delete[] pDacl;
-	delete[] pOwner;
 	return TRUE; 
 }
 
