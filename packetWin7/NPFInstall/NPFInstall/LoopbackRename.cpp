@@ -152,10 +152,6 @@ BOOL DoTheWork(INetSharingManager *pNSM, TCHAR strDeviceName[])
 								}
 							}
 						}
-						else
-						{
-							bError = TRUE;
-						}
 						pNC->Release();
 					}
 				}
