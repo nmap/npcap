@@ -292,6 +292,7 @@ BOOL EnumerateComponents(CComPtr<INetCfg>& pINetCfg, const GUID* pguidClass)
 
  			if (!AddFlagToRegistry_Service(pszBindName))
  			{
+				TRACE_PRINT1("AddFlagToRegistry_Service: error, pszBindName = %ws.", pszBindName);
  				bFailed = TRUE;
  			}
 
