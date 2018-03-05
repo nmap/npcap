@@ -970,7 +970,7 @@ Return Value:
         pControlContext->count++;
     }
     _tprintf(TEXT("%-60s: %s\n"),devID,action);
-    TRACE_PRINT2("RemoveCallback: devID=%s, action=%s\n");
+    TRACE_PRINT2("RemoveCallback: devID=%s, action=%s\n",devID,action);
 
     return EXIT_OK;
 }
@@ -1429,7 +1429,7 @@ Return Value:
 
     if (failcode == EXIT_OK)
     {
-	    TRACE_PRINT("cmdRemove: %d devices removed", context.count);
+	    TRACE_PRINT1("cmdRemove: %d devices removed", context.count);
 	    if (!context.count)
 	    {
 		    FormatToStream(stdout, MSG_REMOVE_TAIL_NONE);
