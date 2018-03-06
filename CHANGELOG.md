@@ -1,3 +1,27 @@
+## Npcap 0.99-r1 [2018-03-05]
+
+* New Internal Use licensing option for Npcap OEM for users who need silent
+  installs or more than five computers, but do not want to pay for
+  redistribution rights.
+
+* Improved installation of the Npcap Loopback Adapter, ensuring it can be
+  correctly removed and reinstalled.
+
+* Packet.DLL now only looks in the driver service's `Parameters` Registry key
+  for installation options; in future releases, Npcap may stop writing these
+  options to the `HKLM:\Software\Npcap` registry key.
+
+* When NpcapHelper.exe is used for UAC elevation, the pipe it uses to
+  communicate with the calling process is now restricted to the user SID of the
+  calling process. Previously, any user could cause NpcapHelper to obtain
+  handles to other devices, though the handles were only valid for the calling
+  process.
+
+* Performed Visual Studio Code Analysis on Packet.DLL and cleaned up several
+  code health issues.
+
+* Improved debug logging, error checking, and diagnostics througout.
+
 ## Npcap 0.98 [2018-01-10]
 
 * Fix digital signatures for some files: OEM drivers were missing the Microsoft
