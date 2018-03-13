@@ -1,3 +1,7 @@
+## Npcap 0.99-r2 [2018-03-13]
+
+* Fix installer to work on 32-bit Windows.
+
 ## Npcap 0.99-r1 [2018-03-05]
 
 * New Internal Use licensing option for Npcap OEM for users who need silent
@@ -20,7 +24,7 @@
 * Performed Visual Studio Code Analysis on Packet.DLL and cleaned up several
   code health issues.
 
-* Improved debug logging, error checking, and diagnostics througout.
+* Improved debug logging, error checking, and diagnostics throughout.
 
 ## Npcap 0.98 [2018-01-10]
 
