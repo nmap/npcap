@@ -1,3 +1,6 @@
+* Fix a double-close of a Registry key which could cause a crash in Packet.dll
+  when debugging. Fixes [#1163](http://issues.nmap.org/1163).
+
 ## Npcap 0.99-r2 [2018-03-13]
 
 * Fix installer to work on 32-bit Windows.
