@@ -25,13 +25,13 @@ DOXYFILE_ENCODING      = UTF-8
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = WinPcap
+PROJECT_NAME           = Npcap
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER         = "4.1.3"
+PROJECT_NUMBER         = "0.99"
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
@@ -493,12 +493,11 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = ../../packetntx/driver/ioctls.h \
-                         ../../packetNtx/driver/Packet.h \
-                         ../../packetNtx/driver/jitter.h \
+INPUT                  = ../../packetWin7/npf/npf/ioctls.h \
+                         ../../packetWin7/npf/npf/Packet.h \
+                         ../../packetWin7/npf/npf/jitter.h \
                          ../libpcap/incs/pcap.h \
                          ../libpcap/funcs/pcap.h \
-                         ../../wpcap/Win32-Extensions/Win32-Extensions.h \
                          ../main.txt \
                          ../wpcap_tut.txt \
                          ../wpcap_tut1.txt \
@@ -512,7 +511,8 @@ INPUT                  = ../../packetntx/driver/ioctls.h \
                          ../wpcap_tut9.txt \
                          ../doxygen_groups.txt \
                          ../wpcap_remote.htm \
-                         ../../wpcap/libpcap/pcap-remote.h \
+                         ../../wpcap/libpcap/pcap/pcap.h \
+                         ../../wpcap/libpcap/pcap-rpcap.h \
                          ../../wpcap/libpcap/remote-ext.h \
                          ../../wpcap/libpcap/rpcapd/fileconf.h \
                          ../../wpcap/libpcap/rpcapd/utils.h \
