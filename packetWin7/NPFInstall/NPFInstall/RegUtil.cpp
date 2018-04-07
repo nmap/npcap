@@ -106,6 +106,39 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDevi
 	return TRUE;
 }
 
+BOOL DeleteValueFromRegistry(LPCTSTR strSubKey, LPCTSTR strValueName)
+{
+	LONG Status;
+	HKEY hNpcapKey;
+
+	TRACE_ENTER();
+	TRACE_PRINT2("DeleteValueFromRegistry: executing, strSubKey = %s, strValueName = %s, dwSamDesired = 0x%08x.",
+		strSubKey, strValueName);
+
+	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, KEY_SET_VALUE | KEY_WOW64_32KEY, &hNpcapKey);
+	if (Status == ERROR_SUCCESS)
+	{
+		Status = RegDeleteValue(hNpcapKey, strValueName);
+		if (Status != ERROR_SUCCESS)
+		{
+			TRACE_PRINT1("RegDeleteValue: error, errCode = 0x%08x.", Status);
+			RegCloseKey(hNpcapKey);
+			TRACE_EXIT();
+			return FALSE;
+		}
+		RegCloseKey(hNpcapKey);
+	}
+	else
+	{
+		TRACE_PRINT1("RegOpenKeyEx: error, errCode = 0x%08x.", Status);
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	TRACE_EXIT();
+	return TRUE;
+}
+
 tstring printAdapterNames(vector<tstring> nstr)
 {
 	tstring strResult;

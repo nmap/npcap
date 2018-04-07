@@ -1580,6 +1580,29 @@ BOOL SaveDevIDToFile(int iDevID)
 	return TRUE;
 }
 
+BOOL DeleteDevIDFile()
+{
+	TRACE_ENTER();
+
+	TCHAR strLoopbackIDFilePath[MAX_PATH + 30];
+	if (!GetConfigFilePath(strLoopbackIDFilePath))
+	{
+		TRACE_PRINT("GetConfigFilePath: error.");
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	if (!DeleteFile(strLoopbackIDFilePath))
+	{
+		TRACE_PRINT1("DeleteFile %s: error: %08x", GetLastError());
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	TRACE_EXIT();
+	return TRUE;
+}
+
 int LoadDevIDFromFile()
 {
 	TRACE_ENTER();
@@ -1678,6 +1701,20 @@ BOOL UninstallLoopbackAdapter()
 	if (!RemoveLoopbackDeviceInternal(iNpcapAdapterID))
 	{
 		TRACE_PRINT("RemoveLoopbackDeviceInternal: error.");
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+  if (!EraseLoopbackRecord())
+	{
+		TRACE_PRINT("EraseLoopbackRecord: error.");
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+  if (!DeleteDevIDFile())
+	{
+		TRACE_PRINT("DeleteDevIDFile: error.");
 		TRACE_EXIT();
 		return FALSE;
 	}

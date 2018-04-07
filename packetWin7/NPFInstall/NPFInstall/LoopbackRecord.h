@@ -68,3 +68,4 @@ int getIntDevID(TCHAR strDevID[]);
 BOOL AddFlagToRegistry(tstring strDeviceName);
 BOOL AddFlagToRegistry_Service(tstring strDeviceName);
 BOOL RecordLoopbackDevice(int iNpcapAdapterID);
+BOOL EraseLoopbackRecord();
