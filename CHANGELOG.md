@@ -1,3 +1,9 @@
+## Npcap 0.99-r3 [2018-04-06]
+
+* Fix recording of the Npcap Loopback Adapter's name in the service registry
+  key. Loopback packet injection was broken in WinPcap API-compatible mode in
+  Npcap 0.99-r1 and 0.99-r2. Fixes [#1165](http://issues.nmap.org/1165).
+
 * Fix a double-close of a Registry key which could cause a crash in Packet.dll
   when debugging. Fixes [#1163](http://issues.nmap.org/1163).
 
