@@ -18,13 +18,13 @@
 
 ## Npcap 0.99-r1 [2018-03-05]
 
-* We now offer an Npcap OEM Edition corporate internal use
-  license. This provides all the advantages of Npcap OEM (such as the
-  silent installer) and removes the 5-copy limitation of the free
-  Npcap, while also providing for commercial support and updates.
-  This is for companies who only want to use Nmap internally.  We also
-  still offer the Npcap OEM redistribution license for companies
-  wanting to redistribute Npcap with their software.  See
+* We now offer an Npcap OEM Edition internal-use license. This
+  provides all the advantages of Npcap OEM (such as the silent
+  installer) and removes the 5-copy limitation of the free Npcap,
+  while also providing for commercial support and updates.  It is
+  for companies who only want to use Nmap internally.  We also still
+  offer the Npcap OEM redistribution license for companies wanting to
+  redistribute Npcap with their software.  See
   https://nmap.org/npcap/oem/.
 
 * Improved installation of the Npcap Loopback Adapter, ensuring it can be
