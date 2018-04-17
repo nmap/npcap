@@ -350,16 +350,16 @@
       the one of the BSD Packet Filter (BPF), so if you are interested the
       subject you can read the following papers:</para>
     <itemizedlist>
-      <listitem><para>S. McCanne and V. Jacobson, <a
-            href="ftp://ftp.ee.lbl.gov/papers/bpf-usenix93.ps.Z">The BSD Packet
-            Filter: A New Architecture for User-level Packet Capture</a>.
+      <listitem><para>S. McCanne and V. Jacobson, <ulink
+            url="ftp://ftp.ee.lbl.gov/papers/bpf-usenix93.ps.Z">The BSD Packet
+            Filter: A New Architecture for User-level Packet Capture</ulink>.
           Proceedings of the 1993 Winter USENIX Technical Conference (San
           Diego, CA, Jan.  1993), USENIX.</para>
       </listitem>
-      <listitem><para>A. Begel, S. McCanne, S.L.Graham, BPF+: <a
-            href="http://www.acm.org/pubs/articles/proceedings/comm/316188/p123-begel/p123-begel.pdf">Exploiting
+      <listitem><para>A. Begel, S. McCanne, S.L.Graham, BPF+: <ulink
+            url="http://www.acm.org/pubs/articles/proceedings/comm/316188/p123-begel/p123-begel.pdf">Exploiting
             Global Data-flow Optimization in a Generalized Packet Filter
-            Architecture</a>, Proceedings of ACM SIGCOMM '99, pages 123-134,
+            Architecture</ulink>, Proceedings of ACM SIGCOMM '99, pages 123-134,
           Conference on Applications, technologies, architectures, and
           protocols for computer communications, August 30 - September 3, 1999,
           Cambridge, USA</para>
