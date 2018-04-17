@@ -1,0 +1,8 @@
+<sect1 id="npcap-contact">
+  <title>Contact</title>
+
+  <itemizedlist>
+  <listitem><para><ulink role="hidepdf" url="mailto:dev@nmap.org">dev@nmap.org</ulink> - The Nmap development mailing list is the preferred place for general inquiries on Npcap usage, development, or issues.</para></listitem>
+  <listitem><para><ulink role="hidepdf" url="mailto:sales@nmap.com">sales@nmap.com</ulink> - for information about redistribution and licensing.</para></listitem>
+  </itemizedlist>
+</sect1>

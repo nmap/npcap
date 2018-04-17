@@ -1,0 +1,7 @@
+<sect2 id="npcap-api">
+  <title>The Npcap API</title>
+  <para>This documentation is currently under development.
+    Until it is publicly available, please refer to
+    <ulink url="https://www.tcpdump.org/manpages/pcap.3pcap.html">the libpcap 1.8.1 manpages</ulink>,
+    as the API should be almost entirely identical.</para>
+</sect2>

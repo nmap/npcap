@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="struct__DEVICE__EXTENSION">
+<title>_DEVICE_EXTENSION struct Reference</title>
+<para>
+    <programlisting>#include <link linkend="Packet_8h">&lt;Packet.h&gt;</link></programlisting>
+</para>
+        <section>
+            <title>Data Fields</title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>NDIS_STRING AdapterName<para><emphasis>Name of the adapter.</emphasis></para></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>PWSTR ExportString<para><emphasis>Name of the exported device, i.e. name that the applications will use.</emphasis></para></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>BOOLEAN Dot11</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+    <simplesect>
+
+<para>Port device extension. </para>
+    </simplesect>
+        <simplesect>
+            <title>Detailed Description</title>
+
+<para>Structure containing some data relative to every adapter on which NPF is bound. </para>
+                <para>Definition at line 285 of file Packet.h</para>
+                <para>The Documentation for this struct was generated from the following file: </para>
+                <para><itemizedlist><listitem><para>Packet.h</para></listitem></itemizedlist></para>
+        </simplesect>
+        <section>
+            <title>Field Documentation</title>
+            <simplesect>
+                <title>BOOLEAN Dot11</title>                
+<para>whether the adapter is a raw 802.11 adapter or not. to open this adapter through WinPcap. </para>
+
+                <para>Definition at line 288 of file Packet.h</para>
+                <para>The Documentation for this struct was generated from the following file: </para>
+                <para><itemizedlist><listitem><para>Packet.h</para></listitem></itemizedlist></para>
+            </simplesect>
+        </section>
+</section>

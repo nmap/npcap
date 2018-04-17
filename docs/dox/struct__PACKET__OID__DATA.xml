@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="struct__PACKET__OID__DATA">
+<title>_PACKET_OID_DATA struct Reference</title>
+<para>
+    <programlisting>#include <link linkend="Packet_8h">&lt;Packet.h&gt;</link></programlisting>
+</para>
+        <section>
+            <title>Data Fields</title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>ULONG Oid</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>ULONG Length<para><emphasis>Length of the data field.</emphasis></para></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>UCHAR Data[1]</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+    <simplesect>
+
+<para>Structure containing an OID request. </para>
+    </simplesect>
+        <simplesect>
+            <title>Detailed Description</title>
+
+<para>It is used by the PacketRequest() function to send an OID to the interface card driver. It can be used, for example, to retrieve the status of the error counters on the adapter, its MAC address, the list of the multicast groups defined on it, and so on. </para>
+                <para>Definition at line 229 of file Packet.h</para>
+                <para>The Documentation for this struct was generated from the following file: </para>
+                <para><itemizedlist><listitem><para>Packet.h</para></listitem></itemizedlist></para>
+        </simplesect>
+        <section>
+            <title>Field Documentation</title>
+            <simplesect>
+                <title>ULONG Oid</title>                
+<para>OID code. See the Microsoft DDK documentation or the file ntddndis.h for a complete list of valid codes. </para>
+
+                <para>Definition at line 230 of file Packet.h</para>
+                <para>The Documentation for this struct was generated from the following file: </para>
+                <para><itemizedlist><listitem><para>Packet.h</para></listitem></itemizedlist></para>
+            </simplesect>
+            <simplesect>
+                <title>UCHAR Data[1]</title>                
+<para>variable-lenght field that contains the information passed to or received from the adapter. </para>
+
+                <para>Definition at line 233 of file Packet.h</para>
+                <para>The Documentation for this struct was generated from the following file: </para>
+                <para><itemizedlist><listitem><para>Packet.h</para></listitem></itemizedlist></para>
+            </simplesect>
+        </section>
+</section>

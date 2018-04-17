@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="structPacketHeader">
+<title>PacketHeader struct Reference</title>
+<para>
+    <programlisting>#include <link linkend="Packet_8h">&lt;Packet.h&gt;</link></programlisting>
+</para>
+        <section>
+            <title>Data Fields</title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>ULONG SN<para><emphasis>Sequence number of the packet.</emphasis></para></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct bpf_hdr header<para><emphasis>bpf header, created by the tap, and copied unmodified to user level programs.</emphasis></para></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+    <simplesect>
+
+<para>Structure prepended to each packet in the kernel buffer pool. </para>
+    </simplesect>
+        <simplesect>
+            <title>Detailed Description</title>
+
+<para>Each packet in one of the kernel buffers is prepended by this header. It encapsulates the bpf_header, which will be passed to user level programs, as well as the sequence number of the packet, set by the producer (the tap function), and used by the consumer (the read function) to &quot;reorder&quot; the packets contained in the various kernel buffers. </para>
+                <para>Definition at line 463 of file Packet.h</para>
+                <para>The Documentation for this struct was generated from the following file: </para>
+                <para><itemizedlist><listitem><para>Packet.h</para></listitem></itemizedlist></para>
+        </simplesect>
+        <section>
+            <title>Field Documentation</title>
+        </section>
+</section>
