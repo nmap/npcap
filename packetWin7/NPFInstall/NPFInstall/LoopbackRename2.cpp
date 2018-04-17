@@ -144,29 +144,79 @@ tstring executeCommand(TCHAR* strCmd)
 	TRACE_PRINT1("executeCommand: executing, strCmd = %s.", strCmd);
 
 	tstring result;
-	char buffer[128];
 	string tmp = "";
+	HANDLE g_hChildStd_OUT_Wr = NULL;
+	HANDLE g_hChildStd_OUT_Rd = NULL;
+	STARTUPINFO si = { 0 };
+	PROCESS_INFORMATION pi = { 0 };
+	SECURITY_ATTRIBUTES saAttr;
 
-	FILE* pipe = _tpopen(strCmd, _T("r"));
-	if (!pipe)
+	// Set the bInheritHandle flag so pipe handles can be inherited. 
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+
+	// Create a pipe for stdout
+	if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0))
 	{
-		TRACE_PRINT1("_tpopen: error, errCode = 0x%08x.", errno);
+		DWORD error = ::GetLastError();
+		TRACE_PRINT1("CreatePipe: error, errCode = 0x%08x.", error);
 		TRACE_EXIT();
 		return _T("");
 	}
 
-	while (!feof(pipe))
+	// Set the read handle for stdout as not inheritable
+	SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
+
+	// Set the process to use STD handles and the window to hidden
+	si.cb = sizeof(STARTUPINFO);
+	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
+	si.hStdError = g_hChildStd_OUT_Wr;
+	si.hStdOutput = g_hChildStd_OUT_Wr;
+	si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+
+	// Create the process
+	BOOL executed = ::CreateProcess(NULL, strCmd, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi);
+	if (executed == FALSE)
 	{
-		if (fgets(buffer, 128, pipe) != NULL)
-			tmp += buffer;
+		DWORD error = ::GetLastError();
+		TRACE_PRINT1("CreateProcess: error, errCode = 0x%08x.", error);
+		TRACE_EXIT();
+		CloseHandle(g_hChildStd_OUT_Wr);
+		CloseHandle(g_hChildStd_OUT_Rd);
+		return _T("");
 	}
-	_pclose(pipe);
+
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+
+	// Release the write handle since we have handed it off
+	CloseHandle(g_hChildStd_OUT_Wr);
+	g_hChildStd_OUT_Wr = 0;
+
+	// Read pipe
+	char aBuf[2048 + 1];
+	while (true)
+	{
+		DWORD dwRead = 0;
+		BOOL status = ReadFile(g_hChildStd_OUT_Rd, aBuf, 2048, &dwRead, NULL);
+		if (!status || dwRead == 0) {
+			break;
+		}
+		aBuf[dwRead] = '\0';
+		tmp += aBuf;
+	}
+
+	// Close read handle
+	CloseHandle(g_hChildStd_OUT_Rd);
 
 #ifdef _UNICODE
 	result = ANSIToUnicode(tmp);
 #else
 	result = tmp;
 #endif
+
 	TRACE_PRINT1("executeCommand: result = %s.", result.c_str());
 
 	TRACE_EXIT();
