@@ -74,6 +74,7 @@ typedef std::basic_string<TCHAR> tstring;
 
 BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDeviceName, DWORD dwSamDesired);
 BOOL DeleteValueFromRegistry(LPCTSTR strSubKey, LPCTSTR strValueName);
+BOOL IncrementRegistryDword(LPCTSTR strSubKey, LPCTSTR strValueName, DWORD maxValue);
 
 tstring printAdapterNames(vector<tstring> nstr);
 

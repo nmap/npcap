@@ -106,6 +106,58 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDevi
 	return TRUE;
 }
 
+BOOL IncrementRegistryDword(LPCTSTR strSubKey, LPCTSTR strValueName, DWORD maxValue)
+{
+	LONG Status;
+	HKEY hNpcapKey;
+	DWORD dwCurrent;
+	DWORD dwSize;
+	dwSize = sizeof(dwCurrent);
+
+	TRACE_ENTER();
+	TRACE_PRINT2("IncrementRegistryDword: executing, strSubKey = %s, strValueName = %s",
+		strSubKey, strValueName);
+
+	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, KEY_SET_VALUE | KEY_QUERY_VALUE | KEY_WOW64_32KEY, &hNpcapKey);
+	if (Status == ERROR_SUCCESS)
+	{
+		Status = RegGetValue(hNpcapKey, NULL, strValueName, RRF_RT_REG_DWORD, NULL, &dwCurrent, &dwSize);
+		if (Status != ERROR_SUCCESS)
+		{
+			TRACE_PRINT1("RegGetValue: error, errCode = 0x%08x.", Status);
+			RegCloseKey(hNpcapKey);
+			TRACE_EXIT();
+			return FALSE;
+		}
+		if (dwCurrent >= maxValue)
+		{
+			TRACE_PRINT2("Current value %d is greater than max value %d", dwCurrent, maxValue);
+			RegCloseKey(hNpcapKey);
+			TRACE_EXIT();
+			return FALSE;
+		}
+		dwCurrent += 1;
+		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_DWORD, (PBYTE)&dwCurrent, sizeof(dwCurrent));
+		if (Status != ERROR_SUCCESS)
+		{
+			TRACE_PRINT1("RegSetValueEx: error, errCode = 0x%08x.", Status);
+			RegCloseKey(hNpcapKey);
+			TRACE_EXIT();
+			return FALSE;
+		}
+		RegCloseKey(hNpcapKey);
+	}
+	else
+	{
+		TRACE_PRINT1("RegOpenKeyEx: error, errCode = 0x%08x.", Status);
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	TRACE_EXIT();
+	return TRUE;
+}
+
 BOOL DeleteValueFromRegistry(LPCTSTR strSubKey, LPCTSTR strValueName)
 {
 	LONG Status;

@@ -331,6 +331,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		if (strArgs[1] == _T("-i"))
 		{
+			BOOL first_try = TRUE;
+		tryagain_i:
 			bWiFiService = FALSE;
 			bSuccess = PacketInstallDriver60();
 			if (bSuccess)
@@ -344,6 +346,11 @@ int _tmain(int argc, _TCHAR* argv[])
 				DWORD err = GetLastError();
 				if (err == NETCFG_E_MAX_FILTER_LIMIT) {
 					_tprintf(_T("Too many filters installed!\n"));
+					if (first_try && IncrementRegistryDword(_T("SYSTEM\\CurrentControlSet\\Control\\Network"), _T("MaxNumFilters"), 14))
+					{
+						first_try = FALSE;
+						goto tryagain_i;
+					}
 				}
 				else {
 					_tprintf(_T("Unknown error! %x\n"), err);
@@ -355,6 +362,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		if (strArgs[1] == _T("-i2"))
 		{
+			BOOL first_try = TRUE;
+		tryagain_i2:
 			bWiFiService = TRUE;
 			bSuccess = PacketInstallDriver60();
 			if (bSuccess)
@@ -368,6 +377,11 @@ int _tmain(int argc, _TCHAR* argv[])
 				DWORD err = GetLastError();
 				if (err == NETCFG_E_MAX_FILTER_LIMIT) {
 					_tprintf(_T("Too many filters installed!\n"));
+					if (first_try && IncrementRegistryDword(_T("SYSTEM\\CurrentControlSet\\Control\\Network"), _T("MaxNumFilters"), 14))
+					{
+						first_try = FALSE;
+						goto tryagain_i2;
+					}
 				}
 				else {
 					_tprintf(_T("Unknown error! %x\n"), err);
