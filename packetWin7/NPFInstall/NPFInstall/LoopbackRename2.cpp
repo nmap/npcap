@@ -324,7 +324,8 @@ void snapshotInterfaceListBeforeInstall()
 {
 	TRACE_ENTER();
 
-	tstring cmd = executeCommand(_T("netsh.exe interface show interface"));
+	TCHAR cmdLine[] = _T("netsh.exe interface show interface");
+	tstring cmd = executeCommand(cmdLine);
 	g_InterfaceNameList1 = getInterfaceNamesFromNetshOutput(cmd);
 
 	TRACE_EXIT();
@@ -334,7 +335,8 @@ void snapshotInterfaceListAfterInstall()
 {
 	TRACE_ENTER();
 
-	tstring cmd = executeCommand(_T("netsh.exe interface show interface"));
+	TCHAR cmdLine[] = _T("netsh.exe interface show interface");
+	tstring cmd = executeCommand(cmdLine);
 	g_InterfaceNameList2 = getInterfaceNamesFromNetshOutput(cmd);
 
 	TRACE_EXIT();
