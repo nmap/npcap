@@ -1,3 +1,8 @@
+
+* Improve the license to allow unlimited copies of Npcap to be used
+  (removes the 5 copy limitation) if the copies are solely used for
+  Nmap and/or Wireshark.
+
 ## Npcap 0.99-r3 [2018-04-06]
 
 * Fix recording of the Npcap Loopback Adapter's name in the service registry
@@ -13,9 +18,14 @@
 
 ## Npcap 0.99-r1 [2018-03-05]
 
-* New Internal Use licensing option for Npcap OEM for users who need silent
-  installs or more than five computers, but do not want to pay for
-  redistribution rights.
+* We now offer an Npcap OEM Edition internal-use license. This
+  provides all the advantages of Npcap OEM (such as the silent
+  installer) and removes the 5-copy limitation of the free Npcap,
+  while also providing for commercial support and updates.  It is
+  for companies who only want to use Nmap internally.  We also still
+  offer the Npcap OEM redistribution license for companies wanting to
+  redistribute Npcap with their software.  See
+  https://nmap.org/npcap/oem/.
 
 * Improved installation of the Npcap Loopback Adapter, ensuring it can be
   correctly removed and reinstalled.

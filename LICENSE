@@ -77,15 +77,26 @@ only have one instance of this Agreement active at once.  For example,
 downloading the software multiple times, downloading multiple versions
 of the software, and/or executing the software installer multiple
 times do not grant any additional rights such as using the software on
-more machines.  Users wishing to redistribute this software or exceed
-the usage limits imposed by this free license should contact
-sales@nmap.com to obtain an appropriate commercial license agreement.
-More details on our OEM edition is also available from
-https://nmap.org/npcap/oem/.
+more machines.
 
 The terms "computer" and "machine" in this license include any
 computing device, including software computing instances such as
 virtual machines and Docker containers.
+
+Copies of Npcap do not count toward the five copy, five computer, or
+five user limitations imposed by this section if they are installed
+and used solely in conjunction with any of the following software:
+
+o The Nmap Security Scanner, as distributed from https://nmap.org
+
+o The Wireshark network protocl analyzer, as distributed from
+  https://www.wireshark.org/
+
+Users wishing to redistribute Npcap or exceed the usage limits imposed
+by this free license or benefit from commercial support and features
+such as a silent installer should contact sales@nmap.com to obtain an
+appropriate commercial license agreement.  More details on our OEM
+edition is also available from https://nmap.org/npcap/oem/.
 
 DISCLAIMER OF WARRANTIES AND LIMITATION OF LIABILITY
 
