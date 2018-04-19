@@ -245,12 +245,7 @@ vector<tstring> getInterfaceNamesFromNetshOutput(tstring strOutput)
 	size_t iStringStart;
 	size_t iStringEnd;
 
-	while (iLineEnd < strOutput.length() && strOutput[iLineEnd] == _T('\n'))
-	{
-		iLineEnd ++;
-	}
-
-	iLineEnd = strOutput.find(_T('\n'), iLineEnd);
+	iLineEnd = strOutput.find(_T('-'), iLineEnd);
 	if (iLineEnd == tstring::npos)
 	{
 		TRACE_EXIT();
