@@ -136,10 +136,11 @@ BOOLEAN ClearDriverStore()
 {
 	TRACE_ENTER();
 
-	tstring cmd = executeCommand(_T("pnputil.exe -e"));
+	TCHAR renameCmd[16+MAX_PATH] = _T("pnputil.exe -e");
+	// "pnputil.exe -d oem1.inf"
+	tstring cmd = executeCommand(renameCmd);
 	vector<tstring> nInfFileNameList = getInfNamesFromPnpUtilOutput(cmd);
 
-	TCHAR renameCmd[MAX_PATH];
 	// "pnputil.exe -d oem1.inf"
 	for (size_t i = 0; i < nInfFileNameList.size(); i++)
 	{
