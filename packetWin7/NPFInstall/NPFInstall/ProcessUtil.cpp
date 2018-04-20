@@ -409,7 +409,7 @@ BOOL killProcess_Soft(DWORD dwProcessID)
 
 	TCHAR* cmdLine = new TCHAR[strCommand.length() * sizeof(TCHAR)];
 	_tcscpy_s(cmdLine, strCommand.length(), (TCHAR*)strCommand.c_str());
-	tstring strResult = executeCommand((TCHAR*)strCommand.c_str());
+	tstring strResult = executeCommand(cmdLine);
 	delete[] cmdLine;
 
 	if (_tcsncmp(strResult.c_str(), _T("SUCCESS"), _tcslen(_T("SUCCESS"))) == 0)
