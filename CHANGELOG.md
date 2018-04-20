@@ -1,3 +1,11 @@
+## Npcap 0.99-r4 [2018-04-19]
+
+* On Windows 7, if Npcap driver installation fails due to maximum NDIS filters
+  installed, attempt to increase the limit. No such limit exists on other
+  Windows versions. Fixes [#1182](http://issues.nmap.org/1182).
+
+* Avoid some cmd.exe popup windows during installation. See
+  [#1188](http://issues.nmap.org/1188).
 
 * Improve the license to allow unlimited copies of Npcap to be used
   (removes the 5 copy limitation) if the copies are solely used for
