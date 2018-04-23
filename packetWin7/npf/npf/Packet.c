@@ -2233,6 +2233,7 @@ NPF_IoControl(
 			//  submit the request
 			//
 			pRequest->Request.RequestId = (PVOID) NPF_REQUEST_ID;
+			pRequest->Request.RequestHandle = Open->AdapterHandle;
 			// ASSERT(Open->AdapterHandle != NULL);
 
 			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
