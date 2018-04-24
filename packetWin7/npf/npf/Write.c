@@ -260,7 +260,7 @@ NPF_Write(
 			ASSERT(Open->GroupHead != NULL);
 
 			NdisAcquireSpinLock(&Open->OpenInUseLock);
-			if (Open->GroupHead->PausePending)
+			if (Open->GroupHead->AdapterBindingStatus != FilterRunning)
 			{
 				Status = NDIS_STATUS_PAUSED;
 			}
@@ -303,7 +303,7 @@ NPF_Write(
 				while (GroupOpen != NULL)
 				{
 					TempOpen = GroupOpen;
-					if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
+					if (TempOpen->AdapterBindingStatus == FilterRunning && TempOpen->SkipSentPackets == FALSE)
 					{
 						NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 					}
@@ -647,7 +647,7 @@ NPF_BufferedWrite(
 		ASSERT(Open->GroupHead != NULL);
 
 		NdisAcquireSpinLock(&Open->OpenInUseLock);
-		if (Open->GroupHead->PausePending)
+		if (Open->GroupHead->AdapterBindingStatus != FilterRunning)
 		{
 			Status = NDIS_STATUS_PAUSED;
 		}
@@ -676,7 +676,7 @@ NPF_BufferedWrite(
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND && TempOpen->SkipSentPackets == FALSE)
+			if (TempOpen->AdapterBindingStatus == FilterRunning && TempOpen->SkipSentPackets == FALSE)
 			{
 				NPF_TapExForEachOpen(TempOpen, pNetBufferList);
 			}
@@ -1031,17 +1031,7 @@ NPF_SendCompleteExForEachOpen(
 		//TRACE_EXIT();
 	}
 
-	if (Open->Multiple_Write_Counter == 0 && Open->TransmitPendingPackets == 0 && Open->GroupHead->PausePending)
-	{
-		CompletePause = TRUE;
-	}
-
 	NdisReleaseSpinLock(&Open->OpenInUseLock);
-
-	if (CompletePause)
-	{
-		NdisFPauseComplete(Open->AdapterHandle);
-	}
 }
 
 //-------------------------------------------------------------------

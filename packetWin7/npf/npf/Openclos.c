@@ -132,7 +132,7 @@ NPF_StartUsingBinding(
 
 	NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
 
-	if (pOpen->AdapterBindingStatus != ADAPTER_BOUND)
+	if (pOpen->AdapterBindingStatus != FilterRunning)
 	{
 		NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
 		return FALSE;
@@ -163,7 +163,6 @@ NPF_StopUsingBinding(
 	NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
 
 	ASSERT(pOpen->AdapterHandleUsageCounter > 0);
-	ASSERT(pOpen->AdapterBindingStatus == ADAPTER_BOUND);
 
 	pOpen->AdapterHandleUsageCounter--;
 
@@ -187,6 +186,7 @@ NPF_CloseBinding(
 	NdisResetEvent(&Event);
 
 	NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
+	pOpen->AdapterBindingStatus = FilterDetaching;
 
 	while (pOpen->AdapterHandleUsageCounter > 0)
 	{
@@ -199,31 +199,7 @@ NPF_CloseBinding(
 	// now the UsageCounter is 0
 	//
 
-	while (pOpen->AdapterBindingStatus == ADAPTER_UNBINDING)
-	{
-		NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
-		NdisWaitEvent(&Event, 1);
-		NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
-	}
-
-	//
-	// now the binding status is either bound or unbound
-	//
-
-	if (pOpen->AdapterBindingStatus == ADAPTER_UNBOUND)
-	{
-		NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
-		return;
-	}
-
-	ASSERT(pOpen->AdapterBindingStatus == ADAPTER_BOUND);
-
-	pOpen->AdapterBindingStatus = ADAPTER_UNBINDING;
-
-	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
-
-	NdisAcquireSpinLock(&pOpen->AdapterHandleLock);
-	pOpen->AdapterBindingStatus = ADAPTER_UNBOUND;
+	pOpen->AdapterBindingStatus = FilterDetached;
 	NdisReleaseSpinLock(&pOpen->AdapterHandleLock);
 }
 
@@ -426,7 +402,8 @@ NPF_StartUsingOpenInstance(
 	BOOLEAN returnStatus;
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-	if (pOpen->ClosePending)
+	NdisAcquireSpinLock(&pOpen->GroupHead->AdapterHandleLock);
+	if (pOpen->GroupHead->AdapterBindingStatus != FilterRunning)
 	{
 		returnStatus = FALSE;
 	}
@@ -435,6 +412,7 @@ NPF_StartUsingOpenInstance(
 		returnStatus = TRUE;
 		pOpen->NumPendingIrps ++;
 	}
+	NdisReleaseSpinLock(&pOpen->GroupHead->AdapterHandleLock);
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
 	return returnStatus;
@@ -469,8 +447,7 @@ NPF_CloseOpenInstance(
 	NdisResetEvent(&Event);
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-
-	pOpen->ClosePending = TRUE;
+	pOpen->AdapterBindingStatus = FilterDetaching;
 
 	while (pOpen->NumPendingIrps > 0)
 	{
@@ -479,6 +456,7 @@ NPF_CloseOpenInstance(
 		NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 	}
 
+	pOpen->AdapterBindingStatus = FilterDetached;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 }
 
@@ -1321,6 +1299,7 @@ NPF_CreateOpenObject(
 	RtlZeroMemory(Open, sizeof(OPEN_INSTANCE));
 
 	Open->DeviceExtension = DeviceExtension; //can be NULL before any actual bindings.
+	Open->AdapterBindingStatus = FilterAttaching;
 	Open->DirectBinded = TRUE;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	Open->Loopback = FALSE;
@@ -1415,8 +1394,6 @@ NPF_CreateOpenObject(
 	// we can wait for those IRPs to be completed
 	//
 	Open->NumPendingIrps = 0;
-	Open->ClosePending = FALSE;
-	Open->PausePending = FALSE;
 	NdisAllocateSpinLock(&Open->OpenInUseLock);
 
 	//
@@ -1444,7 +1421,7 @@ NPF_CreateOpenObject(
 	//
 	// set the proper binding flags before trying to open the MAC
 	//
-	Open->AdapterBindingStatus = ADAPTER_BOUND;
+	Open->AdapterBindingStatus = FilterRunning;
 	Open->AdapterHandleUsageCounter = 0;
 	NdisAllocateSpinLock(&Open->AdapterHandleLock);
 
@@ -1770,13 +1747,62 @@ NPF_Pause(
 	)
 {
 	POPEN_INSTANCE          Open = (POPEN_INSTANCE)FilterModuleContext;
+	POPEN_INSTANCE Current;
 	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
+	NDIS_EVENT Event;
+	BOOLEAN PendingWrites = FALSE;
+	//BOOLEAN PendingReads = TRUE;
 
 	UNREFERENCED_PARAMETER(PauseParameters);
 	TRACE_ENTER();
 
+	NdisInitializeEvent(&Event);
+	NdisResetEvent(&Event);
+
 	NdisAcquireSpinLock(&Open->AdapterHandleLock);
-	Open->PausePending = TRUE;
+	Open->AdapterBindingStatus = FilterPausing;
+	
+	NdisAcquireSpinLock(&Open->GroupLock);
+	for (Current = Open->GroupNext; Current != NULL; Current = Current->GroupNext)
+  {
+    Current->AdapterBindingStatus = FilterPausing;
+    PendingWrites = PendingWrites || Current->TransmitPendingPackets > 0 || Current->Multiple_Write_Counter > 0;
+  }
+	NdisReleaseSpinLock(&Open->GroupLock);
+
+	while (Open->AdapterHandleUsageCounter > 0)
+	{
+		NdisReleaseSpinLock(&Open->AdapterHandleLock);
+		NdisWaitEvent(&Event, 1);
+		NdisAcquireSpinLock(&Open->AdapterHandleLock);
+	}
+
+  NdisAcquireSpinLock(&Open->GroupLock);
+  while (PendingWrites)
+  {
+    PendingWrites = FALSE;
+    for (Current = Open->GroupNext; Current != NULL; Current = Current->GroupNext)
+    {
+      if (Current->TransmitPendingPackets > 0 || Current->Multiple_Write_Counter > 0)
+      {
+        PendingWrites = TRUE;
+        NdisReleaseSpinLock(&Open->GroupLock);
+        NdisReleaseSpinLock(&Open->AdapterHandleLock);
+        NdisWaitEvent(&Current->NdisWriteCompleteEvent, 10);
+        NdisAcquireSpinLock(&Open->AdapterHandleLock);
+        NdisAcquireSpinLock(&Open->GroupLock);
+        /* Have to break because we released GroupLock, and list could have changed. */
+        break;
+      }
+      else
+      {
+        Current->AdapterBindingStatus = FilterPaused;
+      }
+    }
+  }
+  NdisReleaseSpinLock(&Open->GroupLock);
+
+	Open->AdapterBindingStatus = FilterPaused;
 	NdisReleaseSpinLock(&Open->AdapterHandleLock);
 
 	Status = NDIS_STATUS_SUCCESS;
@@ -1796,6 +1822,7 @@ NPF_Restart(
 {
 
 	POPEN_INSTANCE	Open = (POPEN_INSTANCE) FilterModuleContext;
+	POPEN_INSTANCE Current;
 	NDIS_STATUS		Status;
 
 	TRACE_ENTER();
@@ -1805,7 +1832,17 @@ NPF_Restart(
 
 
 	NdisAcquireSpinLock(&Open->AdapterHandleLock);
-	Open->PausePending = FALSE;
+	ASSERT(Open->AdapterBindingStatus == FilterPaused);
+	Open->AdapterBindingStatus = FilterRestarting;
+
+	NdisAcquireSpinLock(&Open->GroupLock);
+	for (Current = Open->GroupNext; Current != NULL; Current = Current->GroupNext)
+  {
+    Current->AdapterBindingStatus = FilterRunning;
+  }
+	NdisReleaseSpinLock(&Open->GroupLock);
+
+	Open->AdapterBindingStatus = FilterRunning;
 	NdisReleaseSpinLock(&Open->AdapterHandleLock);
 
 	Status = NDIS_STATUS_SUCCESS;
@@ -1845,6 +1882,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
+  ASSERT(Open->AdapterBindingStatus == FilterPaused);
   /* No need to lock the group since we are paused. Also, can't lock because
    * that raises IRQL and NPF_CloseOpenInstance requires PASSIVE_LEVEL */
 	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)

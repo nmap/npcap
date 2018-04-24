@@ -319,6 +319,19 @@ typedef struct __CPU_Private_Data
 } CpuPrivateData;
 
 
+typedef enum _FILTER_STATE
+{
+    FilterStateUnspecified,
+    FilterInitialized,
+    FilterAttaching,
+    FilterPausing,
+    FilterPaused,
+    FilterRunning,
+    FilterRestarting,
+    FilterDetaching,
+    FilterDetached
+} FILTER_STATE;
+
 /*!
   \brief Contains the state of a running instance of the NPF driver.
 
@@ -432,25 +445,15 @@ typedef struct _OPEN_INSTANCE
 	ULONG					Size;			///< Size of each kernel buffer contained in the CpuData field.
 	ULONG					AdapterHandleUsageCounter;
 	NDIS_SPIN_LOCK			AdapterHandleLock;
-	ULONG					AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.
+	FILTER_STATE					AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.
 
 	NDIS_EVENT				NdisOpenCloseCompleteEvent;
 	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
-	NTSTATUS				OpenCloseStatus;
 	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
 	ULONG					NumPendingIrps;
-	BOOLEAN					ClosePending;
-	BOOLEAN					PausePending;
 	NDIS_SPIN_LOCK			OpenInUseLock;
 }
 OPEN_INSTANCE, *POPEN_INSTANCE;
-
-enum ADAPTER_BINDING_STATUS
-{
-	ADAPTER_UNBOUND,
-	ADAPTER_BOUND,
-	ADAPTER_UNBINDING,
-};
 
 /*!
   \brief Structure prepended to each packet in the kernel buffer pool.

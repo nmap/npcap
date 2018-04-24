@@ -549,7 +549,7 @@ NPF_SendEx(
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+			if (TempOpen->AdapterBindingStatus == FilterRunning)
 			{
 				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
 			}
@@ -617,7 +617,7 @@ NPF_TapEx(
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
-				if (TempOpen->AdapterBindingStatus == ADAPTER_BOUND)
+				if (TempOpen->AdapterBindingStatus == FilterRunning)
 				{
 					//let every group adapter receive the packets
 					NPF_TapExForEachOpen(TempOpen, NetBufferLists);
