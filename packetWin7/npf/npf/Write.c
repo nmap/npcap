@@ -112,6 +112,14 @@ NPF_Write(
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
 	Open = IrpSp->FileObject->FsContext;
+	if (!NPF_IsOpenInstance(Open))
+	{
+		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
+		Irp->IoStatus.Information = 0;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return STATUS_INVALID_HANDLE;
+	}
 
 	if (NPF_StartUsingOpenInstance(Open) == FALSE)
 	{
@@ -482,6 +490,11 @@ NPF_BufferedWrite(
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
 	Open = (POPEN_INSTANCE) IrpSp->FileObject->FsContext;
+	if (!NPF_IsOpenInstance(Open))
+	{
+		TRACE_EXIT();
+		return 0;
+	}
 
 	if (!Open->GroupHead || NPF_StartUsingBinding(Open->GroupHead) == FALSE)
 	{

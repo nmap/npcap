@@ -332,6 +332,7 @@ typedef enum _FILTER_STATE
     FilterDetached
 } FILTER_STATE;
 
+#define OPEN_SIGNATURE 'NPFO'
 /*!
   \brief Contains the state of a running instance of the NPF driver.
 
@@ -341,6 +342,7 @@ typedef enum _FILTER_STATE
 */
 typedef struct _OPEN_INSTANCE
 {
+	ULONG OpenSignature;
 	NDIS_STRING				AdapterName;
 	BOOLEAN					DirectBinded;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -1423,6 +1425,7 @@ VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Len
 */
 NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
 
+BOOLEAN NPF_IsOpenInstance(IN POPEN_INSTANCE pOpen);
 
 BOOLEAN NPF_StartUsingBinding(IN POPEN_INSTANCE pOpen);
 

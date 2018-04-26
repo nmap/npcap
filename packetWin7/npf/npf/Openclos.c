@@ -122,6 +122,22 @@ extern POPEN_INSTANCE g_LoopbackOpenGroupHead; // Loopback adapter OPEN_INSTANCE
 //-------------------------------------------------------------------
 
 BOOLEAN
+NPF_IsOpenInstance(
+	IN POPEN_INSTANCE pOpen
+	)
+{
+	if (pOpen == NULL)
+	{
+		return FALSE;
+	}
+	if (pOpen->OpenSignature != OPEN_SIGNATURE)
+	{
+		return FALSE;
+	}
+	return TRUE;
+}
+
+BOOLEAN
 NPF_StartUsingBinding(
 	IN POPEN_INSTANCE pOpen
 	)
@@ -857,8 +873,15 @@ NPF_CloseAdapter(
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	pOpen = IrpSp->FileObject->FsContext;
+	if (!NPF_IsOpenInstance(pOpen))
+	{
+		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
+		Irp->IoStatus.Information = 0;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return STATUS_INVALID_HANDLE;
+	}
 
-	ASSERT(pOpen != NULL);
 	//
 	// Free the open instance itself
 	//
@@ -893,6 +916,14 @@ NPF_Cleanup(
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	Open = IrpSp->FileObject->FsContext;
+	if (!NPF_IsOpenInstance(pOpen))
+	{
+		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
+		Irp->IoStatus.Information = 0;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return STATUS_INVALID_HANDLE;
+	}
 
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
 
@@ -1298,6 +1329,7 @@ NPF_CreateOpenObject(
 
 	RtlZeroMemory(Open, sizeof(OPEN_INSTANCE));
 
+	Open->OpenSignature = OPEN_SIGNATURE;
 	Open->DeviceExtension = DeviceExtension; //can be NULL before any actual bindings.
 	Open->AdapterBindingStatus = FilterAttaching;
 	Open->DirectBinded = TRUE;

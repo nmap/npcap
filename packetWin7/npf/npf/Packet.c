@@ -1298,6 +1298,14 @@ NPF_IoControl(
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	FunctionCode = IrpSp->Parameters.DeviceIoControl.IoControlCode;
 	Open = IrpSp->FileObject->FsContext;
+	if (!NPF_IsOpenInstance(Open))
+	{
+		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
+		Irp->IoStatus.Information = 0;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return STATUS_INVALID_HANDLE;
+	}
 
 	if (NPF_StartUsingOpenInstance(Open) == FALSE)
 	{
