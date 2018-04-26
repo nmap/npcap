@@ -916,7 +916,7 @@ NPF_Cleanup(
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	Open = IrpSp->FileObject->FsContext;
-	if (!NPF_IsOpenInstance(pOpen))
+	if (!NPF_IsOpenInstance(Open))
 	{
 		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
 		Irp->IoStatus.Information = 0;
