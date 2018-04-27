@@ -2442,6 +2442,7 @@ NPF_DoInternalRequest(
 	NdisRequest->Header.Revision = NDIS_OID_REQUEST_REVISION_1;
 	NdisRequest->Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
 	NdisRequest->RequestType = RequestType;
+	NdisRequest->RequestHandle = Open->AdapterHandle;
 
 	switch (RequestType)
 	{
