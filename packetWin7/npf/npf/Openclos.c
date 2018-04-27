@@ -418,8 +418,7 @@ NPF_StartUsingOpenInstance(
 	BOOLEAN returnStatus;
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-	NdisAcquireSpinLock(&pOpen->GroupHead->AdapterHandleLock);
-	if (pOpen->GroupHead->AdapterBindingStatus != FilterRunning)
+	if (pOpen->AdapterBindingStatus != FilterRunning)
 	{
 		returnStatus = FALSE;
 	}
@@ -428,7 +427,6 @@ NPF_StartUsingOpenInstance(
 		returnStatus = TRUE;
 		pOpen->NumPendingIrps ++;
 	}
-	NdisReleaseSpinLock(&pOpen->GroupHead->AdapterHandleLock);
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
 	return returnStatus;
@@ -1783,7 +1781,6 @@ NPF_Pause(
 	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
 	NDIS_EVENT Event;
 	BOOLEAN PendingWrites = FALSE;
-	//BOOLEAN PendingReads = TRUE;
 
 	UNREFERENCED_PARAMETER(PauseParameters);
 	TRACE_ENTER();
@@ -1796,10 +1793,9 @@ NPF_Pause(
 	
 	NdisAcquireSpinLock(&Open->GroupLock);
 	for (Current = Open->GroupNext; Current != NULL; Current = Current->GroupNext)
-  {
-    Current->AdapterBindingStatus = FilterPausing;
-    PendingWrites = PendingWrites || Current->TransmitPendingPackets > 0 || Current->Multiple_Write_Counter > 0;
-  }
+	{
+		Current->AdapterBindingStatus = FilterPausing;
+	}
 	NdisReleaseSpinLock(&Open->GroupLock);
 
 	while (Open->AdapterHandleUsageCounter > 0)
@@ -1809,30 +1805,45 @@ NPF_Pause(
 		NdisAcquireSpinLock(&Open->AdapterHandleLock);
 	}
 
-  NdisAcquireSpinLock(&Open->GroupLock);
-  while (PendingWrites)
-  {
-    PendingWrites = FALSE;
-    for (Current = Open->GroupNext; Current != NULL; Current = Current->GroupNext)
-    {
-      if (Current->TransmitPendingPackets > 0 || Current->Multiple_Write_Counter > 0)
-      {
-        PendingWrites = TRUE;
-        NdisReleaseSpinLock(&Open->GroupLock);
-        NdisReleaseSpinLock(&Open->AdapterHandleLock);
-        NdisWaitEvent(&Current->NdisWriteCompleteEvent, 10);
-        NdisAcquireSpinLock(&Open->AdapterHandleLock);
-        NdisAcquireSpinLock(&Open->GroupLock);
-        /* Have to break because we released GroupLock, and list could have changed. */
-        break;
-      }
-      else
-      {
-        Current->AdapterBindingStatus = FilterPaused;
-      }
-    }
-  }
-  NdisReleaseSpinLock(&Open->GroupLock);
+	NdisAcquireSpinLock(&Open->GroupLock);
+	do
+	{
+		PendingWrites = FALSE;
+		for (Current = Open->GroupNext; Current != NULL; Current = Current->GroupNext)
+		{
+			NdisAcquireSpinLock(&Current->OpenInUseLock);
+			if (Current->TransmitPendingPackets > 0 || Current->Multiple_Write_Counter > 0)
+			{
+				PendingWrites = TRUE;
+				NdisReleaseSpinLock(&Current->OpenInUseLock);
+				NdisReleaseSpinLock(&Open->GroupLock);
+				NdisReleaseSpinLock(&Open->AdapterHandleLock);
+				NdisWaitEvent(&Current->NdisWriteCompleteEvent, 10);
+				NdisAcquireSpinLock(&Open->AdapterHandleLock);
+				NdisAcquireSpinLock(&Open->GroupLock);
+				/* Have to break because we released GroupLock, and list could have changed. */
+				break;
+			}
+			else if (Current->NumPendingIrps > 0)
+			{
+				PendingWrites = TRUE;
+				NdisReleaseSpinLock(&Current->OpenInUseLock);
+				NdisReleaseSpinLock(&Open->GroupLock);
+				NdisReleaseSpinLock(&Open->AdapterHandleLock);
+				NdisWaitEvent(&Event, 10);
+				NdisAcquireSpinLock(&Open->AdapterHandleLock);
+				NdisAcquireSpinLock(&Open->GroupLock);
+				/* Have to break because we released GroupLock, and list could have changed. */
+				break;
+			}
+			else
+			{
+				Current->AdapterBindingStatus = FilterPaused;
+			}
+			NdisReleaseSpinLock(&Current->OpenInUseLock);
+		}
+	} while (PendingWrites);
+	NdisReleaseSpinLock(&Open->GroupLock);
 
 	Open->AdapterBindingStatus = FilterPaused;
 	NdisReleaseSpinLock(&Open->AdapterHandleLock);
