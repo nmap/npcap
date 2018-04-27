@@ -1461,50 +1461,6 @@ NPF_CreateOpenObject(
 	return Open;
 }
 
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-NDIS_STATUS
-NPF_RegisterOptions(
-	NDIS_HANDLE  NdisFilterHandle,
-	NDIS_HANDLE  FilterDriverContext
-	)
-/*++
-
-Routine Description:
-
-	Register optional handlers with NDIS.  This sample does not happen to
-	have any optional handlers to register, so this routine does nothing
-	and could simply have been omitted.  However, for illustrative purposes,
-	it is presented here.
-
-Arguments:
-
-	NdisFilterHandle - pointer the driver handle received from
-							 NdisFRegisterFilterDriver
-
-	FilterDriverContext    - pointer to our context passed into
-							 NdisFRegisterFilterDriver
-
-Return Value:
-
-	NDIS_STATUS_SUCCESS
-
---*/
-{
-	TRACE_ENTER();
-
-	ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
-	if (FilterDriverContext != (NDIS_HANDLE)FilterDriverObject)
-	{
-		IF_LOUD(DbgPrint("NPF_RegisterOptions: driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);)
-		return NDIS_STATUS_INVALID_PARAMETER;
-	}
-
-	TRACE_EXIT();
-
-	return NDIS_STATUS_SUCCESS;
-}
 
 //-------------------------------------------------------------------
 
@@ -2228,50 +2184,6 @@ Arguments:
 	TRACE_EXIT();
 }
 
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-VOID
-NPF_Status(
-	NDIS_HANDLE             FilterModuleContext,
-	PNDIS_STATUS_INDICATION StatusIndication
-	)
-/*++
-
-Routine Description:
-
-	Status indication handler
-
-Arguments:
-
-	FilterModuleContext     - our filter context
-	StatusIndication        - the status being indicated
-
-NOTE: called at <= DISPATCH_LEVEL
-
-  FILTER driver may call NdisFIndicateStatus to generate a status indication to
-  all higher layer modules.
-
---*/
-{
-	POPEN_INSTANCE      Open = (POPEN_INSTANCE) FilterModuleContext;
-
-// 	TRACE_ENTER();
-// 	IF_LOUD(DbgPrint("NPF: Status Indication\n");)
-
-	IF_LOUD(DbgPrint("status %x\n", StatusIndication->StatusCode);)
-
-	//
-	// The filter may do processing on the status indication here, including
-	// intercepting and dropping it entirely.  However, the sample does nothing
-	// with status indications except pass them up to the higher layer.  It is
-	// more efficient to omit the FilterStatus handler entirely if it does
-	// nothing, but it is included in this sample for illustrative purposes.
-	//
-	NdisFIndicateStatus(Open->AdapterHandle, StatusIndication);
-
-/*	TRACE_EXIT();*/
-}
 
 //-------------------------------------------------------------------
 
@@ -2377,117 +2289,7 @@ NOTE: called at PASSIVE_LEVEL
 	return Status;
 }
 
-//-------------------------------------------------------------------
 
-_Use_decl_annotations_
-VOID
-NPF_ReturnEx(
-	NDIS_HANDLE         FilterModuleContext,
-	PNET_BUFFER_LIST    NetBufferLists,
-	ULONG               ReturnFlags
-	)
-/*++
-
-Routine Description:
-
-	FilterReturnNetBufferLists handler.
-	FilterReturnNetBufferLists is an optional function. If provided, NDIS calls
-	FilterReturnNetBufferLists to return the ownership of one or more NetBufferLists
-	and their embedded NetBuffers to the filter driver. If this handler is NULL, NDIS
-	will skip calling this filter when returning NetBufferLists to the underlying
-	miniport and will call the next lower driver in the stack. A filter that doesn't
-	provide a FilterReturnNetBufferLists handler cannot originate a receive indication
-	on its own.
-
-Arguments:
-
-	FilterInstanceContext       - our filter context area
-	NetBufferLists              - a linked list of NetBufferLists that this
-								  filter driver indicated in a previous call to
-								  NdisFIndicateReceiveNetBufferLists
-	ReturnFlags                 - flags specifying if the caller is at DISPATCH_LEVEL
-
---*/
-{
-	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
-	PNET_BUFFER_LIST    CurrNbl = NetBufferLists;
-	UINT                NumOfNetBufferLists = 0;
-	BOOLEAN             DispatchLevel;
-	ULONG               Ref;
-
-/*	TRACE_ENTER();*/
-
-	// Return the received NBLs.  If you removed any NBLs from the chain, make
-	// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
-	NdisFReturnNetBufferLists(Open->AdapterHandle, NetBufferLists, ReturnFlags);
-
-/*	TRACE_EXIT();*/
-}
-
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-VOID
-NPF_CancelSendNetBufferLists(
-	NDIS_HANDLE             FilterModuleContext,
-	PVOID                   CancelId
-	)
-/*++
-
-Routine Description:
-
-	This function cancels any NET_BUFFER_LISTs pended in the filter and then
-	calls the NdisFCancelSendNetBufferLists to propagate the cancel operation.
-
-	If your driver does not queue any send NBLs, you may omit this routine.
-	NDIS will propagate the cancelation on your behalf more efficiently.
-
-Arguments:
-
-	FilterModuleContext      - our filter context area.
-	CancelId                 - an identifier for all NBLs that should be dequeued
-
-Return Value:
-
-	None
-
-*/
-{
-	POPEN_INSTANCE  Open = (POPEN_INSTANCE) FilterModuleContext;
-
-	NdisFCancelSendNetBufferLists(Open->AdapterHandle, CancelId);
-}
-
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-NDIS_STATUS
-NPF_SetModuleOptions(
-	NDIS_HANDLE             FilterModuleContext
-	)
-/*++
-
-Routine Description:
-
-	This function set the optional handlers for the filter
-
-Arguments:
-
-	FilterModuleContext: The FilterModuleContext given to NdisFSetAttributes
-
-Return Value:
-
-	NDIS_STATUS_SUCCESS
-	NDIS_STATUS_RESOURCES
-	NDIS_STATUS_FAILURE
-
---*/
-{
-   NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
-   UNREFERENCED_PARAMETER(FilterModuleContext);
-
-   return Status;
-}
 
 //-------------------------------------------------------------------
 
