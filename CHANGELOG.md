@@ -1,3 +1,26 @@
+## Npcap 0.99-r5 [2019-05-01]
+
+* Restored installer code to silently uninstall WinPcap if silent installation
+  in WinPcap API-compatible mode is needed (Npcap OEM only).
+
+* Removed several optional passthrough driver functions that can be handled
+  more efficiently by NDIS, since Npcap was not using them.
+
+* Added validation of IRP parameters for additional security.
+
+* Fixed a crash reported via Microsoft crash telemetry,
+  `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_SendCompleteExForEachOpen` when the
+  system is suspended. Fixes [#1193](http://issues.nmap.org/1193).
+
+* Fixed a crash reported via Microsoft crash telemetry,
+  `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_IOControl` when setting
+  `OID_GEN_CURRENT_LOOKAHEAD`. Fixes [#1194](http://issues.nmap.org/1194).
+
+* Bundle and install the correct public code signing certificate. The
+  certificate used to sign Npcap was updated for Npcap 0.99-r4, but the public
+  cert file included was not, leading to some unwanted publisher trust dialogs
+  during installation.
+
 ## Npcap 0.99-r4 [2018-04-19]
 
 * On Windows 7, if Npcap driver installation fails due to maximum NDIS filters
