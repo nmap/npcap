@@ -115,10 +115,10 @@ BOOL InstallWFPCallout()
 		return FALSE;
 	}
 
-	TCHAR szCmd[_MAX_PATH * 2];
-	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("%s,DefaultInstall,,36,N"), szFileFullPath);
-	TRACE_PRINT1("LaunchINFSectionEx: executing, szCmd = %s.", szCmd);
-	if (LaunchINFSectionEx(NULL, NULL, szCmd, 0) == E_FAIL)
+	TRACE_PRINT("RunSetupCommand: Installing WPF callout INF.");
+	HRESULT hr = RunSetupCommand(NULL, szFileFullPath, TEXT("DefaultInstall"), TEXT("."), NULL, NULL,
+		RSC_FLAG_INF | RSC_FLAG_QUIET | RSC_FLAG_NGCONV, NULL);
+	if (hr != ERROR_SUCCESS_REBOOT_REQUIRED && hr != S_OK)
 	{
 		TRACE_PRINT("WFP INF install failed!");
 		TRACE_EXIT();
@@ -154,10 +154,10 @@ BOOL UninstallWFPCallout()
 		return FALSE;
 	}
 
-	TCHAR szCmd[_MAX_PATH * 2];
-	_stprintf_s(szCmd, _MAX_PATH * 2, TEXT("%s,DefaultUninstall,,36,N"), szFileFullPath);
-	TRACE_PRINT1("LaunchINFSectionEx: executing, szCmd = %s.", szCmd);
-	if (LaunchINFSectionEx(NULL, NULL, szCmd, 0) == E_FAIL)
+	TRACE_PRINT("RunSetupCommand: Removing WPF callout INF.");
+	HRESULT hr = RunSetupCommand(NULL, szFileFullPath, TEXT("DefaultUninstall"), TEXT("."), NULL, NULL,
+		RSC_FLAG_INF | RSC_FLAG_QUIET | RSC_FLAG_NGCONV, NULL);
+	if (hr != ERROR_SUCCESS_REBOOT_REQUIRED && hr != S_OK)
 	{
 		TRACE_PRINT("WFP INF removal failed!");
 		TRACE_EXIT();
