@@ -1,4 +1,4 @@
-## Npcap 0.99-r5 [2019-05-01]
+## Npcap 0.99-r5 [2018-05-01]
 
 * Restored installer code to silently uninstall WinPcap if silent installation
   in WinPcap API-compatible mode is needed (Npcap OEM only).
