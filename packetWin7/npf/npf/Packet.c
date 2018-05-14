@@ -1252,6 +1252,7 @@ NPF_IoControl(
 	)
 {
 	POPEN_INSTANCE			Open;
+	POPEN_INSTANCE			Current;
 	PIO_STACK_LOCATION		IrpSp;
 	PLIST_ENTRY				RequestListEntry;
 	PINTERNAL_REQUEST		pRequest;
@@ -2242,11 +2243,6 @@ NPF_IoControl(
 			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
 			{
 				ASSERT(Open->GroupHead != NULL);
-				Open->GroupHead->MyPacketFilter = *(ULONG*)OidData->Data;
-				if (Open->GroupHead->MyPacketFilter == NDIS_PACKET_TYPE_ALL_LOCAL)
-				{
-					Open->GroupHead->MyPacketFilter = 0;
-				}
 
 				// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
 				if (Open->GroupHead->PhysicalMedium == NdisPhysicalMediumNative802_11)
@@ -2266,6 +2262,17 @@ NPF_IoControl(
 
 					break;
 				}
+
+				// Store the requested packet filter for *this* Open instance
+				Open->MyPacketFilter = *(ULONG*)OidData->Data;
+				// Set the group head packet filter to the union of all instances' filters
+				NdisAcquireSpinLock(&Open->GroupHead->GroupLock);
+				Open->GroupHead->MyPacketFilter = 0;
+				for (Current = Open->GroupHead->GroupNext; Current != NULL; Current = Current->GroupNext)
+				{
+					Open->GroupHead->MyPacketFilter = Open->GroupHead->MyPacketFilter | Current->MyPacketFilter;
+				}
+				NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 
 #ifdef HAVE_DOT11_SUPPORT
 				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | Open->GroupHead->Dot11PacketFilter;

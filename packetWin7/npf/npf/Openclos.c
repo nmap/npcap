@@ -1139,6 +1139,10 @@ NPF_RemoveFromGroupOpenArray(
 {
 	POPEN_INSTANCE GroupOpen;
 	POPEN_INSTANCE GroupPrev = NULL;
+	POPEN_INSTANCE GroupHead = NULL;
+	BOOLEAN Success = FALSE;
+	ULONG OldPacketFilter;
+	ULONG BytesProcessed;
 
 	TRACE_ENTER();
 
@@ -1148,28 +1152,59 @@ NPF_RemoveFromGroupOpenArray(
 		TRACE_EXIT();
 		return;
 	}
+	GroupHead = Open->GroupHead;
 
-	NdisAcquireSpinLock(&Open->GroupHead->GroupLock);
-	GroupPrev = Open->GroupHead;
+	NdisAcquireSpinLock(&GroupHead->GroupLock);
+
+	/* Store the previous combined packet filter */
+	OldPacketFilter = GroupHead->MyPacketFilter;
+	/* Reset the combined packet filter and recalculate it */
+	GroupHead->MyPacketFilter = 0;
+
+	GroupPrev = GroupHead;
 	GroupOpen = GroupPrev->GroupNext;
 	while (GroupOpen)
 	{
 		if (GroupOpen == Open)
 		{
 			GroupPrev->GroupNext = GroupOpen->GroupNext;
-			NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 			GroupOpen->GroupHead = NULL;
-
-			TRACE_EXIT();
-			return;
-
- 		}
-		GroupPrev = GroupOpen;
+		}
+		else
+		{
+			GroupPrev = GroupOpen;
+			GroupHead->MyPacketFilter = GroupHead->MyPacketFilter | GroupOpen->MyPacketFilter;
+		}
 		GroupOpen = GroupOpen->GroupNext;
 	}
-	NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
+	NdisReleaseSpinLock(&GroupHead->GroupLock);
 
-	IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");)
+	/* If the packet filter has changed, originate an OID Request to set it to the new value */
+	if (GroupHead->MyPacketFilter != OldPacketFilter)
+	{
+#ifdef HAVE_DOT11_SUPPORT
+		GroupHead->LowerPacketFilter = GroupHead->HigherPacketFilter | GroupHead->MyPacketFilter | GroupHead->Dot11PacketFilter;
+#else
+		GroupHead->LowerPacketFilter = GroupHead->HigherPacketFilter | GroupHead->MyPacketFilter;
+#endif
+		NPF_DoInternalRequest(Open,
+				NdisRequestSetInformation,
+				OID_GEN_CURRENT_PACKET_FILTER,
+				&GroupHead->LowerPacketFilter,
+				sizeof(GroupHead->LowerPacketFilter),
+				0,
+				0,
+				&BytesProcessed);
+		if (BytesProcessed != sizeof(GroupHead->LowerPacketFilter))
+		{
+			IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");)
+		}
+	}
+
+	if (Open->GroupHead != NULL)
+	{
+		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");)
+	}
 
 	TRACE_EXIT();
 }
