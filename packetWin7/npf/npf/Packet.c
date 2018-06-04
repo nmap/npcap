@@ -1265,6 +1265,7 @@ NPF_IoControl(
 	ULONG					dim, timeout;
 	struct bpf_insn*		NewBpfProgram;
 	PPACKET_OID_DATA		OidData;
+	PVOID OidBuffer = NULL;
 	int*					StatsBuf;
 	ULONG					mode;
 	PWSTR					DumpNameBuff;
@@ -1280,7 +1281,7 @@ NPF_IoControl(
 	BOOLEAN					Flag;
 	PUINT					pStats;
 	ULONG					StatsLength;
-	ULONG					combinedPacketFilter;
+	PULONG					pCombinedPacketFilter;
 
 	HANDLE					hUserEvent;
 	PKEVENT					pKernelEvent;
@@ -2209,12 +2210,22 @@ NPF_IoControl(
 			pRequest->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
 			pRequest->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
 
+			/* NDIS_OID_REQUEST.InformationBuffer must be non-paged */
+			OidBuffer = ExAllocatePoolWithTag(NonPagedPool, OidData->Length, '0PWA');
+			if (OidBuffer == NULL)
+			{
+				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OidBuffer");
+				SET_FAILURE_NOMEM();
+				break;
+			}
+			RtlCopyMemory(OidBuffer, OidData->Data, OidData->Length);
+
 			if (FunctionCode == BIOCSETOID)
 			{
 				pRequest->Request.RequestType = NdisRequestSetInformation;
 				pRequest->Request.DATA.SET_INFORMATION.Oid = OidData->Oid;
 
-				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = OidData->Data;
+				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = OidBuffer;
 				pRequest->Request.DATA.SET_INFORMATION.InformationBufferLength = OidData->Length;
 			}
 			else
@@ -2222,10 +2233,11 @@ NPF_IoControl(
 				pRequest->Request.RequestType = NdisRequestQueryInformation;
 				pRequest->Request.DATA.QUERY_INFORMATION.Oid = OidData->Oid;
 
-				pRequest->Request.DATA.QUERY_INFORMATION.InformationBuffer = OidData->Data;
+				pRequest->Request.DATA.QUERY_INFORMATION.InformationBuffer = OidBuffer;
 				pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength = OidData->Length;
 			}
 
+			NdisInitializeEvent(&pRequest->InternalRequestCompletedEvent);
 			NdisResetEvent(&pRequest->InternalRequestCompletedEvent);
 
 			if (*((PVOID *) pRequest->Request.SourceReserved) != NULL)
@@ -2274,12 +2286,12 @@ NPF_IoControl(
 				}
 				NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 
+                pCombinedPacketFilter = (PULONG) OidBuffer;
 #ifdef HAVE_DOT11_SUPPORT
-				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | Open->GroupHead->Dot11PacketFilter;
+				*pCombinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | Open->GroupHead->Dot11PacketFilter;
 #else
-				combinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
+				*pCombinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
 #endif
-				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = &combinedPacketFilter;
 			}
 
 			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
@@ -2305,7 +2317,7 @@ NPF_IoControl(
 
 		if (Status == NDIS_STATUS_PENDING)
 		{
-			NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 1000);
+			NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 0);
 			Status = pRequest->RequestStatus;
 		}
 
@@ -2344,6 +2356,7 @@ NPF_IoControl(
 						Status = NDIS_STATUS_INVALID_DATA;
 					}
 				}
+				RtlCopyMemory(OidData->Data, OidBuffer, OidData->Length);
 
 				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
 			}
@@ -2374,6 +2387,11 @@ NPF_IoControl(
 		SET_FAILURE_INVALID_REQUEST();
 		break;
 	}
+
+    if (OidBuffer != NULL)
+    {
+        ExFreePoolWithTag(OidBuffer, '0PWA');
+    }
 
 
 	//

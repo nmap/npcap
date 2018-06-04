@@ -588,16 +588,28 @@ NPF_GetDeviceMTU(
 
 	UINT Mtu = 0;
 	ULONG BytesProcessed = 0;
+    PVOID pBuffer = NULL;
+
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(Mtu), '0PWA');
+    if (pBuffer == NULL)
+    {
+        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+            TRACE_EXIT();
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
 
 	NPF_DoInternalRequest(pOpen,
 		NdisRequestQueryInformation,
 		OID_GEN_MAXIMUM_TOTAL_SIZE,
-		&Mtu,
+		pBuffer,
 		sizeof(Mtu),
 		0,
 		0,
 		&BytesProcessed
 	);
+
+    Mtu = *(UINT *)pBuffer;
+    ExFreePoolWithTag(pBuffer, '0PWA');
 
 	if (BytesProcessed != sizeof(Mtu) || Mtu == 0)
 	{
@@ -624,27 +636,37 @@ NPF_GetDataRateMappingTable(
 	ASSERT(pOpen != NULL);
 	ASSERT(pDataRateMappingTable != NULL);
 
-	DOT11_DATA_RATE_MAPPING_TABLE DataRateMappingTable = { 0 };
 	ULONG BytesProcessed = 0;
+    PVOID pBuffer = NULL;
+
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(DOT11_DATA_RATE_MAPPING_TABLE), '0PWA');
+    if (pBuffer == NULL)
+    {
+        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+            TRACE_EXIT();
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
 
 	NPF_DoInternalRequest(pOpen,
 		NdisRequestQueryInformation,
 		OID_DOT11_DATA_RATE_MAPPING_TABLE,
-		&DataRateMappingTable,
-		sizeof(DataRateMappingTable),
+		pBuffer,
+		sizeof(DOT11_DATA_RATE_MAPPING_TABLE),
 		0,
 		0,
 		&BytesProcessed
 	);
 
-	if (BytesProcessed != sizeof(DataRateMappingTable))
+	if (BytesProcessed != sizeof(DOT11_DATA_RATE_MAPPING_TABLE))
 	{
+        ExFreePoolWithTag(pBuffer, '0PWA');
 		TRACE_EXIT();
 		return STATUS_UNSUCCESSFUL;
 	}
 	else
 	{
-		*pDataRateMappingTable = DataRateMappingTable;
+		*pDataRateMappingTable = *(DOT11_DATA_RATE_MAPPING_TABLE *) pBuffer;
+        ExFreePoolWithTag(pBuffer, '0PWA');
 		TRACE_EXIT();
 		return STATUS_SUCCESS;
 	}
@@ -697,16 +719,28 @@ NPF_GetCurrentOperationMode(
 
 	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode = { 0 };
 	ULONG BytesProcessed = 0;
+    PVOID pBuffer = NULL;
+
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentOperationMode), '0PWA');
+    if (pBuffer == NULL)
+    {
+        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+            TRACE_EXIT();
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
 
 	NPF_DoInternalRequest(pOpen,
 		NdisRequestQueryInformation,
 		OID_DOT11_CURRENT_OPERATION_MODE,
-		&CurrentOperationMode,
+		pBuffer,
 		sizeof(CurrentOperationMode),
 		0,
 		0,
 		&BytesProcessed
 	);
+
+    CurrentOperationMode = *(DOT11_CURRENT_OPERATION_MODE *) pBuffer;
+    ExFreePoolWithTag(pBuffer, '0PWA');
 
 	if (BytesProcessed != sizeof(CurrentOperationMode))
 	{
@@ -757,16 +791,28 @@ NPF_GetCurrentChannel(
 
 	ULONG CurrentChannel = 0;
 	ULONG BytesProcessed = 0;
+    PVOID pBuffer = NULL;
+
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentChannel), '0PWA');
+    if (pBuffer == NULL)
+    {
+        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+            TRACE_EXIT();
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
 
 	NPF_DoInternalRequest(pOpen,
 		NdisRequestQueryInformation,
 		OID_DOT11_CURRENT_CHANNEL,
-		&CurrentChannel,
+		pBuffer,
 		sizeof(CurrentChannel),
 		0,
 		0,
 		&BytesProcessed
 	);
+
+    CurrentChannel = *(ULONG *)pBuffer;
+    ExFreePoolWithTag(pBuffer, '0PWA');
 
 	if (BytesProcessed != sizeof(CurrentChannel))
 	{
@@ -814,16 +860,28 @@ NPF_GetCurrentFrequency(
 
 	ULONG CurrentFrequency = 0;
 	ULONG BytesProcessed = 0;
+    PVOID pBuffer = NULL;
+
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentFrequency), '0PWA');
+    if (pBuffer == NULL)
+    {
+        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+            TRACE_EXIT();
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
 
 	NPF_DoInternalRequest(pOpen,
 		NdisRequestQueryInformation,
 		OID_DOT11_CURRENT_FREQUENCY,
-		&CurrentFrequency,
+		pBuffer,
 		sizeof(CurrentFrequency),
 		0,
 		0,
 		&BytesProcessed
 	);
+
+    CurrentFrequency = *(ULONG *)pBuffer;
+    ExFreePoolWithTag(pBuffer, '0PWA');
 
 	if (BytesProcessed != sizeof(CurrentFrequency))
 	{
@@ -1143,6 +1201,7 @@ NPF_RemoveFromGroupOpenArray(
 	BOOLEAN Success = FALSE;
 	ULONG OldPacketFilter;
 	ULONG BytesProcessed;
+    PVOID pBuffer = NULL;
 
 	TRACE_ENTER();
 
@@ -1187,17 +1246,28 @@ NPF_RemoveFromGroupOpenArray(
 #else
 		GroupHead->LowerPacketFilter = GroupHead->HigherPacketFilter | GroupHead->MyPacketFilter;
 #endif
-		NPF_DoInternalRequest(Open,
+
+        pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), '0PWA');
+        if (pBuffer == NULL)
+        {
+            IF_LOUD(DbgPrint("Allocate pBuffer failed, can't reset packet filter\n");)
+        }
+		else
+		{
+			*(ULONG *)pBuffer = GroupHead->LowerPacketFilter;
+			NPF_DoInternalRequest(Open,
 				NdisRequestSetInformation,
 				OID_GEN_CURRENT_PACKET_FILTER,
-				&GroupHead->LowerPacketFilter,
+				pBuffer,
 				sizeof(GroupHead->LowerPacketFilter),
 				0,
 				0,
 				&BytesProcessed);
-		if (BytesProcessed != sizeof(GroupHead->LowerPacketFilter))
-		{
-			IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");)
+			ExFreePoolWithTag(pBuffer, '0PWA');
+			if (BytesProcessed != sizeof(GroupHead->LowerPacketFilter))
+			{
+				IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");)
+			}
 		}
 	}
 
@@ -1983,6 +2053,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 	PFILTER_REQUEST_CONTEXT Context;
 	BOOLEAN                 bFalse = FALSE;
 	ULONG					combinedPacketFilter = 0;
+    PVOID pBuffer = NULL;
 
 	TRACE_ENTER();
 
@@ -2000,14 +2071,24 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 
 		if (Request->RequestType == NdisRequestSetInformation && Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER)
 		{
+            pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), '0PWA');
+            if (pBuffer == NULL)
+            {
+                IF_LOUD(DbgPrint("Allocate pBuffer failed, cannot modify packet filter.\n");)
+            }
+            else
+            {
 
-			Open->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
+
+                Open->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
 #ifdef HAVE_DOT11_SUPPORT
-			Open->LowerPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
+                Open->LowerPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
 #else
-			Open->LowerPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter;
+                Open->LowerPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter;
 #endif
-			ClonedRequest->DATA.SET_INFORMATION.InformationBuffer = &Open->LowerPacketFilter;
+                *(ULONG *)pBuffer = Open->LowerPacketFilter;
+                ClonedRequest->DATA.SET_INFORMATION.InformationBuffer = pBuffer;
+            }
 		}
 
 		Context = (PFILTER_REQUEST_CONTEXT)(&ClonedRequest->SourceReserved[0]);
@@ -2199,6 +2280,11 @@ Arguments:
 		case NdisRequestSetInformation:
 			OriginalRequest->DATA.SET_INFORMATION.BytesRead = Request->DATA.SET_INFORMATION.BytesRead;
 			OriginalRequest->DATA.SET_INFORMATION.BytesNeeded = Request->DATA.SET_INFORMATION.BytesNeeded;
+            if (OriginalRequest->DATA.SET_INFORMATION.InformationBuffer != Request->DATA.SET_INFORMATION.InformationBuffer)
+            {
+                /* We modified the data on clone, e.g. OID_GEN_CURRENT_PACKET_FILTER */
+                ExFreePoolWithTag(Request->DATA.SET_INFORMATION.InformationBuffer, '0PWA');
+            }
 			break;
 
 		case NdisRequestQueryInformation:
@@ -2208,6 +2294,7 @@ Arguments:
 			OriginalRequest->DATA.QUERY_INFORMATION.BytesNeeded = Request->DATA.QUERY_INFORMATION.BytesNeeded;
 			break;
 	}
+
 
 
 	(*Context) = NULL;
@@ -2337,17 +2424,29 @@ NPF_GetPhysicalMedium(
 
 	ULONG PhysicalMedium = 0;
 	ULONG BytesProcessed = 0;
+    PVOID pBuffer = NULL;
+
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PhysicalMedium), '0PWA');
+    if (pBuffer == NULL)
+    {
+        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+            TRACE_EXIT();
+        return 0;
+    }
 
 	// get the PhysicalMedium when filter driver loads
 	NPF_DoInternalRequest(FilterModuleContext,
 		NdisRequestQueryInformation,
 		OID_GEN_PHYSICAL_MEDIUM,
-		&PhysicalMedium,
+		pBuffer,
 		sizeof(PhysicalMedium),
 		0,
 		0,
 		&BytesProcessed
 	);
+
+    PhysicalMedium = *(ULONG *)pBuffer;
+    ExFreePoolWithTag(pBuffer, '0PWA');
 
 	if (BytesProcessed != sizeof(PhysicalMedium))
 	{
@@ -2374,17 +2473,30 @@ NPF_GetPacketFilter(
 
 	ULONG PacketFilter = 0;
 	ULONG BytesProcessed = 0;
+	PVOID pBuffer = NULL;
+	
+	pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PacketFilter), '0PWA');
+    if (pBuffer == NULL)
+    {
+        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+            TRACE_EXIT();
+        return 0;
+    }
+
 
 	// get the PacketFilter when filter driver loads
 	NPF_DoInternalRequest(FilterModuleContext,
 		NdisRequestQueryInformation,
 		OID_GEN_CURRENT_PACKET_FILTER,
-		&PacketFilter,
+		pBuffer,
 		sizeof(PacketFilter),
 		0,
 		0,
 		&BytesProcessed
 		);
+
+    PacketFilter = *(ULONG *)pBuffer;
+    ExFreePoolWithTag(pBuffer, '0PWA');
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
@@ -2411,17 +2523,28 @@ NPF_SetPacketFilter(
 
 	NDIS_STATUS Status;
 	ULONG BytesProcessed = 0;
+    PVOID pBuffer = NULL;
+
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PacketFilter), '0PWA');
+    if (pBuffer == NULL)
+    {
+        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+            TRACE_EXIT();
+        return NDIS_STATUS_RESOURCES;
+    }
 
 	// get the PacketFilter when filter driver loads
 	NPF_DoInternalRequest(FilterModuleContext,
 		NdisRequestQueryInformation,
 		OID_GEN_CURRENT_PACKET_FILTER,
-		&PacketFilter,
+		pBuffer,
 		sizeof(PacketFilter),
 		0,
 		0,
 		&BytesProcessed
 	);
+
+    ExFreePoolWithTag(pBuffer, '0PWA');
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
