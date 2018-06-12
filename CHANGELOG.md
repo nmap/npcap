@@ -1,3 +1,21 @@
+## Npcap 0.99-r6 [2018-06-12]
+
+* Fixed installation on Windows 8 and Server 2012 so that Npcap is able to
+  capture on adapters without requiring a reboot. Fixes
+  [#1031](http://issues.nmap.org/1031).
+
+* Fixed loss of networking on Windows 7 when Npcap was configured to start at
+  boot. Using `AUTO_START` instead of `SYSTEM_START` for the Npcap driver
+  service solves the problem. Fixes [#1208](http://issues.nmap.org/1208).
+
+* Fixed a crash reported via Microsoft crash telemetry,
+  `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_IOControl` when setting
+  `OID_GEN_CURRENT_LOOKAHEAD`. Fixes [#1194](http://issues.nmap.org/1194).
+
+* Fixed certain interactions between processes with open Npcap handles that
+  could allow one process to stop other running captures from receiving
+  packets. Fixes [#1035](http://issues.nmap.org/1035).
+
 ## Npcap 0.99-r5 [2018-05-01]
 
 * Restored installer code to silently uninstall WinPcap if silent installation
@@ -11,10 +29,6 @@
 * Fixed a crash reported via Microsoft crash telemetry,
   `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_SendCompleteExForEachOpen` when the
   system is suspended. Fixes [#1193](http://issues.nmap.org/1193).
-
-* Fixed a crash reported via Microsoft crash telemetry,
-  `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_IOControl` when setting
-  `OID_GEN_CURRENT_LOOKAHEAD`. Fixes [#1194](http://issues.nmap.org/1194).
 
 * Bundle and install the correct public code signing certificate. The
   certificate used to sign Npcap was updated for Npcap 0.99-r4, but the public

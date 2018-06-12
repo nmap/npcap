@@ -89,9 +89,9 @@
 #define /*
  !define /**/ WINPCAP_REV				99
 #define /*
- !define /**/ WINPCAP_BUILD				501
+ !define /**/ WINPCAP_BUILD				612
 #define /*
- !define /**/ WINPCAP_VER_STRING		"0.99-r5"
+ !define /**/ WINPCAP_VER_STRING		"0.99-r6"
 
 #define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
 
