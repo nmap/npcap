@@ -813,7 +813,6 @@ void NpcapStopHelper()
 char* memstr(char* full_data, size_t full_data_len, char* substr)
 {
 	size_t sublen;
-	int i;
 	char* cur;
 	size_t last_possible;
 
@@ -831,7 +830,7 @@ char* memstr(char* full_data, size_t full_data_len, char* substr)
 
 	cur = full_data;
 	last_possible = full_data_len - sublen + 1;
-	for (i = 0; i < last_possible; i++)
+	for (size_t i = 0; i < last_possible; i++)
 	{
 		if (*cur == *substr)
 		{

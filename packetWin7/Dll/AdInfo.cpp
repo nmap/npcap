@@ -1338,16 +1338,13 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 static BOOLEAN PacketGetAdaptersNPF()
 {
 	HKEY		LinkageKey,AdapKey, OneAdapKey;
-	DWORD		RegKeySize=0;
 	LONG		Status;
 	ULONG		Result;
 	INT			i;
 	DWORD		dim;
-	DWORD		RegType;
 	WCHAR		TName[256];
 	CHAR		TAName[256];
 	TCHAR		AdapName[256];
-	CHAR		*TcpBindingsMultiString;
 	UINT		FireWireFlag;
 //  
 //	Old registry based WinPcap names
