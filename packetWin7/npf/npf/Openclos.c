@@ -2412,6 +2412,52 @@ NOTE: called at PASSIVE_LEVEL
 }
 
 
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
+VOID
+NPF_ReturnEx(
+	NDIS_HANDLE         FilterModuleContext,
+	PNET_BUFFER_LIST    NetBufferLists,
+	ULONG               ReturnFlags
+	)
+/*++
+
+Routine Description:
+
+	FilterReturnNetBufferLists handler.
+	FilterReturnNetBufferLists is an optional function. If provided, NDIS calls
+	FilterReturnNetBufferLists to return the ownership of one or more NetBufferLists
+	and their embedded NetBuffers to the filter driver. If this handler is NULL, NDIS
+	will skip calling this filter when returning NetBufferLists to the underlying
+	miniport and will call the next lower driver in the stack. A filter that doesn't
+	provide a FilterReturnNetBufferLists handler cannot originate a receive indication
+	on its own.
+
+Arguments:
+
+	FilterInstanceContext       - our filter context area
+	NetBufferLists              - a linked list of NetBufferLists that this
+								  filter driver indicated in a previous call to
+								  NdisFIndicateReceiveNetBufferLists
+	ReturnFlags                 - flags specifying if the caller is at DISPATCH_LEVEL
+
+--*/
+{
+	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
+	PNET_BUFFER_LIST    CurrNbl = NetBufferLists;
+	UINT                NumOfNetBufferLists = 0;
+	BOOLEAN             DispatchLevel;
+	ULONG               Ref;
+
+/*	TRACE_ENTER();*/
+
+	// Return the received NBLs.  If you removed any NBLs from the chain, make
+	// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
+	NdisFReturnNetBufferLists(Open->AdapterHandle, NetBufferLists, ReturnFlags);
+
+/*	TRACE_EXIT();*/
+}
 
 //-------------------------------------------------------------------
 

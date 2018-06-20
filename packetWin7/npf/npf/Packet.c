@@ -523,6 +523,7 @@ NPF_registerLWF(
 	pFChars->CancelOidRequestHandler = NPF_CancelOidRequest;
 
 	pFChars->SendNetBufferListsHandler = NPF_SendEx;
+	pFChars->ReturnNetBufferListsHandler = NPF_ReturnEx;
 	pFChars->SendNetBufferListsCompleteHandler = NPF_SendCompleteEx;
 	pFChars->ReceiveNetBufferListsHandler = NPF_TapEx;
 	pFChars->DevicePnPEventNotifyHandler = NPF_DevicePnPEventNotify;

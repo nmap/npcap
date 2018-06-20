@@ -658,6 +658,30 @@ FILTER_SEND_NET_BUFFER_LISTS NPF_SendEx;
 
 
 /*!
+  \brief Callback for NDIS ReturnNetBufferListsHandler.
+  \param FilterModuleContext Pointer to the filter context structure.
+  \param NetBufferLists A linked list of NetBufferLists that this
+						filter driver indicated in a previous call to
+						NdisFIndicateReceiveNetBufferLists.
+  \param ReturnFlags Flags specifying if the caller is at DISPATCH_LEVEL.
+
+  FilterReturnNetBufferLists is an optional function. If provided, NDIS calls
+  FilterReturnNetBufferLists to return the ownership of one or more NetBufferLists
+  and their embedded NetBuffers to the filter driver. If this handler is NULL, NDIS
+  will skip calling this filter when returning NetBufferLists to the underlying
+  miniport and will call the next lower driver in the stack. A filter that doesn't
+  provide a FilterReturnNetBufferLists handler cannot originate a receive indication
+  on its own.
+*/
+FILTER_RETURN_NET_BUFFER_LISTS NPF_ReturnEx;
+// VOID
+// NPF_ReturnEx(
+// 	NDIS_HANDLE         FilterModuleContext,
+// 	PNET_BUFFER_LIST    NetBufferLists,
+// 	ULONG               ReturnFlags
+// 	);
+
+/*!
   \brief Function to free the Net Buffer Lists initiated by ourself.
 */
 VOID
