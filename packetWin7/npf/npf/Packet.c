@@ -514,10 +514,12 @@ NPF_registerLWF(
 		pFChars->ServiceName = ServiceName;
 	}
 
+	pFChars->SetOptionsHandler = NPF_RegisterOptions;
 	pFChars->AttachHandler = NPF_AttachAdapter;
 	pFChars->DetachHandler = NPF_DetachAdapter;
 	pFChars->RestartHandler = NPF_Restart;
 	pFChars->PauseHandler = NPF_Pause;
+	pFChars->SetFilterModuleOptionsHandler = NPF_SetModuleOptions;
 	pFChars->OidRequestHandler = NPF_OidRequest;
 	pFChars->OidRequestCompleteHandler = NPF_OidRequestComplete;
 	pFChars->CancelOidRequestHandler = NPF_CancelOidRequest;
@@ -528,6 +530,8 @@ NPF_registerLWF(
 	pFChars->ReceiveNetBufferListsHandler = NPF_TapEx;
 	pFChars->DevicePnPEventNotifyHandler = NPF_DevicePnPEventNotify;
 	pFChars->NetPnPEventHandler = NPF_NetPnPEvent;
+	pFChars->StatusHandler = NPF_Status;
+	pFChars->CancelSendNetBufferListsHandler = NPF_CancelSendNetBufferLists;
 }
 
 //-------------------------------------------------------------------

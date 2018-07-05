@@ -502,6 +502,8 @@ extern struct time_conv G_Start_Time; // from openclos.c
  *  @{
  */
 
+FILTER_SET_OPTIONS NPF_RegisterOptions;
+
 
 /*!
   \brief Callback for NDIS AttachHandler. Not used by NPF.
@@ -600,6 +602,16 @@ FILTER_OID_REQUEST NPF_OidRequest;
 FILTER_CANCEL_OID_REQUEST NPF_CancelOidRequest;
 
 FILTER_OID_REQUEST_COMPLETE NPF_OidRequestComplete;
+
+/*!
+  \brief Callback for NDIS StatusHandler. Not used by NPF
+*/
+FILTER_STATUS NPF_Status;
+// VOID
+// NPF_Status(
+// 	NDIS_HANDLE             FilterModuleContext,
+// 	PNDIS_STATUS_INDICATION StatusIndication
+// 	);
 
 
 /*!
@@ -741,6 +753,39 @@ FILTER_RECEIVE_NET_BUFFER_LISTS NPF_TapEx;
 // 	ULONG               ReceiveFlags
 // 	);
 
+
+/*!
+  \brief Callback for NDIS CancelSendNetBufferListsHandler.
+  \param FilterModuleContext Pointer to the filter context structure.
+  \param CancelId An identifier for all NBLs that should be dequeued.
+
+  This function cancels any NET_BUFFER_LISTs pended in the filter and then
+  calls the NdisFCancelSendNetBufferLists to propagate the cancel operation.
+  If your driver does not queue any send NBLs, you may omit this routine.
+  NDIS will propagate the cancelation on your behalf more efficiently.
+*/
+FILTER_CANCEL_SEND_NET_BUFFER_LISTS NPF_CancelSendNetBufferLists;
+// VOID
+// NPF_CancelSendNetBufferLists(
+// 	NDIS_HANDLE             FilterModuleContext,
+// 	PVOID                   CancelId
+// 	);
+
+
+/*!
+  \brief Callback for NDIS SetFilterModuleOptionsHandler.
+  \param FilterModuleContext Pointer to the filter context structure.
+  \return NDIS_STATUS_SUCCESS
+		  NDIS_STATUS_RESOURCES
+		  NDIS_STATUS_FAILURE
+
+  This function set the optional handlers for the filter. Not used by NPF
+*/
+FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
+// NDIS_STATUS
+// 	NPF_SetModuleOptions(
+// 	NDIS_HANDLE             FilterModuleContext
+// 	);
 
 /*!
 \brief Get the physical medium of the adapter.
@@ -1150,6 +1195,24 @@ NPF_LoopbackSendNetBufferLists(
 	IN PNET_BUFFER_LIST NetBufferList
 	);
 #endif
+
+/*!
+  \brief Callback for NDIS StatusHandler. Not used by NPF
+*/
+VOID
+NPF_StatusEx(
+	IN NDIS_HANDLE ProtocolBindingContext,
+	IN PNDIS_STATUS_INDICATION StatusIndication
+	);
+
+
+/*!
+  \brief Callback for NDIS StatusCompleteHandler. Not used by NPF
+*/
+VOID
+NPF_StatusComplete(
+	IN NDIS_HANDLE ProtocolBindingContext
+	);
 
 
 /*!
