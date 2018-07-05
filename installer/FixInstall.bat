@@ -69,6 +69,10 @@ if %LoopbackSupport% == 0x1 (
 "%NPCAP_DIR%\NPFInstall.exe" -il
 )
 
+rem Start the Base Filtering Engine in case it was disabled
+sc.exe config bfe start= auto
+net start bfe
+
 rem Restart the services
 net start npcap
 if %WinPcapCompatible% == 0x1 (
