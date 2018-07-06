@@ -1,3 +1,18 @@
+## Npcap 0.99-r7 [2018-07-05]
+
+* Fixed the installer so that Npcap in WinPcap API-compatible mode can do
+  loopback capture. This capability is not guaranteed for future releases, but
+  was only missing from 0.99-r3 to 0.99-r6. Native-mode Npcap was unaffected.
+  Fixes [#1213](http://issues.nmap.org/1213)
+
+* Added a script, `FixInstall.bat`, to fix common problems with installations,
+  such as those caused by Windows 10 feature upgrades.
+  See [#1216](http://issues.nmap.org/1216)
+
+* Improved stability by restoring certain passsthrough NDIS callbacks that are
+  not used, but appear to cause connectivity problems if omitted.
+  See [#1208](http://issues.nmap.org/1208).
+
 ## Npcap 0.99-r6 [2018-06-12]
 
 * Fixed installation on Windows 8 and Server 2012 so that Npcap is able to
