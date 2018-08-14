@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iflist", "iflist\iflist.vcxproj", "{0B27B213-4BF3-4611-B412-A2D09CDE8632}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sendcap", "sendcap\sendcap.vcxproj", "{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{0B27B213-4BF3-4611-B412-A2D09CDE8632}.Release|x64.Build.0 = Release|x64
 		{0B27B213-4BF3-4611-B412-A2D09CDE8632}.Release|x86.ActiveCfg = Release|Win32
 		{0B27B213-4BF3-4611-B412-A2D09CDE8632}.Release|x86.Build.0 = Release|Win32
+		{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}.Debug|x64.ActiveCfg = Debug|x64
+		{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}.Debug|x64.Build.0 = Debug|x64
+		{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}.Debug|x86.ActiveCfg = Debug|Win32
+		{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}.Debug|x86.Build.0 = Debug|Win32
+		{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}.Release|x64.ActiveCfg = Release|x64
+		{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}.Release|x64.Build.0 = Release|x64
+		{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}.Release|x86.ActiveCfg = Release|Win32
+		{D6B93A03-446A-4B13-87B8-9AA752A5CC8C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -36,6 +36,26 @@
 
 #include <pcap.h>
 
+#ifdef WIN32
+#include <tchar.h>
+BOOL LoadNpcapDlls()
+{
+	TCHAR npcap_dir[512];
+	UINT len;
+	len = GetSystemDirectory(npcap_dir, 480);
+	if (!len) {
+		fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	_tcscat_s(npcap_dir, 512, TEXT("\\Npcap"));
+	if (SetDllDirectory(npcap_dir) == 0) {
+		fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	return TRUE;
+}
+#endif
+
 void usage();
 
 void main(int argc, char **argv)
@@ -52,6 +72,15 @@ void main(int argc, char **argv)
 	float cpu_time;
 	u_int npacks = 0;
 	errno_t fopen_error;
+
+#ifdef WIN32
+	/* Load Npcap and its functions. */
+	if (!LoadNpcapDlls())
+	{
+		fprintf(stderr, "Couldn't load Npcap\n");
+		exit(1);
+	}
+#endif
 
 	/* Check the validity of the command line */
 	if (argc <= 2 || argc >= 5)
