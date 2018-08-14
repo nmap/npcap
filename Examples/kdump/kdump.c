@@ -37,6 +37,28 @@
 #include <pcap.h>
 
 #error At the moment the kernel dump feature is not supported in the driver
+/* See npf/Packet.c, NPF_IoControl, case BIOCSMODE, mode & MODE_DUMP */
+
+#ifdef WIN32
+#include <tchar.h>
+BOOL LoadNpcapDlls()
+{
+	TCHAR npcap_dir[512];
+	UINT len;
+	len = GetSystemDirectory(npcap_dir, 480);
+	if (!len) {
+		fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	_tcscat_s(npcap_dir, 512, TEXT("\\Npcap"));
+	if (SetDllDirectory(npcap_dir) == 0) {
+		fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	return TRUE;
+}
+#endif
+
 
 main(int argc, char **argv) {
 	
@@ -50,6 +72,14 @@ main(int argc, char **argv) {
 	printf("\t Where: max_size is the maximum size that the dump file will reach (0 means no limit)\n");
 	printf("\t Where: max_packs is the maximum number of packets that will be saved (0 means no limit)\n\n");
 
+#ifdef WIN32
+	/* Load Npcap and its functions. */
+	if (!LoadNpcapDlls())
+	{
+		fprintf(stderr, "Couldn't load Npcap\n");
+		exit(1);
+	}
+#endif
 
 	if(argc < 5){
 
