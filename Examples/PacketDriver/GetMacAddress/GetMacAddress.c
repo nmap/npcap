@@ -33,11 +33,29 @@
 
 #include <stdio.h>
 #include <conio.h>
-#include "..\..\..\Include\packet32.h"
+#include <Packet32.h>
 #include <ntddndis.h>
 
 #define Max_Num_Adapter 10
 char		AdapterList[Max_Num_Adapter][1024];
+
+#include <tchar.h>
+BOOL LoadNpcapDlls()
+{
+	TCHAR npcap_dir[512];
+	UINT len;
+	len = GetSystemDirectory(npcap_dir, 480);
+	if (!len) {
+		fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	_tcscat_s(npcap_dir, 512, TEXT("\\Npcap"));
+	if (SetDllDirectory(npcap_dir) == 0) {
+		fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	return TRUE;
+}
 
 int main()
 {
@@ -51,6 +69,13 @@ int main()
 	PPACKET_OID_DATA  OidData;
 	BOOLEAN		Status;
 	
+	/* Load Npcap and its functions. */
+	if (!LoadNpcapDlls())
+	{
+		fprintf(stderr, "Couldn't load Npcap\n");
+		exit(1);
+	}
+
 	//
 	// Obtain the name of the adapters installed on this machine
 	//
