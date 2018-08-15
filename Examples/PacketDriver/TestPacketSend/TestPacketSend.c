@@ -35,7 +35,7 @@
 #include <conio.h>
 #include <time.h>
 
-#include "..\..\..\Include\packet32.h"
+#include <Packet32.h>
 
 
 #define Max_Num_Adapter 10
@@ -91,7 +91,7 @@ float	cpu_time;
 		{
 			
 		case 'i':
-			sscanf_s(argv[i+1],"%s",AdapterName);
+			sscanf_s(argv[i+1],"%s",AdapterName, (unsigned)_countof(AdapterName));
 			break;
 			
 		case 'n':

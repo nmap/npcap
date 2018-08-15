@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GetMacAddress", "PacketDriv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPacketCapture", "PacketDriver\TestPacketCapture\TestPacketCapture.vcxproj", "{79942922-E02C-486D-9EE3-A13C0876C4C2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPacketSend", "PacketDriver\TestPacketSend\TestPacketSend.vcxproj", "{1E3BED58-2F2C-463A-B9FD-9A55235C6840}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,6 +53,14 @@ Global
 		{79942922-E02C-486D-9EE3-A13C0876C4C2}.Release|x64.Build.0 = Release|x64
 		{79942922-E02C-486D-9EE3-A13C0876C4C2}.Release|x86.ActiveCfg = Release|Win32
 		{79942922-E02C-486D-9EE3-A13C0876C4C2}.Release|x86.Build.0 = Release|Win32
+		{1E3BED58-2F2C-463A-B9FD-9A55235C6840}.Debug|x64.ActiveCfg = Debug|x64
+		{1E3BED58-2F2C-463A-B9FD-9A55235C6840}.Debug|x64.Build.0 = Debug|x64
+		{1E3BED58-2F2C-463A-B9FD-9A55235C6840}.Debug|x86.ActiveCfg = Debug|Win32
+		{1E3BED58-2F2C-463A-B9FD-9A55235C6840}.Debug|x86.Build.0 = Debug|Win32
+		{1E3BED58-2F2C-463A-B9FD-9A55235C6840}.Release|x64.ActiveCfg = Release|x64
+		{1E3BED58-2F2C-463A-B9FD-9A55235C6840}.Release|x64.Build.0 = Release|x64
+		{1E3BED58-2F2C-463A-B9FD-9A55235C6840}.Release|x86.ActiveCfg = Release|Win32
+		{1E3BED58-2F2C-463A-B9FD-9A55235C6840}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
