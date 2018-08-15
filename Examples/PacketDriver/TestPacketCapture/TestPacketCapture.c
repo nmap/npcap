@@ -36,7 +36,7 @@
 #include <conio.h>
 
 
-#include "..\..\..\Include\packet32.h"
+#include <Packet32.h>
 #include <ntddndis.h>
 
 #define Max_Num_Adapter 10
@@ -217,7 +217,7 @@ void PrintPackets(LPPACKET lpPacket)
 
 			pLine =pChar;
 
-			printf( "%08lx : ", pChar-base );
+			printf( "%p : ", (void *)(pChar - base));
 
 			ulen=tlen;
 			ulen = ( ulen > 16 ) ? 16 : ulen;
