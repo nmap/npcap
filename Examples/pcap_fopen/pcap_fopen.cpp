@@ -36,40 +36,64 @@
 #include <pcap.h>
 #include <stdio.h>
 
+BOOL LoadNpcapDlls()
+{
+    _TCHAR npcap_dir[512];
+    UINT len;
+    len = GetSystemDirectory(npcap_dir, 480);
+    if (!len) {
+        fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+        return FALSE;
+    }
+    _tcscat_s(npcap_dir, 512, _T("\\Npcap"));
+    if (SetDllDirectory(npcap_dir) == 0) {
+        fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+        return FALSE;
+    }
+    return TRUE;
+}
+
 /** Prints packet timestaps regardless of format*/
 int _tmain(int argc, _TCHAR* argv[])
 {
     char errbuf[PCAP_ERRBUF_SIZE];
-    wchar_t cmd[1024];
-    wchar_t tshark_path[MAX_PATH];
-    wchar_t file_path[MAX_PATH];
+    _TCHAR cmd[1024];
+    _TCHAR tshark_path[MAX_PATH];
+    _TCHAR file_path[MAX_PATH];
+
+    /* Load Npcap and its functions. */
+    if (!LoadNpcapDlls())
+    {
+        fprintf(stderr, "Couldn't load Npcap\n");
+        exit(1);
+    }
 
     if ( argc != 3 ) {
-        wprintf(L"Prints packet timestaps regardless of format.\n");
-        wprintf(L"Usage:\n\t%ls <tshark path> <trace file>\n", argv[0]);
+        _tprintf(_T("Prints packet timestaps regardless of format.\n"));
+        _tprintf(_T("Usage:\n\t%s <tshark path> <trace file>\n"), argv[0]);
         return 1;
     }
 
     // conversion to short path name in case there are spaces
-    if ( ! GetShortPathNameW(argv[1], tshark_path, MAX_PATH) || 
-         ! GetShortPathNameW(argv[2], file_path, MAX_PATH) )
+    if ( ! GetShortPathName(argv[1], tshark_path, MAX_PATH) || 
+         ! GetShortPathName(argv[2], file_path, MAX_PATH) )
     {
-        printf("Failed to convert paths to short form.");
+        _tprintf(_T("Failed to convert paths to short form."));
         return 1;
     }
 
     // create tshark command, which will make the trace conversion and print in libpcap format to stdout
-    if ( swprintf_s(cmd, 1024, L"%ls -r %ls -w - -F libpcap", tshark_path, file_path) < 0 ) {
-        wprintf(L"Failed to create command\n");
+    if ( _stprintf_s(cmd, 1024, _T("%s -r %s -w - -F libpcap"), tshark_path, file_path) < 0 ) {
+        _tprintf(_T("Failed to create command\n"));
         return 1;
     }
 
     // start tshark
-    FILE *tshark_out = _wpopen(cmd, L"rb");
+    FILE *tshark_out = _tpopen(cmd, _T("rb"));
     if ( tshark_out == NULL ) {
         strerror_s(errbuf, PCAP_ERRBUF_SIZE, errno);
         printf("Failed run tshark: %s\n", errbuf);
-        wprintf(L"Command: %ls", cmd);
+        _tprintf(_T("Command: %s"), cmd);
         return 1;
     }
 
