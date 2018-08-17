@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <pcap.h>
+#include "misc.h"
 
 #define LINE_LEN 16
 
@@ -10,6 +11,13 @@ int main(int argc, char **argv)
 pcap_t *fp;
 char errbuf[PCAP_ERRBUF_SIZE];
 char source[PCAP_BUF_SIZE];
+
+    /* Load Npcap and its functions. */
+    if (!LoadNpcapDlls())
+    {
+        fprintf(stderr, "Couldn't load Npcap\n");
+        exit(1);
+    }
 
 	if(argc != 2){
 

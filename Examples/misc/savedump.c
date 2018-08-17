@@ -1,4 +1,5 @@
-#include "pcap.h"
+#include <pcap.h>
+#include "misc.h"
 
 /* prototype of the packet handler */
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
@@ -13,8 +14,13 @@ pcap_t *adhandle;
 char errbuf[PCAP_ERRBUF_SIZE];
 pcap_dumper_t *dumpfile;
 
+    /* Load Npcap and its functions. */
+    if (!LoadNpcapDlls())
+    {
+        fprintf(stderr, "Couldn't load Npcap\n");
+        exit(1);
+    }
 
-	
     /* Check command line */
 	if(argc != 2)
 	{

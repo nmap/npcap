@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <pcap.h>
+#include "misc.h"
 
 #define LINE_LEN 16
 
@@ -12,6 +13,13 @@ struct pcap_pkthdr *header;
 const u_char *pkt_data;
 u_int i=0;
 int res;
+
+    /* Load Npcap and its functions. */
+    if (!LoadNpcapDlls())
+    {
+        fprintf(stderr, "Couldn't load Npcap\n");
+        exit(1);
+    }
 
 	if(argc != 2)
 	{

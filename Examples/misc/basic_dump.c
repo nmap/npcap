@@ -1,4 +1,5 @@
-#include "pcap.h"
+#include <pcap.h>
+#include "misc.h"
 
 /* prototype of the packet handler */
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
@@ -12,6 +13,13 @@ int i=0;
 pcap_t *adhandle;
 char errbuf[PCAP_ERRBUF_SIZE];
 	
+    /* Load Npcap and its functions. */
+    if (!LoadNpcapDlls())
+    {
+        fprintf(stderr, "Couldn't load Npcap\n");
+        exit(1);
+    }
+
 	/* Retrieve the device list on the local machine */
 	if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, errbuf) == -1)
 	{
