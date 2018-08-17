@@ -31,7 +31,26 @@
  *
  */
 
-#include "pcap.h"
+#include <pcap.h>
+#include <Winsock2.h>
+#include <tchar.h>
+BOOL LoadNpcapDlls()
+{
+    _TCHAR npcap_dir[512];
+    UINT len;
+    len = GetSystemDirectory(npcap_dir, 480);
+    if (!len) {
+        fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+        return FALSE;
+    }
+    _tcscat_s(npcap_dir, 512, _T("\\Npcap"));
+    if (SetDllDirectory(npcap_dir) == 0) {
+        fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+        return FALSE;
+    }
+    return TRUE;
+}
+
 
 /* 4 bytes IP address */
 typedef struct ip_address{
@@ -80,6 +99,13 @@ u_int netmask;
 char packet_filter[] = "ip and udp";
 struct bpf_program fcode;
 
+    /* Load Npcap and its functions. */
+    if (!LoadNpcapDlls())
+    {
+        fprintf(stderr, "Couldn't load Npcap\n");
+        exit(1);
+    }
+
 	/* Retrieve the device list */
 	if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, errbuf) == -1)
 	{
@@ -127,7 +153,7 @@ struct bpf_program fcode;
 							 errbuf		// error buffer
 							 ) ) == NULL)
 	{
-		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by WinPcap\n");
+		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by WinPcap\n", d->name);
 		/* Free the device list */
 		pcap_freealldevs(alldevs);
 		return -1;
