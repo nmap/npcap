@@ -25,6 +25,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcptop", "tcptop\tcptop.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UDPdump", "UDPdump\UDPdump.vcxproj", "{42E5F1D6-6E83-4C13-83CC-C6CD83478C58}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UserBridge", "UserLevelBridge\UserBridge.vcxproj", "{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -121,6 +123,14 @@ Global
 		{42E5F1D6-6E83-4C13-83CC-C6CD83478C58}.Release|x64.Build.0 = Release|x64
 		{42E5F1D6-6E83-4C13-83CC-C6CD83478C58}.Release|x86.ActiveCfg = Release|Win32
 		{42E5F1D6-6E83-4C13-83CC-C6CD83478C58}.Release|x86.Build.0 = Release|Win32
+		{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}.Debug|x64.ActiveCfg = Debug|x64
+		{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}.Debug|x64.Build.0 = Debug|x64
+		{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}.Debug|x86.ActiveCfg = Debug|Win32
+		{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}.Debug|x86.Build.0 = Debug|Win32
+		{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}.Release|x64.ActiveCfg = Release|x64
+		{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}.Release|x64.Build.0 = Release|x64
+		{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}.Release|x86.ActiveCfg = Release|Win32
+		{BB73BFD4-454F-42C8-AFE6-FA890A8BD8FC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
