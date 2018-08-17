@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pktdump_ex", "pktdump_ex\pk
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smp_1", "smp_1\smp_1.vcxproj", "{21F49E7F-6C58-4DA5-ABE5-A9DFB6165C83}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tcptop", "tcptop\tcptop.vcxproj", "{B671D5DF-3A80-4A21-BC01-79E3FB73D372}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -101,6 +103,14 @@ Global
 		{21F49E7F-6C58-4DA5-ABE5-A9DFB6165C83}.Release|x64.Build.0 = Release|x64
 		{21F49E7F-6C58-4DA5-ABE5-A9DFB6165C83}.Release|x86.ActiveCfg = Release|Win32
 		{21F49E7F-6C58-4DA5-ABE5-A9DFB6165C83}.Release|x86.Build.0 = Release|Win32
+		{B671D5DF-3A80-4A21-BC01-79E3FB73D372}.Debug|x64.ActiveCfg = Debug|x64
+		{B671D5DF-3A80-4A21-BC01-79E3FB73D372}.Debug|x64.Build.0 = Debug|x64
+		{B671D5DF-3A80-4A21-BC01-79E3FB73D372}.Debug|x86.ActiveCfg = Debug|Win32
+		{B671D5DF-3A80-4A21-BC01-79E3FB73D372}.Debug|x86.Build.0 = Debug|Win32
+		{B671D5DF-3A80-4A21-BC01-79E3FB73D372}.Release|x64.ActiveCfg = Release|x64
+		{B671D5DF-3A80-4A21-BC01-79E3FB73D372}.Release|x64.Build.0 = Release|x64
+		{B671D5DF-3A80-4A21-BC01-79E3FB73D372}.Release|x86.ActiveCfg = Release|Win32
+		{B671D5DF-3A80-4A21-BC01-79E3FB73D372}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
