@@ -44,6 +44,24 @@
 
 #define LINE_LEN 16
 
+#include <tchar.h>
+BOOL LoadNpcapDlls()
+{
+    _TCHAR npcap_dir[512];
+    UINT len;
+    len = GetSystemDirectory(npcap_dir, 480);
+    if (!len) {
+        fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+        return FALSE;
+    }
+    _tcscat_s(npcap_dir, 512, _T("\\Npcap"));
+    if (SetDllDirectory(npcap_dir) == 0) {
+        fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+        return FALSE;
+    }
+    return TRUE;
+}
+
 int main(int argc, char **argv)
 {	
 pcap_if_t *alldevs, *d;
@@ -53,6 +71,13 @@ char errbuf[PCAP_ERRBUF_SIZE];
 int res;
 struct pcap_pkthdr *header;
 const u_char *pkt_data;
+
+    /* Load Npcap and its functions. */
+    if (!LoadNpcapDlls())
+    {
+        fprintf(stderr, "Couldn't load Npcap\n");
+        exit(1);
+    }
 
 	printf("pktdump_ex: prints the packets of the network using WinPcap.\n");
 	printf("   Usage: pktdump_ex [-s source]\n\n"

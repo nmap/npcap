@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pcap_filter", "pcap_filter\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pcap_fopen", "pcap_fopen\pcap_fopen.vcxproj", "{DD317CB5-6337-498F-A560-553B5558E133}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pktdump_ex", "pktdump_ex\pktdump_ex.vcxproj", "{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -81,6 +83,14 @@ Global
 		{DD317CB5-6337-498F-A560-553B5558E133}.Release|x64.Build.0 = Release|x64
 		{DD317CB5-6337-498F-A560-553B5558E133}.Release|x86.ActiveCfg = Release|Win32
 		{DD317CB5-6337-498F-A560-553B5558E133}.Release|x86.Build.0 = Release|Win32
+		{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}.Debug|x64.ActiveCfg = Debug|x64
+		{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}.Debug|x64.Build.0 = Debug|x64
+		{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}.Debug|x86.ActiveCfg = Debug|Win32
+		{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}.Debug|x86.Build.0 = Debug|Win32
+		{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}.Release|x64.ActiveCfg = Release|x64
+		{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}.Release|x64.Build.0 = Release|x64
+		{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}.Release|x86.ActiveCfg = Release|Win32
+		{3D62DEB4-3536-44AE-8E4B-AD6DFF1B795E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
