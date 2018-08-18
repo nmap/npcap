@@ -31,7 +31,7 @@
  *
  */
 
-#include "..\..\include\pcap.h"
+#include <pcap.h>
 #include "netmeterDoc.h"
 #include "netmeterView.h"
 

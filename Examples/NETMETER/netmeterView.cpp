@@ -42,7 +42,7 @@
 #include "netmeterView.h"
 #include "console.h"
 #include "selectadapter.h"
-#include "..\..\include\pcap.h"
+#include <pcap.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

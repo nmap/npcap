@@ -35,7 +35,7 @@
 #include "CapDll.h"
 #include "SelectAdapter.h"
 #include "LineColl.h"
-#include "..\..\include\pcap.h"
+#include <pcap.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
