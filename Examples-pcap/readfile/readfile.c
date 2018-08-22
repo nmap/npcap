@@ -3,6 +3,26 @@
 
 #define LINE_LEN 16
 
+#ifdef WIN32
+#include <tchar.h>
+BOOL LoadNpcapDlls()
+{
+	_TCHAR npcap_dir[512];
+	UINT len;
+	len = GetSystemDirectory(npcap_dir, 480);
+	if (!len) {
+		fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	_tcscat_s(npcap_dir, 512, _T("\\Npcap"));
+	if (SetDllDirectory(npcap_dir) == 0) {
+		fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	return TRUE;
+}
+#endif
+
 void dispatcher_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
 
 int main(int argc, char **argv)
@@ -10,6 +30,15 @@ int main(int argc, char **argv)
 	pcap_t *fp;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	
+#ifdef WIN32
+	/* Load Npcap and its functions. */
+	if (!LoadNpcapDlls())
+	{
+		fprintf(stderr, "Couldn't load Npcap\n");
+		exit(1);
+	}
+#endif
+
 	if(argc != 2)
 	{	
 		printf("usage: %s filename", argv[0]);

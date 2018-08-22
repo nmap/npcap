@@ -62,6 +62,26 @@
 
 #define LINE_LEN 16
 
+#ifdef WIN32
+#include <tchar.h>
+BOOL LoadNpcapDlls()
+{
+	_TCHAR npcap_dir[512];
+	UINT len;
+	len = GetSystemDirectory(npcap_dir, 480);
+	if (!len) {
+		fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	_tcscat_s(npcap_dir, 512, _T("\\Npcap"));
+	if (SetDllDirectory(npcap_dir) == 0) {
+		fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+		return FALSE;
+	}
+	return TRUE;
+}
+#endif
+
 
 #define FILTER "ether[80:1] < 128 || ether[81:1] > 127 || ether[82:1] < 180 || ether[83:1] > 181" \
 			"|| ether[84:1] < 128 || ether[85:1] > 127 || ether[86:1] < 180 || ether[87:1] > 181" \
@@ -185,8 +205,8 @@ DWORD WINAPI pcap_thread(LPVOID arg)
 #ifdef STRESS_AIRPCAP_TRANSMISSION
 	PAirpcapHandle airpcap_handle;
 	tx_ieee80211_radiotap_header *radio_header;
-#endif
 	u_int rate_index;
+#endif
 
 	srand( (unsigned)time( NULL ) );
 
@@ -367,6 +387,15 @@ int main(int argc, char **argv)
 	HANDLE* hThreads;
 	char* string_to_match;
 	DWORD WaitRes;
+
+#ifdef WIN32
+	/* Load Npcap and its functions. */
+	if (!LoadNpcapDlls())
+	{
+		fprintf(stderr, "Couldn't load Npcap\n");
+		exit(1);
+	}
+#endif
 
 	//
 	// Parse input
