@@ -79,7 +79,7 @@ const u_char *pkt_data;
         exit(1);
     }
 
-	printf("pktdump_ex: prints the packets of the network using WinPcap.\n");
+	printf("pktdump_ex: prints the packets of the network using Npcap.\n");
 	printf("   Usage: pktdump_ex [-s source]\n\n"
 		   "   Examples:\n"
 		   "      pktdump_ex -s file://c:/temp/file.acp\n"

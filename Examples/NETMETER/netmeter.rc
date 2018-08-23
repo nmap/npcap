@@ -109,7 +109,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,92,133,50,14,WS_GROUP
     LTEXT           "Shows the diagram of a 10Mbit Ethernet network's load in:",
                     IDC_STATIC,7,58,209,11
-    LTEXT           "This program is based on WinPcap",IDC_STATIC,7,114,111,
+    LTEXT           "This program uses Npcap",IDC_STATIC,7,114,111,
                     8
     LTEXT           "Each interval on the horizontal axis is approximately 5 seconds",
                     IDC_STATIC,8,100,196,8

@@ -47,7 +47,7 @@ pcap_dumper_t *dumpfile;
 
     if(i==0)
     {
-        printf("\nNo interfaces found! Make sure WinPcap is installed.\n");
+        printf("\nNo interfaces found! Make sure Npcap is installed.\n");
         return -1;
     }
     
@@ -76,7 +76,7 @@ pcap_dumper_t *dumpfile;
 							  errbuf			// error buffer
 							  ) ) == NULL)
 	{
-		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by WinPcap\n", d->name);
+		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by Npcap\n", d->name);
 		/* Free the device list */
 		pcap_freealldevs(alldevs);
 		return -1;

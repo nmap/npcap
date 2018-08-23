@@ -76,7 +76,7 @@ struct pcap_pkthdr old;
     }
 
 	printf("SMP_1\n");
-	printf("\nThis program tests the WinPcap kernel driver on SMP machines.\n");
+	printf("\nThis program tests the Npcap kernel driver on SMP machines.\n");
 	printf("The program tests that timestamps on the captured packets are consistent,\n");
 	printf("and that the caplen is equal to the packet length.\n");
 	printf("If there is an error, it will print out a message saying \"Inconsistent XXX\"\n");
@@ -99,7 +99,7 @@ struct pcap_pkthdr old;
 		
 	if(i==0)
 	{
-		printf("\nNo interfaces found! Make sure WinPcap is installed.\n");
+		printf("\nNo interfaces found! Make sure Npcap is installed.\n");
 		return -1;
 	}
 		
@@ -120,7 +120,7 @@ struct pcap_pkthdr old;
 	/* Open the device */
 	if ( (fp= pcap_open(d->name, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf) ) == NULL)
 	{
-		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by WinPcap\n", d->name);
+		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by Npcap\n", d->name);
 		/* Free the device list */
 		pcap_freealldevs(alldevs);
 		return -1;

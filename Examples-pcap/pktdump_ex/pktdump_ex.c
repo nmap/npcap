@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	printf("pktdump_ex: prints the packets of the network using WinPcap.\n");
+	printf("pktdump_ex: prints the packets of the network using Npcap.\n");
 	printf("   Usage: pktdump_ex [-s source]\n\n"
 		"   Examples:\n"
 		"      pktdump_ex -s file.acp\n"
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 		
 		if (i==0)
 		{
-			printf("\nNo interfaces found! Make sure WinPcap is installed.\n");
+			printf("\nNo interfaces found! Make sure Npcap is installed.\n");
 			return -1;
 		}
 		

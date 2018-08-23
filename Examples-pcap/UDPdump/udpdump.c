@@ -139,7 +139,7 @@ int main()
 
 	if(i==0)
 	{
-		printf("\nNo interfaces found! Make sure WinPcap is installed.\n");
+		printf("\nNo interfaces found! Make sure Npcap is installed.\n");
 		return -1;
 	}
 	
