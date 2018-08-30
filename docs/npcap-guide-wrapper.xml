@@ -1,12 +1,23 @@
 <?xml version="1.0"?>
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"
 [
-<!ENTITY npcap SYSTEM "npcap-guide.xml">
+<!ENTITY npcap-intro SYSTEM "npcap-intro.xml">
+<!ENTITY npcap-guide SYSTEM "npcap-guide.xml">
+<!ENTITY npcap-devguide SYSTEM "npcap-devguide.xml">
+<!ENTITY npcap-api SYSTEM "npcap-api.xml">
+<!ENTITY npcap-internals SYSTEM "npcap-internals.xml">
+<!ENTITY npcap-npf-dox SYSTEM "dox/mainpage.xml">
 ]>
 
 <article id="npcap">
 <artheader>
-  <title>Npcap Users' Guide</title>
+  <title>Npcap: Nmap Project's packet sniffing library for Windows</title>
 </artheader>
-&npcap;
+<indexterm significance="preferred" class="startofrange" id="npcap-indexterm"><primary>Npcap</primary></indexterm>
+
+&npcap-intro;
+&npcap-guide;
+&npcap-devguide;
+&npcap-internals;
+
 </article>

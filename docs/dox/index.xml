@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<book xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <info>
+    <title>Npcap</title>
+    </info>
+        <xi:include href="mainpage.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <chapter>
+        <title>Module Documentation</title>
+        <xi:include href="group__NPF.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    </chapter>
+    <chapter>
+        <title>Data Structure Documentation</title>
+        <xi:include href="struct____CPU__Private__Data.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="struct__DEVICE__EXTENSION.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="struct__INTERNAL__REQUEST.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="struct__OPEN__INSTANCE.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="struct__PACKET__OID__DATA.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="struct__PACKET__RESERVED.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="structbinary__stream.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="structJIT__BPF__Filter.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="structpacket__file__header.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="structPacketHeader.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="structsf__pkthdr.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    </chapter>
+    <chapter>
+        <title>File Documentation</title>
+        <xi:include href="ioctls_8h.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="jitter_8h.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="main_8txt.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+        <xi:include href="Packet_8h.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    </chapter>
+</book>

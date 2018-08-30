@@ -1,22 +1,20 @@
 <html>
 
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 6.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title></title>
 </head>
 
 <body>
 
 <p>This section documents the internals of the Netgroup Packet Filter (NPF), the kernel
-portion of WinPcap. Normal users are probably interested in how to use WinPcap
+portion of Npcap. Normal users are probably interested in how to use Npcap
 and not in its internal structure. Therefore
-the information present in this module is destined mainly to WinPcap developers and maintainers, or to
+the information present in this module is destined mainly to Npcap developers and maintainers, or to
 the people interested in how the driver works. In particular, a good knowledge
 of OSes, networking and Win32 kernel programming and device drivers development
-is required to profitably read this section.&nbsp;</p>
-<p>NPF is the WinPcap component that does the hard work, processing the packets
+is required to profitably read this section.</p>
+<p>NPF is the Npcap component that does the hard work, processing the packets
 that transit on the network and exporting capture, injection and analysis
 capabilities to user-level.</p>
 <p>The following paragraphs will describe the interaction of NPF with the
@@ -30,15 +28,13 @@ onto a network (LAN or WAN) without caring either the particular adapter or the
 particular Win32 operating system.</p>
 <p>NDIS supports three types of network drivers:</p>
 <ol>
-  <li><strong>Network interface card or NIC drivers</strong>. NIC drivers
-    directly manage network interface cards, referred to as NICs. The NIC
+  <li><strong>Miniport drivers</strong>. Miniport drivers
+    directly manage network interface cards, referred to as NICs. The miniport
     drivers interface directly to the hardware at their lower edge and at their
     upper edge present an interface to allow upper layers to send packets on the
     network, to handle interrupts, to reset the NIC, to halt the NIC and to
-    query and set the operational characteristics of the driver. NIC drivers can
-    be either miniports or legacy full NIC drivers.
-    <ul>
-      <li>Miniport drivers implement only the hardware-specific operations
+    query and set the operational characteristics of the driver.
+      <br>Miniport drivers implement only the hardware-specific operations
         necessary to manage a NIC, including sending and receiving data on the
         NIC. Operations common to all lowest level NIC drivers, such as
         synchronization, is provided by NDIS. Miniports do not call operating
@@ -47,11 +43,6 @@ particular Win32 operating system.</p>
         A miniport does not keep track of bindings. It merely passes packets up
         to NDIS and NDIS makes sure that these packets are passed to the correct
         protocols.
-      <li>Full NIC drivers have been written to perform both hardware-specific
-        operations and all the synchronization and queuing operations usually
-        done by NDIS. Full NIC drivers, for instance, maintain their own binding
-        information for indicating received data.&nbsp;</li>
-    </ul>
   <li><strong>Intermediate drivers</strong>. Intermediate drivers interface
     between an upper-level driver such as a protocol driver and a miniport. To
     the upper-level driver, an intermediate driver looks like a miniport. To a
@@ -64,13 +55,14 @@ particular Win32 operating system.</p>
     instance, an intermediate driver could translate from LAN protocol to ATM
     protocol. An intermediate driver cannot communicate with user-mode
     applications, but only with other NDIS drivers.
+  <li><strong>Filter drivers</strong>.
   <li><b>Transport drivers or protocol drivers</b>. A protocol driver implements
     a network protocol stack such as IPX/SPX or TCP/IP, offering its services
     over one or more network interface cards. A protocol driver services
     application-layer clients at its upper edge and connects to one or more NIC
     driver(s) or intermediate NDIS driver(s) at its lower edge.</li>
 </ol>
-<p>NPF is implemented as a protocol driver. This is not the best possible choice
+<p>NPF is implemented as a filter driver. This is not the best possible choice
 from the performance point of view, but allows reasonable independence from the
 MAC layer and as well as complete access to the raw traffic.</p>
 <p>Notice that the various Win32 operating systems have different versions of
@@ -128,10 +120,10 @@ user-level applications.&nbsp;
     packet should be kept, but also the amount of bytes to keep. The filtering
     system adopted by NPF derives from the <b>BSD Packet Filter</b> (BPF), a 
 	virtual processor able to execute filtering programs expressed in a 
-	pseudo-assembler and created at user level. The application takes a user-defined filter (e.g. “pick up all UDP packets”)
-    and, using wpcap.dll, compiles them into a BPF program (e.g. “if the
+	pseudo-assembler and created at user level. The application takes a user-defined filter (e.g. &quot;pick up all UDP packets&quot;)
+    and, using wpcap.dll, compiles them into a BPF program (e.g. &quot;if the
     packet is IP and the <i>protocol type</i>  field is equal to 17, then return
-    true”). Then, the application uses the <i>BIOCSETF</i>
+    true&quot;). Then, the application uses the <i>BIOCSETF</i>
     IOCTL to inject the filter in the kernel. At this point, the program
     is executed for every incoming packet, and only the conformant packets are
     accepted. Unlike traditional solutions, NPF does not <i>interpret</i>

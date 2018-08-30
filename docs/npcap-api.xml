@@ -1,0 +1,8 @@
+<sect2 id="npcap-api">
+  <title>The Npcap API</title>
+  <para>The Npcap API is exported by <filename>wpcap.dll</filename> and is the
+	  Windows port of <ulink url="https://www.tcpdump.org/">libpcap</ulink>.
+	  The API and functions are described in
+	  <ulink url="wpcap/pcap.html">the pcap(1) man page</ulink>.
+  </para>
+</sect2>

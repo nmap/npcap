@@ -493,32 +493,32 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = ../../packetWin7/npf/npf/ioctls.h \
-                         ../../packetWin7/npf/npf/Packet.h \
-                         ../../packetWin7/npf/npf/jitter.h \
-                         ../libpcap/incs/pcap.h \
-                         ../libpcap/funcs/pcap.h \
-                         ../main.txt \
-                         ../wpcap_tut.txt \
-                         ../wpcap_tut1.txt \
-                         ../wpcap_tut2.txt \
-                         ../wpcap_tut3.txt \
-                         ../wpcap_tut4.txt \
-                         ../wpcap_tut5.txt \
-                         ../wpcap_tut6.txt \
-                         ../wpcap_tut7.txt \
-                         ../wpcap_tut8.txt \
-                         ../wpcap_tut9.txt \
-                         ../doxygen_groups.txt \
-                         ../wpcap_remote.htm \
-                         ../../wpcap/libpcap/pcap/pcap.h \
-                         ../../wpcap/libpcap/pcap-rpcap.h \
-                         ../../wpcap/libpcap/remote-ext.h \
-                         ../../wpcap/libpcap/rpcapd/fileconf.h \
-                         ../../wpcap/libpcap/rpcapd/utils.h \
-                         ../../wpcap/libpcap/rpcapd/daemon.h \
-                         ../../wpcap/libpcap/rpcapd/rpcapd.h \
-                         ../../wpcap/libpcap/rpcapd/win32-svc.h
+INPUT                  = main.txt \
+                         ../packetWin7/npf/npf/ioctls.h \
+                         ../packetWin7/npf/npf/Packet.h \
+                         ../packetWin7/npf/npf/jitter.h
+                         #../libpcap/incs/pcap.h \
+                         #../libpcap/funcs/pcap.h \
+                         #../wpcap_tut.txt \
+                         #../wpcap_tut1.txt \
+                         #../wpcap_tut2.txt \
+                         #../wpcap_tut3.txt \
+                         #../wpcap_tut4.txt \
+                         #../wpcap_tut5.txt \
+                         #../wpcap_tut6.txt \
+                         #../wpcap_tut7.txt \
+                         #../wpcap_tut8.txt \
+                         #../wpcap_tut9.txt \
+                         #../doxygen_groups.txt \
+                         #../wpcap_remote.htm \
+                         #../../wpcap/libpcap/pcap/pcap.h \
+                         #../../wpcap/libpcap/pcap-rpcap.h \
+                         #../../wpcap/libpcap/remote-ext.h \
+                         #../../wpcap/libpcap/rpcapd/fileconf.h \
+                         #../../wpcap/libpcap/rpcapd/utils.h \
+                         #../../wpcap/libpcap/rpcapd/daemon.h \
+                         #../../wpcap/libpcap/rpcapd/rpcapd.h \
+                         #../../wpcap/libpcap/rpcapd/win32-svc.h
 
 # This tag can be used to specify the character encoding of the source files that 
 # doxygen parses. Internally doxygen uses the UTF-8 encoding, which is also the default 
@@ -712,7 +712,7 @@ IGNORE_PREFIX          =
 # If the GENERATE_HTML tag is set to YES (the default) Doxygen will 
 # generate HTML output.
 
-GENERATE_HTML          = YES
+GENERATE_HTML          = NO
 
 # The HTML_OUTPUT tag is used to specify where the HTML docs will be put. 
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be 
@@ -736,7 +736,7 @@ HTML_HEADER            =
 # each generated HTML page. If it is left blank doxygen will generate a 
 # standard footer.
 
-HTML_FOOTER            = ../footer.htm
+#HTML_FOOTER            = ../footer.htm
 
 # The HTML_STYLESHEET tag can be used to specify a user-defined cascading 
 # style sheet that is used by each HTML page. It can be used to 
@@ -745,7 +745,7 @@ HTML_FOOTER            = ../footer.htm
 # the style sheet file to the HTML output directory, so don't put your own 
 # stylesheet in the HTML output directory as well, or it will be erased!
 
-HTML_STYLESHEET        = ../style.css
+#HTML_STYLESHEET        = ../style.css
 
 # If the HTML_ALIGN_MEMBERS tag is set to YES, the members of classes, 
 # files or namespaces will be aligned in HTML using tables. If set to 
@@ -758,7 +758,7 @@ HTML_ALIGN_MEMBERS     = YES
 # Microsoft HTML help workshop to generate a compressed HTML help file (.chm) 
 # of the generated HTML documentation.
 
-GENERATE_HTMLHELP      = YES
+GENERATE_HTMLHELP      = NO
 
 # If the HTML_DYNAMIC_SECTIONS tag is set to YES then the generated HTML 
 # documentation will contain sections that can be hidden and shown after the 
@@ -1342,3 +1342,5 @@ DOT_CLEANUP            = YES
 # used. If set to NO the values of all tags below this one will be ignored.
 
 SEARCHENGINE           = NO
+GENERATE_DOCBOOK       = YES
+DOCBOOK_OUTPUT         = dox

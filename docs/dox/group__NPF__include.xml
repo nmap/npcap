@@ -1,0 +1,668 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="group__NPF__include">
+    <title>NPF structures and definitions</title>
+        <section>
+            <title>Detailed Description</title>
+        </section>
+        <section>
+            <title> Data Structures </title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="structpacket__file__header">packet_file_header</link></para>
+<para><emphasis>Header of a libpcap dump file.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="structsf__pkthdr">sf_pkthdr</link></para>
+<para><emphasis>Header associated to a packet in the driver&apos;s buffer when the driver is in dump mode.
+Similar to the bpf_hdr structure, but simpler.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="struct__PACKET__OID__DATA">_PACKET_OID_DATA</link></para>
+<para><emphasis>Structure containing an OID request.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="struct__INTERNAL__REQUEST">_INTERNAL_REQUEST</link></para>
+<para><emphasis>Stores an OID request.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="struct__PACKET__RESERVED">_PACKET_RESERVED</link></para>
+<para><emphasis>Contains a NDIS packet.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="struct__DEVICE__EXTENSION">_DEVICE_EXTENSION</link></para>
+<para><emphasis>Port device extension.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="struct____CPU__Private__Data">__CPU_Private_Data</link></para>
+<para><emphasis>Kernel buffer of each CPU.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="struct__OPEN__INSTANCE">_OPEN_INSTANCE</link></para>
+<para><emphasis>Contains the state of a running instance of the NPF driver.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct <link linkend="structPacketHeader">PacketHeader</link></para>
+<para><emphasis>Structure prepended to each packet in the kernel buffer pool.</emphasis></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
+            <title>Enumerations</title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para><literallayout>enum <link linkend="group__NPF__include_1gaa80226df1c5ee18b01580d23ed4f31cb">ADAPTER_BINDING_STATUS</link> {
+<link linkend="group__NPF__include_1ggaa80226df1c5ee18b01580d23ed4f31cba6e4cdf9f09abf447cffdfd5058357822">ADAPTER_UNBOUND</link>,
+<link linkend="group__NPF__include_1ggaa80226df1c5ee18b01580d23ed4f31cba3e0c0f314d2e9dc41c205ab44bf087bc">ADAPTER_BOUND</link>,
+<link linkend="group__NPF__include_1ggaa80226df1c5ee18b01580d23ed4f31cbadc92e852ef35fac0f033487a3be66a93">ADAPTER_UNBINDING</link>
+}</literallayout>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
+            <title>Typedefs</title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct _NDIS_OID_REQUEST *  <link linkend="group__NPF__include_1ga993e68e9e1b59f07d2e7ee0567bc386c">FILTER_REQUEST_CONTEXT</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct _NDIS_OID_REQUEST **  <link linkend="group__NPF__include_1ga66fd58eca31e60f0d201a2a48aff2b4c">PFILTER_REQUEST_CONTEXT</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__PACKET__OID__DATA">_PACKET_OID_DATA</link>  <link linkend="group__NPF__include_1gaac2a71ec6975f035cd46deecfd64ae34">PACKET_OID_DATA</link><para><emphasis>Structure containing an OID request.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__PACKET__OID__DATA">_PACKET_OID_DATA</link> *  <link linkend="group__NPF__include_1gae8459d841eb2e496497aaf9324817499">PPACKET_OID_DATA</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__INTERNAL__REQUEST">_INTERNAL_REQUEST</link>  <link linkend="group__NPF__include_1ga0bee4ca4dc129822e19478f88d991a31">INTERNAL_REQUEST</link><para><emphasis>Stores an OID request.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__INTERNAL__REQUEST">_INTERNAL_REQUEST</link> *  <link linkend="group__NPF__include_1ga55591a7d14855359ed1e3995f7f025c3">PINTERNAL_REQUEST</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__PACKET__RESERVED">_PACKET_RESERVED</link>  <link linkend="group__NPF__include_1ga2225b3cfa793593a1849aa0652846a5c">PACKET_RESERVED</link><para><emphasis>Contains a NDIS packet.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__PACKET__RESERVED">_PACKET_RESERVED</link> *  <link linkend="group__NPF__include_1ga375d9973bbbe748c9722e8f546beb10c">PPACKET_RESERVED</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__DEVICE__EXTENSION">_DEVICE_EXTENSION</link>  <link linkend="group__NPF__include_1ga5091b7a273db5d38a71df5293eb52ccf">DEVICE_EXTENSION</link><para><emphasis>Port device extension.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__DEVICE__EXTENSION">_DEVICE_EXTENSION</link> *  <link linkend="group__NPF__include_1gac8ad25578be589c8352fc4e1a8a99be3">PDEVICE_EXTENSION</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct____CPU__Private__Data">__CPU_Private_Data</link>  <link linkend="group__NPF__include_1ga996998407e992fbf906e4456d156808c">CpuPrivateData</link><para><emphasis>Kernel buffer of each CPU.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__OPEN__INSTANCE">_OPEN_INSTANCE</link>  <link linkend="group__NPF__include_1gafeddf3a08e141d369532061f3f8cd939">OPEN_INSTANCE</link><para><emphasis>Contains the state of a running instance of the NPF driver.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>typedef struct <link linkend="struct__OPEN__INSTANCE">_OPEN_INSTANCE</link> *  <link linkend="group__NPF__include_1gad3b7ff25cfe0e8fd50666782f85e76cb">POPEN_INSTANCE</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
+            <title>Variables</title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>NDIS_HANDLE <link linkend="group__NPF__include_1ga9113f37eacce9fba2feb3ad57cc73705">FilterDriverObject</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>ULONG <link linkend="group__NPF__include_1ga980b14c18716a1788990f8e68fed9420">g_NCpu</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para>struct time_conv <link linkend="group__NPF__include_1ga8bd3dab633cae7a1a47c4ddb2705a31b">G_Start_Time</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
+            <title>Functions</title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para> <link linkend="group__NPF__include_1ga6259f706c0907d31a1476960233222c6">C_ASSERT</link> (
+sizeof(<link linkend="group__NPF__include_1gaac2a71ec6975f035cd46deecfd64ae34">PACKET_OID_DATA</link>) )</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
+            <title>Macros</title>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga654dd84e604275a3a81caf8aa15bdf4a">__PACKET_INCLUDE______</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gaab9817adcf9533112501a00ef9111587">FILTER_ACQUIRE_LOCK</link> NdisAcquireSpinLock(_pLock)</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga40e501a8f6f65d052419e384e7b92a4f">FILTER_RELEASE_LOCK</link> NdisReleaseSpinLock(_pLock)</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga8fc96cee4177a369a99de7026ebeba81">MAX_REQUESTS</link> 128<para><emphasis>Maximum number of simultaneous IOCTL requests.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga8463d2101446f74b83ed10006d772384">Packet_ALIGNMENT</link> sizeof(int)<para><emphasis>Alignment macro. Defines the alignment size.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga6ad53095b69ed77878dc683754e3264a">Packet_WORDALIGN</link> (((x)+(<link linkend="group__NPF__include_1ga8463d2101446f74b83ed10006d772384">Packet_ALIGNMENT</link>-1))&amp;~(<link linkend="group__NPF__include_1ga8463d2101446f74b83ed10006d772384">Packet_ALIGNMENT</link>-1))<para><emphasis>even multiple of Packet_ALIGNMENT.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gac93c0a6ad1d2a3143b1115bdab3ac04d">MODE_CAPT</link> 0x0<para><emphasis>Capture working mode.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga503326906a62e96c147ae6af31fb5659">MODE_STAT</link> 0x1<para><emphasis>Statistical working mode.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga528e7e542cb1a028a10a3a318880dffb">MODE_MON</link> 0x2<para><emphasis>Kernel monitoring mode.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga89853f93dc8cc890b0665629d16d2831">MODE_DUMP</link> 0x10<para><emphasis>Kernel dump working mode.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga4f6749b7708a411df2a3341a3fcef917">IMMEDIATE</link> 1<para><emphasis>Immediate timeout. Forces a read call to return immediately.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga0a110077bb4fcbcc75512d8988c90de8">NDIS_FLAGS_SKIP_LOOPBACK_W2K</link> 0x400<para><emphasis>This is an undocumented flag for NdisSetPacketFlags() that allows to disable loopback reception.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gafedcc0aa0cf5abe7b20c68eefdfcb126">TCPDUMP_MAGIC</link> 0xa1b2c3d4<para><emphasis>Libpcap magic number. Used by programs like tcpdump to recognize a driver&apos;s generated dump file.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gaac031371d41e21ff96e80409e05a7ddb">PCAP_VERSION_MAJOR</link> 2<para><emphasis>Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver&apos;s generated dump file.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga9c200b070c9f626d38184588b16849c2">PCAP_VERSION_MINOR</link> 4<para><emphasis>Minor libpcap version of the dump file. Used by programs like tcpdump to recognize a driver&apos;s generated dump file.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga7ccc8974741059b5ae25231a56dbed09">NPF_DISABLE_LOOPBACK</link> 1<para><emphasis>Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga4a60d1f215d5b2af2b3b86a0f2a90ae2">NPF_ENABLE_LOOPBACK</link> 2<para><emphasis>Tells the driver to capture the packets sent by itself.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gaf61e6e31a7d39674d62d73f748772fce">NPF_LOOPBACK_INTERFACR_MTU</link> 65536<para><emphasis>The MTU of the &quot;Npcap Loopback Adapter&quot;, this value adopts Linux&apos;s &quot;lo&quot; MTU and can&apos;t be modified.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga2d888c8008db794522a3b13ed65068f7">NdisMediumNull</link> -1<para><emphasis>The link type of the &quot;Npcap Loopback Adapter&quot;, this value will be recognized by packet.dll code.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga1b13e6e753db6b0e48a7179cde1be439">NdisMediumCHDLC</link> -2<para><emphasis>Custom linktype: NDIS doesn&apos;t provide an equivalent.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gae8d4f86eb49aa7bb65794b680327a865">NdisMediumPPPSerial</link> -3<para><emphasis>Custom linktype: NDIS doesn&apos;t provide an equivalent.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga5a3d28ed9a0f3379dbce8e3f4ecfcc0e">NdisMediumBare80211</link> -4<para><emphasis>The link type of the Native WiFi adapters, Npcap versions with Native WiFi feature enabled will support this value.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gae0fb7abf1fd38b8e1f3049bd75abdfcf">NdisMediumRadio80211</link> -5<para><emphasis>Custom linktype: NDIS doesn&apos;t provide an equivalent.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gad3c9d011684e435e817f946a5b65be1d">NdisMediumPpi</link> -6<para><emphasis>Custom linktype: NDIS doesn&apos;t provide an equivalent.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga8b9fc965a4bc299f98645d648611db66">NPF_MAX_CPU_NUMBER</link> sizeof(KAFFINITY) * 32</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gaaf9bf39b6ecc2537a21d0ffa54707e48">ADAPTER_NAME_SIZE</link> (sizeof(&quot;\\Device\\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}&quot;) - 1)</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gaa5b6ca49796c0867a90829d35b61f44e">FILTER_UNIQUE_NAME</link> L&quot;{7daf2ac8-e9f6-4765-a842-f1f5d2501341}&quot;</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga9f24b75aca9c59c38d6af55ff1a39e40">FILTER_UNIQUE_NAME_WIFI</link> L&quot;{7daf2ac8-e9f6-4765-a842-f1f5d2501351}&quot;</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga74667b1380dd052f08d72c2f5a8d9235">SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME</link> (<link linkend="group__NPF__include_1gaaf9bf39b6ecc2537a21d0ffa54707e48">ADAPTER_NAME_SIZE</link> - (sizeof(&quot;\\Device\\&quot;) - 1) + 1 + (sizeof(<link linkend="group__NPF__include_1gaa5b6ca49796c0867a90829d35b61f44e">FILTER_UNIQUE_NAME</link>) - 2) / sizeof(WCHAR) - 3)</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gadfb173c8c762b05c8f96b3168426d4dd">ADAPTER_NAME_SIZE_WITH_SEPARATOR</link> (<link linkend="group__NPF__include_1gaaf9bf39b6ecc2537a21d0ffa54707e48">ADAPTER_NAME_SIZE</link> + 1)</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga258cb90ee5e695c41390f63677e2abf1">NPF_MAX_BUFFER_SIZE</link> 0x40000000L</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga7300b6880da1b61717e7ff815d579bf6">C_ASSERT</link></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga048ba8dfabc6ac16c602a1ca6fe994fc">RESERVED</link> ((<link linkend="group__NPF__include_1ga375d9973bbbe748c9722e8f546beb10c">PPACKET_RESERVED</link>)((_p)-&gt;ProtocolReserved))<para><emphasis>Macro to obtain a NDIS_PACKET from a PACKET_RESERVED.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1ga652e6173ee1441712652d74a5533e042">TRANSMIT_PACKETS</link> 256<para><emphasis>of packets that can be transmitted at the same time or with a single call to NdisSendPackets.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gacabf25322566f3bcd1e564e4939f5821">EXIT_SUCCESS</link> Irp-&gt;IoStatus.Information=quantity;\
+	Irp-&gt;IoStatus.Status = STATUS_SUCCESS;\
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);\
+	return STATUS_SUCCESS;\<para><emphasis>Macro used in the I/O routines to return the control to user-mode with a success status.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                            <para>#define <link linkend="group__NPF__include_1gad6d1f5522a147ddeb7d9b11916acd50a">EXIT_FAILURE</link> Irp-&gt;IoStatus.Information=quantity;\
+	Irp-&gt;IoStatus.Status = STATUS_UNSUCCESSFUL;\
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);\
+	return STATUS_UNSUCCESSFUL;\<para><emphasis>Macro used in the I/O routines to return the control to user-mode with a failure status.</emphasis></para>
+</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
+            <title>Enumeration Type Documentation</title>
+            <section xml:id="group__NPF__include_1gaa80226df1c5ee18b01580d23ed4f31cb">
+               <title>enum ADAPTER_BINDING_STATUS </title>
+               
+               <formalpara>
+                    <title>Enumerator:</title>
+                    <variablelist>
+                        <varlistentry xml:id="group__NPF__include_1ggaa80226df1c5ee18b01580d23ed4f31cba6e4cdf9f09abf447cffdfd5058357822">
+                            <term>ADAPTER_UNBOUND</term>
+                            <listitem>
+                                <para></para>
+                            </listitem>
+                        </varlistentry>
+                        <varlistentry xml:id="group__NPF__include_1ggaa80226df1c5ee18b01580d23ed4f31cba3e0c0f314d2e9dc41c205ab44bf087bc">
+                            <term>ADAPTER_BOUND</term>
+                            <listitem>
+                                <para></para>
+                            </listitem>
+                        </varlistentry>
+                        <varlistentry xml:id="group__NPF__include_1ggaa80226df1c5ee18b01580d23ed4f31cbadc92e852ef35fac0f033487a3be66a93">
+                            <term>ADAPTER_UNBINDING</term>
+                            <listitem>
+                                <para></para>
+                            </listitem>
+                        </varlistentry>
+                     </variablelist>
+                </formalpara>
+                <para>Definition at line 449 of file Packet.h
+                    <computeroutput><literallayout>
+{
+ADAPTER_UNBOUND, 
+ADAPTER_BOUND, 
+ADAPTER_UNBINDING, 
+}ADAPTER_BINDING_STATUS;
+                    </literallayout></computeroutput>
+                </para>
+            </section>
+        </section>
+        <section>
+            <title>Typedef Documentation</title>
+            <section xml:id="group__NPF__include_1ga993e68e9e1b59f07d2e7ee0567bc386c">
+                <title>typedef struct _NDIS_OID_REQUEST* FILTER_REQUEST_CONTEXT</title> <emphasis></emphasis>
+                
+            </section>
+            <section xml:id="group__NPF__include_1ga66fd58eca31e60f0d201a2a48aff2b4c">
+                <title>typedef struct _NDIS_OID_REQUEST ** PFILTER_REQUEST_CONTEXT</title> <emphasis></emphasis>
+                
+            </section>
+            <section xml:id="group__NPF__include_1gaac2a71ec6975f035cd46deecfd64ae34">
+                <title>typedef struct _PACKET_OID_DATA
+ PACKET_OID_DATA</title> <emphasis>Structure containing an OID request.</emphasis>
+                
+<para>It is used by the PacketRequest() function to send an OID to the interface card driver. It can be used, for example, to retrieve the status of the error counters on the adapter, its MAC address, the list of the multicast groups defined on it, and so on. </para>
+
+            </section>
+            <section xml:id="group__NPF__include_1gae8459d841eb2e496497aaf9324817499">
+                <title>typedef struct _PACKET_OID_DATA *  PPACKET_OID_DATA</title> <emphasis></emphasis>
+                
+            </section>
+            <section xml:id="group__NPF__include_1ga0bee4ca4dc129822e19478f88d991a31">
+                <title>typedef struct _INTERNAL_REQUEST  INTERNAL_REQUEST</title> <emphasis>Stores an OID request.</emphasis>
+                
+<para>This structure is used by the driver to perform OID query or set operations on the underlying NIC driver. The OID operations be performed usually only by network drivers, but NPF exports this mechanism to user-level applications through an IOCTL interface. The driver uses this structure to wrap a NDIS_REQUEST structure. This allows to handle correctly the callback structure of NdisRequest(), handling multiple requests and maintaining information about the IRPs to complete. </para>
+
+            </section>
+            <section xml:id="group__NPF__include_1ga55591a7d14855359ed1e3995f7f025c3">
+                <title>typedef struct _INTERNAL_REQUEST * PINTERNAL_REQUEST</title> <emphasis></emphasis>
+                
+            </section>
+            <section xml:id="group__NPF__include_1ga2225b3cfa793593a1849aa0652846a5c">
+                <title>typedef struct _PACKET_RESERVED   PACKET_RESERVED</title> <emphasis>Contains a NDIS packet.</emphasis>
+                
+<para>The driver uses this structure to wrap a NDIS_PACKET structure. This allows to handle correctly the callback structure of NdisTransferData(), handling multiple requests and maintaining information about the IRPs to complete. </para>
+
+            </section>
+            <section xml:id="group__NPF__include_1ga375d9973bbbe748c9722e8f546beb10c">
+                <title>typedef struct _PACKET_RESERVED * PPACKET_RESERVED</title> <emphasis></emphasis>
+                
+            </section>
+            <section xml:id="group__NPF__include_1ga5091b7a273db5d38a71df5293eb52ccf">
+                <title>typedef struct _DEVICE_EXTENSION  DEVICE_EXTENSION</title> <emphasis>Port device extension.</emphasis>
+                
+<para>Structure containing some data relative to every adapter on which NPF is bound. </para>
+
+            </section>
+            <section xml:id="group__NPF__include_1gac8ad25578be589c8352fc4e1a8a99be3">
+                <title>typedef struct _DEVICE_EXTENSION * PDEVICE_EXTENSION</title> <emphasis></emphasis>
+                
+            </section>
+            <section xml:id="group__NPF__include_1ga996998407e992fbf906e4456d156808c">
+                <title>typedef struct __CPU_Private_Data  CpuPrivateData</title> <emphasis>Kernel buffer of each CPU.</emphasis>
+                
+<para>Structure containing the kernel buffer (and other CPU related fields) used to capture packets. </para>
+
+            </section>
+            <section xml:id="group__NPF__include_1gafeddf3a08e141d369532061f3f8cd939">
+                <title>typedef struct _OPEN_INSTANCE
+ OPEN_INSTANCE</title> <emphasis>Contains the state of a running instance of the NPF driver.</emphasis>
+                
+<para>This is the most important structure of NPF: it is used by almost all the functions of the driver. An <link linkend="struct__OPEN__INSTANCE">_OPEN_INSTANCE</link> structure is associated with every user-level session, allowing concurrent access to the driver. </para>
+
+            </section>
+            <section xml:id="group__NPF__include_1gad3b7ff25cfe0e8fd50666782f85e76cb">
+                <title>typedef struct _OPEN_INSTANCE * POPEN_INSTANCE</title> <emphasis></emphasis>
+                
+            </section>
+        </section>
+        <section>
+            <title>Variable Documentation</title>
+            <section xml:id="group__NPF__include_1ga9113f37eacce9fba2feb3ad57cc73705">
+                <title>NDIS_HANDLE FilterDriverObject</title> <emphasis></emphasis>
+                
+            </section>
+            <section xml:id="group__NPF__include_1ga980b14c18716a1788990f8e68fed9420">
+                <title>ULONG g_NCpu</title> <emphasis></emphasis>
+                
+            </section>
+            <section xml:id="group__NPF__include_1ga8bd3dab633cae7a1a47c4ddb2705a31b">
+                <title>struct time_conv G_Start_Time</title> <emphasis></emphasis>
+                
+            </section>
+        </section>
+        <section>
+            <title>Function Documentation</title>
+            <section xml:id="group__NPF__include_1ga6259f706c0907d31a1476960233222c6">
+                <title>C_ASSERT (sizeof(PACKET_OID_DATA)==12)</title> <emphasis></emphasis>
+                
+            </section>
+        </section>
+        <section>
+            <title>Macro Definition Documentation</title>
+            <section xml:id="group__NPF__include_1ga6ad53095b69ed77878dc683754e3264a">
+                <title>#define Packet_WORDALIGN</title>                
+<para>Alignment macro. Rounds up to the next </para>
+
+                <para>Definition at line 122 of file Packet.h</para>
+                <para>The Documentation for this define was generated from the following file: </para>
+                <para><itemizedlist><listitem><para>Packet.h</para></listitem></itemizedlist></para>
+            </section>
+            <section xml:id="group__NPF__include_1ga652e6173ee1441712652d74a5533e042">
+                <title>#define TRANSMIT_PACKETS</title>                
+<para>Maximum number of packets in the transmit packet pool. This value is an upper bound to the number </para>
+
+                <para>Definition at line 471 of file Packet.h</para>
+                <para>The Documentation for this define was generated from the following file: </para>
+                <para><itemizedlist><listitem><para>Packet.h</para></listitem></itemizedlist></para>
+            </section>
+        </section>
+</section>

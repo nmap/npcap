@@ -1,6 +1,6 @@
 /*!
 
-\mainpage WinPcap Documentation
+\mainpage Npcap Documentation
 
 \image html winpcap.gif
 
@@ -8,9 +8,9 @@
 
 <dl>
   <dt><strong>Authors:</strong></dt>
-  <dd>The WinPcap Team</dd>
+  <dd>The Nmap Project</dd>
   <dt><strong>Home page:</strong></dt>
-  <dd><a href="http://www.winpcap.org">http://www.winpcap.org</a></dd>
+  <dd><a href="http://npcap.org">http://npcap.org</a></dd>
 </dl>
 <hr>
 
@@ -39,10 +39,12 @@
   - \ref NPF_code
  - \ref packetapi
  - \ref compilation
+\cond DISABLE_REMOTE_DOCS
 - \ref remote
  - \ref remote_struct
  - Exported Functions. For a reference of the functions that support remote capture, see the "Windows-specific Extensions" in the WinPcap \ref wpcapfunc section.
  - \ref remote_pri_struct
+\endcond
 
 \htmlinclude intro.htm
 
