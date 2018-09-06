@@ -6,7 +6,6 @@
 <!ENTITY npcap-devguide SYSTEM "npcap-devguide.xml">
 <!ENTITY npcap-api SYSTEM "npcap-api.xml">
 <!ENTITY npcap-internals SYSTEM "npcap-internals.xml">
-<!ENTITY npcap-npf-dox SYSTEM "dox/mainpage.xml">
 ]>
 
 <article id="npcap">
