@@ -316,16 +316,17 @@
           user. No buffers are allocated at kernel and user level.</para>
       </sect4>
 
+      <!-- This functionality does not work in Npcap and did not work in the latest WinPcap either.
       <sect4 id="npcap-internals-dump">
         <title>Dump to disk</title>
         <para>The dump to disk capability can be used to save the network data to
           disk directly from kernel mode.</para>
-        <!-- TODO: update this figure
+	--><!-- TODO: update this figure
             <p align="center"><img border="0" src="npf-dump.gif" width="400" height="187">
               </para>
               <p align="center"><b>Figure 3: packet capture versus kernel-level dump.</b>
               </para>
-        -->
+	--><!-- kernel dump doesn't work
         <para>In traditional systems, every packet is copied several times, and
           normally 4 buffers are allocated: the one of the capture driver, the
           one in the application that keeps the captured data, the one of the
@@ -342,6 +343,7 @@
           format. It gives also the possibility to filter the traffic before the
           dump process in order to select the packet that will go to the disk.</para>
       </sect4>
+-->
     </sect3>
   </sect2>
   <sect2 id="npcap-internals-references">

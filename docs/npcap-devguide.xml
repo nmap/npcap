@@ -16,6 +16,7 @@
 
     <para>
       Examples of applications using Npcap are available <ulink role="hidepdf" url="https://github.com/nmap/npcap/tree/master/Examples">in the Examples directory</ulink> in the source distribution.
+    Several of these examples are explored in more depth in the <xref linkend="npcap-tutorial" />.
     </para>
 
     <para>
@@ -23,7 +24,20 @@
       <ulink role="hidepdf" url="https://github.com/hsluoyz/UserBridge/">UserBridge</ulink>,
       which is a tool to redirect all packets from one interface to another.
     </para>
-    <!-- TODO: incorporate WinPcap Tutorial from WinPcap dox -->
+  </sect2>
+
+  <sect2 id="npcap-devguide-updating">
+    <title>Updating WinPcap software to Npcap</title>
+    <para>
+      For the most part, Npcap is completely compatible with software written
+      for WinPcap. Minor changes need to be made to <xref
+        linkend="npcap-feature-native-dll">DLL loading order</xref> and in some
+      cases <xref linkend="npcap-feature-native-servicename">driver service
+        name</xref>. However, there have been many improvements to the libpcap
+      API between the last release of WinPcap and the current release of Npcap.
+      Reviewing the changes may help improve performance, reliability, and
+      maintainability of software that uses Npcap.
+    </para>
   </sect2>
 
   <sect2 id="npcap-detect">
