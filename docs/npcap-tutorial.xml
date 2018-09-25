@@ -390,13 +390,13 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     <para>The callback-based capture mechanism of <ulink
         url="wpcap/pcap_loop.html">pcap_loop()</ulink> is elegant and it could
       be a good choice in some situations. However, handling a callback is
-      sometimes not practical &ndash; it often makes the program more complex
+      sometimes not practical&#x2014;it often makes the program more complex
       especially in situations with multithreaded applications or C++
       classes.</para>
 
     <para>In these cases, <ulink
         url="wpcap/pcap_next_ex.html">pcap_next_ex()</ulink> retrievs a packet
-      with a direct call &mdash; using <literal>pcap_next_ex()</literal>,
+      with a direct call&#x2014;using <literal>pcap_next_ex()</literal>,
       packets are received only when the programmer wants them.</para>
 
     <para>The parameters of this function are the same as a capture callback.
@@ -819,8 +819,9 @@ Enter the interface number (1-2):1
 
     <para>In this lession we are going to learn how to handle packet capture to
       a file (dump to file). Npcap offers a wide range of functions to save
-      the network traffic to a file and to read the content of dumps &mdash;
-      this lesson will teach how to use all of these functions.</para>
+      the network traffic to a file and to read the content of
+      dumps&#x2014;this lesson will teach how to use all of these
+      functions.</para>
 
     <para>The format for dump files is the libpcap one. This format contains
       the data of the captured packets in binary form and is a standard used by
@@ -974,7 +975,7 @@ void packet_handler(u_char *dumpfile, const struct pcap_pkthdr *header, const u_
         content. The following code opens a Npcap/libpcap dump file and
         displays every packet contained in the file. The file is opened with
         <ulink url="wpcap/pcap_open_offline.html">pcap_open_offline()</ulink>,
-        then the usual <ulink url="wpcap/pcap_loop.html">pcap_loop()</a> is
+        then the usual <ulink url="wpcap/pcap_loop.html">pcap_loop()</ulink> is
         used to sequence through the packets. As you can see, reading packets
         from an offline capture is nearly identical to receiving them from a
         physical interface.</para>
@@ -1324,7 +1325,7 @@ int i;
       <para>Note that the link-layer of the dumpfile is compared with the one
         of the interface that will send the packets using <ulink
           url="wpcap/pcap_datalink.html">pcap_datalink()</ulink>, and a warning
-        is printed if they are different &mdash; it is important that the
+        is printed if they are different&#x2014;it is important that the
         capture-file link-layer be the same as the adapter's link layer for
         otherwise the transmission is pointless.</para>
 
