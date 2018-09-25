@@ -375,7 +375,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
       the user application does not have direct control over it. Another
       approach (and to have more readable programs) is to use the <ulink
         url="wpcap/pcap_next_ex.html">pcap_next_ex()</ulink> function, which is
-      presented in the next example (<xlink linkend="npcap-tutorial-something"
+      presented in the next example (<xref linkend="npcap-tutorial-something"
         />).</para>
   </sect2>
 
@@ -383,7 +383,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     <title>Capturing the packets without the callback</title>
 
     <para>The example program in this lesson behaves exactly like the previous
-      program (<xlink linkend="npcap-tutorial-openadapter" />), but it uses
+      program (<xref linkend="npcap-tutorial-openadapter" />), but it uses
       <ulink url="wpcap/pcap_next_ex.html">pcap_next_ex()</ulink> instead of
       <ulink url="wpcap/pcap_loop.html">pcap_loop()</ulink>.</para>
 
@@ -528,7 +528,7 @@ if(res == -1){
       ]]></programlisting>
 
     <para>If you want to see some code that uses the filtering functions shown
-      in this lesson, look at the example presented in the next Lesson, <xlink
+      in this lesson, look at the example presented in the next Lesson, <xref
         linkend="npcap-tutorial-interpreting" />.</para>
 
   </sect2>
@@ -1174,7 +1174,7 @@ int res;
 
   <sect2 id="npcap-tutorial-sending">
     <title>Sending Packets</title>
-    <para>Although the name <em>Npcap</em> indicates clearly that the purpose
+    <para>Although the name <emphasis>Npcap</emphasis> indicates clearly that the purpose
       of the library is packet capture, other useful features for raw
       networking are provided. Among them, the user can find a complete set of
       functions to send packets.</para>
