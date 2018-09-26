@@ -30,6 +30,13 @@
               url="wpcap/pcap_open_live.html">pcap_open_live()</ulink> creates
             a 1 MByte buffer by default.
           </para>
+	  <para>
+            <emphasis>Portability note:</emphasis> libpcap provides the <ulink
+              url="wpcap/pcap_set_buffer_size.html">pcap_set_buffer_size()</ulink>
+            function for setting the kernel buffer size.  This removes the need
+            to use the non-portable <literal>pcap_setbuff()</literal> for this
+            purpose.
+          </para>
         </listitem>
       </varlistentry>
 
