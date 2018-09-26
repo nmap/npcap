@@ -9,6 +9,9 @@ mkdir %WPDPACKDESTDIR% >nul 2>nul
 mkdir %WPDPACKDESTDIR%\Examples-pcap >nul 2>nul
 mkdir %WPDPACKDESTDIR%\Examples-remote >nul 2>nul
 
+git clean -fxd %WINPCAPSOURCEDIR%\Examples
+git clean -fxd %WINPCAPSOURCEDIR%\Examples-pcap
+
 xcopy /s/e/v /Y %WINPCAPSOURCEDIR%\Examples		%WPDPACKDESTDIR%\Examples-remote >nul
  
 rem *** Delete Netmeter since it's no more part of the Developer's pack *** 
