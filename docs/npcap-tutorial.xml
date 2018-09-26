@@ -20,6 +20,13 @@
     dealing with "raw" networking packets, good knowledge of networks and
     network protocols is assumed.</para>
 
+  <para>The code in this section is copied from the <xref
+      linkend="npcap-examples">Examples directory</xref> in the source
+    distribution and the SDK. The code is released under a BSD-3-clause license and
+    copyright: NetGroup, Politecnico di Torino (Italy); CACE Technologies,
+    Davis (California); and Insecure.com, LLC. Full text of the code license
+    can be found in each source file.</para>
+
   <sect2 id="npcap-tutorial-devlist">
     <title>Obtaining the device list</title>
     <para>Typically, the first thing that a Npcap-based application does is
@@ -375,7 +382,7 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
       the user application does not have direct control over it. Another
       approach (and to have more readable programs) is to use the <ulink
         url="wpcap/pcap_next_ex.html">pcap_next_ex()</ulink> function, which is
-      presented in the next example (<xref linkend="npcap-tutorial-something"
+      presented in the next example (<xref linkend="npcap-tutorial-pcap-next-ex"
         />).</para>
   </sect2>
 

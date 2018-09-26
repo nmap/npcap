@@ -235,7 +235,10 @@
       companies to silently and seamlessly install Npcap during their product's
       installation rather than asking users to download and install Npcap
       themselves. The Npcap OEM commercial license also includes support,
-      updates and indemnification.</para>
+      updates and indemnification. This is similar to the commercial licenses
+      we offer for embedding <ulink url="https://nmap.org/">Nmap</ulink> in
+      commercial software. More details are available from <ulink
+          url="https://nmap.org/npcap/oem/">the Npcap OEM page</ulink>.</para>
   </sect2>
 
   <sect2 id="npcap-download">
@@ -245,5 +248,15 @@
       <ulink url="https://nmap.org/npcap/#download">on the Npcap
         website</ulink> as an executable installer and as a source code
       archive.</para>
+  </sect2>
+
+  <sect2 id="npcap-guide-copyright">
+    <title>Acknowledgements and copyright</title>
+
+    <para>Portions of this guide were adapted from the WinPcap documentation.
+      Copyright &#169; 2002-2005 Politecnico di Torino. Copyright &#169;
+      2005-2010 CACE Technologies. Copyright &#169; 2010-2013 Riverbed
+      Technology. Copyright &#169; 2018 Insecure.Com, LLC. All rights
+      reserved.</para>
   </sect2>
 </sect1>
