@@ -106,8 +106,14 @@
             driver's buffer contains some data without performing a read.
           </para>
 
-          <!-- TODO: rewrite with alternatives -->
-          <para>We disourage the use of this function because it is not portable.</para>
+          <para>
+            <emphasis>Portability note:</emphasis> This function is the Windows
+            alternative to <ulink
+              url="wpcap/pcap_get_selectable_fd.html">pcap_get_selectable_fd()</ulink>,
+            which is only available on UNIX-like systems. Most applications
+            will not need an event loop that waits on multiple packet capture
+            handles.
+	  </para>
         </listitem>
       </varlistentry>
 
