@@ -3,7 +3,7 @@ This batch file, in turn, calls the four batches
 - create_includes.bat	creates the include folder
 - create_lib.bat		creates the lib folder
 - create_examples.bat	copies the examples folder to the developers' pack. The examples can be compiled only under the developers' pack folder.
-- create_docs.bat		creates the documentation (via doxygen), and then copies the generated files under the developers' pack folder.
+- create_docs.bat		creates the documentation (via Docbook XSL and Roffit), and then copies the generated files under the developers' pack folder.
 
 The syntax for the various scripts is
 
