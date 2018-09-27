@@ -1,5 +1,11 @@
 <sect1 id="npcap-internals">
   <title>Npcap internals</title>
+  <sect1info>
+    <abstract>
+      <para>Describes the internal structure and interfaces of Npcap: the NPF
+        driver and Packet.dll</para>
+    </abstract>
+  </sect1info>
   <para>This portion of the manual describes the internal structure and
     interfaces of Npcap, starting from the lowest-level module. It is targeted
     at people who must extend or modify this software, or to the ones

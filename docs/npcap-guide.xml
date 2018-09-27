@@ -1,5 +1,12 @@
 <sect1 id="npcap-users-guide">
   <title>Npcap Users' Guide</title>
+  <sect1info>
+    <abstract>
+      <para>The Users' Guide covers the basics of installing and removing
+        Npcap, interactions with WinPcap, frequently asked questions,
+        and how to report bugs.</para>
+    </abstract>
+  </sect1info>
 
   <para>Because Npcap is a packet capture architecture, not merely a software
     library, some aspects of installation and configuration may fall to the end

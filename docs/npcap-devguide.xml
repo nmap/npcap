@@ -1,5 +1,12 @@
 <sect1 id="npcap-devguide">
   <title>Developing software with Npcap</title>
+  <sect1info>
+    <abstract>
+      <para> Writing software that captures or injects network traffic is easy
+        with Npcap.  This guide describes the Npcap SDK, WinPcap compatibility,
+        and the Npcap API.</para>
+    </abstract>
+  </sect1info>
 
   <sect2 id="npcap-development">
     <title>Using the Npcap SDK</title>

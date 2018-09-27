@@ -1,5 +1,11 @@
 <sect1 id="npcap-tutorial">
   <title>Npcap Development Tutorial</title>
+  <sect1info>
+    <abstract>
+      <para>A step-by-step guide to writing software that uses Npcap to list
+        network adapters, capture packets, and send network traffic.</para>
+    </abstract>
+  </sect1info>
 
   <para>This section shows how to use the features of the Npcap API. It is
     organized as a tutorial, subdivided into a set of lessons that will
