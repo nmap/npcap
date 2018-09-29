@@ -1031,7 +1031,7 @@ Exit:
 				FwpmTransactionAbort(g_WFPEngineHandle);
 				_Analysis_assume_lock_not_held_(g_WFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
 			}
-		if (engineOpened)
+		if (engineOpened && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
 		{
 			FwpmEngineClose(g_WFPEngineHandle);
 			g_WFPEngineHandle = INVALID_HANDLE_VALUE;
