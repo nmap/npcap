@@ -1,5 +1,5 @@
 @echo off
-set SDKFILENAME=npcap-sdk-0.1.zip
+set SDKFILENAME=npcap-sdk-1.0.zip
 
 if "%2"== "" ( rd /s/q ./npcap-sdk 2>nul >nul) else ( rd /s /q "%2" 2>nul >nul)
 
@@ -14,6 +14,7 @@ rem Requires xsltproc and Docbook XSL stylesheets
 call create_docs.bat %1 %2
 
 del %SDKFILENAME%
-"C:\Program Files\7-Zip\7z.exe" a %SDKFILENAME% .\npcap-sdk
+cd .\npcap-sdk
+"C:\Program Files\7-Zip\7z.exe" a ..\%SDKFILENAME% .
 PAUSE
 
