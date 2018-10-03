@@ -45,6 +45,20 @@
       Reviewing the changes may help improve performance, reliability, and
       maintainability of software that uses Npcap.
     </para>
+
+    <para>Apart from the libpcap API, WinPcap exported a few functions used by
+      <ulink url="https://www.winpcap.org/windump/">WinDump</ulink> that were
+      related to porting a Unix-style tool to Windows but unrelated to packet
+      capture. Those functions were not documented in the WinPcap
+      documentation, have never been included in libpcap, and are therefore not
+      in the Npcap API: <code>getservent</code>, <code>endservent</code>, and
+      <code>eproto_db</code>.</para>
+
+    <para>One other function exported by WinPcap, <code>wsockinit</code>, is
+      available via the Npcap API as <code>pcap_wsockinit</code>. It calls
+      <code>WSAStartup</code> for Windows Sockets version 1.1 and ensures that
+      <code>WSACleanup</code> is called when the process ends.</para>
+
   </sect2>
 
   <sect2 id="npcap-detect">
