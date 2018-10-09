@@ -1,5 +1,5 @@
 @echo off
-set SDKFILENAME=npcap-sdk-1.0.zip
+set SDKFILENAME=npcap-sdk-1.01.zip
 
 if "%2"== "" ( rd /s/q ./npcap-sdk 2>nul >nul) else ( rd /s /q "%2" 2>nul >nul)
 
