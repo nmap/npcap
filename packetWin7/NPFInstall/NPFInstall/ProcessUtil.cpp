@@ -215,7 +215,11 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 // 				if (strProcessName != _T("nmap.exe"))
 // 					continue;
 
-				if (checkModulePathName(strModulePathName) && getFileProductName(strModulePathName) == _T(NPF_DRIVER_NAME_NORMAL))
+				if (checkModulePathName(strModulePathName) && (getFileProductName(strModulePathName) == _T(NPF_DRIVER_NAME_NORMAL)
+#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
+				|| getFileProductName(strModulePathName) == _T("WinPcap")
+#endif
+						))
 				{
 					TRACE_PRINT2("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.", strProcessName.c_str(), strModulePathName.c_str());
 					// _tprintf(_T("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.\n"), strProcessName.c_str(), strModulePathName.c_str());
