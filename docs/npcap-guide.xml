@@ -89,6 +89,11 @@
         <listitem><para><option>/dot11_support=yes</option>: Support raw 802.11 traffic (and <quote>Monitor Mode</quote>) for wireless adapters</para></listitem>
         <listitem><para><option>/vlan_support=yes</option>: Support 802.1Q VLAN tag when capturing and sending data</para></listitem>
         <listitem><para><option>/winpcap_mode=yes</option>: Install Npcap in WinPcap API-compatible Mode</para></listitem>
+	<listitem><para><option>/no_kill=yes</option>: Control termination of
+			processes using Npcap during upgrades or WinPcap when
+			<option>/winpcap_mode=yes</option> is chosen. See
+			<xref linkend="npcap-installation-uninstall-options" />
+			for more detailed discussion.</para></listitem>
       </itemizedlist>
     </sect3>
 
@@ -146,6 +151,11 @@
               stops immediately. This is because Wireshark UI uses command-line
               processes named <varname>dumpcap.exe</varname> to capture, and
               that command-line process will be terminated immediately.</para>
+
+            <para>If this option is provided on the
+              <emphasis>installer</emphasis> command line, it will be passed to
+              teh Npcap uninstaller when doing an upgrade or
+              replacement.</para>
           </listitem>
         </varlistentry>
       </variablelist>
