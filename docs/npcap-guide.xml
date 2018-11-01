@@ -96,21 +96,59 @@
       <title>Uninstaller options</title>
       <para>
         The uninstaller provided with Npcap also accepts some command-line options.
-        The <option>/Q</option> flag means to skip the confirmation page and finish page in the uninstall wizard. So this option is
-        only meaningful for <quote>GUI Mode</quote>. The <option>/no_kill</option> controls how the uninstaller handles
-        processes that are still using Npcap at the time of uninstall. If <option>/no_kill=yes</option>
-        is specified, then Npcap uninstaller will fail if there are still applications using Npcap driver or DLLs.
-        If <option>/no_kill=no</option> is specified in silent mode, Npcap uninstaller will immediately terminate any command-line processes that are using
-        Npcap (like a Nmap process that is still scanning), and wait for at most 15 seconds to gracefully terminate any GUI processes
-        that are using Npcap (like Wireshark UI that is still capturing). <quote>gracefully</quote> means that if you are
-        still capturing via Wireshark, Wireshark UI will prompt the user about whether to save the current capture to a pcap.
-        So the user have 15 seconds to save his session. Note: although Npcap uninstaller won't terminate Wireshark UI processe
-        immediately, the live capture stops immediately. This is because Wireshark UI uses command-line processes named
-        <varname>dumpcap.exe</varname> to capture, and that command-line process will be terminated immediately. The default
-        value for <option>/no_kill</option> is <option>no</option>, but if the
-        graphical interface is used (without <option>/S</option>), the user will be
-        prompted for what to do.
       </para>
+      <variablelist>
+        <varlistentry>
+          <term><option>/S</option> (Silent uninstall)</term>
+          <listitem>
+            <para>Uninstalls Npcap without showing any graphical windows or
+              prompts. Silent uninstall is available in all editions of Npcap,
+              not just Npcap OEM. If Npcap OEM installer in silent mode needs
+              to uninstall an older Npcap installation, it passes the
+              <option>/S</option> option to the existing uninstaller.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>/Q</option> (Quick uninstall)</term>
+          <listitem>
+            <para>Skips the confirmation page and finish page in the uninstall
+            wizard. This option does not have any meaning for silent
+            uninstalls.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>/no_kill</option>=<replaceable>yes|no</replaceable> (do not kill processes)</term>
+          <listitem>
+            <para>Controls how the uninstaller handles processes that are still using
+              Npcap at the time of uninstall. The default value is
+              <literal>no</literal>, which allows the uninstaller to terminate
+              processes that would block Npcap from being uninstalled. If
+              <option>/no_kill=yes</option> is specified, then Npcap
+              uninstaller will fail if there are still applications using Npcap
+              driver or DLLs.</para>
+
+            <para>In the default case, <option>/no_kill=no</option>, the
+              graphical uninstaller will give the user the choice to manually
+              close the offending programs, have the uninstaller terminate
+              them, or abort the uninstallation.  In silent mode, Npcap
+              uninstaller will immediately terminate any command-line processes
+              that are using Npcap (like a Nmap process that is still
+              scanning), and wait for at most 15 seconds to gracefully
+              terminate any GUI processes that are using Npcap (like Wireshark
+              UI that is still capturing).  <quote>Gracefully</quote> means
+              that if you are still capturing via Wireshark, Wireshark UI will
+              prompt the user about whether to save the current capture before
+              closing. The user will have 15 seconds to save his session.
+              <emphasis>Note:</emphasis> although Npcap uninstaller won't
+              terminate Wireshark UI processes immediately, the live capture
+              stops immediately. This is because Wireshark UI uses command-line
+              processes named <varname>dumpcap.exe</varname> to capture, and
+              that command-line process will be terminated immediately.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
 
       <para>
         An example of Npcap uninstaller options is:
