@@ -1332,6 +1332,8 @@ EXIT_xxxx
 			TEXT("*NdisDeviceType"), 0, REG_DWORD, (const BYTE *)&devtype, sizeof(devtype))) {
 			TRACE_PRINT1("Couldn't set *NdisDeviceType: %x", GetLastError());// Oops. Hope this isn't a problem.
 		}
+#if 0
+		// These values were causing problems.
 		// https://msdn.microsoft.com/library/windows/hardware/ff565767
 		devtype = IF_TYPE_SOFTWARE_LOOPBACK; // 24
 		if (ERROR_SUCCESS != RegSetValueEx(DevRegKey,
@@ -1350,6 +1352,7 @@ EXIT_xxxx
 			TEXT("*PhysicalMediaType"), 0, REG_DWORD, (const BYTE *)&devtype, sizeof(devtype))) {
 			TRACE_PRINT1("Couldn't set *PhysicalMediaType: %x", GetLastError());// Oops. Hope this isn't a problem.
 		}
+#endif
 		RegCloseKey(DevRegKey);
 	}
 	else{ TRACE_PRINT1("Couldn't create/open dev reg key: %x", GetLastError()); }
