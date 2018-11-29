@@ -6,7 +6,7 @@ Npcap is a Windows packet sniffing driver and library and is copyright
 reserved.
 
 Even though Npcap source code is publicly available for review, it is
-not open source software and my not be redistributed without special
+not open source software and may not be redistributed without special
 permission from the Nmap Project.  The standard version is also
 limited to installation on five systems. We fund the Npcap project by
 selling two types of commercial licenses to a special Npcap OEM

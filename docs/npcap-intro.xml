@@ -222,7 +222,7 @@
     <title>Npcap License</title>
 
     <para>Even though Npcap source code is publicly available for review, it is
-      not open source software and my not be redistributed without special 
+      not open source software and may not be redistributed without special 
       permission from the Nmap Project. The
       <ulink url="https://github.com/nmap/npcap/blob/master/LICENSE">Npcap License</ulink>
       allows end users to download, install, and use Npcap from our site for

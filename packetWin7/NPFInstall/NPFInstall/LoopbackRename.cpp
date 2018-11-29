@@ -5,7 +5,7 @@
  * reserved.                                                               *
  *                                                                         *
  * Even though Npcap source code is publicly available for review, it is   *
- * not open source software and my not be redistributed or incorporated    *
+ * not open source software and may not be redistributed or incorporated   *
  * into other software without special permission from the Nmap Project.   *
  * We fund the Npcap project by selling a commercial license which allows  *
  * companies to redistribute Npcap with their products and also provides   *
