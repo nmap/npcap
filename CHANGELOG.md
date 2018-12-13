@@ -1,3 +1,24 @@
+## Npcap 0.99-r8 [2018-12-12]
+
+* Revert to using `SERVICE_SYSTEM_START` for the "Automatically start Npcap at
+  boot" option. The previous value, `SERVICE_AUTO_START` had been introduced as
+  a workaround for network interruption on Windows 7 that was finally solved in
+  Npcap 0.99-r7. See [#1208](http://issues.nmap.org/1208).
+
+* Removed extra Registry keywords from Npcap Loopback Adapter which were
+  causing it to not appear properly in Windows API calls.
+  Fixes [#1368](http://issues.nmap.org/1368).
+
+* Detect in-use WinPcap installations before attempting to overwrite DLLs.
+  Offer to terminate the processes just as we do for in-use Npcap.
+
+* Improved documentation based on WinPcap documentation including updates for
+  Npcap changes. Example code builds on Visual Studio 2015 and works with
+  Npcap. Npcap SDK 1.01 includes these changes.
+
+* Fix a crash reported via Microsoft crash telemetry caused by a failure when
+  opening the Npcap Loopback Adapter for packet capture.
+
 ## Npcap 0.99-r7 [2018-07-05]
 
 * Fixed the installer so that Npcap in WinPcap API-compatible mode can do
