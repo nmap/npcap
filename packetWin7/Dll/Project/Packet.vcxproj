@@ -322,41 +322,41 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)\$(Configuration)\x86\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)\$(Configuration)\x86\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\$(Configuration)\x64\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)\$(Configuration)\x64\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)\$(Configuration)\x86\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)\$(Configuration)\x86\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)\$(Configuration)\x64\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)\$(Configuration)\x64\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|Win32'">$(ProjectDir)\$(Configuration)\x86\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|Win32'">$(ProjectDir)\$(Configuration)\x86\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|x64'">$(ProjectDir)\$(Configuration)\x64\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|x64'">$(ProjectDir)\$(Configuration)\x64\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon|x64'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|Win32'">$(ProjectDir)\$(Configuration)\x86\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|Win32'">$(ProjectDir)\$(Configuration)\x86\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|Win32'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|x64'">$(ProjectDir)\$(Configuration)\x64\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|x64'">$(ProjectDir)\$(Configuration)\x64\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|x64'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|Win32'">$(ProjectDir)\$(Configuration)\x86\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|Win32'">$(ProjectDir)\$(Configuration)\x86\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|Win32'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|x64'">$(ProjectDir)\$(Configuration)\x64\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|x64'">$(ProjectDir)\$(Configuration)\x64\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release LOG_TO_FILE|x64'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|Win32'">$(ProjectDir)\$(Configuration)\x86\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|Win32'">$(ProjectDir)\$(Configuration)\x86\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|Win32'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|x64'">$(ProjectDir)\$(Configuration)\x64\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|x64'">$(ProjectDir)\$(Configuration)\x64\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|x64'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon and AirPcap|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug No NetMon and AirPcap|Win32'">$(Configuration)\</IntDir>
