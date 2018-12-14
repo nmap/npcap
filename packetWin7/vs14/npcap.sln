@@ -281,8 +281,8 @@ Global
 		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release No NetMon and AirPcap|x64.Build.0 = OEM Release|x64
 		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release No NetMon and AirPcap|x86.ActiveCfg = OEM Release|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.OEM Release No NetMon and AirPcap|x86.Build.0 = OEM Release|Win32
-		{5D8A2717-4F35-4402-B868-45612D27291B}.Release No NetMon and AirPcap(WinPcap Mode)|x64.ActiveCfg = Release|x64
-		{5D8A2717-4F35-4402-B868-45612D27291B}.Release No NetMon and AirPcap(WinPcap Mode)|x64.Build.0 = Release|x64
+		{5D8A2717-4F35-4402-B868-45612D27291B}.Release No NetMon and AirPcap(WinPcap Mode)|x64.ActiveCfg = Release(WinPcap Mode)|x64
+		{5D8A2717-4F35-4402-B868-45612D27291B}.Release No NetMon and AirPcap(WinPcap Mode)|x64.Build.0 = Release(WinPcap Mode)|x64
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release No NetMon and AirPcap(WinPcap Mode)|x86.ActiveCfg = Release(WinPcap Mode)|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release No NetMon and AirPcap(WinPcap Mode)|x86.Build.0 = Release(WinPcap Mode)|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release No NetMon and AirPcap|x64.ActiveCfg = Release|x64
