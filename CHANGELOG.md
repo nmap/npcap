@@ -1,4 +1,4 @@
-## Npcap 0.99-r8 [2018-12-12]
+## Npcap 0.99-r8 [2018-12-17]
 
 * Revert to using `SERVICE_SYSTEM_START` for the "Automatically start Npcap at
   boot" option. The previous value, `SERVICE_AUTO_START` had been introduced as
@@ -12,12 +12,17 @@
 * Detect in-use WinPcap installations before attempting to overwrite DLLs.
   Offer to terminate the processes just as we do for in-use Npcap.
 
-* Improved documentation based on WinPcap documentation including updates for
-  Npcap changes. Example code builds on Visual Studio 2015 and works with
-  Npcap. Npcap SDK 1.01 includes these changes.
+* [Improved documentation](https://npcap.org/guide/) based on WinPcap
+  documentation including updates for Npcap changes. Example code builds on
+  Visual Studio 2015 and works with Npcap. Npcap SDK 1.01 includes these changes.
 
-* Fix a crash reported via Microsoft crash telemetry caused by a failure when
-  opening the Npcap Loopback Adapter for packet capture.
+* Fix a crash in `NPF_RegisterCallouts` reported via Microsoft crash telemetry
+  caused by a failure when opening the Npcap Loopback Adapter for packet
+  capture.
+
+* On Windows 8 and Server 2012, Npcap will rebind to network adapters after
+  installation to ensure a more complete fix to
+  [#1031](http://issues.nmap.org/1031).
 
 ## Npcap 0.99-r7 [2018-07-05]
 
