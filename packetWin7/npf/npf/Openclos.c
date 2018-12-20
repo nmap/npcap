@@ -523,6 +523,7 @@ NPF_ReleaseOpenInstanceResources(
 	if (pOpen->Filter != NULL)
 	{
 		BPF_Destroy_JIT_Filter(pOpen->Filter);
+		pOpen->Filter = NULL;
 	}
 #endif //_X86_
 
@@ -533,6 +534,7 @@ NPF_ReleaseOpenInstanceResources(
 	if (pOpen->ReadEvent != NULL)
 	{
 		ObDereferenceObject(pOpen->ReadEvent);
+		pOpen->ReadEvent = NULL;
 	}
 
 	//
@@ -569,6 +571,7 @@ NPF_ReleaseOpenInstanceResources(
 	if (pOpen->DumpFileName.Buffer != NULL)
 	{
 		ExFreePool(pOpen->DumpFileName.Buffer);
+		pOpen->DumpFileName.Buffer = NULL;
 	}
 
 	TRACE_EXIT();
