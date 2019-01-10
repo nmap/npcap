@@ -1,6 +1,6 @@
 @echo off
 rem Start type auto will start the Npcap service at boot. Set this to "demand" for demand start instead.
-set START_TYPE=auto
+set START_TYPE=system
 
 setlocal ENABLEEXTENSIONS
 
