@@ -265,7 +265,6 @@ vector<tstring> getInterfaceNamesFromNetshOutput(tstring strOutput)
 
 	while ((iLineEnd = strOutput.find(_T('\n'), iLineEnd)) != tstring::npos)
 	{
-		iStringEnd = iLineEnd;
 		iStringStart = strOutput.rfind(_T("    "), iLineEnd);
 		if (iStringStart < iLineStart)
 		{
@@ -276,6 +275,7 @@ vector<tstring> getInterfaceNamesFromNetshOutput(tstring strOutput)
 		{
 			iStringStart += _tcslen(_T("    "));
 		}
+		iStringEnd = strOutput.find_first_of(_T("\r\n"), iStringStart);
 
 		tstring strInterfaceName = strOutput.substr(iStringStart, iStringEnd - iStringStart);
 		TRACE_PRINT1("getInterfaceNamesFromNetshOutput: executing, strInterfaceName = %s.", strInterfaceName.c_str());
