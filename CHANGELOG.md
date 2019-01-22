@@ -1,4 +1,4 @@
-## Npcap 0.99-r9 [2019-01-14]
+## Npcap 0.99-r9 [2019-01-22]
 
 * Package the correct driver version. On some platforms, the Npcap 0.99-r8
   installer would install the Npcap 0.99-r7 driver.
