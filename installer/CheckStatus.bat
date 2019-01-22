@@ -14,7 +14,9 @@ if defined NPCAP_DIR (goto DO_CHECK) else (goto ABORT)
 
 :DO_CHECK
 if exist "%NPCAP_DIR%\loopback.ini" (
-	netsh interface show interface | find "Npcap Loopback Adapter"
+	rem NetConnectionID may be different, see nmap/nmap#1416
+	rem but Name will always be Npcap Loopback Adapter
+	wmic.exe nic GET Name,NetConnectionID | find "Npcap Loopback Adapter"
 	if ERRORLEVEL 1 (
 		rem loopback.ini is present, but the adapter is gone. Run FixInstall.bat
 		"%NPCAP_DIR%\FixInstall.bat"
