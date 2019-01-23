@@ -1,13 +1,14 @@
 ## Npcap 0.99-r9 [2019-01-22]
 
+* Install a scheduled task at startup to check whether the Npcap Loopback
+  Adapter has been removed and restore it. Windows 10 feature updates remove
+  the Adapter. See [#1416](http://issues.nmap.org/1416).
+
 * Package the correct driver version. On some platforms, the Npcap 0.99-r8
   installer would install the Npcap 0.99-r7 driver.
 
 * Fix a crash (`REFERENCE_BY_POINTER`) in `NPF_ReleaseOpenInstanceResources`
   reported via Microsoft crash telemetry. See [#1419](http://issues.nmap.org/1419).
-
-* Fix potential problems with installer by ensuring Large Strings build of NSIS
-  is used. See [#404](http://issues.nmap.org/404).
 
 ## Npcap 0.99-r8 [2018-12-17]
 
