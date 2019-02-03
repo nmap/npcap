@@ -1357,36 +1357,31 @@ NPF_IoControl(
 		mdl = NULL;
 		pStats = NULL;
 
+		mdl = IoAllocateMdl(Irp->UserBuffer, StatsLength, FALSE, TRUE, NULL);
+
+		if (mdl == NULL)
+		{
+			SET_FAILURE_UNSUCCESSFUL();
+			break;
+		}
 		__try
 		{
-			mdl = IoAllocateMdl(Irp->UserBuffer, StatsLength, FALSE, TRUE, NULL);
-
-			if (mdl == NULL)
-			{
-				SET_FAILURE_UNSUCCESSFUL();
-				break;
-			}
-
 			MmProbeAndLockPages(mdl, UserMode, IoWriteAccess);
-
-			pStats = (PUINT)(Irp->UserBuffer);
 		}
-		__except(GetExceptionCode() == STATUS_ACCESS_VIOLATION)
+		__except(EXCEPTION_EXECUTE_HANDLER)
 		{
+			Information = 0;
+			Status = GetExceptionCode();
 			pStats = NULL;
-		}
-
-		if (pStats == NULL)
-		{
 			if (mdl != NULL)
 			{
 				IoFreeMdl(mdl);
 			}
-
-			SET_FAILURE_UNSUCCESSFUL();
 			break;
 		}
 
+		pStats = (PUINT)(Irp->UserBuffer);
+		
 		pStats[3] = 0;
 		pStats[0] = 0;
 		pStats[1] = 0;
