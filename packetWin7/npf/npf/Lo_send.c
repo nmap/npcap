@@ -127,6 +127,7 @@ NPF_WSKInitSockets(
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKInitSockets()::WSKBind() failed with status 0x%08X\n", status);
 		WSKCloseSocket(g_IPv4Socket);
+		g_IPv4Socket = NULL;
 		TRACE_EXIT();
 		return status;
 	}
@@ -157,6 +158,7 @@ NPF_WSKInitSockets(
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_WSKInitSockets()::WSKBind() failed with status 0x%08X\n", status);
 		WSKCloseSocket(g_IPv6Socket);
+		g_IPv6Socket = NULL;
 		TRACE_EXIT();
 		return status;
 	}
