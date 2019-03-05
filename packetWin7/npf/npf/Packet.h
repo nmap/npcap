@@ -159,7 +159,7 @@ extern NDIS_HANDLE         FilterDriverObject;
 #define NdisMediumPpi						-6		///< Custom linktype: NDIS doesn't provide an equivalent
 
 // Maximum CPU core number, the original value is sizeof(KAFFINITY) * 8, but Amazon instance can return 128 cores, so we make NPF_MAX_CPU_NUMBER to 256 for safe.
-#define NPF_MAX_CPU_NUMBER					sizeof(KAFFINITY) * 32
+#define NPF_MAX_CPU_NUMBER					(sizeof(KAFFINITY) * 32)
 
 // The length of the adapter name
 #define ADAPTER_NAME_SIZE					(sizeof("\\Device\\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}") - 1)
