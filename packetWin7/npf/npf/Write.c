@@ -233,6 +233,9 @@ NPF_Write(
 
 	while (numSentPackets < NumSends)
 	{
+		/* Unlike NPF_BufferedWrite, we can directly allocate NBLs
+		 * using the MDL in the IRP because the device was created with
+		 * DO_DIRECT_IO. */
 		pNetBufferList = NdisAllocateNetBufferAndNetBufferList(Open->PacketPool,
 			0,
 			0,
@@ -482,6 +485,7 @@ NPF_BufferedWrite(
 	//	PCHAR				CurPos;
 	//	PCHAR				EndOfUserBuff = UserBuff + UserBuffSize;
 	INT						result;
+	PVOID npBuff = NULL;
 
 	TRACE_ENTER();
 
@@ -591,6 +595,18 @@ NPF_BufferedWrite(
 			break;
 		}
 
+		/* Copy packet data to non-paged memory, otherwise we induce
+		 * page faults in NIC drivers: http://issues.nmap.org/1398
+		 * Alternately, we could possibly use Direct I/O for the BIOCSENDPACKETS IoCtl? */
+		npBuff = ExAllocatePoolWithTag(NonPagedPool, pWinpcapHdr->caplen, 'WBPN');
+		if (npBuff == NULL)
+		{
+			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
+			result = -1;
+			break;
+		}
+		RtlCopyMemory(npBuff, UserBuff + Pos, pWinpcapHdr->caplen);
+
 		// Allocate an MDL to map the packet data
 		TmpMdl = IoAllocateMdl(UserBuff + Pos, pWinpcapHdr->caplen, FALSE, FALSE, NULL);
 
@@ -603,7 +619,7 @@ NPF_BufferedWrite(
 			break;
 		}
 
-		MmBuildMdlForNonPagedPool(TmpMdl);	// XXX can this line be removed?
+		MmBuildMdlForNonPagedPool(TmpMdl);
 
 		Pos += pWinpcapHdr->caplen;
 
@@ -734,6 +750,8 @@ NPF_BufferedWrite(
 					NDIS_DEFAULT_PORT_NUMBER,
 					SendFlags);
 			}
+		// We've sent the packet, so leave it up to SendComplete to free the buffer
+		npBuff = NULL;
 
 		if (Sync)
 		{
@@ -779,6 +797,11 @@ NPF_BufferedWrite(
 			while (CurTicks.QuadPart <= TargetTicks.QuadPart)
 				CurTicks = KeQueryPerformanceCounter(NULL);
 		}
+	}
+	
+	// Cleanup
+	if (npBuff != NULL) {
+		ExFreePoolWithTag(npBuff, 'WBPN');
 	}
 
 	// Wait the completion of pending sends
@@ -848,6 +871,7 @@ NPF_FreePackets(
 	PNET_BUFFER_LIST    pNetBufList = NetBufferLists;
 	PNET_BUFFER         Currbuff;
 	PMDL                pMdl;
+	PVOID npBuff;
 
 /*	TRACE_ENTER();*/
 
@@ -864,6 +888,10 @@ NPF_FreePackets(
 		while (Currbuff)
 		{
 			pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
+			npBuff = MmGetSystemAddressForMdlSafe(pMdl, LowPagePriority);
+			if (npBuff != NULL) {
+				ExFreePoolWithTag(npBuff, 'WBPN');
+			}
 			NdisFreeMdl(pMdl); //Free MDL
 			Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
 		}
