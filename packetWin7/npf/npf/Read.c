@@ -713,7 +713,6 @@ NPF_TapExForEachOpen(
 	PUCHAR					TmpBuffer = NULL;
 	PUCHAR					HeaderBuffer;
 	UINT					HeaderBufferSize;
-	PUCHAR					LookaheadBuffer;
 	UINT					LookaheadBufferSize;
 	UINT					PacketSize;
 	ULONG					TotalLength;
@@ -1038,7 +1037,6 @@ NPF_TapExForEachOpen(
 
 				HeaderBuffer = pDataLinkBuffer;
 				HeaderBufferSize = DataLinkHeaderSize;
-				LookaheadBuffer = pDataLinkBuffer + HeaderBufferSize;
 				LookaheadBufferSize = BufferLength - HeaderBufferSize;
 				PacketSize = LookaheadBufferSize;
 
@@ -1259,27 +1257,6 @@ NPF_TapExForEachOpen(
 					}
 #endif
 
-					//
-					//we can consider the buffer contiguous, either because we use only the data
-					//present in the HeaderBuffer, or because HeaderBuffer and LookaheadBuffer are contiguous
-					// ;-))))))
-					//
-// 					if (Open->Size - LocalData->P < iFres)
-// 					{
-// 						//the packet will be fragmented in the buffer (aka, it will skip the buffer boundary)
-// 						//two copies!!
-// 						ToCopy = Open->Size - LocalData->P;
-// 						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pHeaderBuffer, ToCopy);
-// 						NdisMoveMappedMemory(LocalData->Buffer + 0, (PUCHAR)pHeaderBuffer + ToCopy, iFres - ToCopy);
-// 						LocalData->P = iFres - ToCopy;
-// 					}
-// 					else
-// 					{
-// 						//the packet does not need to be fragmented in the buffer (aka, it doesn't skip the buffer boundary)
-// 						// ;-)))))) only ONE copy
-// 						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pHeaderBuffer, iFres);
-// 						LocalData->P += iFres;
-// 					}	
 
 					// Disable the IEEE802.1Q VLAN feature for now.
 // 					if (withVlanTag)
