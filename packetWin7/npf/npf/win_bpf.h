@@ -436,28 +436,7 @@ extern "C"
 #else //HAVE_BUGGY_TME_SUPPORT
 	u_int bpf_filter(register struct bpf_insn* pc, register UCHAR* p, u_int wirelen, register u_int buflen);
 #endif //HAVE_BUGGY_TME_SUPPORT
-	/*!
-	  \brief The filtering pseudo-machine interpreter with two buffers. This function is slower than bpf_filter(), 
-	  but works correctly also if the MAC header and the data of the packet are in two different buffers.
-	  \param pc The filter.
-	  \param p Pointer to a memory buffer containing the MAC header of the packet.
-	  \param pd Pointer to a memory buffer containing the data of the packet.
-	  \param wirelen Original length of the packet.
-	  \param buflen Current length of the packet. In some cases (for example when the transfer of the packet to the RAM
-	  has not yet finished), bpf_filter can be executed on a portion of the packet.
-	  \param mem_ex The extended memory.
-	  \param tme The virtualization of the TME co-processor
-	  \param time_ref Data structure needed by the TME co-processor to timestamp data
-	  \return The portion of the packet to keep, in bytes. 0 means that the packet must be rejected, -1 means that
-	   the whole packet must be kept.
-	  
-	  This function is used when NDIS passes the packet to NPF_tap() in two buffers instaed than in a single one.
-	*/
-#ifdef HAVE_BUGGY_TME_SUPPORT
-	u_int bpf_filter_with_2_buffers(register struct bpf_insn* pc, register u_char* p, register u_char* pd, register int headersize, u_int wirelen, register u_int buflen, PMEM_TYPE mem_ex, PTME_CORE tme, struct time_conv* time_ref);
-#else //HAVE_BUGGY_TME_SUPPORT
-	u_int bpf_filter_with_2_buffers(register struct bpf_insn* pc, register u_char* p, register u_char* pd, register int headersize, u_int wirelen, register u_int buflen);
-#endif
+
 #ifdef __cplusplus
 }
 #endif

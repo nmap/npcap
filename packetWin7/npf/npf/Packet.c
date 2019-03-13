@@ -1554,7 +1554,6 @@ NPF_IoControl(
 				}
 
 			// Allocate the memory to contain the new filter program
-			// We could need the original BPF binary if we are forced to use bpf_filter_with_2_buffers()
 			TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, cnt * sizeof(struct bpf_insn), '4PWA');
 			if (TmpBPFProgram == NULL)
 			{
