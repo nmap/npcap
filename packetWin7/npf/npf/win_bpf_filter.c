@@ -113,6 +113,89 @@
 		 (((u_int32)(((u_char*)p)[2])) << 8 ) |\
 		 (((u_int32)(((u_char*)p)[3])) << 0 ))
 
+#define MDLIDX(len, p, k, buf) \
+{ \
+	NdisQueryMdl(p, &buf, &len, NormalPagePriority); \
+	if (buf == NULL) \
+		return 0; \
+	while (k >= len) { \
+		k -= len; \
+		p = p->Next; \
+		if (p == NULL) \
+			return 0; \
+		NdisQueryMdl(p, &buf, &len, NormalPagePriority); \
+		if (buf == NULL) \
+			return 0; \
+	} \
+}
+
+u_int32 xword(PMDL p, u_int32 k, int *err)
+{
+	size_t len, len0;
+	u_char *CurBuf, *NextBuf;
+	PMDL p0;
+
+	*err = 1;
+	MDLIDX(len, p, k, CurBuf);
+	CurBuf += k;
+	if (len - k >= 4) {
+		*err = 0;
+		return EXTRACT_LONG(CurBuf);
+	}
+	p0 = p->Next;
+	if (p0 == NULL)
+		return 0;
+	NdisQueryMdl(p0, &NextBuf, &len0, NormalPagePriority);
+	if (NextBuf == NULL || (len - k) + len0 < 4)
+		return 0;
+	*err = 0;
+
+	switch (len - k) {
+	case 1:
+		return (CurBuf[0] << 24) | (NextBuf[0] << 16) | (NextBuf[1] << 8) | NextBuf[2];
+	case 2:
+		return (CurBuf[0] << 24) | (CurBuf[1] << 16) | (NextBuf[0] << 8) | NextBuf[1];
+	default:
+		return (CurBuf[0] << 24) | (CurBuf[1] << 16) | (CurBuf[2] << 8) | NextBuf[0];
+	}
+}
+
+u_int32 xhalf(PMDL p, u_int32 k, int *err)
+{
+	size_t len, len0;
+	u_char *CurBuf, *NextBuf;
+	PMDL p0;
+
+	*err = 1;
+	MDLIDX(len, p, k, CurBuf);
+	CurBuf += k;
+	if (len - k >= 2) {
+		*err = 0;
+		return EXTRACT_SHORT(CurBuf);
+	}
+	p0 = p->Next;
+	if (p0 == NULL)
+		return 0;
+	NdisQueryMdl(p0, &NextBuf, &len0, NormalPagePriority);
+	if (NextBuf == NULL || len0 < 1)
+		return 0;
+	*err = 0;
+
+	return (CurBuf[0] << 8) | NextBuf[0];
+}
+
+u_int32 xbyte(PMDL p, u_int32 k, int *err)
+{
+	size_t len;
+	u_char *CurBuf;
+
+	*err = 1;
+	MDLIDX(len, p, k, CurBuf);
+	*err = 0;
+
+	return CurBuf[k];
+}
+
 #ifdef HAVE_BUGGY_TME_SUPPORT
 u_int bpf_filter(pc, p, wirelen, buflen, mem_ex, tme, time_ref)
 register struct bpf_insn * pc;
@@ -123,11 +206,7 @@ PMEM_TYPE mem_ex;
 PTME_CORE tme;
 struct time_conv* time_ref;
 #else  //HAVE_BUGGY_TME_SUPPORT
-u_int bpf_filter(pc, p, wirelen, buflen)
-register struct bpf_insn * pc;
-register u_char* p;
-u_int wirelen;
-register u_int buflen;
+u_int bpf_filter(struct bpf_insn *pc, PMDL p, u_int wirelen)
 #endif //HAVE_BUGGY_TME_SUPPORT
 {
 	register u_int32 A, X;
@@ -138,6 +217,7 @@ register u_int buflen;
 	u_short tmp2;
 #endif //HAVE_BUGGY_TME_SUPPORT
 
+	int merr = 0;
 	int mem[BPF_MEMWORDS];
 
 	RtlZeroMemory(mem, sizeof(mem));
@@ -165,30 +245,24 @@ register u_int buflen;
 			return (u_int)A;
 
 		case BPF_LD|BPF_W|BPF_ABS:
-			k = pc->k;
-			if (k >= buflen || k + sizeof(int) > buflen)
-			{
+			A = xword(p, pc->k, &merr);
+			if (merr != 0) {
 				return 0;
 			}
-			A = EXTRACT_LONG(&p[k]);
 			continue;
 
 		case BPF_LD|BPF_H|BPF_ABS:
-			k = pc->k;
-			if (k >= buflen || k + sizeof(short) > buflen)
-			{
+			A = xhalf(p, pc->k, &merr);
+			if (merr != 0) {
 				return 0;
 			}
-			A = EXTRACT_SHORT(&p[k]);
 			continue;
 
 		case BPF_LD|BPF_B|BPF_ABS:
-			k = pc->k;
-			if (k >= buflen)
-			{
+			A = xbyte(p, pc->k, &merr);
+			if (merr != 0) {
 				return 0;
 			}
-			A = p[k];
 			continue;
 
 		case BPF_LD|BPF_W|BPF_LEN:
@@ -201,38 +275,33 @@ register u_int buflen;
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
-			if (k >= buflen || k + sizeof(int) > buflen)
-			{
+			A = xword(p, k, &merr);
+			if (merr != 0) {
 				return 0;
 			}
-			A = EXTRACT_LONG(&p[k]);
 			continue;
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-			if (k >= buflen || k + sizeof(short) > buflen)
-			{
+			A = xhalf(p, k, &merr);
+			if (merr != 0) {
 				return 0;
 			}
-			A = EXTRACT_SHORT(&p[k]);
 			continue;
 
 		case BPF_LD|BPF_B|BPF_IND:
 			k = X + pc->k;
-			if (k >= buflen)
-			{
+			A = xbyte(p, k, &merr);
+			if (merr != 0) {
 				return 0;
 			}
-			A = p[k];
 			continue;
 
 		case BPF_LDX|BPF_MSH|BPF_B:
-			k = pc->k;
-			if (k >= buflen)
-			{
+			X = (xbyte(p, pc->k, &merr) & 0xf) << 2;
+			if (merr != 0) {
 				return 0;
 			}
-			X = (p[pc->k] & 0xf) << 2;
 			continue;
 
 		case BPF_LD|BPF_IMM:

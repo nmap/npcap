@@ -1043,6 +1043,12 @@ NPF_TapExForEachOpen(
 				//
 				// the jit filter is available on x86 (32 bit) only
 				//
+#if 0
+				/* BPF JIT does not work with NET_BUFFER structures, so disabling it.
+				 * If we are going to re-enable it, we will either have to always copy the
+				 * packet into a buffer prior to invoking the filter, or we will have to
+				 * rewrite the jitter to emit code that can deal with MDL chains (unlikely).
+				 */
 #ifdef _X86_
 
 				if (Open->Filter != NULL)
@@ -1061,11 +1067,11 @@ NPF_TapExForEachOpen(
 				}
 				else
 #endif //_X86_
+#endif //0
 				{
 					fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
-						HeaderBuffer,
-						PacketSize + HeaderBufferSize,
-						LookaheadBufferSize + HeaderBufferSize);
+						NET_BUFFER_FIRST_MDL(pNetBuf),
+						NET_BUFFER_DATA_LENGTH(pNetBuf));
 					IF_LOUD(DbgPrint("\n");)
 					IF_LOUD(DbgPrint("HeaderBufferSize = %d, LookaheadBufferSize (PacketSize) = %d, fres = %d\n", HeaderBufferSize, LookaheadBufferSize, fres);)
 				}

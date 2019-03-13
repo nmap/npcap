@@ -418,10 +418,8 @@ extern "C"
 	/*!
 	  \brief The filtering pseudo-machine interpreter.
 	  \param pc The filter.
-	  \param p Pointer to a memory buffer containing the packet on which the filter will be executed.
+	  \param p Pointer to a Memory Descriptor List (MDL) containing the packet on which the filter will be executed.
 	  \param wirelen Original length of the packet.
-	  \param buflen Current length of the packet. In some cases (for example when the transfer of the packet to the RAM
-	  has not yet finished), bpf_filter can be executed on a portion of the packet.
 	  \param mem_ex The extended memory.
 	  \param tme The virtualization of the TME co-processor
 	  \param time_ref Data structure needed by the TME co-processor to timestamp data
@@ -432,9 +430,9 @@ extern "C"
 	  that is faster than the interpreter.
 	*/
 #ifdef HAVE_BUGGY_TME_SUPPORT
-	u_int bpf_filter(register struct bpf_insn* pc, register UCHAR* p, u_int wirelen, register u_int buflen, PMEM_TYPE mem_ex, PTME_CORE tme, struct time_conv* time_ref);
+	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int wirelen, u_int buflen, PMEM_TYPE mem_ex, PTME_CORE tme, struct time_conv* time_ref);
 #else //HAVE_BUGGY_TME_SUPPORT
-	u_int bpf_filter(register struct bpf_insn* pc, register UCHAR* p, u_int wirelen, register u_int buflen);
+	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int wirelen);
 #endif //HAVE_BUGGY_TME_SUPPORT
 
 #ifdef __cplusplus
