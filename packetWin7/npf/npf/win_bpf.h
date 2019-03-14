@@ -429,11 +429,24 @@ extern "C"
 	  \note this function is not used in normal situations, because the jitter creates a native filtering function
 	  that is faster than the interpreter.
 	*/
-#ifdef HAVE_BUGGY_TME_SUPPORT
-	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int wirelen, u_int buflen, PMEM_TYPE mem_ex, PTME_CORE tme, struct time_conv* time_ref);
-#else //HAVE_BUGGY_TME_SUPPORT
+#ifdef WIN_NT_DRIVER
 	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int wirelen);
+#else
+#ifdef HAVE_BUGGY_TME_SUPPORT
+	u_int bpf_filter(register struct bpf_insn *pc,
+		register UCHAR *p,
+		u_int wirelen,
+		register u_int buflen,
+		PMEM_TYPE mem_ex,
+		PTME_CORE tme,
+		struct time_conv *time_ref); 
+#else //HAVE_BUGGY_TME_SUPPORT
+	u_int bpf_filter(register struct bpf_insn *pc,
+		register UCHAR *p,
+		u_int wirelen,
+		register u_int buflen);
 #endif //HAVE_BUGGY_TME_SUPPORT
+#endif //WIN_NT_DRIVER
 
 #ifdef __cplusplus
 }

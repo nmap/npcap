@@ -113,6 +113,7 @@
 		 (((u_int32)(((u_char*)p)[2])) << 8 ) |\
 		 (((u_int32)(((u_char*)p)[3])) << 0 ))
 
+#ifdef WIN_NT_DRIVER
 #define MDLIDX(len, p, k, buf) \
 { \
 	NdisQueryMdl(p, &buf, &len, NormalPagePriority); \
@@ -196,6 +197,8 @@ u_int32 xbyte(PMDL p, u_int32 k, int *err)
 	return CurBuf[k];
 }
 
+u_int bpf_filter(struct bpf_insn *pc, PMDL p, u_int wirelen)
+#else
 #ifdef HAVE_BUGGY_TME_SUPPORT
 u_int bpf_filter(pc, p, wirelen, buflen, mem_ex, tme, time_ref)
 register struct bpf_insn * pc;
@@ -206,8 +209,13 @@ PMEM_TYPE mem_ex;
 PTME_CORE tme;
 struct time_conv* time_ref;
 #else  //HAVE_BUGGY_TME_SUPPORT
-u_int bpf_filter(struct bpf_insn *pc, PMDL p, u_int wirelen)
+u_int bpf_filter(pc, p, wirelen, buflen)
+register struct bpf_insn *pc;
+register u_char *p;
+u_int wirelen;
+register u_int buflen;
 #endif //HAVE_BUGGY_TME_SUPPORT
+#endif //WIN_NT_DRIVER
 {
 	register u_int32 A, X;
 	register bpf_u_int32 k;
@@ -245,24 +253,48 @@ u_int bpf_filter(struct bpf_insn *pc, PMDL p, u_int wirelen)
 			return (u_int)A;
 
 		case BPF_LD|BPF_W|BPF_ABS:
-			A = xword(p, pc->k, &merr);
+			k = pc->k;
+#ifndef WIN_NT_DRIVER
+			if (k >= buflen || k + sizeof(int) > buflen) {
+				return 0;
+			}
+			A = EXTRACT_LONG(&p[k]);
+#else
+			A = xword(p, k, &merr);
 			if (merr != 0) {
 				return 0;
 			}
+#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_H|BPF_ABS:
-			A = xhalf(p, pc->k, &merr);
+			k = pc->k;
+#ifndef WIN_NT_DRIVER
+			if (k >= buflen || k + sizeof(short) > buflen) {
+				return 0;
+			}
+			A = EXTRACT_SHORT(&p[k]);
+#else
+			A = xhalf(p, k, &merr);
 			if (merr != 0) {
 				return 0;
 			}
+#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_B|BPF_ABS:
-			A = xbyte(p, pc->k, &merr);
+			k = pc->k;
+#ifndef WIN_NT_DRIVER
+			if (k >= buflen) {
+				return 0;
+			}
+			A = p[k];
+#else
+			A = xbyte(p, k, &merr);
 			if (merr != 0) {
 				return 0;
 			}
+#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_W|BPF_LEN:
@@ -275,33 +307,63 @@ u_int bpf_filter(struct bpf_insn *pc, PMDL p, u_int wirelen)
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
+#ifndef WIN_NT_DRIVER
+			if (k >= buflen || k + sizeof(int) > buflen) {
+				return 0;
+			}
+			A = EXTRACT_LONG(&p[k]);
+#else
 			A = xword(p, k, &merr);
 			if (merr != 0) {
 				return 0;
 			}
+#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
+#ifndef WIN_NT_DRIVER
+			if (k >= buflen || k + sizeof(short) > buflen) {
+				return 0;
+			}
+			A = EXTRACT_SHORT(&p[k]);
+#else
 			A = xhalf(p, k, &merr);
 			if (merr != 0) {
 				return 0;
 			}
+#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_B|BPF_IND:
 			k = X + pc->k;
+#ifndef WIN_NT_DRIVER
+			if (k >= buflen) {
+				return 0;
+			}
+			A = p[k];
+#else
 			A = xbyte(p, k, &merr);
 			if (merr != 0) {
 				return 0;
 			}
+#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LDX|BPF_MSH|BPF_B:
-			X = (xbyte(p, pc->k, &merr) & 0xf) << 2;
+			k = pc->k;
+#ifndef WIN_NT_DRIVER
+			if (k >= buflen) {
+				return 0;
+			}
+			X = p[k];
+#else
+			X = xbyte(p, k, &merr);
 			if (merr != 0) {
 				return 0;
 			}
+#endif //WIN_NT_DRIVER
+			X = (X & 0xf) << 2;
 			continue;
 
 		case BPF_LD|BPF_IMM:
