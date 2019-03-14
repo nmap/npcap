@@ -94,12 +94,12 @@
 
 #ifdef WIN_NT_DRIVER
 #include <ndis.h>
+#include "time_calls.h"
 #endif
 
 #ifdef HAVE_BUGGY_TME_SUPPORT
 #include "tme.h"
 #endif 
-#include "time_calls.h"
 
 typedef	UCHAR u_char;
 typedef	USHORT u_short;
