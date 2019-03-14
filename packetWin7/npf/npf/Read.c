@@ -693,14 +693,7 @@ NPF_TapExForEachOpen(
 	IN PNET_BUFFER_LIST pNetBufferLists
 	)
 {
-	ULONG					SizeToTransfer;
-	NDIS_STATUS				Status;
-	UINT					BytesTransfered;
-	PMDL					pMdl1, pMdl2;
-	LARGE_INTEGER			CapTime;
-	LARGE_INTEGER			TimeFreq;
 	UINT					fres;
-	USHORT					NPFHdrSize;
 
 	CpuPrivateData*			LocalData;
 	ULONG					Cpu;
@@ -708,14 +701,7 @@ NPF_TapExForEachOpen(
 	ULONG					ToCopy;
 	ULONG					increment;
 	ULONG					i;
-	BOOLEAN					ShouldReleaseBufferLock;
 
-	PUCHAR					TmpBuffer = NULL;
-	PUCHAR					HeaderBuffer;
-	UINT					HeaderBufferSize;
-	UINT					LookaheadBufferSize;
-	UINT					PacketSize;
-	ULONG					TotalLength;
 	UINT					TotalPacketSize;
 
 	PMDL					pMdl = NULL;
@@ -726,8 +712,6 @@ NPF_TapExForEachOpen(
 	PNET_BUFFER				pNetBuf;
 	PNET_BUFFER				pNextNetBuf;
 	ULONG					Offset;
-
-	UINT					DataLinkHeaderSize;
 
 #ifdef HAVE_DOT11_SUPPORT
 	UCHAR					Dot11RadiotapHeader[256] = { 0 };
@@ -741,17 +725,6 @@ NPF_TapExForEachOpen(
 // 		// The adapter is in use or even released, stop the tapping.
 // 		return;
 // 	}
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (Open->Loopback && g_DltNullMode)
-	{
-		DataLinkHeaderSize = DLT_NULL_HDR_LEN;
-	}
-	else
-#endif
-	{
-		DataLinkHeaderSize = ETHER_HDR_LEN;
-	}
 
 	pNetBufList = pNetBufferLists;
 	while (pNetBufList != NULL)
@@ -953,92 +926,15 @@ NPF_TapExForEachOpen(
 			//
 			// Get first MDL and data length in the list
 			//
-			pMdl = pNetBuf->CurrentMdl;
-			TotalLength = pNetBuf->DataLength;
-			Offset = pNetBuf->CurrentMdlOffset;
-			BufferLength = 0;
+			pMdl = NET_BUFFER_CURRENT_MDL(pNetBuf);
+			Offset = NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf);
+
+			// Get the whole packet length.
+			TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 
 			do
 			{
-				if (pMdl)
-				{
-					NdisQueryMdl(
-						pMdl,
-						&pDataLinkBuffer,
-						&BufferLength,
-						NormalPagePriority);
-				}
 
-				if (pDataLinkBuffer == NULL)
-				{
-					//
-					//  The system is low on resources. Set up to handle failure
-					//  below.
-					//
-					BufferLength = 0;
-					NdisReleaseSpinLock(&Open->MachineLock);
-					break;
-				}
-
-				if (BufferLength == 0)
-				{
-					NdisReleaseSpinLock(&Open->MachineLock);
-					break;
-				}
-
-				BufferLength -= Offset;
-				pDataLinkBuffer += Offset;
-
-				// As for single MDL (as we assume) condition, we always have BufferLength == TotalLength
-				if (BufferLength > TotalLength)
-					BufferLength = TotalLength;
-
-				// Handle multiple MDLs situation here, if there's only 20 bytes in the first MDL, then the IP header is in the second MDL.
-				if (BufferLength == DataLinkHeaderSize && pMdl->Next != NULL)
-				{
-					TmpBuffer = ExAllocatePoolWithTag(NonPagedPool, pNetBuf->DataLength, 'NPCA');
-					pDataLinkBuffer = NdisGetDataBuffer(pNetBuf,
-						pNetBuf->DataLength,
-						TmpBuffer,
-						1,
-						0);
-					if (!pDataLinkBuffer)
-					{
-						TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-							"NPF_TapExForEachOpen: NdisGetDataBuffer() [status: %#x]\n",
-							STATUS_UNSUCCESSFUL);
-
-						NdisReleaseSpinLock(&Open->MachineLock);
-						break;
-					}
-					else
-					{
-						BufferLength = pNetBuf->DataLength;
-					}
-				}
-
-				// 			if (BufferLength < sizeof(NDISPROT_ETH_HEADER))
-				// 			{
-				// 				IF_LOUD(DbgPrint("ReceiveNetBufferList: Open %p, runt nbl %p, first buffer length %d\n",
-				// 					Open, pNetBufList, BufferLength);)
-				// 				NdisReleaseSpinLock(&Open->MachineLock);
-				// 				break;
-				// 			}
-
-				//bAcceptedReceive = TRUE;
-				//IF_LOUD(DbgPrint("ReceiveNetBufferList: Open %p, interesting nbl %p\n",
-				//	Open, pNetBufList);)
-
-				//
-				//  If the miniport is out of resources, we can't queue
-				//  this list of net buffer list - make a copy if this is so.
-				//
-				//DispatchLevel = NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags);
-
-				HeaderBuffer = pDataLinkBuffer;
-				HeaderBufferSize = DataLinkHeaderSize;
-				LookaheadBufferSize = BufferLength - HeaderBufferSize;
-				PacketSize = LookaheadBufferSize;
 
 				//
 				// the jit filter is available on x86 (32 bit) only
@@ -1072,8 +968,7 @@ NPF_TapExForEachOpen(
 					fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
 						NET_BUFFER_FIRST_MDL(pNetBuf),
 						NET_BUFFER_DATA_LENGTH(pNetBuf));
-					IF_LOUD(DbgPrint("\n");)
-					IF_LOUD(DbgPrint("HeaderBufferSize = %d, LookaheadBufferSize (PacketSize) = %d, fres = %d\n", HeaderBufferSize, LookaheadBufferSize, fres);)
+					IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
 				}
 
 
@@ -1102,10 +997,10 @@ NPF_TapExForEachOpen(
 
 					Open->Npackets.QuadPart++;
 
-					if (PacketSize + HeaderBufferSize < 60)
+					if (TotalPacketSize < 60)
 						Open->Nbytes.QuadPart += 60;
 					else
-						Open->Nbytes.QuadPart += PacketSize + HeaderBufferSize;
+						Open->Nbytes.QuadPart += TotalPacketSize;
 					// add preamble+SFD+FCS to the packet
 					// these values must be considered because are not part of the packet received from NDIS
 					Open->Nbytes.QuadPart += 12;
@@ -1150,35 +1045,10 @@ NPF_TapExForEachOpen(
 
 				//////////////////////////////COPIA.C//////////////////////////////////////////77
 
-				ShouldReleaseBufferLock = TRUE;
-				//NdisDprAcquireSpinLock(&LocalData->BufferLock);
 				NdisAcquireSpinLock(&LocalData->BufferLock);
 
 				do
 				{
-					// Get the whole packet length.
-					TotalPacketSize = PacketSize + HeaderBufferSize;
-					PMDL pCurMdl = pMdl;
-					PMDL pPreMdl;
-					while (TRUE)
-					{
-						pPreMdl = pCurMdl;
-						NdisGetNextMdl(pPreMdl, &pCurMdl);
-
-						if (pCurMdl)
-						{
-							NdisQueryMdl(
-								pCurMdl,
-								&pDataLinkBuffer,
-								&BufferLength,
-								NormalPagePriority);
-							TotalPacketSize += BufferLength;
-						}
-						else
-						{
-							break;
-						}
-					}
 
 					if (fres > TotalPacketSize)
 						fres = TotalPacketSize;
@@ -1205,7 +1075,6 @@ NPF_TapExForEachOpen(
 						break;
 					}
 
-					PUCHAR pHeaderBuffer = HeaderBuffer;
 					UINT iFres = fres;
 
 					// Disable the IEEE802.1Q VLAN feature for now.
@@ -1275,8 +1144,8 @@ NPF_TapExForEachOpen(
 // 					}
 
 					// Add MDLs
-					pCurMdl = pMdl;
-					pPreMdl;
+					PMDL pCurMdl = pMdl;
+					PMDL pPreMdl;
 					while (iFres > 0 || iFres == -1)
 					{
 						UINT CopyLengthForMDL = 0;
@@ -1363,20 +1232,11 @@ NPF_TapExForEachOpen(
 					}
 				} while (FALSE);
 
-				if (ShouldReleaseBufferLock)
-				{
-					//NdisDprReleaseSpinLock(&LocalData->BufferLock);
-					NdisReleaseSpinLock(&LocalData->BufferLock);
-				}
+				NdisReleaseSpinLock(&LocalData->BufferLock);
 
 			} while (FALSE);
 
 NPF_TapExForEachOpen_End:;
-			if (TmpBuffer)
-			{
-				ExFreePool(TmpBuffer);
-				TmpBuffer = NULL;
-			}
 
 			pNetBuf = pNextNetBuf;
 		} // while (pNetBuf != NULL)
