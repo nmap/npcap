@@ -1,3 +1,28 @@
+## Npcap 0.991 [2019-03-14]
+
+* Fix a bug in the BPF packet filter engine that caused capture filters with
+  byte offsets to reject packets due to fragmentation within `NET_BUFFER`
+  structures. See [#1406](http://issues.nmap.org/1406) and
+  [#1438](http://issues.nmap.org/1438).
+
+* Fix a bug that caused several network device drivers to crash when using the
+  `pcap_sendqueue_transmit` function, due to queued network packets being
+  allocated from paged memory that paged out before the drivers accessed it.
+  See [#1398](http://issues.nmap.org/1398).
+
+* Fix a crash (`SYSTEM_EXCEPTION_NOT_HANDLED_M`) in `WSKCloseSocket` due to
+  double-free, reported via Microsoft crash telemetry.
+
+* Fix a BSOD inherited from WinPcap triggered when `PacketGetStats` is called
+  with low system resources. See [#1517](http://issues.nmap.org/1517).
+
+* Properly quote the path to the `CheckStatus.bat` script in the
+  `npcapwatchdog` scheduled task. See [#1513](http://issues.nmap.org/1513).
+
+* Fix errors when installing in WinPcap API-compatible mode over WinPcap when
+  Npcap install directory does not already exist. See
+  [#1456](http://issues.nmap.org/1456).
+
 ## Npcap 0.99-r9 [2019-01-22]
 
 * Install a scheduled task at startup to check whether the Npcap Loopback
