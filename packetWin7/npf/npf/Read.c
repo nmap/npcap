@@ -967,6 +967,7 @@ NPF_TapExForEachOpen(
 				{
 					fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
 						NET_BUFFER_FIRST_MDL(pNetBuf),
+						NET_BUFFER_DATA_OFFSET(pNetBuf),
 						NET_BUFFER_DATA_LENGTH(pNetBuf));
 					IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
 				}

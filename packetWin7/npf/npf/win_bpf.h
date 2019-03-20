@@ -419,6 +419,7 @@ extern "C"
 	  \brief The filtering pseudo-machine interpreter.
 	  \param pc The filter.
 	  \param p Pointer to a Memory Descriptor List (MDL) containing the packet on which the filter will be executed.
+	  \param data_offset The offset to the start of the used data space in the NET_BUFFER structure
 	  \param wirelen Original length of the packet.
 	  \param mem_ex The extended memory.
 	  \param tme The virtualization of the TME co-processor
@@ -430,7 +431,7 @@ extern "C"
 	  that is faster than the interpreter.
 	*/
 #ifdef WIN_NT_DRIVER
-	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int wirelen);
+	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int data_offset, u_int wirelen);
 #else
 #ifdef HAVE_BUGGY_TME_SUPPORT
 	u_int bpf_filter(register struct bpf_insn *pc,

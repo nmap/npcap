@@ -2014,7 +2014,7 @@ Routine Description:
 
 	Filter detach routine.
 	This is a required function that will deallocate all the resources allocated during
-	FilterAttach. NDIS calls FilterAttach to remove a filter instance from a filter stack.
+	FilterAttach. NDIS calls FilterDetach to remove a filter instance from a filter stack.
 
 Arguments:
 

@@ -197,7 +197,7 @@ u_int32 xbyte(PMDL p, u_int32 k, int *err)
 	return CurBuf[k];
 }
 
-u_int bpf_filter(struct bpf_insn *pc, PMDL p, u_int wirelen)
+u_int bpf_filter(struct bpf_insn *pc, PMDL p, u_int data_offset, u_int wirelen)
 #else
 #ifdef HAVE_BUGGY_TME_SUPPORT
 u_int bpf_filter(pc, p, wirelen, buflen, mem_ex, tme, time_ref)
@@ -260,7 +260,7 @@ register u_int buflen;
 			}
 			A = EXTRACT_LONG(&p[k]);
 #else
-			A = xword(p, k, &merr);
+			A = xword(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
@@ -275,7 +275,7 @@ register u_int buflen;
 			}
 			A = EXTRACT_SHORT(&p[k]);
 #else
-			A = xhalf(p, k, &merr);
+			A = xhalf(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
@@ -290,7 +290,7 @@ register u_int buflen;
 			}
 			A = p[k];
 #else
-			A = xbyte(p, k, &merr);
+			A = xbyte(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
@@ -313,7 +313,7 @@ register u_int buflen;
 			}
 			A = EXTRACT_LONG(&p[k]);
 #else
-			A = xword(p, k, &merr);
+			A = xword(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
@@ -328,7 +328,7 @@ register u_int buflen;
 			}
 			A = EXTRACT_SHORT(&p[k]);
 #else
-			A = xhalf(p, k, &merr);
+			A = xhalf(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
@@ -343,7 +343,7 @@ register u_int buflen;
 			}
 			A = p[k];
 #else
-			A = xbyte(p, k, &merr);
+			A = xbyte(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
@@ -358,7 +358,7 @@ register u_int buflen;
 			}
 			X = p[k];
 #else
-			X = xbyte(p, k, &merr);
+			X = xbyte(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
