@@ -608,7 +608,7 @@ NPF_BufferedWrite(
 		RtlCopyMemory(npBuff, UserBuff + Pos, pWinpcapHdr->caplen);
 
 		// Allocate an MDL to map the packet data
-		TmpMdl = IoAllocateMdl(UserBuff + Pos, pWinpcapHdr->caplen, FALSE, FALSE, NULL);
+		TmpMdl = NdisAllocateMdl(Open, UserBuff + Pos, pWinpcapHdr->caplen);
 
 		if (TmpMdl == NULL)
 		{
@@ -653,7 +653,7 @@ NPF_BufferedWrite(
 			if (pNetBufferList == NULL)
 			{
 				// Second failure, report an error
-				IoFreeMdl(TmpMdl);
+				NdisFreeMdl(TmpMdl);
 
 				result = -1;
 				break;
