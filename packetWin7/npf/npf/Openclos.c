@@ -1510,9 +1510,6 @@ NPF_CreateOpenObject(
 	Open->TimeOut.QuadPart = (LONGLONG)1;
 	Open->DumpFileName.Buffer = NULL;
 	Open->DumpFileHandle = NULL;
-#ifdef HAVE_BUGGY_TME_SUPPORT
-	Open->tme.active = TME_NONE_ACTIVE;
-#endif // HAVE_BUGGY_TME_SUPPORT
 	Open->DumpLimitReached = FALSE;
 	Open->MaxFrameSize = 0;
 	Open->WriterSN = 0;

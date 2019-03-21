@@ -97,13 +97,6 @@
 #include "jitter.h"
 #endif
 
-#ifdef HAVE_BUGGY_TME_SUPPORT
-#ifndef _X86_
-#error TME support is available only on x86 architectures
-#endif // _X86_
-#endif //HAVE_BUGGY_TME_SUPPORT
-
-
 #include "win_bpf.h"
 
 #define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel) NdisAcquireSpinLock(_pLock)
@@ -428,10 +421,6 @@ typedef struct _OPEN_INSTANCE
 											///< packets.
 	BOOLEAN					DumpLimitReached;	///< TRUE if the maximum dimension of the dump file (MaxDumpBytes or MaxDumpPacks) is
 											///< reached.
-#ifdef HAVE_BUGGY_TME_SUPPORT
-	MEM_TYPE				mem_ex;			///< Memory used by the TME virtual co-processor
-	TME_CORE				tme;			///< Data structure containing the virtualization of the TME co-processor
-#endif//HAVE_BUGGY_TME_SUPPORT
 
 	NDIS_SPIN_LOCK			MachineLock;	///< SpinLock that protects the BPF filter and the TME engine, if in use.
 	UINT					MaxFrameSize;	///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the

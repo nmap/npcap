@@ -40,9 +40,6 @@
     <ClCompile Include="win_bpf_filter.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="win_bpf_filter_init.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Write.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -106,9 +103,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win_bpf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="win_bpf_filter_init.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

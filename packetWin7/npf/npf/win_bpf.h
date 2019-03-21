@@ -97,10 +97,6 @@
 #include "time_calls.h"
 #endif
 
-#ifdef HAVE_BUGGY_TME_SUPPORT
-#include "tme.h"
-#endif 
-
 typedef	UCHAR u_char;
 typedef	USHORT u_short;
 
@@ -409,11 +405,7 @@ extern "C"
 	  This function returns true if f is a valid filter program. The constraints are that each jump be forward and 
 	  to a valid code.  The code must terminate with either an accept or reject. 
 	*/
-#ifdef HAVE_BUGGY_TME_SUPPORT
-	int bpf_validate(struct bpf_insn* f, int len, uint32 mem_ex_size);
-#else //HAVE_BUGGY_TME_SUPPORT
 	int bpf_validate(struct bpf_insn* f, int len);
-#endif //HAVE_BUGGY_TME_SUPPORT
 
 	/*!
 	  \brief The filtering pseudo-machine interpreter.
@@ -421,9 +413,6 @@ extern "C"
 	  \param p Pointer to a Memory Descriptor List (MDL) containing the packet on which the filter will be executed.
 	  \param data_offset The offset to the start of the used data space in the NET_BUFFER structure
 	  \param wirelen Original length of the packet.
-	  \param mem_ex The extended memory.
-	  \param tme The virtualization of the TME co-processor
-	  \param time_ref Data structure needed by the TME co-processor to timestamp data
 	  \return The portion of the packet to keep, in bytes. 0 means that the packet must be rejected, -1 means that
 	   the whole packet must be kept.
 	  
@@ -433,20 +422,10 @@ extern "C"
 #ifdef WIN_NT_DRIVER
 	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int data_offset, u_int wirelen);
 #else
-#ifdef HAVE_BUGGY_TME_SUPPORT
-	u_int bpf_filter(register struct bpf_insn *pc,
-		register UCHAR *p,
-		u_int wirelen,
-		register u_int buflen,
-		PMEM_TYPE mem_ex,
-		PTME_CORE tme,
-		struct time_conv *time_ref); 
-#else //HAVE_BUGGY_TME_SUPPORT
 	u_int bpf_filter(register struct bpf_insn *pc,
 		register UCHAR *p,
 		u_int wirelen,
 		register u_int buflen);
-#endif //HAVE_BUGGY_TME_SUPPORT
 #endif //WIN_NT_DRIVER
 
 #ifdef __cplusplus

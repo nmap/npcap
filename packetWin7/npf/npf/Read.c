@@ -94,10 +94,6 @@
 #include "ieee80211_radiotap.h"
 #endif
 
-#ifdef HAVE_BUGGY_TME_SUPPORT
-#include "tme.h"
-#endif //HAVE_BUGGY_TME_SUPPORT
-
  //
  // Global variables
  //
@@ -299,107 +295,12 @@ NPF_Read(
 		// The MONITOR_MODE (aka TME extensions) is not supported on
 		// 64 bit architectures
 		//
-#ifdef HAVE_BUGGY_TME_SUPPORT
-
-		if (Open->mode == MODE_MON)   //this capture instance is in monitor mode
-		{
-			PTME_DATA data;
-			ULONG cnt;
-			ULONG block_size;
-			PUCHAR tmp;
-
-#ifdef NDIS50
-			UserPointer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
-#else
-			UserPointer = MmGetSystemAddressForMdl(Irp->MdlAddress);
-#endif
-
-			if (UserPointer == NULL)
-			{
-				NPF_StopUsingOpenInstance(Open);
-				TRACE_EXIT();
-				EXIT_FAILURE(0);
-			}
-
-			if ((!IS_VALIDATED(Open->tme.validated_blocks, Open->tme.active_read)) || (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr)))
-			{
-				NPF_StopUsingOpenInstance(Open);
-				TRACE_EXIT();
-				EXIT_FAILURE(0);
-			}
-
-			header = (struct bpf_hdr *)UserPointer;
-
-			GET_TIME(&header->bh_tstamp, &G_Start_Time);
-
-
-			header->bh_hdrlen = sizeof(struct bpf_hdr);
-
-
-			//moves user memory pointer
-			UserPointer += sizeof(struct bpf_hdr);
-
-			//calculus of data to be copied
-			//if the user buffer is smaller than data to be copied,
-			//only some data will be copied
-			data = &Open->tme.block_data[Open->tme.active_read];
-
-			if (data->last_read.tv_sec != 0)
-				data->last_read = header->bh_tstamp;
-
-
-			bytecopy = data->block_size * data->filled_blocks;
-
-			if ((IrpSp->Parameters.Read.Length - sizeof(struct bpf_hdr)) < bytecopy)
-				bytecopy = (IrpSp->Parameters.Read.Length - sizeof(struct bpf_hdr)) / data->block_size;
-			else
-				bytecopy = data->filled_blocks;
-
-			tmp = data->shared_memory_base_address;
-			block_size = data->block_size;
-
-			for (cnt = 0; cnt < bytecopy; cnt++)
-			{
-				NdisAcquireSpinLock(&Open->MachineLock);
-				RtlCopyMemory(UserPointer, tmp, block_size);
-				NdisReleaseSpinLock(&Open->MachineLock);
-				tmp += block_size;
-				UserPointer += block_size;
-			}
-
-			bytecopy *= block_size;
-
-			header->bh_caplen = bytecopy;
-			header->bh_datalen = header->bh_caplen;
-
-			NPF_StopUsingOpenInstance(Open);
-			TRACE_EXIT();
-			EXIT_SUCCESS(bytecopy + sizeof(struct bpf_hdr));
-		}
-
-		Occupation = 0;
-
-		for (i = 0; i < g_NCpu; i++)
-			Occupation += (Open->Size - Open->CpuData[i].Free);
-
-
-		if (Occupation == 0 || Open->mode & MODE_DUMP)
-							// The timeout has expired, but the buffer is still empty (or the packets must be written to file).
-							// We must awake the application, returning an empty buffer.
-		{
-			NPF_StopUsingOpenInstance(Open);
-			TRACE_EXIT();
-			EXIT_SUCCESS(0);
-		}
-
-#else // not HAVE_BUGGY_TME_SUPPORT
 		if (Open->mode == MODE_MON)   //this capture instance is in monitor mode
 		{
 			NPF_StopUsingOpenInstance(Open);
 			TRACE_EXIT();
 			EXIT_FAILURE(0);
 		}
-#endif // HAVE_BUGGY_TME_SUPPORT
 	}
 
 

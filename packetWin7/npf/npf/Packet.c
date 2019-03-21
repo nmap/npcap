@@ -92,10 +92,6 @@
 #include "win_bpf.h"
 #include "ioctls.h"
 
-#ifdef HAVE_BUGGY_TME_SUPPORT
-#include "win_bpf_filter_init.h"
-#endif //HAVE_BUGGY_TME_SUPPORT
-
 #include "..\..\..\Common\WpcapNames.h"
 
 #ifdef ALLOC_PRAGMA
@@ -1506,24 +1502,6 @@ NPF_IoControl(
 
 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Operative instructions=%u", cnt);
 
-#ifdef HAVE_BUGGY_TME_SUPPORT
-			if ((cnt != insns) && (insns != cnt + 1) && (NewBpfProgram[cnt].code == BPF_SEPARATION))
-			{
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Initialization instructions = %u", insns - cnt - 1);
-
-				IsExtendedFilter = TRUE;
-
-				initprogram = &NewBpfProgram[cnt + 1];
-
-				if (bpf_filter_init(initprogram, &(Open->mem_ex), &(Open->tme), &G_Start_Time) != INIT_OK)
-				{
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error initializing NPF machine (bpf_filter_init)");
-
-					SET_FAILURE_INVALID_REQUEST();
-					break;
-				}
-			}
-#else  // HAVE_BUGGY_TME_SUPPORT
 			if (cnt != insns)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error installing the BPF filter. The filter contains TME extensions,"
@@ -1532,18 +1510,13 @@ NPF_IoControl(
 				SET_FAILURE_INVALID_REQUEST();
 				break;
 			}
-#endif // HAVE_BUGGY_TME_SUPPORT
 
 			//the NPF processor has been initialized, we have to validate the operative instructions
 			insns = cnt;
 
 			//NOTE: the validation code checks for TME instructions, and fails if a TME instruction is
 			//encountered on 64 bit machines
-#ifdef HAVE_BUGGY_TME_SUPPORT
-			if (bpf_validate(NewBpfProgram, cnt, Open->mem_ex.size) == 0)
-#else //HAVE_BUGGY_TME_SUPPORT
 				if (bpf_validate(NewBpfProgram, cnt) == 0)
-#endif //HAVE_BUGGY_TME_SUPPORT
 				{
 					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error validating program");
 					//FIXME: the machine has been initialized(?), but the operative code is wrong.
@@ -1635,12 +1608,7 @@ NPF_IoControl(
 			// 64 bit architectures
 			//
 
-#ifdef HAVE_BUGGY_TME_SUPPORT
-			Open->mode = MODE_MON;
-			SET_RESULT_SUCCESS(0);
-#else // HAVE_BUGGY_TME_SUPPORT
 			SET_FAILURE_INVALID_REQUEST();
-#endif // HAVE_BUGGY_TME_SUPPORT
 
 			break;
 		}

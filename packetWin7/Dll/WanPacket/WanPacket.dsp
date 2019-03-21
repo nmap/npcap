@@ -120,10 +120,6 @@ SOURCE=..\..\driver\tcp_session.c
 
 SOURCE=..\..\driver\tme.c
 # End Source File
-# Begin Source File
-
-SOURCE=..\..\driver\win_bpf_filter_init.c
-# End Source File
 # End Group
 # Begin Source File
 
@@ -175,10 +171,6 @@ SOURCE=..\..\driver\tme.h
 # Begin Source File
 
 SOURCE=..\..\driver\valid_insns.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\driver\win_bpf_filter_init.h
 # End Source File
 # End Group
 # Begin Source File

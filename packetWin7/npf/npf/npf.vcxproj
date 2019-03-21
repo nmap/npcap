@@ -411,7 +411,6 @@
     <ClCompile Include="tcp_session.c" />
     <ClCompile Include="tme.c" />
     <ClCompile Include="win_bpf_filter.c" />
-    <ClCompile Include="win_bpf_filter_init.c" />
     <ClCompile Include="Write.c" />
   </ItemGroup>
   <ItemGroup>
@@ -434,7 +433,6 @@
     <ClInclude Include="tme.h" />
     <ClInclude Include="valid_insns.h" />
     <ClInclude Include="win_bpf.h" />
-    <ClInclude Include="win_bpf_filter_init.h" />
   </ItemGroup>
   <ItemGroup>
     <Inf Include="npf.inf" Condition="'$(Configuration)'=='Win7 Debug(WinPcap Mode)'" />
