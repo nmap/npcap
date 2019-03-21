@@ -1635,7 +1635,7 @@ NPF_AttachAdapter(
 		ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
 		if (FilterDriverContext != (NDIS_HANDLE)FilterDriverObject)
 		{
-			Status = NDIS_STATUS_INVALID_PARAMETER;
+			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
 			break;
 		}
 
