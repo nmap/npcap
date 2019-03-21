@@ -967,8 +967,8 @@ NPF_TapExForEachOpen(
 				{
 					fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
 						NET_BUFFER_FIRST_MDL(pNetBuf),
-						NET_BUFFER_DATA_OFFSET(pNetBuf),
-						NET_BUFFER_DATA_LENGTH(pNetBuf));
+						Offset,
+						TotalPacketSize);
 					IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
 				}
 
@@ -1051,7 +1051,7 @@ NPF_TapExForEachOpen(
 				do
 				{
 
-					if (fres > TotalPacketSize)
+					if (fres > TotalPacketSize || fres == -1)
 						fres = TotalPacketSize;
 
 					if (fres + sizeof(struct PacketHeader)
@@ -1145,68 +1145,51 @@ NPF_TapExForEachOpen(
 // 					}
 
 					// Add MDLs
-					PMDL pCurMdl = pMdl;
-					PMDL pPreMdl;
-					while (iFres > 0 || iFres == -1)
+					while (pMdl != NULL && iFres > 0)
 					{
 						UINT CopyLengthForMDL = 0;
-						if (pCurMdl)
+						NdisQueryMdl(
+							pMdl,
+							&pDataLinkBuffer,
+							&BufferLength,
+							NormalPagePriority);
+
+						BufferLength -= Offset;
+						pDataLinkBuffer += Offset;
+
+						CopyLengthForMDL = min(iFres, BufferLength);
+
+						if (LocalData->P == Open->Size)
 						{
-							NdisQueryMdl(
-								pCurMdl,
-								&pDataLinkBuffer,
-								&BufferLength,
-								NormalPagePriority);
+							LocalData->P = 0;
+						}
 
-							// The first MDL, need to handle the offset.
-							if (pCurMdl == pMdl)
-							{
-								IF_LOUD(DbgPrint("The 1st MDL, (Original) MdlSize = %d, Offset = %d\n", BufferLength, Offset);)
-								BufferLength -= Offset;
-								pDataLinkBuffer += Offset;
-							}
+						if (Open->Size - LocalData->P < CopyLengthForMDL)
+						{
+							//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
+							//two copies!!
+							ToCopy = Open->Size - LocalData->P;
+							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, ToCopy);
+							NdisMoveMappedMemory(LocalData->Buffer + 0, pDataLinkBuffer + ToCopy, CopyLengthForMDL - ToCopy);
+							LocalData->P = CopyLengthForMDL - ToCopy;
 
-							if (iFres != -1)
-								CopyLengthForMDL = min(iFres, BufferLength);
-							else
-								CopyLengthForMDL = BufferLength;
-
-							if (LocalData->P == Open->Size)
-							{
-								LocalData->P = 0;
-							}
-
-							if (Open->Size - LocalData->P < CopyLengthForMDL)
-							{
-								//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
-								//two copies!!
-								ToCopy = Open->Size - LocalData->P;
-								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, ToCopy);
-								NdisMoveMappedMemory(LocalData->Buffer + 0, pDataLinkBuffer + ToCopy, CopyLengthForMDL - ToCopy);
-								LocalData->P = CopyLengthForMDL - ToCopy;
-
-								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
-							}
-							else
-							{
-								NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, CopyLengthForMDL);
-								LocalData->P += CopyLengthForMDL;
-
-								IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
-							}
-
-							increment += CopyLengthForMDL;
-							Header->header.bh_caplen += CopyLengthForMDL;
-							if (iFres != -1)
-								iFres -= CopyLengthForMDL;
+							IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
 						}
 						else
 						{
-							break;
+							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, CopyLengthForMDL);
+							LocalData->P += CopyLengthForMDL;
+
+							IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
 						}
 
-						pPreMdl = pCurMdl;
-						NdisGetNextMdl(pPreMdl, &pCurMdl);
+						increment += CopyLengthForMDL;
+						Header->header.bh_caplen += CopyLengthForMDL;
+						iFres -= CopyLengthForMDL;
+
+						/* Offset only matters for first MDL. */
+						Offset = 0;
+						NdisGetNextMdl(pMdl, &pMdl);
 					}
 
 					IF_LOUD(DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);)
