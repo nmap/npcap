@@ -1128,10 +1128,6 @@ Return Value:
 	// Release WSK resources.
 	NPF_WSKFreeSockets();
 	NPF_WSKCleanup();
-
-	// Release WFP resources.
-	NPF_FreeInjectionHandles();
-	NPF_UnregisterCallouts();
 #endif
 
 #ifdef HAVE_RX_SUPPORT
