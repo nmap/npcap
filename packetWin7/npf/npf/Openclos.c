@@ -1357,7 +1357,6 @@ NPF_DuplicateOpenObject(
 	  return NULL;
   }
 	Open->AdapterHandle = OriginalOpen->AdapterHandle;
-	Open->DirectBinded = FALSE;
 	Open->MaxFrameSize = OriginalOpen->MaxFrameSize;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	Open->Loopback = OriginalOpen->Loopback;
@@ -1404,7 +1403,6 @@ NPF_CreateOpenObject(
 	Open->OpenSignature = OPEN_SIGNATURE;
 	Open->DeviceExtension = DeviceExtension; //can be NULL before any actual bindings.
 	Open->AdapterBindingStatus = FilterAttaching;
-	Open->DirectBinded = TRUE;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	Open->Loopback = FALSE;
 #endif

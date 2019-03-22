@@ -337,7 +337,6 @@ typedef struct _OPEN_INSTANCE
 {
 	ULONG OpenSignature;
 	NDIS_STRING				AdapterName;
-	BOOLEAN					DirectBinded;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	BOOLEAN					Loopback;
 #endif
