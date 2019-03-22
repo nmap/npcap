@@ -375,7 +375,6 @@ typedef struct _OPEN_INSTANCE
 	KSPIN_LOCK				RequestSpinLock;///< SpinLock used to synchronize the OID requests.
 	LIST_ENTRY				RequestList;	///< List of pending OID requests.
 	INTERNAL_REQUEST		Requests[MAX_REQUESTS]; ///< Array of structures that wrap every single OID request.
-	PMDL					BufferMdl;		///< Pointer to a Memory descriptor list (MDL) that maps the circular buffer's memory.
 	PKEVENT					ReadEvent;		///< Pointer to the event on which the read calls on this instance must wait.
 	PUCHAR					bpfprogram;		///< Pointer to the filtering pseudo-code associated with current instance of the driver.
 											///< This code is used only in particular situations (for example when the packet received
@@ -404,7 +403,6 @@ typedef struct _OPEN_INSTANCE
 	NDIS_SPIN_LOCK			WriteLock;		///< SpinLock that protects the WriteInProgress variable.
 	NDIS_EVENT				NdisRequestEvent;	///< Event used to synchronize I/O requests with the callback structure of NDIS.
 	BOOLEAN					SkipSentPackets;	///< True if this instance should not capture back the packets that it transmits.
-	NDIS_STATUS				IOStatus;		///< Maintains the status of and OID request call, that will be passed to the application.
 	HANDLE					DumpFileHandle;	///< Handle of the file used in dump mode.
 	PFILE_OBJECT			DumpFileObject;	///< Pointer to the object of the file used in dump mode.
 	PKTHREAD				DumpThreadObject;	///< Pointer to the object of the thread used in dump mode.
