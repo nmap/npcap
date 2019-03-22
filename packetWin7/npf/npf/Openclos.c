@@ -1453,9 +1453,6 @@ NPF_CreateOpenObject(
 
 	NdisInitializeEvent(&Open->NdisOpenCloseCompleteEvent);
 
-	//  list to hold irp's want to reset the adapter
-	InitializeListHead(&Open->ResetIrpList);
-
 	//  Initialize the request list
 	KeInitializeSpinLock(&Open->RequestSpinLock);
 	InitializeListHead(&Open->RequestList);

@@ -374,7 +374,6 @@ typedef struct _OPEN_INSTANCE
 	NDIS_HANDLE				PacketPool;		///< Pool of NDIS_PACKET structures used to transfer the packets from and to the NIC driver.
 	KSPIN_LOCK				RequestSpinLock;///< SpinLock used to synchronize the OID requests.
 	LIST_ENTRY				RequestList;	///< List of pending OID requests.
-	LIST_ENTRY				ResetIrpList;	///< List of pending adapter reset requests.
 	INTERNAL_REQUEST		Requests[MAX_REQUESTS]; ///< Array of structures that wrap every single OID request.
 	PMDL					BufferMdl;		///< Pointer to a Memory descriptor list (MDL) that maps the circular buffer's memory.
 	PKEVENT					ReadEvent;		///< Pointer to the event on which the read calls on this instance must wait.
