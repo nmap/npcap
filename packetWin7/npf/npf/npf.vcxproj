@@ -397,19 +397,13 @@
     <FilesToPackage Include="@(Inf->'%(CopyOutput)')" Condition="'@(Inf)'!=''" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bucket_lookup.c" />
-    <ClCompile Include="count_packets.c" />
     <ClCompile Include="dump.c" />
-    <ClCompile Include="functions.c" />
     <ClCompile Include="jitter.c" />
     <ClCompile Include="Loopback.c" />
     <ClCompile Include="Lo_send.c" />
-    <ClCompile Include="normal_lookup.c" />
     <ClCompile Include="Openclos.c" />
     <ClCompile Include="Packet.c" />
     <ClCompile Include="Read.c" />
-    <ClCompile Include="tcp_session.c" />
-    <ClCompile Include="tme.c" />
     <ClCompile Include="win_bpf_filter.c" />
     <ClCompile Include="Write.c" />
   </ItemGroup>
