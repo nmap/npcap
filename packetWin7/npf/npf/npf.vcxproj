@@ -408,23 +408,16 @@
     <ClCompile Include="Write.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bucket_lookup.h" />
-    <ClInclude Include="count_packets.h" />
     <ClInclude Include="DEBUG.H" />
-    <ClInclude Include="functions.h" />
     <ClInclude Include="ieee80211_radiotap.h" />
     <ClInclude Include="ioctls.h" />
     <ClInclude Include="jitter.h" />
     <ClInclude Include="Loopback.h" />
     <ClInclude Include="Lo_send.h" />
     <ClInclude Include="macros.h" />
-    <ClInclude Include="memory_t.h" />
-    <ClInclude Include="normal_lookup.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="tcp_session.h" />
     <ClInclude Include="time_calls.h" />
-    <ClInclude Include="tme.h" />
     <ClInclude Include="valid_insns.h" />
     <ClInclude Include="win_bpf.h" />
   </ItemGroup>

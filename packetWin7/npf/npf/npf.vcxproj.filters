@@ -30,16 +30,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bucket_lookup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="count_packets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DEBUG.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ieee80211_radiotap.h">
@@ -60,25 +51,13 @@
     <ClInclude Include="macros.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="memory_t.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="normal_lookup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Packet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tcp_session.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="time_calls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="tme.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="valid_insns.h">

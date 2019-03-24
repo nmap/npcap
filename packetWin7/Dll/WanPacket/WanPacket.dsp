@@ -142,34 +142,6 @@ SOURCE=..\..\driver\win_bpf_filter.c
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=..\..\driver\bucket_lookup.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\driver\count_packets.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\driver\functions.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\driver\memory_t.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\driver\normal_lookup.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\driver\tcp_session.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\driver\tme.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\driver\valid_insns.h
 # End Source File
 # End Group
