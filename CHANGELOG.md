@@ -1,3 +1,27 @@
+## Npcap 0.992 [2019-03-24]
+
+* Update libpcap to 1.9.0. See [the libpcap CHANGES
+  file](https://github.com/the-tcpdump-group/libpcap/blob/libpcap-1.9.0/CHANGES)
+  for this release and [#1506](http://issues.nmap.org/1506).
+
+* Fix a bug in the fix for [#1406](http://issues.nmap.org/1406) that caused
+  capture filters to reject all packets when the packet header was offset from
+  the start of the kernel data structure.
+
+* Fix a bug in the fix for [#1398](http://issues.nmap.org/1398) that caused
+  BSoD (`BAD_POOL_CALLER`) due to mismatch in functions used to allocate and
+  free a data structure.
+
+* Remove installer interface option "Use DLT_NULL as the loopback interface'
+  link layer protocol instead of DLT_EN10MB." Command-line and registry
+  settings are still respected, but `DLT_NULL` will be the default for all new
+  installations.
+
+* Remove installer interface option "Support 802.1Q VLAN tag when capturing and
+  sending data," which was unsupported for three years. Support may be restored
+  in future releases, but the option has not had any effect in earlier
+  installers.
+
 ## Npcap 0.991 [2019-03-14]
 
 * Fix a bug in the BPF packet filter engine that caused capture filters with
