@@ -250,21 +250,12 @@ typedef struct _INTERNAL_REQUEST
 } INTERNAL_REQUEST, *PINTERNAL_REQUEST;
 
 /*!
-  \brief Contains a NDIS packet.
-
-  The driver uses this structure to wrap a NDIS_PACKET  structure.
-  This allows to handle correctly the callback structure of NdisTransferData(), handling multiple requests and
-  maintaining information about the IRPs to complete.
+  \brief Context information for originated sent packets
 */
 typedef struct _PACKET_RESERVED
 {
-	LIST_ENTRY	ListElement;		///< Used to handle lists of packets. ((NO USE!!)
 	BOOLEAN		FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
 	PVOID		ChildOpen;			///< The child open pointer that binded the group head open.
-	PIRP		Irp;				///< Irp that performed the request.
-	// PMDL		pMdl;				///< MDL mapping the buffer of the packet. (NO USE!! also no space for this variable)
-									///< after a call to NdisSend().
-	// ULONG	Cpu;				///< The CPU on which the packet was pulled out of the linked list of free packets (NO USE!! also no space for this variable)
 }  PACKET_RESERVED, *PPACKET_RESERVED;
 
 #define RESERVED(_p) ((PPACKET_RESERVED)((_p)->ProtocolReserved)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
