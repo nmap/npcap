@@ -250,17 +250,6 @@ typedef struct _INTERNAL_REQUEST
 } INTERNAL_REQUEST, *PINTERNAL_REQUEST;
 
 /*!
-  \brief Context information for originated sent packets
-*/
-typedef struct _PACKET_RESERVED
-{
-	BOOLEAN		FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
-	PVOID		ChildOpen;			///< The child open pointer that binded the group head open.
-}  PACKET_RESERVED, *PPACKET_RESERVED;
-
-#define RESERVED(_p) ((PPACKET_RESERVED)((_p)->ProtocolReserved)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
-
-/*!
   \brief Port device extension.
 
   Structure containing some data relative to every adapter on which NPF is bound.
@@ -432,6 +421,17 @@ typedef struct _OPEN_INSTANCE
 	NDIS_SPIN_LOCK			OpenInUseLock;
 }
 OPEN_INSTANCE, *POPEN_INSTANCE;
+
+/*!
+\brief Context information for originated sent packets
+*/
+typedef struct _PACKET_RESERVED
+{
+	BOOLEAN		FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
+	POPEN_INSTANCE		ChildOpen;			///< The child open pointer that binded the group head open.
+}  PACKET_RESERVED, *PPACKET_RESERVED;
+
+#define RESERVED(_p) ((PPACKET_RESERVED)((_p)->Context->ContextData + (_p)->Context->Offset)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
 
 /*!
   \brief Structure prepended to each packet in the kernel buffer pool.

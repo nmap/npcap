@@ -237,7 +237,7 @@ NPF_Write(
 		 * using the MDL in the IRP because the device was created with
 		 * DO_DIRECT_IO. */
 		pNetBufferList = NdisAllocateNetBufferAndNetBufferList(Open->PacketPool,
-			0,
+			sizeof(PACKET_RESERVED),
 			0,
 			Irp->MdlAddress,
 			0,
@@ -262,9 +262,6 @@ NPF_Write(
 
 			// The packet hasn't a buffer that needs not to be freed after every single write
 			RESERVED(pNetBufferList)->FreeBufAfterWrite = FALSE;
-
-			// Save the IRP associated with the packet
-			// RESERVED(pPacket)->Irp=Irp;
 
 			// Attach the writes buffer to the packet
 
@@ -328,7 +325,7 @@ NPF_Write(
 #endif
 
 			pNetBufferList->SourceHandle = Open->AdapterHandle;
-			NPFSetNBLChildOpen(pNetBufferList, Open); //save the child open object in the packets
+			RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
 			//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
 			// Recognize IEEE802.1Q tagged packet, as no many adapters support VLAN tag packet sending, no much use for end users,
@@ -626,7 +623,7 @@ NPF_BufferedWrite(
 		// Allocate a packet from our free list
 		pNetBufferList = NdisAllocateNetBufferAndNetBufferList(
 			Open->PacketPool,
-			0,
+			sizeof(PACKET_RESERVED),
 			0,
 			TmpMdl,
 			0,
@@ -644,7 +641,7 @@ NPF_BufferedWrite(
 			// Try again to allocate a packet
 			pNetBufferList = NdisAllocateNetBufferAndNetBufferList(
 				Open->PacketPool,
-				0,
+				sizeof(PACKET_RESERVED),
 				0,
 				TmpMdl,
 				0,
@@ -716,7 +713,7 @@ NPF_BufferedWrite(
 		NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
 
 		pNetBufferList->SourceHandle = Open->AdapterHandle;
-		NPFSetNBLChildOpen(pNetBufferList, Open); //save the child open object in the packets
+		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
 		//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
 		//
@@ -970,7 +967,7 @@ Return Value:
 
 		if (pNetBufList->SourceHandle == Open->AdapterHandle) //this is our self-sent packets
 		{
-			ChildOpen = NPFGetNBLChildOpen(pNetBufList); //get the child open object that sends these packets
+			ChildOpen = RESERVED(pNetBufList)->ChildOpen; //get the child open object that sends these packets
 			FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
 
 			NPF_FreePackets(pNetBufList);
