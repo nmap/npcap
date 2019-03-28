@@ -3415,6 +3415,7 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 	else
 	{
 		TRACE_PRINT1("Request to write on an unknown device type (%u)", AdapterObject->Flags);
+		SetLastError(ERROR_BAD_DEV_TYPE);
 		TotBytesTransfered = 0;
 	}
 
