@@ -662,10 +662,16 @@ NPF_TapExForEachOpen(
 			PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) Dot11RadiotapHeader;
 			UINT cur = 0;
 
+			pwInfo = NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation);
+			if (pwInfo->Header.Type != NDIS_OBJECT_TYPE_DEFAULT
+				|| pwInfo->Header.Revision != DOT11_EXTSTA_RECV_CONTEXT_REVISION_1
+				|| pwInfo->Header.Size != sizeof(DOT11_EXTSTA_RECV_CONTEXT)) {
+				// This isn't the information we're looking for. Move along.
+				goto RadiotapDone;
+			}
+
 			// The radiotap header is also placed in the buffer.
 			cur += sizeof(IEEE80211_RADIOTAP_HEADER) / sizeof(UCHAR);
-
-			pwInfo = NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation);
 
 			// [Radiotap] "TSFT" field.
 			// Size: 8 bytes, Alignment: 8 bytes.
@@ -806,6 +812,7 @@ NPF_TapExForEachOpen(
 			pRadiotapHeader->it_version = 0x0;
 			pRadiotapHeader->it_len = (USHORT) Dot11RadiotapHeaderSize;
 		}
+	RadiotapDone:;
 #endif
 
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
