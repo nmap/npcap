@@ -1440,13 +1440,13 @@ NPF_IoControl(
 		Open->WriteInProgress = FALSE;
 		NdisReleaseSpinLock(&Open->WriteLock);
 
-		if (WriteRes != -1)
+		if (WriteRes >= 0)
 		{
 			SET_RESULT_SUCCESS(WriteRes);
 		}
 		else
 		{
-			SET_FAILURE_UNSUCCESSFUL();
+			SET_FAILURE_CUSTOM(-WriteRes);
 		}
 		break;
 

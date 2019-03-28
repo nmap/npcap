@@ -494,14 +494,14 @@ NPF_BufferedWrite(
 	if (!NPF_IsOpenInstance(Open))
 	{
 		TRACE_EXIT();
-		return 0;
+		return -STATUS_INVALID_HANDLE;
 	}
 
 	if (!Open->GroupHead || NPF_StartUsingBinding(Open->GroupHead) == FALSE)
 	{
 		// The Network adapter was removed. 
 		TRACE_EXIT();
-		return 0;
+		return -STATUS_DEVICE_DOES_NOT_EXIST;
 	}
 
 	// Sanity check on the user buffer
@@ -512,7 +512,7 @@ NPF_BufferedWrite(
 		//
 		NPF_StopUsingBinding(Open->GroupHead);
 		TRACE_EXIT();
-		return 0;
+		return -STATUS_INVALID_PARAMETER;
 	}
 
 	// Check that the MaxFrameSize is correctly initialized
@@ -525,7 +525,7 @@ NPF_BufferedWrite(
 		//
 		NPF_StopUsingBinding(Open->GroupHead);
 		TRACE_EXIT();
-		return 0;
+		return -STATUS_UNSUCCESSFUL;
 	}
 
 	// Reset the event used to synchronize packet allocation
@@ -556,7 +556,7 @@ NPF_BufferedWrite(
 			// Malformed header
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-			result = -1;
+			result = -STATUS_INVALID_PARAMETER;
 			break;
 		}
 
@@ -567,7 +567,7 @@ NPF_BufferedWrite(
 			// Malformed header
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-			result = -1;
+			result = -STATUS_INVALID_PARAMETER;
 			break;
 		}
 
@@ -588,7 +588,7 @@ NPF_BufferedWrite(
 			//
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-			result = -1;
+			result = -STATUS_INVALID_PARAMETER;
 			break;
 		}
 
@@ -599,7 +599,7 @@ NPF_BufferedWrite(
 		if (npBuff == NULL)
 		{
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
-			result = -1;
+			result = -STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
 		RtlCopyMemory(npBuff, UserBuff + Pos, pWinpcapHdr->caplen);
@@ -612,7 +612,7 @@ NPF_BufferedWrite(
 			// Unable to map the memory: packet lost
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate the MDL.\n");)
 
-			result = -1;
+			result = -STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
 
@@ -652,7 +652,7 @@ NPF_BufferedWrite(
 				// Second failure, report an error
 				NdisFreeMdl(TmpMdl);
 
-				result = -1;
+				result = -STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
 		}
@@ -690,7 +690,7 @@ NPF_BufferedWrite(
 			// The adapter is pending to pause, so we don't send the packets.
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: the adapter is pending to pause, unable to send the packets.\n");)
 
-			result = -1;
+			result = -STATUS_OPERATION_IN_PROGRESS;
 			break;
 		}
 
@@ -763,7 +763,7 @@ NPF_BufferedWrite(
 				// Malformed header
 				IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-				result = -1;
+				result = -STATUS_INVALID_PARAMETER;
 				break;
 			}
 
@@ -774,7 +774,7 @@ NPF_BufferedWrite(
 				// Malformed header
 				IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-				result = -1;
+				result = -STATUS_INVALID_PARAMETER;
 				break;
 			}
 
