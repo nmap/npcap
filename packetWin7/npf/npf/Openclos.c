@@ -1776,8 +1776,6 @@ NPF_AttachAdapter(
 		}
 #endif
 
-		returnStatus = STATUS_SUCCESS;
-
 		NdisZeroMemory(&FilterAttributes, sizeof(NDIS_FILTER_ATTRIBUTES));
 		FilterAttributes.Header.Revision = NDIS_FILTER_ATTRIBUTES_REVISION_1;
 		FilterAttributes.Header.Size = sizeof(NDIS_FILTER_ATTRIBUTES);
@@ -1793,62 +1791,64 @@ NPF_AttachAdapter(
 		{
 			returnStatus = Status;
 			IF_LOUD(DbgPrint("NdisFSetAttributes: error, Status=%x.\n", Status);)
-			NPF_ReleaseOpenInstanceResources(Open);
-			//
-			// Free the open instance itself
-			//
-			ExFreePool(Open);
+			break;
 		}
-		else
-		{
-			Open->AdapterHandle = NdisFilterHandle;
-			Open->HigherPacketFilter = NPF_GetPacketFilter(Open);
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-				"HigherPacketFilter=%x",
-				Open->HigherPacketFilter);
 
-			Open->PhysicalMedium = NPF_GetPhysicalMedium(Open);
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-				"PhysicalMedium=%x",
-				Open->PhysicalMedium);
+		Open->AdapterHandle = NdisFilterHandle;
+		Open->HigherPacketFilter = NPF_GetPacketFilter(Open);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"HigherPacketFilter=%x",
+			Open->HigherPacketFilter);
+
+		Open->PhysicalMedium = NPF_GetPhysicalMedium(Open);
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"PhysicalMedium=%x",
+			Open->PhysicalMedium);
 
 #ifdef HAVE_DOT11_SUPPORT
-			if (g_Dot11SupportMode && bDot11)
-			{
-				// Handling raw 802.11 packets need to set NDIS_PACKET_TYPE_802_11_RAW_DATA and NDIS_PACKET_TYPE_802_11_RAW_MGMT in the packet filter.
-				Open->Dot11 = bDot11;
-				Open->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
-				ULONG combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
-				Status = NPF_SetPacketFilter(Open, combinedPacketFilter);
+		if (g_Dot11SupportMode && bDot11)
+		{
+			// Handling raw 802.11 packets need to set NDIS_PACKET_TYPE_802_11_RAW_DATA and NDIS_PACKET_TYPE_802_11_RAW_MGMT in the packet filter.
+			Open->Dot11 = bDot11;
+			Open->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
+			ULONG combinedPacketFilter = Open->HigherPacketFilter | Open->MyPacketFilter | Open->Dot11PacketFilter;
+			Status = NPF_SetPacketFilter(Open, combinedPacketFilter);
 
-				TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-					"NPF_SetPacketFilter, Status=%x, Dot11PacketFilter=%x",
-					Status,
-					Open->Dot11PacketFilter);
-			}
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+				"NPF_SetPacketFilter, Status=%x, Dot11PacketFilter=%x",
+				Status,
+				Open->Dot11PacketFilter);
+		}
 #endif
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			TRACE_MESSAGE4(PACKET_DEBUG_LOUD,
-				"Opened the device %ws, BindingContext=%p, Loopback=%d, dot11=%d",
-				AttachParameters->BaseMiniportName->Buffer,
-				Open,
-				Open->Loopback,
-				Open->Dot11);
+		TRACE_MESSAGE4(PACKET_DEBUG_LOUD,
+			"Opened the device %ws, BindingContext=%p, Loopback=%d, dot11=%d",
+			AttachParameters->BaseMiniportName->Buffer,
+			Open,
+			Open->Loopback,
+			Open->Dot11);
 #else
-			TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
-				"Opened the device %ws, BindingContext=%p, Loopback=<Not supported>, dot11=%d",
-				AttachParameters->BaseMiniportName->Buffer,
-				Open,
-				Open->Dot11);
+		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+			"Opened the device %ws, BindingContext=%p, Loopback=<Not supported>, dot11=%d",
+			AttachParameters->BaseMiniportName->Buffer,
+			Open,
+			Open->Dot11);
 #endif
 
-			returnStatus = STATUS_SUCCESS;
-			NPF_AddToOpenArray(Open);
-		}
+		returnStatus = STATUS_SUCCESS;
+		NPF_AddToOpenArray(Open);
 	}
 	while (bFalse);
 
+	if (!NT_SUCCESS(returnStatus) && Open != NULL) {
+		NPF_ReleaseOpenInstanceResources(Open);
+		//
+		// Free the open instance itself
+		//
+		ExFreePool(Open);
+		Open = NULL;
+	}
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "returnStatus=%x", returnStatus);
 	TRACE_EXIT();
 	return returnStatus;
