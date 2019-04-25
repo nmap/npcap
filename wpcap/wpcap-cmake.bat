@@ -1,6 +1,6 @@
 set CMAKE="C:\Program Files\CMake\bin\cmake.exe"
 set GENERATOR=Visual Studio 14 2015
-set NPCAP_SDK=..\..\npcap-sdk-1.0\
+set NPCAP_SDK=..\..\npcap-sdk-1.01\
 
 mkdir build-win32
 cd build-win32
