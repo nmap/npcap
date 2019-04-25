@@ -1588,6 +1588,7 @@ NPF_AttachAdapter(
 	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
 	BOOLEAN					bFalse = FALSE;
 	BOOLEAN					bDot11;
+	BOOLEAN IsLoopback;
 
 	TRACE_ENTER();
 
@@ -1682,15 +1683,6 @@ NPF_AttachAdapter(
 // 			break;
 // 		}
 
-		// create the adapter object
-		Open = NPF_CreateOpenObject(AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType, NULL);
-		if (Open == NULL)
-		{
-			returnStatus = NDIS_STATUS_RESOURCES;
-			TRACE_EXIT();
-			return returnStatus;
-		}
-
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is our loopback adapter for the open_instance.
 		if (g_LoopbackAdapterName.Buffer != NULL)
@@ -1698,8 +1690,6 @@ NPF_AttachAdapter(
 			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
 				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
 			{
-				Open->Loopback = TRUE;
-				g_LoopbackOpenGroupHead = Open;
 				if ((g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
 				{
 					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, init WSK injection handles and register callouts", g_LoopbackDevObj);
@@ -1725,11 +1715,31 @@ NPF_AttachAdapter(
 				{
 					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, NO need to init WSK code", g_LoopbackDevObj);
 				}
+				IsLoopback = TRUE;
 			}
 		}
 		else
 		{
 			IF_LOUD(DbgPrint("NPF_AttachAdapter: g_LoopbackAdapterName.Buffer=NULL\n");)
+		}
+#endif /* HAVE_WFP_LOOPBACK_SUPPORT */
+
+		// create the adapter object
+		Open = NPF_CreateOpenObject(AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType, NULL);
+		if (Open == NULL)
+		{
+			returnStatus = NDIS_STATUS_RESOURCES;
+			TRACE_EXIT();
+			return returnStatus;
+		}
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		// Determine whether this is our loopback adapter for the open_instance.
+		if (IsLoopback)
+		{
+			ASSERT(g_LoopbackOpenGroupHead == NULL);
+			Open->Loopback = TRUE;
+			g_LoopbackOpenGroupHead = Open;
 		}
 #endif
 
