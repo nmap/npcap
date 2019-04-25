@@ -1424,7 +1424,7 @@ NPF_CreateOpenObject(
 	PoolParameters.Header.Size = NDIS_SIZEOF_NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
 	PoolParameters.ProtocolId = NDIS_PROTOCOL_ID_DEFAULT;
 	PoolParameters.fAllocateNetBuffer = TRUE;
-	PoolParameters.ContextSize = 0;
+	PoolParameters.ContextSize = sizeof(PACKET_RESERVED);
 	PoolParameters.PoolTag = NPF_ALLOC_TAG;
 	PoolParameters.DataSize = 0;
 
