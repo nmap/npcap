@@ -297,6 +297,33 @@ NPF_OpenAdapter(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (Open->Loopback)
 	{
+		if (g_LoopbackDevObj != NULL && g_WFPEngineHandle == INVALID_HANDLE_VALUE)
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, init WSK injection handles and register callouts", g_LoopbackDevObj);
+			// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
+			Status = NPF_InitInjectionHandles();
+			if (!NT_SUCCESS(Status))
+			{
+				goto NPF_OpenAdapter_End;
+			}
+
+			Status = NPF_RegisterCallouts(g_LoopbackDevObj);
+			if (!NT_SUCCESS(Status))
+			{
+				if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+				{
+					NPF_UnregisterCallouts();
+				}
+
+				goto NPF_OpenAdapter_End;
+			}
+		}
+		else
+
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, NO need to init WSK code", g_LoopbackDevObj);
+		}
+
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "This is loopback adapter, set MTU to: %u", NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
 		Open->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
 		Status = STATUS_SUCCESS;
@@ -329,6 +356,8 @@ NPF_OpenAdapter(
 		}
 	}
 #endif
+
+NPF_OpenAdapter_End:;
 
 	if (!NT_SUCCESS(Status))
 	{
@@ -1589,7 +1618,6 @@ NPF_AttachAdapter(
 	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
 	BOOLEAN					bFalse = FALSE;
 	BOOLEAN					bDot11;
-	BOOLEAN IsLoopback;
 
 	TRACE_ENTER();
 
@@ -1684,47 +1712,6 @@ NPF_AttachAdapter(
 // 			break;
 // 		}
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		// Determine whether this is our loopback adapter for the open_instance.
-		if (g_LoopbackAdapterName.Buffer != NULL)
-		{
-			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
-				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
-			{
-				if ((g_LoopbackDevObj != NULL) && (g_WFPEngineHandle == INVALID_HANDLE_VALUE))
-				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, init WSK injection handles and register callouts", g_LoopbackDevObj);
-					// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
-					Status = NPF_InitInjectionHandles();
-					if (!NT_SUCCESS(Status))
-					{
-						NPF_FreeInjectionHandles();
-						returnStatus = Status;
-						break;
-					}
-
-					Status = NPF_RegisterCallouts(g_LoopbackDevObj);
-					if (!NT_SUCCESS(Status))
-					{
-						NPF_FreeInjectionHandles();
-						NPF_UnregisterCallouts();
-						returnStatus = Status;
-						break;
-					}
-				}
-				else
-				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, NO need to init WSK code", g_LoopbackDevObj);
-				}
-				IsLoopback = TRUE;
-			}
-		}
-		else
-		{
-			IF_LOUD(DbgPrint("NPF_AttachAdapter: g_LoopbackAdapterName.Buffer=NULL\n");)
-		}
-#endif /* HAVE_WFP_LOOPBACK_SUPPORT */
-
 		// create the adapter object
 		Open = NPF_CreateOpenObject(AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType, NULL);
 		if (Open == NULL)
@@ -1736,11 +1723,15 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is our loopback adapter for the open_instance.
-		if (IsLoopback)
+		if (g_LoopbackAdapterName.Buffer != NULL)
 		{
-			ASSERT(g_LoopbackOpenGroupHead == NULL);
-			Open->Loopback = TRUE;
-			g_LoopbackOpenGroupHead = Open;
+			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
+				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+			{
+				ASSERT(g_LoopbackOpenGroupHead == NULL);
+				Open->Loopback = TRUE;
+				g_LoopbackOpenGroupHead = Open;
+			}
 		}
 #endif
 
@@ -2041,9 +2032,6 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	if (Open->Loopback && Open == g_LoopbackOpenGroupHead)
 	{
 		g_LoopbackOpenGroupHead = NULL;
-		// Release WFP resources.
-		NPF_FreeInjectionHandles();
-		NPF_UnregisterCallouts();
 	}
 #endif
 
