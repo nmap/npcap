@@ -1029,52 +1029,7 @@ BOOLEAN
 			FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
 	}
 
-	if (NT_SUCCESS(status))
-	{
-		PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
-
-		IF_LOUD(DbgPrint("Device created successfully\n"););
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		// Determine whether this is our loopback adapter for the device.
-		if (g_LoopbackAdapterName.Buffer != NULL)
-		{
-			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, AdapterName->Buffer, AdapterName->Length) == AdapterName->Length)
-			{
-				g_LoopbackDevObj = devObjP;
-			}
-		}
-#endif
-
-		devObjP->Flags |= DO_DIRECT_IO;
-		RtlInitUnicodeString(&devExtP->AdapterName, AdapterName->Buffer);
-		devExtP->Dot11 = Dot11;
-
-		IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
-
-		if (IoCreateSymbolicLink(&deviceSymLink, &deviceName) != STATUS_SUCCESS)
-		{
-			IF_LOUD(DbgPrint("\n\nError creating SymLink %ws\nn", deviceSymLink.Buffer););
-
-			ExFreePool(deviceName.Buffer);
-			ExFreePool(deviceSymLink.Buffer);
-
-			devExtP->ExportString = NULL;
-
-			TRACE_EXIT();
-			return FALSE;
-		}
-
-		IF_LOUD(DbgPrint("SymLink %ws successfully created.\n\n", deviceSymLink.Buffer););
-
-		devExtP->ExportString = deviceSymLink.Buffer;
-
-		ExFreePool(deviceName.Buffer);
-
-		TRACE_EXIT();
-		return TRUE;
-	}
-	else
+	if (!NT_SUCCESS(status))
 	{
 		IF_LOUD(DbgPrint("\n\nIoCreateDevice status = %x\n", status););
 
@@ -1084,6 +1039,49 @@ BOOLEAN
 		TRACE_EXIT();
 		return FALSE;
 	}
+
+	PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
+
+	IF_LOUD(DbgPrint("Device created successfully\n"););
+
+	devObjP->Flags |= DO_DIRECT_IO;
+	RtlInitUnicodeString(&devExtP->AdapterName, AdapterName->Buffer);
+	devExtP->Dot11 = Dot11;
+
+	IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
+
+	if (IoCreateSymbolicLink(&deviceSymLink, &deviceName) != STATUS_SUCCESS)
+	{
+		IF_LOUD(DbgPrint("\n\nError creating SymLink %ws\nn", deviceSymLink.Buffer););
+
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceName.Buffer);
+		ExFreePool(deviceSymLink.Buffer);
+
+		devExtP->ExportString = NULL;
+
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+	IF_LOUD(DbgPrint("SymLink %ws successfully created.\n\n", deviceSymLink.Buffer););
+
+	devExtP->ExportString = deviceSymLink.Buffer;
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// Determine whether this is our loopback adapter for the device.
+	if (g_LoopbackAdapterName.Buffer != NULL)
+	{
+		if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, AdapterName->Buffer, AdapterName->Length) == AdapterName->Length)
+		{
+			g_LoopbackDevObj = devObjP;
+		}
+	}
+#endif
+	ExFreePool(deviceName.Buffer);
+
+	TRACE_EXIT();
+	return TRUE;
 }
 
 //-------------------------------------------------------------------
