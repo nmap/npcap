@@ -103,6 +103,7 @@ extern ULONG g_Dot11SupportMode;
 #endif
 
 extern NDIS_HANDLE FilterDriverHandle_WiFi; // NDIS handle for WiFi filter driver
+extern NDIS_EVENT evtFilterDetached;
 
 static
 VOID
@@ -2049,6 +2050,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	NPF_RemoveFromOpenArray(Open); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
 	NPF_ReleaseOpenInstanceResources(Open);
 	ExFreePool(Open);
+	NdisSetEvent(&evtFilterDetached);
 
 	TRACE_EXIT();
 	return;
