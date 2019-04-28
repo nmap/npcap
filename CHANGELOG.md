@@ -1,3 +1,38 @@
+## Npcap 0.993 [2019-04-27]
+
+* Complete the fix for [#1398](http://issues.nmap.org/1398) that was only
+  partially applied in Npcap 0.992. Due to this partial fix, the user-provided
+  buffer was double-freed, resulting in a `BAD_POOL_CALLER` BSoD. This issue
+  was separately reported as [#1568](http://issues.nmap.org/1568), and has been
+  issued the identifier CVE-2019-11490. We have opened a dispute with the NVD
+  over the CVSS scoring of this vulnerability, since they have incorrectly
+  scored it as being exploitable by an unauthenticated network connection.
+
+* Fix output of `pcap_lib_version` to again report "Npcap version 0.993, based
+  on libpcap version 1.9.0" instead of "libpcap version 1.9.0 (packet.dll
+  version 0.992)". Npcap 0.992 was the only version affected. Fixes
+  [#1566](http://issues.nmap.org/1566).
+
+* Fix a regression in loopback capture that was causing the loopback adapter to
+  be missing from `pcap_findalldevs` until the driver was manually stopped and
+  restarted. Fixes [#1570](http://issues.nmap.org/1570).
+
+* Remove installer interface option "Automatically start the Npcap driver at
+  boot time." Command-line and registry settings are still respected, but
+  automatic start will be the default for all new installations, since manual
+  start results in delays in network connectivity at boot. See
+  [#1502](http://issues.nmap.org/1502).
+
+* Avoid interpreting null or uninitialized memory as out-of-band media-specific
+  information for purposes of constructing the Radiotap header when capturing
+  in raw 802.11 monitor mode. Fixes [#1528](http://issues.nmap.org/1528).
+
+* Ensure the uninstaller removes the `npcapwatchdog` scheduled task.
+
+* Avoid an uninstaller failure if DLLs and executables are in use during
+  uninstall by causing them to be deleted at reboot. See
+  [#1555](http://issues.nmap.org/1555).
+
 ## Npcap 0.992 [2019-03-24]
 
 * Update libpcap to 1.9.0. See [the libpcap CHANGES
