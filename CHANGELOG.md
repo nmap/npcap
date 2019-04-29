@@ -4,9 +4,7 @@
   partially applied in Npcap 0.992. Due to this partial fix, the user-provided
   buffer was double-freed, resulting in a `BAD_POOL_CALLER` BSoD. This issue
   was separately reported as [#1568](http://issues.nmap.org/1568), and has been
-  issued the identifier CVE-2019-11490. We have opened a dispute with the NVD
-  over the CVSS scoring of this vulnerability, since they have incorrectly
-  scored it as being exploitable by an unauthenticated network connection.
+  issued the identifier CVE-2019-11490.
 
 * Fix output of `pcap_lib_version` to again report "Npcap version 0.993, based
   on libpcap version 1.9.0" instead of "libpcap version 1.9.0 (packet.dll
