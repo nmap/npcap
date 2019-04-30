@@ -21,12 +21,12 @@ echo WinPcapCompatible = %WinPcapCompatible%
 
 rem Make sure we can find where Npcap is installed
 set KEY_NAME=HKLM\Software\WOW6432Node\Npcap
-for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /ve 2^>nul ^| find "(Default)"`) do (
+for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /ve 2^>nul ^| find "REG_SZ"`) do (
 	set NPCAP_DIR=%%C
 )
 if defined NPCAP_DIR (goto DO_FIX)
 set KEY_NAME=HKLM\Software\Npcap
-for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /ve 2^>nul ^| find "(Default)"`) do (
+for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /ve 2^>nul ^| find "REG_SZ"`) do (
 	set NPCAP_DIR=%%C
 )
 if defined NPCAP_DIR (goto DO_FIX) else (goto ABORT)
