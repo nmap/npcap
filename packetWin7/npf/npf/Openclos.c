@@ -119,7 +119,6 @@ ULONG g_NumOpenedInstances = 0;
 
 extern POPEN_INSTANCE g_arrOpen; //Adapter OPEN_INSTANCE list head, each list item is a group head.
 extern NDIS_SPIN_LOCK g_OpenArrayLock; //The lock for adapter OPEN_INSTANCE list.
-extern POPEN_INSTANCE g_LoopbackOpenGroupHead; // Loopback adapter OPEN_INSTANCE group head, this pointer points to one item in g_arrOpen list.
 //-------------------------------------------------------------------
 
 BOOLEAN
@@ -1165,10 +1164,6 @@ NPF_RemoveFromOpenArray(
 		}
 	}
 
-	if (Open == g_LoopbackOpenGroupHead) {
-	  g_LoopbackOpenGroupHead = NULL;
-	}
-
 	// Remove the links between group head and group members.
 	NdisAcquireSpinLock(&Open->GroupLock);
 	GroupOpen = Open->GroupNext;
@@ -1371,6 +1366,38 @@ NPF_GetOpenByAdapterName(
 
 //-------------------------------------------------------------------
 
+POPEN_INSTANCE
+NPF_GetLoopbackOpen()
+{
+	POPEN_INSTANCE CurOpen;
+	TRACE_ENTER();
+
+	NdisAcquireSpinLock(&g_OpenArrayLock);
+	for (CurOpen = g_arrOpen; CurOpen != NULL; CurOpen = CurOpen->Next)
+	{
+		if (NPF_StartUsingBinding(CurOpen) == FALSE)
+		{
+			continue;
+		}
+
+		if (CurOpen->Loopback)
+		{
+			NPF_StopUsingBinding(CurOpen);
+			NdisReleaseSpinLock(&g_OpenArrayLock);
+			return CurOpen;
+		}
+		else
+		{
+			NPF_StopUsingBinding(CurOpen);
+		}
+	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
+
+	TRACE_EXIT();
+	return NULL;
+}
+
+//-------------------------------------------------------------------
 POPEN_INSTANCE
 NPF_DuplicateOpenObject(
 	POPEN_INSTANCE OriginalOpen,
@@ -1728,9 +1755,7 @@ NPF_AttachAdapter(
 			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
 				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
 			{
-				ASSERT(g_LoopbackOpenGroupHead == NULL);
 				Open->Loopback = TRUE;
-				g_LoopbackOpenGroupHead = Open;
 			}
 		}
 #endif
@@ -2026,14 +2051,6 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	}
 
 	NPF_CloseBinding(Open);
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// "Npcap Loopback Adapter" is going to be detached, invalidate its global pointer as well. 
-	if (Open->Loopback && Open == g_LoopbackOpenGroupHead)
-	{
-		g_LoopbackOpenGroupHead = NULL;
-	}
-#endif
 
 	NPF_RemoveFromOpenArray(Open); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
 	NPF_ReleaseOpenInstanceResources(Open);

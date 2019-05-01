@@ -70,7 +70,6 @@
 // 
 // Global variables
 //
-extern POPEN_INSTANCE g_LoopbackOpenGroupHead; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
 extern ULONG g_DltNullMode;
 
 // 
@@ -356,6 +355,7 @@ NPF_NetworkClassify(
 #endif
 
 {
+	POPEN_INSTANCE LoopbackOpen;
 	POPEN_INSTANCE GroupOpen;
 	POPEN_INSTANCE		TempOpen;
 	NTSTATUS			status = STATUS_SUCCESS;
@@ -605,13 +605,12 @@ NPF_NetworkClassify(
 	}
 
 	// Send the loopback packets data to the user-mode code.
-	// Can't assert this because a sleep could happen, detaching the adapter and making this pointer invalid.
-	//ASSERT(g_LoopbackOpenGroupHead);
-	if (g_LoopbackOpenGroupHead) {
+	LoopbackOpen = NPF_GetLoopbackOpen();
+	if (NPF_StartUsingBinding(LoopbackOpen)) {
 
 		/* Lock the group */
-		NdisAcquireSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
-		GroupOpen = g_LoopbackOpenGroupHead->GroupNext;
+		NdisAcquireSpinLock(&LoopbackOpen->GroupLock);
+		GroupOpen = LoopbackOpen->GroupNext;
 		while (GroupOpen != NULL)
 		{
 			TempOpen = GroupOpen;
@@ -622,7 +621,8 @@ NPF_NetworkClassify(
 			}
 			GroupOpen = TempOpen->GroupNext;
 		}
-		NdisReleaseSpinLock(&g_LoopbackOpenGroupHead->GroupLock);
+		NdisReleaseSpinLock(&LoopbackOpen->GroupLock);
+		NPF_StopUsingBinding(LoopbackOpen);
 	}
 
 Exit_Ethernet_Retreated:

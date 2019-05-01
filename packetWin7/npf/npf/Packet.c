@@ -119,7 +119,6 @@ NDIS_SPIN_LOCK g_OpenArrayLock; //The lock for adapter OPEN_INSTANCE list.
 //
 // Global variables used by WFP
 //
-POPEN_INSTANCE g_LoopbackOpenGroupHead = NULL; // Loopback adapter open_instance group head, this pointer points to one item in g_arrOpen list.
 PDEVICE_OBJECT g_LoopbackDevObj = NULL;
 
 NDIS_STRING g_LoopbackAdapterName;

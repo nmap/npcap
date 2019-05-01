@@ -1306,6 +1306,12 @@ NPF_GetOpenByAdapterName(
 	BOOLEAN Dot11
 	);
 
+/*!
+  \brief Get the open instance for the loopback adapter
+  \return Pointer to the loopback filter module.
+ */
+POPEN_INSTANCE
+NPF_GetLoopbackOpen();
 
 /*!
   \brief Get a copy of open instance from the global array.
