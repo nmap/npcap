@@ -885,7 +885,7 @@ NPF_FreePackets(
 		while (Currbuff)
 		{
 			pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
-			npBuff = MmGetSystemAddressForMdlSafe(pMdl, LowPagePriority);
+			npBuff = MmGetSystemAddressForMdlSafe(pMdl, LowPagePriority|MdlMappingNoExecute);
 			if (npBuff != NULL) {
 				ExFreePoolWithTag(npBuff, 'WBPN');
 			}
