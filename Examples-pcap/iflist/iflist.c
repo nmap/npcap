@@ -107,7 +107,7 @@ int main()
 	/* Free the device list */
 	pcap_freealldevs(alldevs);
 
-	return 1;
+	return 0;
 }
 
 
