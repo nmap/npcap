@@ -16,4 +16,4 @@ copy /b ".\npcap-sdk\Examples-pcap\x64\%MODE%\pcap_filter.exe" test\
 copy /b ".\npcap-sdk\Examples-pcap\x64\%MODE%\sendpack.exe" test\
 copy /b ".\npcap-sdk\Examples-pcap\x64\%MODE%\readfile.exe" test\
 
-copy /b ".\npcap-sdk\Examples-remote\x64\%MODE%\readfile.exe" test\
+copy /b ".\npcap-sdk\Examples-remote\x64\%MODE%\sendcap.exe" test\
