@@ -68,12 +68,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="npcap.inf">
-      <Filter>Driver Files</Filter>
-    </Inf>
-    <Inf Include="npcap_wfp.inf">
-      <Filter>Driver Files</Filter>
-    </Inf>
+    <Inf Include="npf.inf" />
+    <Inf Include="npf_wfp.inf" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Driver Files">
@@ -90,8 +86,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="npcap.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
+    <ResourceCompile Include="npf.rc" />
   </ItemGroup>
 </Project>
