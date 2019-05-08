@@ -196,10 +196,12 @@ My_NdisGroupMaxProcessorCount(
 			Cpu = NPF_MAX_CPU_NUMBER - 1;
 		}
 	}
+#if NDIS_MIN_API < 0x630
 	else // for NDIS6 (Vista)
 	{
 		Cpu = NdisSystemProcessorCount();
 	}
+#endif
 	return Cpu;
 }
 
@@ -1290,9 +1292,9 @@ NPF_IoControl(
 
 	HANDLE					hUserEvent;
 	PKEVENT					pKernelEvent;
-#ifdef _AMD64_
+#if defined(_WIN64)
 	VOID* POINTER_32		hUserEvent32Bit;
-#endif //_AMD64_
+#endif // defined(_WIN64)
 	PMDL					mdl;
 
 	TRACE_ENTER();
@@ -1781,7 +1783,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETEVENTHANDLE");
 
-#ifdef _AMD64_
+#if defined(_WIN64)
 		if (IoIs32bitProcess(Irp))
 		{
 			//
@@ -1797,7 +1799,7 @@ NPF_IoControl(
 			hUserEvent = hUserEvent32Bit;
 		}
 		else
-#endif //_AMD64_
+#endif // defined(_WIN64)
 		{
 			//
 			// validate the input

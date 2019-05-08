@@ -1026,13 +1026,13 @@ NPF_TapExForEachOpen(
 						{
 							//the Radiotap header will be fragmented in the buffer (aka, it will skip the buffer boundary)
 							ToCopy = Open->Size - LocalData->P;
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, ToCopy);
-							NdisMoveMappedMemory(LocalData->Buffer + 0, Dot11RadiotapHeader + ToCopy, Dot11RadiotapHeaderSize - ToCopy);
+							RtlCopyMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, ToCopy);
+							RtlCopyMemory(LocalData->Buffer + 0, Dot11RadiotapHeader + ToCopy, Dot11RadiotapHeaderSize - ToCopy);
 							LocalData->P = Dot11RadiotapHeaderSize - ToCopy;
 						}
 						else
 						{
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, Dot11RadiotapHeaderSize);
+							RtlCopyMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, Dot11RadiotapHeaderSize);
 							LocalData->P += Dot11RadiotapHeaderSize;
 						}
 						if (LocalData->P == Open->Size)
@@ -1077,15 +1077,15 @@ NPF_TapExForEachOpen(
 							//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
 							//two copies!!
 							ToCopy = Open->Size - LocalData->P;
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, ToCopy);
-							NdisMoveMappedMemory(LocalData->Buffer + 0, pDataLinkBuffer + ToCopy, CopyLengthForMDL - ToCopy);
+							RtlCopyMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, ToCopy);
+							RtlCopyMemory(LocalData->Buffer + 0, pDataLinkBuffer + ToCopy, CopyLengthForMDL - ToCopy);
 							LocalData->P = CopyLengthForMDL - ToCopy;
 
 							IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
 						}
 						else
 						{
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, CopyLengthForMDL);
+							RtlCopyMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, CopyLengthForMDL);
 							LocalData->P += CopyLengthForMDL;
 
 							IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
