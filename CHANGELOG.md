@@ -1,3 +1,22 @@
+## Npcap 0.994 [2019-05-07]
+
+* Fix the installer options screen, which would immediately proceed to
+  installation when you clicked on the "Support loopback traffic" option. Fixes
+  [#1577](http://issues.nmap.org/1577).
+
+* Use the `/F` option to `SCHTASKS.EXE` in the installer so that the
+  `npcapwatchdog` task can be successfully overwritten if it is present, though
+  newer uninstallers also remove the task. Fixes [#1580](http://issues.nmap.org).
+
+* Fix the `CheckStatus.bat` script run by the `npcapwatchdog` scheduled task to
+  correctly match output of `reg.exe` on non-English systems. Fixes
+  [#1582](http://issues.nmap.org/1582).
+
+* Improve synchronization between WFP (Loopback) and NDIS (control) functions
+  within the driver, which ought to improve stability during system
+  sleep/suspend events, particularly an access violation in
+  `NPF_NetworkClassify` observed via Microsoft crash telemetry.
+
 ## Npcap 0.993 [2019-04-27]
 
 * Complete the fix for [#1398](http://issues.nmap.org/1398) that was only
