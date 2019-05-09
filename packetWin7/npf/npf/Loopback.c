@@ -606,7 +606,7 @@ NPF_NetworkClassify(
 
 	// Send the loopback packets data to the user-mode code.
 	LoopbackOpen = NPF_GetLoopbackOpen();
-	if (NPF_StartUsingBinding(LoopbackOpen)) {
+	if (LoopbackOpen && NPF_StartUsingBinding(LoopbackOpen)) {
 
 		/* Lock the group */
 		NdisAcquireSpinLock(&LoopbackOpen->GroupLock);
