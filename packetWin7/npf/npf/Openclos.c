@@ -143,6 +143,9 @@ NPF_StartUsingBinding(
 	)
 {
 	ASSERT(pOpen != NULL);
+	if (!pOpen) {
+		return FALSE;
+	}
 	// NPF_OpenAdapter() is not called on PASSIVE_LEVEL, so the assertion will fail.
 	// ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
