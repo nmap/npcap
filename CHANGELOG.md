@@ -1,3 +1,9 @@
+## Npcap 0.995 [2019-05-10]
+
+* Fix a crash reported via Microsoft crash telemetry,
+  `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_NetworkClassify` introduced in Npcap
+  0.994.  Fixes [#1591](http://issues.nmap.org/1591).
+
 ## Npcap 0.994 [2019-05-07]
 
 * Fix the installer options screen, which would immediately proceed to
