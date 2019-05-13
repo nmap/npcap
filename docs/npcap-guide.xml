@@ -36,13 +36,9 @@
       <title>Installer options</title>
       <para>
         The installer accepts several command-line options that correspond to the
-        options presented in the graphical interface (GUI).  The options take the form
-        <option>/<replaceable>name</replaceable>=<replaceable>value</replaceable></option>,
-        where <replaceable>name</replaceable> is one of
-        <option>/npf_startup</option>, <option>/loopback_support</option>,
-        <option>/dlt_null</option>, <option>/admin_only</option>,
-        <option>/dot11_support</option>, <option>/vlan_support</option>,
-        or <option>/winpcap_mode</option>.
+        options presented in the graphical interface (GUI).  The options can be
+        set by command-line flags taking the form
+        <option>/<replaceable>name</replaceable>=<replaceable>value</replaceable></option>.
       </para>
       <para>The values for these options must be one of:
       </para>
@@ -52,49 +48,164 @@
         <listitem><para><option>enforced</option>: select the option and make it unchangable in the GUI</para></listitem>
         <listitem><para><option>disabled</option>: unselect the option and make it unchangable in the GUI</para></listitem>
       </itemizedlist>
+      <sect4 id="npcap-installer-options-gui">
+        <title>Graphical installer options</title>
+        <para>The following options are presented as checkboxes in the
+          installer, but can be set or locked via command-line flags. Unless
+          otherwise noted, the default for these options is <option>no</option>.
+        </para>
 
-      <para>There is also one option that does not appear in the GUI, which is
-        <option>/disable_restore_point=yes</option>, which will prevent the
-        installer from setting a system restore point. Windows may independently
-        create a restore point because of the driver installation independent
-        from this option.
-      </para>
+        <variablelist>
+          <varlistentry>
+            <term><option>/loopback_support</option></term>
+            <listitem><para>
+                <emphasis>Support loopback traffic ("Npcap Loopback Adapter"
+                  will be created)</emphasis>. This option allows Npcap to
+                capture and inject traffic that the system sends to itself.
+                Windows does not ordinarily involve NDIS filter drivers in
+                loopback traffic, so a WFP callout driver is used in conjuntion
+                with a virtual network adapter that is a clone of the Microsoft
+                KM-TEST loopback adapter.
+              </para>
+              <para>The default for this option is <option>yes</option>.
+            </para></listitem>
+          </varlistentry>
 
-      <para>The destination directory for installation can also be overridden by
-        the <option>/D</option> option, with a few restrictions. First, it will
-        only affect where Npcap keeps its installation logs and helper utilities.
-        The driver and DLLs will always be installed into the appropriate
-        directories below <command>%SYSTEMROOT%\System32\</command>. Second, the
-        <option>/D</option> must be the last option in the command, and the path
-        must not contain quotes. For example, to change the installation directory
-        to <filename>C:\Path With Spaces\</filename>, the invocation would be:
-        <command>npcap-<replaceable>version</replaceable>.exe /D=C:\Path With Spaces</command>
-      </para>
+          <varlistentry>
+            <term><option>/admin_only</option></term>
+            <listitem><para>
+                <emphasis>Restrict Npcap driver's access to Administrators
+                  only</emphasis>. When this option is chosen, the devices
+                created by the Npcap driver for capture and injection on each
+                network adapter will be created with a restrictive ACL that
+                only allows access to the device by the SYSTEM and built-in
+                Administrators. Because this level of access requires UAC
+                elevation, a helper binary, <literal>NpcapHelper.exe</literal>,
+                is used to request elevation for each process that opens a
+                capture handle.
+            </para></listitem>
+          </varlistentry>
 
-      <para>
-        An example of Npcap installer options is:
-      </para>
+          <varlistentry>
+            <term><option>/dot11_support</option></term>
+            <listitem><para>
+                <emphasis>Support raw 802.11 traffic (and monitor mode) for
+                  wireless adapters</emphasis>. This option installs a second
+                Lightweight Filter Driver that uses the Native WiFi API to
+                capture raw 802.11 WiFi frames on devices that are put into
+                network monitor mode. Captured frames are given a Radiotap
+                header. Not all hardware or network drivers support the Native
+                WiFi API.
+            </para></listitem>
+          </varlistentry>
 
-      <para>
-        <option>/npf_startup=yes /loopback_support=yes /dlt_null=no /admin_only=yes /dot11_support=yes /vlan_support=yes /winpcap_mode=yes</option>
-      </para>
+          <varlistentry>
+            <term><option>/winpcap_mode</option></term>
+            <listitem><para>
+                <emphasis>Install Npcap in WinPcap API-compatible
+                  Mode</emphasis>. Npcap uses the same API and DLL names as
+                WinPcap, so to avoid unintentionally removing working WinPcap
+                installations, it places its DLLs in a different directory than
+                WinPcap. This option also installs the DLLs to the system
+                directory, so software written for WinPcap will work
+                seamlessly, though the new features of Npcap will not be
+                available. This requires removal of any old WinPcap
+                installations.
+            </para></listitem>
+          </varlistentry>
+        </variablelist>
+      </sect4>
 
-      <itemizedlist>
-        <listitem><para><option>/npf_startup=yes</option>: Automatically start the Npcap driver at boot time</para></listitem>
-        <listitem><para><option>/loopback_support=yes</option>: Support loopback traffic (<quote>Npcap Loopback Adapter</quote> will be created)</para></listitem>
-        <listitem><para><option>/dlt_null=no</option>: Use <varname>DLT_EN10MB</varname> (Ethernet) as the
-            <quote>Npcap Loopback Adapter</quote>'s link layer protocol instead of the default <varname>DLT_NULL</varname>.
-        </para></listitem>
-        <listitem><para><option>/admin_only=yes</option>: Restrict Npcap driver's access to Administrators only</para></listitem>
-        <listitem><para><option>/dot11_support=yes</option>: Support raw 802.11 traffic (and <quote>Monitor Mode</quote>) for wireless adapters</para></listitem>
-        <listitem><para><option>/vlan_support=yes</option>: Support 802.1Q VLAN tag when capturing and sending data</para></listitem>
-        <listitem><para><option>/winpcap_mode=yes</option>: Install Npcap in WinPcap API-compatible Mode</para></listitem>
-	<listitem><para><option>/no_kill=yes</option>: Control termination of
-			processes using Npcap during upgrades or WinPcap when
-			<option>/winpcap_mode=yes</option> is chosen. See
-			<xref linkend="npcap-installation-uninstall-options" />
-			for more detailed discussion.</para></listitem>
-      </itemizedlist>
+      <sect4 id="npcap-installer-options-cli">
+        <title>Command-line installation options</title>
+        <para>Some advanced or deprecated options are only available on the
+          command-line. Options marked <literal>(deprecated)</literal> are
+          subject to removal in future versions.</para>
+
+        <variablelist>
+          <varlistentry>
+            <term><option>/S</option> (Silent install, Npcap OEM only)</term>
+            <listitem><para>
+                Installs Npcap without showing any graphical windows or
+                prompts. Silent install is available only for Npcap OEM.
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>/disable_restore_point</option></term>
+            <listitem><para>
+                The default for this option is <option>yes<option>, so the
+                installer will not set a system restore point.  Windows may
+                independently create a restore point because of the driver
+                installation independent from this option. To ensure a
+                restore point is made, specify
+                <option>/disable_restore_point=no</option>.
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>/no_kill</option></term>
+            <listitem><para>
+                Control termination of
+                processes using Npcap during upgrades or WinPcap when
+                <option>/winpcap_mode=yes</option> is chosen. See
+                <xref linkend="npcap-installation-uninstall-options" />
+                for more detailed discussion.
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>/D</option> (destination directory)</term>
+            <listitem><para>
+                The destination directory for installation can be overridden by
+                the <option>/D</option> option, with a few restrictions. First, it will
+                only affect where Npcap keeps its installation logs and helper utilities.
+                The driver and DLLs will always be installed into the appropriate
+                directories below <command>%SYSTEMROOT%\System32\</command>. Second, the
+                <option>/D</option> must be the last option in the command, and the path
+                must not contain quotes. For example, to change the installation directory
+                to <filename>C:\Path With Spaces\</filename>, the invocation would be:
+                <command>npcap-<replaceable>version</replaceable>.exe /D=C:\Path With Spaces</command>
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>/npf_startup</option> (deprecated)</term>
+            <listitem><para>
+                <emphasis>Automatically start the Npcap driver at boot
+                  time</emphasis>. This option defaults to
+                <option>yes</option>, because Windows expects NDIS filter
+                drivers to be available at boot time. If you choose to disable
+                this, Windows may not start networking for up to 90 seconds
+                after boot.
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>/dlt_null</option> (deprecated)</term>
+            <listitem><para>
+                <emphasis>Use DLT_NULL as the loopback interface's link layer
+                  protocol instead of DLT_EN10MB</emphasis>. This option
+                defaults to <option>yes</option> because it is more efficient
+                to use the NULL data link type than to create a fake Ethernet
+                header for each captured packet. Certain older software using
+                the undocumented Packet API may be unable to handle DLT_NULL,
+                but we have not been made aware of any.
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>/vlan_support</option> (deprecated, ignored)</term>
+            <listitem><para>
+                <emphasis>Support 802.1Q VLAN tag when capturing and sending
+                  data (currently unsupported)</emphasis>. This feature was
+                disabled in 2016 to prevent a crash and has not been
+                re-enabled.
+            </para></listitem>
+          </varlistentry>
+        </variablelist>
+
+      </sect4>
     </sect3>
 
     <sect3 id="npcap-installation-uninstall-options">
@@ -154,19 +265,12 @@
 
             <para>If this option is provided on the
               <emphasis>installer</emphasis> command line, it will be passed to
-              teh Npcap uninstaller when doing an upgrade or
+              the Npcap uninstaller when doing an upgrade or
               replacement.</para>
           </listitem>
         </varlistentry>
       </variablelist>
 
-      <para>
-        An example of Npcap uninstaller options is:
-      </para>
-
-      <para>
-        <option>/S /Q /no_kill=yes</option>
-      </para>
     </sect3>
 
     <sect3 id="npcap-installation-options-disabled">
@@ -190,52 +294,6 @@
       <para>
         <command>npcap-<replaceable>version</replaceable>.exe /dlt_null=disabled</command>
       </para>
-    </sect3>
-
-    <sect3 id="npcap-installation-options-gui">
-      <title>How to change options for GUI Mode</title>
-      <para>
-        Default options for Npcap installer GUI can be changed. An example is:
-      </para>
-
-      <para>
-        <command>npcap-<replaceable>version</replaceable>.exe /npf_startup=yes /loopback_support=yes /dlt_null=yes /admin_only=no /dot11_support=no /vlan_support=no /winpcap_mode=yes</command>
-      </para>
-
-      <para>
-        Because most of these are the default values for these options, this example could be even simpler:
-      </para>
-
-      <para>
-        <command>npcap-<replaceable>version</replaceable>.exe /winpcap_mode=yes</command>
-      </para>
-
-      <para>
-        Running the installer
-        directly without options will see <option>Install Npcap in WinPcap API-compatible Mode</option>
-        <emphasis>UNCHECKED</emphasis> by default in the <quote>Installation Options</quote> page.
-        However, the above two commands will launch the installer GUI, and in the <quote>Installation Options</quote> page, the
-        <option>Install Npcap in WinPcap API-compatible Mode</option> option will be <emphasis>CHECKED</emphasis> by default.
-      </para>
-    </sect3>
-
-    <sect3 id="npcap-installation-options-silent">
-      <title>How to change options for Silent Mode</title>
-      <para>
-        An example of changing option features for silent installation is:
-      </para>
-
-      <para>
-        <command>npcap-<replaceable>version</replaceable>.exe /S /admin_only=yes /dot11_support=yes /vlan_support=yes</command>
-      </para>
-
-      <itemizedlist>
-        <listitem><para>If you doesn't specify a parameter key, it will take the default value.
-            This is the same with the GUI.</para></listitem>
-        <listitem><para>The keys are <emphasis>case-insensitive</emphasis>.</para></listitem>
-        <listitem><para>The values are <emphasis>case-sensitive</emphasis>, only two values are
-            permitted: <option>yes</option> or <option>no</option>.</para></listitem>
-      </itemizedlist>
     </sect3>
 
   </sect2>
