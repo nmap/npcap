@@ -56,7 +56,7 @@ echo Replaying dump file...
 .\sendcap.exe scanme.pcap %devname% || goto :error
 
 pause
-exit
+exit /b
 
 :error
 echo Failed: %errorlevel%
