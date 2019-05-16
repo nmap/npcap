@@ -134,7 +134,7 @@
           <varlistentry>
             <term><option>/disable_restore_point</option></term>
             <listitem><para>
-                The default for this option is <option>yes<option>, so the
+                The default for this option is <option>yes</option>, so the
                 installer will not set a system restore point.  Windows may
                 independently create a restore point because of the driver
                 installation independent from this option. To ensure a
