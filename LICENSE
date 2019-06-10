@@ -91,6 +91,10 @@ o The Nmap Security Scanner, as distributed from https://nmap.org
 
 o The Wireshark network protocol analyzer, as distributed from
   https://www.wireshark.org/
+  
+o Microsoft's Azure Advanced Threat Protection (ATP) software,
+  as distributed from
+  https://azure.microsoft.com/en-us/features/azure-advanced-threat-protection/
 
 Users wishing to redistribute Npcap or exceed the usage limits imposed
 by this free license or benefit from commercial support and features
