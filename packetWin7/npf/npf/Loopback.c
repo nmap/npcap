@@ -935,7 +935,7 @@ Callouts and filters will be removed during DriverUnload.
 		&session,
 		&g_WFPEngineHandle
 		);
-	if (!NT_SUCCESS(status))
+	if (!NT_SUCCESS(status) || !g_WFPEngineHandle || g_WFPEngineHandle == INVALID_HANDLE_VALUE)
 	{
 		goto Exit;
 	}
@@ -1026,11 +1026,11 @@ Exit:
 	if (!NT_SUCCESS(status))
 	{
 		IF_LOUD(DbgPrint("NPF_RegisterCallouts: failed to register callouts\n");)
-			if (inTransaction)
-			{
-				FwpmTransactionAbort(g_WFPEngineHandle);
-				_Analysis_assume_lock_not_held_(g_WFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
-			}
+		if (inTransaction && g_WPFEngineHandle && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+		{
+			FwpmTransactionAbort(g_WFPEngineHandle);
+			_Analysis_assume_lock_not_held_(g_WFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
+		}
 		if (engineOpened && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
 		{
 			FwpmEngineClose(g_WFPEngineHandle);
