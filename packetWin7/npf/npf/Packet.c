@@ -169,7 +169,6 @@ ULONG g_NCpu;
 NDIS_HANDLE         FilterDriverHandle = NULL;			// NDIS handle for filter driver
 NDIS_HANDLE         FilterDriverHandle_WiFi = NULL;		// NDIS handle for WiFi filter driver
 NDIS_HANDLE         FilterDriverObject;					// Driver object for filter driver
-NDIS_EVENT evtFilterDetached; // Signal that a filter module has detached
 
 typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
 	USHORT Group
@@ -456,7 +455,6 @@ DriverEntry(
 #endif
 
 	NdisAllocateSpinLock(&g_OpenArrayLock);
-	NdisInitializeEvent(&evtFilterDetached);
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
@@ -1113,8 +1111,12 @@ Return Value:
 	PDEVICE_EXTENSION DeviceExtension;
 	NDIS_STATUS Status;
 	NDIS_STRING SymLink;
+	NDIS_EVENT Event;
 
 	TRACE_ENTER();
+
+	NdisInitializeEvent(&Event);
+	NdisResetEvent(&Event);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// Free the loopback adapter name
@@ -1196,10 +1198,14 @@ Return Value:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Filter Handle (WiFi) = NULL, no need to delete.");
 	}
 	// NdisFDeregisterFilterDriver ought to have called FilterDetach, but something is leaking. Let's force a wait:
+	NdisAcquireSpinLock(&g_OpenArrayLock);
 	while (g_arrOpen != NULL) {
-		NdisWaitEvent(&evtFilterDetached, 10);
-		NdisResetEvent(&evtFilterDetached);
+		NdisReleaseSpinLock(&g_OpenArrayLock);
+		NdisWaitEvent(&Event, 1);
+		NdisAcquireSpinLock(&g_OpenArrayLock);
+		NdisResetEvent(&Event);
 	}
+	NdisReleaseSpinLock(&g_OpenArrayLock);
 
 	// Free the adapters names
 	if (bindP != NULL)

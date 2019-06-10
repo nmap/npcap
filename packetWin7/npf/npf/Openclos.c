@@ -103,7 +103,6 @@ extern ULONG g_Dot11SupportMode;
 #endif
 
 extern NDIS_HANDLE FilterDriverHandle_WiFi; // NDIS handle for WiFi filter driver
-extern NDIS_EVENT evtFilterDetached;
 
 static
 VOID
@@ -452,8 +451,6 @@ NPF_CloseOpenInstance(
 {
 	ULONG i = 0;
 	NDIS_EVENT Event;
-
-	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
 	NdisInitializeEvent(&Event);
 	NdisResetEvent(&Event);
@@ -2042,9 +2039,8 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
-  ASSERT(Open->AdapterBindingStatus == FilterPaused);
-  /* No need to lock the group since we are paused. Also, can't lock because
-   * that raises IRQL and NPF_CloseOpenInstance requires PASSIVE_LEVEL */
+	ASSERT(Open->AdapterBindingStatus == FilterPaused);
+	/* No need to lock the group since we are paused. */
 	for (GroupOpen = Open->GroupNext; GroupOpen != NULL; GroupOpen = GroupOpen->GroupNext)
 	{
 		NPF_CloseOpenInstance(GroupOpen);
@@ -2058,7 +2054,6 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	NPF_RemoveFromOpenArray(Open); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
 	NPF_ReleaseOpenInstanceResources(Open);
 	ExFreePool(Open);
-	NdisSetEvent(&evtFilterDetached);
 
 	TRACE_EXIT();
 	return;
