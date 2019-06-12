@@ -1026,7 +1026,7 @@ Exit:
 	if (!NT_SUCCESS(status))
 	{
 		IF_LOUD(DbgPrint("NPF_RegisterCallouts: failed to register callouts\n");)
-		if (inTransaction && g_WPFEngineHandle && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+		if (inTransaction && g_WFPEngineHandle && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
 		{
 			FwpmTransactionAbort(g_WFPEngineHandle);
 			_Analysis_assume_lock_not_held_(g_WFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
