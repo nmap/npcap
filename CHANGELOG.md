@@ -1,3 +1,16 @@
+## Npcap 0.996 [2019-06-15]
+
+* Fix a crash when stopping the npcap driver service, such as when upgrading
+  Npcap, `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_DetachAdapter`. Since Npcap
+  0.994 and 0.995 may crash when upgrading, the installer will offer to disable
+  the npcap driver service if it is running, allowing the user to reboot and
+  attempt the install again, avoiding a crash. Fixes [#1626](http://issues.nmap.org/1626).
+
+* Ensure the uninstaller for the previous version of Nmap is called when
+  upgrading. Npcap 0.95 through 0.995 erroneously skipped this step in simple
+  non-silent upgrades, which could cause multiple Npcap Loopback Adapters to be
+  installed.
+
 ## Npcap 0.995 [2019-05-10]
 
 * Fix a crash reported via Microsoft crash telemetry,
@@ -12,7 +25,7 @@
 
 * Use the `/F` option to `SCHTASKS.EXE` in the installer so that the
   `npcapwatchdog` task can be successfully overwritten if it is present, though
-  newer uninstallers also remove the task. Fixes [#1580](http://issues.nmap.org).
+  newer uninstallers also remove the task. Fixes [#1580](http://issues.nmap.org/1580).
 
 * Fix the `CheckStatus.bat` script run by the `npcapwatchdog` scheduled task to
   correctly match output of `reg.exe` on non-English systems. Fixes
