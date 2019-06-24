@@ -2643,7 +2643,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 {
     LPADAPTER lpAdapter = NULL;
 	PCHAR AdapterNameA = NULL;
-	PCHAR TranslatedAdapterNameWA = NULL;
+	PCHAR TranslatedAdapterNameA = NULL;
 	BOOL bFreeAdapterNameA;
 #ifndef _WINNT4
 	PADAPTER_INFO TAdInfo;
@@ -2656,13 +2656,6 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	TRACE_PRINT_OS_INFO();
 	
 	TRACE_PRINT2("Packet DLL version %hs, Driver version %hs", PacketLibraryVersion, PacketDriverVersion);
-
-	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	TranslatedAdapterNameWA = NpcapTranslateAdapterName_Npf2Npcap(AdapterNameWA);
-	if (TranslatedAdapterNameWA)
-	{
-		AdapterNameWA = TranslatedAdapterNameWA;
-	}
 
 	//
 	// Check the presence on some libraries we rely on, and load them if we found them
@@ -2692,13 +2685,22 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 		if (AdapterNameA == NULL)
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-			if (TranslatedAdapterNameWA)
-				free(TranslatedAdapterNameWA);
 			return NULL;
 		}
 
 		StringCchPrintfA(AdapterNameA, bufferSize, "%ws", (PWCHAR)AdapterNameWA);
 		bFreeAdapterNameA = TRUE;
+	}
+
+	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+	TranslatedAdapterNameA = NpcapTranslateAdapterName_Npf2Npcap(AdapterNameA);
+	if (TranslatedAdapterNameA)
+	{
+        if (bFreeAdapterNameA) {
+            GlobalFree(AdapterNameA);
+            bFreeAdapterNameA = FALSE;
+        }
+		AdapterNameA = TranslatedAdapterNameA;
 	}
 
 #ifndef _WINNT4
@@ -2909,16 +2911,16 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	{
 		TRACE_EXIT();
 		SetLastError(dwLastError);
-		if (TranslatedAdapterNameWA)
-			free(TranslatedAdapterNameWA);
+		if (TranslatedAdapterNameA)
+			free(TranslatedAdapterNameA);
 
 		return NULL;
 	}
 	else
 	{
 		TRACE_EXIT();
-		if (TranslatedAdapterNameWA)
-			free(TranslatedAdapterNameWA);
+		if (TranslatedAdapterNameA)
+			free(TranslatedAdapterNameA);
 
 		return lpAdapter;
 	}
