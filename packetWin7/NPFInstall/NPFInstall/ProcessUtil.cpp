@@ -411,7 +411,7 @@ BOOL killProcess_Soft(DWORD dwProcessID)
 	tstring strCommand = _T("taskkill /pid ");
 	strCommand += itos(dwProcessID);
 
-	TCHAR* cmdLine = new TCHAR[strCommand.length() * sizeof(TCHAR)];
+	TCHAR* cmdLine = new TCHAR[(strCommand.length() + 1) * sizeof(TCHAR)];
 	_tcscpy_s(cmdLine, strCommand.length(), (TCHAR*)strCommand.c_str());
 	tstring strResult = executeCommand(cmdLine);
 	delete[] cmdLine;
