@@ -100,7 +100,8 @@
   and resets all the parameters associated with the buffer in the OPEN_INSTANCE structure. The currently 
   buffered packets are lost.
 */
-#define	 BIOCSETBUFFERSIZE 9592
+#define W_BIOCSETBUFFERSIZE 9592
+#define BIOCSETBUFFERSIZE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa01, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: set packet filtering program.
@@ -112,7 +113,9 @@
   every incoming packet. This command also empties the circular buffer used by current instance 
   to store packets. This is done to avoid the presence in the buffer of packets that do not match the filter.
 */
-#define	 BIOCSETF 9030
+/* Historical number 9030 */
+#define W_BIOCSETF 9030
+#define BIOCSETF CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa02, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: get the capture stats
@@ -120,14 +123,17 @@
   This command returns to the application the number of packets received and the number of packets dropped by 
   an instance of the driver.
 */
-#define  BIOCGSTATS 9031
+/* Historical number 9031 */
+#define W_BIOCGSTATS 9031
+#define BIOCGSTATS CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa03, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: set the read timeout
 
   This command sets the maximum timeout after which a read is released, also if no data packets were received.
 */
-#define	 BIOCSRTIMEOUT 7416
+#define W_BIOCSRTIMEOUT 7416
+#define BIOCSRTIMEOUT CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa04, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: set working mode
@@ -136,7 +142,8 @@
   buffer associated with the IOCTL command, can be #MODE_CAPT for capture mode (the default), #MODE_STAT for
   statistical mode or #MODE_DUMP for dump mode.
 */
-#define	 BIOCSMODE 7412
+#define W_BIOCSMODE 7412
+#define BIOCSMODE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa05, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: set number of physical repetions of every packet written by the app
@@ -144,28 +151,32 @@
   Sets the number of times a single write call must be repeated. This command sets the OPEN_INSTANCE::Nwrites 
   member, and is used to implement the 'multiple write' feature of the driver.
 */
-#define	 BIOCSWRITEREP 7413
+#define W_BIOCSWRITEREP 7413
+#define BIOCSWRITEREP CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa06, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /*!
   \brief IOCTL code: set minimum amount of data in the kernel buffer that unlocks a read call
 
   This command sets the OPEN_INSTANCE::MinToCopy member.
 */
-#define	 BIOCSMINTOCOPY 7414
+#define W_BIOCSMINTOCOPY 7414
+#define BIOCSMINTOCOPY CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa07, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: set an OID value
 
   This IOCTL is used to perform an OID set operation on the NIC driver. 
 */
-#define	 BIOCSETOID 0x80000000
+#define W_BIOCSETOID 0x80000000
+#define BIOCSETOID CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa08, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /*!
   \brief IOCTL code: get an OID value
 
   This IOCTL is used to perform an OID get operation on the NIC driver. 
 */
-#define	 BIOCQUERYOID 0x80000004
+#define W_BIOCQUERYOID 0x80000004
+#define BIOCQUERYOID CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa09, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: set the name of a the file used by kernel dump mode
@@ -174,7 +185,8 @@
   The dump thread uses it to copy the content of the circular buffer to file.
   If a file was already opened, the driver closes it before opening the new one.
 */
-#define  BIOCSETDUMPFILENAME 9029
+#define W_BIOCSETDUMPFILENAME 9029
+#define BIOCSETDUMPFILENAME CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0a, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: get the name of the event that the driver signals when some data is present in the buffer
@@ -182,7 +194,8 @@
   Command used by the application to retrieve the name of the global event associated with a NPF instance.
   The event is signaled by the driver when the kernel buffer contains enough data for a transfer.
 */
-#define  BIOCGEVNAME 7415
+#define W_BIOCGEVNAME 7415
+#define BIOCGEVNAME CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0b, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: Send a buffer containing multiple packets to the network, ignoring the timestamps.
@@ -191,7 +204,9 @@
   a sf_pkthdr structure. The timestamps of the packets are ignored, i.e. the packets are sent as fast as 
   possible. The NPF_BufferedWrite() function is invoked to send the packets.
 */
-#define  BIOCSENDPACKETSNOSYNC 9032
+#define W_BIOCSENDPACKETSNOSYNC 9032
+/* Possibly consider METHOD_IN_DIRECT to avoid issues like #1398 */
+#define BIOCSENDPACKETSNOSYNC CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0c, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /*!
   \brief IOCTL code: Send a buffer containing multiple packets to the network, considering the timestamps.
@@ -201,7 +216,8 @@
   are sent to the network respecting the intervals specified in the sf_pkthdr structure assiciated with each
   packet. NPF_BufferedWrite() function is invoked to send the packets. 
 */
-#define  BIOCSENDPACKETSSYNC 9033
+#define W_BIOCSENDPACKETSSYNC 9033
+#define BIOCSENDPACKETSSYNC CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0d, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /*!
   \brief IOCTL code: Set the dump file limits.
@@ -209,7 +225,8 @@
   This IOCTL sets the limits (maximum size and maximum number of packets) of the dump file created when the
   driver works in dump mode.
 */
-#define  BIOCSETDUMPLIMITS 9034
+#define W_BIOCSETDUMPLIMITS 9034
+#define BIOCSETDUMPLIMITS CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0e, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: Get the status of the kernel dump process.
@@ -217,14 +234,16 @@
   This command returns TRUE if the kernel dump is ended, i.e if one of the limits set with BIOCSETDUMPLIMITS
   (amount of bytes or number of packets) has been reached.
 */
-#define BIOCISDUMPENDED 7411
+#define W_BIOCISDUMPENDED 7411
+#define BIOCISDUMPENDED CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0f, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
   \brief IOCTL code: set the loopback behavior.
 
   This IOCTL sets the loopback behavior of the driver with packets sent by itself: capture or drop.
 */
-#define  BIOCISETLOBBEH 7410			
+#define W_BIOCISETLOBBEH 7410
+#define BIOCISETLOBBEH CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa10, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
 	\brief This IOCTL passes the read event HANDLE allocated by the user (packet.dll) to kernel level
@@ -233,9 +252,9 @@
 	Parameter size: sizeof(HANDLE). If the caller is 32 bit, the parameter size is 4 bytes, even if sizeof(HANDLE) at kernel level
 		is 8 bytes. That's why in this IOCTL code handler we detect a 32bit calling process and do the necessary thunking.
 
-	TODO GV:I will go to hell for this ugly IOCTL definition. We should use CTL_CODE!!
 */
-#define BIOCSETEVENTHANDLE 7920
+#define W_BIOCSETEVENTHANDLE 7920
+#define BIOCSETEVENTHANDLE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa11, METHOD_BUFFERED, FILE_READ_DATA)
 
 /** 
  *  @}
