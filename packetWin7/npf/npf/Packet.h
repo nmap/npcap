@@ -381,7 +381,6 @@ typedef struct _OPEN_INSTANCE
 	BOOLEAN					WriteInProgress;///< True if a write is currently in progress. NPF currently allows a single wite on
 											///< the same open instance.
 	NDIS_SPIN_LOCK			WriteLock;		///< SpinLock that protects the WriteInProgress variable.
-	NDIS_EVENT				NdisRequestEvent;	///< Event used to synchronize I/O requests with the callback structure of NDIS.
 	BOOLEAN					SkipSentPackets;	///< True if this instance should not capture back the packets that it transmits.
 	HANDLE					DumpFileHandle;	///< Handle of the file used in dump mode.
 	PFILE_OBJECT			DumpFileObject;	///< Pointer to the object of the file used in dump mode.
@@ -414,7 +413,6 @@ typedef struct _OPEN_INSTANCE
 	NDIS_SPIN_LOCK			AdapterHandleLock;
 	FILTER_STATE					AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.
 
-	NDIS_EVENT				NdisOpenCloseCompleteEvent;
 	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
 	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
 	ULONG					NumPendingIrps;

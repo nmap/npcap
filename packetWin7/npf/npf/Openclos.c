@@ -1495,7 +1495,6 @@ NPF_CreateOpenObject(
 	}
 
 	NdisInitializeEvent(&Open->WriteEvent);
-	NdisInitializeEvent(&Open->NdisRequestEvent);
 	NdisInitializeEvent(&Open->NdisWriteCompleteEvent);
 	NdisInitializeEvent(&Open->DumpEvent);
 	NdisAllocateSpinLock(&Open->MachineLock);
@@ -1507,8 +1506,6 @@ NPF_CreateOpenObject(
 	{
 		NdisAllocateSpinLock(&Open->CpuData[i].BufferLock);
 	}
-
-	NdisInitializeEvent(&Open->NdisOpenCloseCompleteEvent);
 
 	//  Initialize the request list
 	KeInitializeSpinLock(&Open->RequestSpinLock);
@@ -1568,8 +1565,6 @@ NPF_CreateOpenObject(
 
 		ExInterlockedInsertTailList(&Open->RequestList, &Open->Requests[i].ListElement, &Open->RequestSpinLock);
 	}
-
-	NdisResetEvent(&Open->NdisOpenCloseCompleteEvent);
 
 	//
 	// set the proper binding flags before trying to open the MAC
