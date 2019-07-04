@@ -569,9 +569,6 @@ NPF_ReleaseOpenInstanceResources(
 		pOpen->DumpFileName.Buffer = NULL;
 	}
 
-	// This is no longer a usable Open instance.
-	pOpen->OpenSignature = 0;
-
 	TRACE_EXIT();
 }
 
