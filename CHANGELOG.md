@@ -1,3 +1,22 @@
+## Npcap 0.997 [2019-07-08]
+
+* When upgrading Npcap, do not uninstall the existing Npcap until the user
+  clicks the Install button. Previously, the existing Npcap was uninstalled
+  prior to the first options screen, so that canceling the upgrade left no
+  working Npcap on the system.
+
+* Redefine the I/O control codes used by Npcap using the `CTL_CODE` macro to
+  ensure proper access control and consistent parameter passing. This is not a
+  published API, but the change will require that Packet.DLL and the npcap
+  driver are the same version.
+
+* Fix a 1-byte overrun in NPFInstall.exe when killing processes with Npcap DLLs
+  in use.
+
+* In cases where PacketOpenAdapter is given an adapter name in UTF-16LE,
+  translate it to ASCII before doing string operations on it. See
+  [#1575](http://issues.nmap.org/1575).
+
 ## Npcap 0.996 [2019-06-15]
 
 * Fix a crash when stopping the npcap driver service, such as when upgrading
