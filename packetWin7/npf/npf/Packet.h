@@ -127,11 +127,30 @@ extern NDIS_HANDLE         FilterDriverObject;
 
 #define NDIS_FLAGS_SKIP_LOOPBACK_W2K		0x400 ///< This is an undocumented flag for NdisSetPacketFlags() that allows to disable loopback reception.
 
+#ifdef NPCAP_KDUMP
 // The following definitions are used to provide compatibility
 // of the dump files with the ones of libpcap
 #define TCPDUMP_MAGIC						0xa1b2c3d4	///< Libpcap magic number. Used by programs like tcpdump to recognize a driver's generated dump file.
 #define PCAP_VERSION_MAJOR					2			///< Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
 #define PCAP_VERSION_MINOR					4			///< Minor libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
+
+/*!
+  \brief Header of a libpcap dump file.
+
+  Used when a driver instance is set in dump mode to create a libpcap-compatible file.
+*/
+struct packet_file_header
+{
+	UINT	magic;			///< Libpcap magic number
+	USHORT	version_major;	///< Libpcap major version
+	USHORT	version_minor;	///< Libpcap minor version
+	UINT	thiszone;		///< Gmt to local correction
+	UINT	sigfigs;		///< Accuracy of timestamps
+	UINT	snaplen;		///< Length of the max saved portion of each packet
+	UINT	linktype;		///< Data link type (DLT_*). See win_bpf.h for details.
+};
+
+#endif //NPCAP_KDUMP
 
 // Loopback behaviour definitions
 #define NPF_DISABLE_LOOPBACK				1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
@@ -174,22 +193,6 @@ extern NDIS_HANDLE         FilterDriverObject;
 
 // Maximum pool size allowed in bytes (defence against bad BIOCSETBUFFERSIZE calls)
 #define NPF_MAX_BUFFER_SIZE 0x40000000L
-
-/*!
-  \brief Header of a libpcap dump file.
-
-  Used when a driver instance is set in dump mode to create a libpcap-compatible file.
-*/
-struct packet_file_header
-{
-	UINT	magic;			///< Libpcap magic number
-	USHORT	version_major;	///< Libpcap major version
-	USHORT	version_minor;	///< Libpcap minor version
-	UINT	thiszone;		///< Gmt to local correction
-	UINT	sigfigs;		///< Accuracy of timestamps
-	UINT	snaplen;		///< Length of the max saved portion of each packet
-	UINT	linktype;		///< Data link type (DLT_*). See win_bpf.h for details.
-};
 
 /*!
   \brief Header associated to a packet in the driver's buffer when the driver is in dump mode.
@@ -382,6 +385,7 @@ typedef struct _OPEN_INSTANCE
 											///< the same open instance.
 	NDIS_SPIN_LOCK			WriteLock;		///< SpinLock that protects the WriteInProgress variable.
 	BOOLEAN					SkipSentPackets;	///< True if this instance should not capture back the packets that it transmits.
+#ifdef NPCAP_KDUMP
 	HANDLE					DumpFileHandle;	///< Handle of the file used in dump mode.
 	PFILE_OBJECT			DumpFileObject;	///< Pointer to the object of the file used in dump mode.
 	PKTHREAD				DumpThreadObject;	///< Pointer to the object of the thread used in dump mode.
@@ -396,6 +400,7 @@ typedef struct _OPEN_INSTANCE
 											///< packets.
 	BOOLEAN					DumpLimitReached;	///< TRUE if the maximum dimension of the dump file (MaxDumpBytes or MaxDumpPacks) is
 											///< reached.
+#endif
 
 	NDIS_SPIN_LOCK			MachineLock;	///< SpinLock that protects the BPF filter and the TME engine, if in use.
 	UINT					MaxFrameSize;	///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the
@@ -1343,6 +1348,7 @@ NPF_CreateOpenObject(
 	);
 
 
+#ifdef NPCAP_KDUMP
 /*!
   \brief Creates the file that will receive the packets when the driver is in dump mode.
   \param Open The NPF instance that opens the file.
@@ -1404,6 +1410,7 @@ VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Len
   \return The status of the operation. See ntstatus.h in the DDK.
 */
 NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
+#endif
 
 BOOLEAN NPF_IsOpenInstance(IN POPEN_INSTANCE pOpen);
 

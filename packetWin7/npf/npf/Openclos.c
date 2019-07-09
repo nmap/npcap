@@ -560,6 +560,7 @@ NPF_ReleaseOpenInstanceResources(
 	NdisFreeSpinLock(&pOpen->AdapterHandleLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
 
+#ifdef NPCAP_KDUMP
 	//
 	// Free the string with the name of the dump file
 	//
@@ -568,6 +569,7 @@ NPF_ReleaseOpenInstanceResources(
 		ExFreePool(pOpen->DumpFileName.Buffer);
 		pOpen->DumpFileName.Buffer = NULL;
 	}
+#endif
 
 	TRACE_EXIT();
 }
@@ -990,46 +992,46 @@ NPF_Cleanup(
 	if (Open->ReadEvent != NULL)
 		KeSetEvent(Open->ReadEvent, 0, FALSE);
 
-	// NOTE:
-	// code commented out because the kernel dump feature is disabled
-	//
-	//if (AdapterAlreadyClosing == FALSE)
-	//{
+#ifdef NPCAP_KDUMP
+	
+	if (AdapterAlreadyClosing == FALSE)
+	{
 
-	//
-	//	 Unfreeze the consumer
-	//
-	//	if(Open->mode & MODE_DUMP)
-	//		NdisSetEvent(&Open->DumpEvent);
-	//	else
-	//		KeSetEvent(Open->ReadEvent,0,FALSE);
+	
+		 Unfreeze the consumer
+	
+		if(Open->mode & MODE_DUMP)
+			NdisSetEvent(&Open->DumpEvent);
+		else
+			KeSetEvent(Open->ReadEvent,0,FALSE);
 
-	//	//
-	//	// If this instance is in dump mode, complete the dump and close the file
-	//	//
-	//	if((Open->mode & MODE_DUMP) && Open->DumpFileHandle != NULL)
-	//	{
-	//		NTSTATUS wres;
+		//
+		// If this instance is in dump mode, complete the dump and close the file
+		//
+		if((Open->mode & MODE_DUMP) && Open->DumpFileHandle != NULL)
+		{
+			NTSTATUS wres;
 
-	//		ThreadDelay.QuadPart = -50000000;
+			ThreadDelay.QuadPart = -50000000;
 
-	//		//
-	//		// Wait the completion of the thread
-	//		//
-	//		wres = KeWaitForSingleObject(Open->DumpThreadObject,
-	//			UserRequest,
-	//			KernelMode,
-	//			TRUE,
-	//			&ThreadDelay);
+			//
+			// Wait the completion of the thread
+			//
+			wres = KeWaitForSingleObject(Open->DumpThreadObject,
+				UserRequest,
+				KernelMode,
+				TRUE,
+				&ThreadDelay);
 
-	//		ObDereferenceObject(Open->DumpThreadObject);
+			ObDereferenceObject(Open->DumpThreadObject);
 
-	//		//
-	//		// Flush and close the dump file
-	//		//
-	//		NPF_CloseDumpFile(Open);
-	//	}
-	//}
+			//
+			// Flush and close the dump file
+			//
+			NPF_CloseDumpFile(Open);
+		}
+	}
+#endif //NPCAP_KDUMP
 
 
 	//
@@ -1496,7 +1498,9 @@ NPF_CreateOpenObject(
 
 	NdisInitializeEvent(&Open->WriteEvent);
 	NdisInitializeEvent(&Open->NdisWriteCompleteEvent);
+#ifdef NPCAP_KDUMP
 	NdisInitializeEvent(&Open->DumpEvent);
+#endif
 	NdisAllocateSpinLock(&Open->MachineLock);
 	NdisAllocateSpinLock(&Open->WriteLock);
 	NdisAllocateSpinLock(&Open->GroupLock);
@@ -1523,9 +1527,11 @@ NPF_CreateOpenObject(
 	Open->Multiple_Write_Counter = 0;
 	Open->MinToCopy = 0;
 	Open->TimeOut.QuadPart = (LONGLONG)1;
+#ifdef NPCAP_KDUMP
 	Open->DumpFileName.Buffer = NULL;
 	Open->DumpFileHandle = NULL;
 	Open->DumpLimitReached = FALSE;
+#endif
 	Open->MaxFrameSize = 0;
 	Open->WriterSN = 0;
 	Open->ReaderSN = 0;

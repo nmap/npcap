@@ -174,6 +174,7 @@ NPF_Read(
 			break;
 		}
 
+#ifdef NPCAP_KDUMP
 		if (Open->mode & MODE_DUMP && Open->DumpFileHandle == NULL)
 		{
 			// this instance is in dump mode, but the dump file has still not been opened
@@ -181,6 +182,7 @@ NPF_Read(
 			Status = STATUS_UNSUCCESSFUL;
 			break;
 		}
+#endif
 
 	} while (FALSE);
 
@@ -258,6 +260,7 @@ NPF_Read(
 			header = (struct bpf_hdr *)CurrBuff;
 			GET_TIME(&header->bh_tstamp, &G_Start_Time);
 
+#ifdef NPCAP_KDUMP
 			if (Open->mode & MODE_DUMP)
 			{
 				*(LONGLONG *)(CurrBuff + sizeof(struct bpf_hdr) + 16) = Open->DumpOffset.QuadPart;
@@ -266,6 +269,7 @@ NPF_Read(
 				Irp->IoStatus.Information = 24 + sizeof(struct bpf_hdr);
 			}
 			else
+#endif
 			{
 				header->bh_caplen = 16;
 				header->bh_datalen = 16;
@@ -930,6 +934,7 @@ NPF_TapExForEachOpen(
 					goto NPF_TapExForEachOpen_End;
 				}
 
+#ifdef NPCAP_KDUMP
 				if (Open->mode & MODE_DUMP && Open->MaxDumpPacks)
 				{
 					ULONG Accepted = 0;
@@ -951,6 +956,7 @@ NPF_TapExForEachOpen(
 						goto NPF_TapExForEachOpen_End;
 					}
 				}
+#endif
 
 				//////////////////////////////COPIA.C//////////////////////////////////////////77
 
@@ -1112,9 +1118,11 @@ NPF_TapExForEachOpen(
 					InterlockedExchangeAdd(&LocalData->Free, (ULONG)(-(LONG)increment));
 					if (Open->Size - LocalData->Free >= Open->MinToCopy)
 					{
+#ifdef NCPAP_KDUMP
 						if (Open->mode & MODE_DUMP)
 							NdisSetEvent(&Open->DumpEvent);
 						else
+#endif
 						{
 							if (Open->ReadEvent != NULL)
 							{

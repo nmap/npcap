@@ -81,6 +81,8 @@
 
 #include "stdafx.h"
 
+#ifdef NPCAP_KDUMP
+
 #include <ntddk.h>
 #include <ndis.h>
 
@@ -636,3 +638,4 @@ VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Len
 
 	return;
 }
+#endif //NPCAP_KDUMP
