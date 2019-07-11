@@ -154,18 +154,17 @@ NPF_Read(
 
 		//
 		// we need to test if the device is still bound to the Network adapter,
-		// so we perform a start/stop using binding.
+		// so we check the status.
 		// This is not critical, since we just want to have a quick way to have the
 		// dispatch read fail in case the adapter has been unbound
 
-		if (!Open->GroupHead || NPF_StartUsingBinding(Open->GroupHead) == FALSE)
+		if (Open->OpenStatus != OpenRunning)
 		{
 			NPF_StopUsingOpenInstance(Open);
 			// The Network adapter has been removed or diasabled
 			Status = STATUS_UNSUCCESSFUL;
 			break;
 		}
-		NPF_StopUsingBinding(Open->GroupHead);
 
 		if (Open->Size == 0)
 		{
@@ -438,8 +437,8 @@ NPF_SendEx(
 	ULONG               SendFlags
 	)
 {
-	POPEN_INSTANCE		Open = (POPEN_INSTANCE) FilterModuleContext;
-	POPEN_INSTANCE GroupOpen;
+	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
+	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE		TempOpen;
 	PVOID i = 0;
 	PVOID j = 0;
@@ -448,42 +447,27 @@ NPF_SendEx(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// Do not capture the normal NDIS send traffic, if this is our loopback adapter.
-	if (Open->Loopback == FALSE)
+	if (pFiltMod->Loopback == FALSE)
 	{
 #endif
 		/* Lock the group */
-		NdisAcquireSpinLock(&Open->GroupLock);
+		NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
 
-		ASSERT(Open->GroupHead == NULL);
-		if (Open->GroupHead != NULL)
+		for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 		{
-			// Should not come here, because Open called by NDIS will always be a group head itself, so its GroupHead member is NULL.
-			IF_LOUD(DbgPrint("NPF_SendEx: Open->GroupHead != NULL\n");)
-				GroupOpen = Open->GroupHead->GroupNext;
-		}
-		else
-		{
-			//get the 1st group adapter child
-			GroupOpen = Open->GroupNext;
-		}
-
-		while (GroupOpen != NULL)
-		{
-			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == FilterRunning)
+			TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+			if (TempOpen->OpenStatus == OpenRunning)
 			{
 				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
 			}
-
-			GroupOpen = TempOpen->GroupNext;
 		}
 		/* Release the spin lock no matter what. */
-		NdisReleaseSpinLock(&Open->GroupLock);
+		NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif
 
-	NdisFSendNetBufferLists(Open->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
+	NdisFSendNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
 
 	TRACE_EXIT();
 }
@@ -501,8 +485,8 @@ NPF_TapEx(
 	)
 {
 
-	POPEN_INSTANCE      Open = (POPEN_INSTANCE) FilterModuleContext;
-	POPEN_INSTANCE		GroupOpen;
+	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
+	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE		TempOpen;
 	ULONG				ReturnFlags = 0;
 
@@ -518,47 +502,35 @@ NPF_TapEx(
 
 	// Do not capture the normal NDIS receive traffic, if this is our loopback adapter.
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (Open->Loopback == FALSE)
+	if (pFiltMod->Loopback == FALSE)
 	{
 #endif
 		/* Lock the group */
-		NdisAcquireSpinLock(&Open->GroupLock);
-		ASSERT(Open->GroupHead == NULL);
-		if (Open->GroupHead != NULL)
-		{
-			// Should not come here, because Open called by NDIS will always be a group head itself, so its GroupHead member is NULL.
-			GroupOpen = Open->GroupHead->GroupNext;
-		}
-		else
-		{
-			//get the 1st group adapter child
-			GroupOpen = Open->GroupNext;
-		}
+		NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
 
-		while (GroupOpen != NULL)
+		for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 		{
-			TempOpen = GroupOpen;
-				if (TempOpen->AdapterBindingStatus == FilterRunning)
-				{
-					//let every group adapter receive the packets
-					NPF_TapExForEachOpen(TempOpen, NetBufferLists);
-				}
-				GroupOpen = TempOpen->GroupNext;
+			TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+			if (TempOpen->OpenStatus == OpenRunning)
+			{
+				//let every group adapter receive the packets
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+			}
 		}
 		/* Release the spin lock no matter what. */
-		NdisReleaseSpinLock(&Open->GroupLock);
+		NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif
 
 #ifdef HAVE_RX_SUPPORT
-	if (Open->BlockRxPath)
+	if (pFiltMod->BlockRxPath)
 	{
 		if (NDIS_TEST_RECEIVE_CAN_PEND(ReceiveFlags))
 		{
 			// no NDIS_RECEIVE_FLAGS_RESOURCES in ReceiveFlags
 			NdisFReturnNetBufferLists(
-				Open->AdapterHandle,
+				pFiltMod->AdapterHandle,
 				NetBufferLists,
 				ReturnFlags);
 		}
@@ -568,7 +540,7 @@ NPF_TapEx(
 	{
 		//return the packets immediately
 		NdisFIndicateReceiveNetBufferLists(
-			Open->AdapterHandle,
+			pFiltMod->AdapterHandle,
 			NetBufferLists,
 			PortNumber,
 			NumberOfNetBufferLists,
@@ -660,7 +632,7 @@ NPF_TapExForEachOpen(
 #ifdef HAVE_DOT11_SUPPORT
 		// Handle native 802.11 media specific OOB data here.
 		// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
-		if (Open->Dot11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
+		if (Open->pFiltMod->Dot11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
 		{
 			PDOT11_EXTSTA_RECV_CONTEXT  pwInfo;
 			PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) Dot11RadiotapHeader;
@@ -713,7 +685,7 @@ NPF_TapExForEachOpen(
 			// Looking up the ucDataRate field's value in the data rate mapping table.
 			// If not found, return 0.
 			IF_LOUD(DbgPrint("pwInfo->ucDataRate = %d\n", pwInfo->ucDataRate);)
-			USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open, pwInfo->ucDataRate);
+			USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open->pFiltMod, pwInfo->ucDataRate);
 			if (usDataRateValue != 0) {
 				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
 				// The miniport might be providing data rate values > 127.5 Mb/s, but radiotap's "Rate" field is only 8 bits,

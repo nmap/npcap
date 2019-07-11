@@ -112,8 +112,8 @@ PDEVICE_EXTENSION GlobalDeviceExtension;
 WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
 WCHAR g_NPF_PrefixBuffer_Wifi[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI;
 
-POPEN_INSTANCE g_arrOpen = NULL; //Adapter OPEN_INSTANCE list head, each list item is a group head.
-NDIS_SPIN_LOCK g_OpenArrayLock; //The lock for adapter OPEN_INSTANCE list.
+SINGLE_LIST_ENTRY g_arrFiltMod; //Adapter filter module list head
+NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 //
@@ -454,7 +454,8 @@ DriverEntry(
 	}
 #endif
 
-	NdisAllocateSpinLock(&g_OpenArrayLock);
+	NdisAllocateSpinLock(&g_FilterArrayLock);
+	g_arrFiltMod.Next = NULL;
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
@@ -1198,14 +1199,14 @@ Return Value:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Filter Handle (WiFi) = NULL, no need to delete.");
 	}
 	// NdisFDeregisterFilterDriver ought to have called FilterDetach, but something is leaking. Let's force a wait:
-	NdisAcquireSpinLock(&g_OpenArrayLock);
-	while (g_arrOpen != NULL) {
-		NdisReleaseSpinLock(&g_OpenArrayLock);
+	NdisAcquireSpinLock(&g_FilterArrayLock);
+	while (g_arrFiltMod.Next != NULL) {
+		NdisReleaseSpinLock(&g_FilterArrayLock);
 		NdisWaitEvent(&Event, 1);
-		NdisAcquireSpinLock(&g_OpenArrayLock);
+		NdisAcquireSpinLock(&g_FilterArrayLock);
 		NdisResetEvent(&Event);
 	}
-	NdisReleaseSpinLock(&g_OpenArrayLock);
+	NdisReleaseSpinLock(&g_FilterArrayLock);
 
 	// Free the adapters names
 	if (bindP != NULL)
@@ -1214,7 +1215,7 @@ Return Value:
 		bindP = NULL;
 	}
 
-	NdisFreeSpinLock(&g_OpenArrayLock);
+	NdisFreeSpinLock(&g_FilterArrayLock);
 
 	TRACE_EXIT();
 
@@ -1263,7 +1264,7 @@ NPF_IoControl(
 	)
 {
 	POPEN_INSTANCE			Open;
-	POPEN_INSTANCE			Current;
+	PSINGLE_LIST_ENTRY Curr;
 	PIO_STACK_LOCATION		IrpSp;
 	PLIST_ENTRY				RequestListEntry;
 	PINTERNAL_REQUEST		pRequest;
@@ -2018,25 +2019,25 @@ NPF_IoControl(
 		//
 		// gain ownership of the Ndis Handle
 		//
-		if (!Open->GroupHead || NPF_StartUsingBinding(Open->GroupHead) == FALSE)
+		if (!Open->pFiltMod || NPF_StartUsingBinding(Open->pFiltMod) == FALSE)
 		{
 			//
 			// MAC unbindind or unbound
 			//
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open->GroupHead is unavailable or cannot bind, Open->GroupHead=%p", Open->GroupHead);
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open->pFiltMod is unavailable or cannot bind, Open->pFiltMod=%p", Open->pFiltMod);
 			SET_FAILURE_INVALID_REQUEST();
 			break;
 		}
 
 
 		// Extract a request from the list of free ones
-		RequestListEntry = ExInterlockedRemoveHeadList(&Open->RequestList, &Open->RequestSpinLock);
+		RequestListEntry = ExInterlockedRemoveHeadList(&Open->pFiltMod->RequestList, &Open->pFiltMod->RequestSpinLock);
 		if (RequestListEntry == NULL)
 		{
 			//
 			// Release ownership of the Ndis Handle
 			//
-			NPF_StopUsingBinding(Open->GroupHead);
+			NPF_StopUsingBinding(Open->pFiltMod);
 
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "RequestListEntry=NULL");
 			SET_FAILURE_NOMEM();
@@ -2053,16 +2054,16 @@ NPF_IoControl(
 			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA) - 1 + OidData->Length))
 		{
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			if (Open->Loopback && (OidData->Oid == OID_GEN_MAXIMUM_TOTAL_SIZE || OidData->Oid == OID_GEN_TRANSMIT_BUFFER_SPACE || OidData->Oid == OID_GEN_RECEIVE_BUFFER_SPACE))
+			if (Open->pFiltMod->Loopback && (OidData->Oid == OID_GEN_MAXIMUM_TOTAL_SIZE || OidData->Oid == OID_GEN_TRANSMIT_BUFFER_SPACE || OidData->Oid == OID_GEN_RECEIVE_BUFFER_SPACE))
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCSETOID, fail it", Open->AdapterName.Buffer);
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
 					SET_FAILURE_UNSUCCESSFUL();
 				}
 				else
 				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", Open->AdapterName.Buffer, NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
 					*((PUINT)OidData->Data) = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 				}
@@ -2070,24 +2071,24 @@ NPF_IoControl(
 				//
 				// Release ownership of the Ndis Handle
 				//
-				NPF_StopUsingBinding(Open->GroupHead);
+				NPF_StopUsingBinding(Open->pFiltMod);
 
-				ExInterlockedInsertTailList(&Open->RequestList,
+				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
 					&pRequest->ListElement,
-					&Open->RequestSpinLock);
+					&Open->pFiltMod->RequestSpinLock);
 
 				break;
 			}
-			else if (Open->Loopback && (OidData->Oid == OID_GEN_TRANSMIT_BLOCK_SIZE || OidData->Oid == OID_GEN_RECEIVE_BLOCK_SIZE))
+			else if (Open->pFiltMod->Loopback && (OidData->Oid == OID_GEN_TRANSMIT_BLOCK_SIZE || OidData->Oid == OID_GEN_RECEIVE_BLOCK_SIZE))
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCSETOID, fail it", Open->AdapterName.Buffer);
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
 					SET_FAILURE_UNSUCCESSFUL();
 				}
 				else
 				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", Open->AdapterName.Buffer, 1);
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, 1);
 					*((PUINT)OidData->Data) = 1;
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 				}
@@ -2095,15 +2096,15 @@ NPF_IoControl(
 				//
 				// Release ownership of the Ndis Handle
 				//
-				NPF_StopUsingBinding(Open->GroupHead);
+				NPF_StopUsingBinding(Open->pFiltMod);
 
-				ExInterlockedInsertTailList(&Open->RequestList,
+				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
 					&pRequest->ListElement,
-					&Open->RequestSpinLock);
+					&Open->pFiltMod->RequestSpinLock);
 
 				break;
 			}
-// 			else if (Open->Loopback && g_DltNullMode && (OidData->Oid == OID_802_3_PERMANENT_ADDRESS || OidData->Oid == OID_802_3_CURRENT_ADDRESS))
+// 			else if (Open->pFiltMod->Loopback && g_DltNullMode && (OidData->Oid == OID_802_3_PERMANENT_ADDRESS || OidData->Oid == OID_802_3_CURRENT_ADDRESS))
 // 			{
 // 				if (FunctionCode == BIOCSETOID)
 // 				{
@@ -2119,24 +2120,24 @@ NPF_IoControl(
 // 				//
 // 				// Release ownership of the Ndis Handle
 // 				//
-// 				NPF_StopUsingBinding(Open->GroupHead);
+// 				NPF_StopUsingBinding(Open->pFiltMod);
 //
-// 				ExInterlockedInsertTailList(&Open->RequestList,
+// 				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
 // 					&pRequest->ListElement,
-// 					&Open->RequestSpinLock);
+// 					&Open->pFiltMod->RequestSpinLock);
 //
 // 				break;
 // 			}
-			else if (Open->Loopback && g_DltNullMode && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
+			else if (Open->pFiltMod->Loopback && g_DltNullMode && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->AdapterName.Buffer);
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
 					SET_FAILURE_UNSUCCESSFUL();
 				}
 				else
 				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->AdapterName.Buffer, NdisMediumNull);
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NdisMediumNull);
 					*((PUINT)OidData->Data) = NdisMediumNull;
 					OidData->Length = sizeof(UINT);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
@@ -2145,27 +2146,27 @@ NPF_IoControl(
 				//
 				// Release ownership of the Ndis Handle
 				//
-				NPF_StopUsingBinding(Open->GroupHead);
+				NPF_StopUsingBinding(Open->pFiltMod);
 
-				ExInterlockedInsertTailList(&Open->RequestList,
+				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
 					&pRequest->ListElement,
-					&Open->RequestSpinLock);
+					&Open->pFiltMod->RequestSpinLock);
 
 				break;
 			}
 #endif
 
 #ifdef HAVE_DOT11_SUPPORT
-			if (Open->Dot11 && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
+			if (Open->pFiltMod->Dot11 && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
 			{
 				if (FunctionCode == BIOCSETOID)
 				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->AdapterName.Buffer);
+					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
 					SET_FAILURE_UNSUCCESSFUL();
 				}
 				else
 				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->AdapterName.Buffer, NdisMediumRadio80211);
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
 					*((PUINT)OidData->Data) = NdisMediumRadio80211;
 					OidData->Length = sizeof(UINT);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
@@ -2174,11 +2175,11 @@ NPF_IoControl(
 				//
 				// Release ownership of the Ndis Handle
 				//
-				NPF_StopUsingBinding(Open->GroupHead);
+				NPF_StopUsingBinding(Open->pFiltMod);
 
-				ExInterlockedInsertTailList(&Open->RequestList,
+				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
 					&pRequest->ListElement,
-					&Open->RequestSpinLock);
+					&Open->pFiltMod->RequestSpinLock);
 
 				break;
 			}
@@ -2231,63 +2232,63 @@ NPF_IoControl(
 			//  submit the request
 			//
 			pRequest->Request.RequestId = (PVOID) NPF_REQUEST_ID;
-			pRequest->Request.RequestHandle = Open->AdapterHandle;
-			// ASSERT(Open->AdapterHandle != NULL);
+			pRequest->Request.RequestHandle = Open->pFiltMod->AdapterHandle;
+			// ASSERT(Open->pFiltMod->AdapterHandle != NULL);
 
 			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
 			{
-				ASSERT(Open->GroupHead != NULL);
+				ASSERT(Open->pFiltMod != NULL);
 
 				// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
-				if (Open->GroupHead->PhysicalMedium == NdisPhysicalMediumNative802_11)
+				if (Open->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
 				{
 					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %p",
-						*(ULONG*)OidData->Data, Open->GroupHead->MyPacketFilter);
+						*(ULONG*)OidData->Data, Open->pFiltMod->MyPacketFilter);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 
 					//
 					// Release ownership of the Ndis Handle
 					//
-					NPF_StopUsingBinding(Open->GroupHead);
+					NPF_StopUsingBinding(Open->pFiltMod);
 
-					ExInterlockedInsertTailList(&Open->RequestList,
+					ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
 						&pRequest->ListElement,
-						&Open->RequestSpinLock);
+						&Open->pFiltMod->RequestSpinLock);
 
 					break;
 				}
 
 				// Store the requested packet filter for *this* Open instance
 				Open->MyPacketFilter = *(ULONG*)OidData->Data;
-				// Set the group head packet filter to the union of all instances' filters
-				NdisAcquireSpinLock(&Open->GroupHead->GroupLock);
-				Open->GroupHead->MyPacketFilter = 0;
-				for (Current = Open->GroupHead->GroupNext; Current != NULL; Current = Current->GroupNext)
+				// Set the filter module's packet filter to the union of all instances' filters
+				NdisAcquireSpinLock(&Open->pFiltMod->OpenInstancesLock);
+				Open->pFiltMod->MyPacketFilter = 0;
+				for (Curr = Open->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 				{
-					Open->GroupHead->MyPacketFilter = Open->GroupHead->MyPacketFilter | Current->MyPacketFilter;
+					Open->pFiltMod->MyPacketFilter = Open->pFiltMod->MyPacketFilter | CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
 				}
-				NdisReleaseSpinLock(&Open->GroupHead->GroupLock);
+				NdisReleaseSpinLock(&Open->pFiltMod->OpenInstancesLock);
 
                 pCombinedPacketFilter = (PULONG) OidBuffer;
 #ifdef HAVE_DOT11_SUPPORT
-				*pCombinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter | Open->GroupHead->Dot11PacketFilter;
+				*pCombinedPacketFilter = Open->pFiltMod->HigherPacketFilter | Open->pFiltMod->MyPacketFilter | Open->pFiltMod->Dot11PacketFilter;
 #else
-				*pCombinedPacketFilter = Open->GroupHead->HigherPacketFilter | Open->GroupHead->MyPacketFilter;
+				*pCombinedPacketFilter = Open->pFiltMod->HigherPacketFilter | Open->pFiltMod->MyPacketFilter;
 #endif
 			}
 
-			Status = NdisFOidRequest(Open->AdapterHandle, &pRequest->Request);
+			Status = NdisFOidRequest(Open->pFiltMod->AdapterHandle, &pRequest->Request);
 		}
 		else
 		{
 			//
 			// Release ownership of the Ndis Handle
 			//
-			NPF_StopUsingBinding(Open->GroupHead);
+			NPF_StopUsingBinding(Open->pFiltMod);
 
-			ExInterlockedInsertTailList(&Open->RequestList,
+			ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
 				&pRequest->ListElement,
-				&Open->RequestSpinLock);
+				&Open->pFiltMod->RequestSpinLock);
 
 			//
 			//  buffer too small
@@ -2306,7 +2307,7 @@ NPF_IoControl(
 		//
 		// Release ownership of the Ndis Handle
 		//
-		NPF_StopUsingBinding(Open->GroupHead);
+		NPF_StopUsingBinding(Open->pFiltMod);
 
 		//
 		// Complete the request
@@ -2345,9 +2346,9 @@ NPF_IoControl(
 		}
 
 
-		ExInterlockedInsertTailList(&Open->RequestList,
+		ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
 			&pRequest->ListElement,
-			&Open->RequestSpinLock);
+			&Open->pFiltMod->RequestSpinLock);
 
 		if (Status == NDIS_STATUS_SUCCESS)
 		{

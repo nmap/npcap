@@ -355,8 +355,8 @@ NPF_NetworkClassify(
 #endif
 
 {
-	POPEN_INSTANCE LoopbackOpen;
-	POPEN_INSTANCE GroupOpen;
+	PNPCAP_FILTER_MODULE pLoopbackFilter;
+	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE		TempOpen;
 	NTSTATUS			status = STATUS_SUCCESS;
 	UINT32				ipHeaderSize = 0;
@@ -605,24 +605,22 @@ NPF_NetworkClassify(
 	}
 
 	// Send the loopback packets data to the user-mode code.
-	LoopbackOpen = NPF_GetLoopbackOpen();
-	if (LoopbackOpen && NPF_StartUsingBinding(LoopbackOpen)) {
+	pLoopbackFilter = NPF_GetLoopbackFilterModule();
+	if (pLoopbackFilter && NPF_StartUsingBinding(pLoopbackFilter)) {
 
 		/* Lock the group */
-		NdisAcquireSpinLock(&LoopbackOpen->GroupLock);
-		GroupOpen = LoopbackOpen->GroupNext;
-		while (GroupOpen != NULL)
+		NdisAcquireSpinLock(&pLoopbackFilter->OpenInstancesLock);
+		for (Curr = pLoopbackFilter->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 		{
-			TempOpen = GroupOpen;
-			if (TempOpen->AdapterBindingStatus == FilterRunning)
+			TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+			if (TempOpen->OpenStatus == OpenRunning)
 			{
 				//let every group adapter receive the packets
 				NPF_TapExForEachOpen(TempOpen, pClonedNetBufferList);
 			}
-			GroupOpen = TempOpen->GroupNext;
 		}
-		NdisReleaseSpinLock(&LoopbackOpen->GroupLock);
-		NPF_StopUsingBinding(LoopbackOpen);
+		NdisReleaseSpinLock(&pLoopbackFilter->OpenInstancesLock);
+		NPF_StopUsingBinding(pLoopbackFilter);
 	}
 
 Exit_Ethernet_Retreated:
