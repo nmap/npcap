@@ -106,12 +106,6 @@ ULONG PacketDebugFlag = PACKET_DEBUG_LOUD;
 
 PDEVICE_EXTENSION GlobalDeviceExtension;
 
-//
-// Global strings
-//
-WCHAR g_NPF_PrefixBuffer[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
-WCHAR g_NPF_PrefixBuffer_Wifi[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI;
-
 SINGLE_LIST_ENTRY g_arrFiltMod; //Adapter filter module list head
 NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
 
@@ -325,12 +319,10 @@ DriverEntry(
 // 	}
 // 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_Dot11SupportMode (based on RegistryPath) = %d\n", g_Dot11SupportMode);
 
-	// g_NPF_PrefixBuffer = "NPCAP_"
-	NdisInitUnicodeString(&g_NPF_Prefix, g_NPF_PrefixBuffer);
+	NdisInitUnicodeString(&g_NPF_Prefix, NPF_DEVICE_NAMES_PREFIX_WIDECHAR);
 
-	// g_NPF_PrefixBuffer_Wifi = "NPCAP_WIFI_"
 	if (g_Dot11SupportMode)
-		NdisInitUnicodeString(&g_NPF_Prefix_WIFI, g_NPF_PrefixBuffer_Wifi);
+		NdisInitUnicodeString(&g_NPF_Prefix_WIFI, NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI);
 
 	//
 	// Initialize several CPU-related functions.
