@@ -104,9 +104,7 @@ ULONG PacketDebugFlag = PACKET_DEBUG_LOUD;
 
 #endif
 
-PDEVICE_EXTENSION GlobalDeviceExtension;
-
-SINGLE_LIST_ENTRY g_arrFiltMod; //Adapter filter module list head
+SINGLE_LIST_ENTRY g_arrFiltMod = {0}; //Adapter filter module list head
 NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -388,6 +386,28 @@ DriverEntry(
 			NPF_CreateDevice(DriverObject, &AdapterName, &g_NPF_Prefix_WIFI, TRUE);
 	}
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// Use Winsock Kernel (WSK) to send loopback packets.
+	// TODO: Allow this to continue but disable loopback if there's an error
+	Status = NPF_WSKStartup();
+	if (!NT_SUCCESS(Status))
+	{
+		TRACE_EXIT();
+		return Status;
+	}
+
+	Status = NPF_WSKInitSockets();
+	if (!NT_SUCCESS(Status))
+	{
+		NPF_WSKCleanup();
+		TRACE_EXIT();
+		return Status;
+	}
+#endif
+
+	/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */
+	NdisAllocateSpinLock(&g_FilterArrayLock);
+
 	// Register the filter to NDIS.
 	Status = NdisFRegisterFilterDriver(DriverObject,
 		(NDIS_HANDLE) FilterDriverObject,
@@ -395,6 +415,11 @@ DriverEntry(
 		&FilterDriverHandle);
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		NPF_WSKFreeSockets();
+		NPF_WSKCleanup();
+#endif
+		NdisFreeSpinLock(&g_FilterArrayLock);
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter with NDIS, Status = %x", Status);
 		TRACE_EXIT();
 		return Status;
@@ -428,26 +453,6 @@ DriverEntry(
 			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter (WiFi) with NDIS, Status = %x, FilterDriverHandle_WiFi = %p", Status, FilterDriverHandle_WiFi);
 		}
 	}
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// Use Winsock Kernel (WSK) to send loopback packets.
-	Status = NPF_WSKStartup();
-	if (!NT_SUCCESS(Status))
-	{
-		TRACE_EXIT();
-		return Status;
-	}
-
-	Status = NPF_WSKInitSockets();
-	if (!NT_SUCCESS(Status))
-	{
-		TRACE_EXIT();
-		return Status;
-	}
-#endif
-
-	NdisAllocateSpinLock(&g_FilterArrayLock);
-	g_arrFiltMod.Next = NULL;
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;

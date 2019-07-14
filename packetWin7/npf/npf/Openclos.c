@@ -102,8 +102,6 @@ extern ULONG g_Dot11SupportMode;
 	extern PDEVICE_OBJECT g_LoopbackDevObj;
 #endif
 
-extern NDIS_HANDLE FilterDriverHandle_WiFi; // NDIS handle for WiFi filter driver
-
 static
 VOID
 NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen);
