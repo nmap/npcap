@@ -1,4 +1,4 @@
-## Npcap 0.997 [2019-07-08]
+## Npcap 0.997 [2019-07-15]
 
 * When upgrading Npcap, do not uninstall the existing Npcap until the user
   clicks the Install button. Previously, the existing Npcap was uninstalled
@@ -16,6 +16,9 @@
 * In cases where PacketOpenAdapter is given an adapter name in UTF-16LE,
   translate it to ASCII before doing string operations on it. See
   [#1575](http://issues.nmap.org/1575).
+
+* Significant reorganization of internal data structures to reduce memory use
+  and initialization overhead.
 
 ## Npcap 0.996 [2019-06-15]
 
