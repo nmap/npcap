@@ -1,4 +1,4 @@
-## Npcap 0.997 [2019-07-15]
+## Npcap 0.9981 [2019-07-23]
 
 * When upgrading Npcap, do not uninstall the existing Npcap until the user
   clicks the Install button. Previously, the existing Npcap was uninstalled
@@ -19,6 +19,10 @@
 
 * Significant reorganization of internal data structures to reduce memory use
   and initialization overhead.
+
+## Npcap 0.997 [N/A]
+
+* Internal testing build, no public release.
 
 ## Npcap 0.996 [2019-06-15]
 
