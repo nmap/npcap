@@ -1514,8 +1514,8 @@ NPF_CreateFilterModule(
 	
 	pFiltMod->MaxFrameSize = 0;
 
-	pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NonPagedPool, 255 * sizeof(WCHAR), 'NPCA');
-	pFiltMod->AdapterName.MaximumLength = 255 * sizeof(WCHAR);
+	pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NonPagedPool, AdapterName->MaximumLength, 'NPCA');
+	pFiltMod->AdapterName.MaximumLength = AdapterName->MaximumLength;
 	pFiltMod->AdapterName.Length = 0;
 	RtlCopyUnicodeString(&pFiltMod->AdapterName, AdapterName);
 
