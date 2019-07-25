@@ -1299,7 +1299,6 @@ NPF_IoControl(
 #ifdef _AMD64_
 	VOID* POINTER_32		hUserEvent32Bit;
 #endif //_AMD64_
-	PMDL					mdl;
 
 	TRACE_ENTER();
 
@@ -1349,7 +1348,7 @@ NPF_IoControl(
 			break;
 		}
 
-		if (Irp->UserBuffer == NULL)
+		if (Irp->AssociatedIrp.SystemBuffer == NULL)
 		{
 			SET_FAILURE_UNSUCCESSFUL();
 			break;
@@ -1360,33 +1359,7 @@ NPF_IoControl(
 		// might well be a dangling pointer. We need to probe and lock the address.
 		//
 
-		mdl = NULL;
-		pStats = NULL;
-
-		mdl = IoAllocateMdl(Irp->UserBuffer, StatsLength, FALSE, TRUE, NULL);
-
-		if (mdl == NULL)
-		{
-			SET_FAILURE_UNSUCCESSFUL();
-			break;
-		}
-		__try
-		{
-			MmProbeAndLockPages(mdl, UserMode, IoWriteAccess);
-		}
-		__except(EXCEPTION_EXECUTE_HANDLER)
-		{
-			Information = 0;
-			Status = GetExceptionCode();
-			pStats = NULL;
-			if (mdl != NULL)
-			{
-				IoFreeMdl(mdl);
-			}
-			break;
-		}
-
-		pStats = (PUINT)(Irp->UserBuffer);
+		pStats = (PUINT)(Irp->AssociatedIrp.SystemBuffer);
 		
 		pStats[3] = 0;
 		pStats[0] = 0;
@@ -1400,9 +1373,6 @@ NPF_IoControl(
 			pStats[1] += Open->CpuData[i].Dropped;
 			pStats[2] += 0;		// Not yet supported
 		}
-
-		MmUnlockPages(mdl);
-		IoFreeMdl(mdl);
 
 		SET_RESULT_SUCCESS(StatsLength);
 
