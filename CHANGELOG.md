@@ -1,3 +1,17 @@
+## Npcap 0.9982 [2019-07-30]
+
+* Fix the packet statistics functionality used by `pcap_stats()`, which was
+  broken in 0.9981. Fixes [#1668](http://issues.nmap.org/1668).
+
+* Rework the flow of packets through the WFP callout driver that implements
+  loopback traffic capture. This should prevent clobbering of redirect context
+  data reported in [#1529](http://issues.nmap.org/1529).
+
+* Restore the `/dlt_null` installer option to default to "yes" since it has
+  been defaulting to "no" since Npcap 0.992. Using `DLT_NULL` for loopback
+  capture is slightly more efficient than creating a dummy Ethernet header,
+  which was the default before.
+
 ## Npcap 0.9981 [2019-07-23]
 
 * When upgrading Npcap, do not uninstall the existing Npcap until the user
