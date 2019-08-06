@@ -604,8 +604,8 @@ Exit_Inject_Clone:
 		compartmentID = (COMPARTMENT_ID)inMetaValues->compartmentId;
 
 	// This cloned NBL will be freed in NPF_NetworkInjectionComplete function.
-#if 0 // Should we send inbound packets to the receive stack? Seems like we should, but it works for now.
-	if (bInbound) {
+	// Inbound packets that we didn't inject should be sent to receive stack.
+	if (bInbound && !bSelfSent) {
 		status = FwpsInjectNetworkReceiveAsync(bInnerIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
 				NULL,
 				0,
@@ -616,8 +616,8 @@ Exit_Inject_Clone:
 				NPF_NetworkInjectionComplete,
 				NULL);
 	}
+	// Outbound packets and ones we injected should be sent to the send stack.
 	else
-#endif // 0
        	{
 		status = FwpsInjectNetworkSendAsync(bInnerIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
 				NULL,
