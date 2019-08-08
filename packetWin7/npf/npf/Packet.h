@@ -1311,15 +1311,13 @@ NPF_EqualAdapterName(
 /*!
   \brief Get a pointer to filter module from the global array.
   \param pAdapterName The adapter name of the target filter module.
-  \param Dot11 Whether to find the raw 802.11 version of the filter module.
   \return Pointer to the filter module, or NULL if not found.
 
   This function is used to create a group member adapter for the group head one.
 */
 PNPCAP_FILTER_MODULE
 NPF_GetFilterModuleByAdapterName(
-	PNDIS_STRING pAdapterName,
-	BOOLEAN Dot11
+	PNDIS_STRING pAdapterName
 	);
 
 /*!

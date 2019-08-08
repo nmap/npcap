@@ -219,7 +219,7 @@ NPF_Write(
 
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
 		"Max frame size = %u, packet size = %u",
-		Open->MaxFrameSize,
+		Open->pFiltMod->MaxFrameSize,
 		IrpSp->Parameters.Write.Length);
 
 	//

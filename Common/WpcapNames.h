@@ -118,10 +118,10 @@
 //
 
 // Used in packetWin7\Dll and the driver
-#define NPF_DEVICE_NAMES_PREFIX					NPF_DRIVER_NAME "_"     								///< (AAA) packet.dll
-#define NPF_DEVICE_NAMES_PREFIX_WIDECHAR		NPF_DRIVER_NAME_WIDECHAR L"_"     						///< (AAA) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
-#define NPF_DEVICE_NAMES_PREFIX_WIFI			NPF_DEVICE_NAMES_PREFIX "WIFI_"
-#define NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI	NPF_DEVICE_NAMES_PREFIX_WIDECHAR L"WIFI_"
+#define NPF_DEVICE_NAMES_PREFIX					NPF_DRIVER_NAME "\\"     								///< (AAA) packet.dll
+#define NPF_DEVICE_NAMES_PREFIX_WIDECHAR		NPF_DRIVER_NAME_WIDECHAR L"\\"     						///< (AAA) used by the NPF driver, that does not accept the TEXT(a) macro correctly.
+#define NPF_DEVICE_NAMES_PREFIX_WIFI			NPF_DEVICE_NAMES_PREFIX "\\WIFI_"
+#define NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI	NPF_DEVICE_NAMES_PREFIX_WIDECHAR L"\\WIFI_"
 
 // Used in packetWin7\Dll
 #define FAKE_NDISWAN_ADAPTER_NAME				"\\Device\\" NPF_DRIVER_NAME "_GenericDialupAdapter"	///< (CCC) Name of a fake ndiswan adapter that is always available on 2000/XP/2003, used to capture NCP/LCP packets

@@ -231,12 +231,14 @@ DriverEntry(
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars_WiFi; // The specification for the WiFi filter.
 	UNICODE_STRING parametersPath;
 	NTSTATUS Status = STATUS_SUCCESS;
+	PDEVICE_OBJECT devObjP;
+	UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;WD)"); // this SDDL means only permits System and Administrator to modify the device.
+	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
+	UNICODE_STRING deviceSymLink;
 
 	// Use NonPaged Pool instead of No-Execute (NX) Nonpaged Pool for Win8 and later, this is for security purpose.
 	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 	
-	WCHAR* bindT;
-	PKEY_VALUE_PARTIAL_INFORMATION tcpBindingsP;
 	UNICODE_STRING AdapterName;
 	ULONG OsMajorVersion, OsMinorVersion;
 
@@ -356,35 +358,54 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
-	bindP = getAdaptersList();
+	// Create the "NPCAP" device itself:
+	// TODO: handle wifi. suffix to file name?
+	RtlInitUnicodeString(&AdapterName, L"\\Device\\" NPF_DRIVER_NAME_WIDECHAR);
+	deviceSymLink.Length = 0;
+	deviceSymLink.MaximumLength = (USHORT)(AdapterName.Length - devicePrefix.Length + symbolicLinkPrefix.Length + sizeof(UNICODE_NULL));
 
-	if (bindP == NULL)
+	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, '3PWA');
+	if (deviceSymLink.Buffer == NULL)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Adapters not found in the registry, try to copy the bindings of TCP-IP.");
-
-		tcpBindingsP = getTcpBindings();
-
-		if (tcpBindingsP == NULL)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "TCP-IP not found, quitting.");
-			goto RegistryError;
-		}
-
-		bindP = (WCHAR *)tcpBindingsP;
-		bindT = (WCHAR *)(tcpBindingsP->Data);
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-	else
+	RtlAppendUnicodeStringToString(&deviceSymLink, &symbolicLinkPrefix);
+	RtlAppendUnicodeToString(&deviceSymLink, AdapterName.Buffer + devicePrefix.Length / sizeof(WCHAR));
+
+	Status = IoCreateDeviceSecure(DriverObject, sizeof(DEVICE_EXTENSION), &AdapterName, FILE_DEVICE_UNKNOWN,
+			FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID)&guidClassNPF, &devObjP);
+	if (!NT_SUCCESS(Status))
 	{
-		bindT = bindP;
+		IF_LOUD(DbgPrint("\n\nIoCreateDevice status = %x\n", Status););
+
+		ExFreePool(deviceSymLink.Buffer);
+
+		TRACE_EXIT();
+		return Status;
 	}
 
-	for (; *bindT != UNICODE_NULL; bindT += (AdapterName.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR))
+	PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
+
+	devObjP->Flags |= DO_DIRECT_IO;
+
+	IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
+
+	Status = IoCreateSymbolicLink(&deviceSymLink, &AdapterName) != STATUS_SUCCESS;
+	if (!NT_SUCCESS(Status))
 	{
-		RtlInitUnicodeString(&AdapterName, bindT);
-		NPF_CreateDevice(DriverObject, &AdapterName, &g_NPF_Prefix, FALSE);
-		if (g_Dot11SupportMode)
-			NPF_CreateDevice(DriverObject, &AdapterName, &g_NPF_Prefix_WIFI, TRUE);
+		IF_LOUD(DbgPrint("\n\nError creating SymLink %ws\nn", deviceSymLink.Buffer););
+
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceSymLink.Buffer);
+		devExtP->ExportString = NULL;
+
+		TRACE_EXIT();
+		return Status;
 	}
+
+	devExtP->ExportString = deviceSymLink.Buffer;
+
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// Use Winsock Kernel (WSK) to send loopback packets.
@@ -456,8 +477,6 @@ DriverEntry(
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
-
-RegistryError:
 
 	Status = STATUS_UNSUCCESSFUL;
 	TRACE_EXIT();
@@ -957,130 +976,6 @@ NPF_GetRegistryOption_String(
 
 //-------------------------------------------------------------------
 
-BOOLEAN
-	NPF_CreateDevice(
-	IN OUT PDRIVER_OBJECT DriverObject,
-	IN PUNICODE_STRING AdapterName,
-	IN PUNICODE_STRING NPF_Prefix,
-	IN BOOLEAN Dot11
-	)
-{
-	NTSTATUS status;
-	PDEVICE_OBJECT devObjP;
-	UNICODE_STRING deviceName;
-	UNICODE_STRING deviceSymLink;
-
-	TRACE_ENTER();
-
-	IF_LOUD(DbgPrint("\n\ncreateDevice for MAC %ws\n", AdapterName->Buffer););
-	if (RtlCompareMemory(AdapterName->Buffer, devicePrefix.Buffer, devicePrefix.Length) < devicePrefix.Length)
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	deviceName.Length = 0;
-	deviceName.MaximumLength = (USHORT)(AdapterName->Length + NPF_Prefix->Length + sizeof(UNICODE_NULL));
-	deviceName.Buffer = ExAllocatePoolWithTag(PagedPool, deviceName.MaximumLength, '3PWA');
-
-	if (deviceName.Buffer == NULL)
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	deviceSymLink.Length = 0;
-	deviceSymLink.MaximumLength = (USHORT)(AdapterName->Length - devicePrefix.Length + symbolicLinkPrefix.Length + NPF_Prefix->Length + sizeof(UNICODE_NULL));
-
-	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, '3PWA');
-
-	if (deviceSymLink.Buffer == NULL)
-	{
-		ExFreePool(deviceName.Buffer);
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	RtlAppendUnicodeStringToString(&deviceName, &devicePrefix);
-	RtlAppendUnicodeStringToString(&deviceName, NPF_Prefix);
-	RtlAppendUnicodeToString(&deviceName, AdapterName->Buffer + devicePrefix.Length / sizeof(WCHAR));
-
-	RtlAppendUnicodeStringToString(&deviceSymLink, &symbolicLinkPrefix);
-	RtlAppendUnicodeStringToString(&deviceSymLink, NPF_Prefix);
-	RtlAppendUnicodeToString(&deviceSymLink, AdapterName->Buffer + devicePrefix.Length / sizeof(WCHAR));
-
-	IF_LOUD(DbgPrint("Creating device name: %ws\n", deviceName.Buffer);)
-
-	if (g_AdminOnlyMode != 0)
-	{
-		UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"); // this SDDL means only permits System and Administrator to access the device.
-		const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
-		status = IoCreateDeviceSecure(DriverObject, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
-			FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID)&guidClassNPF, &devObjP);
-	}
-	else
-	{
-		status = IoCreateDevice(DriverObject, sizeof(DEVICE_EXTENSION), &deviceName, FILE_DEVICE_TRANSPORT,
-			FILE_DEVICE_SECURE_OPEN, FALSE, &devObjP);
-	}
-
-	if (!NT_SUCCESS(status))
-	{
-		IF_LOUD(DbgPrint("\n\nIoCreateDevice status = %x\n", status););
-
-		ExFreePool(deviceName.Buffer);
-		ExFreePool(deviceSymLink.Buffer);
-
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
-
-	IF_LOUD(DbgPrint("Device created successfully\n"););
-
-	devObjP->Flags |= DO_DIRECT_IO;
-	RtlInitUnicodeString(&devExtP->AdapterName, AdapterName->Buffer);
-	devExtP->Dot11 = Dot11;
-
-	IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
-
-	if (IoCreateSymbolicLink(&deviceSymLink, &deviceName) != STATUS_SUCCESS)
-	{
-		IF_LOUD(DbgPrint("\n\nError creating SymLink %ws\nn", deviceSymLink.Buffer););
-
-		IoDeleteDevice(devObjP);
-		ExFreePool(deviceName.Buffer);
-		ExFreePool(deviceSymLink.Buffer);
-
-		devExtP->ExportString = NULL;
-
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	IF_LOUD(DbgPrint("SymLink %ws successfully created.\n\n", deviceSymLink.Buffer););
-
-	devExtP->ExportString = deviceSymLink.Buffer;
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// Determine whether this is our loopback adapter for the device.
-	if (g_LoopbackAdapterName.Buffer != NULL)
-	{
-		if (RtlCompareMemory(g_LoopbackAdapterName.Buffer, AdapterName->Buffer, AdapterName->Length) == AdapterName->Length)
-		{
-			g_LoopbackDevObj = devObjP;
-		}
-	}
-#endif
-	ExFreePool(deviceName.Buffer);
-
-	TRACE_EXIT();
-	return TRUE;
-}
-
-//-------------------------------------------------------------------
-
 _Use_decl_annotations_
 VOID
 NPF_Unload(
@@ -1157,8 +1052,8 @@ Return Value:
 
 		DeviceExtension = OldDeviceObject->DeviceExtension;
 
-		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "Deleting Adapter %ws, Device Obj=%p (%p)",
-			DeviceExtension->AdapterName.Buffer, DeviceObject, OldDeviceObject);
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Deleting Adapter, Device Obj=%p (%p)",
+				DeviceObject, OldDeviceObject);
 
 		if (DeviceExtension->ExportString)
 		{
