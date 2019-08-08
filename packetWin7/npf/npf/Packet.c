@@ -1129,8 +1129,8 @@ Return Value:
 	NPF_WSKCleanup();
 
 	// Release WFP resources
-	NPF_FreeInjectionHandles();
 	NPF_UnregisterCallouts();
+	NPF_FreeInjectionHandles();
 #endif
 
 #ifdef HAVE_RX_SUPPORT
