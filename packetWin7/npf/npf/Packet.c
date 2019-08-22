@@ -111,12 +111,8 @@ NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
 //
 // Global variables used by WFP
 //
-PDEVICE_OBJECT g_LoopbackDevObj = NULL;
-
 NDIS_STRING g_LoopbackAdapterName;
 NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("LoopbackAdapter");
-
-extern HANDLE g_WFPEngineHandle;
 #endif
 
 #ifdef HAVE_RX_SUPPORT
@@ -149,9 +145,6 @@ ULONG g_DltNullMode = 0;
 ULONG g_Dot11SupportMode = 0;
 ULONG g_VlanSupportMode = 0;
 ULONG g_TimestampMode = 0;
-
-/// Global variable that points to the names of the bound adapters
-WCHAR* bindP = NULL;
 
 ULONG g_NCpu;
 
@@ -424,6 +417,21 @@ DriverEntry(
 		TRACE_EXIT();
 		return Status;
 	}
+
+	// Create the fake "filter module" for loopback capture
+	// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
+	NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
+	PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(&LoopbackDeviceName, NdisMediumLoopback);
+	if (pFiltMod == NULL)
+	{
+		NPF_WSKFreeSockets();
+		NPF_WSKCleanup();
+		TRACE_EXIT();
+		return NDIS_STATUS_RESOURCES;
+	}
+	pFiltMod->Loopback = TRUE;
+	// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
+	NPF_AddToFilterModuleArray(pFiltMod);
 #endif
 
 	/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */
@@ -1093,19 +1101,21 @@ Return Value:
 	// NdisFDeregisterFilterDriver ought to have called FilterDetach, but something is leaking. Let's force a wait:
 	NdisAcquireSpinLock(&g_FilterArrayLock);
 	while (g_arrFiltMod.Next != NULL) {
-		NdisReleaseSpinLock(&g_FilterArrayLock);
-		NdisWaitEvent(&Event, 1);
+		PNPCAP_FILTER_MODULE pFiltMod = CONTAINING_RECORD(g_arrFiltMod.Next, NPCAP_FILTER_MODULE, FilterModulesEntry);
+		if (pFiltMod->Loopback) {
+			// NDIS doesn't manage this, so we "detach" it ourselves.
+			NdisReleaseSpinLock(&g_FilterArrayLock);
+			NPF_DetachAdapter(pFiltMod);
+		}
+		else {
+			// Wait for NDIS to release it
+			NdisReleaseSpinLock(&g_FilterArrayLock);
+			NdisWaitEvent(&Event, 1);
+		}
 		NdisAcquireSpinLock(&g_FilterArrayLock);
 		NdisResetEvent(&Event);
 	}
 	NdisReleaseSpinLock(&g_FilterArrayLock);
-
-	// Free the adapters names
-	if (bindP != NULL)
-	{
-		ExFreePool(bindP);
-		bindP = NULL;
-	}
 
 	NdisFreeSpinLock(&g_FilterArrayLock);
 
@@ -1161,7 +1171,7 @@ NPF_IoControl(
 	PLIST_ENTRY				RequestListEntry;
 	PINTERNAL_REQUEST		pRequest;
 	ULONG					FunctionCode;
-	NDIS_STATUS				Status;
+	NDIS_STATUS				Status = STATUS_INVALID_DEVICE_REQUEST;
 	ULONG					Information = 0;
 	PLIST_ENTRY				PacketListEntry;
 	UINT					i;
@@ -1859,8 +1869,8 @@ NPF_IoControl(
 		SET_RESULT_SUCCESS(0);
 		break;
 
-	case BIOCQUERYOID:
 	case BIOCSETOID:
+	case BIOCQUERYOID:
 
 		OidData = Irp->AssociatedIrp.SystemBuffer;
 		if (FunctionCode == BIOCQUERYOID)
@@ -1916,93 +1926,52 @@ NPF_IoControl(
 			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA) - 1 + OidData->Length))
 		{
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			if (Open->pFiltMod->Loopback && (OidData->Oid == OID_GEN_MAXIMUM_TOTAL_SIZE || OidData->Oid == OID_GEN_TRANSMIT_BUFFER_SPACE || OidData->Oid == OID_GEN_RECEIVE_BUFFER_SPACE))
-			{
-				if (FunctionCode == BIOCSETOID)
-				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
-					SET_FAILURE_UNSUCCESSFUL();
+			if (Open->pFiltMod->Loopback)
+			{ 
+				// We don't really support OID requests on our fake loopback
+				// adapter, but we can pretend.
+				if (FunctionCode == BIOCSETOID) {
+					switch (OidData->Oid) {
+						// Using a switch instead of if/else in case there are
+						// other OIDs we should accept
+						case OID_GEN_CURRENT_PACKET_FILTER:
+							SET_RESULT_SUCCESS(0);
+							break;
+						default:
+							TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID not supported for Loopback");
+							SET_FAILURE_INVALID_REQUEST();
+							break;
+					}
 				}
-				else
-				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
-					*((PUINT)OidData->Data) = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
-					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-				}
+				else {
+					switch (OidData->Oid)
+					{
+						case OID_GEN_MAXIMUM_TOTAL_SIZE:
+						case OID_GEN_TRANSMIT_BUFFER_SPACE:
+						case OID_GEN_RECEIVE_BUFFER_SPACE:
+							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
+							*((PUINT)OidData->Data) = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
+							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+							break;
 
-				//
-				// Release ownership of the Ndis Handle
-				//
-				NPF_StopUsingBinding(Open->pFiltMod);
-
-				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-					&pRequest->ListElement,
-					&Open->pFiltMod->RequestSpinLock);
-
-				break;
-			}
-			else if (Open->pFiltMod->Loopback && (OidData->Oid == OID_GEN_TRANSMIT_BLOCK_SIZE || OidData->Oid == OID_GEN_RECEIVE_BLOCK_SIZE))
-			{
-				if (FunctionCode == BIOCSETOID)
-				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
-					SET_FAILURE_UNSUCCESSFUL();
-				}
-				else
-				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, 1);
-					*((PUINT)OidData->Data) = 1;
-					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-				}
-
-				//
-				// Release ownership of the Ndis Handle
-				//
-				NPF_StopUsingBinding(Open->pFiltMod);
-
-				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-					&pRequest->ListElement,
-					&Open->pFiltMod->RequestSpinLock);
-
-				break;
-			}
-// 			else if (Open->pFiltMod->Loopback && g_DltNullMode && (OidData->Oid == OID_802_3_PERMANENT_ADDRESS || OidData->Oid == OID_802_3_CURRENT_ADDRESS))
-// 			{
-// 				if (FunctionCode == BIOCSETOID)
-// 				{
-// 					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_802_3_PERMANENT_ADDRESS & BIOCSETOID, fail it");
-// 					SET_FAILURE_UNSUCCESSFUL();
-// 				}
-// 				else
-// 				{
-// 					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Loopback: OID_802_3_PERMANENT_ADDRESS & BIOCGETOID, fail it");
-// 					SET_FAILURE_UNSUCCESSFUL();
-// 				}
-//
-// 				//
-// 				// Release ownership of the Ndis Handle
-// 				//
-// 				NPF_StopUsingBinding(Open->pFiltMod);
-//
-// 				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-// 					&pRequest->ListElement,
-// 					&Open->pFiltMod->RequestSpinLock);
-//
-// 				break;
-// 			}
-			else if (Open->pFiltMod->Loopback && g_DltNullMode && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
-			{
-				if (FunctionCode == BIOCSETOID)
-				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
-					SET_FAILURE_UNSUCCESSFUL();
-				}
-				else
-				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NdisMediumNull);
-					*((PUINT)OidData->Data) = NdisMediumNull;
-					OidData->Length = sizeof(UINT);
-					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+						case OID_GEN_TRANSMIT_BLOCK_SIZE:
+						case OID_GEN_RECEIVE_BLOCK_SIZE:
+							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, 1);
+							*((PUINT)OidData->Data) = 1;
+							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+							break;
+						case OID_GEN_MEDIA_IN_USE:
+						case OID_GEN_MEDIA_SUPPORTED:
+							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NdisMediumNull);
+							*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
+							OidData->Length = sizeof(UINT);
+							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+							break;
+						default:
+							TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unsupported BIOCQUERYOID for Loopback");
+							SET_FAILURE_INVALID_REQUEST();
+							break;
+					}
 				}
 
 				//

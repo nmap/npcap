@@ -118,6 +118,7 @@ HANDLE g_hNpcapHelperPipe				=	INVALID_HANDLE_VALUE;	// Handle for NpcapHelper n
 HANDLE g_hDllHandle						=	NULL;					// The handle to this DLL.
 
 CHAR g_strLoopbackAdapterName[BUFSIZE]	= "";						// The name of "Npcap Loopback Adapter".
+#define NPCAP_LOOPBACK_ADAPTER_BUILTIN "NPF_Loopback"
 
 map<string, int> g_nbAdapterMonitorModes;							// The states for all the wireless adapters that show whether it is in the monitor mode.
 
@@ -954,28 +955,17 @@ PCHAR NpcapTranslateAdapterName_Standard2Wifi(PCHAR AdapterName)
 {
 	TRACE_ENTER();
 	TRACE_EXIT();
-	return NpcapReplaceString(AdapterName, "_{", "_WIFI_{");
+	return NpcapReplaceString(AdapterName, "{", NPF_DEVICE_NAMES_TAG_WIFI "{");
 }
 
 PCHAR NpcapTranslateAdapterName_Npf2Npcap(PCHAR AdapterName)
 {
-#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
-	UNREFERENCED_PARAMETER(AdapterName);
-	return NULL;
-#else
-	return NpcapReplaceString(AdapterName, "NPF", "NPCAP");
-#endif
+	return NpcapReplaceString(AdapterName, "NPF_", NPF_DEVICE_NAMES_PREFIX);
 }
 
 PCHAR NpcapTranslateMemory_Npcap2Npf(PCHAR pStr, int iBufSize)
 {
-#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
-	UNREFERENCED_PARAMETER(pStr);
-	UNREFERENCED_PARAMETER(iBufSize);
-	return NULL;
-#else
-	return NpcapReplaceMemory(pStr, iBufSize, "NPCAP", "NPF");
-#endif
+	return NpcapReplaceMemory(pStr, iBufSize, NPF_DEVICE_NAMES_PREFIX, "NPF_");
 }
 
 /*! 
@@ -4865,9 +4855,18 @@ BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName)
 
 	TRACE_ENTER();
 
-	// Set the return value to TRUE for "Npcap Loopback Adapter".
-	if (strcmp(g_strLoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
-		AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1) == 0)
+	if (strlen(AdapterName) < sizeof(DEVICE_PREFIX)) {
+		// The adapter name is too short.
+		ret = FALSE;
+	}
+	// Compare to NPF_Loopback
+	else if (strcmp(AdapterName + sizeof(DEVICE_PREFIX) - 1, NPCAP_LOOPBACK_ADAPTER_BUILTIN) == 0 ||
+			// or compare to value in Registry, if it's found and long enough.
+			(strlen(g_strLoopbackAdapterName) > sizeof(DEVICE_PREFIX) &&
+			 strlen(AdapterName) > sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) &&
+			 strcmp(g_strLoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
+				 AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1) == 0)
+	   )
 	{
 		ret = TRUE;
 	}

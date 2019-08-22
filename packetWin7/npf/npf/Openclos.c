@@ -99,7 +99,6 @@ extern ULONG g_Dot11SupportMode;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	extern HANDLE g_WFPEngineHandle;
-	extern PDEVICE_OBJECT g_LoopbackDevObj;
 #endif
 
 static
@@ -299,7 +298,7 @@ NPF_OpenAdapter(
 	{
 		if (g_WFPEngineHandle == INVALID_HANDLE_VALUE)
 		{
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, init WSK injection handles and register callouts", g_LoopbackDevObj);
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init WSK injection handles and register callouts");
 			// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
 			Status = NPF_InitInjectionHandles();
 			if (!NT_SUCCESS(Status))
@@ -321,7 +320,7 @@ NPF_OpenAdapter(
 		else
 
 		{
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_LoopbackDevObj=%p, NO need to init WSK code", g_LoopbackDevObj);
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "g_WFPEngineHandle invalid, not initializing WSK handles");
 		}
 
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "This is loopback adapter, set MTU to: %u", NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
@@ -1302,8 +1301,29 @@ NPF_GetFilterModuleByAdapterName(
 	size_t i = 0;
 	size_t shrink_by = 0;
 	BOOLEAN Dot11 = FALSE;
-	NDIS_STRING BaseName;
+	BOOLEAN Loopback = FALSE;
+	NDIS_STRING BaseName = NDIS_STRING_CONST("Loopback");
+	WCHAR *pName = NULL;
 	TRACE_ENTER();
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// If this is *not* the legacy loopback name, we'll have to set up BaseName to be the real name of the buffer.
+	if (g_LoopbackAdapterName.Buffer != NULL) {
+		// strip off leading backslashes
+		while (shrink_by < pAdapterName->Length && pAdapterName->Buffer[shrink_by] == L'\\') {
+			shrink_by++;
+		}
+		if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, pAdapterName->Buffer + shrink_by,
+					pAdapterName->Length - shrink_by / 2) == pAdapterName->Length - shrink_by / 2)
+		{
+			Loopback = TRUE;
+		}
+		// Restore shrink_by in case this wasn't a match.
+		shrink_by = 0;
+	}
+
+	if (!Loopback) {
+#endif
 
 	BaseName.MaximumLength = pAdapterName->MaximumLength;
 	BaseName.Buffer = ExAllocatePoolWithTag(NonPagedPool, BaseName.MaximumLength, 'GFBN');
@@ -1331,6 +1351,10 @@ NPF_GetFilterModuleByAdapterName(
 	}
 	BaseName.Length = BaseName.Length - shrink_by*sizeof(WCHAR);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	} //end if !Loopback
+#endif
+
 	NdisAcquireSpinLock(&g_FilterArrayLock);
 	for (Curr = g_arrFiltMod.Next; Curr != NULL; Curr = Curr->Next)
 	{
@@ -1344,7 +1368,9 @@ NPF_GetFilterModuleByAdapterName(
 		{
 			NPF_StopUsingBinding(pFiltMod);
 			NdisReleaseSpinLock(&g_FilterArrayLock);
-			ExFreePoolWithTag(BaseName.Buffer, 'GFBN');
+			if (!Loopback) {
+				ExFreePoolWithTag(BaseName.Buffer, 'GFBN');
+			}
 			return pFiltMod;
 		}
 		else
@@ -1353,7 +1379,9 @@ NPF_GetFilterModuleByAdapterName(
 		}
 	}
 	NdisReleaseSpinLock(&g_FilterArrayLock);
-	ExFreePoolWithTag(BaseName.Buffer, 'GFBN');
+	if (!Loopback) {
+		ExFreePoolWithTag(BaseName.Buffer, 'GFBN');
+	}
 
 	TRACE_EXIT();
 	return NULL;
@@ -1732,6 +1760,22 @@ NPF_AttachAdapter(
 // 			break;
 // 		}
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		// Determine whether this is the legacy loopback adapter
+		if (g_LoopbackAdapterName.Buffer != NULL)
+		{
+			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
+				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
+			{
+				// This request is for the legacy loopback adapter listed in the Registry.
+				// Since we now have a fake filter module for this, deny the binding.
+				// We'll intercept open requests for this name elsewhere and redirect to the fake one.
+				returnStatus = NDIS_STATUS_NOT_SUPPORTED;
+				break;
+			}
+		}
+#endif
+
 		// create the adapter object
 		pFiltMod = NPF_CreateFilterModule(AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType);
 		if (pFiltMod == NULL)
@@ -1740,18 +1784,6 @@ NPF_AttachAdapter(
 			TRACE_EXIT();
 			return returnStatus;
 		}
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		// Determine whether this is our loopback adapter
-		if (g_LoopbackAdapterName.Buffer != NULL)
-		{
-			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
-				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
-			{
-				pFiltMod->Loopback = TRUE;
-			}
-		}
-#endif
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
