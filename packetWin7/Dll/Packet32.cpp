@@ -1599,6 +1599,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 	return TRUE;
 }
 
+#ifdef NPCAP_PACKET_START_SERVICE
 /*! 
   \brief Installs the NPF device driver.
   \return If the function succeeds, the return value is nonzero.
@@ -1698,6 +1699,7 @@ BOOLEAN PacketInstallDriver60()
 	TRACE_EXIT();
 	return result;
 }
+#endif /* NPCAP_PACKET_START_SERVICE */
 
 /*! 
   \brief Dumps a registry key to disk in text format. Uses regedit.
@@ -1828,6 +1830,7 @@ BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLe
 	return TRUE;
 }
 
+#ifdef NPCAP_PACKET_START_SERVICE
 BOOL PacketStartService()
 {
 	DWORD error;
@@ -2049,6 +2052,7 @@ BOOL PacketStartService()
 	TRACE_EXIT();
 	return Result;
 }
+#endif /* NPCAP_PACKET_START_SERVICE */
 
 /*! 
   \brief Opens an adapter using the NPF device driver.
@@ -2074,7 +2078,9 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 	// Though don't bother if we already have a valid pipe to NpcapHelper
 	if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
 	{
+#ifdef NPCAP_PACKET_START_SERVICE
 		PacketStartService();
+#endif
 		if (NpcapIsAdminOnlyMode())
 		{
 			// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
