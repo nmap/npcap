@@ -180,7 +180,6 @@ BOOLEAN
 NPF_IsPacketSelfSent(
 	_In_ PNET_BUFFER_LIST pNetBufferList,
 	_In_ BOOLEAN bIPv4,
-	_Out_ BOOLEAN *pbInnerIPv4,
 	_Out_ UCHAR *puProto
 	)
 {
@@ -217,7 +216,6 @@ NPF_IsPacketSelfSent(
 			*puProto = uProto;
 			if (uProto == IPPROTO_NPCAP_LOOPBACK)
 			{
-				*pbInnerIPv4 = bIPv4;
 				TRACE_EXIT();
 				return TRUE;
 			}
@@ -363,7 +361,6 @@ NPF_NetworkClassify(
 	UINT32				bytesRetreated = 0;
 	UINT32				bytesRetreatedEthernet = 0;
 	BOOLEAN				bIPv4;
-	BOOLEAN				bInnerIPv4;
 	BOOLEAN				bInbound;
 	BOOLEAN				bSelfSent = FALSE;
 	UCHAR				uIPProto;
@@ -477,7 +474,7 @@ NPF_NetworkClassify(
 		}
 
 
-		bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, bIPv4, &bInnerIPv4, &uIPProto);
+		bSelfSent = NPF_IsPacketSelfSent(pNetBufferList, bIPv4, &uIPProto);
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_NetworkClassify: bSelfSent = %d\n", bSelfSent);
 
 		if (bIPv4 && !bSelfSent && uIPProto == IPPROTO_ICMP)
@@ -606,7 +603,7 @@ Exit_Inject_Clone:
 	// This cloned NBL will be freed in NPF_NetworkInjectionComplete function.
 	// Inbound packets that we didn't inject should be sent to receive stack.
 	if (bInbound && !bSelfSent) {
-		status = FwpsInjectNetworkReceiveAsync(bInnerIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+		status = FwpsInjectNetworkReceiveAsync(bIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
 				NULL,
 				0,
 				compartmentID,
@@ -619,7 +616,7 @@ Exit_Inject_Clone:
 	// Outbound packets and ones we injected should be sent to the send stack.
 	else
        	{
-		status = FwpsInjectNetworkSendAsync(bInnerIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+		status = FwpsInjectNetworkSendAsync(bIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
 				NULL,
 				0,
 				compartmentID,
