@@ -400,7 +400,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 {
   TRACE_ENTER();
 
-  TCHAR path[MAX_PATH];
+  TCHAR path[MAX_PATH] = { 0 };
   TCHAR fullFileName[MAX_PATH];
   UINT res;
   HMODULE hModule = NULL;
@@ -408,7 +408,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
   {
 	res = GetSystemDirectory(path, MAX_PATH);
 
-	if (res == 0 || !path)
+	if (res == 0)
 	{
 		//
 		// some bad failure occurred;
@@ -501,7 +501,8 @@ BOOL NpcapCreatePipe(char *pipeName, HANDLE moduleName)
 	else
 	{
 		TRACE_EXIT();
-		CloseHandle(shExInfo.hProcess);
+		if (shExInfo.hProcess)
+			CloseHandle(shExInfo.hProcess);
 		return TRUE;
 	}
 }
