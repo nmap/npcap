@@ -98,7 +98,7 @@
         WAN) without caring either the particular adapter or the particular
         Win32 operating system.</para>
 
-      <para>NDIS supports three types of network drivers:</para>
+      <para>NDIS supports four types of network drivers:</para>
 
       <orderedlist>
         <listitem>
