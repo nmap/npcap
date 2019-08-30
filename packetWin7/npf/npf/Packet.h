@@ -1016,7 +1016,7 @@ DRIVER_DISPATCH NPF_OpenAdapter;
   This function is called when a running instance of the driver is closed by the user with a CloseHandle().
   Used together with NPF_CloseAdapter().
   It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
-  instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
+  instance and closing the files.
 */
 _Dispatch_type_(IRP_MJ_CLEANUP)
 DRIVER_DISPATCH NPF_Cleanup;

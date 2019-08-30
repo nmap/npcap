@@ -466,6 +466,7 @@ NPF_CloseOpenInstance(
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 }
 
+
 //-------------------------------------------------------------------
 
 VOID
@@ -997,7 +998,7 @@ NPF_Cleanup(
 
 	ASSERT(Open != NULL);
 
-	NPF_RemoveFromGroupOpenArray(Open); //Remove the adapter from the group adapter list
+	NPF_RemoveFromGroupOpenArray(Open); //Remove the Open from the filter module's list
 
 	NPF_CloseOpenInstance(Open);
 
@@ -1161,8 +1162,13 @@ NPF_RemoveFromGroupOpenArray(
 
 	TRACE_ENTER();
 
-	ASSERT(pOpen->pFiltMod != NULL);
 	pFiltMod = pOpen->pFiltMod;
+	if (!pFiltMod) {
+		/* This adapter was already removed, so no filter module exists.
+		 * Nothing left to do!
+		 */
+		return;
+	}
 
 	NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
 
@@ -1934,8 +1940,10 @@ NPF_Pause(
 	NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
 	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 	{
-		/* TODO: We don't have to close these open instances if we can
-		 * track them some other way. See #1650 */
+		/* Can't just use NPF_CloseOpenInstance because that waits too
+		 * long (for all IRPs to finish, including stats and other
+		 * things that aren't dependent on OpenRunning status). We'll
+		 * wait for all events in parallel instead. */
 		CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->OpenStatus = OpenClosing;
 	}
 	NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
@@ -2074,6 +2082,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	{
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
 		NPF_CloseOpenInstance(pOpen);
+		pOpen->pFiltMod = NULL;
 
 		if (pOpen->ReadEvent != NULL)
 			KeSetEvent(pOpen->ReadEvent, 0, FALSE);

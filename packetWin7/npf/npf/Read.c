@@ -145,26 +145,15 @@ NPF_Read(
 		}
 		if (NPF_StartUsingOpenInstance(Open) == FALSE)
 		{
-			//
-			// an IRP_MJ_CLEANUP was received, just fail the request
-			//
+			// Filter module is detached.
 			Status = STATUS_CANCELLED;
 			break;
 		}
 
-		//
-		// we need to test if the device is still bound to the Network adapter,
-		// so we check the status.
-		// This is not critical, since we just want to have a quick way to have the
-		// dispatch read fail in case the adapter has been unbound
-
-		if (Open->OpenStatus != OpenRunning)
-		{
-			NPF_StopUsingOpenInstance(Open);
-			// The Network adapter has been removed or diasabled
-			Status = STATUS_UNSUCCESSFUL;
-			break;
-		}
+		/* TODO: Allow the read to continue if the filter module is
+		 * detached (NPF_StartUsingOpenInstance above returned false)
+		 * but we have packet data in the buffer that can still be
+		 * delivered. */
 
 		if (Open->Size == 0)
 		{
@@ -597,11 +586,11 @@ NPF_TapExForEachOpen(
 
 	//TRACE_ENTER();
 
-// 	if (NPF_StartUsingOpenInstance(Open) == FALSE)
-// 	{
-// 		// The adapter is in use or even released, stop the tapping.
-// 		return;
-// 	}
+ 	if (!NPF_StartUsingOpenInstance(Open))
+ 	{
+ 		// The adapter is in use or even released, stop the tapping.
+ 		return;
+ 	}
 
 	pNetBufList = pNetBufferLists;
 	while (pNetBufList != NULL)
@@ -1116,6 +1105,6 @@ NPF_TapExForEachOpen_End:;
 		pNetBufList = pNextNetBufList;
 	} // while (pNetBufList != NULL)
 
-	//NPF_StopUsingOpenInstance(Open);
+	NPF_StopUsingOpenInstance(Open);
 	//TRACE_EXIT();
 }

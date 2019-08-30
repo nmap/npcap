@@ -941,7 +941,7 @@ NPF_IoControl(
 	BOOLEAN					IsExtendedFilter = FALSE;
 	ULONG					StringLength;
 	ULONG					NeededBytes;
-	BOOLEAN					Flag;
+	BOOLEAN					bAttached;
 	PUINT					pStats;
 	ULONG					StatsLength;
 	PULONG					pCombinedPacketFilter;
@@ -966,18 +966,8 @@ NPF_IoControl(
 		return STATUS_INVALID_HANDLE;
 	}
 
-	if (NPF_StartUsingOpenInstance(Open) == FALSE)
-	{
-		//
-		// an IRP_MJ_CLEANUP was received, just fail the request
-		//
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = STATUS_CANCELLED;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return STATUS_CANCELLED;
-	}
-
+	/* If this instance is not attached to the NDIS filter module, we can't do some operations. */
+	bAttached = NPF_StartUsingOpenInstance(Open);
 	Irp->IoStatus.Status = STATUS_SUCCESS;
 
 	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
@@ -1050,6 +1040,12 @@ NPF_IoControl(
 
 	case BIOCSENDPACKETSNOSYNC:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSENDPACKETSNOSYNC");
+
+		if (!bAttached)
+		{
+			SET_FAILURE_UNSUCCESSFUL();
+			break;
+		}
 
 		NdisAcquireSpinLock(&Open->WriteLock);
 		if (Open->WriteInProgress)
@@ -1619,6 +1615,12 @@ NPF_IoControl(
 	case BIOCSETOID:
 	case BIOCQUERYOID:
 
+		if (!bAttached)
+		{
+			SET_FAILURE_UNSUCCESSFUL();
+			break;
+		}
+
 		OidData = Irp->AssociatedIrp.SystemBuffer;
 		if (FunctionCode == BIOCQUERYOID)
 		{
@@ -1958,7 +1960,8 @@ NPF_IoControl(
 	//
 	// release the Open structure
 	//
-	NPF_StopUsingOpenInstance(Open);
+	if (bAttached)
+		NPF_StopUsingOpenInstance(Open);
 
 	//
 	// complete the IRP
