@@ -289,6 +289,9 @@ DriverEntry(
 #endif
 	}
 	if (parametersPath.Buffer) ExFreePool(parametersPath.Buffer);
+	if (g_AdminOnlyMode) {
+		NdisInitUnicodeString(&sddl, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)");
+	}
 
 	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap" for standard driver
 	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap_wifi" for WiFi driver
