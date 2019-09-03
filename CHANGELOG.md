@@ -1,3 +1,33 @@
+## Npcap 0.9983 [2019-08-30]
+
+* Npcap can now detect newly-added network adapters without restarting the
+  driver. Fixes [#664](http://issues.nmap.org/664).
+
+* Loopback capture and injection no longer requires the Npcap Loopback Adapter
+  to be installed. This is a minor API change, so Nmap 7.80 and earlier will
+  still require the adapter to do localhost scans, but Wireshark and most other
+  software will not require changes. Loopback capture uses the device name
+  `NPF_Loopback` instead of `NPF_{GUID}`, where `GUID` has to be looked up in
+  the Registry. The Npcap Loopback Adapter can still be installed by selecting
+  "Legacy loopback support" in the installer or using the
+  `/loopback_support=yes` command-line option. The`LoopbackSupport` Registry
+  value will be 1 only if legacy support is selected, but loopback capture will
+  be available regardless of this value.
+
+* The `DltNull` Registry setting and the `/dlt_null` installer option are no
+  longer supported. Loopback capture will use the `DLT_NULL` link type as
+  described [in the tcpdump
+  documentation](https://www.tcpdump.org/linktypes.html). Loopback packet
+  injection will also use this link type instead of requiring a dummy Ethernet
+  header to be constructed. The `DltNull` Registry value will still be present
+  and set to `1` for software that consults this value.
+
+* Some operations like `pcap_stats()` can now be completed even after the
+  adapter that was in use is removed. See [#1650](http://issues.nmap.org/1650).
+
+* Fixed a crash that could happen when stopping the driver during a loopback
+  traffic capture. Fixes [#1678](http://issues.nmap.org/1678).
+
 ## Npcap 0.9982 [2019-07-30]
 
 * Fix the packet statistics functionality used by `pcap_stats()`, which was
