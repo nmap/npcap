@@ -70,7 +70,7 @@
       to handle this, you may want to handle it by yourself in some conditions,
       like you run Npcap installer in silent-mode.  The run-time detection is even
       more useful. Your software probably has some functions that rely on Npcap's
-      particular features (like the loopback interface). You need to know if you
+      particular features (like loopback capture). You need to know if you
       are running on top of Npcap or the legacy WinPcap to control whether to
       switch your functions on.  Fortunately, Npcap provides you some methods to
       detect Npcap/WinPcap at install-time and run-time.
@@ -242,33 +242,25 @@
     <title id="npcap-feature-loopback.title">For software that uses Npcap loopback feature</title>
 
     <para>
-      Prerequisite: Check the <option>Support loopback traffic ("Npcap Loopback Adapter" will be created)</option> option at install-time.
+      Npcap 0.9983 and newer support loopback traffic capture and injection without requiring a particular installation option.
     </para>
 
     <para>
-      Npcap's loopback adapter device is based on <quote>Microsoft KM-TEST Loopback Adapter</quote>
-      (Win8 and Win10) or <quote>Microsoft Loopback Adapter</quote> (Vista, Win7). It is an Ethernet
-      adapter, and Npcap has changed its behavior and renamed it to <quote>Npcap Loopback Adapter</quote>,
-      to make it see the real loopback traffic only.
+      Npcap's loopback adapter device is reported by
+      <function>pcap_findalldevs()</function> as
+      <quote>\Device\NPF_Loopback</quote>. This name is also found in the
+      Registry key
+      <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap\Parameters</filename>.
+      in the <filename>LoopbackAdapter</filename> REG_SZ value, unless
+      <quote>Legacy loopback support</quote> was chosen at install time, in
+      which case the value will be the name of the legacy loopback adapter.
     </para>
 
     <para>
-      The IP address of <quote>Npcap Loopback Adapter</quote> is usually like 169.254.x.x. However,
-      this IP is totally meaningless. Software using Npcap should regard this interface's IP address
-      as 127.0.0.1 (IPv4) and ::1 (IPv6). This work can't be done by Npcap because Windows forbids
-      any IP address to be configured as 127.0.0.1 or ::1 as they're reserved.
-    </para>
-
-    <para>
-      The MAC address of <quote>Npcap Loopback Adapter</quote> is usually like 02:00:4C:4F:4F:50. However,
-      this address is meaningless too. Software using Npcap should think this interface doesn't own a
-      MAC address, as the loopback traffic never goes to link layer. For software using Npcap to
-      capture loopback traffic, the MAC addresses in captured data will be all zeros (aka 00:00:00:00:00:00).
-      For software using Npcap to send loopback traffic, any MAC addresses can be specified as they
-      will be ignored. But notice that ether_type in Ethernet header should be set correctly. Only <option>IPv4</option>
-      and <option>IPv6</option> are accepted. Other values like <option>ARP</option> will be ignored. (You don't need an ARP request for
-      loopback interface)
-      <!-- TODO: document DLT_NULL, since it is the current default -->
+      Traffic captured and injected on the loopback adapter uses the
+      <varname>DLT_NULL</varname> data link type, which consists of a 4-byte
+      header in host byte order that is either 2 for IPv4 packets or 24 for
+      IPv6 packets.
     </para>
 
     <para>
@@ -287,31 +279,23 @@
       65550 (65536 + 14). If you try to set its value, the operation will always fail.
     </para>
 
-    <para>
-      To conclude, a software that wants to support Npcap loopback feature should do these steps:
-    </para>
+    <para>If you use IP Helper API to get adapter list, you will get an interface named
+      like <quote>Loopback Pseudo-Interface 1</quote>. This interface is a DUMMY interface by Microsoft
+      and can't be seen in NDIS layer. And it also takes the 127.0.0.1/::1 IP address. A good practice
+      for software is replacing the <varname>AdapterName</varname> of the
+      <quote>Loopback Pseudo-Interface 1</quote> entry with
+      <quote>NPF_Loopback</quote>, as Nmap does in its enhancements to
+      libdnet.</para>
 
-    <itemizedlist>
-      <listitem><para>Detect Npcap Loopback Adapter's presence, by reading registry value LoopbackSupport
-          at key <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap\Parameters</filename>.
-          If <filename>LoopbackSupport</filename> is 0x00000001, then the adapter's device name is in the <filename>LoopbackAdapter</filename> REG_SZ value.
-          Then perform the following steps.</para></listitem>
+    <para><quote>Legacy loopback support</quote> installs a copy of the
+      Microsft KM-TEST loopback adapter named <quote>Npcap Loopback
+        Adapter</quote> for software that expects to find the loopback adapter
+      via ordinary Windows API calls. The features and operation are no
+      different from standard loopback support, but the
+      <filename>LoopbackSupport</filename> Registry value will be set to
+      0x00000001 and the name of the adapter will be written to the
+      <filename>LoopbackAdapter</filename> Registry value.
 
-      <listitem><para>Treat the IP address of <quote>Npcap Loopback Adapter</quote> as 127.0.0.1 (IPv4) and ::1 (IPv6).</para></listitem>
-
-      <listitem><para>Treat the MAC address of <quote>Npcap Loopback Adapter</quote> as 00:00:00:00:00:00.</para></listitem>
-
-      <listitem><para>If you use IP Helper API to get adapter list, you will get an interface named
-          like <quote>Loopback Pseudo-Interface 1</quote>. This interface is a DUMMY interface by Microsoft
-          and can't be seen in NDIS layer. And it also takes the 127.0.0.1/::1 IP address. A good practice
-          for software is merging the entry of <quote>Npcap Loopback Adapter</quote> and the entry of
-          <quote>Loopback Pseudo-Interface 1</quote> into one entry, like what I have implemented for Nmap (see the
-          <!-- TODO: what is this referring to? Link it correctly -->
-          <quote>Other code (for developers)</quote> part).</para></listitem>
-
-      <listitem><para>Don't make use of OID requests for <quote>Npcap Loopback Adapter</quote>
-          except <varname>OID_GEN_MAXIMUM_TOTAL_SIZE</varname> requests.</para></listitem>
-    </itemizedlist>
   </sect2>
 
   <sect2 id="npcap-feature-dot11">

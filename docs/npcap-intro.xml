@@ -126,20 +126,22 @@
         <listitem><para><emphasis>Loopback Packet Capture</emphasis>: Npcap is able to
             see Windows loopback packets using the
             <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/desktop/aa366510(v=vs.85).aspx">
-              Windows Filtering Platform (WFP)</ulink>. After installation, Npcap will create an
-            adapter named <quote>Npcap
-              Loopback Adapter</quote> for you. If you are a Wireshark user, choose this adapter
+              Windows Filtering Platform (WFP)</ulink>. Npcap supplies an
+            interface named <quote>NPF_Loopback</quote>, with the description <quote>Adapter for loopback capture.</quote>
+            If you are a Wireshark user, choose this adapter
             to capture, you will see all loopback traffic the same way as other
             non-loopback adapters. Try it by typing in commands like <command>ping 127.0.0.1</command>
             (IPv4) or <command>ping ::1</command> (IPv6).</para></listitem>
 
-        <listitem><para><emphasis>Loopback Packets Injection</emphasis>: Besides loopback packets
+        <listitem><para><emphasis>Loopback Packet Injection</emphasis>: Besides loopback packet
             capturing, Npcap can also send out loopback packets using the
             <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/hardware/ff556958(v=vs.85).aspx">Winsock Kernel (WSK)</ulink>
             technique. A user software (e.g. Nmap) can just send packets
-            out using <quote>Npcap Loopback Adapter</quote> like other adapters.
-            <quote>Npcap Loopback Adapter</quote>
-            will automatically remove the packet's Ethernet header and
+            on the <quote>NPF_Loopback</quote> device using
+            <function>pcap_inject()</function> or
+            <function>PacketSendPacket</function> just like on a standard
+            interface. Npcap
+            will automatically remove the packet's DLT_NULL header and
             inject the payload into Windows TCP/IP stack.</para></listitem>
 
         <listitem><para><emphasis>Raw 802.11 Packets Capture Support</emphasis>: Npcap is able to see

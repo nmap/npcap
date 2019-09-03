@@ -59,15 +59,16 @@
           <varlistentry>
             <term><option>/loopback_support</option></term>
             <listitem><para>
-                <emphasis>Support loopback traffic ("Npcap Loopback Adapter"
-                  will be created)</emphasis>. This option allows Npcap to
-                capture and inject traffic that the system sends to itself.
-                Windows does not ordinarily involve NDIS filter drivers in
-                loopback traffic, so a WFP callout driver is used in conjuntion
-                with a virtual network adapter that is a clone of the Microsoft
-                KM-TEST loopback adapter.
+		<emphasis>Legacy loopback support for Nmap 7.80 and older. Not needed for Wireshark.</emphasis>
+		Older versions of Npcap required a Microsoft KM-TEST loopback
+		adapter to be installed in order to capture and inject loopback
+		traffic. This is no longer needed, but some software won't be
+		able to do loopback injection unless the adapter is installed.
+		Use this option to install the legacy loopback adapter if
+		needed.
               </para>
-              <para>The default for this option is <option>yes</option>.
+              <para>See <xref linkend="npcap-feature-loopback" /> for more
+                information.
             </para></listitem>
           </varlistentry>
 
@@ -178,19 +179,6 @@
                 drivers to be available at boot time. If you choose to disable
                 this, Windows may not start networking for up to 90 seconds
                 after boot.
-            </para></listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term><option>/dlt_null</option> (deprecated)</term>
-            <listitem><para>
-                <emphasis>Use DLT_NULL as the loopback interface's link layer
-                  protocol instead of DLT_EN10MB</emphasis>. This option
-                defaults to <option>yes</option> because it is more efficient
-                to use the NULL data link type than to create a fake Ethernet
-                header for each captured packet. Certain older software using
-                the undocumented Packet API may be unable to handle DLT_NULL,
-                but we have not been made aware of any.
             </para></listitem>
           </varlistentry>
 
