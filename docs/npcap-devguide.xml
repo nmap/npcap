@@ -230,6 +230,11 @@
     <sect3 id="npcap-feature-native-servicename">
       <title>Service name</title>
 
+      <para>Because Npcap is a NDIS 6 LWF filter driver it is designed to run
+        at system boot, so software will generally not need to start it,
+        unlike WinPcap which was often installed in a demand-start
+        configuration.</para> 
+
       <para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
         <quote>WinPcap Compatible Mode</quote> OFF. So applications using
         <command>net start npf</command> for starting service must change to this:

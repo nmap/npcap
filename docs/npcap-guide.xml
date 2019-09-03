@@ -276,11 +276,11 @@
         certain options for reasons like compatibility. It can also use the four value
         mechanism by setting the command-line parameters to <option>disabled</option> or <option>enforced</option>.
         For example, the following command will start an installer GUI with the
-        <option>dlt_null</option> disabled and unselected:
+        <option>loopback_support</option> option disabled and unselected:
       </para>
 
       <para>
-        <command>npcap-<replaceable>version</replaceable>.exe /dlt_null=disabled</command>
+        <command>npcap-<replaceable>version</replaceable>.exe /loopback_support=disabled</command>
       </para>
     </sect3>
 
@@ -336,8 +336,8 @@
             drivers</quote>, see solution
           <ulink role="hidepdf" url="https://social.technet.microsoft.com/Forums/windows/en-US/4deb27fc-33ce-4fc0-a26f-3fec5b57733d/is-there-a-maximum-number-of-network-filter-drivers-in-windows-7?forum=w7itpronetworking">here</ulink>.
       </para></listitem>
-      <listitem><para>Npcap Loopback Adapter is missing:
-          Npcap Loopback Adapter is actually a wrapper of Microsoft Loopback Adapter.
+      <listitem><para>Npcap Loopback Adapter is missing (legacy loopback support):
+          The legacy Npcap Loopback Adapter is actually a wrapper of Microsoft Loopback Adapter.
           Such adapters won't show up in Wireshark if the <varname>Basic Filtering Enging (BFE)</varname>
           service was not running. To fix this issue, you should start this service at <varname>services.msc</varname>
           manually and restart the Npcap service by running <command>net stop npcap</command>
