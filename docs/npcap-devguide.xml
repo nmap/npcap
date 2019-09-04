@@ -299,6 +299,7 @@
       different from standard loopback support, but the
       name of the adapter will be written to the
       <filename>LoopbackAdapter</filename> Registry value.
+      </para>
 
   </sect2>
 
