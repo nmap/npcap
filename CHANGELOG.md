@@ -11,8 +11,7 @@
   the Registry. The Npcap Loopback Adapter can still be installed by selecting
   "Legacy loopback support" in the installer or using the
   `/loopback_support=yes` command-line option. The`LoopbackSupport` Registry
-  value will be 1 only if legacy support is selected, but loopback capture will
-  be available regardless of this value.
+  value will always be 0x00000001.
 
 * The `DltNull` Registry setting and the `/dlt_null` installer option are no
   longer supported. Loopback capture will use the `DLT_NULL` link type as

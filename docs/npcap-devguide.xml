@@ -253,12 +253,12 @@
     <para>
       Npcap's loopback adapter device is reported by
       <function>pcap_findalldevs()</function> as
-      <quote>\Device\NPF_Loopback</quote>. This name is also found in the
-      Registry key
+      <quote>\Device\NPF_Loopback</quote>. This name is always available even
+      if <quote>Legacy loopback support</quote> was chosen at install time,
+      which puts the name of the legacy loopback adapter in the
+      <filename>LoopbackAdapter</filename> REG_SZ value of the
       <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap\Parameters</filename>.
-      in the <filename>LoopbackAdapter</filename> REG_SZ value, unless
-      <quote>Legacy loopback support</quote> was chosen at install time, in
-      which case the value will be the name of the legacy loopback adapter.
+      Registry key.
     </para>
 
     <para>
@@ -297,8 +297,7 @@
         Adapter</quote> for software that expects to find the loopback adapter
       via ordinary Windows API calls. The features and operation are no
       different from standard loopback support, but the
-      <filename>LoopbackSupport</filename> Registry value will be set to
-      0x00000001 and the name of the adapter will be written to the
+      name of the adapter will be written to the
       <filename>LoopbackAdapter</filename> Registry value.
 
   </sect2>

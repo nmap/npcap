@@ -10,10 +10,10 @@ for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /v "Dot11Support" 
 	set Dot11Support=%%C
 )
 echo Dot11Support = %Dot11Support%
-for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /v "LoopbackSupport" 2^>nul ^| find "LoopbackSupport"`) do (
-	set LoopbackSupport=%%C
+for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /v "LoopbackAdapter" 2^>nul ^| find "LoopbackAdapter"`) do (
+	set LoopbackAdapter=%%C
 )
-echo LoopbackSupport = %LoopbackSupport%
+echo LoopbackAdapter = %LoopbackAdapter%
 for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /v "WinPcapCompatible" 2^>nul ^| find "WinPcapCompatible"`) do (
 	set WinPcapCompatible=%%C
 )
@@ -51,7 +51,7 @@ if %WinPcapCompatible% == 0x1 (
 )
 
 rem Remove and reinstall loopback adapters
-if %LoopbackSupport% == 0x1 (
+if not %LoopbackAdapter% == "" (
 "%NPCAP_DIR%\NPFInstall.exe" -ul
 )
 rem TODO Remove any leftover adapters in any case
@@ -65,7 +65,7 @@ if NOT ERRORLEVEL 1 (
 	pause
 )
 
-if %LoopbackSupport% == 0x1 (
+if not %LoopbackAdapter% == "" (
 "%NPCAP_DIR%\NPFInstall.exe" -il
 )
 
