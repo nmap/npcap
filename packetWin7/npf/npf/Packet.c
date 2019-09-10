@@ -204,6 +204,27 @@ My_KeGetCurrentProcessorNumber(
 }
 
 
+#ifdef NPCAP_READ_ONLY
+// For read-only Npcap, we want an explicit denial function for the Write call.
+// The IOCTLs will be rejected as "invalid request"
+_Dispatch_type_(IRP_MJ_WRITE)
+DRIVER_DISPATCH NPF_Deny;
+
+NTSTATUS NPF_Deny(
+		IN PDEVICE_OBJECT 
+		IN PIRP Irp
+		)
+{
+	TRACE_ENTER;
+	Irp->IoStatus.Information = 0;
+	Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+
+	TRACE_EXIT();
+	return STATUS_UNSUCCESSFUL;
+}
+#endif
+
 //-------------------------------------------------------------------
 //
 //  Packet Driver's entry routine.
@@ -220,7 +241,13 @@ DriverEntry(
 	UNICODE_STRING parametersPath;
 	NTSTATUS Status = STATUS_SUCCESS;
 	PDEVICE_OBJECT devObjP;
+#ifndef NPCAP_READ_ONLY
 	UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;WD)"); // this SDDL means only permits System and Administrator to modify the device.
+#else
+	// For convenience and clarity, deny write access here. In reality, we
+	// remove any code that injects packets in this configuration
+	UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GR;;;WD)"); // this SDDL means only permits System and Administrator to modify the device.
+#endif
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
 	UNICODE_STRING deviceSymLink;
 
@@ -346,7 +373,12 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_CLOSE] = NPF_CloseAdapter;
 	DriverObject->MajorFunction[IRP_MJ_CLEANUP] = NPF_Cleanup;
 	DriverObject->MajorFunction[IRP_MJ_READ] = NPF_Read;
+#ifndef NPCAP_READ_ONLY
 	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Write;
+#else
+	// Explicitly reject write calls
+	DriverObject->MajorFunction[IRP_MJ_WRITE] = NPF_Deny;
+#endif
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
 	// Create the "NPCAP" device itself:
@@ -1038,6 +1070,7 @@ NPF_IoControl(
 		SET_FAILURE_INVALID_REQUEST();
 		break;
 
+#ifndef NPCAP_READ_ONLY
 	case BIOCSENDPACKETSSYNC:
 		SyncWrite = TRUE;
 
@@ -1084,6 +1117,7 @@ NPF_IoControl(
 			SET_FAILURE_CUSTOM(-WriteRes);
 		}
 		break;
+#endif // NPCAP_READ_ONLY
 
 	case BIOCSETF:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETF");
@@ -1583,6 +1617,7 @@ NPF_IoControl(
 		SET_RESULT_SUCCESS(0);
 		break;
 
+#ifndef NPCAP_READ_ONLY
 	case BIOCSWRITEREP:
 		//set the writes repetition number
 
@@ -1598,6 +1633,8 @@ NPF_IoControl(
 
 		SET_RESULT_SUCCESS(0);
 		break;
+
+#endif // NPCAP_READ_ONLY
 
 	case BIOCSMINTOCOPY:
 		//set the minimum buffer's size to copy to the application
