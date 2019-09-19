@@ -1079,7 +1079,7 @@ NPF_TapExForEachOpen(
 					InterlockedExchangeAdd(&LocalData->Free, (ULONG)(-(LONG)increment));
 					if (Open->Size - LocalData->Free >= Open->MinToCopy)
 					{
-#ifdef NCPAP_KDUMP
+#ifdef NPCAP_KDUMP
 						if (Open->mode & MODE_DUMP)
 							NdisSetEvent(&Open->DumpEvent);
 						else

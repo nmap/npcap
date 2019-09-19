@@ -208,7 +208,7 @@ void ifprint(pcap_if_t *d)
       packet flowing through the adapter.</para>
 
     <para>The function that opens a capture device is <ulink
-        url="wpcap/pcap_open.htl">pcap_open()</ulink>. The parameters,
+        url="wpcap/pcap_open.html">pcap_open()</ulink>. The parameters,
       <literal>snaplen</literal>, <literal>flags</literal> and
       <literal>to_ms</literal> deserve some explanation.</para>
 
