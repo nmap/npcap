@@ -1,7 +1,7 @@
 @echo off
 
-net session >nul 2>&1
-if not "%errorLevel%" == "0" (
+whoami /Groups | find "S-1-16-12288" >NUL
+if ERRORLEVEL 1 (
   rem This tools must run with administrator permissions
   rem It will popup the UAC dialog, please click [Yes] to continue.
   echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
