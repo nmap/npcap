@@ -414,7 +414,7 @@ DriverEntry(
 
 	IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
 
-	Status = IoCreateSymbolicLink(&deviceSymLink, &AdapterName) != STATUS_SUCCESS;
+	Status = IoCreateSymbolicLink(&deviceSymLink, &AdapterName);
 	if (!NT_SUCCESS(Status))
 	{
 		IF_LOUD(DbgPrint("\n\nError creating SymLink %ws\nn", deviceSymLink.Buffer););
