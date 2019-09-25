@@ -1658,20 +1658,7 @@ NPF_IoControl(
 		}
 
 		OidData = Irp->AssociatedIrp.SystemBuffer;
-		if (FunctionCode == BIOCQUERYOID)
-		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCQUERYOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
-		}
-		else if (FunctionCode == BIOCSETOID)
-		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "BIOCSETOID Request: Oid=%08lx, Length=%08lx", OidData->Oid, OidData->Length);
-		}
-		else
-		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Unknown FunctionCode: %x, Oid=%08lx", FunctionCode, OidData->Oid);
-			SET_FAILURE_INVALID_REQUEST();
-			break;
-		}
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
 
 		//
 		// gain ownership of the Ndis Handle
