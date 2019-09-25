@@ -211,11 +211,11 @@ _Dispatch_type_(IRP_MJ_WRITE)
 DRIVER_DISPATCH NPF_Deny;
 
 NTSTATUS NPF_Deny(
-		IN PDEVICE_OBJECT 
+		IN PDEVICE_OBJECT DeviceObject,
 		IN PIRP Irp
 		)
 {
-	TRACE_ENTER;
+	TRACE_ENTER();
 	Irp->IoStatus.Information = 0;
 	Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
