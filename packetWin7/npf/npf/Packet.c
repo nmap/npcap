@@ -515,10 +515,6 @@ DriverEntry(
 
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
-
-	Status = STATUS_UNSUCCESSFUL;
-	TRACE_EXIT();
-	return(Status);
 }
 
 //-------------------------------------------------------------------
