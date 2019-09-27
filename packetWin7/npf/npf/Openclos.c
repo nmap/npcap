@@ -2821,6 +2821,8 @@ NPF_DoInternalRequest(
 	NDIS_STATUS                 Status = NDIS_STATUS_FAILURE;
 	BOOLEAN                     bFalse;
 
+	FilterRequest.RequestStatus = NDIS_STATUS_PENDING;
+
 	bFalse = FALSE;
 	*pBytesProcessed = 0;
 	NdisZeroMemory(NdisRequest, sizeof(NDIS_OID_REQUEST));
@@ -2876,6 +2878,8 @@ NPF_DoInternalRequest(
 
 	if (Status == NDIS_STATUS_PENDING)
 	{
+		// Wait for this event which is signaled by NPF_InternalRequestComplete,
+		// which also sets RequestStatus appropriately
 		NdisWaitEvent(&FilterRequest.InternalRequestCompletedEvent, 0);
 		Status = FilterRequest.RequestStatus;
 	}
