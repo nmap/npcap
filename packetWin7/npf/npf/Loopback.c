@@ -191,8 +191,10 @@ NPF_IsPacketSelfSent(
 
 	TRACE_ENTER();
 
+	// We only look at the first NB in the list to determine this, since
+	// our assumption is that all NBs in the NBL share the same origin.
 	pNetBuffer = NET_BUFFER_LIST_FIRST_NB(pNetBufferList);
-	while (pNetBuffer)
+	if (pNetBuffer)
 	{
 		pContiguousData = NdisGetDataBuffer(pNetBuffer,
 			bIPv4 ? IP_HDR_LEN : IPV6_HDR_LEN,
@@ -226,7 +228,6 @@ NPF_IsPacketSelfSent(
 			}
 		}
 
-		pNetBuffer = pNetBuffer->Next;
 	}
 
 	TRACE_EXIT();
