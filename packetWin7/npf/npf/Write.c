@@ -155,12 +155,11 @@ NPF_Write(
 	// 2. less-equal than max frame size for the link layer and
 	// 3. the maximum frame size of the link layer should not be zero.
 	//
+	// These we can check without bothering with the filter module:
 	if (IrpSp->Parameters.Write.Length == 0 || 	// Check that the buffer provided by the user is not empty
-		Open->pFiltMod->MaxFrameSize == 0 ||	// Check that the MaxFrameSize is correctly initialized
-		Irp->MdlAddress == NULL ||
-		IrpSp->Parameters.Write.Length > Open->pFiltMod->MaxFrameSize) // Check that the fame size is smaller that the MTU
+		Irp->MdlAddress == NULL)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Frame size out of range, or maxFrameSize = 0. Send aborted");
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Write parameters empty. Send aborted");
 
 		NPF_StopUsingOpenInstance(Open);
 
@@ -187,6 +186,25 @@ NPF_Write(
 
 		TRACE_EXIT();
 		return STATUS_INVALID_DEVICE_REQUEST;
+	}
+
+	// Now that we have a handle to the filter module, validate specifics:
+	if (Open->pFiltMod->MaxFrameSize == 0 ||	// Check that the MaxFrameSize is correctly initialized
+		IrpSp->Parameters.Write.Length > Open->pFiltMod->MaxFrameSize) // Check that the fame size is smaller that the MTU
+	{
+		NPF_StopUsingBinding(Open->pFiltMod);
+
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Frame size out of range, or maxFrameSize = 0. Send aborted");
+
+		NPF_StopUsingOpenInstance(Open);
+
+		Irp->IoStatus.Information = 0;
+		Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+
+		TRACE_EXIT();
+
+		return STATUS_UNSUCCESSFUL;
 	}
 
 	NdisAcquireSpinLock(&Open->WriteLock);
