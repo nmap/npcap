@@ -248,8 +248,11 @@ NPF_IsICMPProtocolUnreachablePacket(
 
 	TRACE_ENTER();
 
+	// Same reasoning as NPF_IsPacketSelfSent:
+	// We only look at the first NB in the list to determine this, since
+	// our assumption is that all NBs in the NBL share the same origin.
 	pNetBuffer = NET_BUFFER_LIST_FIRST_NB(pNetBufferList);
-	while (pNetBuffer)
+	if (pNetBuffer)
 	{
 		pContiguousData = NdisGetDataBuffer(pNetBuffer,
 			IP_HDR_LEN + ICMP_HDR_LEN,
@@ -284,7 +287,6 @@ NPF_IsICMPProtocolUnreachablePacket(
 			}
 		}
 
-		pNetBuffer = pNetBuffer->Next;
 	}
 
 	TRACE_EXIT();
