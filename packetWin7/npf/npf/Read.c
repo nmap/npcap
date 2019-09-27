@@ -609,8 +609,8 @@ NPF_TapExForEachOpen(
 				USHORT pTmpVlanTag;
 				withVlanTag = TRUE;
 
-				pTmpVlanTag = (qInfo.TagHeader.UserPriority & 0x07 << 13) |
-					(qInfo.TagHeader.CanonicalFormatId & 0x01 << 12) |
+				pTmpVlanTag = ((qInfo.TagHeader.UserPriority & 0x07) << 13) |
+					((qInfo.TagHeader.CanonicalFormatId & 0x01) << 12) |
 					(qInfo.TagHeader.VlanId & 0x0FFF);
 
 				pVlanTag[0] = ((UCHAR *)(&pTmpVlanTag))[1];
