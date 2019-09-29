@@ -1048,8 +1048,6 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 
 		CloseHandle(g_AdaptersInfoMutex);
 		
-		g_AdaptersInfoList;
-		
 		while(g_AdaptersInfoList != NULL)
 		{
 			PNPF_IF_ADDRESS_ITEM pCursor, pNext;
