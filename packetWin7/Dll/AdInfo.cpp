@@ -2346,7 +2346,7 @@ static BOOLEAN PacketAddFakeLoopbackAdapter()
 	TmpAdInfo->LinkLayer.LinkType = NdisMediumNull;
 	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 	TmpAdInfo->Flags = 0;
-	memset(TmpAdInfo->MacAddress,'0',6);
+	memset(TmpAdInfo->MacAddress,'\0',6);
 	TmpAdInfo->MacAddressLen = 6;
 	TmpAdInfo->pNetworkAddresses = NULL;
 
@@ -2424,7 +2424,7 @@ static BOOLEAN PacketAddFakeNdisWanAdapter()
 	TmpAdInfo->LinkLayer.LinkType = NdisMedium802_3;
 	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 	TmpAdInfo->Flags = INFO_FLAG_NDISWAN_ADAPTER;
-	memset(TmpAdInfo->MacAddress,'0',6);
+	memset(TmpAdInfo->MacAddress,'\0',6);
 	TmpAdInfo->MacAddressLen = 6;
 	TmpAdInfo->pNetworkAddresses = NULL;
 
