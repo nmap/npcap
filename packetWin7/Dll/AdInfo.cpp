@@ -577,10 +577,6 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 	
 	RegCloseKey(TcpIpKey);
 	
-	if (status != ERROR_SUCCESS) {
-		goto fail;
-	}
-	
 	TRACE_PRINT("Successfully retrieved the addresses from the registry.");
 	TRACE_EXIT();
 
