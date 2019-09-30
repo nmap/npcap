@@ -209,7 +209,9 @@ register u_int buflen;
 	register u_int32 A, X;
 	register bpf_u_int32 k;
 
+#ifdef WIN_NT_DRIVER
 	int merr = 0;
+#endif
 	int mem[BPF_MEMWORDS];
 
 	RtlZeroMemory(mem, sizeof(mem));

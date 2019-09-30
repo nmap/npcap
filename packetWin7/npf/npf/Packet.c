@@ -1658,7 +1658,7 @@ NPF_IoControl(
 		}
 
 		OidData = Irp->AssociatedIrp.SystemBuffer;
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
+		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
 
 		//
 		// gain ownership of the Ndis Handle

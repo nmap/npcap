@@ -2339,7 +2339,7 @@ static BOOLEAN PacketAddFakeLoopbackAdapter()
 
 	strncpy(TmpAdInfo->Name, LoopbackName, sizeof(TmpAdInfo->Name) - 1);
 	strncpy(TmpAdInfo->Description, LoopbackDesc, sizeof(TmpAdInfo->Description) - 1);
-	TmpAdInfo->LinkLayer.LinkType = NdisMediumNull;
+	TmpAdInfo->LinkLayer.LinkType = (UINT) NdisMediumNull;
 	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 	TmpAdInfo->Flags = 0;
 	memset(TmpAdInfo->MacAddress,'\0',6);
