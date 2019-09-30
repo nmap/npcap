@@ -62,6 +62,7 @@
 #include <tchar.h>
 #include <windows.h>
 #include <strsafe.h>
+#include <exception>
 //#define _DBG
 #include "../debug.h"
 
@@ -279,13 +280,26 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 // client connections.
 { 
 	HANDLE hHeap      = GetProcessHeap();
-	char* pchRequest = (char*) HeapAlloc(hHeap, 0, BUFSIZE * sizeof(TCHAR));
-	char* pchReply   = (char*) HeapAlloc(hHeap, 0, BUFSIZE * sizeof(char));
-
 	DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0; 
 	BOOL fSuccess = FALSE;
 	HANDLE hPipe  = NULL;
+	char *pchRequest = NULL;
+	char *pchReply = NULL;
+
 	TRACE_ENTER("InstanceThread");
+	try {
+		// Have to try to catch std::bad_alloc since we use GetProcessHeap
+		// and the default heap may use HEAP_GENERATE_EXCEPTIONS
+		pchRequest = (char*) HeapAlloc(hHeap, 0, BUFSIZE * sizeof(TCHAR));
+		pchReply   = (char*) HeapAlloc(hHeap, 0, BUFSIZE * sizeof(char));
+	}
+	catch (std::exception& ba)
+	{
+#if !defined(_DBG) && !defined (_DEBUG_TO_FILE)
+		_CRT_UNUSED(ba);
+#endif
+		TRACE_PRINT1( "\nERROR - Pipe Server caught %s.\n", ba.what());
+	}
 
 	// Do some extra error checking since the app will keep running even if this
 	// thread fails.
