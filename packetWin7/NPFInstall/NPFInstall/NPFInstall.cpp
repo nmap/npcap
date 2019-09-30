@@ -72,39 +72,39 @@ BOOL PacketInstallDriver40();
 BOOL PacketStopDriver40();
 
 #define STR_COMMAND_USAGE \
-_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.org )\n")\
-_T("Usage: NPFInstall [Options]\n")\
-_T("\n")\
-_T("OPTIONS:\n")\
-_T("  -i\t\t\t: Install the LWF driver\n")\
-_T("  -i2\t\t\t: Install the LWF driver (with Wi-Fi support)\n")\
-_T("  -u\t\t\t: Uninstall the LWF driver\n")\
-_T("  -u2\t\t\t: Uninstall the LWF driver (with Wi-Fi support)\n")\
-_T("  -iw\t\t\t: Install the WFP callout driver\n")\
-_T("  -uw\t\t\t: Uninstall the WFP callout driver\n")\
-_T("  -il\t\t\t: Install \"Npcap loopback adapter\"\n")\
-_T("  -ul\t\t\t: Uninstall \"Npcap loopback adapter\"\n")\
-_T("  -ii\t\t\t: Install the legacy driver (for XP)\n")\
-_T("  -uu\t\t\t: Uninstall the legacy driver (for XP)\n")\
-_T("  -r\t\t\t: Restart all bindings\n")\
-_T("  -r2\t\t\t: Restart all bindings (with Wi-Fi support)\n")\
-_T("  -d\t\t\t: Detect whether the driver service is pending to stop\n")\
-_T("  -check_dll\t\t: Detect whether the Npcap DLLs are still used by any processes, will list them if yes\n")\
-_T("  -kill_proc\t\t: Terminate all the processes that are still using Npcap DLLs\n")\
-_T("  -kill_proc_soft\t: Gracefully terminate all the processes that are still using Npcap DLLs (only for GUI processes, CLI processes will not be terminated)\n")\
-_T("  -kill_proc_polite\t: Politely terminate all the processes that are still using Npcap DLLs (wait for 15 seconds for GUI processes to close themselves, CLI processes will still be terminiated immediatelly)\n")\
-_T("  -c\t\t\t: Clear all the driverstore cache for the driver\n")\
-_T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n")\
-_T("  -wlan_write_reg\t: Write the names of all wireless adapters to registry\n")\
-_T("  -add_path\t\t: Add Npcap folder to the PATH environment variable\n")\
-_T("  -remove_path\t\t: Remove Npcap folder from the PATH environment variable\n")\
-_T("  -n\t\t\t: Hide this window when executing the command\n")\
-_T("  -h\t\t\t: Print this help summary page\n")\
-_T("\n")\
-_T("EXAMPLES:\n")\
-_T("  NPFInstall -i\n")\
-_T("  NPFInstall -iw\n")\
-_T("\n")\
+_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.org )\n") \
+_T("Usage: NPFInstall [Options]\n") \
+_T("\n") \
+_T("OPTIONS:\n") \
+_T("  -i\t\t\t: Install the LWF driver\n") \
+_T("  -i2\t\t\t: Install the LWF driver (with Wi-Fi support)\n") \
+_T("  -u\t\t\t: Uninstall the LWF driver\n") \
+_T("  -u2\t\t\t: Uninstall the LWF driver (with Wi-Fi support)\n") \
+_T("  -iw\t\t\t: Install the WFP callout driver\n") \
+_T("  -uw\t\t\t: Uninstall the WFP callout driver\n") \
+_T("  -il\t\t\t: Install \"Npcap loopback adapter\"\n") \
+_T("  -ul\t\t\t: Uninstall \"Npcap loopback adapter\"\n") \
+_T("  -ii\t\t\t: Install the legacy driver (for XP)\n") \
+_T("  -uu\t\t\t: Uninstall the legacy driver (for XP)\n") \
+_T("  -r\t\t\t: Restart all bindings\n") \
+_T("  -r2\t\t\t: Restart all bindings (with Wi-Fi support)\n") \
+_T("  -d\t\t\t: Detect whether the driver service is pending to stop\n") \
+_T("  -check_dll\t\t: Detect whether the Npcap DLLs are still used by any processes, will list them if yes\n") \
+_T("  -kill_proc\t\t: Terminate all the processes that are still using Npcap DLLs\n") \
+_T("  -kill_proc_soft\t: Gracefully terminate all the processes that are still using Npcap DLLs (only for GUI processes, CLI processes will not be terminated)\n") \
+_T("  -kill_proc_polite\t: Politely terminate all the processes that are still using Npcap DLLs (wait for 15 seconds for GUI processes to close themselves, CLI processes will still be terminiated immediatelly)\n") \
+_T("  -c\t\t\t: Clear all the driverstore cache for the driver\n") \
+_T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n") \
+_T("  -wlan_write_reg\t: Write the names of all wireless adapters to registry\n") \
+_T("  -add_path\t\t: Add Npcap folder to the PATH environment variable\n") \
+_T("  -remove_path\t\t: Remove Npcap folder from the PATH environment variable\n") \
+_T("  -n\t\t\t: Hide this window when executing the command\n") \
+_T("  -h\t\t\t: Print this help summary page\n") \
+_T("\n") \
+_T("EXAMPLES:\n") \
+_T("  NPFInstall -i\n") \
+_T("  NPFInstall -iw\n") \
+_T("\n") \
 _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPLES\n")
 
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"NPFInstall -h\" for help.\n")

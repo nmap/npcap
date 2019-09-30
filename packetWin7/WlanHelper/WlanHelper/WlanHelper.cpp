@@ -517,48 +517,48 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 }
 
 #define STR_COMMAND_USAGE \
-_T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.org )\n")\
-_T("Usage: WlanHelper [Commands]\n")\
-_T("   or: WlanHelper {Interface Name or GUID} [Options]\n")\
-_T("\n")\
-_T("OPTIONS:\n")\
-_T("  mode\t\t\t\t\t: Get interface operation mode\n")\
-_T("  mode <managed|monitor|master|..>\t: Set interface operation mode\n")\
-_T("  modes\t\t\t\t\t: Get all operation modes supported by the interface, comma-separated\n")\
-_T("  channel\t\t\t\t: Get interface channel\n")\
-_T("  channel <1-14>\t\t\t: Set interface channel (only works in monitor mode)\n")\
-_T("  freq\t\t\t\t\t: Get interface frequency\n")\
-_T("  freq <VALUE>\t\t\t\t: Set interface frequency (only works in monitor mode)\n")\
-_T("  modu\t\t\t\t\t: Get interface modulation\n")\
-_T("  modu <dsss|fhss|irbaseband|ofdm|hrdsss|erp|ht|vht|ihv (VALUE)|..>\t: Set interface modulation\n")\
-_T("  modus\t\t\t\t\t: Get all modulations supported by the interface, comma-separated\n")\
-_T("\n")\
-_T("COMMANDS:\n")\
-_T("  -i\t\t\t\t\t: Enter the interactive mode\n")\
-_T("  -h\t\t\t\t\t: Print this help summary page\n")\
-_T("\n")\
-_T("OPERATION MODES:\n")\
-_T("  managed\t: The Extensible Station (ExtSTA) operation mode\n")\
-_T("  monitor\t: The Network Monitor (NetMon) operation mode\n")\
-_T("  master\t: The Extensible Access Point (ExtAP) operation mode (supported from Windows 7 and later)\n")\
-_T("  wfd_device\t: The Wi-Fi Direct Device operation mode (supported from Windows 8 and later)\n")\
-_T("  wfd_owner\t: The Wi-Fi Direct Group Owner operation mode (supported from Windows 8 and later)\n")\
-_T("  wfd_client\t: The Wi-Fi Direct Client operation mode (supported from Windows 8 and later)\n")\
-_T("\n")\
-_T("802.11 MODULATIONS (https://en.wikipedia.org/wiki/IEEE_802.11):\n")\
-_T("  802.11-1997\t: dsss, fhss\n")\
-_T("  802.11a\t: ofdm\n")\
-_T("  802.11b\t: dsss\n")\
-_T("  802.11g\t: ofdm\n")\
-_T("  802.11n\t: mimo-ofdm\n")\
-_T("  802.11ac\t: mimo-ofdm\n")\
-_T("\n")\
-_T("EXAMPLES:\n")\
-_T("  WlanHelper Wi-Fi mode\n")\
-_T("  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11\n")\
-_T("  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2\n")\
-_T("  WlanHelper \"Wireless Network Connection\" mode monitor\n")\
-_T("\n")\
+_T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.org )\n") \
+_T("Usage: WlanHelper [Commands]\n") \
+_T("   or: WlanHelper {Interface Name or GUID} [Options]\n") \
+_T("\n") \
+_T("OPTIONS:\n") \
+_T("  mode\t\t\t\t\t: Get interface operation mode\n") \
+_T("  mode <managed|monitor|master|..>\t: Set interface operation mode\n") \
+_T("  modes\t\t\t\t\t: Get all operation modes supported by the interface, comma-separated\n") \
+_T("  channel\t\t\t\t: Get interface channel\n") \
+_T("  channel <1-14>\t\t\t: Set interface channel (only works in monitor mode)\n") \
+_T("  freq\t\t\t\t\t: Get interface frequency\n") \
+_T("  freq <VALUE>\t\t\t\t: Set interface frequency (only works in monitor mode)\n") \
+_T("  modu\t\t\t\t\t: Get interface modulation\n") \
+_T("  modu <dsss|fhss|irbaseband|ofdm|hrdsss|erp|ht|vht|ihv (VALUE)|..>\t: Set interface modulation\n") \
+_T("  modus\t\t\t\t\t: Get all modulations supported by the interface, comma-separated\n") \
+_T("\n") \
+_T("COMMANDS:\n") \
+_T("  -i\t\t\t\t\t: Enter the interactive mode\n") \
+_T("  -h\t\t\t\t\t: Print this help summary page\n") \
+_T("\n") \
+_T("OPERATION MODES:\n") \
+_T("  managed\t: The Extensible Station (ExtSTA) operation mode\n") \
+_T("  monitor\t: The Network Monitor (NetMon) operation mode\n") \
+_T("  master\t: The Extensible Access Point (ExtAP) operation mode (supported from Windows 7 and later)\n") \
+_T("  wfd_device\t: The Wi-Fi Direct Device operation mode (supported from Windows 8 and later)\n") \
+_T("  wfd_owner\t: The Wi-Fi Direct Group Owner operation mode (supported from Windows 8 and later)\n") \
+_T("  wfd_client\t: The Wi-Fi Direct Client operation mode (supported from Windows 8 and later)\n") \
+_T("\n") \
+_T("802.11 MODULATIONS (https://en.wikipedia.org/wiki/IEEE_802.11):\n") \
+_T("  802.11-1997\t: dsss, fhss\n") \
+_T("  802.11a\t: ofdm\n") \
+_T("  802.11b\t: dsss\n") \
+_T("  802.11g\t: ofdm\n") \
+_T("  802.11n\t: mimo-ofdm\n") \
+_T("  802.11ac\t: mimo-ofdm\n") \
+_T("\n") \
+_T("EXAMPLES:\n") \
+_T("  WlanHelper Wi-Fi mode\n") \
+_T("  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11\n") \
+_T("  WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2\n") \
+_T("  WlanHelper \"Wireless Network Connection\" mode monitor\n") \
+_T("\n") \
 _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPLES\n")
 
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"WlanHelper -h\" for help.\n")
