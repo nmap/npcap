@@ -111,6 +111,7 @@ HANDLE getDeviceHandleInternal(char *SymbolicLinkA, DWORD *pdwError)
 	{
 		*pdwError = dwError = GetLastError();
 		TRACE_PRINT1("OpenProcess failed, GLE=%d.\n", dwError);
+		CloseHandle(hFile);
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -120,12 +121,14 @@ HANDLE getDeviceHandleInternal(char *SymbolicLinkA, DWORD *pdwError)
 		&hFileDup, 
 		GENERIC_WRITE | GENERIC_READ,
 		FALSE,
+		// hFile will be closed regardless of error:
 		DUPLICATE_CLOSE_SOURCE);
 	TRACE_PRINT1("Duplicated handle: %08p.\n", hFileDup);
 
+
 	if (!bResult)
 	{
-		TRACE_PRINT1("CreateNamedPipe failed, GLE=%d.\n", GetLastError());
+		TRACE_PRINT1("DuplicateHandle failed, GLE=%d.\n", GetLastError());
 		*pdwError = 1234;
 		return INVALID_HANDLE_VALUE;
 	}
