@@ -369,9 +369,9 @@ extern "C"
 	// EXPORTED FUNCTIONS
 	//---------------------------------------------------------------------------
 
-	PCHAR PacketGetVersion();
-	PCHAR PacketGetDriverVersion();
-	PCHAR PacketGetDriverName();
+	LPCSTR PacketGetVersion();
+	LPCSTR PacketGetDriverVersion();
+	LPCSTR PacketGetDriverName();
 	BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject, int nbytes);
 	BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject, int nwrites);
 	BOOLEAN PacketSetMode(LPADAPTER AdapterObject, int mode);

@@ -445,7 +445,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 }
 #endif
 
-BOOL NpcapCreatePipe(char *pipeName, HANDLE moduleName)
+BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 {
 	int pid = GetCurrentProcessId();
 	char params[BUFSIZE];
@@ -507,7 +507,7 @@ BOOL NpcapCreatePipe(char *pipeName, HANDLE moduleName)
 	}
 }
 
-HANDLE NpcapConnect(char *pipeName)
+HANDLE NpcapConnect(const char *pipeName)
 {
 	HANDLE hPipe = INVALID_HANDLE_VALUE;
 	int tryTime = 0;
@@ -547,9 +547,9 @@ HANDLE NpcapConnect(char *pipeName)
 	return hPipe;
 }
 
-HANDLE NpcapRequestHandle(char *sMsg, DWORD *pdwError)
+HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 {
-	LPSTR lpvMessage = sMsg;
+	LPCSTR lpvMessage = sMsg;
 	char  chBuf[BUFSIZE];
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
@@ -812,10 +812,10 @@ void NpcapStopHelper()
 // find [substr] from a fixed-length buffer
 // [full_data] will be treated as binary data buffer)
 // return NULL if not found
-char* memstr(char* full_data, size_t full_data_len, char* substr)
+static const char* memstr(const char* full_data, size_t full_data_len, const char* substr)
 {
 	size_t sublen;
-	char* cur;
+	const char* cur;
 	size_t last_possible;
 
 	if (full_data == NULL || full_data_len <= 0 || substr == NULL)
@@ -850,12 +850,12 @@ char* memstr(char* full_data, size_t full_data_len, char* substr)
 }
 
 // For memory block [mem], substitute all [source] strings with [destination], return the new memory block (need to free), if not found, return NULL.
-PCHAR NpcapReplaceMemory(PCHAR buf, int buf_size, PCHAR source, PCHAR destination)
+PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR destination)
 {
 	PCHAR tmp;
 	PCHAR newbuf;
 	PCHAR retbuf;
-	PCHAR sk;
+	LPCCH sk;
 	size_t size;
 
 	sk = memstr(buf, buf_size, source);
@@ -900,12 +900,12 @@ PCHAR NpcapReplaceMemory(PCHAR buf, int buf_size, PCHAR source, PCHAR destinatio
 }
 
 // For [string], substitute all [source] strings with [destination], return the new string (need to free), if not found, return NULL.
-PCHAR NpcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
+static PCHAR NpcapReplaceString(LPCSTR string, LPCSTR source, LPCSTR destination)
 {
 	PCHAR tmp;
 	PCHAR newstr;
 	PCHAR retstr;
-	PCHAR sk;
+	LPCCH sk;
 	size_t size;
 
 	sk = strstr(string, source);
@@ -952,19 +952,19 @@ PCHAR NpcapReplaceString(PCHAR string, PCHAR source, PCHAR destination)
 	return newstr;
 }
 
-PCHAR NpcapTranslateAdapterName_Standard2Wifi(PCHAR AdapterName)
+static PCHAR NpcapTranslateAdapterName_Standard2Wifi(LPCSTR AdapterName)
 {
 	TRACE_ENTER();
 	TRACE_EXIT();
 	return NpcapReplaceString(AdapterName, "{", NPF_DEVICE_NAMES_TAG_WIFI "{");
 }
 
-PCHAR NpcapTranslateAdapterName_Npf2Npcap(PCHAR AdapterName)
+static PCHAR NpcapTranslateAdapterName_Npf2Npcap(LPCSTR AdapterName)
 {
 	return NpcapReplaceString(AdapterName, "NPF_", NPF_DEVICE_NAMES_PREFIX);
 }
 
-PCHAR NpcapTranslateMemory_Npcap2Npf(PCHAR pStr, int iBufSize)
+static PCHAR NpcapTranslateMemory_Npcap2Npf(LPCSTR pStr, int iBufSize)
 {
 	return NpcapReplaceMemory(pStr, iBufSize, NPF_DEVICE_NAMES_PREFIX, "NPF_");
 }
@@ -1734,7 +1734,7 @@ LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName)
 
   \note uses the GetFileVersionInfoSize() and GetFileVersionInfo() WIN32 API functions
 */
-BOOL PacketGetFileVersion(LPTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLen)
+BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLen)
 {
     DWORD   dwVerInfoSize;  // Size of version information block
     DWORD   dwVerHnd=0;   // An 'ignored' parameter, always '0'
@@ -2060,7 +2060,7 @@ BOOL PacketStartService()
 
   \note internal function used by PacketOpenAdapter() and AddAdapter()
 */
-LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
+LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 {
 	DWORD error;
 	LPADAPTER lpAdapter;
@@ -2217,7 +2217,7 @@ LPADAPTER PacketOpenAdapterNPF(PCHAR AdapterNameA)
 }
 
 #ifdef HAVE_WANPACKET_API
-static LPADAPTER PacketOpenAdapterWanPacket(PCHAR AdapterName)
+static LPADAPTER PacketOpenAdapterWanPacket(LPCSTR AdapterName)
 {
 	LPADAPTER lpAdapter = NULL;
 	DWORD dwLastError = ERROR_SUCCESS;
@@ -2288,7 +2288,7 @@ static LPADAPTER PacketOpenAdapterWanPacket(PCHAR AdapterName)
   \note internal function used by PacketOpenAdapter()
 */
 #ifdef HAVE_AIRPCAP_API
-static LPADAPTER PacketOpenAdapterAirpcap(PCHAR AdapterName)
+static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 {
 	CHAR Ebuf[AIRPCAP_ERRBUF_SIZE];
     LPADAPTER lpAdapter;
@@ -2338,7 +2338,7 @@ static LPADAPTER PacketOpenAdapterAirpcap(PCHAR AdapterName)
 
 
 #ifdef HAVE_NPFIM_API
-static LPADAPTER PacketOpenAdapterNpfIm(PCHAR AdapterName)
+static LPADAPTER PacketOpenAdapterNpfIm(LPCSTR AdapterName)
 {
     LPADAPTER lpAdapter;
 
@@ -2385,7 +2385,7 @@ static LPADAPTER PacketOpenAdapterNpfIm(PCHAR AdapterName)
   \note internal function used by PacketOpenAdapter()
 */
 #ifdef HAVE_DAG_API
-static LPADAPTER PacketOpenAdapterDAG(PCHAR AdapterName, BOOLEAN IsAFile)
+static LPADAPTER PacketOpenAdapterDAG(LPCSTR AdapterName, BOOLEAN IsAFile)
 {
 	CHAR DagEbuf[DAGC_ERRBUF_SIZE];
     LPADAPTER lpAdapter;
@@ -2512,7 +2512,7 @@ static LPADAPTER PacketOpenAdapterDAG(PCHAR AdapterName, BOOLEAN IsAFile)
   \brief Return a string with the dll version.
   \return A char pointer to the version of the library.
 */
-PCHAR PacketGetVersion()
+LPCSTR PacketGetVersion()
 {
 	TRACE_ENTER();
 	TRACE_EXIT();
@@ -2523,7 +2523,7 @@ PCHAR PacketGetVersion()
   \brief Return a string with the version of the device driver.
   \return A char pointer to the version of the driver.
 */
-PCHAR PacketGetDriverVersion()
+LPCSTR PacketGetDriverVersion()
 {
 	TRACE_ENTER();
 	TRACE_EXIT();
@@ -2534,7 +2534,7 @@ PCHAR PacketGetDriverVersion()
 \brief Return a string with the name of the device driver.
 \return A char pointer to the version of the driver.
 */
-PCHAR PacketGetDriverName()
+LPCSTR PacketGetDriverName()
 {
 	TRACE_ENTER();
 	TRACE_EXIT();
