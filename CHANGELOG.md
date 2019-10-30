@@ -1,3 +1,27 @@
+## Npcap 0.9984 [2019-10-30]
+
+* Update libpcap to 1.9.1. See [the libpcap CHANGES
+  file](https://github.com/the-tcpdump-group/libpcap/blob/libpcap-1.9.1/CHANGES)
+  for this release. This update addresses several CVE-identified vulnerabilities.
+
+* Address several code quality issues identified by Tangible Security using
+  Coverity source code analysis.
+
+* Fixed processing of the "enforced" value for several command-line installer
+  options. Fixes [#1719](http://issues.nmap.org/1719).
+
+* The `DisplayName` value in the Uninstall registry key for Npcap no longer
+  includes the version number, which has always been available in the
+  `DisplayVersion` value. Instead, it will include the product name and
+  edition, e.g. "Npcap" or "Npcap OEM". This value will also be recorded in the
+  `Edition` value under the npcap service's Parameters registry key.
+
+* Fixed a couple of issues with the
+  [DiagReport tool](https://npcap.org/guide/npcap-users-guide.html#npcap-issues-diagreport)
+  used for bug report diagnostics: remove extraneous partial output lines
+  ([#1760](http://issues.nmap.org/1760)), and avoid relying on the Server
+  service to determine privilege level ([#1757](http://issues.nmap.org/1757)).
+
 ## Npcap 0.9983 [2019-08-30]
 
 * Npcap can now detect newly-added network adapters without restarting the
