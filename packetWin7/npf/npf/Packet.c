@@ -157,14 +157,10 @@ typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
 typedef ULONG (*KEGETCURRENTPROCESSORNUMBEREX)(
 	PPROCESSOR_NUMBER ProcNumber
 	);
-//KeQuerySystemTimePrecise
-typedef void (*KEQUERYSYSTEMTIMEPRECISE)(
-	PLARGE_INTEGER CurrentTime
-	);
 
 NDISGROUPMAXPROCESSORCOUNT g_My_NdisGroupMaxProcessorCount = NULL;
 KEGETCURRENTPROCESSORNUMBEREX g_My_KeGetCurrentProcessorNumberEx = NULL;
-KEQUERYSYSTEMTIMEPRECISE g_My_KeQuerySystemTimePrecise = NULL;
+PQUERYSYSTEMTIME g_ptrQuerySystemTime = NULL;
 
 //-------------------------------------------------------------------
 ULONG
@@ -208,23 +204,17 @@ My_KeGetCurrentProcessorNumber(
 	return Cpu;
 }
 
+#ifdef KeQuerySystemTime
+// On Win x64, KeQuerySystemTime is defined as a macro,
+// this function wraps the macro execution.
 void
-My_KeQuerySystemTime(
+KeQuerySystemTimeWrapper(
 	PLARGE_INTEGER CurrentTime
 )
 {
-	if (g_My_KeQuerySystemTimePrecise)
-	{
-		// KeQuerySystemTimePrecise is more precise than KeQuerySystemTime.
-		// The system time reported by KeQuerySystemTimePrecise is accurate to within a microsecond.
-		g_My_KeQuerySystemTimePrecise(CurrentTime);
-	}
-	else
-	{
-		KeQuerySystemTime(CurrentTime);
-	}
+	KeQuerySystemTime(CurrentTime);
 }
-
+#endif
 
 #ifdef NPCAP_READ_ONLY
 // For read-only Npcap, we want an explicit denial function for the Write call.
@@ -375,10 +365,20 @@ DriverEntry(
 	g_My_KeGetCurrentProcessorNumberEx = (KEGETCURRENTPROCESSORNUMBEREX) NdisGetRoutineAddress(&strKeGetCurrentProcessorNumberEx);
 
 	//
-	// Try to get reference to KeQuerySystemTimePrecise (Windows 8 and later)
+	// Initialize system-time function pointer.
 	//
+	// Try to get reference to KeQuerySystemTimePrecise (Windows 8 and later).
 	RtlInitUnicodeString(&strKeQuerySystemTimePrecise, L"KeQuerySystemTimePrecise");
-	g_My_KeQuerySystemTimePrecise = (KEQUERYSYSTEMTIMEPRECISE) MmGetSystemRoutineAddress(&strKeQuerySystemTimePrecise);
+	g_ptrQuerySystemTime = (PQUERYSYSTEMTIME) MmGetSystemRoutineAddress(&strKeQuerySystemTimePrecise);
+	// If KeQuerySystemTimePrecise is not available,
+	// use KeQuerySystemTime function (Win32) or a wrapper to the KeQuerySystemTime macro (x64).
+	if (g_ptrQuerySystemTime == NULL) {
+#ifdef KeQuerySystemTime
+		g_ptrQuerySystemTime = &KeQuerySystemTimeWrapper;
+#else
+		g_ptrQuerySystemTime = &KeQuerySystemTime;
+#endif
+	}
 
 	//
 	// Get number of CPUs and save it

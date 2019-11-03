@@ -95,7 +95,12 @@
 
 #define TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP		99
 
+typedef void(*PQUERYSYSTEMTIME)(
+	PLARGE_INTEGER CurrentTime
+	);
+
 extern ULONG g_TimestampMode;
+extern PQUERYSYSTEMTIME g_ptrQuerySystemTime;
 
 /* Defined in Packet.c/h */
 ULONG
@@ -105,12 +110,6 @@ My_NdisGroupMaxProcessorCount(
 /* Defined in Packet.c/h */
 ULONG
 My_KeGetCurrentProcessorNumber(
-);
-
-/* Defined in Packet.c/h */
-void
-My_KeQuerySystemTime(
-	PLARGE_INTEGER CurrentTime
 );
 
 /*!
@@ -160,7 +159,7 @@ __inline void SynchronizeOnCpu(struct timeval* start)
 	// get the absolute value of the system boot time.   
 
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
-	My_KeQuerySystemTime(&SystemTime);
+	g_ptrQuerySystemTime(&SystemTime);
 
 	start->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 
@@ -267,7 +266,7 @@ __inline VOID TimeSynchronizeRDTSC(struct time_conv* data)
 
 	reference = data->reference;
 
-	My_KeQuerySystemTime(&system_time);
+	g_ptrQuerySystemTime(&system_time);
 
 	__asm
 	{
@@ -463,7 +462,7 @@ __inline void GetTimeQST(struct timeval* dst, struct time_conv* data)
 	LARGE_INTEGER SystemTime;
 	UNREFERENCED_PARAMETER(data);
 
-	My_KeQuerySystemTime(&SystemTime);
+	g_ptrQuerySystemTime(&SystemTime);
 
 	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
