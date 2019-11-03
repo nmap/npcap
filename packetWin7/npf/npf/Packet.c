@@ -157,9 +157,14 @@ typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
 typedef ULONG (*KEGETCURRENTPROCESSORNUMBEREX)(
 	PPROCESSOR_NUMBER ProcNumber
 	);
+//KeQuerySystemTimePrecise
+typedef void (*KEQUERYSYSTEMTIMEPRECISE)(
+	PLARGE_INTEGER CurrentTime
+	);
 
 NDISGROUPMAXPROCESSORCOUNT g_My_NdisGroupMaxProcessorCount = NULL;
 KEGETCURRENTPROCESSORNUMBEREX g_My_KeGetCurrentProcessorNumberEx = NULL;
+KEQUERYSYSTEMTIMEPRECISE g_My_KeQuerySystemTimePrecise = NULL;
 
 //-------------------------------------------------------------------
 ULONG
@@ -201,6 +206,23 @@ My_KeGetCurrentProcessorNumber(
 		Cpu = KeGetCurrentProcessorNumber();
 	}
 	return Cpu;
+}
+
+void
+My_KeQuerySystemTime(
+	PLARGE_INTEGER CurrentTime
+)
+{
+	if (g_My_KeQuerySystemTimePrecise)
+	{
+		// KeQuerySystemTimePrecise is more precise than KeQuerySystemTime.
+		// The system time reported by KeQuerySystemTimePrecise is accurate to within a microsecond.
+		g_My_KeQuerySystemTimePrecise(CurrentTime);
+	}
+	else
+	{
+		KeQuerySystemTime(CurrentTime);
+	}
 }
 
 
@@ -260,6 +282,7 @@ DriverEntry(
 	NDIS_STRING strNdisGroupMaxProcessorCount;
 	NDIS_STRING strKeGetCurrentProcessorNumberEx;
 	NDIS_STRING strKeGetProcessorIndexFromNumber;
+	NDIS_STRING strKeQuerySystemTimePrecise;
 
 	UNREFERENCED_PARAMETER(RegistryPath);
 
@@ -350,6 +373,12 @@ DriverEntry(
 
 	RtlInitUnicodeString(&strKeGetCurrentProcessorNumberEx, L"KeGetCurrentProcessorNumberEx");
 	g_My_KeGetCurrentProcessorNumberEx = (KEGETCURRENTPROCESSORNUMBEREX) NdisGetRoutineAddress(&strKeGetCurrentProcessorNumberEx);
+
+	//
+	// Try to get reference to KeQuerySystemTimePrecise (Windows 8 and later)
+	//
+	RtlInitUnicodeString(&strKeQuerySystemTimePrecise, L"KeQuerySystemTimePrecise");
+	g_My_KeQuerySystemTimePrecise = (KEQUERYSYSTEMTIMEPRECISE) MmGetSystemRoutineAddress(&strKeQuerySystemTimePrecise);
 
 	//
 	// Get number of CPUs and save it

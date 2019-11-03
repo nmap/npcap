@@ -892,6 +892,15 @@ My_KeGetCurrentProcessorNumber(
 
 
 /*!
+\brief Retrieves the current system time.
+\param CurrentTime A pointer to a LARGE_INTEGER variable into which the routine writes the current system time.
+*/
+void
+My_KeQuerySystemTime(
+	PLARGE_INTEGER CurrentTime
+);
+
+/*!
   \brief The initialization routine of the driver.
   \param DriverObject The driver object of NPF created by the system.
   \param RegistryPath The registry path containing the keys related to the driver.

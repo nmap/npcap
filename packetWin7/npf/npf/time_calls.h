@@ -107,6 +107,12 @@ ULONG
 My_KeGetCurrentProcessorNumber(
 );
 
+/* Defined in Packet.c/h */
+void
+My_KeQuerySystemTime(
+	PLARGE_INTEGER CurrentTime
+);
+
 /*!
   \brief A microsecond precise timestamp.
 
@@ -154,7 +160,7 @@ __inline void SynchronizeOnCpu(struct timeval* start)
 	// get the absolute value of the system boot time.   
 
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
-	KeQuerySystemTime(&SystemTime);
+	My_KeQuerySystemTime(&SystemTime);
 
 	start->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 
@@ -261,7 +267,7 @@ __inline VOID TimeSynchronizeRDTSC(struct time_conv* data)
 
 	reference = data->reference;
 
-	KeQuerySystemTime(&system_time);
+	My_KeQuerySystemTime(&system_time);
 
 	__asm
 	{
@@ -457,7 +463,7 @@ __inline void GetTimeQST(struct timeval* dst, struct time_conv* data)
 	LARGE_INTEGER SystemTime;
 	UNREFERENCED_PARAMETER(data);
 
-	KeQuerySystemTime(&SystemTime);
+	My_KeQuerySystemTime(&SystemTime);
 
 	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
