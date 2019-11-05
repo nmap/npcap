@@ -4,8 +4,8 @@
   file](https://github.com/the-tcpdump-group/libpcap/blob/libpcap-1.9.1/CHANGES)
   for this release. This update addresses several CVE-identified vulnerabilities.
 
-* Address several code quality issues identified by Tangible Security using
-  Coverity source code analysis.
+* Address several code quality issues identified by Charles E. Smith of
+  Tangible Security using Coverity source code analysis.
 
 * Fixed processing of the "enforced" value for several command-line installer
   options. Fixes [#1719](http://issues.nmap.org/1719).
