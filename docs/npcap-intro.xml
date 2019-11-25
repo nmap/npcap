@@ -83,7 +83,7 @@
 
     <para>Npcap is an update of <ulink role="hidepdf" url="http://www.winpcap.org/">WinPcap</ulink>
       to the <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx">NDIS 6 Light-Weight Filter (LWF)</ulink> API.
-      It supports <command>Windows Vista, 7, 8 and 10</command>. It is developed
+      It supports <command>Windows 7, 8, 8.1, and 10</command>. It is developed
       by the <ulink role="hidepdf" url="http://nmap.org/">Nmap Project</ulink>
       as a continuation of the project started by Yang Luo
       under <ulink role="hidepdf" url="https://www.google-melange.com/gsoc/project/details/google/gsoc2013/hsluoyz/5727390428823552">Google Summer of Code 2013</ulink> and
@@ -100,8 +100,8 @@
         features that Npcap adds:</para>
 
       <itemizedlist>
-        <listitem><para><emphasis>NDIS 6 Support</emphasis>: Npcap makes use of the new NDIS Lightweight Filter driver in
-            Windows Vista and later. This driver type is faster and has less overhead
+        <listitem><para><emphasis>NDIS 6 Support</emphasis>: Npcap makes use of the new NDIS Lightweight Filter driver introduced in
+            NDIS 6.0. This driver type is faster and has less overhead
             than the legacy <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/hardware/ff557012(v=vs.85).aspx">NDIS 5 Intermediate Driver</ulink>
             type used by WinPcap.
         </para></listitem>

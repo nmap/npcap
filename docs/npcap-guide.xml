@@ -382,17 +382,6 @@
         Please always submit it to us if you encounter any issues.
       </para>
 
-      <para>
-        For Vista users: <filename>DiagReport</filename> is a script written for
-        <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/powershell/mt173057.aspx">Windows PowerShell</ulink>,
-        and Vista doesn't have it installed by default. So if you are using Vista,
-        you need to install <emphasis>PowerShell 2.0 (KB968930)</emphasis> on your
-        system. Please download it <ulink role="hidepdf" url="https://www.microsoft.com/en-hk/download/details.aspx?id=9864">here for x86</ulink>
-        and <ulink role="hidepdf" url="https://www.microsoft.com/en-us/download/details.aspx?id=9239">here for x64</ulink>.
-        Win7 and later systems have built-in PowerShell support and don't need
-        to do anything about it.
-      </para>
-
     </sect3>
     <sect3 id="npcap-issues-installation-log">
       <title>General installation log</title>
