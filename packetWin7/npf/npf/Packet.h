@@ -177,13 +177,8 @@ struct packet_file_header
 #define ADAPTER_NAME_SIZE					(sizeof("\\Device\\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}") - 1)
 
 // The GUID for the filters
-#ifdef NPF_NPCAP_RUN_IN_WINPCAP_MODE
-#define				FILTER_UNIQUE_NAME			L"{7daf2ac8-e9f6-4765-a842-f1f5d2501340}"
-#define				FILTER_UNIQUE_NAME_WIFI		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501350}"
-#else
 #define				FILTER_UNIQUE_NAME			L"{7daf2ac8-e9f6-4765-a842-f1f5d2501341}"
 #define				FILTER_UNIQUE_NAME_WIFI		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501351}"
-#endif
 
 #define SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME		(ADAPTER_NAME_SIZE - (sizeof("\\Device\\") - 1) + 1 + (sizeof(FILTER_UNIQUE_NAME) - 2) / sizeof(WCHAR) - 3)
 

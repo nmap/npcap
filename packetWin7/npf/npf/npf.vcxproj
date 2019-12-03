@@ -9,14 +9,6 @@
       <Configuration>Win7 OEM RO Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Win7 OEM Release(WinPcap Mode)|Win32">
-      <Configuration>Win7 OEM Release(WinPcap Mode)</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Win7 OEM Release(WinPcap Mode)|x64">
-      <Configuration>Win7 OEM Release(WinPcap Mode)</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Win7 OEM Release|Win32">
       <Configuration>Win7 OEM Release</Configuration>
       <Platform>Win32</Platform>
@@ -25,36 +17,12 @@
       <Configuration>Win7 OEM Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Win7 Debug(WinPcap Mode)|Win32">
-      <Configuration>Win7 Debug(WinPcap Mode)</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Win7 OEM RO Release(WinPcap Mode)|Win32">
-      <Configuration>Win7 OEM RO Release(WinPcap Mode)</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Win7 OEM RO Release(WinPcap Mode)|x64">
-      <Configuration>Win7 OEM RO Release(WinPcap Mode)</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Win7 Release SDV|Win32">
       <Configuration>Win7 Release SDV</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Win7 Release SDV|x64">
       <Configuration>Win7 Release SDV</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Win7 Release(WinPcap Mode)|Win32">
-      <Configuration>Win7 Release(WinPcap Mode)</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Win7 Debug(WinPcap Mode)|x64">
-      <Configuration>Win7 Debug(WinPcap Mode)</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Win7 Release(WinPcap Mode)|x64">
-      <Configuration>Win7 Release(WinPcap Mode)</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Win7 Debug|Win32">
@@ -92,46 +60,6 @@
     <DriverType>WDM</DriverType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release(WinPcap Mode)|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release(WinPcap Mode)|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release(WinPcap Mode)|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release(WinPcap Mode)|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -191,62 +119,6 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|Win32'">
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|Win32'">
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release(WinPcap Mode)|Win32'">
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release(WinPcap Mode)|Win32'">
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|x64'">
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|x64'">
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release(WinPcap Mode)|x64'">
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release(WinPcap Mode)|x64'">
-    <TargetName>npf</TargetName>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <TimeStampServer />
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <TargetName>npcap</TargetName>
@@ -318,81 +190,6 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions);NDIS61;WINVER=0x0600;_WIN32_WINNT=0x0600;NTDDI_VERSION=0x06000100</PreprocessorDefinitions>
-      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug(WinPcap Mode)|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions);NDIS61;WINVER=0x0600;_WIN32_WINNT=0x0600;NTDDI_VERSION=0x06000100</PreprocessorDefinitions>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions);NDIS61;WINVER=0x0600;_WIN32_WINNT=0x0600;NTDDI_VERSION=0x06000100</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release(WinPcap Mode)|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions);NDIS61;WINVER=0x0600;_WIN32_WINNT=0x0600;NTDDI_VERSION=0x06000100</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release(WinPcap Mode)|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions);NDIS61;WINVER=0x0600;_WIN32_WINNT=0x0600;NTDDI_VERSION=0x06000100</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release(WinPcap Mode)|x64'">
-    <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions);NDIS61;WINVER=0x0600;_WIN32_WINNT=0x0600;NTDDI_VERSION=0x06000100</PreprocessorDefinitions>
-      <WarningLevel>Level3</WarningLevel>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release(WinPcap Mode)|x64'">
-    <ClCompile>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions);NDIS61;WINVER=0x0600;_WIN32_WINNT=0x0600;NTDDI_VERSION=0x06000100</PreprocessorDefinitions>
-      <WarningLevel>Level3</WarningLevel>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release(WinPcap Mode)|x64'">
-    <ClCompile>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;NPF_NPCAP_RUN_IN_WINPCAP_MODE;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions);NDIS61;WINVER=0x0600;_WIN32_WINNT=0x0600;NTDDI_VERSION=0x06000100</PreprocessorDefinitions>
-      <WarningLevel>Level3</WarningLevel>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -522,19 +319,11 @@
     <ClInclude Include="win_bpf.h" />
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="npf.inf" Condition="'$(Configuration)'=='Win7 Debug(WinPcap Mode)'" />
-    <Inf Include="npf.inf" Condition="'$(Configuration)'=='Win7 Release(WinPcap Mode)'" />
-    <Inf Include="npf.inf" Condition="'$(Configuration)'=='Win7 OEM Release(WinPcap Mode)'" />
-    <Inf Include="npf.inf" Condition="'$(Configuration)'=='Win7 OEM RO Release(WinPcap Mode)'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 Debug'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 OEM Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 OEM RO Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 Release SDV'" />
-    <Inf Include="npf_wfp.inf" Condition="'$(Configuration)'=='Win7 Debug(WinPcap Mode)'" />
-    <Inf Include="npf_wfp.inf" Condition="'$(Configuration)'=='Win7 Release(WinPcap Mode)'" />
-    <Inf Include="npf_wfp.inf" Condition="'$(Configuration)'=='Win7 OEM Release(WinPcap Mode)'" />
-    <Inf Include="npf_wfp.inf" Condition="'$(Configuration)'=='Win7 OEM RO Release(WinPcap Mode)'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 Debug'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 Release'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 OEM Release'" />
@@ -542,10 +331,6 @@
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 Release SDV'" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="npf.rc" Condition="'$(Configuration)'=='Win7 Debug(WinPcap Mode)'" />
-    <ResourceCompile Include="npf.rc" Condition="'$(Configuration)'=='Win7 Release(WinPcap Mode)'" />
-    <ResourceCompile Include="npf.rc" Condition="'$(Configuration)'=='Win7 OEM Release(WinPcap Mode)'" />
-    <ResourceCompile Include="npf.rc" Condition="'$(Configuration)'=='Win7 OEM RO Release(WinPcap Mode)'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 Debug'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 Release'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 OEM Release'" />
