@@ -1295,17 +1295,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		// Retrieve IP addresses
 		TmpAdInfo->pNetworkAddresses = NULL;
 		
-		if(!PacketGetAddressesFromRegistry(TmpAdInfo->Name, &pAddressesFromRegistry))
-		{
-#ifdef HAVE_IPHELPER_API
-			// Try to see if the interface has some IPv6 addresses
-			if(!PacketAddIP6Addresses(TmpAdInfo))
-			{
-				TRACE_PRINT("No IPv6 addresses added with IPHelper API");
-			}
-#endif // HAVE_IPHELPER_API
-		}
-		else
+		if(PacketGetAddressesFromRegistry(TmpAdInfo->Name, &pAddressesFromRegistry))
 		{
 			PNPF_IF_ADDRESS_ITEM pCursor;
 
@@ -1323,7 +1313,10 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		}
 #ifdef HAVE_IPHELPER_API
 		// Now Add IPv6 Addresses
-		PacketAddIP6Addresses(TmpAdInfo);
+		if(!PacketAddIP6Addresses(TmpAdInfo))
+		{
+			TRACE_PRINT("No IPv6 addresses added with IPHelper API");
+		}
 #endif // HAVE_IPHELPER_API
 		
 		TmpAdInfo->Flags = INFO_FLAG_NDIS_ADAPTER;	// NdisWan adapters are not exported by the NPF driver,
