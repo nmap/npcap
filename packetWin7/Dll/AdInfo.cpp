@@ -135,6 +135,8 @@ typedef ULONG (WINAPI *GAAHandler)(
 	_Inout_ PIP_ADAPTER_ADDRESSES AdapterAddresses,
 	_Inout_ PULONG                SizePointer);
 extern GAAHandler g_GetAdaptersAddressesPointer;
+#define ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE 15000
+#define ADAPTERS_ADDRESSES_MAX_TRIES 3
 
 #ifdef HAVE_AIRPCAP_API
 extern AirpcapGetLastErrorHandler g_PAirpcapGetLastError;
@@ -602,7 +604,9 @@ fail:
 
 static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 {
+	ULONG Iterations;
 	ULONG BufLen;
+	DWORD RetVal = ERROR_SUCCESS;
 	PIP_ADAPTER_ADDRESSES AdBuffer, TmpAddr;
 	PCHAR OrName;
 	PIP_ADAPTER_UNICAST_ADDRESS UnicastAddr;
@@ -619,28 +623,42 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 		return TRUE;	// GetAdaptersAddresses() not present on this system,
 	}											// return immediately.
 
- 	if(g_GetAdaptersAddressesPointer(AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST| GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, NULL, &BufLen) != ERROR_BUFFER_OVERFLOW)
-	{
-		TRACE_PRINT("IsIPv4Enabled: GetAdaptersAddresses Failed while retrieving the needed buffer size");
-
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	TRACE_PRINT("IsIPv4Enabled, retrieved needed storage for the call");
-
-	AdBuffer = (PIP_ADAPTER_ADDRESSES) GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
-	if (AdBuffer == NULL) 
+	BufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
+	AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
+	if (AdBuffer == NULL)
 	{
 		TRACE_PRINT("IsIPv4Enabled: GlobalAlloc Failed");
 		TRACE_EXIT();
 		return FALSE;
 	}
+	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
+	{
 
- 	if(g_GetAdaptersAddressesPointer(AF_UNSPEC,  GAA_FLAG_SKIP_ANYCAST| GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen) != ERROR_SUCCESS)
+		RetVal = g_GetAdaptersAddressesPointer(AF_INET, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
+		if (RetVal == ERROR_BUFFER_OVERFLOW)
+		{
+			TRACE_PRINT("IsIPv4Enabled: GetAdaptersAddresses Too small buffer");
+			AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalReAllocPtr(AdBuffer, BufLen, GMEM_ZEROINIT);
+			if (AdBuffer == NULL)
+			{
+				TRACE_PRINT("IsIPv4Enabled: GlobalReAlloc Failed");
+				TRACE_EXIT();
+				return FALSE;
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (RetVal != ERROR_SUCCESS)
 	{
 		TRACE_PRINT("IsIPv4Enabled: GetAdaptersAddresses Failed while retrieving the addresses");
-		GlobalFreePtr(AdBuffer);
+		if (AdBuffer)
+		{
+			GlobalFreePtr(AdBuffer);
+		}
 		TRACE_EXIT();
 		return FALSE;
 	}
@@ -691,7 +709,9 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 */
 static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 {
+	ULONG Iterations;
 	ULONG BufLen;
+	DWORD RetVal = ERROR_SUCCESS;
 	PIP_ADAPTER_ADDRESSES AdBuffer, TmpAddr;
 	PCHAR OrName;
 	PIP_ADAPTER_UNICAST_ADDRESS UnicastAddr;
@@ -714,28 +734,41 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 		return TRUE;	// GetAdaptersAddresses() not present on this system,
 	}											// return immediately.
 
- 	if(g_GetAdaptersAddressesPointer(AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST| GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, NULL, &BufLen) != ERROR_BUFFER_OVERFLOW)
-	{
-		TRACE_PRINT("PacketAddIP6Addresses: GetAdaptersAddresses Failed while retrieving the needed buffer size");
-
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	TRACE_PRINT("PacketAddIP6Addresses, retrieved needed storage for the call");
-
-	AdBuffer = (PIP_ADAPTER_ADDRESSES) GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
-	if (AdBuffer == NULL) 
+	BufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
+	AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
+	if (AdBuffer == NULL)
 	{
 		TRACE_PRINT("PacketAddIP6Addresses: GlobalAlloc Failed");
 		TRACE_EXIT();
 		return FALSE;
 	}
-
- 	if(g_GetAdaptersAddressesPointer(AF_UNSPEC,  GAA_FLAG_SKIP_ANYCAST| GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen) != ERROR_SUCCESS)
+	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
 	{
-		TRACE_PRINT("PacketGetIP6Addresses: GetAdaptersAddresses Failed while retrieving the addresses");
-		GlobalFreePtr(AdBuffer);
+		RetVal = g_GetAdaptersAddressesPointer(AF_INET6, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
+		if (RetVal == ERROR_BUFFER_OVERFLOW)
+		{
+			TRACE_PRINT("PacketAddIP6Addresses: GetAdaptersAddresses Too small buffer");
+			AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalReAllocPtr(AdBuffer, BufLen, GMEM_ZEROINIT);
+			if (AdBuffer == NULL)
+			{
+				TRACE_PRINT("PacketAddIP6Addresses: GlobalReAlloc Failed");
+				TRACE_EXIT();
+				return FALSE;
+			}
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (RetVal != ERROR_SUCCESS)
+	{
+		TRACE_PRINT("PacketAddIP6Addresses: GetAdaptersAddresses Failed while retrieving the addresses");
+		if (AdBuffer)
+		{
+			GlobalFreePtr(AdBuffer);
+		}
 		TRACE_EXIT();
 		return FALSE;
 	}
@@ -1269,17 +1302,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		// Retrieve IP addresses
 		TmpAdInfo->pNetworkAddresses = NULL;
 		
-		if(!PacketGetAddressesFromRegistry(TmpAdInfo->Name, &pAddressesFromRegistry))
-		{
-#ifdef HAVE_IPHELPER_API
-			// Try to see if the interface has some IPv6 addresses
-			if(!PacketAddIP6Addresses(TmpAdInfo))
-			{
-				TRACE_PRINT("No IPv6 addresses added with IPHelper API");
-			}
-#endif // HAVE_IPHELPER_API
-		}
-		else
+		if(PacketGetAddressesFromRegistry(TmpAdInfo->Name, &pAddressesFromRegistry))
 		{
 			PNPF_IF_ADDRESS_ITEM pCursor;
 
@@ -1297,7 +1320,10 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		}
 #ifdef HAVE_IPHELPER_API
 		// Now Add IPv6 Addresses
-		PacketAddIP6Addresses(TmpAdInfo);
+		if(!PacketAddIP6Addresses(TmpAdInfo))
+		{
+			TRACE_PRINT("No IPv6 addresses added with IPHelper API");
+		}
 #endif // HAVE_IPHELPER_API
 		
 		TmpAdInfo->Flags = INFO_FLAG_NDIS_ADAPTER;	// NdisWan adapters are not exported by the NPF driver,
