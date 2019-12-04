@@ -606,7 +606,7 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 {
 	ULONG Iterations;
 	ULONG BufLen;
-	DWORD RetVal;
+	DWORD RetVal = ERROR_SUCCESS;
 	PIP_ADAPTER_ADDRESSES AdBuffer, TmpAddr;
 	PCHAR OrName;
 	PIP_ADAPTER_UNICAST_ADDRESS UnicastAddr;
@@ -624,23 +624,27 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 	}											// return immediately.
 
 	BufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
-	Iterations = 0;
+	AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
+	if (AdBuffer == NULL)
+	{
+		TRACE_PRINT("IsIPv4Enabled: GlobalAlloc Failed");
+		TRACE_EXIT();
+		return FALSE;
+	}
 	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
 	{
-		AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
-		if (AdBuffer == NULL)
-		{
-			TRACE_PRINT("IsIPv4Enabled: GlobalAlloc Failed");
-			TRACE_EXIT();
-			return FALSE;
-		}
 
 		RetVal = g_GetAdaptersAddressesPointer(AF_INET, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
 		if (RetVal == ERROR_BUFFER_OVERFLOW)
 		{
 			TRACE_PRINT("IsIPv4Enabled: GetAdaptersAddresses Too small buffer");
-			GlobalFreePtr(AdBuffer);
-			AdBuffer = NULL;
+			AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalReAllocPtr(AdBuffer, BufLen, GMEM_ZEROINIT);
+			if (AdBuffer == NULL)
+			{
+				TRACE_PRINT("IsIPv4Enabled: GlobalReAlloc Failed");
+				TRACE_EXIT();
+				return FALSE;
+			}
 		}
 		else
 		{
@@ -707,7 +711,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 {
 	ULONG Iterations;
 	ULONG BufLen;
-	DWORD RetVal;
+	DWORD RetVal = ERROR_SUCCESS;
 	PIP_ADAPTER_ADDRESSES AdBuffer, TmpAddr;
 	PCHAR OrName;
 	PIP_ADAPTER_UNICAST_ADDRESS UnicastAddr;
@@ -731,23 +735,26 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 	}											// return immediately.
 
 	BufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
-	Iterations = 0;
+	AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
+	if (AdBuffer == NULL)
+	{
+		TRACE_PRINT("PacketAddIP6Addresses: GlobalAlloc Failed");
+		TRACE_EXIT();
+		return FALSE;
+	}
 	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
 	{
-		AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
-		if (AdBuffer == NULL)
-		{
-			TRACE_PRINT("PacketAddIP6Addresses: GlobalAlloc Failed");
-			TRACE_EXIT();
-			return FALSE;
-		}
-
 		RetVal = g_GetAdaptersAddressesPointer(AF_INET6, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
 		if (RetVal == ERROR_BUFFER_OVERFLOW)
 		{
 			TRACE_PRINT("PacketAddIP6Addresses: GetAdaptersAddresses Too small buffer");
-			GlobalFreePtr(AdBuffer);
-			AdBuffer = NULL;
+			AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalReAllocPtr(AdBuffer, BufLen, GMEM_ZEROINIT);
+			if (AdBuffer == NULL)
+			{
+				TRACE_PRINT("PacketAddIP6Addresses: GlobalReAlloc Failed");
+				TRACE_EXIT();
+				return FALSE;
+			}
 		}
 		else
 		{
