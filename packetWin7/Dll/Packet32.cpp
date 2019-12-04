@@ -626,7 +626,7 @@ HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 	if (cbRead != 0)
 	{
 		HANDLE hd;
-		sscanf_s(chBuf, "%p,%d", &hd, pdwError);
+		sscanf_s(chBuf, "%p,%lu", &hd, pdwError);
 		TRACE_PRINT1("Received Driver Handle: %0p\n", hd);
 		TRACE_EXIT();
 		return hd;
