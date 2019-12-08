@@ -1422,40 +1422,6 @@ BOOLEAN QueryWinPcapRegistryStringW(WCHAR *SubKeyName,
 
 */
 
-/*! 
-  \brief Convert a Unicode dotted-quad to a 32-bit IP address.
-  \param cp A string containing the address.
-  \return the converted 32-bit numeric address.
-
-   Doesn't check to make sure the address is valid.
-*/
-ULONG inet_addrU(const WCHAR *cp)
-{
-	ULONG val, part;
-	WCHAR c;
-	int i;
-
-	val = 0;
-	for (i = 0; i < 4; i++) {
-		part = 0;
-		while ((c = *cp++) != '\0' && c != '.') {
-			if (c < '0' || c > '9')
-				return (ULONG)-1;
-			part = part*10 + (c - '0');
-		}
-		if (part > 255)
-			return (ULONG)-1;	
-		val = val | (part << i*8);
-		if (i == 3) {
-			if (c != '\0')
-				return (ULONG)-1;	// extra gunk at end of string 
-		} else {
-			if (c == '\0')
-				return (ULONG)-1;	// string ends early 
-		}
-	}
-	return val;
-}
 
 /*! 
   \brief Converts an ASCII string to UNICODE. Uses the MultiByteToWideChar() system function.

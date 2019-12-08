@@ -109,6 +109,7 @@
 #include "wanpacket/wanpacket.h"
 #endif //HAVE_WANPACKET_API
 
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <iphlpapi.h>
@@ -165,8 +166,6 @@ extern dagc_freedevs_handler g_p_dagc_freedevs;
 
 /// Title of error windows
 TCHAR   szWindowTitle[] = TEXT("PACKET.DLL");
-
-ULONG inet_addrU(const WCHAR *cp);
 
 extern HKEY WinpcapKey;
 extern WCHAR *WinPcapKeyBuffer;
@@ -382,9 +381,8 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 			pItem->Next = NULL;
 
 			TmpAddr = (struct sockaddr_in *) &pItem->Addr.IPAddress;
-			TmpAddr->sin_addr.S_un.S_addr = inet_addrU(String + StringPos);
-			
-			if(TmpAddr->sin_addr.S_un.S_addr != -1)
+
+			if (InetPtonW(AF_INET, String + StringPos, &TmpAddr->sin_addr) == 1)
 			{
 				TmpAddr->sin_family = AF_INET;
 				
@@ -445,7 +443,7 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 			}
 			TmpAddr = (struct sockaddr_in *) &pItem->Addr.SubnetMask;
 			
-			if((TmpAddr->sin_addr.S_un.S_addr = inet_addrU(String + StringPos))!= -1){
+			if(InetPtonW(AF_INET, String + StringPos, &TmpAddr->sin_addr) == 1){
 				TmpAddr->sin_family = AF_INET;
 				
 				while(*(String + StringPos) != 0)StringPos++;
@@ -493,7 +491,7 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 
 			TmpAddr = (struct sockaddr_in *) &pItem->Addr.IPAddress;
 			
-			if((TmpAddr->sin_addr.S_un.S_addr = inet_addrU(String + StringPos))!= -1){
+			if(InetPtonW(AF_INET, String + StringPos, &TmpAddr->sin_addr) == 1){
 				TmpAddr->sin_family = AF_INET;
 
 				TmpBroad = (struct sockaddr_in *) &pItem->Addr.Broadcast;
@@ -554,7 +552,7 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 
 			TmpAddr = (struct sockaddr_in *) &pItem->Addr.SubnetMask;
 			
-			if((TmpAddr->sin_addr.S_un.S_addr = inet_addrU(String + StringPos))!= -1){
+			if(InetPtonW(AF_INET, String + StringPos, &TmpAddr->sin_addr) == 1){
 				TmpAddr->sin_family = AF_INET;
 				
 				while(*(String + StringPos) != 0)StringPos++;
@@ -998,8 +996,9 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 	for(TmpAddrStr = &IphAd->IpAddressList, i = 0; TmpAddrStr != NULL; TmpAddrStr = TmpAddrStr->Next)
 	{
 		PNPF_IF_ADDRESS_ITEM pItem, pCursor;
+		struct in_addr tmp_addr;
 		
-		if (inet_addr(TmpAddrStr->IpAddress.String)!= INADDR_NONE)
+		if (InetPtonA(AF_INET, TmpAddrStr->IpAddress.String, &tmp_addr) == 1)
 		{
 			pItem = (PNPF_IF_ADDRESS_ITEM)GlobalAllocPtr(GPTR, sizeof(NPF_IF_ADDRESS_ITEM));
 			if (pItem == NULL)
@@ -1009,10 +1008,10 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 			}
 		
 			TmpAddr = (struct sockaddr_in *)&(pItem->Addr.IPAddress);
-			TmpAddr->sin_addr.S_un.S_addr = inet_addr(TmpAddrStr->IpAddress.String);
+			TmpAddr->sin_addr.S_un.S_addr = tmp_addr.S_un.S_addr;
 			TmpAddr->sin_family = AF_INET;
 			TmpAddr = (struct sockaddr_in *)&(pItem->Addr.SubnetMask);
-			TmpAddr->sin_addr.S_un.S_addr = inet_addr(TmpAddrStr->IpMask.String);
+			InetPtonA(AF_INET, TmpAddrStr->IpMask.String, &TmpAddr->sin_addr);
 			TmpAddr->sin_family = AF_INET;
 			TmpAddr = (struct sockaddr_in *)&(pItem->Addr.Broadcast);
 			TmpAddr->sin_addr.S_un.S_addr = 0xffffffff; // Consider 255.255.255.255 as broadcast address since IP Helper API doesn't provide information about it
