@@ -1,10 +1,10 @@
 ## Unreleased changes
 
-* Insecure.Org, LLC's code signing certificate has been renewed, and no longer
-  exists as a SHA-1 certificate. Windows Vista and Server 2008 may therefore
-  not recognize the digital signatures on the filter driver. After Microsoft
-  ends extended support for these operating systems in January 2020, Npcap will
-  be updated to no longer support them as well.
+* The Nmap Project's (Insecure.Com LLC) code signing certificate has been
+  renewed, and no longer exists as a SHA-1 certificate. Windows Vista and
+  Server 2008 may therefore not recognize the digital signatures on the
+  filter driver so a warning may be presented upon install. Please note
+  that Microsoft is ending support for these operating systems in January 2020.
 
 * WinPcap API-compatible mode no longer installs a separate filter driver.
   Packet.DLL will translate NPF device names so that they are all serviced by
