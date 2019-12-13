@@ -1,4 +1,4 @@
-## Unreleased changes
+﻿## Npcap 0.9985 [2019-12-13]
 
 * The Nmap Project's (Insecure.Com LLC) code signing certificate has been
   renewed, and no longer exists as a SHA-1 certificate. Windows Vista and
@@ -10,6 +10,19 @@
   Packet.DLL will translate NPF device names so that they are all serviced by
   the npcap.sys driver. The npf.sys driver has been removed. See
   [#1812](http://issues.nmap.org/1812).
+
+* Improve the speed of `pcap_findalldevs` by reducing the number of calls to
+  `GetAdaptersAddresses`, removing a redundant function call, and improving
+  buffer reallocation. Patch by Tomasz Moń
+  ([#20](https://github.com/nmap/npcap/pull/20)).
+
+* Temporary DLLs unpacked during installation are now signed with our code
+  signing certificate.
+
+* Fixed a bug in the uninstaller preventing downgrades to prior versions of
+  Npcap. On 64-bit Windows, the driver file `npcap.sys` was not properly
+  removed, and Windows would not replace it with any older version. Fixes
+  [#1686](http://issues.nmap.org/1686).
 
 ## Npcap 0.9984 [2019-10-30]
 
