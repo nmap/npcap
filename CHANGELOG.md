@@ -17,7 +17,8 @@
   ([#20](https://github.com/nmap/npcap/pull/20)).
 
 * Temporary DLLs unpacked during installation are now signed with our code
-  signing certificate.
+  signing certificate. Certain strict application whitelisting systems were
+  complaining about unsigned DLL's loaded from a temporary directory.
 
 * Fixed a bug in the uninstaller preventing downgrades to prior versions of
   Npcap. On 64-bit Windows, the driver file `npcap.sys` was not properly
