@@ -1,4 +1,9 @@
-﻿## Npcap 0.9985 [2019-12-13]
+﻿## Npcap 0.9986 [2019-12-17]
+
+* Fix a driver signing issue that made Npcap 0.9985 uninstallable on Windows
+  versions other than Windows 10. Fixes [#1856](http://issues.nmap.org/1856).
+
+## Npcap 0.9985 [2019-12-13]
 
 * The Nmap Project's (Insecure.Com LLC) code signing certificate has been
   renewed, and no longer exists as a SHA-1 certificate. Windows Vista and
