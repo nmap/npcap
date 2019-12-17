@@ -1,7 +1,8 @@
 ﻿## Npcap 0.9986 [2019-12-17]
 
-* Fix a driver signing issue that made Npcap 0.9985 uninstallable on Windows
-  versions other than Windows 10. Fixes [#1856](http://issues.nmap.org/1856).
+* Fix a driver signing issue that made Npcap 0.9985 uninstallable on default
+  configurations of Windows 8.1 and older, as well as certain older Windows
+  Server releases. Fixes [#1856](http://issues.nmap.org/1856).
 
 ## Npcap 0.9985 [2019-12-13]
 
