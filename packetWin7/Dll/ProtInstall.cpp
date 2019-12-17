@@ -105,14 +105,15 @@ BOOLEAN bWiFiService = FALSE;
 //
 VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...)
 {
+#define ERRMSG_BUF_LEN 400
 	LPTSTR lpSysMsg;
-	TCHAR buf[400];
+	TCHAR buf[ERRMSG_BUF_LEN];
 	ULONG offset;
 	va_list vArgList; 
 
 	if (hr != 0)
 	{
-		_stprintf(buf, _T("Error %#lx: "), hr);
+		_stprintf_s(buf, ERRMSG_BUF_LEN, _T("Error %#lx: "), hr);
 	}
 	else
 	{
@@ -123,7 +124,7 @@ VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...)
 
 	va_start(vArgList, lpFmt);
 
-	_vstprintf(buf + offset, lpFmt, vArgList);
+	_vstprintf_s(buf + offset, ERRMSG_BUF_LEN - offset, lpFmt, vArgList);
 
 	va_end(vArgList);
 
@@ -135,11 +136,11 @@ VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...)
 		{
 			offset = (ULONG) _tcslen(buf);
 
-			_stprintf(buf + offset, _T("\n\nPossible cause:\n\n"));
+			_stprintf_s(buf + offset, ERRMSG_BUF_LEN - offset, _T("\n\nPossible cause:\n\n"));
 
 			offset = (ULONG) _tcslen(buf);
 
-			_tcscat(buf + offset, lpSysMsg);
+			_tcscat_s(buf + offset, ERRMSG_BUF_LEN - offset, lpSysMsg);
 
 			LocalFree((HLOCAL)lpSysMsg);
 		}
@@ -167,9 +168,9 @@ DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize)
 		return 0;
 	}
 
-	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
+	_tsplitpath_s(lpFilename, szDrive, _MAX_DRIVE, szDir, _MAX_DIR, NULL, 0, NULL, 0);
 
-	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
+	_tmakepath_s(lpFilename, nSize, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".inf"));
 	TRACE_PRINT1("lpFilename = %s", lpFilename);
 
 	TRACE_EXIT();
@@ -193,9 +194,9 @@ DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize)
 		return 0;
 	}
 
-	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
+	_tsplitpath_s(lpFilename, szDrive, _MAX_DRIVE, szDir, _MAX_DIR, NULL, 0, NULL, 0);
 
-	_tmakepath(lpFilename, szDrive, szDir, WFP_CALLOUT_INF_FILE, _T(".inf"));
+	_tmakepath_s(lpFilename, nSize, szDrive, szDir, WFP_CALLOUT_INF_FILE, _T(".inf"));
 	TRACE_PRINT1("lpFilename = %s", lpFilename);
 
 	TRACE_EXIT();
@@ -219,9 +220,9 @@ DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
 		return 0;
 	}
 
-	_tsplitpath(lpFilename, szDrive, szDir, NULL, NULL);
+	_tsplitpath_s(lpFilename, szDrive, _MAX_DRIVE, szDir, _MAX_DIR, NULL, 0, NULL, 0);
 
-	_tmakepath(lpFilename, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".sys"));
+	_tmakepath_s(lpFilename, nSize, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".sys"));
 	TRACE_PRINT1("lpFilename = %s", lpFilename);
 
 	TRACE_EXIT();

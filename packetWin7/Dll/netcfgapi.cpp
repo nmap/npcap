@@ -286,10 +286,10 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguidClass, IN LPC
 		//
 		// Get the path where the INF file is.
 		//
-		_tsplitpath(lpszInfFullPath, szDrive, szDir, NULL, NULL);
+		_tsplitpath_s(lpszInfFullPath, szDrive, _MAX_DRIVE, szDir, _MAX_DIR, NULL, 0, NULL, 0);
 
-		_tcscpy(szDirWithDrive, szDrive);
-		_tcscat(szDirWithDrive, szDir);
+		_tcscpy_s(szDirWithDrive, _MAX_DRIVE + _MAX_DIR, szDrive);
+		_tcscat_s(szDirWithDrive, _MAX_DRIVE + _MAX_DIR, szDir);
 
 		//
 		// Copy the Service INF file to the \Windows\Inf Folder

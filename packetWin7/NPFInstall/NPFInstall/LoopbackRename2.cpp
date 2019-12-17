@@ -63,9 +63,6 @@ This code is based on the Windows built-in netsh.exe tool.
 
 #include "debug.h"
 
-// Depress the GetVersionEx() call warning.
-#pragma warning (disable: 4996)
-
 #ifdef _UNICODE
 #define			NPCAP_LOOPBACK_INTERFACE_NAME				NPF_DRIVER_NAME_NORMAL_WIDECHAR L" Loopback Adapter"
 #else
