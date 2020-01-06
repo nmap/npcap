@@ -1797,7 +1797,7 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 #ifdef NPCAP_PACKET_START_SERVICE
 BOOL PacketStartService()
 {
-	DWORD error;
+	DWORD error = ERROR_SUCCESS;
 	BOOL Result;
 	SC_HANDLE svcHandle = NULL;
 	SC_HANDLE scmHandle = NULL;
@@ -1903,14 +1903,8 @@ BOOL PacketStartService()
 						error = GetLastError();
 						if (error != ERROR_SERVICE_ALREADY_RUNNING && error != ERROR_ALREADY_EXISTS)
 						{
-							SetLastError(error);
-							if (scmHandle != NULL)
-								CloseServiceHandle(scmHandle);
-							error = GetLastError();
 							TRACE_PRINT1("PacketOpenAdapterNPF: StartService failed, LastError=%8.8x", error);
-							TRACE_EXIT();
-							SetLastError(error);
-							return FALSE;
+							Result = FALSE;
 						}
 					}
 				}
@@ -1923,96 +1917,20 @@ BOOL PacketStartService()
 			{
 				error = GetLastError();
 				TRACE_PRINT1("OpenService failed! Error=%8.8x", error);
-				SetLastError(error);
+				Result = FALSE;
 			}
 		}
 		else
 		{
-			if (KeyRes != ERROR_SUCCESS)
-				if (bUseNPF60)
-				{
-					Result = PacketInstallDriver60();
-				}
-				else
-				{
-					Result = PacketInstallDriver();
-				}
-			else
-				Result = TRUE;
-
-			if (Result) {
-
-				svcHandle = OpenServiceA(scmHandle,
-					NpfDriverName,
-					SERVICE_START);
-				if (svcHandle != NULL)
-				{
-
-					QuerySStat = QueryServiceStatus(svcHandle, &SStat);
-
-#ifdef _DBG
-					switch (SStat.dwCurrentState)
-					{
-					case SERVICE_CONTINUE_PENDING:
-						TRACE_PRINT("The status of the driver is: SERVICE_CONTINUE_PENDING");
-						break;
-					case SERVICE_PAUSE_PENDING:
-						TRACE_PRINT("The status of the driver is: SERVICE_PAUSE_PENDING");
-						break;
-					case SERVICE_PAUSED:
-						TRACE_PRINT("The status of the driver is: SERVICE_PAUSED");
-						break;
-					case SERVICE_RUNNING:
-						TRACE_PRINT("The status of the driver is: SERVICE_RUNNING");
-						break;
-					case SERVICE_START_PENDING:
-						TRACE_PRINT("The status of the driver is: SERVICE_START_PENDING");
-						break;
-					case SERVICE_STOP_PENDING:
-						TRACE_PRINT("The status of the driver is: SERVICE_STOP_PENDING");
-						break;
-					case SERVICE_STOPPED:
-						TRACE_PRINT("The status of the driver is: SERVICE_STOPPED");
-						break;
-
-					default:
-						TRACE_PRINT("The status of the driver is: unknown");
-						break;
-					}
-#endif
-
-					if (!QuerySStat || SStat.dwCurrentState != SERVICE_RUNNING){
-
-						TRACE_PRINT("Calling startservice");
-
-						if (StartService(svcHandle, 0, NULL) == 0){
-							error = GetLastError();
-							if (error != ERROR_SERVICE_ALREADY_RUNNING && error != ERROR_ALREADY_EXISTS)
-							{
-								if (scmHandle != NULL) CloseServiceHandle(scmHandle);
-								TRACE_PRINT1("PacketOpenAdapterNPF: StartService failed, LastError=%8.8x", error);
-								TRACE_EXIT();
-								SetLastError(error);
-								return FALSE;
-							}
-						}
-					}
-
-					CloseServiceHandle(svcHandle);
-					svcHandle = NULL;
-
-				}
-				else{
-					error = GetLastError();
-					TRACE_PRINT1("OpenService failed! LastError=%8.8x", error);
-					SetLastError(error);
-				}
-			}
+			error = GetLastError();
+			TRACE_PRINT1("PacketInstallDriver failed! Error=%8.8x", error);
+			Result = FALSE;
 		}
 	}
 
 	if (scmHandle != NULL) CloseServiceHandle(scmHandle);
 
+	SetLastError(error);
 	TRACE_EXIT();
 	return Result;
 }
