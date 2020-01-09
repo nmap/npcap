@@ -14,10 +14,6 @@ for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /v "LoopbackAdapte
 	set LoopbackAdapter=%%C
 )
 echo LoopbackAdapter = %LoopbackAdapter%
-for /F "usebackq tokens=1,2*" %%A IN (`reg query "%KEY_NAME%" /v "WinPcapCompatible" 2^>nul ^| find "WinPcapCompatible"`) do (
-	set WinPcapCompatible=%%C
-)
-echo WinPcapCompatible = %WinPcapCompatible%
 
 rem Make sure we can find where Npcap is installed
 set KEY_NAME=HKLM\Software\WOW6432Node\Npcap
@@ -40,14 +36,6 @@ if %Dot11Support% == 0x1 (
 	net stop npcap_wifi
 	rem *_wifi service is disabled at install
 	sc.exe config npcap_wifi start= disabled
-)
-if %WinPcapCompatible% == 0x1 (
-	net stop npf
-	sc.exe config npf start= %START_TYPE%
-	if %Dot11Support% == 0x1 (
-		net stop npf_wifi
-		sc.exe config npf_wifi start= disabled
-	)
 )
 
 rem Remove and reinstall loopback adapters
@@ -75,18 +63,12 @@ net start bfe
 
 rem Restart the services
 net start npcap
-if %WinPcapCompatible% == 0x1 (
-	net start npf
-)
 
 rem Rebind the filters to all adapters
 if %Dot11Support% == 0x1 (
 	"%NPCAP_DIR%\NPFInstall.exe" -r2
 ) else (
 	"%NPCAP_DIR%\NPFInstall.exe" -r
-)
-if %WinPcapCompatible% == 0x1 (
-	"%NPCAP_DIR%\NPFInstall2.exe" -r
 )
 
 rem Done!
