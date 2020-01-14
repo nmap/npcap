@@ -284,9 +284,6 @@ typedef struct __CPU_Private_Data
 									///< driver associates to current instance.
 									///< This number is related to the particular CPU this structure is referring to.
 	NDIS_SPIN_LOCK	BufferLock;		///< It protects the buffer associated with this CPU.
-	PMDL			TransferMdl1;	///< MDL used to map the portion of the buffer that will contain an incoming packet.
-	PMDL			TransferMdl2;	///< Second MDL used to map the portion of the buffer that will contain an incoming packet.
-	ULONG			NewP;			///< Used by NdisTransferData() (when we call NdisTransferData, p index must be updated only in the TransferDataComplete.
 } CpuPrivateData;
 
 

@@ -940,17 +940,6 @@ NPF_TapExForEachOpen(
 						break;
 					}
 
-					if (LocalData->TransferMdl1 != NULL)
-					{
-						//
-						//if TransferMdl is not NULL, there is some TransferData pending (i.e. not having called TransferDataComplete, yet)
-						//in order to avoid buffer corruption, we drop the packet
-						//
-						LocalData->Dropped++;
-						IF_LOUD(DbgPrint("LocalData->Dropped++, LocalData->TransferMdl1 = %p\n", LocalData->TransferMdl1);)
-						break;
-					}
-
 					UINT iFres = fres;
 
 					// Disable the IEEE802.1Q VLAN feature for now.
