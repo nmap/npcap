@@ -937,6 +937,10 @@ NPF_TapExForEachOpen(
 					{
 						LocalData->Dropped++;
 						IF_LOUD(DbgPrint("LocalData->Dropped++, fres = %d, LocalData->Free = %d\n", fres, LocalData->Free);)
+						// May as well tell the application, even if MinToCopy is not met,
+						// to avoid dropping further packets
+						if (Open->ReadEvent != NULL)
+							KeSetEvent(Open->ReadEvent, 0, FALSE);
 						break;
 					}
 
