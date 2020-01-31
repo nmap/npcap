@@ -1296,7 +1296,7 @@ NPF_EqualAdapterName(
 
 //-------------------------------------------------------------------
 
-#define UNICODE_CONTAINS(a, b, byteoffset) (sizeof(b) == RtlCompareMemory(a.Buffer + byteoffset/sizeof(WCHAR), b, sizeof(b)))
+#define PUNICODE_CONTAINS(a, b, byteoffset) (sizeof(b) == RtlCompareMemory(a->Buffer + byteoffset/sizeof(WCHAR), b, sizeof(b)))
 PNPCAP_FILTER_MODULE
 NPF_GetFilterModuleByAdapterName(
 	PNDIS_STRING pAdapterName
@@ -1338,15 +1338,14 @@ NPF_GetFilterModuleByAdapterName(
 		TRACE_EXIT();
 		return NULL;
 	}
-	RtlCopyUnicodeString(&BaseName, pAdapterName);
 
 	// strip off leading backslashes
-	while (shrink_by < BaseName.Length && BaseName.Buffer[shrink_by] == L'\\') {
+	while (shrink_by < pAdapterName->Length && pAdapterName->Buffer[shrink_by] == L'\\') {
 		shrink_by++;
 	}
 
 	// Check for WIFI_ prefix and strip it
-	if (UNICODE_CONTAINS(BaseName, NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI, i)) {
+	if (PUNICODE_CONTAINS(pAdapterName, NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI, shrink_by * sizeof(WCHAR))) {
 		shrink_by += sizeof(NPF_DEVICE_NAMES_PREFIX_WIDECHAR)/sizeof(WCHAR) - 1;
 		Dot11 = TRUE;
 	}
@@ -1355,7 +1354,7 @@ NPF_GetFilterModuleByAdapterName(
 	for (i=shrink_by; i < pAdapterName->Length/sizeof(WCHAR) && (i - shrink_by)*sizeof(WCHAR) < BaseName.MaximumLength; i++) {
 		BaseName.Buffer[i - shrink_by] = pAdapterName->Buffer[i];
 	}
-	BaseName.Length = BaseName.Length - shrink_by*sizeof(WCHAR);
+	BaseName.Length = pAdapterName->Length - shrink_by*sizeof(WCHAR);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	} //end if !Loopback
