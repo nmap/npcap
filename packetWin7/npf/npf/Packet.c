@@ -113,6 +113,8 @@ NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
 //
 NDIS_STRING g_LoopbackAdapterName;
 NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("LoopbackAdapter");
+NDIS_STRING g_LoopbackSupportRegValueName = NDIS_STRING_CONST("LoopbackSupport");
+ULONG g_LoopbackSupportMode = 0;
 #endif
 
 #ifdef HAVE_RX_SUPPORT
@@ -299,15 +301,18 @@ DriverEntry(
 		g_TimestampMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_TimestampRegValueName);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		NPF_GetRegistryOption_String(&parametersPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
-		if (g_LoopbackAdapterName.Buffer != NULL && g_LoopbackAdapterName.Length != ADAPTER_NAME_SIZE * 2)
-		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_LoopbackAdapterName is invalid, g_LoopbackAdapterName.Length = %d, ADAPTER_NAME_SIZE * 2 = %d\n",
-					g_LoopbackAdapterName.Length, ADAPTER_NAME_SIZE * 2);
-			ExFreePool(g_LoopbackAdapterName.Buffer);
-			g_LoopbackAdapterName.Buffer = NULL;
-			g_LoopbackAdapterName.Length = 0;
-			g_LoopbackAdapterName.MaximumLength = 0;
+		g_LoopbackSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_LoopbackSupportRegValueName);
+		if (g_LoopbackSupportMode) {
+			NPF_GetRegistryOption_String(&parametersPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
+			if (g_LoopbackAdapterName.Buffer != NULL && g_LoopbackAdapterName.Length != ADAPTER_NAME_SIZE * 2)
+			{
+				TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_LoopbackAdapterName is invalid, g_LoopbackAdapterName.Length = %d, ADAPTER_NAME_SIZE * 2 = %d\n",
+						g_LoopbackAdapterName.Length, ADAPTER_NAME_SIZE * 2);
+				ExFreePool(g_LoopbackAdapterName.Buffer);
+				g_LoopbackAdapterName.Buffer = NULL;
+				g_LoopbackAdapterName.Length = 0;
+				g_LoopbackAdapterName.MaximumLength = 0;
+			}
 		}
 #endif
 #ifdef HAVE_RX_SUPPORT
@@ -431,37 +436,39 @@ DriverEntry(
 
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// Use Winsock Kernel (WSK) to send loopback packets.
-	// TODO: Allow this to continue but disable loopback if there's an error
-	Status = NPF_WSKStartup();
-	if (!NT_SUCCESS(Status))
-	{
-		TRACE_EXIT();
-		return Status;
-	}
+	if (g_LoopbackSupportMode) {
+		// Use Winsock Kernel (WSK) to send loopback packets.
+		// TODO: Allow this to continue but disable loopback if there's an error
+		Status = NPF_WSKStartup();
+		if (!NT_SUCCESS(Status))
+		{
+			TRACE_EXIT();
+			return Status;
+		}
 
-	Status = NPF_WSKInitSockets();
-	if (!NT_SUCCESS(Status))
-	{
-		NPF_WSKCleanup();
-		TRACE_EXIT();
-		return Status;
-	}
+		Status = NPF_WSKInitSockets();
+		if (!NT_SUCCESS(Status))
+		{
+			NPF_WSKCleanup();
+			TRACE_EXIT();
+			return Status;
+		}
 
-	// Create the fake "filter module" for loopback capture
-	// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
-	NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
-	PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(&LoopbackDeviceName, NdisMediumLoopback);
-	if (pFiltMod == NULL)
-	{
-		NPF_WSKFreeSockets();
-		NPF_WSKCleanup();
-		TRACE_EXIT();
-		return NDIS_STATUS_RESOURCES;
+		// Create the fake "filter module" for loopback capture
+		// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
+		NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
+		PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(&LoopbackDeviceName, NdisMediumLoopback);
+		if (pFiltMod == NULL)
+		{
+			NPF_WSKFreeSockets();
+			NPF_WSKCleanup();
+			TRACE_EXIT();
+			return NDIS_STATUS_RESOURCES;
+		}
+		pFiltMod->Loopback = TRUE;
+		// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
+		NPF_AddToFilterModuleArray(pFiltMod);
 	}
-	pFiltMod->Loopback = TRUE;
-	// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
-	NPF_AddToFilterModuleArray(pFiltMod);
 #endif
 
 	/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */

@@ -114,6 +114,7 @@
 
 static BOOLEAN PacketAddFakeNdisWanAdapter();
 static BOOLEAN PacketAddFakeLoopbackAdapter();
+extern BOOLEAN g_bLoopbackSupport;
 
 #ifdef HAVE_IPHELPER_API
 static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA);
@@ -2204,7 +2205,9 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	PacketAddFakeNdisWanAdapter();
 #endif //HAVE_WANPACKET_API
 
-	PacketAddFakeLoopbackAdapter();
+	if (g_bLoopbackSupport) {
+		PacketAddFakeLoopbackAdapter();
+	}
 
 #ifdef HAVE_DAG_API
 	if(g_p_dagc_open != NULL)	
@@ -2285,9 +2288,11 @@ void PacketPopulateAdaptersInfoList()
 	}
 #endif // HAVE_WANPACKET_API
 
-	if (!PacketAddFakeLoopbackAdapter())
-	{
-		TRACE_PRINT("PacketPopulateAdaptersInfoList: adding fake Loopback adapter failed.");
+	if (g_bLoopbackSupport) {
+		if (!PacketAddFakeLoopbackAdapter())
+		{
+			TRACE_PRINT("PacketPopulateAdaptersInfoList: adding fake Loopback adapter failed.");
+		}
 	}
 
 #ifdef HAVE_AIRPCAP_API
