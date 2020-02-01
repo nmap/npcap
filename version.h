@@ -1,7 +1,7 @@
 /***********************IMPORTANT NPCAP LICENSE TERMS***********************
  *                                                                         *
  * Npcap is a Windows packet sniffing driver and library and is copyright  *
- * (c) 2013-2016 by Insecure.Com LLC ("The Nmap Project").  All rights     *
+ * (c) 2013-2020 by Insecure.Com LLC ("The Nmap Project").  All rights     *
  * reserved.                                                               *
  *                                                                         *
  * Even though Npcap source code is publicly available for review, it is   *
@@ -116,10 +116,10 @@
 #endif /*
  !endif /**/
 
-#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2019, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright (c) 2019, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2019, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2019, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2020, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_WANPACKET_COPYRIGHT_STRING "Copyright (c) 2020, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2020, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2020, Insecure.Com LLC.  All rights reserved."
 
 #define WINPCAP_BUILD_DESCRIPTION 		""
 #define WINPCAP_PRIVATE_BUILD			""
