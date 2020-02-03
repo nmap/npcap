@@ -64,6 +64,7 @@
 #include "Loopback.h"
 #include "packet.h"
 #include "debug.h"
+#include "winerror.h"
 
 #define NPCAP_CALLOUT_DRIVER_TAG (UINT32) 'NPCA'
 
@@ -75,6 +76,15 @@ extern ULONG g_DltNullMode;
 // 
 // Callout and sublayer GUIDs
 //
+
+// f99c911e-90ce-41a3-8022-c3e078b8f7a2
+DEFINE_GUID(
+	NPF_FWPM_SESSION_GUID,
+	0xf99c911e,
+	0x90ce,
+	0x41a3,
+	0x80, 0x22, 0xc3, 0xe0, 0x78, 0xb8, 0xf7, 0xa2
+);
 
 // 2D605B3E-C244-4364-86E8-BD81E6C91B6E
 DEFINE_GUID(
@@ -873,16 +883,25 @@ Callouts and filters will be removed during DriverUnload.
 	BOOLEAN inTransaction = FALSE;
 
 	FWPM_SESSION session = { 0 };
+	HANDLE hEngineHandle = NULL;
 
 	session.flags = FWPM_SESSION_FLAG_DYNAMIC;
+	session.sessionKey = NPF_FWPM_SESSION_GUID;
 
 	status = FwpmEngineOpen(
 		NULL,
 		RPC_C_AUTHN_WINNT,
 		NULL,
 		&session,
-		&g_WFPEngineHandle
+		&hEngineHandle
 		);
+	if (status == FWP_E_ALREADY_EXISTS) {
+		// Exit with success
+		status = ERROR_SUCCESS;
+		goto Exit;
+	}
+	g_WFPEngineHandle = hEngineHandle;
+
 	if (!NT_SUCCESS(status) || !g_WFPEngineHandle || g_WFPEngineHandle == INVALID_HANDLE_VALUE)
 	{
 		goto Exit;
@@ -979,7 +998,7 @@ Exit:
 			FwpmTransactionAbort(g_WFPEngineHandle);
 			_Analysis_assume_lock_not_held_(g_WFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
 		}
-		if (engineOpened && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+		if (engineOpened && g_WFPEngineHandle && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
 		{
 			FwpmEngineClose(g_WFPEngineHandle);
 			g_WFPEngineHandle = INVALID_HANDLE_VALUE;
