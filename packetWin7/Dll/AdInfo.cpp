@@ -1217,7 +1217,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	}
 	
 	// Copy the device name
-	strncpy(TmpAdInfo->Name, AdName, sizeof(TmpAdInfo->Name)/ sizeof(TmpAdInfo->Name[0]) - 1);
+	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), AdName, _TRUNCATE);
 
 	//we do not need to terminate the string TmpAdInfo->Name, since we have left a char at the end, and
 	//the memory for TmpAdInfo was zeroed upon allocation
@@ -1241,7 +1241,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		TRACE_PRINT1("Adapter Description = %hs",OidData->Data);
 		
 		// Copy the description
-		strncpy(TmpAdInfo->Description, (PCHAR)OidData->Data, sizeof(TmpAdInfo->Description)/ sizeof(TmpAdInfo->Description[0]) - 1);
+		strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), (PCHAR)OidData->Data, _TRUNCATE);
 		//we do not need to terminate the string TmpAdInfo->Description, since we have left a char at the end, and
 		//the memory for TmpAdInfo was zeroed upon allocation
 		
@@ -1250,7 +1250,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		// Record the name of "Npcap Loopback adapter", as we need it to set NdisMediumNull value for IPHelper version add adapter function.
 		if (TmpAdInfo->LinkLayer.LinkType == (UINT) NdisMediumNull)
 		{
-			strncpy(g_LoopbackAdapterNameForDLTNull, TmpAdInfo->Name, sizeof(g_LoopbackAdapterNameForDLTNull)/ sizeof(g_LoopbackAdapterNameForDLTNull[0]) - 1);
+			strncpy_s(g_LoopbackAdapterNameForDLTNull, sizeof(g_LoopbackAdapterNameForDLTNull), TmpAdInfo->Name, _TRUNCATE);
 		}
 
 		if (Status == FALSE)
@@ -2362,8 +2362,8 @@ static BOOLEAN PacketAddFakeLoopbackAdapter()
 		return FALSE;
 	}
 
-	strncpy(TmpAdInfo->Name, LoopbackName, sizeof(TmpAdInfo->Name) - 1);
-	strncpy(TmpAdInfo->Description, LoopbackDesc, sizeof(TmpAdInfo->Description) - 1);
+	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), LoopbackName, _TRUNCATE);
+	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), LoopbackDesc, _TRUNCATE);
 	TmpAdInfo->LinkLayer.LinkType = (UINT) NdisMediumNull;
 	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 	TmpAdInfo->Flags = 0;
@@ -2440,8 +2440,8 @@ static BOOLEAN PacketAddFakeNdisWanAdapter()
 		return FALSE;
 	}
 
-	strncpy(TmpAdInfo->Name, DialupName, sizeof(TmpAdInfo->Name) - 1);
-	strncpy(TmpAdInfo->Description, DialupDesc, sizeof(TmpAdInfo->Description) - 1);
+	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), DialupName, _TRUNCATE);
+	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), DialupDesc, _TRUNCATE);
 	TmpAdInfo->LinkLayer.LinkType = NdisMedium802_3;
 	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 	TmpAdInfo->Flags = INFO_FLAG_NDISWAN_ADAPTER;
