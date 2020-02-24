@@ -1569,7 +1569,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 	return TRUE;
 }
 
-#ifdef NPCAP_PACKET_START_SERVICE
+#ifdef NPCAP_PACKET_INSTALL_SERVICE
 /*! 
   \brief Installs the NPF device driver.
   \return If the function succeeds, the return value is nonzero.
@@ -1800,7 +1800,6 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 	return TRUE;
 }
 
-#ifdef NPCAP_PACKET_START_SERVICE
 BOOL PacketStartService()
 {
 	DWORD error = ERROR_SUCCESS;
@@ -1811,8 +1810,14 @@ BOOL PacketStartService()
 	HKEY PathKey;
 	SERVICE_STATUS SStat;
 	BOOL QuerySStat;
+	static BOOL ServiceStartAttempted = FALSE;
 
 	TRACE_ENTER();
+	if (ServiceStartAttempted) {
+		TRACE_PRINT("PacketStartService: Already tried once.");
+		TRACE_EXIT();
+		return TRUE;
+	}
 
 	//  
 	//	Old registry based WinPcap names
@@ -1844,6 +1849,8 @@ BOOL PacketStartService()
 
 		if (KeyRes != ERROR_SUCCESS)
 		{
+			Result = FALSE;
+#ifdef NPCAP_PACKET_INSTALL_SERVICE
 			TRACE_PRINT("NPF registry key not present, trying to install the driver.");
 			if (bUseNPF60)
 			{
@@ -1853,6 +1860,7 @@ BOOL PacketStartService()
 			{
 				Result = PacketInstallDriver();
 			}
+#endif
 		}
 		else
 		{
@@ -1936,11 +1944,11 @@ BOOL PacketStartService()
 
 	if (scmHandle != NULL) CloseServiceHandle(scmHandle);
 
+	ServiceStartAttempted = TRUE;
 	SetLastError(error);
 	TRACE_EXIT();
 	return Result;
 }
-#endif /* NPCAP_PACKET_START_SERVICE */
 
 /*! 
   \brief Opens an adapter using the NPF device driver.
@@ -1966,9 +1974,7 @@ LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 	// Though don't bother if we already have a valid pipe to NpcapHelper
 	if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
 	{
-#ifdef NPCAP_PACKET_START_SERVICE
 		PacketStartService();
-#endif
 		if (NpcapIsAdminOnlyMode())
 		{
 			// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
