@@ -466,6 +466,7 @@ DriverEntry(
 			return NDIS_STATUS_RESOURCES;
 		}
 		pFiltMod->Loopback = TRUE;
+		pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
 		// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
 		NPF_AddToFilterModuleArray(pFiltMod);
 	}
@@ -1093,7 +1094,7 @@ NPF_IoControl(
 			//
 			// Another write operation is currently in progress
 			//
-			SET_FAILURE_UNSUCCESSFUL();
+			SET_FAILURE_CUSTOM(STATUS_DEVICE_BUSY);
 			break;
 		}
 		else

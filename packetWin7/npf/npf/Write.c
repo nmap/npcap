@@ -103,9 +103,9 @@ NPF_Write(
 	PIO_STACK_LOCATION	IrpSp;
 	ULONG				SendFlags = 0;
 	PNET_BUFFER_LIST	pNetBufferList = NULL;
-	NDIS_STATUS			Status;
 	ULONG				NumSends;
 	ULONG				numSentPackets;
+	NTSTATUS Status = STATUS_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -174,7 +174,7 @@ NPF_Write(
 	// 
 	// Increment the ref counter of the binding handle, if possible
 	//
-	if (!Open->pFiltMod || NPF_StartUsingBinding(Open->pFiltMod) == FALSE)
+	if (!Open->pFiltMod)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Adapter is probably unbinding, cannot send packets");
 
@@ -192,8 +192,6 @@ NPF_Write(
 	if (Open->pFiltMod->MaxFrameSize == 0 ||	// Check that the MaxFrameSize is correctly initialized
 		IrpSp->Parameters.Write.Length > Open->pFiltMod->MaxFrameSize) // Check that the fame size is smaller that the MTU
 	{
-		NPF_StopUsingBinding(Open->pFiltMod);
-
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Frame size out of range, or maxFrameSize = 0. Send aborted");
 
 		NPF_StopUsingOpenInstance(Open);
@@ -213,19 +211,17 @@ NPF_Write(
 		// Another write operation is currently in progress
 		NdisReleaseSpinLock(&Open->WriteLock);
 
-		NPF_StopUsingBinding(Open->pFiltMod);
-
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Another Send operation is in progress, aborting.");
 
 		NPF_StopUsingOpenInstance(Open);
 
 		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+		Irp->IoStatus.Status = STATUS_DEVICE_BUSY;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 		TRACE_EXIT();
 
-		return STATUS_UNSUCCESSFUL;
+		return STATUS_DEVICE_BUSY;
 	}
 	else
 	{
@@ -251,6 +247,12 @@ NPF_Write(
 
 	while (numSentPackets < NumSends)
 	{
+		if (!NPF_StartUsingBinding(Open->pFiltMod)) {
+			// The adapter is pending to pause, so we don't send the packets.
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "The adapter is pending to pause, unable to send the packets.");
+			Status = STATUS_DEVICE_DOES_NOT_EXIST;
+			goto NPF_Write_End;
+		}
 		/* Unlike NPF_BufferedWrite, we can directly allocate NBLs
 		 * using the MDL in the IRP because the device was created with
 		 * DO_DIRECT_IO. */
@@ -285,38 +287,7 @@ NPF_Write(
 
 			ASSERT(Open->pFiltMod != NULL);
 
-			/* TODO: fix this locking and check. Either we should
-			 * lock the filter module and check adapter binding
-			 * status, or we should lock the open instance and
-			 * check the open status. */
-			NdisAcquireSpinLock(&Open->OpenInUseLock);
-			if (Open->pFiltMod->AdapterBindingStatus != FilterRunning)
-			{
-				Status = NDIS_STATUS_PAUSED;
-			}
-			else
-			{
-				Status = NDIS_STATUS_SUCCESS;
-				InterlockedIncrement(&Open->TransmitPendingPackets);
-			}
-			NdisReleaseSpinLock(&Open->OpenInUseLock);
-
-			if (Status == NDIS_STATUS_PAUSED)
-			{
-				// The adapter is pending to pause, so we don't send the packets.
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "The adapter is pending to pause, unable to send the packets.");
-
-				NPF_FreePackets(pNetBufferList);
-				NPF_StopUsingBinding(Open->pFiltMod);
-				NPF_StopUsingOpenInstance(Open);
-
-				Irp->IoStatus.Information = 0;
-				Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
-				IoCompleteRequest(Irp, IO_NO_INCREMENT);
-				TRACE_EXIT();
-				return STATUS_UNSUCCESSFUL;
-			}
-			
+			InterlockedIncrement(&Open->TransmitPendingPackets);
 
 			NdisResetEvent(&Open->NdisWriteCompleteEvent);
 
@@ -431,6 +402,7 @@ NPF_Write(
 			//
 			NdisWaitEvent(&Open->WriteEvent, 1);
 		}
+		NPF_StopUsingBinding(Open->pFiltMod);
 	}
 
 	//
@@ -448,10 +420,7 @@ NPF_Write(
 #endif
 		NdisWaitEvent(&Open->NdisWriteCompleteEvent, 0);
 
-	//
-	// all the packets have been transmitted, release the use of the adapter binding
-	//
-	NPF_StopUsingBinding(Open->pFiltMod);
+NPF_Write_End:
 
 	//
 	// no more writes are in progress
@@ -465,13 +434,13 @@ NPF_Write(
 	//
 	// Complete the Irp and return success
 	//
-	Irp->IoStatus.Status = STATUS_SUCCESS;
-	Irp->IoStatus.Information = IrpSp->Parameters.Write.Length;
+	Irp->IoStatus.Status = Status;
+	Irp->IoStatus.Information = numSentPackets > 0 ? IrpSp->Parameters.Write.Length : 0;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 	TRACE_EXIT();
 
-	return STATUS_SUCCESS;
+	return Status;
 }
 
 //-------------------------------------------------------------------
@@ -516,7 +485,7 @@ NPF_BufferedWrite(
 		return -STATUS_INVALID_HANDLE;
 	}
 
-	if (!Open->pFiltMod || NPF_StartUsingBinding(Open->pFiltMod) == FALSE)
+	if (!Open->pFiltMod)
 	{
 		// The Network adapter was removed. 
 		TRACE_EXIT();
@@ -526,10 +495,6 @@ NPF_BufferedWrite(
 	// Sanity check on the user buffer
 	if (UserBuff == NULL)
 	{
-		// 
-		// release ownership of the NdisAdapter binding
-		//
-		NPF_StopUsingBinding(Open->pFiltMod);
 		TRACE_EXIT();
 		return -STATUS_INVALID_PARAMETER;
 	}
@@ -539,10 +504,6 @@ NPF_BufferedWrite(
 	{
 		IF_LOUD(DbgPrint("NPF_BufferedWrite: Open->MaxFrameSize not initialized, probably because of a problem in the OID query\n");)
 
-		// 
-		// release ownership of the NdisAdapter binding
-		//
-		NPF_StopUsingBinding(Open->pFiltMod);
 		TRACE_EXIT();
 		return -STATUS_UNSUCCESSFUL;
 	}
@@ -623,6 +584,12 @@ NPF_BufferedWrite(
 		}
 		RtlCopyMemory(npBuff, UserBuff + Pos, pWinpcapHdr->caplen);
 
+		if (!NPF_StartUsingBinding(Open->pFiltMod)) {
+			// The adapter is pending to pause, so we don't send the packets.
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "The adapter is pending to pause, unable to send the packets.");
+			result = -STATUS_DEVICE_DOES_NOT_EXIST;
+			break;
+		}
 		// Allocate an MDL to map the packet data
 		TmpMdl = NdisAllocateMdl(Open->pFiltMod, npBuff, pWinpcapHdr->caplen);
 
@@ -631,6 +598,7 @@ NPF_BufferedWrite(
 			// Unable to map the memory: packet lost
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate the MDL.\n");)
 
+			NPF_StopUsingBinding(Open->pFiltMod);
 			result = -STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
@@ -671,6 +639,7 @@ NPF_BufferedWrite(
 				// Second failure, report an error
 				NdisFreeMdl(TmpMdl);
 
+				NPF_StopUsingBinding(Open->pFiltMod);
 				result = -STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
@@ -691,27 +660,8 @@ NPF_BufferedWrite(
 
 		ASSERT(Open->pFiltMod != NULL);
 
-		NdisAcquireSpinLock(&Open->OpenInUseLock);
-		if (Open->pFiltMod->AdapterBindingStatus != FilterRunning)
-		{
-			Status = NDIS_STATUS_PAUSED;
-		}
-		else
-		{
-			Status = NDIS_STATUS_SUCCESS;
-			// Increment the number of pending sends
-			InterlockedIncrement(&Open->Multiple_Write_Counter);
-		}
-		NdisReleaseSpinLock(&Open->OpenInUseLock);
-
-		if (Status == NDIS_STATUS_PAUSED)
-		{
-			// The adapter is pending to pause, so we don't send the packets.
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: the adapter is pending to pause, unable to send the packets.\n");)
-
-			result = -STATUS_OPERATION_IN_PROGRESS;
-			break;
-		}
+		// Increment the number of pending sends
+		InterlockedIncrement(&Open->Multiple_Write_Counter);
 
 		//receive the packets before sending them
 		/* Lock the group */
@@ -762,6 +712,12 @@ NPF_BufferedWrite(
 					NDIS_DEFAULT_PORT_NUMBER,
 					SendFlags);
 			}
+
+		// 
+		// release ownership of the NdisAdapter binding
+		//
+		NPF_StopUsingBinding(Open->pFiltMod);
+
 		// We've sent the packet, so leave it up to SendComplete to free the buffer
 		npBuff = NULL;
 
@@ -825,11 +781,6 @@ NPF_BufferedWrite(
 	else
 #endif
 		NPF_WaitEndOfBufferedWrite(Open);
-
-	// 
-	// release ownership of the NdisAdapter binding
-	//
-	NPF_StopUsingBinding(Open->pFiltMod);
 
 	TRACE_EXIT();
 	return result;
