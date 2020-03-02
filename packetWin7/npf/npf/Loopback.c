@@ -362,6 +362,10 @@ NPF_TapLoopback(
 							&pOrigBuf,
 							&OrigLen,
 							NormalPagePriority);
+					if (pOrigBuf == NULL) {
+						TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_TapLoopback: Failed to query MDL");
+						break;
+					}
 					/* Make a buffer big enough for our fake DLT header plus used
 					 * data of first MDL */
 					FirstMDLLen = numBytes + OrigLen - Offset;
@@ -508,6 +512,7 @@ BOOL NPF_ShouldProcess(
 		// This is not our layer! Bail.
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 				"NPF_NetworkClassifyOutbound: bIPv4 cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
+		*pbIPv4 = FALSE;
 		return FALSE;
 	}
 
