@@ -341,6 +341,7 @@ NPF_NetworkClassify(
 	COMPARTMENT_ID		compartmentID = UNSPECIFIED_COMPARTMENT_ID;
 	FWPS_PACKET_INJECTION_STATE injectionState = FWPS_PACKET_INJECTION_STATE_MAX;
 	PNET_BUFFER_LIST pClonedNetBufferList = NULL;
+	UINT32				layerFlags = 0;
 
 #if(NTDDI_VERSION >= NTDDI_WIN7)
 	UNREFERENCED_PARAMETER(classifyContext);
@@ -348,54 +349,57 @@ NPF_NetworkClassify(
 	UNREFERENCED_PARAMETER(filter);
 	UNREFERENCED_PARAMETER(flowContext);
 
+	TRACE_ENTER();
+
 	// Make the default action.
 	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
 		classifyOut->actionType = FWP_ACTION_CONTINUE;
 
-	// Filter out fragment packets and reassembled packets.
-	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_FRAGMENT)
+	//Set runtime variables from the layer
+	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4)
 	{
-		return;
-	}
-#if(NTDDI_VERSION >= NTDDI_VISTASP1)
-	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_REASSEMBLED)
-	{
-		return;
-	}
-#endif
-
-	TRACE_ENTER();
-
-	// Get the packet protocol (IPv4 or IPv6) and the direction (Inbound or Outbound).
-	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
-	{
+		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V4_FLAGS].value.uint32;
 		bIPv4 = TRUE;
-	}
-	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
-	{
-		bIPv4 = FALSE;
-	}
-	else
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_NetworkClassify: bIPv4 cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
-		bIPv4 = FALSE;
-	}
-
-	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
-	{
 		bInbound = FALSE;
 	}
-	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4 || inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
 	{
+		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V4_FLAGS].value.uint32;
+		bIPv4 = TRUE;
+		bInbound = TRUE;
+	}
+	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
+	{
+		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V6_FLAGS].value.uint32;
+		bIPv4 = FALSE;
+		bInbound = FALSE;
+	}
+	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+	{
+		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V6_FLAGS].value.uint32;
+		bIPv4 = FALSE;
 		bInbound = TRUE;
 	}
 	else
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_NetworkClassify: bInbound cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
+			"NPF_NetworkClassify: Unsupported layer. Runtime values cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
+		layerFlags = 0;
+		bIPv4 = FALSE;
 		bInbound = FALSE;
 	}
+
+	// Filter out fragment packets and reassembled packets.
+	if (layerFlags & FWP_CONDITION_FLAG_IS_FRAGMENT)
+	{
+		return;
+	}
+#if(NTDDI_VERSION >= NTDDI_VISTASP1)
+	if (layerFlags & FWP_CONDITION_FLAG_IS_REASSEMBLED)
+	{
+		return;
+	}
+#endif
 
 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_IP_HEADER_SIZE)
 	{
