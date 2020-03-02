@@ -176,55 +176,6 @@ typedef struct _ICMP4_HEADER
 // Shared function prototypes
 //
 
-#if(NTDDI_VERSION >= NTDDI_WIN7)
-
-void
-NPF_NetworkClassify(
-_In_ const FWPS_INCOMING_VALUES* inFixedValues,
-_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
-_Inout_opt_ void* layerData,
-_In_opt_ const void* classifyContext,
-_In_ const FWPS_FILTER* filter,
-_In_ UINT64 flowContext,
-_Inout_ FWPS_CLASSIFY_OUT* classifyOut
-	);
-
-#else /// (NTDDI_VERSION >= NTDDI_WIN7)
-
-void
-NPF_NetworkClassify(
-_In_ const FWPS_INCOMING_VALUES* inFixedValues,
-_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
-_Inout_opt_ void* layerData,
-_In_ const FWPS_FILTER* filter,
-_In_ UINT64 flowContext,
-_Inout_ FWPS_CLASSIFY_OUT* classifyOut
-	);
-
-#endif /// (NTDDI_VERSION >= NTDDI_WIN7)
-
-NTSTATUS
-NPF_NetworkNotify(
-_In_ FWPS_CALLOUT_NOTIFY_TYPE notifyType,
-_In_ const GUID* filterKey,
-_Inout_ const FWPS_FILTER* filter
-	);
-
-NTSTATUS
-NPF_AddFilter(
-_In_ const GUID* layerKey,
-_In_ const GUID* calloutKey,
-_In_ const int iFlag
-	);
-
-NTSTATUS
-NPF_RegisterCallout(
-_In_ const GUID* layerKey,
-_In_ const GUID* calloutKey,
-_Inout_ void* deviceObject,
-_Out_ UINT32* calloutId
-	);
-
 NTSTATUS
 NPF_RegisterCallouts(
 _Inout_ void* deviceObject

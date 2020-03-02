@@ -65,6 +65,7 @@
 #include "packet.h"
 #include "debug.h"
 #include "winerror.h"
+#include <ndis.h>
 
 #define NPCAP_CALLOUT_DRIVER_TAG (UINT32) 'NPCA'
 
@@ -444,11 +445,11 @@ NPF_TapLoopback(
 				if (pMdl != NULL) {
 					/* If the MDL's buffer is numBytes long, it's npBuff and we'll free it later.
 					 * Otherwise it's unique and we should free it now. */
-					if (MmGetMdlByteCount(pMdl) != numBytes) {
+					FirstMDLLen = MmGetMdlByteCount(pMdl);
+					if (FirstMDLLen != numBytes) {
 						pTmpBuf = MmGetSystemAddressForMdlSafe(pMdl, NormalPagePriority|MdlMappingNoExecute);
 						if (pTmpBuf != NULL) {
-							NdisFreeMemoryWithTagPriority(pLoopbackFilter->AdapterHandle,
-									pTmpBuf, NPF_TAG_LOOPBACK_COPY);
+							NdisFreeMemory(pTmpBuf, FirstMDLLen, 0);
 						}
 					}
 
@@ -466,7 +467,7 @@ NPF_TapLoopback(
 		}
 
 		if (npBuff != NULL) {
-			NdisFreeMemoryWithTagPriority(pLoopbackFilter->AdapterHandle, npBuff, NPF_TAG_LOOPBACK_COPY);
+			NdisFreeMemory(npBuff, numBytes, 0);
 		}
 
 		NPF_StopUsingBinding(pLoopbackFilter);
@@ -602,6 +603,7 @@ NPF_NetworkClassifyInbound(
 	_Inout_ FWPS_CLASSIFY_OUT* classifyOut
 	)
 {
+	NDIS_STATUS status = NDIS_STATUS_SUCCESS;
 	UINT32				ipHeaderSize = 0;
 	UINT32				bytesRetreated = 0;
 	UINT32				bytesRetreatedEthernet = 0;
@@ -615,6 +617,10 @@ NPF_NetworkClassifyInbound(
 	COMPARTMENT_ID		compartmentID = UNSPECIFIED_COMPARTMENT_ID;
 	FWPS_PACKET_INJECTION_STATE injectionState = FWPS_PACKET_INJECTION_STATE_MAX;
 	PNET_BUFFER_LIST pClonedNetBufferList = NULL;
+	PNPCAP_FILTER_MODULE pLoopbackFilter = NULL;
+	UCHAR pPacketData[ETHER_HDR_LEN] = { 0 };
+	PSINGLE_LIST_ENTRY Curr = NULL;
+	POPEN_INSTANCE TempOpen = NULL;
 
 	UNREFERENCED_PARAMETER(classifyContext);
 	UNREFERENCED_PARAMETER(filter);
@@ -663,7 +669,7 @@ NPF_NetworkClassifyInbound(
 			NULL);
 	bytesRetreated = ipHeaderSize;
 
-	if (status != STATUS_SUCCESS)
+	if (status != NDIS_STATUS_SUCCESS)
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 				"NPF_NetworkClassifyInbound: NdisRetreatNetBufferListDataStart(bytesRetreated) [status: %#x]\n",
@@ -705,7 +711,7 @@ NPF_NetworkClassifyInbound(
 						0,
 						0,
 						0);
-				if (status != STATUS_SUCCESS)
+				if (status != NDIS_STATUS_SUCCESS)
 				{
 					bytesRetreatedEthernet = 0;
 
