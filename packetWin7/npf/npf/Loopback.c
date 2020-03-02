@@ -473,6 +473,52 @@ NPF_TapLoopback(
 	}
 }
 
+BOOL NPF_ShouldProcess(
+		_In_ const FWPS_INCOMING_VALUES* inFixedValues,
+		_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
+		_Out_ PBOOLEAN pbIPv4
+		)
+{
+	UINT32 layerFlags = 0;
+
+	// Get the packet protocol (IPv4 or IPv6)
+	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4)
+	{
+		*pbIPv4 = TRUE;
+		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V4_FLAGS].value.uint32;
+	}
+	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
+	{
+		*pbIPv4 = FALSE;
+		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V6_FLAGS].value.uint32;
+	}
+	if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
+	{
+		*pbIPv4 = TRUE;
+		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V4_FLAGS].value.uint32;
+	}
+	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
+	{
+		*pbIPv4 = FALSE;
+		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V6_FLAGS].value.uint32;
+	}
+	else
+	{
+		// This is not our layer! Bail.
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_NetworkClassifyOutbound: bIPv4 cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
+		return FALSE;
+	}
+
+	// Filter out fragment packets and reassembled packets.
+	if (layerFlags & FWP_CONDITION_FLAG_IS_FRAGMENT
+			|| layerFlags & FWP_CONDITION_FLAG_IS_REASSEMBLED)
+	{
+		return FALSE;
+	}
+	return TRUE;
+}
+
 #if(NTDDI_VERSION < NTDDI_WIN7)
 #error This version of Npcap is not supported on Windows versions older than Windows 7
 #endif
@@ -507,32 +553,11 @@ NPF_NetworkClassifyOutbound(
 	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
 		classifyOut->actionType = FWP_ACTION_CONTINUE;
 
-	// Filter out fragment packets and reassembled packets.
-	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_FRAGMENT)
-	{
-		return;
-	}
-	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_REASSEMBLED)
-	{
-		return;
-	}
-
 	TRACE_ENTER();
 
-	// Get the packet protocol (IPv4 or IPv6)
-	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4)
+	if (!NPF_ShouldProcess(inFixedValues, inMetaValues, &bIPv4))
 	{
-		bIPv4 = TRUE;
-	}
-	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
-	{
-		bIPv4 = FALSE;
-	}
-	else
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_NetworkClassifyOutbound: bIPv4 cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
-		bIPv4 = FALSE;
+		return;
 	}
 
 	injectionState = FwpsQueryPacketInjectionState(bIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
@@ -599,32 +624,11 @@ NPF_NetworkClassifyInbound(
 	if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
 		classifyOut->actionType = FWP_ACTION_CONTINUE;
 
-	// Filter out fragment packets and reassembled packets.
-	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_FRAGMENT)
-	{
-		return;
-	}
-	if (inMetaValues->currentMetadataValues & FWP_CONDITION_FLAG_IS_REASSEMBLED)
-	{
-		return;
-	}
-
 	TRACE_ENTER();
 
-	// Get the packet protocol (IPv4 or IPv6)
-	if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
+	if (!NPF_ShouldProcess(inFixedValues, inMetaValues, &bIPv4))
 	{
-		bIPv4 = TRUE;
-	}
-	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
-	{
-		bIPv4 = FALSE;
-	}
-	else
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_NetworkClassifyInbound: bIPv4 cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
-		bIPv4 = FALSE;
+		return;
 	}
 
 	if (inMetaValues->currentMetadataValues & FWPS_METADATA_FIELD_IP_HEADER_SIZE)
