@@ -1,4 +1,31 @@
-﻿## Npcap 0.9987 [2020-02-03]
+﻿## Npcap 0.9988 [2020-03-05]
+
+* Formally remove support for Windows Vista and Server 2008. These operating
+  systems have been unsupported by Microsoft since January 2020.
+
+* If a capture is in progress when the system is suspended, it will continue
+  without interruption after the system is woken. This also prevents capture
+  interruptions when the OS makes certain network stack changes.
+  Fixes [#1903](http://issues.nmap.org/1903).
+
+* If the npcap driver is stopped, Packet.dll will attempt to start it
+  automatically. This feature requires Administrator privilege and had been
+  removed in Npcap 0.9983. Fixes [#1911](http://issues.nmap.org/1911). 
+
+* Fix the check for fragmented packets in loopback capture.
+  Closes [PR #22](https://github.com/nmap/npcap/pull/22).
+
+* Eliminate clone/block/inject pattern from loopback capture except for packets
+  already injected by Npcap. Should fix [#1529](http://issues.nmap.org/1529)
+  and [#1789](http://issues.nmap.org/1789).
+
+* Fix an issue in the Npcap OEM installer where silent mode would not detect a
+  failure to install the npcap driver. Fixes [#1910](http://issues.nmap.org/1910).
+
+* Improve the installer to avoid broken installations and allow the installer
+  to continue if a broken installation is detected. Fixes [#1935](http://issues.nmap.org/1935).
+
+## Npcap 0.9987 [2020-02-03]
 
 * Fix an issue where Npcap begins dropping large packets, then smaller ones
   until finally all packets are dropped. Our fix changes the way remaining free
