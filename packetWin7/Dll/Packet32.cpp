@@ -1669,7 +1669,7 @@ BOOLEAN PacketInstallDriver60()
 	TRACE_EXIT();
 	return result;
 }
-#endif /* NPCAP_PACKET_START_SERVICE */
+#endif /* NPCAP_PACKET_INSTALL_SERVICE */
 
 /*! 
   \brief Dumps a registry key to disk in text format. Uses regedit.

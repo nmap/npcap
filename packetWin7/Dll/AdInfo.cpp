@@ -113,7 +113,6 @@
 
 
 static BOOLEAN PacketAddFakeNdisWanAdapter();
-static BOOLEAN PacketAddFakeLoopbackAdapter();
 extern BOOLEAN g_bLoopbackSupport;
 
 #ifdef HAVE_IPHELPER_API
@@ -1222,7 +1221,16 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 	//we do not need to terminate the string TmpAdInfo->Name, since we have left a char at the end, and
 	//the memory for TmpAdInfo was zeroed upon allocation
 
-	if(flags != INFO_FLAG_DONT_EXPORT)
+	if(g_bLoopbackSupport && 0 == strcmp(AdName, FAKE_LOOPBACK_ADAPTER_NAME)) {
+		strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), FAKE_LOOPBACK_ADAPTER_DESCRIPTION, _TRUNCATE);
+		TmpAdInfo->LinkLayer.LinkType = (UINT) NdisMediumNull;
+		TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
+		TmpAdInfo->Flags = 0;
+		memset(TmpAdInfo->MacAddress,'\0',6);
+		TmpAdInfo->MacAddressLen = 6;
+		TmpAdInfo->pNetworkAddresses = NULL;
+	}
+	else if(flags != INFO_FLAG_DONT_EXPORT)
 	{
 		PNPF_IF_ADDRESS_ITEM pAddressesFromRegistry;
 
@@ -2206,7 +2214,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 #endif //HAVE_WANPACKET_API
 
 	if (g_bLoopbackSupport) {
-		PacketAddFakeLoopbackAdapter();
+		PacketAddAdapterNPF(FAKE_LOOPBACK_ADAPTER_NAME, 0);
 	}
 
 #ifdef HAVE_DAG_API
@@ -2289,7 +2297,7 @@ void PacketPopulateAdaptersInfoList()
 #endif // HAVE_WANPACKET_API
 
 	if (g_bLoopbackSupport) {
-		if (!PacketAddFakeLoopbackAdapter())
+		if (!PacketAddAdapterNPF(FAKE_LOOPBACK_ADAPTER_NAME, 0))
 		{
 			TRACE_PRINT("PacketPopulateAdaptersInfoList: adding fake Loopback adapter failed.");
 		}
@@ -2330,54 +2338,6 @@ void PacketPopulateAdaptersInfoList()
 	TRACE_EXIT();
 }
 
-static BOOLEAN PacketAddFakeLoopbackAdapter()
-{
-	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
-	PADAPTER_INFO TmpAdInfo, SAdInfo;
-	CHAR LoopbackName[MAX_WINPCAP_KEY_CHARS] = FAKE_LOOPBACK_ADAPTER_NAME;
-	CHAR LoopbackDesc[MAX_WINPCAP_KEY_CHARS] = FAKE_LOOPBACK_ADAPTER_DESCRIPTION;
-
-	TRACE_ENTER();
-
-
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-	
-	for(SAdInfo = g_AdaptersInfoList; SAdInfo != NULL; SAdInfo = SAdInfo->Next)
-	{
-		if(strcmp(LoopbackName, SAdInfo->Name) == 0)
-		{
-			TRACE_PRINT("PacketAddFakeLoopbackAdapter: Adapter already present in the list");
-			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT();
-			return TRUE;
-		}
-	}
-
-	TmpAdInfo = (PADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
-	if (TmpAdInfo == NULL) 
-	{
-		TRACE_PRINT("PacketAddFakeLoopbackAdapter: GlobalAlloc Failed allocating memory for the AdInfo structure");
-		ReleaseMutex(g_AdaptersInfoMutex);
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), LoopbackName, _TRUNCATE);
-	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), LoopbackDesc, _TRUNCATE);
-	TmpAdInfo->LinkLayer.LinkType = (UINT) NdisMediumNull;
-	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
-	TmpAdInfo->Flags = 0;
-	memset(TmpAdInfo->MacAddress,'\0',6);
-	TmpAdInfo->MacAddressLen = 6;
-	TmpAdInfo->pNetworkAddresses = NULL;
-
-	TmpAdInfo->Next = g_AdaptersInfoList;
-	g_AdaptersInfoList = TmpAdInfo;
-	ReleaseMutex(g_AdaptersInfoMutex);
-
-	TRACE_EXIT();
-	return TRUE;
-}
 #ifdef HAVE_WANPACKET_API
 
 static BOOLEAN PacketAddFakeNdisWanAdapter()
