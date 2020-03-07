@@ -157,42 +157,33 @@ UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 	DWORD dwError = ERROR_SUCCESS;
 	PWLAN_INTERFACE_INFO_LIST pIntfList = NULL;
 	UINT i = 0;
+	UINT numInterfaces = 0;
 
-	__try
+	// enumerate wireless interfaces
+	if ((dwError = My_WlanEnumInterfaces(
+		hClient,
+		NULL,               // reserved
+		&pIntfList
+	)) != ERROR_SUCCESS || pIntfList == NULL)
 	{
-		// enumerate wireless interfaces
-		if ((dwError = My_WlanEnumInterfaces(
-			hClient,
-			NULL,               // reserved
-			&pIntfList
-			)) != ERROR_SUCCESS)
-		{
-			TRACE_PRINT1("My_WlanEnumInterfaces: error, errCode = 0x%08x.", dwError);
-			__leave;
-		}
-
-		// print out interface information
-		for (i = 0; i < pIntfList->dwNumberOfItems; i++)
-		{
-			memcpy(&sInfo[i], &pIntfList->InterfaceInfo[i], sizeof(WLAN_INTERFACE_INFO));
-		}
-
-		TRACE_PRINT1("My_WlanEnumInterfaces: pIntfList->dwNumberOfItems = %d.", pIntfList->dwNumberOfItems);
-		TRACE_EXIT();
-		return pIntfList->dwNumberOfItems;
+		TRACE_PRINT1("My_WlanEnumInterfaces: error, errCode = 0x%08x.", dwError);
+		return 0;
 	}
-	__finally
+	numInterfaces = pIntfList->dwNumberOfItems;
+	// print out interface information
+	for (i = 0; i < numInterfaces; i++)
 	{
-		// clean up
-		if (pIntfList != NULL)
-		{
-			My_WlanFreeMemory(pIntfList);
-		}
+		memcpy(&sInfo[i], &pIntfList->InterfaceInfo[i], sizeof(WLAN_INTERFACE_INFO));
 	}
 
-	TRACE_PRINT1("My_WlanEnumInterfaces: pIntfList->dwNumberOfItems = %d.", pIntfList->dwNumberOfItems);
+	TRACE_PRINT1("My_WlanEnumInterfaces: pIntfList->dwNumberOfItems = %d.", numInterfaces);
+
+
+	// clean up
+	My_WlanFreeMemory(pIntfList);
+
 	TRACE_EXIT();
-	return 0;
+	return numInterfaces;
 }
 
 // open a WLAN client handle and check version
