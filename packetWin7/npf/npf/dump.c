@@ -90,10 +90,6 @@
 #include "packet.h"
 #include "win_bpf.h"
 
-#ifdef __NPF_NT4__
-extern POBJECT_TYPE* PsThreadType;
-#endif
-
 //-------------------------------------------------------------------
 
 NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN Append)

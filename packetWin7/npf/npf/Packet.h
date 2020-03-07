@@ -202,13 +202,6 @@ struct sf_pkthdr
 	UINT			len;		///< Length of the original packet (off wire).
 };
 
-//
-// NT4 DDK doesn't have C_ASSERT
-//
-#ifndef C_ASSERT
-#define C_ASSERT(a)
-#endif
-
 /*!
   \brief Structure containing an OID request.
 

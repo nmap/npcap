@@ -126,16 +126,6 @@ map<string, int> g_nbAdapterMonitorModes;							// The states for all the wirele
 #define SERVICES_REG_KEY "SYSTEM\\CurrentControlSet\\Services\\"
 #define NPCAP_SERVICE_REGISTRY_KEY SERVICES_REG_KEY NPF_DRIVER_NAME
 
-#ifdef _WINNT4
-#if (defined(HAVE_NPFIM_API) || defined(HAVE_WANPACKET_API) || defined (HAVE_AIRPCAP_API) || defined(HAVE_IPHELPER_API))
-#error Do not enable _WINNT4 with any other API
-#endif
-#endif //_WINNT4
-
-#ifdef _WINNT4
-#pragma message ("Compiling Packet.dll for WINNT4 only")
-#endif
-
 #ifdef HAVE_AIRPCAP_API
 #pragma message ("Compiling Packet.dll with support for AirPcap")
 #endif
@@ -389,7 +379,6 @@ __declspec (dllexport) VOID PacketRegWoemLeaveHandler(PVOID Handler)
 
 //---------------------------------------------------------------------------
 
-#ifndef _WINNT4
 //
 // This wrapper around loadlibrary appends the system folder (usually c:\windows\system32)
 // to the relative path of the DLL, so that the DLL is always loaded from an absolute path
@@ -444,7 +433,6 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
   TRACE_EXIT();
   return hModule;
 }
-#endif
 
 BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 {
@@ -1998,21 +1986,6 @@ LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 
 #define DEVICE_PREFIX "\\Device\\"
 
-	// This code is only for NT4, and we are targeting Vista now at least, so it's useless and commented.
-// 	if (LOWORD(GetVersion()) == 4)
-// 	{
-// 		if (strlen(AdapterNameA) > strlen(DEVICE_PREFIX))
-// 		{
-// 			StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
-// 		}
-// 		else
-// 		{
-// 			ZeroMemory(SymbolicLinkA, sizeof(SymbolicLinkA));
-// 		}
-// 	}
-//  	else
-// 	{
-
 	if (strlen(AdapterNameA) > strlen(DEVICE_PREFIX))
 	{
 		StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\Global\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
@@ -2536,9 +2509,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	PCHAR AdapterNameA = NULL;
 	PCHAR TranslatedAdapterNameA = NULL;
 	BOOL bFreeAdapterNameA;
-#ifndef _WINNT4
 	PADAPTER_INFO TAdInfo;
-#endif //_WINNT4
 	
 	DWORD dwLastError = ERROR_SUCCESS;
  
@@ -2594,21 +2565,10 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 		AdapterNameA = TranslatedAdapterNameA;
 	}
 
-#ifndef _WINNT4
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-#endif // not WINNT4
 
 	do
 	{
-
-#ifndef _WINNT4
-		//
-		// Windows NT4 does not have support for the various nifty
-		// adapters supported from 2000 on (airpcap, ndiswan, npfim...)
-		// so we just skip all the magic of the global adapter list, 
-		// and try to open the adapter with PacketOpenAdapterNPF at
-		// the end of this big function!
-		//
 
 		//
 		// If we are here it's because we need to update the list
@@ -2771,17 +2731,6 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 			break;
 		}
 
-#endif // not _WINNT4
-
-		//
-		// This is the only code executed on NT4
-		//
-		// Windows NT4 does not have support for the various nifty
-		// adapters supported from 2000 on (airpcap, ndiswan, npfim...)
-		// so we just skip all the magic of the global adapter list, 
-		// and try to open the adapter with PacketOpenAdapterNPF at
-		// the end of this big function!
-		//
 		TRACE_PRINT("Normal NPF adapter, trying to open it...");
 		lpAdapter = PacketOpenAdapterNPF(AdapterNameA);
 		if (lpAdapter == NULL)
@@ -2791,9 +2740,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 
 	}while(FALSE);
 
-#ifndef _WINNT4
 	ReleaseMutex(g_AdaptersInfoMutex);
-#endif
 
 	if (bFreeAdapterNameA) GlobalFree(AdapterNameA);
 

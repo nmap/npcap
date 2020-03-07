@@ -46,13 +46,6 @@ extern ULONG PacketDebugFlag;
 #define PACKET_DEBUG_INIT   			0x00000100  // init debugging info
 
 //
-// unfortunately, NT4 does not have the __FUNCTION__ macro, so we define it as null
-//
-#ifndef __FUNCTION__
-#define __FUNCTION__ 
-#endif
-
-//
 // Macro for deciding whether to dump lots of debugging information.
 //
 
