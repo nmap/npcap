@@ -1282,7 +1282,11 @@ NPF_EqualAdapterName(
 
 //-------------------------------------------------------------------
 
-#define PUNICODE_CONTAINS(a, b, byteoffset) (sizeof(b) == RtlCompareMemory(a->Buffer + byteoffset/sizeof(WCHAR), b, sizeof(b)))
+/* Ensure string "a" is long enough to contain "b" after the offset.
+ * Length does not include the null terminator, so account for that with sizeof(WCHAR).
+ * Then compare memory. Length is length in bytes, but buffer is a PWCHAR.
+ */
+#define PUNICODE_CONTAINS(a, b, byteoffset) (a->Length >= byteoffset + sizeof(b) - sizeof(WCHAR) && sizeof(b) == RtlCompareMemory(a->Buffer + byteoffset/sizeof(WCHAR), b, sizeof(b)))
 PNPCAP_FILTER_MODULE
 NPF_GetFilterModuleByAdapterName(
 	PNDIS_STRING pAdapterName
