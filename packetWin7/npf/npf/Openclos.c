@@ -248,10 +248,11 @@ NPF_OpenAdapter(
 	{
 		// Can't find the adapter from the global open array.
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_GetOpenByAdapterName error, pFiltMod=NULL, AdapterName=%ws",
+			"NPF_GetFilterModuleByAdapterName error, pFiltMod=NULL, AdapterName=%ws",
 			IrpSp->FileObject->FileName.Buffer);
 
 		Irp->IoStatus.Status = STATUS_NDIS_INTERFACE_NOT_FOUND;
+		Irp->IoStatus.Information = FILE_DOES_NOT_EXIST;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
 		return STATUS_NDIS_INTERFACE_NOT_FOUND;
@@ -260,7 +261,7 @@ NPF_OpenAdapter(
 	if (NPF_StartUsingBinding(pFiltMod) == FALSE)
 	{
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_GetOpenByAdapterName error, AdapterName=%ws",
+			"NPF_StartUsingBinding error, AdapterName=%ws",
 			IrpSp->FileObject->FileName.Buffer);
 
 		Irp->IoStatus.Status = STATUS_NDIS_OPEN_FAILED;
@@ -272,12 +273,12 @@ NPF_OpenAdapter(
 	// Create a group child adapter object from the head adapter.
 	Open = NPF_CreateOpenObject();
 	if (Open == NULL)
-  {
+	{
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-    TRACE_EXIT();
-    return STATUS_INSUFFICIENT_RESOURCES;
-  }
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
 	Open->pFiltMod = pFiltMod;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -382,7 +383,7 @@ NPF_OpenAdapter_End:;
 	NPF_StopUsingBinding(pFiltMod);
 
 	Irp->IoStatus.Status = Status;
-	Irp->IoStatus.Information = 0;
+	Irp->IoStatus.Information = FILE_OPENED;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 	TRACE_EXIT();
