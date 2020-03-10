@@ -2349,51 +2349,6 @@ Arguments:
 
 _Use_decl_annotations_
 VOID
-NPF_Status(
-	NDIS_HANDLE             FilterModuleContext,
-	PNDIS_STATUS_INDICATION StatusIndication
-	)
-/*++
-
-Routine Description:
-
-	Status indication handler
-
-Arguments:
-
-	FilterModuleContext     - our filter context
-	StatusIndication        - the status being indicated
-
-NOTE: called at <= DISPATCH_LEVEL
-
-  FILTER driver may call NdisFIndicateStatus to generate a status indication to
-  all higher layer modules.
-
---*/
-{
-	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
-
-// 	TRACE_ENTER();
-// 	IF_LOUD(DbgPrint("NPF: Status Indication\n");)
-
-	IF_LOUD(DbgPrint("status %x\n", StatusIndication->StatusCode);)
-
-	//
-	// The filter may do processing on the status indication here, including
-	// intercepting and dropping it entirely.  However, the sample does nothing
-	// with status indications except pass them up to the higher layer.  It is
-	// more efficient to omit the FilterStatus handler entirely if it does
-	// nothing, but it is included in this sample for illustrative purposes.
-	//
-	NdisFIndicateStatus(pFiltMod->AdapterHandle, StatusIndication);
-
-/*	TRACE_EXIT();*/
-}
-
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-VOID
 NPF_DevicePnPEventNotify(
 	NDIS_HANDLE             FilterModuleContext,
 	PNET_DEVICE_PNP_EVENT   NetDevicePnPEvent
