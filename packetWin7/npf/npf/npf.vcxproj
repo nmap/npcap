@@ -295,7 +295,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dump.c" />
-    <ClCompile Include="jitter.c" />
     <ClCompile Include="Loopback.c" />
     <ClCompile Include="Lo_send.c" />
     <ClCompile Include="Openclos.c" />
@@ -308,7 +307,6 @@
     <ClInclude Include="DEBUG.H" />
     <ClInclude Include="ieee80211_radiotap.h" />
     <ClInclude Include="ioctls.h" />
-    <ClInclude Include="jitter.h" />
     <ClInclude Include="Loopback.h" />
     <ClInclude Include="Lo_send.h" />
     <ClInclude Include="macros.h" />

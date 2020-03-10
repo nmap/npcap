@@ -1152,16 +1152,6 @@ NPF_IoControl(
 				ExFreePool(TmpBPFProgram);
 			}
 
-			//
-			// Jitted filters are supported on x86 (32bit) only
-			//
-#ifdef _X86_
-			if (Open->Filter != NULL)
-			{
-				BPF_Destroy_JIT_Filter(Open->Filter);
-				Open->Filter = NULL;
-			}
-#endif // _X86_
 
 			insns = (IrpSp->Parameters.DeviceIoControl.InputBufferLength) / sizeof(struct bpf_insn);
 
@@ -1205,25 +1195,6 @@ NPF_IoControl(
 				SET_FAILURE_NOMEM();
 				break;
 			}
-
-			//
-			// At the moment the JIT compiler works on x86 (32 bit) only
-			//
-#ifdef _X86_
-			// Create the new JIT filter function
-			if (!IsExtendedFilter)
-			{
-				if ((Open->Filter = BPF_jitter(NewBpfProgram, cnt)) == NULL)
-				{
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error jittering filter");
-
-					ExFreePool(TmpBPFProgram);
-
-					SET_FAILURE_UNSUCCESSFUL();
-					break;
-				}
-			}
-#endif //_X86_
 
 			//copy the program in the new buffer
 			RtlCopyMemory(TmpBPFProgram, NewBpfProgram, cnt * sizeof(struct bpf_insn));

@@ -4,9 +4,6 @@
     <ClCompile Include="dump.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="jitter.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Lo_send.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -37,9 +34,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ioctls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="jitter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Lo_send.h">

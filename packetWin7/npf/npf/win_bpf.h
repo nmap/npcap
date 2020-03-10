@@ -415,9 +415,6 @@ extern "C"
 	  \param wirelen Original length of the packet.
 	  \return The portion of the packet to keep, in bytes. 0 means that the packet must be rejected, -1 means that
 	   the whole packet must be kept.
-	  
-	  \note this function is not used in normal situations, because the jitter creates a native filtering function
-	  that is faster than the interpreter.
 	*/
 #ifdef WIN_NT_DRIVER
 	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int data_offset, u_int wirelen);

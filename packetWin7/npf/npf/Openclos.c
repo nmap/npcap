@@ -480,18 +480,6 @@ NPF_ReleaseOpenInstanceResources(
 	}
 
 	//
-	// Jitted filters are supported on x86 (32bit) only
-	//
-#ifdef _X86_
-	// Free the jitted filter if it's present
-	if (pOpen->Filter != NULL)
-	{
-		BPF_Destroy_JIT_Filter(pOpen->Filter);
-		pOpen->Filter = NULL;
-	}
-#endif //_X86_
-
-	//
 	// Dereference the read event.
 	//
 
