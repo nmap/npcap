@@ -92,6 +92,7 @@
 #include "win_bpf.h"
 #include "ioctls.h"
 
+#include "..\..\..\version.h"
 #include "..\..\..\Common\WpcapNames.h"
 
 #ifdef ALLOC_PRAGMA
