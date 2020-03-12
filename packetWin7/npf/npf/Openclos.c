@@ -1962,6 +1962,11 @@ NPF_Restart(
 	TIME_DESYNCHRONIZE(&G_Start_Time);
 	TIME_SYNCHRONIZE(&G_Start_Time);
 
+	if (RestartParameters == NULL)
+	{
+		// Can't validate, but probably fine. Also, I don't think this is possible.
+		return NDIS_STATUS_SUCCESS;
+	}
 
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
 	ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused);
@@ -1972,13 +1977,14 @@ NPF_Restart(
 		goto NPF_Restart_End;
 	}
 
-	do {
+	while (Curr) {
 		if (Curr->Oid == OID_GEN_MINIPORT_RESTART_ATTRIBUTES) {
 			GenAttr = (PNDIS_RESTART_GENERAL_ATTRIBUTES) Curr->Data;
 			pFiltMod->MaxFrameSize = GenAttr->MtuSize;
 			break;
 		}
-	} while (Curr = Curr->Next);
+		Curr = Curr->Next;
+	}
 
 
 NPF_Restart_End:
