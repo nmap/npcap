@@ -86,26 +86,17 @@
 
 #include "debug.h"
 #include "ndis.h"
-#define	DEFAULT_TIMESTAMPMODE								0
+#define DEFAULT_TIMESTAMPMODE 0
 
-#define TIMESTAMPMODE_SINGLE_SYNCHRONIZATION				0
-#define TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP		1
-#define TIMESTAMPMODE_QUERYSYSTEMTIME						2
-#define TIMESTAMPMODE_RDTSC									3
+#define TIMESTAMPMODE_SINGLE_SYNCHRONIZATION 0
+#define TIMESTAMPMODE_QUERYSYSTEMTIME 2
+#define TIMESTAMPMODE_RDTSC 3
 
-#define TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP		99
+/* Deprecated modes, unsupported */
+#define TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP 1
+#define TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
 
 extern ULONG g_TimestampMode;
-
-/* Defined in Packet.c/h */
-ULONG
-My_NdisGroupMaxProcessorCount(
-);
-
-/* Defined in Packet.c/h */
-ULONG
-My_KeGetCurrentProcessorNumber(
-);
 
 /*!
   \brief A microsecond precise timestamp.
@@ -120,13 +111,10 @@ struct timeval
 
 #endif /*WIN_NT_DRIVER*/
 
-// Maximum CPU core number, the original value is sizeof(KAFFINITY) * 8, but Amazon instance can return 128 cores, so we make NPF_MAX_CPU_NUMBER to 256 for safe.
-#define NPF_MAX_CPU_NUMBER		(sizeof(KAFFINITY) * 32)
-
 struct time_conv
 {
 	ULONGLONG reference;
-	struct timeval start[NPF_MAX_CPU_NUMBER];
+	struct timeval start;
 };
 
 #ifdef WIN_NT_DRIVER
@@ -292,7 +280,7 @@ __inline VOID TimeSynchronizeRDTSC(struct time_conv* data)
 		tmp.tv_usec += 1000000;
 	}
 
-	data->start[0] = tmp;
+	data->start = tmp;
 
 	IF_LOUD(DbgPrint("Frequency %I64u MHz\n", data->reference);)
 }
@@ -302,31 +290,12 @@ __inline VOID TimeSynchronizeRDTSC(struct time_conv* data)
 
 __inline VOID TIME_SYNCHRONIZE(struct time_conv* data)
 {
-	ULONG NumberOfCpus, i;
-	KAFFINITY AffinityMask;
 
 	if (data->reference != 0)
 		return;
 
-	NumberOfCpus = My_NdisGroupMaxProcessorCount();
 
-	if (g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP || g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP)
-	{
-		for (i = 0 ; i < NumberOfCpus ; i++)
-		{
-			//
-			// the following cast is needed because KAFFINITY is defined as a 32bit value on x86 and a 64bit integer on x64.
-			// The constant 1 is implicitely 32bit only, so a shift won't work properly on x64.
-			//
-			AffinityMask = ((KAFFINITY)1 << i);
-			ZwSetInformationThread(NtCurrentThread(), ThreadAffinityMask, &AffinityMask, sizeof(KAFFINITY));
-			SynchronizeOnCpu(&(data->start[i]));
-		}
-		AffinityMask = 0xFFFFFFFF;
-		ZwSetInformationThread(NtCurrentThread(), ThreadAffinityMask, &AffinityMask, sizeof(KAFFINITY));
-		data->reference = 1;
-	}
-	else if (g_TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME)
+	if (g_TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME)
 	{
 		//do nothing
 		data->reference = 1;
@@ -344,7 +313,7 @@ __inline VOID TIME_SYNCHRONIZE(struct time_conv* data)
 		#endif // _X86_
 	{
 		//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
-		SynchronizeOnCpu(data->start);
+		SynchronizeOnCpu(&data->start);
 		data->reference = 1;
 	}
 	return;
@@ -357,49 +326,18 @@ __inline void GetTimeKQPC(struct timeval* dst, struct time_conv* data)
 {
 	LARGE_INTEGER PTime, TimeFreq;
 	LONG tmp;
-	ULONG CurrentCpu;
-	static struct timeval old_ts =
-	{
-		0, 0
-	};
-
 
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
 	tmp = (LONG)(PTime.QuadPart / TimeFreq.QuadPart);
 
-	if (g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP || g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP)
+	//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
+	dst->tv_sec = data->start.tv_sec + tmp;
+	dst->tv_usec = data->start.tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
+
+	if (dst->tv_usec >= 1000000)
 	{
-		//actually this code is ok only if we are guaranteed that no thread scheduling will take place. 
-		CurrentCpu = My_KeGetCurrentProcessorNumber();
-
-		dst->tv_sec = data->start[CurrentCpu].tv_sec + tmp;
-		dst->tv_usec = data->start[CurrentCpu].tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
-
-		if (dst->tv_usec >= 1000000)
-		{
-			dst->tv_sec ++;
-			dst->tv_usec -= 1000000;
-		}
-
-		if (g_TimestampMode == TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP)
-		{
-			if (old_ts.tv_sec > dst->tv_sec || (old_ts.tv_sec == dst->tv_sec && old_ts.tv_usec > dst->tv_usec))
-				*dst = old_ts;
-			else
-				old_ts = *dst;
-		}
-	}
-	else
-	{
-		//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
-		dst->tv_sec = data->start[0].tv_sec + tmp;
-		dst->tv_usec = data->start[0].tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
-
-		if (dst->tv_usec >= 1000000)
-		{
-			dst->tv_sec ++;
-			dst->tv_usec -= 1000000;
-		}
+		dst->tv_sec ++;
+		dst->tv_usec -= 1000000;
 	}
 }
 
@@ -440,9 +378,9 @@ __inline void GetTimeRDTSC(struct timeval* dst, struct time_conv* data)
 
 	dst->tv_usec = (LONG)((tmp - dst->tv_sec * data->reference) * 1000000 / data->reference);
 
-	dst->tv_sec += data->start[0].tv_sec;
+	dst->tv_sec += data->start.tv_sec;
 
-	dst->tv_usec += data->start[0].tv_usec;
+	dst->tv_usec += data->start.tv_usec;
 
 	if (dst->tv_usec >= 1000000)
 	{
@@ -493,12 +431,12 @@ __inline void GET_TIME(struct timeval* dst, struct time_conv* data)
 
 __inline void FORCE_TIME(struct timeval* src, struct time_conv* dest)
 {
-	dest->start[0] = *src;
+	dest->start = *src;
 }
 
 __inline void GET_TIME(struct timeval* dst, struct time_conv* data)
 {
-	*dst = data->start[0];
+	*dst = data->start;
 }
 
 #endif /*WIN_NT_DRIVER*/
