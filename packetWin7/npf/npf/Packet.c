@@ -552,7 +552,8 @@ NPF_registerLWF(
 	pFChars->MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION; // NDIS version is 6.2 (Windows 7)
 	pFChars->MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
 	pFChars->MajorDriverVersion = WINPCAP_MINOR;
-	pFChars->MinorDriverVersion = WINPCAP_REV;
+	/* TODO: Stop using minor version numbers greater than 255 */
+	pFChars->MinorDriverVersion = WINPCAP_REV % MAXUCHAR;
 	pFChars->Flags = 0;
 
 	// Use different names for the WiFi driver.
