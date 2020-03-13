@@ -436,8 +436,7 @@ NPF_TapLoopback(
 
 		if (pFakeNbl != NULL) {
 			/* cleanup */
-			/* First NBL is pre-allocated, so skip that one. */
-			pFakeNetBuffer = NET_BUFFER_NEXT_NB(NET_BUFFER_LIST_FIRST_NB(pFakeNbl));
+			pFakeNetBuffer = NET_BUFFER_LIST_FIRST_NB(pFakeNbl);
 			while (pFakeNetBuffer != NULL)
 			{
 				/* The first MDL in every fake NB is one we allocated, so we
@@ -463,7 +462,10 @@ NPF_TapLoopback(
 
 				/* Now stash the next NB and free this one. */
 				pNetBuffer = NET_BUFFER_NEXT_NB(pFakeNetBuffer);
-				NdisFreeNetBuffer(pFakeNetBuffer);
+				/* First NB is pre-allocated, so we don't have to free it. */
+				if (pFakeNetBuffer != NET_BUFFER_LIST_FIRST_NB(pFakeNbl)) {
+					NdisFreeNetBuffer(pFakeNetBuffer);
+				}
 				pFakeNetBuffer = pNetBuffer;
 			}
 
