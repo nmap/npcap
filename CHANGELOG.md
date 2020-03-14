@@ -1,8 +1,5 @@
 ﻿## Npcap 0.9988 [2020-03-05]
 
-* Formally remove support for Windows Vista and Server 2008. These operating
-  systems have been unsupported by Microsoft since January 2020.
-
 * If a capture is in progress when the system is suspended, it will continue
   without interruption after the system is woken. This also prevents capture
   interruptions when the OS makes certain network stack changes.
@@ -24,6 +21,17 @@
 
 * Improve the installer to avoid broken installations and allow the installer
   to continue if a broken installation is detected. Fixes [#1935](http://issues.nmap.org/1935).
+
+* Formally removed support for Windows Vista and Server 2008 r1, which
+  are no longer supported by Microsoft either. This allows us to support
+  newer Windows WFP and NDIS features for better performance and
+  compatibility. Folks who must still run these ancient Windows releases
+  should use Npcap version 0.9984 from
+  https://nmap.org/npcap/dist/?C=M;O=D. That was the last Npcap release
+  to support the old (and less secure) SHA-128 driver signatures
+  required by these Windows Vista/2008. Please note that Windows Server
+  2008 r2 and Windows 7 are still supported in this release even though
+  they have also passed their Microsoft end-of-life dates.
 
 ## Npcap 0.9987 [2020-02-03]
 
