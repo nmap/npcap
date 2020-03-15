@@ -98,6 +98,11 @@
 
 extern ULONG g_TimestampMode;
 
+/* Defined in Packet.c/h */
+VOID My_KeQuerySystemTimePrecise(
+	PLARGE_INTEGER CurrentTime
+	);
+
 /*!
   \brief A microsecond precise timestamp.
 
@@ -142,7 +147,7 @@ __inline void SynchronizeOnCpu(struct timeval* start)
 	// get the absolute value of the system boot time.   
 
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
-	KeQuerySystemTime(&SystemTime);
+	My_KeQuerySystemTimePrecise(&SystemTime);
 
 	start->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 

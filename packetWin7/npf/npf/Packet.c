@@ -206,6 +206,24 @@ My_KeGetCurrentProcessorNumber(
 	return Cpu;
 }
 
+typedef VOID (*KEQUERYSYSTEMTIMEPRECISE)(
+	PLARGE_INTEGER CurrentTime
+	);
+KEQUERYSYSTEMTIMEPRECISE g_My_KeQuerySystemTimePrecise = NULL;
+
+VOID My_KeQuerySystemTimePrecise(
+	PLARGE_INTEGER CurrentTime
+	)
+{
+	if (g_My_KeQuerySystemTimePrecise) // Windows 8 and newer
+	{
+		g_My_KeQuerySystemTimePrecise(CurrentTime);
+	}
+	else
+	{
+		KeQuerySystemTime(CurrentTime);
+	}
+}
 
 #ifdef NPCAP_READ_ONLY
 // For read-only Npcap, we want an explicit denial function for the Write call.
