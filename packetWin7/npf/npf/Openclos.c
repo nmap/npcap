@@ -115,6 +115,7 @@ struct time_conv G_Start_Time =
 };
 
 ULONG g_NumOpenedInstances = 0;
+ULONG g_NumLoopbackInstances = 0;
 
 extern SINGLE_LIST_ENTRY g_arrFiltMod; //Adapter filter module list head, each list item is a group head.
 extern NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
@@ -325,6 +326,7 @@ NPF_OpenAdapter(
 		}
 
 		Status = STATUS_SUCCESS;
+		InterlockedIncrement(&g_NumLoopbackInstances);
 	}
 #endif
 
@@ -1026,6 +1028,13 @@ NPF_Cleanup(
 	// release all the resources
 	//
 	NPF_ReleaseOpenInstanceResources(Open);
+
+	if (InterlockedDecrement(&g_NumLoopbackInstances) == 0)
+	{
+		// No more loopback handles open. Release WFP resources
+		NPF_UnregisterCallouts();
+		NPF_FreeInjectionHandles();
+	}
 
 	//	IrpSp->FileObject->FsContext = NULL;
 
