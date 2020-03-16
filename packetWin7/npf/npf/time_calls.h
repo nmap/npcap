@@ -89,16 +89,16 @@
 #define DEFAULT_TIMESTAMPMODE 0
 
 #define TIMESTAMPMODE_SINGLE_SYNCHRONIZATION 0
+#define /* DEPRECATED */ TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP 1
 #define TIMESTAMPMODE_QUERYSYSTEMTIME 2
-
-/* Deprecated modes, unsupported */
-#define TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP 1
-#define TIMESTAMPMODE_RDTSC 3
-#define TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
+#define /* DEPRECATED */ TIMESTAMPMODE_RDTSC 3
+#define TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE 4
+#define /* DEPRECATED */ TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
 
 extern ULONG g_TimestampMode;
 
-/* Defined in Packet.c/h */
+/* Defined in Packet.c/h
+ * Falls back to KeQuerySystemTime (i.e. not Precise) on Win7/2008R2 */
 VOID My_KeQuerySystemTimePrecise(
 	PLARGE_INTEGER CurrentTime
 	);
@@ -174,16 +174,18 @@ __inline VOID TIME_SYNCHRONIZE(struct time_conv* data)
 		return;
 
 
-	if (g_TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME)
+	switch (g_TimestampMode)
 	{
-		//do nothing
-		data->reference = 1;
-	}
-	else
-	{
-		//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
-		SynchronizeOnCpu(&data->start);
-		data->reference = 1;
+		case TIMESTAMPMODE_QUERYSYSTEMTIME:
+		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
+			//do nothing
+			data->reference = 1;
+			break;
+		default:
+			//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
+			SynchronizeOnCpu(&data->start);
+			data->reference = 1;
+			break;
 	}
 	return;
 }
@@ -221,18 +223,34 @@ __inline void GetTimeQST(struct timeval* dst, struct time_conv* data)
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
 }
 
+__inline void GetTimeQST_precise(struct timeval* dst, struct time_conv* data)
+{
+	LARGE_INTEGER SystemTime;
+	UNREFERENCED_PARAMETER(data);
+
+	My_KeQuerySystemTimePrecise(&SystemTime);
+
+	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
+	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
+}
+
+
 #pragma optimize ("g",on)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
 
 __inline void GET_TIME(struct timeval* dst, struct time_conv* data)
 {
-	if (g_TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME)
+	switch (g_TimestampMode)
 	{
-		GetTimeQST(dst, data);
-	}
-	else
-	{
-		GetTimeKQPC(dst, data);
+		case TIMESTAMPMODE_QUERYSYSTEMTIME:
+			GetTimeQST(dst, data);
+			break;
+		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
+			GetTimeQST_precise(dst, data);
+			break;
+		default:
+			GetTimeKQPC(dst, data);
+			break;
 	}
 }
 
