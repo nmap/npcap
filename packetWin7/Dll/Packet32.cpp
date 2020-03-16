@@ -3962,6 +3962,41 @@ BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavio
 }
 
 /*!
+\brief Sets the timestamp mode of an adapter handle.
+\param AdapterObject Pointer to an _ADAPTER structure.
+\param mode The new timestamp mode from the TIMESTAMPMODE_* definitions
+\return TRUE if the function succeeds, FALSE otherwise.
+*/
+BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
+{
+	DWORD BytesReturned;
+	BOOLEAN result;
+
+	TRACE_ENTER();
+
+	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
+	{
+		TRACE_PRINT("PacketSetTimestampMode: not allowed on non-NPF adapters");
+	
+		TRACE_EXIT();
+		return FALSE;
+	}
+
+
+	result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,
+		BIOCSTIMESTAMPMODE,
+		&mode,
+		sizeof(ULONG),
+		NULL,
+		0,
+		&BytesReturned,
+		NULL);
+
+	TRACE_EXIT();
+	return result;
+}
+
+/*!
   \brief Sets the snap len on the adapters that allow it.
   \param AdapterObject Pointer to an _ADAPTER structure.
   \param snaplen Desired snap len for this capture.

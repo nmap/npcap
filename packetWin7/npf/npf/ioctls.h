@@ -256,6 +256,12 @@
 #define W_BIOCSETEVENTHANDLE 7920
 #define BIOCSETEVENTHANDLE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa11, METHOD_BUFFERED, FILE_READ_DATA)
 
+/*
+  \brief IOCTL code: set the timestamp mode.
+
+  This IOCTL sets the timestamp mode (DWORD) to one of the supported modes from time_calls.h
+*/ 
+#define BIOCSTIMESTAMPMODE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa12, METHOD_BUFFERED, FILE_READ_DATA)
 /** 
  *  @}
  */

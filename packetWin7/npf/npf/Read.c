@@ -246,7 +246,7 @@ NPF_Read(
 
 			//fill the bpf header for this packet
 			header = (struct bpf_hdr *)CurrBuff;
-			GET_TIME(&header->bh_tstamp, &G_Start_Time);
+			GET_TIME(&header->bh_tstamp, &Open->start, Open->TimestampMode);
 
 #ifdef NPCAP_KDUMP
 			if (Open->mode & MODE_DUMP)
@@ -942,7 +942,7 @@ NPF_TapExForEachOpen(
 
 					Header = (struct PacketHeader *)(LocalData->Buffer + LocalData->P);
 					LocalData->Accepted++;
-					GET_TIME(&Header->header.bh_tstamp, &G_Start_Time);
+					GET_TIME(&Header->header.bh_tstamp, &Open->start, Open->TimestampMode);
 					Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
 
 					// DbgPrint("MDL %d\n", BufferLength);

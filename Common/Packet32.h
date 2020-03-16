@@ -384,6 +384,7 @@ extern "C"
 	BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject, int timeout);
 	BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program* fp);
 	BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavior);
+	BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode);
 	INT PacketSetSnapLen(LPADAPTER AdapterObject, int snaplen);
 	BOOLEAN PacketGetStats(LPADAPTER AdapterObject, struct bpf_stat* s);
 	BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject, struct bpf_stat* s);

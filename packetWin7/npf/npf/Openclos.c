@@ -108,13 +108,6 @@ static
 VOID
 NPF_ReleaseFilterModuleResources(PNPCAP_FILTER_MODULE pFiltMod);
 
-/// Global start time. Used as an absolute reference for timestamp conversion.
-struct time_conv G_Start_Time =
-{
-	0, {0, 0},
-};
-
-ULONG g_NumOpenedInstances = 0;
 ULONG g_NumLoopbackInstances = 0;
 
 extern SINGLE_LIST_ENTRY g_arrFiltMod; //Adapter filter module list head, each list item is a group head.
@@ -373,12 +366,10 @@ NPF_OpenAdapter_End:;
 	// complete the open
 	//
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
-	localNumOpenedInstances = InterlockedIncrement(&g_NumOpenedInstances);
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened Instances: %u", localNumOpenedInstances);
 
 	// Get the absolute value of the system boot time.
 	// This is used for timestamp conversion.
-	TIME_SYNCHRONIZE(&G_Start_Time);
+	TIME_SYNCHRONIZE(&Open->start, Open->TimestampMode);
 
 	NPF_AddToGroupOpenArray(Open, pFiltMod);
 
@@ -1038,21 +1029,6 @@ NPF_Cleanup(
 
 	//	IrpSp->FileObject->FsContext = NULL;
 
-	//
-	// Decrease the counter of open instances
-	//
-	localNumOpenInstances = InterlockedDecrement(&g_NumOpenedInstances);
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Opened Instances: %u", localNumOpenInstances);
-
-	if (localNumOpenInstances == 0)
-	{
-		//
-		// Force a synchronization at the next NPF_Open().
-		// This hopefully avoids the synchronization issues caused by hibernation or standby.
-		//
-		TIME_DESYNCHRONIZE(&G_Start_Time);
-	}
-
 	Status = STATUS_SUCCESS;
 
 	//
@@ -1458,6 +1434,7 @@ NPF_CreateOpenObject()
 	// Initialize the open instance
 	//
 	//Open->BindContext = NULL;
+	Open->TimestampMode = g_TimestampMode;
 	Open->bpfprogram = NULL;	//reset the filter
 	Open->mode = MODE_CAPT;
 	Open->Nbytes.QuadPart = 0;
@@ -1967,9 +1944,6 @@ NPF_Restart(
 	PNDIS_RESTART_GENERAL_ATTRIBUTES GenAttr = NULL;
 
 	TRACE_ENTER();
-
-	TIME_DESYNCHRONIZE(&G_Start_Time);
-	TIME_SYNCHRONIZE(&G_Start_Time);
 
 	if (RestartParameters == NULL)
 	{

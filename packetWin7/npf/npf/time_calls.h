@@ -95,6 +95,13 @@
 #define TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE 4
 #define /* DEPRECATED */ TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
 
+__inline BOOLEAN NPF_TimestampModeSupported(ULONG mode)
+{
+	return mode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
+		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME
+		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE;
+}
+
 extern ULONG g_TimestampMode;
 
 /* Defined in Packet.c/h
@@ -116,20 +123,7 @@ struct timeval
 
 #endif /*WIN_NT_DRIVER*/
 
-struct time_conv
-{
-	ULONGLONG reference;
-	struct timeval start;
-};
-
 #ifdef WIN_NT_DRIVER
-
-__inline void TIME_DESYNCHRONIZE(struct time_conv* data)
-{
-	data->reference = 0;
-	//	data->start.tv_sec = 0;
-	//	data->start.tv_usec = 0;
-}
 
 #pragma optimize ("g",off)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
@@ -167,24 +161,16 @@ __inline void SynchronizeOnCpu(struct timeval* start)
 
 #pragma optimize ("g",on)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
-__inline VOID TIME_SYNCHRONIZE(struct time_conv* data)
+__inline VOID TIME_SYNCHRONIZE(struct timeval* start, ULONG TimestampMode)
 {
 
-	if (data->reference != 0)
-		return;
-
-
-	switch (g_TimestampMode)
+	switch (TimestampMode)
 	{
-		case TIMESTAMPMODE_QUERYSYSTEMTIME:
-		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
-			//do nothing
-			data->reference = 1;
+		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION:
+			SynchronizeOnCpu(start);
 			break;
 		default:
-			//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
-			SynchronizeOnCpu(&data->start);
-			data->reference = 1;
+			//do nothing
 			break;
 	}
 	return;
@@ -193,7 +179,7 @@ __inline VOID TIME_SYNCHRONIZE(struct time_conv* data)
 
 #pragma optimize ("g",off)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
-__inline void GetTimeKQPC(struct timeval* dst, struct time_conv* data)
+__inline void GetTimeKQPC(struct timeval* dst, struct timeval* start)
 {
 	LARGE_INTEGER PTime, TimeFreq;
 	LONG tmp;
@@ -202,8 +188,8 @@ __inline void GetTimeKQPC(struct timeval* dst, struct time_conv* data)
 	tmp = (LONG)(PTime.QuadPart / TimeFreq.QuadPart);
 
 	//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
-	dst->tv_sec = data->start.tv_sec + tmp;
-	dst->tv_usec = data->start.tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
+	dst->tv_sec = start->tv_sec + tmp;
+	dst->tv_usec = start->tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
 
 	if (dst->tv_usec >= 1000000)
 	{
@@ -212,10 +198,9 @@ __inline void GetTimeKQPC(struct timeval* dst, struct time_conv* data)
 	}
 }
 
-__inline void GetTimeQST(struct timeval* dst, struct time_conv* data)
+__inline void GetTimeQST(struct timeval* dst)
 {
 	LARGE_INTEGER SystemTime;
-	UNREFERENCED_PARAMETER(data);
 
 	KeQuerySystemTime(&SystemTime);
 
@@ -223,10 +208,9 @@ __inline void GetTimeQST(struct timeval* dst, struct time_conv* data)
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
 }
 
-__inline void GetTimeQST_precise(struct timeval* dst, struct time_conv* data)
+__inline void GetTimeQST_precise(struct timeval* dst)
 {
 	LARGE_INTEGER SystemTime;
-	UNREFERENCED_PARAMETER(data);
 
 	My_KeQuerySystemTimePrecise(&SystemTime);
 
@@ -238,18 +222,18 @@ __inline void GetTimeQST_precise(struct timeval* dst, struct time_conv* data)
 #pragma optimize ("g",on)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
 
-__inline void GET_TIME(struct timeval* dst, struct time_conv* data)
+__inline void GET_TIME(struct timeval* dst, struct timeval* start, ULONG TimestampMode)
 {
-	switch (g_TimestampMode)
+	switch (TimestampMode)
 	{
 		case TIMESTAMPMODE_QUERYSYSTEMTIME:
-			GetTimeQST(dst, data);
+			GetTimeQST(dst);
 			break;
 		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
-			GetTimeQST_precise(dst, data);
+			GetTimeQST_precise(dst);
 			break;
 		default:
-			GetTimeKQPC(dst, data);
+			GetTimeKQPC(dst, start);
 			break;
 	}
 }
@@ -257,14 +241,14 @@ __inline void GET_TIME(struct timeval* dst, struct time_conv* data)
 
 #else /*WIN_NT_DRIVER*/
 
-__inline void FORCE_TIME(struct timeval* src, struct time_conv* dest)
+__inline void FORCE_TIME(struct timeval* src, struct timeval* dest)
 {
-	dest->start = *src;
+	*dest = *src;
 }
 
-__inline void GET_TIME(struct timeval* dst, struct time_conv* data)
+__inline void GET_TIME(struct timeval* dst, struct timeval* data)
 {
-	*dst = data->start;
+	*dst = *data;
 }
 
 #endif /*WIN_NT_DRIVER*/

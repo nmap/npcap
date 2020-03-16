@@ -410,6 +410,8 @@ typedef struct _OPEN_INSTANCE
 
 	OPEN_STATE OpenStatus;
 	NDIS_SPIN_LOCK			OpenInUseLock;
+	ULONG TimestampMode;
+	struct timeval start; // Time synchronization of QPC with last boot
 
 } 
 OPEN_INSTANCE, *POPEN_INSTANCE;
@@ -439,7 +441,6 @@ struct PacketHeader
 };
 
 extern ULONG g_NCpu;
-extern struct time_conv G_Start_Time; // from openclos.c
 
 #define TRANSMIT_PACKETS 256	///< Maximum number of packets in the transmit packet pool. This value is an upper bound to the number
 ///< of packets that can be transmitted at the same time or with a single call to NdisSendPackets.

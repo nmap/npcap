@@ -142,7 +142,7 @@ ULONG g_AdminOnlyMode = 0;
 ULONG g_DltNullMode = 0;
 ULONG g_Dot11SupportMode = 0;
 ULONG g_VlanSupportMode = 0;
-ULONG g_TimestampMode = 0;
+ULONG g_TimestampMode = DEFAULT_TIMESTAMPMODE;
 
 ULONG g_NCpu;
 
@@ -318,6 +318,9 @@ DriverEntry(
 		// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
 		// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
 		g_TimestampMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_TimestampRegValueName);
+		if (!NPF_TimestampModeSupported(g_TimestampMode)) {
+			g_TimestampMode = DEFAULT_TIMESTAMPMODE;
+		}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		g_LoopbackSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_LoopbackSupportRegValueName);
@@ -1966,6 +1969,28 @@ NPF_IoControl(
 
 		break;
 
+	case BIOCSTIMESTAMPMODE:
+		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
+		{
+			SET_FAILURE_BUFFER_SMALL();
+			break;
+		}
+
+		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
+		
+		// verify that the provided mode is supported
+		if (!NPF_TimestampModeSupported(dim))
+		{
+			SET_FAILURE_INVALID_REQUEST();
+			break;
+		} 
+
+		/* Reset buffer, since contents could have differing timestamps */
+		NPF_ResetBufferContents(Open);
+		Open->TimestampMode = dim;
+
+		SET_RESULT_SUCCESS(0);
+		break;
 
 	default:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown IOCTL code");
