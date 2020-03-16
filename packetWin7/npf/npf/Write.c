@@ -101,7 +101,6 @@ NPF_Write(
 	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE		TempOpen;
 	PIO_STACK_LOCATION	IrpSp;
-	ULONG				SendFlags = 0;
 	PNET_BUFFER_LIST	pNetBufferList = NULL;
 	ULONG				NumSends;
 	ULONG				numSentPackets;
@@ -316,7 +315,6 @@ NPF_Write(
 
 			pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 			RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
-			//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
 			// Recognize IEEE802.1Q tagged packet, as no many adapters support VLAN tag packet sending, no much use for end users,
 			// and this code examines the data which lacks efficiency, so I left it commented, the sending part is also unfinished.
@@ -388,7 +386,7 @@ NPF_Write(
 					NdisFSendNetBufferLists(Open->pFiltMod->AdapterHandle,
 						pNetBufferList,
 						NDIS_DEFAULT_PORT_NUMBER,
-						SendFlags);
+						Open->SendFlags);
 				}
 
 			numSentPackets ++;
@@ -458,7 +456,6 @@ NPF_BufferedWrite(
 	PIO_STACK_LOCATION		IrpSp;
 	PNET_BUFFER_LIST		pNetBufferList = NULL;
 	PNET_BUFFER				pNetBuffer;
-	ULONG					SendFlags = 0;
 	UINT					i;
 	NDIS_STATUS				Status;
 	LARGE_INTEGER			StartTicks, CurTicks, TargetTicks;
@@ -679,7 +676,6 @@ NPF_BufferedWrite(
 
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
-		//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
 		//
 		// Call the MAC
@@ -710,7 +706,7 @@ NPF_BufferedWrite(
 				NdisFSendNetBufferLists(Open->pFiltMod->AdapterHandle,
 					pNetBufferList,
 					NDIS_DEFAULT_PORT_NUMBER,
-					SendFlags);
+					Open->SendFlags);
 			}
 
 		// 

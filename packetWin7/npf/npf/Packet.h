@@ -150,6 +150,8 @@ struct packet_file_header
 // Loopback behaviour definitions
 #define NPF_DISABLE_LOOPBACK				1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
 #define NPF_ENABLE_LOOPBACK					2	///< Tells the driver to capture the packets sent by itself.
+#define NPF_DISABLE_LOOPBACK_RX 3 ///< Tells the driver to not receive the packets sent by itself.
+#define NPF_ENABLE_LOOPBACK_RX 4 ///< Tells the driver to receive the packets sent by itself.
 
 // Admin only mode definition
 //#define NPF_ADMIN_ONLY_MODE			///< Tells the driver to restrict its access only to Administrators. This is used to support "Admin-only Mode" for Npcap.
@@ -410,7 +412,7 @@ typedef struct _OPEN_INSTANCE
 
 	OPEN_STATE OpenStatus;
 	NDIS_SPIN_LOCK			OpenInUseLock;
-
+	ULONG SendFlags; ///< Flags passed to NDIS send functions. See https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/ndis/nf-ndis-ndisfsendnetbufferlists.
 } 
 OPEN_INSTANCE, *POPEN_INSTANCE;
 

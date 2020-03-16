@@ -3928,6 +3928,8 @@ BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
   \param LoopbackBehavior Can be one of the following:
 	- \ref NPF_ENABLE_LOOPBACK
 	- \ref NPF_DISABLE_LOOPBACK
+	- \ref NPF_ENABLE_LOOPBACK_RX (default)
+	- \ref NPF_DISABLE_LOOPBACK_RX
   \return If the function succeeds, the return value is nonzero.
 
   \note: when opened, adapters have loopback capture \b enabled.

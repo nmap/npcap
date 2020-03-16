@@ -140,6 +140,8 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 // Loopback behaviour definitions
 #define NPF_DISABLE_LOOPBACK	1	///< Drop the packets sent by the NPF driver
 #define NPF_ENABLE_LOOPBACK		2	///< Capture the packets sent by the NPF driver
+#define NPF_DISABLE_LOOPBACK_RX 3 ///< Do not receive the packets sent by the NPF driver
+#define NPF_ENABLE_LOOPBACK_RX 4 ///< Receive the packets sent by the NPF driver
 
 /*!
   \brief Network type structure.

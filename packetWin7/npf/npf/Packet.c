@@ -1407,31 +1407,42 @@ NPF_IoControl(
 			break;
 		}
 
-		if (*(PINT) Irp->AssociatedIrp.SystemBuffer == NPF_DISABLE_LOOPBACK)
+		switch(*(PINT)Irp->AssociatedIrp.SystemBuffer)
 		{
-			Open->SkipSentPackets = TRUE;
+			case NPF_DISABLE_LOOPBACK:
+				Open->SkipSentPackets = TRUE;
 
-			//
-			// Reset the capture buffers, since they could contain loopbacked packets
-			//
+				//
+				// Reset the capture buffers, since they could contain loopbacked packets
+				//
 
-			NPF_ResetBufferContents(Open);
+				NPF_ResetBufferContents(Open);
 
-			SET_RESULT_SUCCESS(0);
-			break;
-		}
-		else if (*(PINT) Irp->AssociatedIrp.SystemBuffer == NPF_ENABLE_LOOPBACK)
-		{
-			Open->SkipSentPackets = FALSE;
+				SET_RESULT_SUCCESS(0);
+				break;
 
-			SET_RESULT_SUCCESS(0);
-			break;
-		}
-		else
-		{
-			// Unknown operation
-			SET_FAILURE_INVALID_REQUEST();
-			break;
+			case NPF_ENABLE_LOOPBACK:
+				Open->SkipSentPackets = FALSE;
+
+				SET_RESULT_SUCCESS(0);
+				break;
+
+			case NPF_DISABLE_LOOPBACK_RX:
+				Open->SendFlags &= ~NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
+
+				SET_RESULT_SUCCESS(0);
+				break;
+
+			case NPF_ENABLE_LOOPBACK_RX:
+				Open->SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
+
+				SET_RESULT_SUCCESS(0);
+				break;
+
+			default:
+				// Unknown operation
+				SET_FAILURE_INVALID_REQUEST();
+				break;
 		}
 
 		break;

@@ -1476,6 +1476,7 @@ NPF_CreateOpenObject()
 	Open->Size = 0;
 	Open->SkipSentPackets = FALSE;
 	Open->ReadEvent = NULL;
+	Open->SendFlags = NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
 	//
 	// we need to keep a counter of the pending IRPs
