@@ -149,7 +149,7 @@ __inline void SynchronizeOnCpu(struct timeval* start)
 
 	start->tv_sec -= (ULONG)(PTime.QuadPart / TimeFreq.QuadPart);
 
-	start->tv_usec -= (LONG)((PTime.QuadPart % TimeFreq.QuadPart) / TimeFreq.QuadPart) * 1000000;
+	start->tv_usec -= (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
 
 	if (start->tv_usec < 0)
 	{
