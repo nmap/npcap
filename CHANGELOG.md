@@ -1,4 +1,37 @@
-﻿## Npcap 0.9988 [2020-03-05]
+﻿
+## Npcap 0.9989 [2020-03-19]
+
+* Fix a BSOD crash in `NPF_OpenAdapter` due to reading past the end of a
+  string. Fixes [#1924](https://issues.nmap.org/1924)
+
+* Fix a BSOD crash (NULL pointer dereference) in `NPF_Restart`.
+  Fixes [#1964](https://issues.nmap.org/1964).
+
+* Fix a memory leak in the Loopback WFP filter. Additionally, WFP callbacks
+  will be unregistered when all loopback captures are closed, reducing impact
+  of related code when not in use. Fixes [#1966](https://issues.nmap.org/1966).
+
+* New Packet.DLL function `PacketSetTimestampMode()` allows a user program to
+  set the method used to timestamp packets as they arrive. See [#1775](https://issues.nmap.org/1775).
+  Supported modes are:
+  * `TIMESTAMPMODE_SINGLE_SYNCHRONIZATION` - default monotonic timestamps based
+   on `KeQueryPerformanceCounter()`
+  * `TIMESTAMPMODE_QUERYSYSTEMTIME` - low-precision wall clock time based on
+   `KeQuerySystemTime()`
+  * `TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE` - high-precision wall clock time
+   based on `KeQuerySystemTimePrecise()`, new in this release and only
+   available on Windows 8 and newer. See [#1407](https://issues.nmap.org/1407).
+
+* Remove some problematic timestamp modes:
+  `TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_WITH_FIXUP` and
+  `TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP` were undocumented;
+  `TIMESTAMPMODE_RDTSC` was x86-only and not suitable for multi-processor
+  systems. See [#1829](https://issues.nmap.org/1829).
+
+* The Npcap SDK 1.05 will be released to include the new
+  `PacketSetTimestampMode()` function.
+
+## Npcap 0.9988 [2020-03-05]
 
 * If a capture is in progress when the system is suspended, it will continue
   without interruption after the system is woken. This also prevents capture
@@ -351,7 +384,7 @@
   such as those caused by Windows 10 feature upgrades.
   See [#1216](http://issues.nmap.org/1216)
 
-* Improved stability by restoring certain passsthrough NDIS callbacks that are
+* Improved stability by restoring certain passthrough NDIS callbacks that are
   not used, but appear to cause connectivity problems if omitted.
   See [#1208](http://issues.nmap.org/1208).
 

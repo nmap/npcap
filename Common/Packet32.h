@@ -141,6 +141,11 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 #define NPF_DISABLE_LOOPBACK	1	///< Drop the packets sent by the NPF driver
 #define NPF_ENABLE_LOOPBACK		2	///< Capture the packets sent by the NPF driver
 
+// Timestamp Modes
+#define TIMESTAMPMODE_SINGLE_SYNCHRONIZATION 0 // KeQueryPerformanceCounter
+#define TIMESTAMPMODE_QUERYSYSTEMTIME 2 // KeQuerySystemTime
+#define TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE 4 // KeQuerySystemTimePrecise, Windows 8 and newer
+
 /*!
   \brief Network type structure.
 
