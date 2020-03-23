@@ -206,24 +206,19 @@ My_KeGetCurrentProcessorNumber(
 	return Cpu;
 }
 
-typedef VOID (*KEQUERYSYSTEMTIMEPRECISE)(
-	PLARGE_INTEGER CurrentTime
-	);
-KEQUERYSYSTEMTIMEPRECISE g_My_KeQuerySystemTimePrecise = NULL;
+PQUERYSYSTEMTIME g_ptrQuerySystemTime = NULL;
 
-VOID My_KeQuerySystemTimePrecise(
+#ifdef KeQuerySystemTime
+// On Win x64, KeQuerySystemTime is defined as a macro,
+// this function wraps the macro execution.
+void
+KeQuerySystemTimeWrapper(
 	PLARGE_INTEGER CurrentTime
-	)
+)
 {
-	if (g_My_KeQuerySystemTimePrecise) // Windows 8 and newer
-	{
-		g_My_KeQuerySystemTimePrecise(CurrentTime);
-	}
-	else
-	{
-		KeQuerySystemTime(CurrentTime);
-	}
+	KeQuerySystemTime(CurrentTime);
 }
+#endif
 
 #ifdef NPCAP_READ_ONLY
 // For read-only Npcap, we want an explicit denial function for the Write call.
@@ -380,10 +375,19 @@ DriverEntry(
 	g_My_KeGetCurrentProcessorNumberEx = (KEGETCURRENTPROCESSORNUMBEREX) NdisGetRoutineAddress(&strKeGetCurrentProcessorNumberEx);
 
 	//
-	// Try to get reference to KeQuerySystemTimePrecise (Windows 8 and later)
+	// Initialize system-time function pointer.
 	//
 	RtlInitUnicodeString(&strKeQuerySystemTimePrecise, L"KeQuerySystemTimePrecise");
-	g_My_KeQuerySystemTimePrecise = (KEQUERYSYSTEMTIMEPRECISE) MmGetSystemRoutineAddress(&strKeQuerySystemTimePrecise);
+	g_ptrQuerySystemTime = (PQUERYSYSTEMTIME) MmGetSystemRoutineAddress(&strKeQuerySystemTimePrecise);
+	// If KeQuerySystemTimePrecise is not available,
+	// use KeQuerySystemTime function (Win32) or a wrapper to the KeQuerySystemTime macro (x64).
+	if (g_ptrQuerySystemTime == NULL) {
+#ifdef KeQuerySystemTime
+		g_ptrQuerySystemTime = &KeQuerySystemTimeWrapper;
+#else
+		g_ptrQuerySystemTime = &KeQuerySystemTime;
+#endif
+	}
 
 	//
 	// Get number of CPUs and save it

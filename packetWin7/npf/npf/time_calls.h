@@ -102,13 +102,12 @@ __inline BOOLEAN NPF_TimestampModeSupported(ULONG mode)
 		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE;
 }
 
-extern ULONG g_TimestampMode;
-
-/* Defined in Packet.c/h
- * Falls back to KeQuerySystemTime (i.e. not Precise) on Win7/2008R2 */
-VOID My_KeQuerySystemTimePrecise(
+typedef void(*PQUERYSYSTEMTIME)(
 	PLARGE_INTEGER CurrentTime
 	);
+
+extern ULONG g_TimestampMode;
+extern PQUERYSYSTEMTIME g_ptrQuerySystemTime;
 
 /*!
   \brief A microsecond precise timestamp.
@@ -141,7 +140,7 @@ __inline void SynchronizeOnCpu(struct timeval* start)
 	// get the absolute value of the system boot time.   
 
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
-	My_KeQuerySystemTimePrecise(&SystemTime);
+	g_ptrQuerySystemTime(&SystemTime);
 
 	start->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 
@@ -212,7 +211,7 @@ __inline void GetTimeQST_precise(struct timeval* dst)
 {
 	LARGE_INTEGER SystemTime;
 
-	My_KeQuerySystemTimePrecise(&SystemTime);
+	g_ptrQuerySystemTime(&SystemTime);
 
 	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
