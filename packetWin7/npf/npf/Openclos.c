@@ -1656,7 +1656,7 @@ static NDIS_STATUS NPF_ValidateParameters(
 	{
 		if (MiniportMediaType != NdisMediumNative802_11)
 		{
-			IF_LOUD(DbgPrint("Unsupported media type for the WiFi filter: MiniportMediaType = %d, expected = 16 (NdisMediumNative802_11).\n", AttachParameters->MiniportMediaType);)
+			IF_LOUD(DbgPrint("Unsupported media type for the WiFi filter: MiniportMediaType = %d, expected = 16 (NdisMediumNative802_11).\n", MiniportMediaType);)
 
 			return NDIS_STATUS_INVALID_PARAMETER;
 		}
