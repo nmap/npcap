@@ -281,6 +281,7 @@ DriverEntry(
 	NDIS_STRING strNdisGroupMaxProcessorCount;
 	NDIS_STRING strKeGetCurrentProcessorNumberEx;
 	NDIS_STRING strKeGetProcessorIndexFromNumber;
+	NDIS_STRING strKeQuerySystemTimePrecise;
 
 	UNREFERENCED_PARAMETER(RegistryPath);
 
@@ -377,6 +378,12 @@ DriverEntry(
 
 	RtlInitUnicodeString(&strKeGetCurrentProcessorNumberEx, L"KeGetCurrentProcessorNumberEx");
 	g_My_KeGetCurrentProcessorNumberEx = (KEGETCURRENTPROCESSORNUMBEREX) NdisGetRoutineAddress(&strKeGetCurrentProcessorNumberEx);
+
+	//
+	// Try to get reference to KeQuerySystemTimePrecise (Windows 8 and later)
+	//
+	RtlInitUnicodeString(&strKeQuerySystemTimePrecise, L"KeQuerySystemTimePrecise");
+	g_My_KeQuerySystemTimePrecise = (KEQUERYSYSTEMTIMEPRECISE) MmGetSystemRoutineAddress(&strKeQuerySystemTimePrecise);
 
 	//
 	// Get number of CPUs and save it
