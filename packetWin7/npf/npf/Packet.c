@@ -598,12 +598,12 @@ NPF_registerLWF(
 		pFChars->ServiceName = ServiceName;
 	}
 
-	pFChars->SetOptionsHandler = NPF_RegisterOptions;
+	pFChars->SetOptionsHandler = NULL;
 	pFChars->AttachHandler = NPF_AttachAdapter;
 	pFChars->DetachHandler = NPF_DetachAdapter;
 	pFChars->RestartHandler = NPF_Restart;
 	pFChars->PauseHandler = NPF_Pause;
-	pFChars->SetFilterModuleOptionsHandler = NPF_SetModuleOptions;
+	pFChars->SetFilterModuleOptionsHandler = NULL;
 	pFChars->OidRequestHandler = NPF_OidRequest;
 	pFChars->OidRequestCompleteHandler = NPF_OidRequestComplete;
 	pFChars->CancelOidRequestHandler = NPF_CancelOidRequest;

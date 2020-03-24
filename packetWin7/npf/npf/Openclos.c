@@ -1579,51 +1579,6 @@ NPF_CreateFilterModule(
 
 //-------------------------------------------------------------------
 
-_Use_decl_annotations_
-NDIS_STATUS
-NPF_RegisterOptions(
-	NDIS_HANDLE  NdisFilterHandle,
-	NDIS_HANDLE  FilterDriverContext
-	)
-/*++
-
-Routine Description:
-
-	Register optional handlers with NDIS.  This sample does not happen to
-	have any optional handlers to register, so this routine does nothing
-	and could simply have been omitted.  However, for illustrative purposes,
-	it is presented here.
-
-Arguments:
-
-	NdisFilterHandle - pointer the driver handle received from
-							 NdisFRegisterFilterDriver
-
-	FilterDriverContext    - pointer to our context passed into
-							 NdisFRegisterFilterDriver
-
-Return Value:
-
-	NDIS_STATUS_SUCCESS
-
---*/
-{
-	TRACE_ENTER();
-
-	ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
-	if (FilterDriverContext != (NDIS_HANDLE)FilterDriverObject)
-	{
-		IF_LOUD(DbgPrint("NPF_RegisterOptions: driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);)
-		return NDIS_STATUS_INVALID_PARAMETER;
-	}
-
-	TRACE_EXIT();
-
-	return NDIS_STATUS_SUCCESS;
-}
-
-//-------------------------------------------------------------------
-
 static NDIS_STATUS NPF_ValidateParameters(
 		BOOLEAN bDot11,
         NDIS_MEDIUM MiniportMediaType
@@ -2506,37 +2461,6 @@ Return Value:
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 
 	NdisFCancelSendNetBufferLists(pFiltMod->AdapterHandle, CancelId);
-}
-
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-NDIS_STATUS
-NPF_SetModuleOptions(
-	NDIS_HANDLE             FilterModuleContext
-	)
-/*++
-
-Routine Description:
-
-	This function set the optional handlers for the filter
-
-Arguments:
-
-	FilterModuleContext: The FilterModuleContext given to NdisFSetAttributes
-
-Return Value:
-
-	NDIS_STATUS_SUCCESS
-	NDIS_STATUS_RESOURCES
-	NDIS_STATUS_FAILURE
-
---*/
-{
-   NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
-   UNREFERENCED_PARAMETER(FilterModuleContext);
-
-   return Status;
 }
 
 //-------------------------------------------------------------------
