@@ -271,7 +271,6 @@ DriverEntry(
 	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 	
 	UNICODE_STRING AdapterName;
-	ULONG OsMajorVersion, OsMinorVersion;
 
 	NDIS_STRING strNdisGroupMaxProcessorCount;
 	NDIS_STRING strKeGetCurrentProcessorNumberEx;
@@ -282,9 +281,6 @@ DriverEntry(
 
 	TRACE_ENTER();
 	FilterDriverObject = DriverObject;
-
-	PsGetVersion(&OsMajorVersion, &OsMinorVersion, NULL, NULL);
-	TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "OS Version: %d.%d\n", OsMajorVersion, OsMinorVersion);
 
 	RtlInitUnicodeString(&parametersPath, NULL);
 	parametersPath.MaximumLength=RegistryPath->Length+wcslen(L"\\Parameters")*sizeof(WCHAR)+sizeof(UNICODE_NULL);
