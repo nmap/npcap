@@ -2582,10 +2582,11 @@ NPF_SetPacketFilter(
             TRACE_EXIT();
         return NDIS_STATUS_RESOURCES;
     }
+    *(PULONG) pBuffer = PacketFilter;
 
-	// get the PacketFilter when filter driver loads
+	// set the PacketFilter
 	NPF_DoInternalRequest(FilterModuleContext,
-		NdisRequestQueryInformation,
+		NdisRequestSetInformation,
 		OID_GEN_CURRENT_PACKET_FILTER,
 		pBuffer,
 		sizeof(PacketFilter),
