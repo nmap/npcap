@@ -1755,16 +1755,7 @@ NPF_IoControl(
 					}
 				}
 
-				//
-				// Release ownership of the Ndis Handle
-				//
-				NPF_StopUsingBinding(Open->pFiltMod);
-
-				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-					&pRequest->ListElement,
-					&Open->pFiltMod->RequestSpinLock);
-
-				break;
+				goto OID_REQUEST_DONE;
 			}
 #endif
 
@@ -1784,16 +1775,7 @@ NPF_IoControl(
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 				}
 
-				//
-				// Release ownership of the Ndis Handle
-				//
-				NPF_StopUsingBinding(Open->pFiltMod);
-
-				ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-					&pRequest->ListElement,
-					&Open->pFiltMod->RequestSpinLock);
-
-				break;
+				goto OID_REQUEST_DONE;
 			}
 #endif
 
@@ -1858,28 +1840,52 @@ NPF_IoControl(
 						*(ULONG*)OidData->Data, Open->pFiltMod->MyPacketFilter);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 
-					//
-					// Release ownership of the Ndis Handle
-					//
-					NPF_StopUsingBinding(Open->pFiltMod);
-
-					ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-						&pRequest->ListElement,
-						&Open->pFiltMod->RequestSpinLock);
-
-					break;
+					goto OID_REQUEST_DONE;
 				}
 
+				// Stash the old packet filter...
+				dim = Open->MyPacketFilter;
 				// Store the requested packet filter for *this* Open instance
 				Open->MyPacketFilter = *(ULONG*)OidData->Data;
+
+				/* We don't want NDIS_PACKET_TYPE_ALL_LOCAL, since that may cause NDIS to loop
+				 * packets back that shouldn't be. WinPcap had to do this as a protocol driver,
+				 * but Npcap sees outgoing packets from all protocols already.  We'll clear this
+				 * bit, but instead turn on the other aspects that it covers: packets that would
+				 * be indicated by the NIC anyway.
+				 */
+				if (Open->MyPacketFilter & NDIS_PACKET_TYPE_ALL_LOCAL) {
+					Open->MyPacketFilter ^= NDIS_PACKET_TYPE_ALL_LOCAL;
+					Open->MyPacketFilter |= NDIS_PACKET_TYPE_DIRECTED | NDIS_PACKET_TYPE_MULTICAST | NDIS_PACKET_TYPE_BROADCAST;
+				}
+				// If the new packet filter is the same as the old one, nothing left to do.
+				if (Open->MyPacketFilter == dim)
+				{
+					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+
+					goto OID_REQUEST_DONE;
+				}
 				// Set the filter module's packet filter to the union of all instances' filters
 				NdisAcquireSpinLock(&Open->pFiltMod->OpenInstancesLock);
+				// Stash the old filter
+				dim = Open->pFiltMod->MyPacketFilter;
 				Open->pFiltMod->MyPacketFilter = 0;
 				for (Curr = Open->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 				{
-					Open->pFiltMod->MyPacketFilter = Open->pFiltMod->MyPacketFilter | CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
+					Open->pFiltMod->MyPacketFilter |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
 				}
 				NdisReleaseSpinLock(&Open->pFiltMod->OpenInstancesLock);
+
+				// If the new packet filter is the same as the old one...
+				if (Open->pFiltMod->MyPacketFilter == dim
+						// ...or it wouldn't change the upper one
+						|| (Open->pFiltMod->MyPacketFilter & (~Open->pFiltMod->HigherPacketFilter)) == 0)
+				{
+					// Nothing left to do!
+					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+
+					goto OID_REQUEST_DONE;
+				}
 
                 pCombinedPacketFilter = (PULONG) OidBuffer;
 #ifdef HAVE_DOT11_SUPPORT
@@ -1888,26 +1894,16 @@ NPF_IoControl(
 				*pCombinedPacketFilter = Open->pFiltMod->HigherPacketFilter | Open->pFiltMod->MyPacketFilter;
 #endif
 			}
-
 			Status = NdisFOidRequest(Open->pFiltMod->AdapterHandle, &pRequest->Request);
 		}
 		else
 		{
 			//
-			// Release ownership of the Ndis Handle
-			//
-			NPF_StopUsingBinding(Open->pFiltMod);
-
-			ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-				&pRequest->ListElement,
-				&Open->pFiltMod->RequestSpinLock);
-
-			//
 			//  buffer too small
 			//
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "buffer is too small");
 			SET_FAILURE_BUFFER_SMALL();
-			break;
+			goto OID_REQUEST_DONE;
 		}
 
 		if (Status == NDIS_STATUS_PENDING)
@@ -1915,11 +1911,6 @@ NPF_IoControl(
 			NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 0);
 			Status = pRequest->RequestStatus;
 		}
-
-		//
-		// Release ownership of the Ndis Handle
-		//
-		NPF_StopUsingBinding(Open->pFiltMod);
 
 		//
 		// Complete the request
@@ -1958,10 +1949,6 @@ NPF_IoControl(
 		}
 
 
-		ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-			&pRequest->ListElement,
-			&Open->pFiltMod->RequestSpinLock);
-
 		if (Status == NDIS_STATUS_SUCCESS)
 		{
 			SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
@@ -1973,6 +1960,16 @@ NPF_IoControl(
 			SET_FAILURE_CUSTOM(Status);
 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Custom NdisFOidRequest() Status = %#x", Status);
 		}
+
+OID_REQUEST_DONE:
+		//
+		// Release ownership of the Ndis Handle
+		//
+		NPF_StopUsingBinding(Open->pFiltMod);
+
+		ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
+			&pRequest->ListElement,
+			&Open->pFiltMod->RequestSpinLock);
 
 		break;
 

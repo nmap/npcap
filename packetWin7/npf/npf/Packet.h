@@ -317,7 +317,6 @@ typedef struct _NPCAP_FILTER_MODULE
 
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
-	ULONG LowerPacketFilter;
 	ULONG					PhysicalMedium;
 #ifdef HAVE_DOT11_SUPPORT
 	BOOLEAN					Dot11;
