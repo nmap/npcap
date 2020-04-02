@@ -98,8 +98,6 @@ NPF_Write(
 	)
 {
 	POPEN_INSTANCE		Open;
-	PSINGLE_LIST_ENTRY Curr;
-	POPEN_INSTANCE		TempOpen;
 	PIO_STACK_LOCATION	IrpSp;
 	ULONG				SendFlags = 0;
 	PNET_BUFFER_LIST	pNetBufferList = NULL;
@@ -236,6 +234,13 @@ NPF_Write(
 		Open->pFiltMod->MaxFrameSize,
 		IrpSp->Parameters.Write.Length);
 
+	// WinPcap emulation: loop back injected packets if anyone's listening.
+	// Except when PACKET_DISABLE_LOOPBACK is chosen, then don't loop back.
+	if (!Open->SkipSentPackets)
+	{
+		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
+	}
+
 	//
 	// reset the number of packets pending the SendComplete
 	//
@@ -269,17 +274,6 @@ NPF_Write(
 			// packet is available, prepare it and send it with NdisSend.
 			//
 
-			//
-			// If asked, set the flags for this packet.
-			// Currently, the only situation in which we set the flags is to disable the reception of loopback
-			// packets, i.e. of the packets sent by us.
-			//
-			//if (Open->SkipSentPackets)
-			//{
-			//	NPFSetNBLFlags(pNetBufferList, g_SendPacketFlags);
-			//}
-
-
 			// The packet hasn't a buffer that needs not to be freed after every single write
 			RESERVED(pNetBufferList)->FreeBufAfterWrite = FALSE;
 
@@ -298,25 +292,13 @@ NPF_Write(
 			if (Open->pFiltMod->Loopback == FALSE)
 			{
 #endif
-				/* Lock the group */
-				NdisAcquireSpinLock(&Open->pFiltMod->OpenInstancesLock);
-				for (Curr = Open->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-				{
-					TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-					if (TempOpen->OpenStatus == OpenRunning && TempOpen->SkipSentPackets == FALSE)
-					{
-						NPF_TapExForEachOpen(TempOpen, pNetBufferList);
-					}
-				}
-				/* Release the spin lock no matter what. */
-				NdisReleaseSpinLock(&Open->pFiltMod->OpenInstancesLock);
+				NPF_DoTap(Open->pFiltMod, pNetBufferList, Open);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			}
 #endif
 
 			pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 			RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
-			//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
 			// Recognize IEEE802.1Q tagged packet, as no many adapters support VLAN tag packet sending, no much use for end users,
 			// and this code examines the data which lacks efficiency, so I left it commented, the sending part is also unfinished.
@@ -453,8 +435,6 @@ NPF_BufferedWrite(
 	BOOLEAN Sync)
 {
 	POPEN_INSTANCE			Open;
-	PSINGLE_LIST_ENTRY Curr;
-	POPEN_INSTANCE			TempOpen;
 	PIO_STACK_LOCATION		IrpSp;
 	PNET_BUFFER_LIST		pNetBufferList = NULL;
 	PNET_BUFFER				pNetBuffer;
@@ -507,6 +487,14 @@ NPF_BufferedWrite(
 		TRACE_EXIT();
 		return -STATUS_UNSUCCESSFUL;
 	}
+
+	// WinPcap emulation: loop back injected packets if anyone's listening.
+	// Except when PACKET_DISABLE_LOOPBACK is chosen, then don't loop back.
+	if (!Open->SkipSentPackets)
+	{
+		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
+	}
+
 
 	// Reset the event used to synchronize packet allocation
 	NdisResetEvent(&Open->WriteEvent);
@@ -645,14 +633,6 @@ NPF_BufferedWrite(
 			}
 		}
 
-		// If asked, set the flags for this packet.
-		// Currently, the only situation in which we set the flags is to disable the reception of loopback
-		// packets, i.e. of the packets sent by us.
-		//if (Open->SkipSentPackets)
-		//{
-		//	NPFSetNBLFlags(pNetBufferList, g_SendPacketFlags);
-		//}
-
 		// The packet has a buffer that needs to be freed after every single write
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
 
@@ -664,22 +644,11 @@ NPF_BufferedWrite(
 		InterlockedIncrement(&Open->Multiple_Write_Counter);
 
 		//receive the packets before sending them
-		/* Lock the group */
-		NdisAcquireSpinLock(&Open->pFiltMod->OpenInstancesLock);
-		for (Curr = Open->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-		{
-			TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-			if (TempOpen->OpenStatus == OpenRunning && TempOpen->SkipSentPackets == FALSE)
-			{
-				NPF_TapExForEachOpen(TempOpen, pNetBufferList);
-			}
-		}
-		/* Release the spin lock no matter what. */
-		NdisReleaseSpinLock(&Open->pFiltMod->OpenInstancesLock);
+		// TODO: Should we check for loopback like we do in NPF_Write?
+		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open);
 
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
-		//SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 
 		//
 		// Call the MAC

@@ -1420,22 +1420,10 @@ NPF_IoControl(
 		if (*(PINT) Irp->AssociatedIrp.SystemBuffer == NPF_DISABLE_LOOPBACK)
 		{
 			Open->SkipSentPackets = TRUE;
-
-			//
-			// Reset the capture buffers, since they could contain loopbacked packets
-			//
-
-			NPF_ResetBufferContents(Open);
-
-			SET_RESULT_SUCCESS(0);
-			break;
 		}
 		else if (*(PINT) Irp->AssociatedIrp.SystemBuffer == NPF_ENABLE_LOOPBACK)
 		{
 			Open->SkipSentPackets = FALSE;
-
-			SET_RESULT_SUCCESS(0);
-			break;
 		}
 		else
 		{
@@ -1444,6 +1432,11 @@ NPF_IoControl(
 			break;
 		}
 
+
+		// Reset the capture buffers, since they could contain loopbacked packets
+		NPF_ResetBufferContents(Open);
+
+		SET_RESULT_SUCCESS(0);
 		break;
 
 	case BIOCSETEVENTHANDLE:
@@ -1858,6 +1851,7 @@ NPF_IoControl(
 					Open->MyPacketFilter ^= NDIS_PACKET_TYPE_ALL_LOCAL;
 					Open->MyPacketFilter |= NDIS_PACKET_TYPE_DIRECTED | NDIS_PACKET_TYPE_MULTICAST | NDIS_PACKET_TYPE_BROADCAST;
 				}
+
 				// If the new packet filter is the same as the old one, nothing left to do.
 				if (Open->MyPacketFilter == dim)
 				{

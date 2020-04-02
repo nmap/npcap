@@ -428,6 +428,48 @@ NPF_Read(
 }
 
 //-------------------------------------------------------------------
+VOID
+NPF_TapExForEachOpen(
+	IN POPEN_INSTANCE Open,
+	IN PNET_BUFFER_LIST pNetBufferLists
+	);
+
+VOID
+NPF_DoTap(
+	PNPCAP_FILTER_MODULE pFiltMod,
+	PNET_BUFFER_LIST NetBufferLists,
+	POPEN_INSTANCE pOpenOriginating
+	)
+{
+	PSINGLE_LIST_ENTRY Curr;
+	POPEN_INSTANCE TempOpen;
+
+	// If this is a Npcap-sent packet being looped back, then it has already been captured.
+	if (NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
+			&& NetBufferLists->NdisPoolHandle == pFiltMod->PacketPool)
+	{
+		return;
+	}
+
+	/* Lock the group */
+	NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
+
+	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
+	{
+		TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+		if (TempOpen->OpenStatus == OpenRunning)
+		{
+			// If this instance originated the packet and doesn't want to see it, don't capture.
+			if (!(TempOpen == pOpenOriginating && TempOpen->SkipSentPackets))
+			{
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+			}
+		}
+	}
+	/* Release the spin lock no matter what. */
+	NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
+	return;
+}
 
 _Use_decl_annotations_
 VOID
@@ -439,10 +481,6 @@ NPF_SendEx(
 	)
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
-	PSINGLE_LIST_ENTRY Curr;
-	POPEN_INSTANCE		TempOpen;
-	PVOID i = 0;
-	PVOID j = 0;
 
 	TRACE_ENTER();
 
@@ -451,19 +489,7 @@ NPF_SendEx(
 	if (pFiltMod->Loopback == FALSE)
 	{
 #endif
-		/* Lock the group */
-		NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
-
-		for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-		{
-			TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-			if (TempOpen->OpenStatus == OpenRunning)
-			{
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
-			}
-		}
-		/* Release the spin lock no matter what. */
-		NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
+		NPF_DoTap(pFiltMod, NetBufferLists, NULL);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif
@@ -506,20 +532,7 @@ NPF_TapEx(
 	if (pFiltMod->Loopback == FALSE)
 	{
 #endif
-		/* Lock the group */
-		NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
-
-		for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-		{
-			TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-			if (TempOpen->OpenStatus == OpenRunning)
-			{
-				//let every group adapter receive the packets
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
-			}
-		}
-		/* Release the spin lock no matter what. */
-		NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
+		NPF_DoTap(pFiltMod, NetBufferLists, NULL);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif

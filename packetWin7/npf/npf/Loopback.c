@@ -310,8 +310,6 @@ NPF_TapLoopback(
     ULONG FirstMDLLen = 0;
     PUCHAR pTmpBuf = NULL;
     PMDL pMdl = NULL;
-	PSINGLE_LIST_ENTRY Curr = NULL;
-	POPEN_INSTANCE TempOpen = NULL;
 
 	pLoopbackFilter = NPF_GetLoopbackFilterModule();
 	if (pLoopbackFilter && NPF_StartUsingBinding(pLoopbackFilter)) {
@@ -420,18 +418,8 @@ NPF_TapLoopback(
 			}
 
 
-			/* Lock the group */
-			NdisAcquireSpinLock(&pLoopbackFilter->OpenInstancesLock);
-			for (Curr = pLoopbackFilter->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-			{
-				TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-				if (TempOpen->OpenStatus == OpenRunning)
-				{
-					//let every group adapter receive the packets
-					NPF_TapExForEachOpen(TempOpen, pFakeNbl);
-				}
-			}
-			NdisReleaseSpinLock(&pLoopbackFilter->OpenInstancesLock);
+			// TODO: handle SkipSentPackets?
+			NPF_DoTap(pLoopbackFilter, pFakeNbl, NULL);
 		} while (0);
 
 		if (pFakeNbl != NULL) {
@@ -626,8 +614,6 @@ NPF_NetworkClassifyInbound(
 	PNET_BUFFER_LIST pClonedNetBufferList = NULL;
 	PNPCAP_FILTER_MODULE pLoopbackFilter = NULL;
 	UCHAR pPacketData[ETHER_HDR_LEN] = { 0 };
-	PSINGLE_LIST_ENTRY Curr = NULL;
-	POPEN_INSTANCE TempOpen = NULL;
 
 	UNREFERENCED_PARAMETER(classifyContext);
 	UNREFERENCED_PARAMETER(filter);
@@ -759,18 +745,8 @@ NPF_NetworkClassifyInbound(
 				}
 
 
-				/* Lock the group */
-				NdisAcquireSpinLock(&pLoopbackFilter->OpenInstancesLock);
-				for (Curr = pLoopbackFilter->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-				{
-					TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-					if (TempOpen->OpenStatus == OpenRunning)
-					{
-						//let every group adapter receive the packets
-						NPF_TapExForEachOpen(TempOpen, pClonedNetBufferList);
-					}
-				}
-				NdisReleaseSpinLock(&pLoopbackFilter->OpenInstancesLock);
+				// TODO: handle SkipSentPackets?
+				NPF_DoTap(pLoopbackFilter, pClonedNetBufferList, NULL);
 			} while (0);
 			NPF_StopUsingBinding(pLoopbackFilter);
 		}

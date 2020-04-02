@@ -994,22 +994,23 @@ DRIVER_DISPATCH NPF_CloseAdapter;
 
 
 /*!
-  \brief Callback invoked by NPF_TapEx() when a packet arrives from the network.
-  \param Open Pointer to an OPEN_INSTANCE structure to which the packets are destined.
+  \brief Capture a NBL for all OpenInstances on an adapter.
+  \param pFiltMod Pointer to a filter module where the packets should be captured
   \param pNetBufferLists A List of NetBufferLists to receive.
+  \param pOpenOriginating A pointer to the OpenInstance that originated/injected these packets so SkipSentPackets can be honored. NULL if not applicable.
 
-  NPF_TapExForEachOpen() is called by the underlying NIC for every incoming packet. It is the most important and one of
+  NPF_DoTap() is called for every incoming and outgoing packet. It is the most important and one of
   the most complex functions of NPF: it executes the filter, runs the statistical engine (if the instance is in
-  statistical mode), gathers the timestamp, moves the packet in the buffer. NPF_tap() is the only function,
+  statistical mode), gathers the timestamp, moves the packet in the buffer. NPF_DoTap() is the only function,
   along with the filtering ones, that is executed for every incoming packet, therefore it is carefully
   optimized.
 */
 VOID
-NPF_TapExForEachOpen(
-	IN POPEN_INSTANCE Open,
-	IN PNET_BUFFER_LIST pNetBufferLists
+NPF_DoTap(
+	PNPCAP_FILTER_MODULE pFiltMod,
+	PNET_BUFFER_LIST NetBufferLists,
+	POPEN_INSTANCE pOpenOriginating
 	);
-
 
 /*!
   \brief Handles the IOCTL calls.
