@@ -21,9 +21,6 @@
     <ClCompile Include="..\netcfgapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\NpfImExt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Packet32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,9 +39,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\netcfgapi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\NpfImExt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Packet32-Int.h">

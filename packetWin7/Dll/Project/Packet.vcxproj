@@ -812,7 +812,6 @@
   <ItemGroup>
     <ClCompile Include="..\AdInfo.cpp" />
     <ClCompile Include="..\netcfgapi.cpp" />
-    <ClCompile Include="..\NpfImExt.cpp" />
     <ClCompile Include="..\Packet32.cpp" />
     <ClCompile Include="..\ProtInstall.cpp" />
     <ClCompile Include="..\WanPacket\WanPacket.cpp">
@@ -834,7 +833,6 @@
   <ItemGroup>
     <ClInclude Include="..\debug.h" />
     <ClInclude Include="..\netcfgapi.h" />
-    <ClInclude Include="..\NpfImExt.h" />
     <ClInclude Include="..\Packet32-Int.h" />
     <ClInclude Include="..\ProtInstall.h" />
     <ClInclude Include="..\strsafe.h" />

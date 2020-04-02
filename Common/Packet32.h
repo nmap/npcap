@@ -277,7 +277,7 @@ typedef WAN_ADAPTER* PWAN_ADAPTER; ///< Describes an opened wan (dialup, VPN...)
 #define INFO_FLAG_DAG_FILE			6	///< Flag for ADAPTER_INFO: this is a DAG file
 #define INFO_FLAG_DONT_EXPORT		8	///< Flag for ADAPTER_INFO: when this flag is set, the adapter will not be listed or openend by winpcap. This allows to prevent exporting broken network adapters, like for example FireWire ones.
 #define INFO_FLAG_AIRPCAP_CARD		16	///< Flag for ADAPTER_INFO: this is an airpcap card
-#define INFO_FLAG_NPFIM_DEVICE		32
+#define INFO_FLAG_NPFIM_DEVICE		32 /// NPFIM device, not supported
 
 /*!
   \brief Describes an opened network adapter.
@@ -308,10 +308,6 @@ typedef struct _ADAPTER
 #ifdef HAVE_AIRPCAP_API
 	PAirpcapHandle AirpcapAd;
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_NPFIM_API
-	void* NpfImHandle;
-#endif // HAVE_NPFIM_API
 
 #ifdef HAVE_DAG_API
 	dagc_t* pDagCard;			///< Pointer to the dagc API adapter descriptor for this adapter

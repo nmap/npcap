@@ -86,10 +86,6 @@
 // opening of firewire adapters 
 #define FIREWIRE_SUBSTR L"1394"
 
-#ifdef HAVE_NPFIM_API
-#include "NpfImExt.h"
-#endif //HAVE_NPFIM_API
-
 #ifdef __MINGW32__
 #ifdef __MINGW64__
 #include <ntddndis.h>
