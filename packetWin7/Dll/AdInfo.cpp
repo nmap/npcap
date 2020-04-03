@@ -1542,7 +1542,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
 		// Allocate a descriptor for this adapter
 		//			
 		//here we do not acquire the mutex, since we are not touching the list, yet.
-		TmpAdInfo = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
+		TmpAdInfo = (PADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
 		if (TmpAdInfo == NULL) 
 		{
 			TRACE_PRINT("PacketAddAdapterDag: GlobalAlloc Failed");

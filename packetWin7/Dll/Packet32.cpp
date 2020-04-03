@@ -2774,7 +2774,7 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
 		// g_PAirpcapRead always returns immediately.
 		//
 		res = (BOOLEAN)g_PAirpcapRead(AdapterObject->AirpcapAd, 
-				lpPacket->Buffer, 
+				(PUCHAR) lpPacket->Buffer, 
 				lpPacket->Length, 
 				&lpPacket->ulBytesReceived);
 
@@ -2854,7 +2854,7 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 	{
 		if(g_PAirpcapWrite)
 		{
-			Result = (BOOLEAN)g_PAirpcapWrite(AdapterObject->AirpcapAd, lpPacket->Buffer, lpPacket->Length);
+			Result = (BOOLEAN)g_PAirpcapWrite(AdapterObject->AirpcapAd, (PCHAR) lpPacket->Buffer, lpPacket->Length);
 			
 			TRACE_EXIT();
 			return Result;
