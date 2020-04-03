@@ -130,10 +130,6 @@ map<string, int> g_nbAdapterMonitorModes;							// The states for all the wirele
 #pragma message ("Compiling Packet.dll with support for DAG cards")
 #endif
 
-#ifdef HAVE_IPHELPER_API
-#pragma message ("Compiling Packet.dll with support from IP helper API for API addresses")
-#endif
-
 #ifndef UNUSED
 #define UNUSED(_x) (_x)
 #endif
@@ -300,16 +296,6 @@ BOOL initWlanFunctions()
 	TRACE_EXIT();
 	return bRet;
 }
-
-#ifdef HAVE_IPHELPER_API
-typedef ULONG (WINAPI *GAAHandler)(
-	_In_    ULONG                 Family,
-	_In_    ULONG                 Flags,
-	_In_    PVOID                 Reserved,
-	_Inout_ PIP_ADAPTER_ADDRESSES AdapterAddresses,
-	_Inout_ PULONG                SizePointer);
-GAAHandler g_GetAdaptersAddressesPointer = NULL;
-#endif // HAVE_IPHELPER_API
 
 //
 // Dynamic dependencies variables and declarations
@@ -1073,10 +1059,6 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 */
 VOID PacketLoadLibrariesDynamically()
 {
-#ifdef HAVE_IPHELPER_API
-	HMODULE IPHMod;
-#endif // HAVE_IPHELPER_API
-
 #ifdef HAVE_AIRPCAP_API
 	HMODULE AirpcapLib;
 #endif // HAVE_DAG_API	
@@ -1104,18 +1086,6 @@ VOID PacketLoadLibrariesDynamically()
 		return;
 	}
 
-	//
-	// Locate GetAdaptersAddresses dinamically since it is not present in Win2k
-	//
-
-#ifdef HAVE_IPHELPER_API
-	IPHMod = GetModuleHandle(TEXT("Iphlpapi"));
-	if (IPHMod != NULL)
-	{
-		g_GetAdaptersAddressesPointer = (GAAHandler) GetProcAddress(IPHMod ,"GetAdaptersAddresses");
-	}
-#endif // HAVE_IPHELPER_API
-	
 #ifdef HAVE_AIRPCAP_API
 	/* We dinamically load the airpcap library in order link it only when it's present on the system */
 	if((AirpcapLib =  LoadLibrarySafe(TEXT("airpcap.dll"))) == NULL)

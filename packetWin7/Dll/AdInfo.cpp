@@ -111,22 +111,13 @@
 static BOOLEAN PacketAddFakeNdisWanAdapter();
 extern BOOLEAN g_bLoopbackSupport;
 
-#ifdef HAVE_IPHELPER_API
 static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA);
-#endif
 
 #define BUFSIZE 512
 PADAPTER_INFO g_AdaptersInfoList = NULL;				///< Head of the adapter information list. This list is populated when packet.dll is linked by the application.
 HANDLE g_AdaptersInfoMutex = NULL;						///< Mutex that protects the adapter information list. NOTE: every API that takes an ADAPTER_INFO as parameter assumes that it has been called with the mutex acquired.
 CHAR g_LoopbackAdapterNameForDLTNull[BUFSIZE] = "";		///< The name of "Npcap Loopback Adapter", used for recording the NdisMediumNull link type for this adapter.
 
-typedef ULONG (WINAPI *GAAHandler)(
-	_In_    ULONG                 Family,
-	_In_    ULONG                 Flags,
-	_In_    PVOID                 Reserved,
-	_Inout_ PIP_ADAPTER_ADDRESSES AdapterAddresses,
-	_Inout_ PULONG                SizePointer);
-extern GAAHandler g_GetAdaptersAddressesPointer;
 #define ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE 15000
 #define ADAPTERS_ADDRESSES_MAX_TRIES 3
 
@@ -267,14 +258,12 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 	
 	TRACE_ENTER();
 	
-#ifdef HAVE_IPHELPER_API
 	if (IsIPv4Enabled(AdapterNameA) == FALSE)
 	{
 		*ppItems = NULL;
 		TRACE_EXIT();
 		return TRUE;
 	}
-#endif
 
 	StringCchPrintfW(AdapterNameW, ADAPTER_NAME_LENGTH, L"%S", AdapterNameA);
 
@@ -589,8 +578,6 @@ fail:
     return FALSE;
 }
 
-#ifdef HAVE_IPHELPER_API
-
 static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 {
 	ULONG Iterations;
@@ -604,14 +591,6 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 
 	TRACE_ENTER();
 
-	if(g_GetAdaptersAddressesPointer == NULL)	
-	{
-		TRACE_PRINT("GetAdaptersAddressesPointer not available on the system, simply returning success...");
-
-		TRACE_EXIT();
-		return TRUE;	// GetAdaptersAddresses() not present on this system,
-	}											// return immediately.
-
 	BufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
 	AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
 	if (AdBuffer == NULL)
@@ -623,7 +602,7 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
 	{
 
-		RetVal = g_GetAdaptersAddressesPointer(AF_INET, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
+		RetVal = GetAdaptersAddresses(AF_INET, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
 		if (RetVal == ERROR_BUFFER_OVERFLOW)
 		{
 			TRACE_PRINT("IsIPv4Enabled: GetAdaptersAddresses Too small buffer");
@@ -692,8 +671,6 @@ static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA)
 
   \note the structure pointed by AdInfo must be initialized the an properly filled. In particular, AdInfo->Name
   must be a valid capture device name.
-  \note uses the GetAdaptersAddresses() Ip Helper API function, so it works only on systems where IP Helper API
-  provides it (WinXP and successive).
   \note we suppose that we are called after having acquired the g_AdaptersInfoMutex mutex
 */
 static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
@@ -715,14 +692,6 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 
 	TRACE_ENTER();
 
-	if(g_GetAdaptersAddressesPointer == NULL)	
-	{
-		TRACE_PRINT("GetAdaptersAddressesPointer not available on the system, simply returning success...");
-
-		TRACE_EXIT();
-		return TRUE;	// GetAdaptersAddresses() not present on this system,
-	}											// return immediately.
-
 	BufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
 	AdBuffer = (PIP_ADAPTER_ADDRESSES)GlobalAllocPtr(GMEM_MOVEABLE, BufLen);
 	if (AdBuffer == NULL)
@@ -733,7 +702,7 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 	}
 	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
 	{
-		RetVal = g_GetAdaptersAddressesPointer(AF_INET6, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
+		RetVal = GetAdaptersAddresses(AF_INET6, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
 		if (RetVal == ERROR_BUFFER_OVERFLOW)
 		{
 			TRACE_PRINT("PacketAddIP6Addresses: GetAdaptersAddresses Too small buffer");
@@ -836,7 +805,6 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 	TRACE_EXIT();
 	return TRUE;
 }
-#endif // HAVE_IPHELPER_API
 
 /*!
   \brief Check if a string contains the "1394" substring
@@ -860,7 +828,6 @@ BOOLEAN IsFireWire(TCHAR *AdapterDesc)
 	return FALSE;
 }
 
-#ifdef HAVE_IPHELPER_API
 
 /*!
   \brief Adds an entry to the adapter description list, gathering its values from the IP Helper API.
@@ -1103,8 +1070,6 @@ static BOOLEAN PacketGetAdaptersIPH()
 	return TRUE;
 }
 
-#endif // HAVE_IPHELPER_API
-
 
 /*!
   \brief Adds an entry to the adapter description list.
@@ -1312,13 +1277,11 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 				pCursor->Next = pAddressesFromRegistry;
 			}
 		}
-#ifdef HAVE_IPHELPER_API
 		// Now Add IPv6 Addresses
 		if(!PacketAddIP6Addresses(TmpAdInfo))
 		{
 			TRACE_PRINT("No IPv6 addresses added with IPHelper API");
 		}
-#endif // HAVE_IPHELPER_API
 		
 		TmpAdInfo->Flags = INFO_FLAG_NDIS_ADAPTER;	// NdisWan adapters are not exported by the NPF driver,
 													// therefore it's impossible to see them here
@@ -1907,9 +1870,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 		return TRUE;
 	}
 
-#ifdef HAVE_IPHELPER_API
 	PacketGetAdaptersIPH();
-#endif //HAVE_IPHELPER_API
 
 #ifdef HAVE_AIRPCAP_API
 	if (g_PAirpcapGetDeviceList != NULL)
@@ -1990,13 +1951,11 @@ void PacketPopulateAdaptersInfoList()
 		TRACE_PRINT("PacketPopulateAdaptersInfoList: registry scan for adapters failed!");
 	}
 
-#ifdef HAVE_IPHELPER_API
 	if(!PacketGetAdaptersIPH())
 	{
 		// IP Helper API not present. We are under WinNT 4 or TCP/IP is not installed
 		TRACE_PRINT("PacketPopulateAdaptersInfoList: failed to get adapters from the IP Helper API!");
 	}
-#endif //HAVE_IPHELPER_API
 
 	if (g_bLoopbackSupport) {
 		if (!PacketAddAdapterNPF(FAKE_LOOPBACK_ADAPTER_NAME, 0))

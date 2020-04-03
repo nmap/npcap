@@ -269,7 +269,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\driver;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;HAVE_AIRPCAP_API;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;HAVE_AIRPCAP_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -296,7 +296,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\driver;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;HAVE_AIRPCAP_API;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;HAVE_AIRPCAP_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -319,7 +319,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release No NetMon|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\driver;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;HAVE_AIRPCAP_API;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;HAVE_AIRPCAP_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -345,7 +345,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS; ;HAVE_AIRPCAP_API;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS; ;HAVE_AIRPCAP_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -368,7 +368,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release No NetMon LOG_TO_FILE|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\driver;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;HAVE_AIRPCAP_API;HAVE_IPHELPER_API;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;HAVE_AIRPCAP_API;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -394,7 +394,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\driver;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS; ;HAVE_AIRPCAP_API;HAVE_IPHELPER_API;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS; ;HAVE_AIRPCAP_API;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -419,7 +419,7 @@
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDIS6X;_X86_;WIN32;_DBG;_WINDOWS;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;_X86_;WIN32;_DBG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -451,7 +451,7 @@
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDIS6X;_AMD64_;_DBG;_WINDOWS;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;_AMD64_;_DBG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
@@ -473,7 +473,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release No NetMon and AirPcap|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDIS6X;_X86_;WIN32;NDEBUG;_WINDOWS;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;_X86_;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -496,7 +496,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OEM Release No NetMon and AirPcap|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;_X86_;WIN32;NDEBUG;_WINDOWS;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;_X86_;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -519,7 +519,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release No NetMon and AirPcap|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDIS6X;_AMD64_;NDEBUG;_WINDOWS;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;_AMD64_;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <ResourceCompile>
@@ -538,7 +538,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OEM Release No NetMon and AirPcap|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\Common;..\..\npf\npf;..\..\..\..\AirPcap_devpack\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;_AMD64_;NDEBUG;_WINDOWS;HAVE_IPHELPER_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;_AMD64_;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <ResourceCompile>
