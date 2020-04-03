@@ -130,6 +130,11 @@ map<string, int> g_nbAdapterMonitorModes;							// The states for all the wirele
 #pragma message ("Compiling Packet.dll with support for DAG cards")
 #endif
 
+#if defined(HAVE_AIRPCAP_API) || defined(HAVE_DAG_API)
+#define LOAD_OPTIONAL_LIBRARIES
+VOID PacketLoadLibrariesDynamically();
+#endif
+
 #ifndef UNUSED
 #define UNUSED(_x) (_x)
 #endif
@@ -297,11 +302,13 @@ BOOL initWlanFunctions()
 	return bRet;
 }
 
+#ifdef LOAD_OPTIONAL_LIBRARIES
 //
 // Dynamic dependencies variables and declarations
 //
 volatile LONG g_DynamicLibrariesLoaded = 0;
 HANDLE g_DynamicLibrariesMutex;
+#endif
 
 #ifdef HAVE_AIRPCAP_API
 // We load dinamically the dag library in order link it only when it's present on the system
@@ -980,8 +987,10 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 		// Create the mutex that will protect the adapter information list
 		g_AdaptersInfoMutex = CreateMutex(NULL, FALSE, NULL);
 		
+#ifdef LOAD_OPTIONAL_LIBRARIES
 		// Create the mutex that will protect the PacketLoadLibrariesDynamically() function		
 		g_DynamicLibrariesMutex = CreateMutex(NULL, FALSE, NULL);
+#endif
 
 		//
 		// Retrieve packet.dll version information from the file
@@ -1049,6 +1058,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 }
 
 
+#ifdef LOAD_OPTIONAL_LIBRARIES
 /*! 
   \brief This function is used to dynamically load some of the libraries winpcap depends on, 
    and that are not guaranteed to be in the system
@@ -1166,6 +1176,7 @@ VOID PacketLoadLibrariesDynamically()
 	TRACE_EXIT();
 	return;
 }
+#endif
 
 /*
 BOOLEAN QueryWinPcapRegistryStringA(CHAR *SubKeyName,
@@ -2359,10 +2370,12 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	
 	TRACE_PRINT2("Packet DLL version %hs, Driver version %hs", PacketLibraryVersion, PacketDriverVersion);
 
+#ifdef LOAD_OPTIONAL_LIBRARIES
 	//
 	// Check the presence on some libraries we rely on, and load them if we found them
 	//
 	PacketLoadLibrariesDynamically();
+#endif
 
 	//
 	// Ugly heuristic to detect if the adapter is ASCII
@@ -3965,10 +3978,12 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	TRACE_PRINT1("PacketGetAdapterNames: BufferSize=%u", *BufferSize);
 
 
+#ifdef LOAD_OPTIONAL_LIBRARIES
 	//
 	// Check the presence on some libraries we rely on, and load them if we found them
 	//f
 	PacketLoadLibrariesDynamically();
+#endif
 
 	//d
 	// Create the adapter information list

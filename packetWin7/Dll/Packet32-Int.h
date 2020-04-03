@@ -132,7 +132,6 @@ ADAPTER_INFO, *PADAPTER_INFO;
 //
 // Internal functions
 //
-VOID PacketLoadLibrariesDynamically();
 void PacketPopulateAdaptersInfoList();
 BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLen);
 PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName);
