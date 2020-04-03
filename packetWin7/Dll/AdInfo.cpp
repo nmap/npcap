@@ -100,10 +100,6 @@
 #include "Packet32-Int.h"
 #include "debug.h"
 
-#ifdef HAVE_WANPACKET_API
-#include "wanpacket/wanpacket.h"
-#endif //HAVE_WANPACKET_API
-
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <windowsx.h>
@@ -925,12 +921,7 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 	
 	if(IphAd->Type == IF_TYPE_PPP || IphAd->Type == IF_TYPE_SLIP)
 	{
-#ifdef HAVE_WANPACKET_API
-		if (!WanPacketTestAdapter())
-			goto SkipAd;
-#else
 		goto SkipAd;
-#endif
 	
 	}
 	else
@@ -1845,10 +1836,6 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	PADAPTER_INFO TAdInfo, PrevAdInfo;
 
-#ifdef HAVE_WANPACKET_API
-	CHAR	FakeNdisWanAdapterName[MAX_WINPCAP_KEY_CHARS] = FAKE_NDISWAN_ADAPTER_NAME;
-#endif
-
 //  
 //	Old registry based WinPcap names
 //
@@ -1875,14 +1862,6 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	{
 		if(strcmp(TAdInfo->Name, AdapterName) == 0)
 		{
-#ifdef HAVE_WANPACKET_API
-			if (strcmp(AdapterName, FakeNdisWanAdapterName) == 0)
-			{
-				ReleaseMutex(g_AdaptersInfoMutex);
-				TRACE_EXIT();
-				return TRUE;
-			}
-#endif
 			if(TAdInfo == g_AdaptersInfoList)
 			{
 				g_AdaptersInfoList = TAdInfo->Next;
@@ -1942,10 +1921,6 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 		TRACE_PRINT("AirPcap extension not available");
 	}
 #endif
-
-#ifdef HAVE_WANPACKET_API
-	PacketAddFakeNdisWanAdapter();
-#endif //HAVE_WANPACKET_API
 
 	if (g_bLoopbackSupport) {
 		PacketAddAdapterNPF(FAKE_LOOPBACK_ADAPTER_NAME, 0);
@@ -2023,13 +1998,6 @@ void PacketPopulateAdaptersInfoList()
 	}
 #endif //HAVE_IPHELPER_API
 
-#ifdef HAVE_WANPACKET_API
-	if (!PacketAddFakeNdisWanAdapter())
-	{
-		TRACE_PRINT("PacketPopulateAdaptersInfoList: adding fake NdisWan adapter failed.");
-	}
-#endif // HAVE_WANPACKET_API
-
 	if (g_bLoopbackSupport) {
 		if (!PacketAddAdapterNPF(FAKE_LOOPBACK_ADAPTER_NAME, 0))
 		{
@@ -2061,84 +2029,3 @@ void PacketPopulateAdaptersInfoList()
 	ReleaseMutex(g_AdaptersInfoMutex);
 	TRACE_EXIT();
 }
-
-#ifdef HAVE_WANPACKET_API
-
-static BOOLEAN PacketAddFakeNdisWanAdapter()
-{
-	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
-	PADAPTER_INFO TmpAdInfo, SAdInfo;
-//  
-//	Old registry based WinPcap names
-//
-//	CHAR DialupName[MAX_WINPCAP_KEY_CHARS];
-//	CHAR DialupDesc[MAX_WINPCAP_KEY_CHARS];
-//	UINT RegQueryLen;
-	CHAR DialupName[MAX_WINPCAP_KEY_CHARS] = FAKE_NDISWAN_ADAPTER_NAME;
-	CHAR DialupDesc[MAX_WINPCAP_KEY_CHARS] = FAKE_NDISWAN_ADAPTER_DESCRIPTION;
-
-	TRACE_ENTER();
-
-//  
-//	Old registry based WinPcap names
-//
-//	//
-//	// Get name and description of the wan adapter from the registry
-//	//
-//	RegQueryLen = sizeof(DialupName)/sizeof(DialupName[0]);
-//	if (QueryWinPcapRegistryStringA(NPF_FAKE_NDISWAN_ADAPTER_NAME_REG_KEY, DialupName, &RegQueryLen, FAKE_NDISWAN_ADAPTER_NAME) == FALSE && RegQueryLen == 0)
-//		return FALSE;
-//	
-//	RegQueryLen = sizeof(DialupDesc)/sizeof(DialupDesc[0]);
-//	if (QueryWinPcapRegistryStringA(NPF_FAKE_NDISWAN_ADAPTER_DESC_REG_KEY, DialupDesc, &RegQueryLen, FAKE_NDISWAN_ADAPTER_DESCRIPTION) == FALSE && RegQueryLen == 0)
-//		return FALSE;
-
-	// Scan the adapters list to see if this one is already present
-	if (!WanPacketTestAdapter())
-	{
- 		TRACE_PRINT("Cannot add the wan adapter, since it cannot be opened.");
-  		//the adapter cannot be opened, we do not list it, but we return t
- 		TRACE_EXIT();
-  		return FALSE;
-	}
-
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-	
-	for(SAdInfo = g_AdaptersInfoList; SAdInfo != NULL; SAdInfo = SAdInfo->Next)
-	{
-		if(strcmp(DialupName, SAdInfo->Name) == 0)
-		{
-			TRACE_PRINT("PacketAddFakeNdisWanAdapter: Adapter already present in the list");
-			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT();
-			return TRUE;
-		}
-	}
-
-	TmpAdInfo = (PADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
-	if (TmpAdInfo == NULL) 
-	{
-		TRACE_PRINT("PacketAddFakeNdisWanAdapter: GlobalAlloc Failed allocating memory for the AdInfo structure");
-		ReleaseMutex(g_AdaptersInfoMutex);
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), DialupName, _TRUNCATE);
-	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), DialupDesc, _TRUNCATE);
-	TmpAdInfo->LinkLayer.LinkType = NdisMedium802_3;
-	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
-	TmpAdInfo->Flags = INFO_FLAG_NDISWAN_ADAPTER;
-	memset(TmpAdInfo->MacAddress,'\0',6);
-	TmpAdInfo->MacAddressLen = 6;
-	TmpAdInfo->pNetworkAddresses = NULL;
-
-	TmpAdInfo->Next = g_AdaptersInfoList;
-	g_AdaptersInfoList = TmpAdInfo;
-	ReleaseMutex(g_AdaptersInfoMutex);
-
-	TRACE_EXIT();
-	return TRUE;
-}
-
-#endif //HAVE_WANPACKET_API

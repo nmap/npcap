@@ -30,9 +30,6 @@
     <ClCompile Include="..\..\npf\npf\win_bpf_filter.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\WanPacket\WanPacket.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\debug.h">
@@ -48,9 +45,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\strsafe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\WanPacket\WanPacket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
