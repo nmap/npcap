@@ -21,8 +21,8 @@ mkdir %WPDPACKDESTDIR%\Lib\x64	>nul 2>nul
 
 xcopy /v /Y "%WPCAPBUILDDIR32%\Release\wpcap.lib" %WPDPACKDESTDIR%\Lib\ || goto :fail
 xcopy /v /Y "%WPCAPBUILDDIR64%\Release\wpcap.lib" %WPDPACKDESTDIR%\Lib\x64 || goto :fail
-xcopy /v /Y "%PACKETBUILDDIR%\Release No NetMon and AirPcap\packet.lib" %WPDPACKDESTDIR%\Lib\ || goto :fail
-xcopy /v /Y "%PACKETBUILDDIR%\x64\Release No NetMon and AirPcap\packet.lib" %WPDPACKDESTDIR%\Lib\x64 || goto :fail
+xcopy /v /Y "%PACKETBUILDDIR%\Release\packet.lib" %WPDPACKDESTDIR%\Lib\ || goto :fail
+xcopy /v /Y "%PACKETBUILDDIR%\x64\Release\packet.lib" %WPDPACKDESTDIR%\Lib\x64 || goto :fail
 
 echo Folder \Lib created successfully
 
