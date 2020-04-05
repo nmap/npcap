@@ -1,4 +1,36 @@
 ﻿
+## Npcap 0.9990 [2020-04-04]
+
+* Improve compatibility with WinPcap's behavior regarding injected traffic.
+  WinPcap uses inefficient loopback to capture all outbound traffic, but allows
+  `PacketSetLoopbackBehavior()` to avoid this for injected traffic. Because of
+  Npcap's more efficient design, injected traffic was never looped back up to
+  protocol drivers, causing problems for some users who relied on this behavior.
+  Now, injected traffic follows the same path as with WinPcap, though ordinary
+  traffic is unaffected. For highest efficiency without loopback, use
+  `PacketSetLoopbackBehavior(PACKET_DISABLE_LOOPBACK)`. Fixes [#1343](https://issues.nmap.org/1343),
+  [#1929](https://issues.nmap.org/1929), and [GNS3/gns3-gui#2936](https://github.com/GNS3/gns3-gui/issues/2936)
+
+* No longer honor `NDIS_PACKET_TYPE_ALL_LOCAL` set via `PacketSetHwFilter()`.
+  This packet filter causes all local traffic to be routed through an unoptimized
+  loopback path within NDIS, which was necessary to capture outgoing traffic in
+  WinPcap but is no longer needed in Npcap. Instead, this value will be treated as
+  `NDIS_PACKET_TYPE_DIRECTED | NDIS_PACKET_TYPE_MULTICAST | NDIS_PACKET_TYPE_BROADCAST`.
+
+* Fix a bug that caused `TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE` to fall back to
+  `TIMESTAMPMODE_QUERYSYSTEMTIME` even when `KeQuerySystemTimePrecise()` was
+  available. Fix by Mauro Levra in [PR#23](https://github.com/nmap/npcap/pull/24).
+
+* Installer will now install an intermediate CA cert that was missing from some
+  systems, which is needed to verify the driver's digital signature. Only
+  affects Windows versions prior to Windows 10.
+
+* Backport a fix from libpcap needed to properly support
+  `NdisMediumWirelessWan`. See [#1573](https://issues.nmap.org/1573).
+
+* Include experimental support for AirPcap cards if `airpcap.dll` (not
+  included) is installed.
+
 ## Npcap 0.9989 [2020-03-19]
 
 * Fix a BSOD crash in `NPF_OpenAdapter` due to reading past the end of a
