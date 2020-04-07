@@ -392,7 +392,7 @@ typedef struct _OPEN_INSTANCE
 											///< reached.
 #endif
 
-	NDIS_SPIN_LOCK			MachineLock;	///< SpinLock that protects the BPF filter and the TME engine, if in use.
+	NDIS_SPIN_LOCK			MachineLock;	///< SpinLock that protects the BPF filter while in use.
 	//
 	// KAFFINITY is used as a bit mask for the affinity in the system. So on every supported OS is big enough for all the CPUs on the system (32 bits on x86, 64 on x64?).
 	// We use its size to compute the max number of CPUs.

@@ -834,11 +834,6 @@ NPF_TapExForEachOpen(
 
 			NdisReleaseSpinLock(&Open->MachineLock);
 
-			//
-			// The MONITOR_MODE (aka TME extensions) is not supported on
-			// 64 bit architectures
-			//
-
 			if (fres == 0)
 			{
 				// Packet not accepted by the filter, ignore it.
