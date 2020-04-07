@@ -418,13 +418,9 @@ NPF_Read(
 			count++;
 		}
 	}
-	{
-		NPF_StopUsingOpenInstance(Open);
-		TRACE_EXIT();
-		EXIT_SUCCESS(copied);
-	}
-
+	NPF_StopUsingOpenInstance(Open);
 	TRACE_EXIT();
+	EXIT_SUCCESS(copied);
 }
 
 //-------------------------------------------------------------------
@@ -829,118 +825,114 @@ NPF_TapExForEachOpen(
 			// Get the whole packet length.
 			TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 
-			do
+			fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
+					NET_BUFFER_FIRST_MDL(pNetBuf),
+					Offset,
+					TotalPacketSize);
+			IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
+
+
+			NdisReleaseSpinLock(&Open->MachineLock);
+
+			//
+			// The MONITOR_MODE (aka TME extensions) is not supported on
+			// 64 bit architectures
+			//
+
+			if (fres == 0)
 			{
+				// Packet not accepted by the filter, ignore it.
+				// return NDIS_STATUS_NOT_ACCEPTED;
+				goto NPF_TapExForEachOpen_End;
+			}
 
+			//if the filter returns -1 the whole packet must be accepted
+			// if (fres == -1 || fres > PacketSize + HeaderBufferSize)
+			//	fres = PacketSize + HeaderBufferSize;
 
-				fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
-						NET_BUFFER_FIRST_MDL(pNetBuf),
-						Offset,
-						TotalPacketSize);
-				IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
+			if (Open->mode & MODE_STAT)
+			{
+				// we are in statistics mode
+				NdisAcquireSpinLock(&Open->CountersLock);
 
+				Open->Npackets.QuadPart++;
 
-				NdisReleaseSpinLock(&Open->MachineLock);
+				if (TotalPacketSize < 60)
+					Open->Nbytes.QuadPart += 60;
+				else
+					Open->Nbytes.QuadPart += TotalPacketSize;
+				// add preamble+SFD+FCS to the packet
+				// these values must be considered because are not part of the packet received from NDIS
+				Open->Nbytes.QuadPart += 12;
 
-				//
-				// The MONITOR_MODE (aka TME extensions) is not supported on
-				// 64 bit architectures
-				//
+				NdisReleaseSpinLock(&Open->CountersLock);
 
-				if (fres == 0)
+				if (!(Open->mode & MODE_DUMP))
 				{
-					// Packet not accepted by the filter, ignore it.
-					// return NDIS_STATUS_NOT_ACCEPTED;
-					goto NPF_TapExForEachOpen_End;
-				}
-
-				//if the filter returns -1 the whole packet must be accepted
-				// if (fres == -1 || fres > PacketSize + HeaderBufferSize)
-				//	fres = PacketSize + HeaderBufferSize;
-
-				if (Open->mode & MODE_STAT)
-				{
-					// we are in statistics mode
-					NdisAcquireSpinLock(&Open->CountersLock);
-
-					Open->Npackets.QuadPart++;
-
-					if (TotalPacketSize < 60)
-						Open->Nbytes.QuadPart += 60;
-					else
-						Open->Nbytes.QuadPart += TotalPacketSize;
-					// add preamble+SFD+FCS to the packet
-					// these values must be considered because are not part of the packet received from NDIS
-					Open->Nbytes.QuadPart += 12;
-
-					NdisReleaseSpinLock(&Open->CountersLock);
-
-					if (!(Open->mode & MODE_DUMP))
-					{
-						//return NDIS_STATUS_NOT_ACCEPTED;
-						goto NPF_TapExForEachOpen_End;
-					}
-				}
-
-				if (Open->Size == 0)
-				{
-					LocalData->Dropped++;
 					//return NDIS_STATUS_NOT_ACCEPTED;
 					goto NPF_TapExForEachOpen_End;
 				}
+			}
+
+			if (Open->Size == 0)
+			{
+				LocalData->Dropped++;
+				//return NDIS_STATUS_NOT_ACCEPTED;
+				goto NPF_TapExForEachOpen_End;
+			}
 
 #ifdef NPCAP_KDUMP
-				if (Open->mode & MODE_DUMP && Open->MaxDumpPacks)
+			if (Open->mode & MODE_DUMP && Open->MaxDumpPacks)
+			{
+				ULONG Accepted = 0;
+				for (i = 0; i < g_NCpu; i++)
+					Accepted += Open->CpuData[i].Accepted;
+
+				if (Accepted > Open->MaxDumpPacks)
 				{
-					ULONG Accepted = 0;
-					for (i = 0; i < g_NCpu; i++)
-						Accepted += Open->CpuData[i].Accepted;
+					// Reached the max number of packets to save in the dump file. Discard the packet and stop the dump thread.
+					Open->DumpLimitReached = TRUE; // This stops the thread
+												   // Awake the dump thread
+					NdisSetEvent(&Open->DumpEvent);
 
-					if (Accepted > Open->MaxDumpPacks)
-					{
-						// Reached the max number of packets to save in the dump file. Discard the packet and stop the dump thread.
-						Open->DumpLimitReached = TRUE; // This stops the thread
-													   // Awake the dump thread
-						NdisSetEvent(&Open->DumpEvent);
+					// Awake the application
+					if (Open->ReadEvent != NULL)
+						KeSetEvent(Open->ReadEvent, 0, FALSE);
 
-						// Awake the application
-						if (Open->ReadEvent != NULL)
-							KeSetEvent(Open->ReadEvent, 0, FALSE);
-
-						//return NDIS_STATUS_NOT_ACCEPTED;
-						goto NPF_TapExForEachOpen_End;
-					}
+					//return NDIS_STATUS_NOT_ACCEPTED;
+					goto NPF_TapExForEachOpen_End;
 				}
+			}
 #endif
 
-				//////////////////////////////COPIA.C//////////////////////////////////////////77
+			//////////////////////////////COPIA.C//////////////////////////////////////////77
 
-				NdisAcquireSpinLock(&LocalData->BufferLock);
+			NdisAcquireSpinLock(&LocalData->BufferLock);
 
-				do
-				{
+			do
+			{
 
-					if (fres > TotalPacketSize || fres == -1)
-						fres = TotalPacketSize;
+				if (fres > TotalPacketSize || fres == -1)
+					fres = TotalPacketSize;
 
-					if (fres + sizeof(struct PacketHeader)
+				if (fres + sizeof(struct PacketHeader)
 #ifdef HAVE_DOT11_SUPPORT
-							+ Dot11RadiotapHeaderSize
+						+ Dot11RadiotapHeaderSize
 #endif
-							> LocalData->Free)
-					{
-						LocalData->Dropped++;
-						IF_LOUD(DbgPrint("LocalData->Dropped++, fres = %d, LocalData->Free = %d\n", fres, LocalData->Free);)
-						// May as well tell the application, even if MinToCopy is not met,
-						// to avoid dropping further packets
-						if (Open->ReadEvent != NULL)
-							KeSetEvent(Open->ReadEvent, 0, FALSE);
-						break;
-					}
+						> LocalData->Free)
+				{
+					LocalData->Dropped++;
+					IF_LOUD(DbgPrint("LocalData->Dropped++, fres = %d, LocalData->Free = %d\n", fres, LocalData->Free);)
+					// May as well tell the application, even if MinToCopy is not met,
+					// to avoid dropping further packets
+					if (Open->ReadEvent != NULL)
+						KeSetEvent(Open->ReadEvent, 0, FALSE);
+					break;
+				}
 
-					UINT iFres = fres;
+				UINT iFres = fres;
 
-					// Disable the IEEE802.1Q VLAN feature for now.
+				// Disable the IEEE802.1Q VLAN feature for now.
 // 					if (withVlanTag)
 // 					{
 // 						// Insert a tag in the case of IEEE802.1Q packet
@@ -953,47 +945,47 @@ NPF_TapExForEachOpen(
 // 						iFres += 4;
 // 					}
 
-					Header = (struct PacketHeader *)(LocalData->Buffer + LocalData->P);
-					LocalData->Accepted++;
-					GET_TIME(&Header->header.bh_tstamp, &Open->start, Open->TimestampMode);
-					Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
+				Header = (struct PacketHeader *)(LocalData->Buffer + LocalData->P);
+				LocalData->Accepted++;
+				GET_TIME(&Header->header.bh_tstamp, &Open->start, Open->TimestampMode);
+				Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
 
-					// DbgPrint("MDL %d\n", BufferLength);
+				// DbgPrint("MDL %d\n", BufferLength);
 
-					Header->header.bh_caplen = 0;
-					Header->header.bh_datalen = TotalPacketSize;
-					Header->header.bh_hdrlen = sizeof(struct bpf_hdr);
+				Header->header.bh_caplen = 0;
+				Header->header.bh_datalen = TotalPacketSize;
+				Header->header.bh_hdrlen = sizeof(struct bpf_hdr);
 
-					LocalData->P += sizeof(struct PacketHeader);
-					if (LocalData->P == Open->Size)
-						LocalData->P = 0;
+				LocalData->P += sizeof(struct PacketHeader);
+				if (LocalData->P == Open->Size)
+					LocalData->P = 0;
 
 #ifdef HAVE_DOT11_SUPPORT
-					if (Dot11RadiotapHeaderSize)
-					{
-						Header->header.bh_caplen += Dot11RadiotapHeaderSize;
-						Header->header.bh_datalen += Dot11RadiotapHeaderSize;
+				if (Dot11RadiotapHeaderSize)
+				{
+					Header->header.bh_caplen += Dot11RadiotapHeaderSize;
+					Header->header.bh_datalen += Dot11RadiotapHeaderSize;
 
-						if (Open->Size - LocalData->P < Dot11RadiotapHeaderSize)
-						{
-							//the Radiotap header will be fragmented in the buffer (aka, it will skip the buffer boundary)
-							ToCopy = Open->Size - LocalData->P;
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, ToCopy);
-							NdisMoveMappedMemory(LocalData->Buffer + 0, Dot11RadiotapHeader + ToCopy, Dot11RadiotapHeaderSize - ToCopy);
-							LocalData->P = Dot11RadiotapHeaderSize - ToCopy;
-						}
-						else
-						{
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, Dot11RadiotapHeaderSize);
-							LocalData->P += Dot11RadiotapHeaderSize;
-						}
-						if (LocalData->P == Open->Size)
-							LocalData->P = 0;
+					if (Open->Size - LocalData->P < Dot11RadiotapHeaderSize)
+					{
+						//the Radiotap header will be fragmented in the buffer (aka, it will skip the buffer boundary)
+						ToCopy = Open->Size - LocalData->P;
+						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, ToCopy);
+						NdisMoveMappedMemory(LocalData->Buffer + 0, Dot11RadiotapHeader + ToCopy, Dot11RadiotapHeaderSize - ToCopy);
+						LocalData->P = Dot11RadiotapHeaderSize - ToCopy;
 					}
+					else
+					{
+						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, Dot11RadiotapHeaderSize);
+						LocalData->P += Dot11RadiotapHeaderSize;
+					}
+					if (LocalData->P == Open->Size)
+						LocalData->P = 0;
+				}
 #endif
 
 
-					// Disable the IEEE802.1Q VLAN feature for now.
+				// Disable the IEEE802.1Q VLAN feature for now.
 // 					if (withVlanTag)
 // 					{
 // 						if (pHeaderBuffer)
@@ -1003,85 +995,83 @@ NPF_TapExForEachOpen(
 // 						}
 // 					}
 
-					// Add MDLs
-					while (pMdl != NULL && iFres > 0)
+				// Add MDLs
+				while (pMdl != NULL && iFres > 0)
+				{
+					UINT CopyLengthForMDL = 0;
+					NdisQueryMdl(
+						pMdl,
+						&pDataLinkBuffer,
+						&BufferLength,
+						NormalPagePriority);
+
+					BufferLength -= Offset;
+					pDataLinkBuffer += Offset;
+
+					CopyLengthForMDL = min(iFres, BufferLength);
+
+					if (LocalData->P == Open->Size)
 					{
-						UINT CopyLengthForMDL = 0;
-						NdisQueryMdl(
-							pMdl,
-							&pDataLinkBuffer,
-							&BufferLength,
-							NormalPagePriority);
-
-						BufferLength -= Offset;
-						pDataLinkBuffer += Offset;
-
-						CopyLengthForMDL = min(iFres, BufferLength);
-
-						if (LocalData->P == Open->Size)
-						{
-							LocalData->P = 0;
-						}
-
-						if (Open->Size - LocalData->P < CopyLengthForMDL)
-						{
-							//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
-							//two copies!!
-							ToCopy = Open->Size - LocalData->P;
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, ToCopy);
-							NdisMoveMappedMemory(LocalData->Buffer + 0, pDataLinkBuffer + ToCopy, CopyLengthForMDL - ToCopy);
-							LocalData->P = CopyLengthForMDL - ToCopy;
-
-							IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
-						}
-						else
-						{
-							NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, CopyLengthForMDL);
-							LocalData->P += CopyLengthForMDL;
-
-							IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
-						}
-
-						Header->header.bh_caplen += CopyLengthForMDL;
-						iFres -= CopyLengthForMDL;
-
-						/* Offset only matters for first MDL. */
-						Offset = 0;
-						NdisGetNextMdl(pMdl, &pMdl);
-					}
-
-					IF_LOUD(DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);)
-
-					if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
-					{
-						//the NewHeader structure, at least, otherwise we skip the producer
 						LocalData->P = 0;
 					}
 
-					/* Update free space.
-					 * Buffer is already locked, so nobody else is updating P and C.
-					 * If P == C, there's no space left, and Size % Size is 0 */
-					LocalData->Free = (Open->Size - LocalData->P + LocalData->C) % Open->Size;
-
-					if (Open->Size - LocalData->Free >= Open->MinToCopy)
+					if (Open->Size - LocalData->P < CopyLengthForMDL)
 					{
+						//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
+						//two copies!!
+						ToCopy = Open->Size - LocalData->P;
+						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, ToCopy);
+						NdisMoveMappedMemory(LocalData->Buffer + 0, pDataLinkBuffer + ToCopy, CopyLengthForMDL - ToCopy);
+						LocalData->P = CopyLengthForMDL - ToCopy;
+
+						IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
+					}
+					else
+					{
+						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, CopyLengthForMDL);
+						LocalData->P += CopyLengthForMDL;
+
+						IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
+					}
+
+					Header->header.bh_caplen += CopyLengthForMDL;
+					iFres -= CopyLengthForMDL;
+
+					/* Offset only matters for first MDL. */
+					Offset = 0;
+					NdisGetNextMdl(pMdl, &pMdl);
+				}
+
+				IF_LOUD(DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);)
+
+				if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
+				{
+					//the NewHeader structure, at least, otherwise we skip the producer
+					LocalData->P = 0;
+				}
+
+				/* Update free space.
+				 * Buffer is already locked, so nobody else is updating P and C.
+				 * If P == C, there's no space left, and Size % Size is 0 */
+				LocalData->Free = (Open->Size - LocalData->P + LocalData->C) % Open->Size;
+
+				if (Open->Size - LocalData->Free >= Open->MinToCopy)
+				{
 #ifdef NPCAP_KDUMP
-						if (Open->mode & MODE_DUMP)
-							NdisSetEvent(&Open->DumpEvent);
-						else
+					if (Open->mode & MODE_DUMP)
+						NdisSetEvent(&Open->DumpEvent);
+					else
 #endif
+					{
+						if (Open->ReadEvent != NULL)
 						{
-							if (Open->ReadEvent != NULL)
-							{
-								KeSetEvent(Open->ReadEvent, 0, FALSE);
-							}
+							KeSetEvent(Open->ReadEvent, 0, FALSE);
 						}
 					}
-				} while (FALSE);
-
-				NdisReleaseSpinLock(&LocalData->BufferLock);
-
+				}
 			} while (FALSE);
+
+			NdisReleaseSpinLock(&LocalData->BufferLock);
 
 NPF_TapExForEachOpen_End:;
 
