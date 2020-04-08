@@ -120,8 +120,6 @@ extern NDIS_HANDLE         FilterDriverObject;
 
 #define IMMEDIATE 1			///< Immediate timeout. Forces a read call to return immediately.
 
-#define NDIS_FLAGS_SKIP_LOOPBACK_W2K		0x400 ///< This is an undocumented flag for NdisSetPacketFlags() that allows to disable loopback reception.
-
 #ifdef NPCAP_KDUMP
 // The following definitions are used to provide compatibility
 // of the dump files with the ones of libpcap
@@ -242,9 +240,8 @@ typedef struct _INTERNAL_REQUEST
 */
 typedef struct _DEVICE_EXTENSION
 {
-	NDIS_STRING	AdapterName;			///< Name of the adapter.
 	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
-										///< to open this adapter through WinPcap.
+										///< to open this adapter through Packet.dll.
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 /*!
