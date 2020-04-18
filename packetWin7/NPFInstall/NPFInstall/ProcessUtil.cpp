@@ -74,15 +74,6 @@ using namespace std;
 #include "LoopbackRename2.h"
 #include "debug.h"
 
-
-tstring itos(int i)
-{
-	TCHAR buf[256];
-	_itot_s(i, buf, 10);
-	tstring res = buf;
-	return res;
-}
-
 BOOL enableDebugPrivilege(BOOL bEnable)
 {
 	HANDLE hToken = nullptr;
@@ -416,7 +407,14 @@ BOOL killProcess_Soft(DWORD dwProcessID)
 	TRACE_ENTER();
 
 	tstring strCommand = _T("taskkill /pid ");
-	strCommand += itos(dwProcessID);
+	TCHAR buf[256];
+	errno_t err = _itot_s(dwProcessID, buf, 10);
+	if (err != 0) {
+		TRACE_PRINT1("Can't convert process ID %d to string.", dwProcessID);
+		TRACE_EXIT();
+		return FALSE;
+	}
+	strCommand += buf;
 
 	TCHAR* cmdLine = new TCHAR[(strCommand.length() + 1) * sizeof(TCHAR)];
 	_tcscpy_s(cmdLine, strCommand.length(), (TCHAR*)strCommand.c_str());
