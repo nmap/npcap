@@ -466,6 +466,9 @@ extern ULONG g_NCpu;
  *  @{
  */
 
+FILTER_SET_OPTIONS NPF_RegisterOptions;
+
+
 /*!
   \brief Callback for NDIS AttachHandler. Not used by NPF.
   \param NdisFilterHandle Specify a handle identifying this instance of the filter. FilterAttach
@@ -721,6 +724,21 @@ FILTER_CANCEL_SEND_NET_BUFFER_LISTS NPF_CancelSendNetBufferLists;
 // 	PVOID                   CancelId
 // 	);
 
+
+/*!
+  \brief Callback for NDIS SetFilterModuleOptionsHandler.
+  \param FilterModuleContext Pointer to the filter context structure.
+  \return NDIS_STATUS_SUCCESS
+		  NDIS_STATUS_RESOURCES
+		  NDIS_STATUS_FAILURE
+
+  This function set the optional handlers for the filter. Not used by NPF
+*/
+FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
+// NDIS_STATUS
+// 	NPF_SetModuleOptions(
+// 	NDIS_HANDLE             FilterModuleContext
+// 	);
 
 /*!
 \brief Get the physical medium of the adapter.
