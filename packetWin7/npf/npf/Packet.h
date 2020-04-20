@@ -568,6 +568,17 @@ FILTER_CANCEL_OID_REQUEST NPF_CancelOidRequest;
 FILTER_OID_REQUEST_COMPLETE NPF_OidRequestComplete;
 
 /*!
+  \brief Callback for NDIS StatusHandler. Not used by NPF
+*/
+FILTER_STATUS NPF_Status;
+// VOID
+// NPF_Status(
+// 	NDIS_HANDLE             FilterModuleContext,
+// 	PNDIS_STATUS_INDICATION StatusIndication
+// 	);
+
+
+/*!
   \brief Device PNP event handler.
   \param FilterModuleContext Pointer to the filter context structure.
   \param NetDevicePnPEvent A Device PnP event.

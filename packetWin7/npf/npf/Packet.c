@@ -614,7 +614,7 @@ NPF_registerLWF(
 	pFChars->ReceiveNetBufferListsHandler = NPF_TapEx;
 	pFChars->DevicePnPEventNotifyHandler = NPF_DevicePnPEventNotify;
 	pFChars->NetPnPEventHandler = NPF_NetPnPEvent;
-	pFChars->StatusHandler = NULL;
+	pFChars->StatusHandler = NPF_Status;
 	pFChars->CancelSendNetBufferListsHandler = NPF_CancelSendNetBufferLists;
 }
 
