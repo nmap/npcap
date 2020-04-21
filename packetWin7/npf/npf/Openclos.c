@@ -2607,7 +2607,8 @@ NPF_PurgeRequests(
 
 	KeAcquireSpinLock(&pFiltMod->WriterRequestLock, &OldIrql);
 	Prev = &pFiltMod->WriterRequestList;
-	for (Curr = pFiltMod->WriterRequestList.Flink; Curr = Curr->Flink; Curr && Curr != &pFiltMod->WriterRequestList)
+	Curr = Prev->Flink;
+	while (Curr && Curr != &pFiltMod->WriterRequestList)
 	{
 		pReq = CONTAINING_RECORD(Curr, NPF_WRITER_REQUEST, WriterRequestEntry);
 		if ( bPurgeAll
@@ -2643,6 +2644,7 @@ NPF_PurgeRequests(
 		{
 			Prev = Curr;
 		}
+		Curr = Curr->Flink;
 	}
 	KeReleaseSpinLock(&pFiltMod->WriterRequestLock, OldIrql);
 }
