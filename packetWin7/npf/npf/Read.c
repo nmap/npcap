@@ -870,20 +870,23 @@ NPF_TapExForEachOpen_End:;
 		} // while (pNetBuf != NULL)
 
 #ifdef HAVE_DOT11_SUPPORT
-		// Free the radiotap header
-		pReq = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
-		if (pReq == NULL)
+		if (Dot11RadiotapHeader)
 		{
-			// Insufficient memory
-			// Can't free it yet or writer will BSOD accessing it.
-			NPF_PurgeRequests(Open->pFiltMod, NULL, Dot11RadiotapHeader, NULL);
-			NdisFreeMemory(Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
-		}
-		else
-		{
-			pReq->pRadiotapHeader = Dot11RadiotapHeader;
-			pReq->FunctionCode = NPF_WRITER_FREE_RADIOTAP;
-			NPF_QueueRequest(Open->pFiltMod, pReq);
+			// Free the radiotap header
+			pReq = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+			if (pReq == NULL)
+			{
+				// Insufficient memory
+				// Can't free it yet or writer will BSOD accessing it.
+				NPF_PurgeRequests(Open->pFiltMod, NULL, Dot11RadiotapHeader, NULL);
+				NdisFreeMemory(Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
+			}
+			else
+			{
+				pReq->pRadiotapHeader = Dot11RadiotapHeader;
+				pReq->FunctionCode = NPF_WRITER_FREE_RADIOTAP;
+				NPF_QueueRequest(Open->pFiltMod, pReq);
+			}
 		}
 #endif
 
