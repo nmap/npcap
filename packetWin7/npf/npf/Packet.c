@@ -1758,7 +1758,7 @@ NPF_IoControl(
 					goto OID_REQUEST_DONE;
 				}
 				// Set the filter module's packet filter to the union of all instances' filters
-				NdisAcquireSpinLock(&Open->pFiltMod->OpenInstancesLock);
+				NdisAcquireReadWriteLock(&Open->pFiltMod->OpenInstancesLock, FALSE, &lockState);
 				// Stash the old filter
 				dim = Open->pFiltMod->MyPacketFilter;
 				Open->pFiltMod->MyPacketFilter = 0;
@@ -1766,7 +1766,7 @@ NPF_IoControl(
 				{
 					Open->pFiltMod->MyPacketFilter |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
 				}
-				NdisReleaseSpinLock(&Open->pFiltMod->OpenInstancesLock);
+				NdisReleaseReadWriteLock(&Open->pFiltMod->OpenInstancesLock, &lockState);
 
 				// If the new packet filter is the same as the old one...
 				if (Open->pFiltMod->MyPacketFilter == dim

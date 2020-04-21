@@ -281,8 +281,10 @@ typedef enum _OPEN_STATE
 typedef struct _NPCAP_FILTER_MODULE
 {
 	SINGLE_LIST_ENTRY FilterModulesEntry;
-    SINGLE_LIST_ENTRY OpenInstances; //GroupHead
-    NDIS_SPIN_LOCK OpenInstancesLock; // GroupLock
+	// List of open instances needs to be write-locked only when inserting/removing.
+	// Ordinary traversal can use faster and concurrent read-lock.
+	SINGLE_LIST_ENTRY OpenInstances; //GroupHead
+	NDIS_RW_LOCK OpenInstancesLock; // GroupLock
 
 	LIST_ENTRY WriterRequestList; // Head of writer thread request queue
 	KSPIN_LOCK WriterRequestLock; // Lock controlling request queue

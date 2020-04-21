@@ -615,7 +615,8 @@ NPF_ReleaseFilterModuleResources(
 	}
 
 	NdisFreeSpinLock(&pFiltMod->OIDLock);
-	NdisFreeSpinLock(&pFiltMod->OpenInstancesLock);
+	// Reminder for upgrade to NDIS 6.20: free this lock!
+	//NdisFreeRWLock(pFiltMod->OpenInstancesLock);
 	NdisFreeSpinLock(&pFiltMod->AdapterHandleLock);
 
 	TRACE_EXIT();
@@ -1013,7 +1014,6 @@ NPF_Cleanup(
 	NDIS_STATUS Status;
 	PIO_STACK_LOCATION IrpSp;
 	LARGE_INTEGER ThreadDelay;
-	ULONG localNumOpenInstances;
 
 	TRACE_ENTER();
 
@@ -1133,7 +1133,14 @@ NPF_AddToGroupOpenArray(
 {
 	TRACE_ENTER();
 
-	NdisInterlockedPushEntryList(&(pFiltMod->OpenInstances), &(pOpen->OpenInstancesEntry), &pFiltMod->OpenInstancesLock);
+	LOCK_STATE lockState;
+
+	// Acquire lock for writing (modify list)
+	NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, TRUE, &lockState);
+
+	PushEntryList(&pFiltMod->OpenInstances, &pOpen->OpenInstancesEntry);
+
+	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
 
 	TRACE_EXIT();
 }
@@ -1185,6 +1192,7 @@ NPF_RemoveFromGroupOpenArray(
 	ULONG BytesProcessed;
 	PVOID pBuffer = NULL;
 	BOOL found = FALSE;
+	LOCK_STATE lockState;
 
 	TRACE_ENTER();
 
@@ -1196,7 +1204,8 @@ NPF_RemoveFromGroupOpenArray(
 		return;
 	}
 
-	NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
+	// Acquire lock for writing (modify list)
+	NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, TRUE, &lockState);
 
 	/* Store the previous combined packet filter */
 	OldPacketFilter = pFiltMod->MyPacketFilter;
@@ -1232,7 +1241,7 @@ NPF_RemoveFromGroupOpenArray(
 		Curr = Prev->Next;
 	}
 
-	NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
+	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
 
 	/* If the packet filter has changed, originate an OID Request to set it to the new value */
 	if (pFiltMod->MyPacketFilter != OldPacketFilter)
@@ -1606,7 +1615,7 @@ NPF_CreateFilterModule(
 		return NULL;
 	}
 
-	NdisAllocateSpinLock(&pFiltMod->OpenInstancesLock);
+	NdisInitializeReadWriteLock(&pFiltMod->OpenInstancesLock);
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;
 
@@ -2896,6 +2905,7 @@ NPF_SetPacketFilter(
 	PSINGLE_LIST_ENTRY Prev = NULL;
 	PSINGLE_LIST_ENTRY Curr = NULL;
 	PNPCAP_FILTER_MODULE pFiltMod = pOpen->pFiltMod;
+	LOCK_STATE lockState;
 	
 	ASSERT(pFiltMod != NULL);
 
@@ -2905,7 +2915,8 @@ NPF_SetPacketFilter(
 		return NDIS_STATUS_SUCCESS;
 	}
 
-	NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
+	// Not modifying list, read-lock
+	NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, FALSE, &lockState);
 	pOpen->MyPacketFilter = PacketFilter;
 	Prev = &(pFiltMod->OpenInstances);
 	Curr = Prev->Next;
@@ -2916,7 +2927,7 @@ NPF_SetPacketFilter(
 		Prev = Curr;
 		Curr = Prev->Next;
 	}
-	NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
+	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
 
 #ifdef HAVE_DOT11_SUPPORT
 	// Check if we should be setting the raw wifi filter

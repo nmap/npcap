@@ -371,6 +371,7 @@ NPF_DoTap(
 {
 	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE TempOpen;
+	LOCK_STATE lockState;
 
 	// If this is a Npcap-sent packet being looped back, then it has already been captured.
 	if (NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
@@ -380,7 +381,8 @@ NPF_DoTap(
 	}
 
 	/* Lock the group */
-	NdisAcquireSpinLock(&pFiltMod->OpenInstancesLock);
+	// Read-only lock since list is not being modified.
+	NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, FALSE, &lockState);
 
 	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 	{
@@ -395,7 +397,7 @@ NPF_DoTap(
 		}
 	}
 	/* Release the spin lock no matter what. */
-	NdisReleaseSpinLock(&pFiltMod->OpenInstancesLock);
+	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
 	return;
 }
 
