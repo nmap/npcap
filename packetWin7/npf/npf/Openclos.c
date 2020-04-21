@@ -2594,7 +2594,7 @@ NPF_PurgeRequests(
 	PLIST_ENTRY Prev = NULL;
 	PNPF_WRITER_REQUEST pReq = NULL;
 
-	BOOLEAN bPurgeAll = !(ppNBL || ppRadiotapHeader || pOpen);
+	BOOLEAN bPurgeAll = !(pNBL || pRadiotapHeader || pOpen);
 
 	KeAcquireSpinLock(&pFiltMod->WriterRequestLock, &OldIrql);
 	Prev = &pFiltMod->WriterRequestList;
@@ -2603,7 +2603,7 @@ NPF_PurgeRequests(
 		pReq = CONTAINING_RECORD(Curr, NPF_WRITER_REQUEST, WriterRequestEntry);
 		if ( bPurgeAll
 			|| (pNBL && pReq->pNBL == pNBL)
-			|| (pRadiotap && pReq->pRadiotapHeader == pRadiotap)
+			|| (pRadiotapHeader && pReq->pRadiotapHeader == pRadiotapHeader)
 			|| (pOpen && pReq->pOpen == pOpen)
 		   )
 		{

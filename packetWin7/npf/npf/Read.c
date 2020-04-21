@@ -873,7 +873,7 @@ NPF_TapExForEachOpen_End:;
 		{
 			// Insufficient memory
 			// Can't free it yet or writer will BSOD accessing it.
-			NPF_PurgeRequests(Open->pFiltMod, NULL, &Dot11RadiotapHeader, NULL);
+			NPF_PurgeRequests(Open->pFiltMod, NULL, Dot11RadiotapHeader, NULL);
 			NdisFreeMemory(Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
 		}
 		else
