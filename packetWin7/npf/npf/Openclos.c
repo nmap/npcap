@@ -554,9 +554,9 @@ NPF_ReleaseOpenInstanceResources(
 
 	// Reminder for upgrade to NDIS 6.20: free this lock!
 	//NdisFreeRWLock(pOpen->BufferLock);
+	//NdisFreeRWLock(pOpen->MachineLock);
 	NdisFreeSpinLock(&pOpen->CountersLock);
 	NdisFreeSpinLock(&pOpen->WriteLock);
-	NdisFreeSpinLock(&pOpen->MachineLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
 
 #ifdef NPCAP_KDUMP
@@ -1502,7 +1502,7 @@ NPF_CreateOpenObject()
 #ifdef NPCAP_KDUMP
 	NdisInitializeEvent(&Open->DumpEvent);
 #endif
-	NdisAllocateSpinLock(&Open->MachineLock);
+	NdisInitializeReadWriteLock(&Open->MachineLock);
 	NdisAllocateSpinLock(&Open->WriteLock);
 	Open->WriteInProgress = FALSE;
 

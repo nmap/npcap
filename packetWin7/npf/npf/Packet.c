@@ -1087,10 +1087,8 @@ NPF_IoControl(
 			break;
 		}
 
-		//
-		// Lock the machine. After this call we are at DISPATCH level
-		//
-		NdisAcquireSpinLock(&Open->MachineLock);
+		// Lock the BPF engine for writing. 
+		NdisAcquireReadWriteLock(&Open->MachineLock, TRUE, &lockState);
 
 		do
 		{
@@ -1157,7 +1155,7 @@ NPF_IoControl(
 		//
 		// release the machine lock and then reset the buffer
 		//
-		NdisReleaseSpinLock(&Open->MachineLock);
+		NdisReleaseReadWriteLock(&Open->MachineLock, &lockState);
 
 		NPF_ResetBufferContents(Open);
 

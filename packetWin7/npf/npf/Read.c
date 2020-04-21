@@ -544,6 +544,7 @@ NPF_TapExForEachOpen(
 	PNET_BUFFER				pNetBuf;
 	PNET_BUFFER				pNextNetBuf;
 	PNPF_WRITER_REQUEST pReq = NULL;
+	LOCK_STATE lockState;
 
 #ifdef HAVE_DOT11_SUPPORT
 	PUCHAR					Dot11RadiotapHeader = NULL;
@@ -765,7 +766,8 @@ NPF_TapExForEachOpen(
 
 			InterlockedIncrement(&Open->Received);
 
-			NdisAcquireSpinLock(&Open->MachineLock);
+			// Lock BPF engine for reading.
+			NdisAcquireReadWriteLock(&Open->MachineLock, FALSE, &lockState);
 
 			// Get the whole packet length.
 			TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
@@ -776,8 +778,7 @@ NPF_TapExForEachOpen(
 					TotalPacketSize);
 			IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
 
-
-			NdisReleaseSpinLock(&Open->MachineLock);
+			NdisReleaseReadWriteLock(&Open->MachineLock, &lockState);
 
 			if (fres == 0)
 			{

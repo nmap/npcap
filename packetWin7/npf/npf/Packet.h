@@ -380,7 +380,7 @@ typedef struct _OPEN_INSTANCE
 											///< reached.
 #endif
 
-	NDIS_SPIN_LOCK			MachineLock;	///< SpinLock that protects the BPF filter while in use.
+	NDIS_RW_LOCK MachineLock; ///< Lock that protects the BPF filter while in use.
 
 	/* Buffer */
 	PUCHAR Buffer; // The kernel ring buffer
