@@ -144,67 +144,12 @@ ULONG g_Dot11SupportMode = 0;
 ULONG g_VlanSupportMode = 0;
 ULONG g_TimestampMode = DEFAULT_TIMESTAMPMODE;
 
-ULONG g_NCpu;
-
 //
 // Global variables
 //
 NDIS_HANDLE         FilterDriverHandle = NULL;			// NDIS handle for filter driver
 NDIS_HANDLE         FilterDriverHandle_WiFi = NULL;		// NDIS handle for WiFi filter driver
 NDIS_HANDLE         FilterDriverObject;					// Driver object for filter driver
-
-typedef ULONG (*NDISGROUPMAXPROCESSORCOUNT)(
-	USHORT Group
-	);
-//KeGetCurrentProcessorNumberEx
-typedef ULONG (*KEGETCURRENTPROCESSORNUMBEREX)(
-	PPROCESSOR_NUMBER ProcNumber
-	);
-
-NDISGROUPMAXPROCESSORCOUNT g_My_NdisGroupMaxProcessorCount = NULL;
-KEGETCURRENTPROCESSORNUMBEREX g_My_KeGetCurrentProcessorNumberEx = NULL;
-
-//-------------------------------------------------------------------
-ULONG
-My_NdisGroupMaxProcessorCount(
-	)
-{
-	ULONG Cpu;
-	if (g_My_NdisGroupMaxProcessorCount) // for NDIS620 and later (Win7 and later).
-	{
-		Cpu = g_My_NdisGroupMaxProcessorCount(ALL_PROCESSOR_GROUPS);
-		if (Cpu > NPF_MAX_CPU_NUMBER - 1)
-		{
-			Cpu = NPF_MAX_CPU_NUMBER - 1;
-		}
-	}
-	else // for NDIS6 (Vista)
-	{
-		Cpu = NdisSystemProcessorCount();
-	}
-	return Cpu;
-}
-
-//-------------------------------------------------------------------
-ULONG
-My_KeGetCurrentProcessorNumber(
-)
-{
-	ULONG Cpu;
-	if (g_My_KeGetCurrentProcessorNumberEx) // for NDIS620 and later (Win7 and later).
-	{
-		Cpu = g_My_KeGetCurrentProcessorNumberEx(NULL);
-		if (Cpu > NPF_MAX_CPU_NUMBER - 1)
-		{
-			Cpu = NPF_MAX_CPU_NUMBER - 1;
-		}
-	}
-	else // for NDIS6 (Vista)
-	{
-		Cpu = KeGetCurrentProcessorNumber();
-	}
-	return Cpu;
-}
 
 PQUERYSYSTEMTIME g_ptrQuerySystemTime = NULL;
 
@@ -272,9 +217,6 @@ DriverEntry(
 	
 	UNICODE_STRING AdapterName;
 
-	NDIS_STRING strNdisGroupMaxProcessorCount;
-	NDIS_STRING strKeGetCurrentProcessorNumberEx;
-	NDIS_STRING strKeGetProcessorIndexFromNumber;
 	NDIS_STRING strKeQuerySystemTimePrecise;
 
 	UNREFERENCED_PARAMETER(RegistryPath);
@@ -362,15 +304,6 @@ DriverEntry(
 		NdisInitUnicodeString(&g_NPF_Prefix_WIFI, NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI);
 
 	//
-	// Initialize several CPU-related functions.
-	//
-	RtlInitUnicodeString(&strNdisGroupMaxProcessorCount, L"NdisGroupMaxProcessorCount");
-	g_My_NdisGroupMaxProcessorCount = (NDISGROUPMAXPROCESSORCOUNT) NdisGetRoutineAddress(&strNdisGroupMaxProcessorCount);
-
-	RtlInitUnicodeString(&strKeGetCurrentProcessorNumberEx, L"KeGetCurrentProcessorNumberEx");
-	g_My_KeGetCurrentProcessorNumberEx = (KEGETCURRENTPROCESSORNUMBEREX) NdisGetRoutineAddress(&strKeGetCurrentProcessorNumberEx);
-
-	//
 	// Initialize system-time function pointer.
 	//
 	RtlInitUnicodeString(&strKeQuerySystemTimePrecise, L"KeQuerySystemTimePrecise");
@@ -384,12 +317,6 @@ DriverEntry(
 		g_ptrQuerySystemTime = &KeQuerySystemTime;
 #endif
 	}
-
-	//
-	// Get number of CPUs and save it
-	//
-	g_NCpu = My_NdisGroupMaxProcessorCount();
-	TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "g_NCpu: %d, NPF_MAX_CPU_NUMBER: %d, g_My_NdisGroupMaxProcessorCount: %x\n", g_NCpu, NPF_MAX_CPU_NUMBER, g_My_NdisGroupMaxProcessorCount);
 
 	//
 	// Register as a service with NDIS
@@ -1017,6 +944,7 @@ NPF_IoControl(
 
 	HANDLE					hUserEvent;
 	PKEVENT					pKernelEvent;
+	LOCK_STATE lockState;
 #ifdef _AMD64_
 	VOID* POINTER_32		hUserEvent32Bit;
 #endif //_AMD64_
@@ -1072,18 +1000,10 @@ NPF_IoControl(
 
 		pStats = (PUINT)(Irp->AssociatedIrp.SystemBuffer);
 		
-		pStats[3] = 0;
-		pStats[0] = 0;
-		pStats[1] = 0;
+		pStats[3] = Open->Accepted;
+		pStats[0] = Open->Received;
+		pStats[1] = Open->Dropped;
 		pStats[2] = 0;		// Not yet supported
-
-		for (i = 0 ; i < g_NCpu ; i++)
-		{
-			pStats[3] += Open->CpuData[i].Accepted;
-			pStats[0] += Open->CpuData[i].Received;
-			pStats[1] += Open->CpuData[i].Dropped;
-			pStats[2] += 0;		// Not yet supported
-		}
 
 		SET_RESULT_SUCCESS(StatsLength);
 
@@ -1515,15 +1435,21 @@ NPF_IoControl(
 
 		// Get the number of bytes to allocate
 		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
-		
+
 		// verify that the provided size value is sensible
 		if (dim > NPF_MAX_BUFFER_SIZE)
 		{
 			SET_FAILURE_NOMEM();
 			break;
 		} 
+		// If there's no change, we're done!
+		if (dim == Open->Size) {
+			SET_RESULT_SUCCESS(0);
+			break;
+		}
 
-		if (dim / g_NCpu < sizeof(struct PacketHeader))
+		// Reallocate the buffer.
+		if (dim < sizeof(struct bpf_hdr))
 		{
 			dim = 0;
 		}
@@ -1538,53 +1464,27 @@ NPF_IoControl(
 			}
 		}
 
-		//
-		// acquire the locks for all the buffers
-		//
-		for (i = 0; i < g_NCpu ; i++)
-		{
-			NdisAcquireSpinLock(&Open->CpuData[i].BufferLock);
-		}
+		// Acquire buffer lock
+		NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
 
 		//
 		// free the old buffer, if any
 		//
-		if (Open->CpuData[0].Buffer != NULL)
+		if (Open->Buffer != NULL)
 		{
-			ExFreePool(Open->CpuData[0].Buffer);
-			Open->CpuData[0].Buffer = NULL;
+			ExFreePool(Open->Buffer);
+			Open->Buffer = NULL;
 		}
 
-		for (i = 0 ; i < g_NCpu ; i++)
-		{
-			if (dim > 0)
-				Open->CpuData[i].Buffer = (PUCHAR)tpointer + (dim / g_NCpu) * i;
-			else
-				Open->CpuData[i].Buffer = NULL;
-			Open->CpuData[i].Free = dim / g_NCpu;
-			Open->CpuData[i].P = 0;
-			Open->CpuData[i].C = 0;
-			Open->CpuData[i].Accepted = 0;
-			Open->CpuData[i].Dropped = 0;
-			Open->CpuData[i].Received = 0;
-		}
+		Open->Buffer = (PUCHAR)tpointer; // May be NULL if dim == 0;
+		Open->Size = dim;
+		Open->Accepted = 0;
+		Open->Dropped = 0;
+		Open->Received = 0;
+		Open->C = 0;
+		Open->P = 0;
 
-		Open->ReaderSN = 0;
-		Open->WriterSN = 0;
-
-		Open->Size = dim / g_NCpu;
-
-		//
-		// acquire the locks for all the buffers
-		//
-		i = g_NCpu;
-
-		while (i > 0)
-		{
-			i --;
-#pragma warning (disable: 28122)
-			NdisReleaseSpinLock(&Open->CpuData[i].BufferLock);
-		}
+		NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
 
 		SET_RESULT_SUCCESS(0);
 		break;
@@ -1645,7 +1545,7 @@ NPF_IoControl(
 			break;
 		}
 
-		Open->MinToCopy = (*((PULONG)Irp->AssociatedIrp.SystemBuffer)) / g_NCpu;  //An hack to make the NCPU-buffers behave like a larger one
+		Open->MinToCopy = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
 		SET_RESULT_SUCCESS(0);
 		break;
@@ -2027,40 +1927,17 @@ NPF_ResetBufferContents(
 	IN POPEN_INSTANCE Open
 	)
 {
-	UINT i;
-
-	//
-	// lock all the buffers
-	//
-	for (i = 0 ; i < g_NCpu ; i++)
-	{
-		NdisAcquireSpinLock(&Open->CpuData[i].BufferLock);
-	}
-
-	Open->ReaderSN = 0;
-	Open->WriterSN = 0;
+	LOCK_STATE lockState;
+	NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
+	Open->Accepted = 0;
+	Open->Dropped = 0;
+	Open->Received = 0;
 
 	//
 	// reset their pointers
 	//
-	for (i = 0 ; i < g_NCpu ; i++)
-	{
-		Open->CpuData[i].C = 0;
-		Open->CpuData[i].P = 0;
-		Open->CpuData[i].Free = Open->Size;
-		Open->CpuData[i].Accepted = 0;
-		Open->CpuData[i].Dropped = 0;
-		Open->CpuData[i].Received = 0;
-	}
-
-	//
-	// release the locks in reverse order
-	//
-	i = g_NCpu;
-
-	while (i > 0)
-	{
-		i--;
-		NdisReleaseSpinLock(&Open->CpuData[i].BufferLock);
-	}
+	Open->C = 0;
+	Open->P = 0;
+	Open->Free = Open->Size;
+	NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
 }

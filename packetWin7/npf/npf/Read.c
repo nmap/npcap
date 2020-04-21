@@ -90,10 +90,6 @@
 #include "win_bpf.h"
 #include "time_calls.h"
 
-#ifdef HAVE_DOT11_SUPPORT
-#include "ieee80211_radiotap.h"
-#endif
-
  //
  // Global variables
  //
@@ -112,23 +108,10 @@ NPF_Read(
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
 	PUCHAR					packp;
-	ULONG					Input_Buffer_Length;
-	UINT					Thead;
-	UINT					Ttail;
-	UINT					TLastByte;
 	PUCHAR					CurrBuff;
-	LARGE_INTEGER			CapTime;
-	LARGE_INTEGER			TimeFreq;
 	struct bpf_hdr*			header;
-	KIRQL					Irql;
-	PUCHAR					UserPointer;
-	ULONG					bytecopy;
-	UINT					SizeToCopy;
-	UINT					PktLen;
-	ULONG					copied, count, current_cpu, av, plen, increment, ToCopy, available;
-	CpuPrivateData*			LocalData;
-	ULONG					i;
-	ULONG					Occupation;
+	ULONG					copied, plen, ToCopy, available;
+	LOCK_STATE lockState;
 	NDIS_STATUS Status = STATUS_SUCCESS;
 
 	TRACE_ENTER();
@@ -183,17 +166,8 @@ NPF_Read(
 		return Status;
 	}
 
-
-
-	Occupation = 0;
-
-	for (i = 0; i < g_NCpu; i++)
-	{
-		Occupation += (Open->Size - Open->CpuData[i].Free);
-	}
-
 	//See if the buffer is full enough to be copied
-	if (Occupation <= Open->MinToCopy * g_NCpu || Open->mode & MODE_DUMP)
+	if (Open->Size - Open->Free <= Open->MinToCopy || Open->mode & MODE_DUMP)
 	{
 		if (Open->ReadEvent != NULL)
 		{
@@ -299,8 +273,6 @@ NPF_Read(
 
 	//------------------------------------------------------------------------------
 	copied = 0;
-	count = 0;
-	current_cpu = 0;
 	available = IrpSp->Parameters.Read.Length;
 
 	if (Irp->MdlAddress == 0x0)
@@ -323,101 +295,61 @@ NPF_Read(
 	if (Open->ReadEvent != NULL)
 		KeClearEvent(Open->ReadEvent);
 
-	while (count < g_NCpu) //round robin on the CPUs, if count = NCpu there are no packets left to be copied
+	NdisAcquireReadWriteLock(&Open->BufferLock, FALSE, &lockState);
+
+	while (available > copied && Open->Free < Open->Size)
 	{
-		if (available == copied)
+		//there are some packets in the buffer
+		header = (struct bpf_hdr*)(Open->Buffer + Open->C);
+
+		plen = header->bh_caplen;
+		if (plen + sizeof(struct bpf_hdr) > available - copied)
 		{
-			NPF_StopUsingOpenInstance(Open);
-			TRACE_EXIT();
-			EXIT_SUCCESS(copied);
+			//if the packet does not fit into the user buffer, we've ended copying packets
+			break;
 		}
 
-		LocalData = &Open->CpuData[current_cpu];
+		*((struct bpf_hdr *) (&packp[copied])) = *header;
 
-		if (LocalData->Free < Open->Size)
+		copied += sizeof(struct bpf_hdr);
+		Open->C += sizeof(struct bpf_hdr);
+		InterlockedExchangeAdd(&Open->Free, sizeof(struct bpf_hdr));
+
+		if (Open->C == Open->Size)
 		{
-			//there are some packets in the selected (aka LocalData) buffer
-			struct PacketHeader* Header = NULL;
-			NdisAcquireSpinLock(&LocalData->BufferLock);
-			Header = (struct PacketHeader*)(LocalData->Buffer + LocalData->C);
+			Open->C = 0;
+		}
 
-			if (Header->SN == Open->ReaderSN)
-			{
-				//check if it the next one to be copied
-				plen = Header->header.bh_caplen;
-				if (plen + sizeof(struct bpf_hdr) > available - copied)
-				{
-					//if the packet does not fit into the user buffer, we've ended copying packets
-					NdisReleaseSpinLock(&LocalData->BufferLock);
-					NPF_StopUsingOpenInstance(Open);
-					TRACE_EXIT();
-					EXIT_SUCCESS(copied);
-				}
-
-				// FIX_TIMESTAMPS(&Header->header.bh_tstamp);
-
-				*((struct bpf_hdr *) (&packp[copied])) = Header->header;
-
-				copied += sizeof(struct bpf_hdr);
-				LocalData->C += sizeof(struct PacketHeader);
-
-				if (LocalData->C == Open->Size)
-				{
-					LocalData->C = 0;
-				}
-
-				if (Open->Size - LocalData->C < plen)
-				{
-					//the packet is fragmented in the buffer (i.e. it skips the buffer boundary)
-					ToCopy = Open->Size - LocalData->C;
-					RtlCopyMemory(packp + copied, LocalData->Buffer + LocalData->C, ToCopy);
-					RtlCopyMemory(packp + copied + ToCopy, LocalData->Buffer, plen - ToCopy);
-					LocalData->C = plen - ToCopy;
-				}
-				else
-				{
-					//the packet is not fragmented
-					RtlCopyMemory(packp + copied, LocalData->Buffer + LocalData->C, plen);
-					LocalData->C += plen;
-					//if (c==size)  inutile, contemplato nell "header atomico"
-					//c=0;
-				}
-
-				Open->ReaderSN++;
-				copied += Packet_WORDALIGN(plen);
-
-				if (Open->Size - LocalData->C < sizeof(struct PacketHeader))
-				{
-					//the next packet would be saved at the end of the buffer, but the NewHeader struct would be fragmented
-					//so the producer (--> the consumer) skips to the beginning of the buffer
-					LocalData->C = 0;
-				}
-
-				/* Update free space. */
-				if (LocalData->C == LocalData->P)
-				{
-					/* Nothing left to read, all space is free. */
-					LocalData->Free = Open->Size;
-				}
-				else
-				{
-					LocalData->Free = (Open->Size - LocalData->P + LocalData->C) % Open->Size;
-				}
-				count = 0;
-			}
-			else
-			{
-				current_cpu = (current_cpu + 1) % g_NCpu;
-				count++;
-			}
-			NdisReleaseSpinLock(&LocalData->BufferLock);
+		if (Open->Size - Open->C < plen)
+		{
+			//the packet is fragmented in the buffer (i.e. it skips the buffer boundary)
+			ToCopy = Open->Size - Open->C;
+			RtlCopyMemory(packp + copied, Open->Buffer + Open->C, ToCopy);
+			RtlCopyMemory(packp + copied + ToCopy, Open->Buffer, plen - ToCopy);
+			Open->C = plen - ToCopy;
 		}
 		else
 		{
-			current_cpu = (current_cpu + 1) % g_NCpu;
-			count++;
+			//the packet is not fragmented
+			RtlCopyMemory(packp + copied, Open->Buffer + Open->C, plen);
+			Open->C += plen;
 		}
+		InterlockedExchangeAdd(&Open->Free, plen);
+
+		copied += Packet_WORDALIGN(plen);
+
+		if (Open->Size - Open->C < sizeof(struct bpf_hdr))
+		{
+			//the next packet would be saved at the end of the buffer, but the bpf_hdr would be fragmented
+			//so the producer (--> the consumer) skips to the beginning of the buffer
+			// Update free space accordingly
+			InterlockedExchangeAdd(&Open->Free, Open->Size - Open->C);
+			Open->C = 0;
+		}
+		ASSERT(Open->Free <= Open->Size);
 	}
+
+	NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
 	NPF_StopUsingOpenInstance(Open);
 	TRACE_EXIT();
 	EXIT_SUCCESS(copied);
@@ -509,6 +441,8 @@ NPF_TapEx(
 {
 
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
+	PNET_BUFFER_LIST pClonedNBL = NULL;
+	PNET_BUFFER_LIST pWorkingNBL = NULL;
 	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE		TempOpen;
 	ULONG				ReturnFlags = 0;
@@ -523,12 +457,27 @@ NPF_TapEx(
 		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
 	}
 
+	if (NDIS_TEST_RECEIVE_CANNOT_PEND(ReceiveFlags))
+	{
+		pClonedNBL = NdisAllocateCloneNetBufferList(NetBufferLists, pFiltMod->PacketPool, NULL, 0);
+		NdisFReturnNetBufferLists(
+				pFiltMod->AdapterHandle,
+				NetBufferLists,
+				ReturnFlags);
+		if (pClonedNBL == NULL)
+		{
+			// Insufficient resources
+			return;
+		}
+	}
+	pWorkingNBL = pClonedNBL ? pClonedNBL : NetBufferLists;
+
 	// Do not capture the normal NDIS receive traffic, if this is our loopback adapter.
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (pFiltMod->Loopback == FALSE)
 	{
 #endif
-		NPF_DoTap(pFiltMod, NetBufferLists, NULL);
+		NPF_DoTap(pFiltMod, pWorkingNBL, NULL);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif
@@ -551,10 +500,17 @@ NPF_TapEx(
 		//return the packets immediately
 		NdisFIndicateReceiveNetBufferLists(
 			pFiltMod->AdapterHandle,
-			NetBufferLists,
+			pWorkingNBL,
 			PortNumber,
 			NumberOfNetBufferLists,
 			ReceiveFlags);
+		if (NDIS_TEST_RECEIVE_CANNOT_PEND(ReceiveFlags))
+		{
+			// We retained this, so free it up right away
+			NPF_ReturnEx(FilterModuleContext, 
+					pWorkingNBL,
+					ReturnFlags);
+		}
 	}
 
 	TRACE_EXIT();
@@ -581,26 +537,16 @@ NPF_TapExForEachOpen(
 	)
 {
 	UINT					fres;
-
-	CpuPrivateData*			LocalData;
-	ULONG					Cpu;
-	struct PacketHeader*	Header;
-	ULONG					ToCopy;
-	ULONG					i;
-
 	UINT					TotalPacketSize;
 
-	PMDL					pMdl = NULL;
-	UINT					BufferLength;
-	PUCHAR					pDataLinkBuffer = NULL;
 	PNET_BUFFER_LIST		pNetBufList;
 	PNET_BUFFER_LIST		pNextNetBufList;
 	PNET_BUFFER				pNetBuf;
 	PNET_BUFFER				pNextNetBuf;
-	ULONG					Offset;
+	PNPF_WRITER_REQUEST pReq = NULL;
 
 #ifdef HAVE_DOT11_SUPPORT
-	UCHAR					Dot11RadiotapHeader[256] = { 0 };
+	PUCHAR					Dot11RadiotapHeader = NULL;
 	UINT					Dot11RadiotapHeaderSize = 0;
 #endif
 
@@ -644,7 +590,8 @@ NPF_TapExForEachOpen(
 		if (Open->pFiltMod->Dot11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
 		{
 			PDOT11_EXTSTA_RECV_CONTEXT  pwInfo;
-			PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) Dot11RadiotapHeader;
+			PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = NULL;
+
 			UINT cur = 0;
 
 			pwInfo = NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation);
@@ -654,6 +601,15 @@ NPF_TapExForEachOpen(
 				// This isn't the information we're looking for. Move along.
 				goto RadiotapDone;
 			}
+
+			Dot11RadiotapHeader = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, SIZEOF_RADIOTAP_BUFFER, '0OWA', NormalPoolPriority);
+			if (Dot11RadiotapHeader == NULL)
+			{
+				// Insufficient memory
+				// TODO: Count this as a drop?
+				goto RadiotapDone;
+			}
+			pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) Dot11RadiotapHeader;
 
 			// The radiotap header is also placed in the buffer.
 			cur += sizeof(IEEE80211_RADIOTAP_HEADER) / sizeof(UCHAR);
@@ -807,27 +763,16 @@ NPF_TapExForEachOpen(
 		{
 			pNextNetBuf = NET_BUFFER_NEXT_NB(pNetBuf);
 
-			Cpu = My_KeGetCurrentProcessorNumber();
-			LocalData = &Open->CpuData[Cpu];
+			InterlockedIncrement(&Open->Received);
 
-			LocalData->Received++;
-
-			IF_LOUD(DbgPrint("Received on CPU %d \t%d\n", Cpu, LocalData->Received);)
-
-				NdisAcquireSpinLock(&Open->MachineLock);
-
-			//
-			// Get first MDL and data length in the list
-			//
-			pMdl = NET_BUFFER_CURRENT_MDL(pNetBuf);
-			Offset = NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf);
+			NdisAcquireSpinLock(&Open->MachineLock);
 
 			// Get the whole packet length.
 			TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 
 			fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
 					NET_BUFFER_FIRST_MDL(pNetBuf),
-					Offset,
+					NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf),
 					TotalPacketSize);
 			IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
 
@@ -842,8 +787,8 @@ NPF_TapExForEachOpen(
 			}
 
 			//if the filter returns -1 the whole packet must be accepted
-			// if (fres == -1 || fres > PacketSize + HeaderBufferSize)
-			//	fres = PacketSize + HeaderBufferSize;
+			if (fres > TotalPacketSize || fres == -1)
+				fres = TotalPacketSize;
 
 			if (Open->mode & MODE_STAT)
 			{
@@ -871,7 +816,7 @@ NPF_TapExForEachOpen(
 
 			if (Open->Size == 0)
 			{
-				LocalData->Dropped++;
+				InterlockedIncrement(&Open->Dropped);
 				//return NDIS_STATUS_NOT_ACCEPTED;
 				goto NPF_TapExForEachOpen_End;
 			}
@@ -879,11 +824,7 @@ NPF_TapExForEachOpen(
 #ifdef NPCAP_KDUMP
 			if (Open->mode & MODE_DUMP && Open->MaxDumpPacks)
 			{
-				ULONG Accepted = 0;
-				for (i = 0; i < g_NCpu; i++)
-					Accepted += Open->CpuData[i].Accepted;
-
-				if (Accepted > Open->MaxDumpPacks)
+				if (Open->Accepted > Open->MaxDumpPacks)
 				{
 					// Reached the max number of packets to save in the dump file. Discard the packet and stop the dump thread.
 					Open->DumpLimitReached = TRUE; // This stops the thread
@@ -899,183 +840,222 @@ NPF_TapExForEachOpen(
 				}
 			}
 #endif
-
-			//////////////////////////////COPIA.C//////////////////////////////////////////77
-
-			NdisAcquireSpinLock(&LocalData->BufferLock);
-
-			do
+			pReq = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+			if (pReq == NULL)
 			{
-
-				if (fres > TotalPacketSize || fres == -1)
-					fres = TotalPacketSize;
-
-				if (fres + sizeof(struct PacketHeader)
+				// Insufficient memory
+				InterlockedIncrement(&Open->Dropped);
+				goto NPF_TapExForEachOpen_End;
+			}
+			pReq->pOpen = Open;
+			pReq->pNBL = pNetBufList;
+			pReq->pNetBuffer = pNetBuf;
+			GET_TIME(&pReq->BpfHeader.bh_tstamp, &Open->start, Open->TimestampMode);
+			pReq->BpfHeader.bh_caplen = fres;
+			pReq->BpfHeader.bh_datalen = TotalPacketSize;
+			pReq->BpfHeader.bh_hdrlen = sizeof(struct bpf_hdr);
 #ifdef HAVE_DOT11_SUPPORT
-						+ Dot11RadiotapHeaderSize
-#endif
-						> LocalData->Free)
-				{
-					LocalData->Dropped++;
-					IF_LOUD(DbgPrint("LocalData->Dropped++, fres = %d, LocalData->Free = %d\n", fres, LocalData->Free);)
-					// May as well tell the application, even if MinToCopy is not met,
-					// to avoid dropping further packets
-					if (Open->ReadEvent != NULL)
-						KeSetEvent(Open->ReadEvent, 0, FALSE);
-					break;
-				}
-
-				UINT iFres = fres;
-
-				// Disable the IEEE802.1Q VLAN feature for now.
-// 					if (withVlanTag)
-// 					{
-// 						// Insert a tag in the case of IEEE802.1Q packet
-// 						pHeaderBuffer = ExAllocatePoolWithTag(NonPagedPool, fres + 4, 'NPCA');
-// 						NdisMoveMappedMemory(pHeaderBuffer, HeaderBuffer, 12);
-// 						pHeaderBuffer[12] = 0x81;
-// 						pHeaderBuffer[13] = 0x00;
-// 						NdisMoveMappedMemory(&pHeaderBuffer[14], pVlanTag, 2);
-// 						NdisMoveMappedMemory(&pHeaderBuffer[16], &HeaderBuffer[12], fres - 12);
-// 						iFres += 4;
-// 					}
-
-				Header = (struct PacketHeader *)(LocalData->Buffer + LocalData->P);
-				LocalData->Accepted++;
-				GET_TIME(&Header->header.bh_tstamp, &Open->start, Open->TimestampMode);
-				Header->SN = InterlockedIncrement(&Open->WriterSN) - 1;
-
-				// DbgPrint("MDL %d\n", BufferLength);
-
-				Header->header.bh_caplen = 0;
-				Header->header.bh_datalen = TotalPacketSize;
-				Header->header.bh_hdrlen = sizeof(struct bpf_hdr);
-
-				LocalData->P += sizeof(struct PacketHeader);
-				if (LocalData->P == Open->Size)
-					LocalData->P = 0;
-
-#ifdef HAVE_DOT11_SUPPORT
-				if (Dot11RadiotapHeaderSize)
-				{
-					Header->header.bh_caplen += Dot11RadiotapHeaderSize;
-					Header->header.bh_datalen += Dot11RadiotapHeaderSize;
-
-					if (Open->Size - LocalData->P < Dot11RadiotapHeaderSize)
-					{
-						//the Radiotap header will be fragmented in the buffer (aka, it will skip the buffer boundary)
-						ToCopy = Open->Size - LocalData->P;
-						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, ToCopy);
-						NdisMoveMappedMemory(LocalData->Buffer + 0, Dot11RadiotapHeader + ToCopy, Dot11RadiotapHeaderSize - ToCopy);
-						LocalData->P = Dot11RadiotapHeaderSize - ToCopy;
-					}
-					else
-					{
-						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, Dot11RadiotapHeader, Dot11RadiotapHeaderSize);
-						LocalData->P += Dot11RadiotapHeaderSize;
-					}
-					if (LocalData->P == Open->Size)
-						LocalData->P = 0;
-				}
+			pReq->pRadiotapHeader = Dot11RadiotapHeader;
 #endif
 
-
-				// Disable the IEEE802.1Q VLAN feature for now.
-// 					if (withVlanTag)
-// 					{
-// 						if (pHeaderBuffer)
-// 						{
-// 							ExFreePool(pHeaderBuffer);
-// 							pHeaderBuffer = NULL;
-// 						}
-// 					}
-
-				// Add MDLs
-				while (pMdl != NULL && iFres > 0)
-				{
-					UINT CopyLengthForMDL = 0;
-					NdisQueryMdl(
-						pMdl,
-						&pDataLinkBuffer,
-						&BufferLength,
-						NormalPagePriority);
-
-					BufferLength -= Offset;
-					pDataLinkBuffer += Offset;
-
-					CopyLengthForMDL = min(iFres, BufferLength);
-
-					if (LocalData->P == Open->Size)
-					{
-						LocalData->P = 0;
-					}
-
-					if (Open->Size - LocalData->P < CopyLengthForMDL)
-					{
-						//the MDL data will be fragmented in the buffer (aka, it will skip the buffer boundary)
-						//two copies!!
-						ToCopy = Open->Size - LocalData->P;
-						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, ToCopy);
-						NdisMoveMappedMemory(LocalData->Buffer + 0, pDataLinkBuffer + ToCopy, CopyLengthForMDL - ToCopy);
-						LocalData->P = CopyLengthForMDL - ToCopy;
-
-						IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d (two copies)\n", iFres, BufferLength, CopyLengthForMDL);)
-					}
-					else
-					{
-						NdisMoveMappedMemory(LocalData->Buffer + LocalData->P, pDataLinkBuffer, CopyLengthForMDL);
-						LocalData->P += CopyLengthForMDL;
-
-						IF_LOUD(DbgPrint("iFres = %d, MdlSize = %d, CopyLengthForMDL = %d\n", iFres, BufferLength, CopyLengthForMDL);)
-					}
-
-					Header->header.bh_caplen += CopyLengthForMDL;
-					iFres -= CopyLengthForMDL;
-
-					/* Offset only matters for first MDL. */
-					Offset = 0;
-					NdisGetNextMdl(pMdl, &pMdl);
-				}
-
-				IF_LOUD(DbgPrint("Packet Header: bh_caplen = %d, bh_datalen = %d\n", Header->header.bh_caplen, Header->header.bh_datalen);)
-
-				if (Open->Size - LocalData->P < sizeof(struct PacketHeader))  //we check that the available, AND contiguous, space in the buffer will fit
-				{
-					//the NewHeader structure, at least, otherwise we skip the producer
-					LocalData->P = 0;
-				}
-
-				/* Update free space.
-				 * Buffer is already locked, so nobody else is updating P and C.
-				 * If P == C, there's no space left, and Size % Size is 0 */
-				LocalData->Free = (Open->Size - LocalData->P + LocalData->C) % Open->Size;
-
-				if (Open->Size - LocalData->Free >= Open->MinToCopy)
-				{
-#ifdef NPCAP_KDUMP
-					if (Open->mode & MODE_DUMP)
-						NdisSetEvent(&Open->DumpEvent);
-					else
-#endif
-					{
-						if (Open->ReadEvent != NULL)
-						{
-							KeSetEvent(Open->ReadEvent, 0, FALSE);
-						}
-					}
-				}
-			} while (FALSE);
-
-			NdisReleaseSpinLock(&LocalData->BufferLock);
+			pReq->FunctionCode = NPF_WRITER_WRITE;
+			NPF_QueueRequest(Open->pFiltMod, pReq);
 
 NPF_TapExForEachOpen_End:;
 
 			pNetBuf = pNextNetBuf;
 		} // while (pNetBuf != NULL)
 
+#ifdef HAVE_DOT11_SUPPORT
+		// Free the radiotap header
+		pReq = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+		if (pReq == NULL)
+		{
+			// Insufficient memory
+			// Can't free it yet or writer will BSOD accessing it.
+			NPF_PurgeRequests(Open->pFiltMod, NULL, &Dot11RadiotapHeader, NULL);
+			NdisFreeMemory(Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
+		}
+		else
+		{
+			pReq->pRadiotapHeader = Dot11RadiotapHeader;
+			pReq->FunctionCode = NPF_WRITER_FREE_RADIOTAP;
+			NPF_QueueRequest(Open->pFiltMod, pReq);
+		}
+#endif
+
 		pNetBufList = pNextNetBufList;
 	} // while (pNetBufList != NULL)
 
 	NPF_StopUsingOpenInstance(Open);
 	//TRACE_EXIT();
+}
+			//////////////////////////////COPIA.C//////////////////////////////////////////77
+__inline VOID NPF_CircularFill( POPEN_INSTANCE pOpen, PUCHAR pSrc, ULONG Len )
+{
+	ULONG ToCopy = 0;
+	if (pOpen->Size - pOpen->P < Len)
+	{
+		ToCopy = pOpen->Size - pOpen->P;
+		NdisMoveMappedMemory(pOpen->Buffer + pOpen->P, pSrc, ToCopy);
+		NdisMoveMappedMemory(pOpen->Buffer + 0, pSrc + ToCopy, Len - ToCopy);
+		pOpen->P = Len - ToCopy;
+	}
+	else
+	{
+		NdisMoveMappedMemory(pOpen->Buffer + pOpen->P, pSrc, Len);
+		pOpen->P += Len;
+	}
+
+	if (pOpen->P == pOpen->Size)
+	{
+		pOpen->P = 0;
+	}
+}
+
+VOID
+NPF_FillBuffer( POPEN_INSTANCE pOpen,
+	       	PNET_BUFFER pNetBuf,
+	       	struct bpf_hdr *pBpfHeader,
+	       	PUCHAR pDot11Data)
+{
+
+	UINT iFres = pBpfHeader->bh_caplen;
+	struct bpf_hdr *pBufferHeader = NULL;
+	ULONG Offset;
+	LOCK_STATE lockState;
+#ifdef HAVE_DOT11_SUPPORT
+	PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pDot11Data;
+#endif
+
+	NdisAcquireReadWriteLock(&pOpen->BufferLock, FALSE, &lockState);
+	do
+	{
+
+
+		if (pBpfHeader->bh_caplen + sizeof(struct bpf_hdr)
+#ifdef HAVE_DOT11_SUPPORT
+				+ (pRadiotapHeader != NULL ? pRadiotapHeader->it_len : 0)
+#endif
+				> pOpen->Free)
+		{
+			// Not enough room in this buffer segment. Drop the packet.
+			IF_LOUD(DbgPrint("Dropped++, iFres = %d, pOpen->Free = %d\n", iFres, pOpen->Free);)
+			// May as well tell the application, even if MinToCopy is not met,
+			// to avoid dropping further packets
+			if (pOpen->ReadEvent != NULL)
+				KeSetEvent(pOpen->ReadEvent, 0, FALSE);
+			break;
+		}
+
+		// Disable the IEEE802.1Q VLAN feature for now.
+		// 					if (withVlanTag)
+		// 					{
+		// 						// Insert a tag in the case of IEEE802.1Q packet
+		// 						pHeaderBuffer = ExAllocatePoolWithTag(NonPagedPool, fres + 4, 'NPCA');
+		// 						NdisMoveMappedMemory(pHeaderBuffer, HeaderBuffer, 12);
+		// 						pHeaderBuffer[12] = 0x81;
+		// 						pHeaderBuffer[13] = 0x00;
+		// 						NdisMoveMappedMemory(&pHeaderBuffer[14], pVlanTag, 2);
+		// 						NdisMoveMappedMemory(&pHeaderBuffer[16], &HeaderBuffer[12], fres - 12);
+		// 						iFres += 4;
+		// 					}
+
+		ULONG oldP = pOpen->P;
+		ULONG ulSize = 0;
+
+		InterlockedIncrement(&pOpen->Accepted);
+
+		pBufferHeader = (struct bpf_hdr *)(pOpen->Buffer + pOpen->P);
+		// We won't wrap this because of earlier checks
+		NPF_CircularFill(pOpen, (PUCHAR) pBpfHeader, sizeof(struct bpf_hdr));
+
+#ifdef HAVE_DOT11_SUPPORT
+		if (pRadiotapHeader != NULL)
+		{
+			ulSize = pRadiotapHeader->it_len;
+			pBufferHeader->bh_caplen += ulSize;
+			pBufferHeader->bh_caplen += ulSize;
+			NPF_CircularFill(pOpen, pDot11Data, ulSize);
+		}
+#endif
+
+
+		// Disable the IEEE802.1Q VLAN feature for now.
+		// 					if (withVlanTag)
+		// 					{
+		// 						if (pHeaderBuffer)
+		// 						{
+		// 							ExFreePool(pHeaderBuffer);
+		// 							pHeaderBuffer = NULL;
+		// 						}
+		// 					}
+
+		// Add MDLs
+		PMDL pMdl = NET_BUFFER_CURRENT_MDL(pNetBuf);
+		Offset = NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf);
+		while (pMdl != NULL && iFres > 0)
+		{
+			UINT CopyLengthForMDL = 0;
+			PUCHAR pDataLinkBuffer = NULL;
+			ULONG BufferLength = 0;
+			NdisQueryMdl(
+					pMdl,
+					&pDataLinkBuffer,
+					&BufferLength,
+					NormalPagePriority);
+
+			BufferLength -= Offset;
+			pDataLinkBuffer += Offset;
+
+			CopyLengthForMDL = min(iFres, BufferLength);
+
+			if (pOpen->P == pOpen->Size)
+			{
+				pOpen->P = 0;
+			}
+
+			NPF_CircularFill(pOpen, pDataLinkBuffer, CopyLengthForMDL);
+			iFres -= CopyLengthForMDL;
+
+			/* Offset only matters for first MDL. */
+			Offset = 0;
+			NdisGetNextMdl(pMdl, &pMdl);
+		}
+
+		if (pMdl == NULL && iFres > 0) {
+			IF_LOUD(DbgPrint("NetBuffer missing %lu bytes", iFres);)
+			pBufferHeader->bh_caplen -= iFres;
+		}
+
+
+		InterlockedExchangeAdd(&pOpen->Free, -(LONG)(sizeof(struct bpf_hdr) + pBufferHeader->bh_caplen));
+		// Check our accounting.
+		ASSERT((pOpen->Size + (pOpen->P - oldP)) % pOpen->Size == sizeof(struct bpf_hdr) + pBufferHeader->bh_caplen);
+
+		if (pOpen->Size - pOpen->P < sizeof(struct bpf_hdr))  //we check that the available, AND contiguous, space in the buffer will fit
+		{
+			//the NewHeader structure, at least, otherwise we skip the producer
+			InterlockedExchangeAdd(&pOpen->Free, -(LONG)(pOpen->Size - pOpen->P));
+			pOpen->P = 0;
+		}
+
+		if (pOpen->Size - pOpen->Free >= pOpen->MinToCopy)
+		{
+#ifdef NPCAP_KDUMP
+			if (pOpen->mode & MODE_DUMP)
+				NdisSetEvent(&pOpen->DumpEvent);
+			else
+#endif
+			{
+				if (pOpen->ReadEvent != NULL)
+				{
+					KeSetEvent(pOpen->ReadEvent, 0, FALSE);
+				}
+			}
+		}
+	} while (FALSE);
+
+	NdisReleaseReadWriteLock(&pOpen->BufferLock, &lockState);
+
 }

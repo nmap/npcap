@@ -215,6 +215,61 @@ NPF_CloseBinding(
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 }
 
+VOID
+NPF_WriterThread(
+		_In_ PVOID Context
+		)
+{
+	PNPCAP_FILTER_MODULE pFiltMod = Context;
+
+	PLIST_ENTRY RequestListEntry = NULL;
+	PNPF_WRITER_REQUEST pReq = NULL;
+	KIRQL oldIrql;
+
+	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY );
+
+	for (;;)
+	{
+		// Wait for work to appear
+		KeWaitForSingleObject(&pFiltMod->WriterSemaphore,
+				Executive,
+				KernelMode,
+				FALSE,
+				NULL);
+		// Check if we're being told to die
+		if (pFiltMod->WriterShouldStop) {
+			// Clean up!
+ 			NPF_PurgeRequests(pFiltMod, NULL, NULL, NULL);
+			PsTerminateSystemThread( STATUS_SUCCESS );
+		}
+
+		// Grab the next work request
+		RequestListEntry = ExInterlockedRemoveHeadList(&pFiltMod->WriterRequestList, &pFiltMod->WriterRequestLock);
+		if (RequestListEntry == NULL) {
+			// That's weird, no work to do.
+			continue;
+		}
+		pReq = CONTAINING_RECORD(RequestListEntry, NPF_WRITER_REQUEST, WriterRequestEntry);
+		switch (pReq->FunctionCode)
+		{
+			case NPF_WRITER_WRITE:
+				NPF_FillBuffer(pReq->pOpen,
+					pReq->pNetBuffer,
+					&pReq->BpfHeader,
+					pReq->pRadiotapHeader);
+				break;
+			case NPF_WRITER_FREE_RADIOTAP:
+				NdisFreeMemory(pReq->pRadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
+				break;
+			case NPF_WRITER_FREE_NBL:
+				NdisFreeCloneNetBufferList(pReq->pNBL, 0);
+				break;
+			default:
+				break;
+		}
+		NdisFreeMemory(pReq, sizeof(NPF_WRITER_REQUEST), 0);
+	}
+}
 //-------------------------------------------------------------------
 
 NTSTATUS
@@ -446,6 +501,9 @@ NPF_CloseOpenInstance(
 
 	pOpen->OpenStatus = OpenClosed;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+
+	// Remove all worker requests related to this instance.
+	NPF_PurgeRequests(pOpen->pFiltMod, NULL, NULL, pOpen);
 }
 
 
@@ -486,24 +544,16 @@ NPF_ReleaseOpenInstanceResources(
 
 	//
 	// free the buffer
-	// NOTE: the buffer is fragmented among the various CPUs, but the base pointer of the
-	// allocated chunk of memory is stored in the first slot (pOpen->CpuData[0])
 	//
 	if (pOpen->Size > 0)
 	{
-		ExFreePool(pOpen->CpuData[0].Buffer);
-		pOpen->CpuData[0].Buffer = NULL;
+		ExFreePool(pOpen->Buffer);
+		pOpen->Buffer = NULL;
 		pOpen->Size = 0;
 	}
 
-	//
-	// free the per CPU spinlocks
-	//
-	for (i = 0; i < g_NCpu; i++)
-	{
-		NdisFreeSpinLock(&pOpen->CpuData[i].BufferLock);
-	}
-
+	// Reminder for upgrade to NDIS 6.20: free this lock!
+	//NdisFreeRWLock(pOpen->BufferLock);
 	NdisFreeSpinLock(&pOpen->CountersLock);
 	NdisFreeSpinLock(&pOpen->WriteLock);
 	NdisFreeSpinLock(&pOpen->MachineLock);
@@ -534,6 +584,20 @@ NPF_ReleaseFilterModuleResources(
 
 	ASSERT(pFiltMod != NULL);
 	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
+	// Stop the writer thread
+	pFiltMod->WriterShouldStop = TRUE;
+	KeReleaseSemaphore(&pFiltMod->WriterSemaphore,
+			0,  // No priority boost
+			1,  // Increment semaphore by 1
+			TRUE );// WaitForXxx after this call
+	// Wait for the thread to terminate
+	KeWaitForSingleObject(pFiltMod->WriterThreadObj,
+			Executive,
+			KernelMode,
+			FALSE,
+			NULL );
+
+	ObDereferenceObject(pFiltMod->WriterThreadObj);
 
 	if (pFiltMod->PacketPool) // Release the packet buffer pool
 	{
@@ -1424,6 +1488,12 @@ NPF_CreateOpenObject()
 
 	RtlZeroMemory(Open, sizeof(OPEN_INSTANCE));
 
+	/* Buffer */
+	NdisInitializeReadWriteLock(&Open->BufferLock);
+	Open->Accepted = 0;
+	Open->Received = 0;
+	Open->Dropped = 0;
+
 	Open->OpenSignature = OPEN_SIGNATURE;
 	Open->OpenStatus = OpenClosed;
 
@@ -1435,11 +1505,6 @@ NPF_CreateOpenObject()
 	NdisAllocateSpinLock(&Open->MachineLock);
 	NdisAllocateSpinLock(&Open->WriteLock);
 	Open->WriteInProgress = FALSE;
-
-	for (i = 0; i < g_NCpu; i++)
-	{
-		NdisAllocateSpinLock(&Open->CpuData[i].BufferLock);
-	}
 
 	//
 	// Initialize the open instance
@@ -1459,8 +1524,6 @@ NPF_CreateOpenObject()
 	Open->DumpFileHandle = NULL;
 	Open->DumpLimitReached = FALSE;
 #endif
-	Open->WriterSN = 0;
-	Open->ReaderSN = 0;
 	Open->Size = 0;
 	Open->SkipSentPackets = FALSE;
 	Open->ReadEvent = NULL;
@@ -1547,9 +1610,16 @@ NPF_CreateFilterModule(
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;
 
-	//  Initialize the request list
+	//  Initialize the OID request list
 	KeInitializeSpinLock(&pFiltMod->RequestSpinLock);
 	InitializeListHead(&pFiltMod->RequestList);
+
+	//  Initialize the writer request list
+	KeInitializeSpinLock(&pFiltMod->WriterRequestLock);
+	InitializeListHead(&pFiltMod->WriterRequestList);
+	KeInitializeSemaphore(&pFiltMod->WriterSemaphore, 0, MAXLONG);
+	pFiltMod->WriterShouldStop = FALSE;
+	pFiltMod->WriterThreadObj = NULL;
 	
 	// Default; expect this will be overwritten in NPF_Restart,
 	// or for Loopback when creating the fake module.
@@ -1689,6 +1759,7 @@ NPF_AttachAdapter(
 	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
 	BOOLEAN					bFalse = FALSE;
 	BOOLEAN					bDot11;
+	HANDLE threadHandle;
 
 	TRACE_ENTER();
 
@@ -1820,6 +1891,25 @@ NPF_AttachAdapter(
 		}
 #endif
 
+		Status = PsCreateSystemThread(&threadHandle, THREAD_ALL_ACCESS,
+				NULL, NULL, NULL, NPF_WriterThread, pFiltMod);
+		if (Status != STATUS_SUCCESS)
+		{
+			returnStatus = Status;
+			IF_LOUD(DbgPrint("PsCreateSystemThread: error, Status=%x.\n", Status);)
+			break;
+		}
+
+		// Convert the Thread object handle into a pointer to the Thread object
+		// itself. Then close the handle.
+		ObReferenceObjectByHandle(threadHandle,
+			THREAD_ALL_ACCESS,
+			NULL,
+			KernelMode,
+			&pFiltMod->WriterThreadObj,
+			NULL);
+
+		ZwClose(threadHandle);
 		NdisZeroMemory(&FilterAttributes, sizeof(NDIS_FILTER_ATTRIBUTES));
 		FilterAttributes.Header.Revision = NDIS_FILTER_ATTRIBUTES_REVISION_1;
 		FilterAttributes.Header.Size = sizeof(NDIS_FILTER_ATTRIBUTES);
@@ -2482,6 +2572,86 @@ NOTE: called at PASSIVE_LEVEL
 
 //-------------------------------------------------------------------
 
+/* This function is a last resort when we can't tell the WriterThread to free
+ * something, like if something it needs becomes invalid or we can't allocate a
+ * request object. Locks the whole request queue while it works.
+ *
+ * If any of pNBL, pRadiotapHeader, or pOpen is NULL, it is ignored.
+ * If all 3 are NULL, all requests are purged, but all FREE requests are honored.
+ * If any of them is a pointer to an actual object, it will be used as the criteria for matching.
+ *
+ */
+VOID
+NPF_PurgeRequests(
+		PNPCAP_FILTER_MODULE pFiltMod,
+		PNET_BUFFER_LIST pNBL,
+		PUCHAR pRadiotapHeader,
+		POPEN_INSTANCE pOpen
+		)
+{
+	KIRQL OldIrql;
+	PLIST_ENTRY Curr = NULL;
+	PLIST_ENTRY Prev = NULL;
+	PNPF_WRITER_REQUEST pReq = NULL;
+
+	BOOLEAN bPurgeAll = !(ppNBL || ppRadiotapHeader || pOpen);
+
+	KeAcquireSpinLock(&pFiltMod->WriterRequestLock, &OldIrql);
+	Prev = &pFiltMod->WriterRequestList;
+	for (Curr = pFiltMod->WriterRequestList.Flink; Curr = Curr->Flink; Curr && Curr != &pFiltMod->WriterRequestList)
+	{
+		pReq = CONTAINING_RECORD(Curr, NPF_WRITER_REQUEST, WriterRequestEntry);
+		if ( bPurgeAll
+			|| (pNBL && pReq->pNBL == pNBL)
+			|| (pRadiotap && pReq->pRadiotapHeader == pRadiotap)
+			|| (pOpen && pReq->pOpen == pOpen)
+		   )
+		{
+			// Unlink and free
+			Prev->Flink = Curr->Flink;
+			Curr->Flink->Blink = Prev;
+			
+			switch (pReq->FunctionCode)
+			{
+				case NPF_WRITER_FREE_RADIOTAP:
+					NdisFreeMemory(pReq->pRadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
+					break;
+				case NPF_WRITER_FREE_NBL:
+					NdisFreeCloneNetBufferList(pReq->pNBL, 0);
+					break;
+				case NPF_WRITER_WRITE:
+					// If this was a packet to be written,
+					// count it as a drop
+					InterlockedIncrement(&pReq->pOpen->Dropped);
+					break;
+				default:
+					break;
+			}
+			NdisFreeMemory(pReq, sizeof(NPF_WRITER_REQUEST), 0);
+			Curr = Prev;
+		}
+		else
+		{
+			Prev = Curr;
+		}
+	}
+	KeReleaseSpinLock(&pFiltMod->WriterRequestLock, OldIrql);
+}
+
+VOID NPF_QueueRequest(PNPCAP_FILTER_MODULE pFiltMod,
+	       	PNPF_WRITER_REQUEST pReq)
+{
+	// Enqueue the request
+	ExInterlockedInsertTailList(&pFiltMod->WriterRequestList,
+			&pReq->WriterRequestEntry,
+			&pFiltMod->WriterRequestLock);
+	// Wake the worker to deal with it.
+	KeReleaseSemaphore(&pFiltMod->WriterSemaphore,
+			0, // No priority boost
+			1, // Increment semaphore by 1
+			FALSE); // No WaitForXxx after this call
+}
+
 _Use_decl_annotations_
 VOID
 NPF_ReturnEx(
@@ -2513,16 +2683,35 @@ Arguments:
 --*/
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
-	PNET_BUFFER_LIST    CurrNbl = NetBufferLists;
-	UINT                NumOfNetBufferLists = 0;
-	BOOLEAN             DispatchLevel;
-	ULONG               Ref;
+	PNPF_WRITER_REQUEST pReq = NULL;
+	KIRQL OldIrql;
 
 /*	TRACE_ENTER();*/
 
-	// Return the received NBLs.  If you removed any NBLs from the chain, make
-	// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
-	NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
+	// If this is our own allocated NBL, tell the Writer thread to clean it up.
+	// Queue ensures this happens after we're done copying anything from it.
+	if (NetBufferLists->NdisPoolHandle == pFiltMod->PacketPool)
+	{
+		pReq = NdisAllocateMemoryWithTagPriority(pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+		if (pReq == NULL) {
+			// Oh fudge, we can't allocate a work request.
+			// Clean up our mess the expensive way (lost packets, locked buffer).
+			NPF_PurgeRequests(pFiltMod, NetBufferLists, NULL, NULL);
+			NdisFreeCloneNetBufferList(NetBufferLists, 0);
+		}
+		else
+		{
+			pReq->FunctionCode = NPF_WRITER_FREE_NBL;
+			pReq->pNBL = NetBufferLists;
+			NPF_QueueRequest(pFiltMod, pReq);
+		}
+	}
+	else // Not our NBL
+	{
+		// Return the received NBLs.  If you removed any NBLs from the chain, make
+		// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
+		NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
+	}
 
 /*	TRACE_EXIT();*/
 }

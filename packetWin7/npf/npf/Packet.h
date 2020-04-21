@@ -163,9 +163,6 @@ struct packet_file_header
 #define NdisMediumRadio80211				-5		///< Custom linktype: NDIS doesn't provide an equivalent
 #define NdisMediumPpi						-6		///< Custom linktype: NDIS doesn't provide an equivalent
 
-// Maximum CPU core number, the original value is sizeof(KAFFINITY) * 8, but Amazon instance can return 128 cores, so we make NPF_MAX_CPU_NUMBER to 256 for safe.
-#define NPF_MAX_CPU_NUMBER					(sizeof(KAFFINITY) * 32)
-
 // The length of the adapter name
 #define ADAPTER_NAME_SIZE					(sizeof("\\Device\\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}") - 1)
 
@@ -181,6 +178,20 @@ struct packet_file_header
 
 // Maximum pool size allowed in bytes (defence against bad BIOCSETBUFFERSIZE calls)
 #define NPF_MAX_BUFFER_SIZE 0x40000000L
+
+#ifdef HAVE_DOT11_SUPPORT
+#include "ieee80211_radiotap.h"
+/* These are the fields we support, hence the max size
+ * of radiotap header buffer */
+#define SIZEOF_RADIOTAP_BUFFER sizeof(IEEE80211_RADIOTAP_HEADER) \
+			+ 8 /* TSFT */ \
+			+ 1 /* Flags */ \
+			+ 1 /* Rate */ \
+			+ 2 + 2 /* Channel */ \
+			+ 1 /* Antenna signal */ \
+			+ 3 /* MCS */ \
+			+ 12 /* VHT */
+#endif
 
 /*!
   \brief Header associated to a packet in the driver's buffer when the driver is in dump mode.
@@ -236,40 +247,13 @@ typedef struct _INTERNAL_REQUEST
 /*!
   \brief Port device extension.
 
-  Structure containing some data relative to every adapter on which NPF is bound.
+  Structure containing some data relative to every device NPF exposes
 */
 typedef struct _DEVICE_EXTENSION
 {
 	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
 										///< to open this adapter through Packet.dll.
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
-
-/*!
-  \brief Kernel buffer of each CPU.
-
-  Structure containing the kernel buffer (and other CPU related fields) used to capture packets.
-*/
-typedef struct __CPU_Private_Data
-{
-	ULONG			P;				///< Zero-based index of the producer in the buffer. It indicates the first free byte to be written.
-	ULONG			C;				///< Zero-based index of the consumer in the buffer. It indicates the first free byte to be read.
-	ULONG			Free;			///< Number of the free bytes in the buffer
-	PUCHAR			Buffer;			///< Pointer to the kernel buffer used to capture packets.
-	ULONG			Accepted;		///< Number of packet that current capture instance acepted, from its opening. A packet
-									///< is accepted if it passes the filter and fits in the buffer. Accepted packets are the
-									///< ones that reach the application.
-									///< This number is related to the particular CPU this structure is referring to.
-	ULONG			Received;		///< Number of packets received by current instance from its opening, i.e. number of
-									///< packet received by the network adapter since the beginning of the
-									///< capture/monitoring/dump session.
-									///< This number is related to the particular CPU this structure is referring to.
-	ULONG			Dropped;		///< Number of packet that current instance had to drop, from its opening. A packet
-									///< is dropped if there is no more space to store it in the circular buffer that the
-									///< driver associates to current instance.
-									///< This number is related to the particular CPU this structure is referring to.
-	NDIS_SPIN_LOCK	BufferLock;		///< It protects the buffer associated with this CPU.
-} CpuPrivateData;
-
 
 typedef enum _FILTER_STATE
 {
@@ -299,6 +283,13 @@ typedef struct _NPCAP_FILTER_MODULE
 	SINGLE_LIST_ENTRY FilterModulesEntry;
     SINGLE_LIST_ENTRY OpenInstances; //GroupHead
     NDIS_SPIN_LOCK OpenInstancesLock; // GroupLock
+
+	LIST_ENTRY WriterRequestList; // Head of writer thread request queue
+	KSPIN_LOCK WriterRequestLock; // Lock controlling request queue
+	KSEMAPHORE WriterSemaphore; // Semaphore to signal writer thread of new requests
+	BOOLEAN WriterShouldStop; // Flag to kill writer thread
+	PVOID WriterThreadObj; // Pointer to the writer thread itself.
+
 	NDIS_STRING				AdapterName;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	BOOLEAN					Loopback;
@@ -390,15 +381,24 @@ typedef struct _OPEN_INSTANCE
 #endif
 
 	NDIS_SPIN_LOCK			MachineLock;	///< SpinLock that protects the BPF filter while in use.
-	//
-	// KAFFINITY is used as a bit mask for the affinity in the system. So on every supported OS is big enough for all the CPUs on the system (32 bits on x86, 64 on x64?).
-	// We use its size to compute the max number of CPUs.
-	//
-	CpuPrivateData			CpuData[NPF_MAX_CPU_NUMBER];	///< Pool of kernel buffer structures, one for each CPU.
-	ULONG					ReaderSN;		///< Sequence number of the next packet to be read from the pool of kernel buffers.
-	ULONG					WriterSN;		///< Sequence number of the next packet to be written in the pool of kernel buffers.
-											///< These two sequence numbers are unique for each capture instance.
-	ULONG					Size;			///< Size of each kernel buffer contained in the CpuData field.
+
+	/* Buffer */
+	PUCHAR Buffer; // The kernel ring buffer
+	NDIS_RW_LOCK BufferLock; // Lock for modifying the buffer size/configuration
+	ULONG C; // Consumer's index in the buffer
+	ULONG P; // Producer's index in the buffer
+	ULONG Free; // Bytes of buffer free for writing
+
+	/* Stats */
+	ULONG Accepted; /// A packet is accepted if it passes the filter and
+			//  fits in the buffer. Accepted packets are the
+			//  ones that reach the application.
+	ULONG Received; /// number of packet received by the network adapter
+                        //  since the beginning of the capture session.
+	ULONG Dropped; /// A packet is dropped if there is no more space to
+                       //  store it in the circular buffer.
+
+	ULONG Size; ///< Size of the kernel buffer
 	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
 	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
 	ULONG					NumPendingIrps;
@@ -411,6 +411,36 @@ typedef struct _OPEN_INSTANCE
 } 
 OPEN_INSTANCE, *POPEN_INSTANCE;
 
+#define NPF_WRITER_WRITE 1
+#define NPF_WRITER_FREE_NBL (1<<1)
+#define NPF_WRITER_FREE_RADIOTAP (1<<2)
+
+/* Structure of a serialized request to the writer thread */
+typedef struct _NPF_WRITER_REQUEST
+{
+	LIST_ENTRY WriterRequestEntry;
+	UINT FunctionCode;
+	POPEN_INSTANCE pOpen;
+	PNET_BUFFER_LIST pNBL;
+	PNET_BUFFER pNetBuffer;
+	struct bpf_hdr BpfHeader;
+	PUCHAR pRadiotapHeader;
+}
+NPF_WRITER_REQUEST, *PNPF_WRITER_REQUEST;
+
+VOID NPF_QueueRequest(PNPCAP_FILTER_MODULE pFiltMod,
+	PNPF_WRITER_REQUEST pReq);
+
+VOID NPF_PurgeRequests(PNPCAP_FILTER_MODULE pFiltMod,
+	PNET_BUFFER_LIST *ppNBL,
+	PUCHAR *ppRadiotapHeader,
+	POPEN_INSTANCE pOpen);
+
+VOID NPF_FillBuffer(POPEN_INSTANCE pOpen,
+	PNET_BUFFER pNB,
+	struct bpf_hdr *pBpfHeader,
+	PUCHAR pDot11Data);
+
 /*!
 \brief Context information for originated sent packets
 */
@@ -421,21 +451,6 @@ typedef struct _PACKET_RESERVED
 }  PACKET_RESERVED, *PPACKET_RESERVED;
 
 #define RESERVED(_p) ((PPACKET_RESERVED)((_p)->Context->ContextData + (_p)->Context->Offset)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
-
-/*!
-  \brief Structure prepended to each packet in the kernel buffer pool.
-
-  Each packet in one of the kernel buffers is prepended by this header. It encapsulates the bpf_header,
-  which will be passed to user level programs, as well as the sequence number of the packet, set by the producer (the tap function),
-  and used by the consumer (the read function) to "reorder" the packets contained in the various kernel buffers.
-*/
-struct PacketHeader
-{
-	ULONG			SN;				///< Sequence number of the packet.
-	struct bpf_hdr	header;			///< bpf header, created by the tap, and copied unmodified to user level programs.
-};
-
-extern ULONG g_NCpu;
 
 #define TRANSMIT_PACKETS 256	///< Maximum number of packets in the transmit packet pool. This value is an upper bound to the number
 ///< of packets that can be transmitted at the same time or with a single call to NdisSendPackets.
@@ -846,24 +861,6 @@ NPF_InternalRequestComplete(
 
 
 /*!
-  \brief Returns the maximum number of processors in the machine.
-  \return A ULONG value for the maximum number of processors of the machine.
-*/
-ULONG
-My_NdisGroupMaxProcessorCount(
-);
-
-
-/*!
-\brief Returns the processor number of the logical processor that the caller is running on.
-\return A ULONG value for the system-wide processor index of the logical processor that the caller is running on.
-*/
-ULONG
-My_KeGetCurrentProcessorNumber(
-);
-
-
-/*!
   \brief The initialization routine of the driver.
   \param DriverObject The driver object of NPF created by the system.
   \param RegistryPath The registry path containing the keys related to the driver.
@@ -895,30 +892,6 @@ NPF_registerLWF(
 	BOOLEAN bWiFiOrNot
 	);
 
-
-/*!
-  \brief Returns the list of the MACs available on the system.
-  \return A string containing a list of network adapters.
-
-  The list of adapters is retrieved from the
-  SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318} registry key.
-  NPF tries to create its bindings from this list. In this way it is possible to be loaded
-  and unloaded dynamically without passing from the control panel.
-*/
-PWCHAR
-getAdaptersList(
-	);
-
-
-/*!
-  \brief Returns the MACs that bind to TCP/IP.
-  \return Pointer to the registry key containing the list of adapters on which TCP/IP is bound.
-
-  If getAdaptersList() fails, NPF tries to obtain the TCP/IP bindings through this function.
-*/
-PKEY_VALUE_PARTIAL_INFORMATION
-getTcpBindings(
-	);
 
 /*!
   \brief read Npcap software's registry, get the option.
@@ -1421,13 +1394,6 @@ NTSTATUS NPF_GetCurrentFrequency(IN PNPCAP_FILTER_MODULE pFiltMod, OUT PULONG pC
 
 ULONG NPF_GetCurrentFrequency_Wrapper(IN PNPCAP_FILTER_MODULE pFiltMod);
 #endif
-
-/*!
-  \brief Returns the amount of bytes present in the packet buffer.
-  \param Open The NPF instance that closes the file.
-*/
-UINT GetBuffOccupation(POPEN_INSTANCE Open);
-
 
 VOID NPF_ResetBufferContents(POPEN_INSTANCE Open);
 
