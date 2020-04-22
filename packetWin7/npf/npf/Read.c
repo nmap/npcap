@@ -860,7 +860,7 @@ NPF_TapExForEachOpen(
 			pReq->BpfHeader.bh_datalen = TotalPacketSize;
 			pReq->BpfHeader.bh_hdrlen = sizeof(struct bpf_hdr);
 #ifdef HAVE_DOT11_SUPPORT
-			pReq->pRadiotapHeader = Dot11RadiotapHeader;
+			pReq->pBuffer = (PVOID) Dot11RadiotapHeader;
 #endif
 
 			pReq->FunctionCode = NPF_WRITER_WRITE;
@@ -875,20 +875,9 @@ NPF_TapExForEachOpen_End:;
 		if (Dot11RadiotapHeader)
 		{
 			// Free the radiotap header
-			pReq = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
-			if (pReq == NULL)
-			{
-				// Insufficient memory
-				// Can't free it yet or writer will BSOD accessing it.
-				NPF_PurgeRequests(Open->pFiltMod, NULL, Dot11RadiotapHeader, NULL);
-				NdisFreeMemory(Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
-			}
-			else
-			{
-				pReq->pRadiotapHeader = Dot11RadiotapHeader;
-				pReq->FunctionCode = NPF_WRITER_FREE_RADIOTAP;
-				NPF_QueueRequest(Open->pFiltMod, pReq);
-			}
+			NPF_QueuedFree(Open->pFiltMod, NPF_WRITER_FREE_MEM, pNetBufList,
+					(PVOID) Dot11RadiotapHeader,
+					SIZEOF_RADIOTAP_BUFFER);
 		}
 #endif
 

@@ -413,29 +413,44 @@ typedef struct _OPEN_INSTANCE
 } 
 OPEN_INSTANCE, *POPEN_INSTANCE;
 
-#define NPF_WRITER_WRITE 1
-#define NPF_WRITER_FREE_NBL (1<<1)
-#define NPF_WRITER_FREE_RADIOTAP (1<<2)
+typedef enum
+{
+	NPF_WRITER_INVALID_CODE,
+	NPF_WRITER_WRITE,
+	NPF_WRITER_FREE_CLONE_NBL,
+	NPF_WRITER_FREE_MEM,
+	NPF_WRITER_FREE_NB,
+	NPF_WRITER_FREE_NBL,
+	NPF_WRITER_FREE_MDL
+} NPF_WRITER_FUNCTION_CODE;
 
 /* Structure of a serialized request to the writer thread */
 typedef struct _NPF_WRITER_REQUEST
 {
 	LIST_ENTRY WriterRequestEntry;
-	UINT FunctionCode;
+	NPF_WRITER_FUNCTION_CODE FunctionCode;
 	POPEN_INSTANCE pOpen;
 	PNET_BUFFER_LIST pNBL;
 	PNET_BUFFER pNetBuffer;
 	struct bpf_hdr BpfHeader;
-	PUCHAR pRadiotapHeader;
+       	// For FREE requests, BpfHeader.bh_datalen is used for the size of pBuffer.
+	PVOID pBuffer;
 }
 NPF_WRITER_REQUEST, *PNPF_WRITER_REQUEST;
 
 VOID NPF_QueueRequest(PNPCAP_FILTER_MODULE pFiltMod,
 	PNPF_WRITER_REQUEST pReq);
 
+VOID NPF_QueuedFree(
+	PNPCAP_FILTER_MODULE pFiltMod,
+	NPF_WRITER_FUNCTION_CODE FunctionCode,
+	PNET_BUFFER_LIST pNBL,
+	PVOID pItem,
+	ULONG ulSize
+	);
+
 VOID NPF_PurgeRequests(PNPCAP_FILTER_MODULE pFiltMod,
 	PNET_BUFFER_LIST pNBL,
-	PUCHAR pRadiotapHeader,
 	POPEN_INSTANCE pOpen);
 
 VOID NPF_FillBuffer(POPEN_INSTANCE pOpen,

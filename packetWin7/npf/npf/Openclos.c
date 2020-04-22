@@ -239,7 +239,7 @@ NPF_WriterThread(
 		// Check if we're being told to die
 		if (pFiltMod->WriterShouldStop) {
 			// Clean up!
- 			NPF_PurgeRequests(pFiltMod, NULL, NULL, NULL);
+ 			NPF_PurgeRequests(pFiltMod, NULL, NULL);
 			PsTerminateSystemThread( STATUS_SUCCESS );
 		}
 
@@ -256,13 +256,22 @@ NPF_WriterThread(
 				NPF_FillBuffer(pReq->pOpen,
 					pReq->pNetBuffer,
 					&pReq->BpfHeader,
-					pReq->pRadiotapHeader);
+					(PUCHAR) pReq->pBuffer);
 				break;
-			case NPF_WRITER_FREE_RADIOTAP:
-				NdisFreeMemory(pReq->pRadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
+			case NPF_WRITER_FREE_MEM:
+				NdisFreeMemory(pReq->pBuffer, pReq->BpfHeader.bh_datalen, 0);
+				break;
+			case NPF_WRITER_FREE_CLONE_NBL:
+				NdisFreeCloneNetBufferList(pReq->pNBL, 0);
 				break;
 			case NPF_WRITER_FREE_NBL:
-				NdisFreeCloneNetBufferList(pReq->pNBL, 0);
+				NdisFreeNetBufferList(pReq->pNBL);
+				break;
+			case NPF_WRITER_FREE_NB:
+				NdisFreeNetBuffer(pReq->pNetBuffer);
+				break;
+			case NPF_WRITER_FREE_MDL:
+				NdisFreeMdl((PMDL)pReq->pBuffer);
 				break;
 			default:
 				break;
@@ -503,7 +512,7 @@ NPF_CloseOpenInstance(
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
 	// Remove all worker requests related to this instance.
-	NPF_PurgeRequests(pOpen->pFiltMod, NULL, NULL, pOpen);
+	NPF_PurgeRequests(pOpen->pFiltMod, NULL, pOpen);
 }
 
 
@@ -2585,16 +2594,16 @@ NOTE: called at PASSIVE_LEVEL
  * something, like if something it needs becomes invalid or we can't allocate a
  * request object. Locks the whole request queue while it works.
  *
- * If any of pNBL, pRadiotapHeader, or pOpen is NULL, it is ignored.
- * If all 3 are NULL, all requests are purged, but all FREE requests are honored.
- * If any of them is a pointer to an actual object, it will be used as the criteria for matching.
+ * If pNBL or pOpen is NULL, it is ignored.
+ * If both are NULL, all requests are purged, but all FREE requests are honored.
+ * If either of them is a pointer to an actual object, it will be used as the criteria for matching.
  *
+ * TODO: No need to match radiotap header/buffer: The only operation that needs to be purged is WRITE, which has a NBL. Make the caller pass in the NBL to purge.
  */
 VOID
 NPF_PurgeRequests(
 		PNPCAP_FILTER_MODULE pFiltMod,
 		PNET_BUFFER_LIST pNBL,
-		PUCHAR pRadiotapHeader,
 		POPEN_INSTANCE pOpen
 		)
 {
@@ -2603,7 +2612,7 @@ NPF_PurgeRequests(
 	PLIST_ENTRY Prev = NULL;
 	PNPF_WRITER_REQUEST pReq = NULL;
 
-	BOOLEAN bPurgeAll = !(pNBL || pRadiotapHeader || pOpen);
+	BOOLEAN bPurgeAll = !(pNBL || pOpen);
 
 	KeAcquireSpinLock(&pFiltMod->WriterRequestLock, &OldIrql);
 	Prev = &pFiltMod->WriterRequestList;
@@ -2613,7 +2622,6 @@ NPF_PurgeRequests(
 		pReq = CONTAINING_RECORD(Curr, NPF_WRITER_REQUEST, WriterRequestEntry);
 		if ( bPurgeAll
 			|| (pNBL && pReq->pNBL == pNBL)
-			|| (pRadiotapHeader && pReq->pRadiotapHeader == pRadiotapHeader)
 			|| (pOpen && pReq->pOpen == pOpen)
 		   )
 		{
@@ -2623,11 +2631,20 @@ NPF_PurgeRequests(
 			
 			switch (pReq->FunctionCode)
 			{
-				case NPF_WRITER_FREE_RADIOTAP:
-					NdisFreeMemory(pReq->pRadiotapHeader, SIZEOF_RADIOTAP_BUFFER, 0);
+				case NPF_WRITER_FREE_MEM:
+					NdisFreeMemory(pReq->pBuffer, pReq->BpfHeader.bh_datalen, 0);
+					break;
+				case NPF_WRITER_FREE_CLONE_NBL:
+					NdisFreeCloneNetBufferList(pReq->pNBL, 0);
 					break;
 				case NPF_WRITER_FREE_NBL:
-					NdisFreeCloneNetBufferList(pReq->pNBL, 0);
+					NdisFreeNetBufferList(pReq->pNBL);
+					break;
+				case NPF_WRITER_FREE_NB:
+					NdisFreeNetBuffer(pReq->pNetBuffer);
+					break;
+				case NPF_WRITER_FREE_MDL:
+					NdisFreeMdl((PMDL)pReq->pBuffer);
 					break;
 				case NPF_WRITER_WRITE:
 					// If this was a packet to be written,
@@ -2661,6 +2678,64 @@ VOID NPF_QueueRequest(PNPCAP_FILTER_MODULE pFiltMod,
 			0, // No priority boost
 			1, // Increment semaphore by 1
 			FALSE); // No WaitForXxx after this call
+}
+
+VOID
+NPF_QueuedFree(
+		PNPCAP_FILTER_MODULE pFiltMod,
+		NPF_WRITER_FUNCTION_CODE FunctionCode,
+		PNET_BUFFER_LIST pNBL,
+		PVOID pItem,
+		ULONG ulSize
+		)
+{
+	PNPF_WRITER_REQUEST pReq = NULL;
+
+	pReq = NdisAllocateMemoryWithTagPriority(pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+	if (pReq == NULL)
+	{
+		// Insufficient memory
+		// Can't free it yet or writer will BSOD accessing it.
+		ASSERT(pNBL != NULL);
+		NPF_PurgeRequests(pFiltMod, pNBL, NULL);
+		switch (FunctionCode)
+		{
+			case NPF_WRITER_FREE_CLONE_NBL:
+				NdisFreeCloneNetBufferList(pNBL, 0);
+				break;
+			case NPF_WRITER_FREE_MEM:
+				NdisFreeMemory(pItem, ulSize, 0);
+				break;
+			case NPF_WRITER_FREE_NB:
+				NdisFreeNetBuffer((PNET_BUFFER)pItem);
+				break;
+			case NPF_WRITER_FREE_NBL:
+				NdisFreeNetBufferList(pNBL);
+				break;
+			case NPF_WRITER_FREE_MDL:
+				NdisFreeMdl((PMDL)pItem);
+				break;
+			default:
+				// NPF_QueuedFree must not be used to queue other request types.
+				ASSERT(FALSE);
+				break;
+		}
+	}
+	else
+	{
+		pReq->FunctionCode = FunctionCode;
+		pReq->pNBL = pNBL;
+		if (FunctionCode == NPF_WRITER_FREE_NB)
+		{
+			pReq->pNetBuffer = (PNET_BUFFER)pItem;
+		}
+		else
+		{
+			pReq->pBuffer = pItem;
+		}
+		pReq->BpfHeader.bh_datalen = ulSize;
+		NPF_QueueRequest(pFiltMod, pReq);
+	}
 }
 
 _Use_decl_annotations_
@@ -2703,19 +2778,7 @@ Arguments:
 	// Queue ensures this happens after we're done copying anything from it.
 	if (NetBufferLists->NdisPoolHandle == pFiltMod->PacketPool)
 	{
-		pReq = NdisAllocateMemoryWithTagPriority(pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
-		if (pReq == NULL) {
-			// Oh fudge, we can't allocate a work request.
-			// Clean up our mess the expensive way (lost packets, locked buffer).
-			NPF_PurgeRequests(pFiltMod, NetBufferLists, NULL, NULL);
-			NdisFreeCloneNetBufferList(NetBufferLists, 0);
-		}
-		else
-		{
-			pReq->FunctionCode = NPF_WRITER_FREE_NBL;
-			pReq->pNBL = NetBufferLists;
-			NPF_QueueRequest(pFiltMod, pReq);
-		}
+		NPF_QueuedFree(pFiltMod, NPF_WRITER_FREE_CLONE_NBL, NetBufferLists, NULL, 0);
 	}
 	else // Not our NBL
 	{
