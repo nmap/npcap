@@ -462,15 +462,17 @@ NPF_TapEx(
 	if (NDIS_TEST_RECEIVE_CANNOT_PEND(ReceiveFlags))
 	{
 		pClonedNBL = NdisAllocateCloneNetBufferList(NetBufferLists, pFiltMod->PacketPool, NULL, 0);
-		NdisFReturnNetBufferLists(
-				pFiltMod->AdapterHandle,
-				NetBufferLists,
-				ReturnFlags);
 		if (pClonedNBL == NULL)
 		{
 			// Insufficient resources
 			return;
 		}
+		pClonedNBL->ParentNetBufferList = NetBufferLists;
+		NetBufferLists->ChildRefCount++;
+		NdisFReturnNetBufferLists(
+				pFiltMod->AdapterHandle,
+				NetBufferLists,
+				ReturnFlags);
 	}
 	pWorkingNBL = pClonedNBL ? pClonedNBL : NetBufferLists;
 
