@@ -359,7 +359,8 @@ NPF_Read(
 VOID
 NPF_TapExForEachOpen(
 	IN POPEN_INSTANCE Open,
-	IN PNET_BUFFER_LIST pNetBufferLists
+	IN PNET_BUFFER_LIST pNetBufferLists,
+	IN PSINGLE_LIST_ENTRY NBCopiesHead
 	);
 
 VOID
@@ -372,13 +373,17 @@ NPF_DoTap(
 	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE TempOpen;
 	LOCK_STATE lockState;
+	PNPF_WRITER_REQUEST pReq = NULL;
 
-	// If this is a Npcap-sent packet being looped back, then it has already been captured.
-	if (NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
-			&& NetBufferLists->NdisPoolHandle == pFiltMod->PacketPool)
+	pReq = NdisAllocateMemoryWithTagPriority(pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+	if (pReq == NULL)
 	{
+		//Insufficient memory. May as well abandon everything at this point.
 		return;
 	}
+	RtlZeroMemory(pReq, sizeof(NPF_WRITER_REQUEST));
+
+	pReq->NBCopiesHead.Next = NULL;
 
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
@@ -392,12 +397,22 @@ NPF_DoTap(
 			// If this instance originated the packet and doesn't want to see it, don't capture.
 			if (!(TempOpen == pOpenOriginating && TempOpen->SkipSentPackets))
 			{
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists);
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &pReq->NBCopiesHead);
 			}
 		}
 	}
 	/* Release the spin lock no matter what. */
 	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
+
+	if (pReq->NBCopiesHead.Next != NULL)
+	{
+		pReq->FunctionCode = NPF_WRITER_FREE_NB_COPIES;
+		NPF_QueueRequest(pFiltMod, pReq);
+	}
+	else
+	{
+		NdisFreeMemory(pReq, sizeof(NPF_WRITER_REQUEST), 0);
+	}
 	return;
 }
 
@@ -443,10 +458,6 @@ NPF_TapEx(
 {
 
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
-	PNET_BUFFER_LIST pClonedNBL = NULL;
-	PNET_BUFFER_LIST pWorkingNBL = NULL;
-	PSINGLE_LIST_ENTRY Curr;
-	POPEN_INSTANCE		TempOpen;
 	ULONG				ReturnFlags = 0;
 
 	TRACE_ENTER();
@@ -459,32 +470,19 @@ NPF_TapEx(
 		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
 	}
 
-	if (NDIS_TEST_RECEIVE_CANNOT_PEND(ReceiveFlags))
-	{
-		pClonedNBL = NdisAllocateCloneNetBufferList(NetBufferLists, pFiltMod->PacketPool, NULL, 0);
-		if (pClonedNBL == NULL)
-		{
-			// Insufficient resources
-			return;
-		}
-		pClonedNBL->ParentNetBufferList = NetBufferLists;
-		NetBufferLists->ChildRefCount++;
-		NdisFReturnNetBufferLists(
-				pFiltMod->AdapterHandle,
-				NetBufferLists,
-				ReturnFlags);
-	}
-	pWorkingNBL = pClonedNBL ? pClonedNBL : NetBufferLists;
+	if (
+		// If this is a Npcap-sent packet being looped back, then it has already been captured.
+		!(NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
+		 && NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
 
-	// Do not capture the normal NDIS receive traffic, if this is our loopback adapter.
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pFiltMod->Loopback == FALSE)
+		// Do not capture the normal NDIS receive traffic, if this is our loopback adapter.
+		&& pFiltMod->Loopback == FALSE
+#endif
+	   )
 	{
-#endif
-		NPF_DoTap(pFiltMod, pWorkingNBL, NULL);
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		NPF_DoTap(pFiltMod, NetBufferLists, NULL);
 	}
-#endif
 
 #ifdef HAVE_RX_SUPPORT
 	if (pFiltMod->BlockRxPath)
@@ -504,7 +502,7 @@ NPF_TapEx(
 		//return the packets immediately
 		NdisFIndicateReceiveNetBufferLists(
 			pFiltMod->AdapterHandle,
-			pWorkingNBL,
+			NetBufferLists,
 			PortNumber,
 			NumberOfNetBufferLists,
 			ReceiveFlags);
@@ -512,7 +510,7 @@ NPF_TapEx(
 		{
 			// We retained this, so free it up right away
 			NPF_ReturnEx(FilterModuleContext, 
-					pWorkingNBL,
+					NetBufferLists,
 					ReturnFlags);
 		}
 	}
@@ -537,7 +535,8 @@ NPF_AlignProtocolField(
 VOID
 NPF_TapExForEachOpen(
 	IN POPEN_INSTANCE Open,
-	IN PNET_BUFFER_LIST pNetBufferLists
+	IN PNET_BUFFER_LIST pNetBufferLists,
+	IN PSINGLE_LIST_ENTRY NBCopiesHead
 	)
 {
 	UINT					fres;
@@ -554,7 +553,9 @@ NPF_TapExForEachOpen(
 	PUCHAR					Dot11RadiotapHeader = NULL;
 	UINT					Dot11RadiotapHeaderSize = 0;
 #endif
-
+	PNPF_NB_COPIES pNBCopy = NULL;
+	PSINGLE_LIST_ENTRY pNBCopiesPrev = NBCopiesHead;
+	
 	//TRACE_ENTER();
 
  	if (!NPF_StartUsingOpenInstance(Open))
@@ -766,6 +767,34 @@ NPF_TapExForEachOpen(
 		pNetBuf = pNetBufList->FirstNetBuffer;
 		while (pNetBuf != NULL)
 		{
+			if (pNBCopiesPrev->Next == NULL)
+			{
+				// Add another copy to the chain
+				pNBCopy = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_NB_COPIES), '0OWA', NormalPoolPriority);
+				if (pNBCopy == NULL)
+				{
+					//Insufficient resources. Really need to abandon everything.
+#ifdef HAVE_DOT11_SUPPORT
+					if (Dot11RadiotapHeader)
+					{
+						// Free the radiotap header
+						NPF_QueuedFree(Open->pFiltMod, NPF_WRITER_FREE_MEM, pNetBufList,
+								(PVOID) Dot11RadiotapHeader,
+								SIZEOF_RADIOTAP_BUFFER);
+					}
+#endif
+					// We can't continue traversing or the NBCopies
+					// and actual NBs won't line up.
+					return;
+				}
+				RtlZeroMemory(pNBCopy, sizeof(NPF_NB_COPIES));
+				pNBCopiesPrev->Next = &pNBCopy->CopiesEntry;
+			}
+			else
+			{
+				pNBCopy = CONTAINING_RECORD(pNBCopiesPrev->Next, NPF_NB_COPIES, CopiesEntry);
+			}
+			pNBCopiesPrev = pNBCopiesPrev->Next;
 			pNextNetBuf = NET_BUFFER_NEXT_NB(pNetBuf);
 
 			InterlockedIncrement(&Open->Received);
@@ -845,16 +874,68 @@ NPF_TapExForEachOpen(
 				}
 			}
 #endif
+			// Packet accepted and must be written to buffer.
+			// Make a copy of the data so we can return the original quickly,
+			// then queue a write request to copy the relevant data to the buffer.
+			if (pNBCopy->pNetBuffer == NULL)
+			{
+				pNBCopy->pNetBuffer = NdisAllocateNetBufferMdlAndData(Open->pFiltMod->TapNBPool);
+				if (pNBCopy->pNetBuffer == NULL)
+				{
+					// Insufficient memory
+					InterlockedIncrement(&Open->Dropped);
+					goto NPF_TapExForEachOpen_End;
+				}
+			}
+			ULONG OldLength = NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer);
+
+			// Extend the copy length and fill with data
+			if (fres > OldLength)
+			{
+				PUCHAR pBuff = (PUCHAR) NdisAllocateMemoryWithTagPriority(
+					Open->pFiltMod->AdapterHandle,
+					fres - OldLength,
+					NPF_ALLOC_TAG,
+					NormalPoolPriority);
+				if (pBuff == NULL)
+				{
+					InterlockedIncrement(&Open->Dropped);
+					goto NPF_TapExForEachOpen_End;
+				}
+				PMDL pMdl = NULL;
+				ULONG BytesCopied = 0;
+				for (pMdl = NET_BUFFER_CURRENT_MDL(pNBCopy->pNetBuffer);
+						pMdl->Next != NULL; pMdl = pMdl->Next);
+
+				pMdl->Next = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuff, fres - OldLength);
+				if (pMdl->Next == NULL)
+				{
+					NdisFreeMemory(pBuff, fres - OldLength, 0);
+					InterlockedIncrement(&Open->Dropped);
+					goto NPF_TapExForEachOpen_End;
+				}
+				NdisCopyFromNetBufferToNetBuffer(
+						pNBCopy->pNetBuffer,
+						OldLength,
+						fres - OldLength,
+						pNetBuf,
+						OldLength,
+						&BytesCopied);
+				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = fres;
+			}
+
 			pReq = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
 			if (pReq == NULL)
 			{
 				// Insufficient memory
+				// Don't free pNBCopy; that's done later
 				InterlockedIncrement(&Open->Dropped);
 				goto NPF_TapExForEachOpen_End;
 			}
+			RtlZeroMemory(pReq, sizeof(NPF_WRITER_REQUEST));
 			pReq->pOpen = Open;
 			pReq->pNBL = pNetBufList;
-			pReq->pNetBuffer = pNetBuf;
+			pReq->pNetBuffer = pNBCopy->pNetBuffer;
 			GET_TIME(&pReq->BpfHeader.bh_tstamp, &Open->start, Open->TimestampMode);
 			pReq->BpfHeader.bh_caplen = fres;
 			pReq->BpfHeader.bh_datalen = TotalPacketSize;

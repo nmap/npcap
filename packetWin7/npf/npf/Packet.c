@@ -413,7 +413,7 @@ DriverEntry(
 		// Create the fake "filter module" for loopback capture
 		// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
 		NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
-		PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(&LoopbackDeviceName, NdisMediumLoopback);
+		PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(NULL, &LoopbackDeviceName, NdisMediumLoopback);
 		if (pFiltMod == NULL)
 		{
 			NPF_WSKFreeSockets();

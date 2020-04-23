@@ -215,6 +215,46 @@ NPF_CloseBinding(
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 }
 
+VOID NPF_FreeNBCopies(PSINGLE_LIST_ENTRY NBCopiesHead)
+{
+	PVOID pDeleteMe = NULL;
+	PNPF_NB_COPIES pNBCopy = NULL;
+	PMDL pMdl = NULL;
+	ULONG ulSize = 0;
+	PSINGLE_LIST_ENTRY pNBCopyEntry = NBCopiesHead->Next;
+
+	while (pNBCopyEntry != NULL)
+	{
+		pNBCopy = CONTAINING_RECORD(pNBCopyEntry, NPF_NB_COPIES, CopiesEntry);
+		if (pNBCopy->pNetBuffer != NULL)
+		{
+			// Skip the first MDL/buffer (allocated by NdisAllocateNetBufferMdlAndData)
+			pMdl = NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next;
+			while (pMdl)
+			{
+				NdisQueryMdl(pMdl,
+						&pDeleteMe,
+						&ulSize,
+						NormalPagePriority);
+				if (pDeleteMe != NULL)
+				{
+					NdisFreeMemory(pDeleteMe, ulSize, 0);
+				}
+				pDeleteMe = pMdl;
+				pMdl = pMdl->Next;
+				NdisFreeMdl((PMDL)pDeleteMe);
+			}
+			NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next = NULL;
+			NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = 0;
+			NET_BUFFER_DATA_OFFSET(pNBCopy->pNetBuffer) = 0;
+			NdisFreeNetBuffer(pNBCopy->pNetBuffer);
+		}
+		pDeleteMe = pNBCopyEntry;
+		pNBCopyEntry = pNBCopyEntry->Next;
+		NdisFreeMemory(pDeleteMe, sizeof(NPF_NB_COPIES), 0);
+	}
+}
+
 VOID
 NPF_WriterThread(
 		_In_ PVOID Context
@@ -261,17 +301,8 @@ NPF_WriterThread(
 			case NPF_WRITER_FREE_MEM:
 				NdisFreeMemory(pReq->pBuffer, pReq->BpfHeader.bh_datalen, 0);
 				break;
-			case NPF_WRITER_FREE_CLONE_NBL:
-				NdisFreeCloneNetBufferList(pReq->pNBL, 0);
-				break;
-			case NPF_WRITER_FREE_NBL:
-				NdisFreeNetBufferList(pReq->pNBL);
-				break;
-			case NPF_WRITER_FREE_NB:
-				NdisFreeNetBuffer(pReq->pNetBuffer);
-				break;
-			case NPF_WRITER_FREE_MDL:
-				NdisFreeMdl((PMDL)pReq->pBuffer);
+			case NPF_WRITER_FREE_NB_COPIES:
+				NPF_FreeNBCopies(&pReq->NBCopiesHead);
 				break;
 			default:
 				break;
@@ -612,6 +643,12 @@ NPF_ReleaseFilterModuleResources(
 	{
 		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
 		pFiltMod->PacketPool = NULL;
+	}
+
+	if (pFiltMod->TapNBPool)
+	{
+		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
+		pFiltMod->TapNBPool = NULL;
 	}
 
 	// Release the adapter name
@@ -1569,11 +1606,13 @@ NPF_CreateOpenObject()
 
 PNPCAP_FILTER_MODULE
 NPF_CreateFilterModule(
+	NDIS_HANDLE NdisFilterHandle,
 	PNDIS_STRING AdapterName,
 	UINT SelectedIndex)
 {
 	PNPCAP_FILTER_MODULE pFiltMod;
 	NET_BUFFER_LIST_POOL_PARAMETERS PoolParameters;
+	NET_BUFFER_POOL_PARAMETERS NBPoolParams;
 	UINT i;
 
 	// allocate some memory for the filter module structure
@@ -1615,10 +1654,27 @@ NPF_CreateFilterModule(
 	PoolParameters.PoolTag = NPF_ALLOC_TAG;
 	PoolParameters.DataSize = 0;
 
-	pFiltMod->PacketPool = NdisAllocateNetBufferListPool(NULL, &PoolParameters);
+	pFiltMod->PacketPool = NdisAllocateNetBufferListPool(NdisFilterHandle, &PoolParameters);
 	if (pFiltMod->PacketPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate packet pool");
+		ExFreePool(pFiltMod);
+		TRACE_EXIT();
+		return NULL;
+	}
+
+	NdisZeroMemory(&NBPoolParams, sizeof(NET_BUFFER_POOL_PARAMETERS));
+	NBPoolParams.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
+	NBPoolParams.Header.Revision = NET_BUFFER_POOL_PARAMETERS_REVISION_1;
+	NBPoolParams.Header.Size = NDIS_SIZEOF_NET_BUFFER_POOL_PARAMETERS_REVISION_1;
+	NBPoolParams.PoolTag = NPF_ALLOC_TAG;
+	NBPoolParams.DataSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
+
+	pFiltMod->TapNBPool = NdisAllocateNetBufferPool(NdisFilterHandle, &NBPoolParams);
+	if (pFiltMod->TapNBPool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate TapNBPool");
+		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
 		ExFreePool(pFiltMod);
 		TRACE_EXIT();
 		return NULL;
@@ -1858,7 +1914,7 @@ NPF_AttachAdapter(
 #endif
 
 		// create the adapter object
-		pFiltMod = NPF_CreateFilterModule(AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType);
+		pFiltMod = NPF_CreateFilterModule(NdisFilterHandle, AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType);
 		if (pFiltMod == NULL)
 		{
 			returnStatus = NDIS_STATUS_RESOURCES;
@@ -2634,17 +2690,8 @@ NPF_PurgeRequests(
 				case NPF_WRITER_FREE_MEM:
 					NdisFreeMemory(pReq->pBuffer, pReq->BpfHeader.bh_datalen, 0);
 					break;
-				case NPF_WRITER_FREE_CLONE_NBL:
-					NdisFreeCloneNetBufferList(pReq->pNBL, 0);
-					break;
-				case NPF_WRITER_FREE_NBL:
-					NdisFreeNetBufferList(pReq->pNBL);
-					break;
-				case NPF_WRITER_FREE_NB:
-					NdisFreeNetBuffer(pReq->pNetBuffer);
-					break;
-				case NPF_WRITER_FREE_MDL:
-					NdisFreeMdl((PMDL)pReq->pBuffer);
+				case NPF_WRITER_FREE_NB_COPIES:
+					NPF_FreeNBCopies(&pReq->NBCopiesHead);
 					break;
 				case NPF_WRITER_WRITE:
 					// If this was a packet to be written,
@@ -2700,20 +2747,8 @@ NPF_QueuedFree(
 		NPF_PurgeRequests(pFiltMod, pNBL, NULL);
 		switch (FunctionCode)
 		{
-			case NPF_WRITER_FREE_CLONE_NBL:
-				NdisFreeCloneNetBufferList(pNBL, 0);
-				break;
 			case NPF_WRITER_FREE_MEM:
 				NdisFreeMemory(pItem, ulSize, 0);
-				break;
-			case NPF_WRITER_FREE_NB:
-				NdisFreeNetBuffer((PNET_BUFFER)pItem);
-				break;
-			case NPF_WRITER_FREE_NBL:
-				NdisFreeNetBufferList(pNBL);
-				break;
-			case NPF_WRITER_FREE_MDL:
-				NdisFreeMdl((PMDL)pItem);
 				break;
 			default:
 				// NPF_QueuedFree must not be used to queue other request types.
@@ -2723,16 +2758,10 @@ NPF_QueuedFree(
 	}
 	else
 	{
+		RtlZeroMemory(pReq, sizeof(NPF_WRITER_REQUEST));
 		pReq->FunctionCode = FunctionCode;
 		pReq->pNBL = pNBL;
-		if (FunctionCode == NPF_WRITER_FREE_NB)
-		{
-			pReq->pNetBuffer = (PNET_BUFFER)pItem;
-		}
-		else
-		{
-			pReq->pBuffer = pItem;
-		}
+		pReq->pBuffer = pItem;
 		pReq->BpfHeader.bh_datalen = ulSize;
 		NPF_QueueRequest(pFiltMod, pReq);
 	}
@@ -2774,18 +2803,9 @@ Arguments:
 
 /*	TRACE_ENTER();*/
 
-	// If this is our own allocated NBL, tell the Writer thread to clean it up.
-	// Queue ensures this happens after we're done copying anything from it.
-	if (NetBufferLists->NdisPoolHandle == pFiltMod->PacketPool)
-	{
-		NPF_QueuedFree(pFiltMod, NPF_WRITER_FREE_CLONE_NBL, NetBufferLists, NULL, 0);
-	}
-	else // Not our NBL
-	{
-		// Return the received NBLs.  If you removed any NBLs from the chain, make
-		// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
-		NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
-	}
+	// Return the received NBLs.  If you removed any NBLs from the chain, make
+	// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
+	NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
 
 /*	TRACE_EXIT();*/
 }

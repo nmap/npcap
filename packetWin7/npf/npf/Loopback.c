@@ -440,38 +440,28 @@ NPF_TapLoopback(
 					if (FirstMDLLen != numBytes) {
 						pTmpBuf = MmGetSystemAddressForMdlSafe(pMdl, NormalPagePriority|MdlMappingNoExecute);
 						if (pTmpBuf != NULL) {
-							NPF_QueuedFree(pLoopbackFilter, NPF_WRITER_FREE_MEM,
-									pFakeNbl,
-									pTmpBuf, FirstMDLLen);
+							NdisFreeMemory(pTmpBuf, FirstMDLLen, 0);
 						}
 					}
 
 					/* Regardless, free the MDL */
-					NPF_QueuedFree(pLoopbackFilter, NPF_WRITER_FREE_MDL,
-							pFakeNbl,
-							pMdl, 0);
+					NdisFreeMdl(pMdl);
 				}
 
 				/* Now stash the next NB and free this one. */
 				pNetBuffer = NET_BUFFER_NEXT_NB(pFakeNetBuffer);
 				/* First NB is pre-allocated, so we don't have to free it. */
 				if (pFakeNetBuffer != NET_BUFFER_LIST_FIRST_NB(pFakeNbl)) {
-					NPF_QueuedFree(pLoopbackFilter, NPF_WRITER_FREE_NB,
-							pFakeNbl,
-							pFakeNetBuffer, 0);
+					NdisFreeNetBuffer(pFakeNetBuffer);
 				}
 				pFakeNetBuffer = pNetBuffer;
 			}
 
-			NPF_QueuedFree(pLoopbackFilter, NPF_WRITER_FREE_NBL,
-					pFakeNbl,
-					NULL, 0);
+			NdisFreeNetBufferList(pFakeNbl);
 		}
 
 		if (npBuff != NULL) {
-			NPF_QueuedFree(pLoopbackFilter, NPF_WRITER_FREE_MEM,
-					pFakeNbl,
-					npBuff, numBytes);
+			NdisFreeMemory(npBuff, numBytes, 0);
 		}
 
 		NPF_StopUsingBinding(pLoopbackFilter);
