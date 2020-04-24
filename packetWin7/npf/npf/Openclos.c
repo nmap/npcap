@@ -2791,8 +2791,6 @@ Arguments:
 --*/
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
-	PNPF_WRITER_REQUEST pReq = NULL;
-	KIRQL OldIrql;
 
 /*	TRACE_ENTER();*/
 

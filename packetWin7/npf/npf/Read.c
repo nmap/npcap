@@ -506,13 +506,6 @@ NPF_TapEx(
 			PortNumber,
 			NumberOfNetBufferLists,
 			ReceiveFlags);
-		if (NDIS_TEST_RECEIVE_CANNOT_PEND(ReceiveFlags))
-		{
-			// We retained this, so free it up right away
-			NPF_ReturnEx(FilterModuleContext, 
-					NetBufferLists,
-					ReturnFlags);
-		}
 	}
 
 	TRACE_EXIT();
