@@ -1321,6 +1321,13 @@ NPF_CreateFilterModule(
 	UINT SelectedIndex
 	);
 
+VOID
+NPF_WriterThread(_In_ PVOID Context);
+VOID
+NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen);
+VOID
+NPF_ReleaseFilterModuleResources(PNPCAP_FILTER_MODULE pFiltMod);
+
 
 #ifdef NPCAP_KDUMP
 /*!

@@ -101,13 +101,6 @@ extern ULONG g_Dot11SupportMode;
 	extern HANDLE g_WFPEngineHandle;
 #endif
 
-static
-VOID
-NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen);
-static
-VOID
-NPF_ReleaseFilterModuleResources(PNPCAP_FILTER_MODULE pFiltMod);
-
 ULONG g_NumLoopbackInstances = 0;
 
 extern SINGLE_LIST_ENTRY g_arrFiltMod; //Adapter filter module list head, each list item is a group head.
