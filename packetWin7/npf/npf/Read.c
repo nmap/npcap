@@ -375,7 +375,7 @@ NPF_DoTap(
 	LOCK_STATE lockState;
 	PNPF_WRITER_REQUEST pReq = NULL;
 
-	pReq = NdisAllocateMemoryWithTagPriority(pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+	pReq = NPF_POOL_GET(pFiltMod->WriterRequestPool, PNPF_WRITER_REQUEST);
 	if (pReq == NULL)
 	{
 		//Insufficient memory. May as well abandon everything at this point.
@@ -411,7 +411,7 @@ NPF_DoTap(
 	}
 	else
 	{
-		NdisFreeMemory(pReq, sizeof(NPF_WRITER_REQUEST), 0);
+		NPF_POOL_RETURN(pFiltMod->WriterRequestPool, pReq);
 	}
 	return;
 }
@@ -917,7 +917,7 @@ NPF_TapExForEachOpen(
 				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = fres;
 			}
 
-			pReq = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+			pReq = NPF_POOL_GET(Open->pFiltMod->WriterRequestPool, PNPF_WRITER_REQUEST);
 			if (pReq == NULL)
 			{
 				// Insufficient memory

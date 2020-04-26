@@ -297,6 +297,7 @@
     <ClCompile Include="dump.c" />
     <ClCompile Include="Loopback.c" />
     <ClCompile Include="Lo_send.c" />
+    <ClCompile Include="ObjPool.c" />
     <ClCompile Include="Openclos.c" />
     <ClCompile Include="Packet.c" />
     <ClCompile Include="Read.c" />
@@ -310,6 +311,7 @@
     <ClInclude Include="Loopback.h" />
     <ClInclude Include="Lo_send.h" />
     <ClInclude Include="macros.h" />
+    <ClInclude Include="ObjPool.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="time_calls.h" />

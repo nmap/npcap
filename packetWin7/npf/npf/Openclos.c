@@ -300,7 +300,7 @@ NPF_WriterThread(
 			default:
 				break;
 		}
-		NdisFreeMemory(pReq, sizeof(NPF_WRITER_REQUEST), 0);
+		NPF_POOL_RETURN(pFiltMod->WriterRequestPool, pReq);
 	}
 }
 //-------------------------------------------------------------------
@@ -642,6 +642,11 @@ NPF_ReleaseFilterModuleResources(
 	{
 		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
 		pFiltMod->TapNBPool = NULL;
+	}
+
+	if (pFiltMod->WriterRequestPool)
+	{
+		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
 	}
 
 	// Release the adapter name
@@ -1687,6 +1692,16 @@ NPF_CreateFilterModule(
 	KeInitializeSemaphore(&pFiltMod->WriterSemaphore, 0, MAXLONG);
 	pFiltMod->WriterShouldStop = FALSE;
 	pFiltMod->WriterThreadObj = NULL;
+	pFiltMod->WriterRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_WRITER_REQUEST), 16);
+	if (pFiltMod->WriterRequestPool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate WriterRequestPool");
+		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
+		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
+		ExFreePool(pFiltMod);
+		TRACE_EXIT();
+		return NULL;
+	}
 	
 	// Default; expect this will be overwritten in NPF_Restart,
 	// or for Loopback when creating the fake module.
@@ -2694,7 +2709,7 @@ NPF_PurgeRequests(
 				default:
 					break;
 			}
-			NdisFreeMemory(pReq, sizeof(NPF_WRITER_REQUEST), 0);
+			NPF_POOL_RETURN(pFiltMod->WriterRequestPool, pReq);
 			Curr = Prev;
 		}
 		else
@@ -2731,7 +2746,7 @@ NPF_QueuedFree(
 {
 	PNPF_WRITER_REQUEST pReq = NULL;
 
-	pReq = NdisAllocateMemoryWithTagPriority(pFiltMod->AdapterHandle, sizeof(NPF_WRITER_REQUEST), '0OWA', NormalPoolPriority);
+	pReq = NPF_POOL_GET(pFiltMod->WriterRequestPool, PNPF_WRITER_REQUEST);
 	if (pReq == NULL)
 	{
 		// Insufficient memory

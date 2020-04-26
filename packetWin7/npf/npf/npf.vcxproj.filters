@@ -25,6 +25,9 @@
     <ClCompile Include="Write.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ObjPool.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DEBUG.H">
@@ -58,6 +61,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win_bpf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

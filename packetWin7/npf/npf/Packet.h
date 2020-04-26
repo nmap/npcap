@@ -193,6 +193,8 @@ struct packet_file_header
 			+ 12 /* VHT */
 #endif
 
+#include "ObjPool.h"
+
 /*!
   \brief Header associated to a packet in the driver's buffer when the driver is in dump mode.
   Similar to the bpf_hdr structure, but simpler.
@@ -291,6 +293,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	KSEMAPHORE WriterSemaphore; // Semaphore to signal writer thread of new requests
 	BOOLEAN WriterShouldStop; // Flag to kill writer thread
 	PVOID WriterThreadObj; // Pointer to the writer thread itself.
+	PNPF_OBJ_POOL WriterRequestPool; // Pool of request objects
 
 	NDIS_STRING				AdapterName;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
