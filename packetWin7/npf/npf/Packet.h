@@ -104,8 +104,6 @@ typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTE
 //
 extern NDIS_HANDLE         FilterDriverObject;
 
-#define  MAX_REQUESTS						128 ///< Maximum number of simultaneous IOCTL requests.
-
 #define Packet_ALIGNMENT sizeof(int) ///< Alignment macro. Defines the alignment size.
 #define Packet_WORDALIGN(x) (((x)+(Packet_ALIGNMENT-1))&~(Packet_ALIGNMENT-1))	///< Alignment macro. Rounds up to the next
 ///< even multiple of Packet_ALIGNMENT.
@@ -238,9 +236,6 @@ C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
 */
 typedef struct _INTERNAL_REQUEST
 {
-	LIST_ENTRY			ListElement;		///< Used to handle lists of requests.
-	// PIRP				Irp;				///< Irp that performed the request
-	// BOOLEAN			Internal;			///< True if the request is for internal use of npf.sys. False if the request is performed by the user through an IOCTL.
 	NDIS_EVENT			InternalRequestCompletedEvent;
 	NDIS_OID_REQUEST	Request;			///< The structure with the actual request, that will be passed to NdisRequest().
 	NDIS_STATUS			RequestStatus;
@@ -325,9 +320,7 @@ typedef struct _NPCAP_FILTER_MODULE
 											///< documentation of NdisOpenAdapter in the MS DDK for details.
 	NDIS_HANDLE				PacketPool;		///< Pool of NDIS_PACKET structures used to transfer the packets from and to the NIC driver.
 	NDIS_HANDLE TapNBPool; // Pool of NET_BUFFERs to hold capture data temporarily.
-	KSPIN_LOCK				RequestSpinLock;///< SpinLock used to synchronize the OID requests.
-	LIST_ENTRY				RequestList;	///< List of pending OID requests.
-	INTERNAL_REQUEST		Requests[MAX_REQUESTS]; ///< Array of structures that wrap every single OID request.
+	PNPF_OBJ_POOL InternalRequestPool; // Pool of INTERNAL_REQUEST structures that wrap every single OID request.
 	UINT					MaxFrameSize;	///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the
 											///< size of the frames sent with NPF_Write() or NPF_BufferedWrite().
 	ULONG					AdapterHandleUsageCounter;

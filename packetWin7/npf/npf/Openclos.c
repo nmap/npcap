@@ -1687,9 +1687,17 @@ NPF_CreateFilterModule(
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;
 
-	//  Initialize the OID request list
-	KeInitializeSpinLock(&pFiltMod->RequestSpinLock);
-	InitializeListHead(&pFiltMod->RequestList);
+	//  Initialize the OID request pool
+	pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 16);
+	if (pFiltMod->InternalRequestPool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
+		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
+		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
+		ExFreePool(pFiltMod);
+		TRACE_EXIT();
+		return NULL;
+	}
 
 	//  Initialize the writer request list
 	KeInitializeSpinLock(&pFiltMod->WriterRequestLock);
@@ -1701,6 +1709,7 @@ NPF_CreateFilterModule(
 	if (pFiltMod->WriterRequestPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate WriterRequestPool");
+		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
 		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
 		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
 		ExFreePool(pFiltMod);
@@ -1714,6 +1723,7 @@ NPF_CreateFilterModule(
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
 		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
+		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
 		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
 		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
 		ExFreePool(pFiltMod);
@@ -1734,16 +1744,6 @@ NPF_CreateFilterModule(
 	//allocate the spinlock for the OID requests
 	//
 	NdisAllocateSpinLock(&pFiltMod->OIDLock);
-
-	//
-	//  link up the request stored in our open block
-	//
-	for (i = 0 ; i < MAX_REQUESTS ; i++)
-	{
-		NdisInitializeEvent(&pFiltMod->Requests[i].InternalRequestCompletedEvent);
-
-		ExInterlockedInsertTailList(&pFiltMod->RequestList, &pFiltMod->Requests[i].ListElement, &pFiltMod->RequestSpinLock);
-	}
 
 	//
 	// set the proper binding flags before trying to open the MAC

@@ -934,7 +934,6 @@ NPF_IoControl(
 	POPEN_INSTANCE			Open;
 	PSINGLE_LIST_ENTRY Curr;
 	PIO_STACK_LOCATION		IrpSp;
-	PLIST_ENTRY				RequestListEntry;
 	PINTERNAL_REQUEST		pRequest;
 	ULONG					FunctionCode;
 	NDIS_STATUS				Status = STATUS_INVALID_DEVICE_REQUEST;
@@ -1598,20 +1597,18 @@ NPF_IoControl(
 
 
 		// Extract a request from the list of free ones
-		RequestListEntry = ExInterlockedRemoveHeadList(&Open->pFiltMod->RequestList, &Open->pFiltMod->RequestSpinLock);
-		if (RequestListEntry == NULL)
+		pRequest = NPF_POOL_GET(Open->pFiltMod->InternalRequestPool, PINTERNAL_REQUEST);
+		if (pRequest == NULL)
 		{
 			//
 			// Release ownership of the Ndis Handle
 			//
 			NPF_StopUsingBinding(Open->pFiltMod);
 
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "RequestListEntry=NULL");
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
 			SET_FAILURE_NOMEM();
 			break;
 		}
-
-		pRequest = CONTAINING_RECORD(RequestListEntry, INTERNAL_REQUEST, ListElement);
 
 		//
 		//  See if it is an Ndis request
@@ -1707,7 +1704,7 @@ NPF_IoControl(
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OidBuffer");
 				SET_FAILURE_NOMEM();
-				break;
+				goto OID_REQUEST_DONE;
 			}
 			RtlCopyMemory(OidBuffer, OidData->Data, OidData->Length);
 
@@ -1882,9 +1879,7 @@ OID_REQUEST_DONE:
 		//
 		NPF_StopUsingBinding(Open->pFiltMod);
 
-		ExInterlockedInsertTailList(&Open->pFiltMod->RequestList,
-			&pRequest->ListElement,
-			&Open->pFiltMod->RequestSpinLock);
+		NPF_POOL_RETURN(Open->pFiltMod->InternalRequestPool, pRequest);
 
 		break;
 
