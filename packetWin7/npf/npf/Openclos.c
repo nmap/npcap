@@ -644,9 +644,16 @@ NPF_ReleaseFilterModuleResources(
 		pFiltMod->TapNBPool = NULL;
 	}
 
+	if (pFiltMod->InternalRequestPool)
+	{
+		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
+		pFiltMod->InternalRequestPool = NULL;
+	}
+
 	if (pFiltMod->WriterRequestPool)
 	{
 		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
+		pFiltMod->WriterRequestPool = NULL;
 	}
 
 	if (pFiltMod->NBCopiesPool)
