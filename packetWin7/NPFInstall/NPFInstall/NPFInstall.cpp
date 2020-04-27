@@ -57,7 +57,6 @@
 #include "LoopbackInstall.h"
 #include "CalloutInstall.h"
 #include "DriverStoreClear.h"
-#include "WlanRecord.h"
 #include "RegUtil.h"
 #include "ProcessUtil.h"
 #include <Netcfgx.h>
@@ -94,8 +93,6 @@ _T("  -kill_proc\t\t: Terminate all the processes that are still using Npcap DLL
 _T("  -kill_proc_soft\t: Gracefully terminate all the processes that are still using Npcap DLLs (only for GUI processes, CLI processes will not be terminated)\n") \
 _T("  -kill_proc_polite\t: Politely terminate all the processes that are still using Npcap DLLs (wait for 15 seconds for GUI processes to close themselves, CLI processes will still be terminiated immediatelly)\n") \
 _T("  -c\t\t\t: Clear all the driverstore cache for the driver\n") \
-_T("  -wlan_check\t\t: Check whether this machine owns a wireless adapter\n") \
-_T("  -wlan_write_reg\t: Write the names of all wireless adapters to registry\n") \
 _T("  -add_path\t\t: Add Npcap folder to the PATH environment variable\n") \
 _T("  -remove_path\t\t: Remove Npcap folder from the PATH environment variable\n") \
 _T("  -n\t\t\t: Hide this window when executing the command\n") \
@@ -647,39 +644,6 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				_tprintf(_T("Npcap driver cache in Driver Store has failed to be cleaned up.\n"));
-				nStatus = -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-wlan_check"))
-		{
-			vector<tstring> nstrAdapterGuids;
-			nstrAdapterGuids = getWlanAdapterGuids();
-			if (nstrAdapterGuids.size() != 0)
-			{
-				_tprintf(_T("Wlan adapters: %s\n"), printArray(nstrAdapterGuids).c_str());
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("Wlan adapters: NULL\n"));
-				nStatus = -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-wlan_write_reg"))
-		{
-			bSuccess = writeWlanAdapterGuidsToRegistry();
-			if (bSuccess)
-			{
-				_tprintf(_T("Wlan adapters have been successfully written to registry!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("Wlan adapters have failed to be written to registry.\n"));
 				nStatus = -1;
 				goto _EXIT;
 			}

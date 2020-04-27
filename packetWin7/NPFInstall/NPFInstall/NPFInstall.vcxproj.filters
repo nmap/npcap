@@ -42,9 +42,6 @@
     <ClCompile Include="DriverStoreClear.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WlanRecord.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="RegUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -84,9 +81,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DriverStoreClear.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WlanRecord.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RegUtil.h">

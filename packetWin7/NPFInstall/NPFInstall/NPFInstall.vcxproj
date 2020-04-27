@@ -307,7 +307,6 @@
     <ClCompile Include="ProcessUtil.cpp" />
     <ClCompile Include="RegKey.cpp" />
     <ClCompile Include="RegUtil.cpp" />
-    <ClCompile Include="WlanRecord.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CalloutInstall.h" />
@@ -323,7 +322,6 @@
     <ClInclude Include="rc_ids.h" />
     <ClInclude Include="RegKey.h" />
     <ClInclude Include="RegUtil.h" />
-    <ClInclude Include="WlanRecord.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc" />
