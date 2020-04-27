@@ -208,7 +208,7 @@ NPF_CloseBinding(
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 }
 
-VOID NPF_FreeNBCopies(PSINGLE_LIST_ENTRY NBCopiesHead)
+VOID NPF_FreeNBCopies(PNPCAP_FILTER_MODULE pFiltMod, PSINGLE_LIST_ENTRY NBCopiesHead)
 {
 	PVOID pDeleteMe = NULL;
 	PNPF_NB_COPIES pNBCopy = NULL;
@@ -244,7 +244,7 @@ VOID NPF_FreeNBCopies(PSINGLE_LIST_ENTRY NBCopiesHead)
 		}
 		pDeleteMe = pNBCopyEntry;
 		pNBCopyEntry = pNBCopyEntry->Next;
-		NdisFreeMemory(pDeleteMe, sizeof(NPF_NB_COPIES), 0);
+		NPF_POOL_RETURN(pFiltMod->NBCopiesPool, pDeleteMe);
 	}
 }
 
@@ -295,7 +295,7 @@ NPF_WriterThread(
 				NdisFreeMemory(pReq->pBuffer, pReq->BpfHeader.bh_datalen, 0);
 				break;
 			case NPF_WRITER_FREE_NB_COPIES:
-				NPF_FreeNBCopies(&pReq->NBCopiesHead);
+				NPF_FreeNBCopies(pFiltMod, &pReq->NBCopiesHead);
 				break;
 			default:
 				break;
@@ -647,6 +647,11 @@ NPF_ReleaseFilterModuleResources(
 	if (pFiltMod->WriterRequestPool)
 	{
 		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
+	}
+
+	if (pFiltMod->NBCopiesPool)
+	{
+		NPF_FreeObjectPool(pFiltMod->NBCopiesPool);
 	}
 
 	// Release the adapter name
@@ -1702,6 +1707,19 @@ NPF_CreateFilterModule(
 		TRACE_EXIT();
 		return NULL;
 	}
+
+	// These are small, so allocate in larger multiples.
+	pFiltMod->NBCopiesPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_NB_COPIES), 32);
+	if (pFiltMod->NBCopiesPool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
+		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
+		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
+		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
+		ExFreePool(pFiltMod);
+		TRACE_EXIT();
+		return NULL;
+	}
 	
 	// Default; expect this will be overwritten in NPF_Restart,
 	// or for Loopback when creating the fake module.
@@ -2699,7 +2717,7 @@ NPF_PurgeRequests(
 					NdisFreeMemory(pReq->pBuffer, pReq->BpfHeader.bh_datalen, 0);
 					break;
 				case NPF_WRITER_FREE_NB_COPIES:
-					NPF_FreeNBCopies(&pReq->NBCopiesHead);
+					NPF_FreeNBCopies(pFiltMod, &pReq->NBCopiesHead);
 					break;
 				case NPF_WRITER_WRITE:
 					// If this was a packet to be written,

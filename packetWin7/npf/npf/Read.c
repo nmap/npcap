@@ -763,7 +763,7 @@ NPF_TapExForEachOpen(
 			if (pNBCopiesPrev->Next == NULL)
 			{
 				// Add another copy to the chain
-				pNBCopy = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, sizeof(NPF_NB_COPIES), '0OWA', NormalPoolPriority);
+				pNBCopy = NPF_POOL_GET(Open->pFiltMod->NBCopiesPool, PNPF_NB_COPIES);
 				if (pNBCopy == NULL)
 				{
 					//Insufficient resources. Really need to abandon everything.

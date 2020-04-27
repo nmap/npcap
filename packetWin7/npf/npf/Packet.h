@@ -294,6 +294,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	BOOLEAN WriterShouldStop; // Flag to kill writer thread
 	PVOID WriterThreadObj; // Pointer to the writer thread itself.
 	PNPF_OBJ_POOL WriterRequestPool; // Pool of request objects
+	PNPF_OBJ_POOL NBCopiesPool; // Pool of NET_BUFFER copy objects
 
 	NDIS_STRING				AdapterName;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
