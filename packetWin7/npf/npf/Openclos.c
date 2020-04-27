@@ -297,6 +297,11 @@ NPF_WriterThread(
 			case NPF_WRITER_FREE_NB_COPIES:
 				NPF_FreeNBCopies(pFiltMod, &pReq->NBCopiesHead);
 				break;
+#ifdef HAVE_DOT11_SUPPORT
+			case NPF_WRITER_FREE_RADIOTAP:
+				NPF_POOL_RETURN(pFiltMod->Dot11HeaderPool, pReq->pBuffer);
+				break;
+#endif
 			default:
 				break;
 		}
@@ -659,6 +664,13 @@ NPF_ReleaseFilterModuleResources(
 	if (pFiltMod->NBCopiesPool)
 	{
 		NPF_FreeObjectPool(pFiltMod->NBCopiesPool);
+		pFiltMod->NBCopiesPool = NULL;
+	}
+
+	if (pFiltMod->Dot11HeaderPool)
+	{
+		NPF_FreeObjectPool(pFiltMod->Dot11HeaderPool);
+		pFiltMod->Dot11HeaderPool = NULL;
 	}
 
 	// Release the adapter name
@@ -1738,6 +1750,19 @@ NPF_CreateFilterModule(
 		return NULL;
 	}
 	
+	pFiltMod->Dot11HeaderPool = NPF_AllocateObjectPool(NdisFilterHandle, SIZEOF_RADIOTAP_BUFFER, 32);
+	if (pFiltMod->Dot11HeaderPool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
+		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
+		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
+		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
+		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
+		ExFreePool(pFiltMod);
+		TRACE_EXIT();
+		return NULL;
+	}
+	
 	// Default; expect this will be overwritten in NPF_Restart,
 	// or for Loopback when creating the fake module.
 	pFiltMod->MaxFrameSize = 1514;
@@ -2726,6 +2751,11 @@ NPF_PurgeRequests(
 				case NPF_WRITER_FREE_NB_COPIES:
 					NPF_FreeNBCopies(pFiltMod, &pReq->NBCopiesHead);
 					break;
+#ifdef HAVE_DOT11_SUPPORT
+				case NPF_WRITER_FREE_RADIOTAP:
+					NPF_POOL_RETURN(pFiltMod->Dot11HeaderPool, pReq->pBuffer);
+					break;
+#endif
 				case NPF_WRITER_WRITE:
 					// If this was a packet to be written,
 					// count it as a drop
@@ -2783,6 +2813,11 @@ NPF_QueuedFree(
 			case NPF_WRITER_FREE_MEM:
 				NdisFreeMemory(pItem, ulSize, 0);
 				break;
+#ifdef HAVE_DOT11_SUPPORT
+			case NPF_WRITER_FREE_RADIOTAP:
+				NPF_POOL_RETURN(pFiltMod->Dot11HeaderPool, pItem);
+				break;
+#endif
 			default:
 				// NPF_QueuedFree must not be used to queue other request types.
 				ASSERT(FALSE);

@@ -302,6 +302,7 @@ typedef struct _NPCAP_FILTER_MODULE
 #ifdef HAVE_DOT11_SUPPORT
 	BOOLEAN					HasDataRateMappingTable;
 	DOT11_DATA_RATE_MAPPING_TABLE	DataRateMappingTable;
+	PNPF_OBJ_POOL Dot11HeaderPool; // Pool of Radiotap header buffers
 #endif
 
 	ULONG					MyPacketFilter;
@@ -416,6 +417,7 @@ typedef enum
 	NPF_WRITER_INVALID_CODE,
 	NPF_WRITER_WRITE,
 	NPF_WRITER_FREE_NB_COPIES,
+	NPF_WRITER_FREE_RADIOTAP,
 	NPF_WRITER_FREE_MEM,
 } NPF_WRITER_FUNCTION_CODE;
 

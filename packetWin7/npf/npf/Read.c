@@ -601,7 +601,7 @@ NPF_TapExForEachOpen(
 				goto RadiotapDone;
 			}
 
-			Dot11RadiotapHeader = NdisAllocateMemoryWithTagPriority(Open->pFiltMod->AdapterHandle, SIZEOF_RADIOTAP_BUFFER, '0OWA', NormalPoolPriority);
+			Dot11RadiotapHeader = NPF_POOL_GET(Open->pFiltMod->Dot11HeaderPool, PUCHAR);
 			if (Dot11RadiotapHeader == NULL)
 			{
 				// Insufficient memory
@@ -771,7 +771,7 @@ NPF_TapExForEachOpen(
 					if (Dot11RadiotapHeader)
 					{
 						// Free the radiotap header
-						NPF_QueuedFree(Open->pFiltMod, NPF_WRITER_FREE_MEM, pNetBufList,
+						NPF_QueuedFree(Open->pFiltMod, NPF_WRITER_FREE_RADIOTAP, pNetBufList,
 								(PVOID) Dot11RadiotapHeader,
 								SIZEOF_RADIOTAP_BUFFER);
 					}
@@ -949,7 +949,7 @@ NPF_TapExForEachOpen_End:;
 		if (Dot11RadiotapHeader)
 		{
 			// Free the radiotap header
-			NPF_QueuedFree(Open->pFiltMod, NPF_WRITER_FREE_MEM, pNetBufList,
+			NPF_QueuedFree(Open->pFiltMod, NPF_WRITER_FREE_RADIOTAP, pNetBufList,
 					(PVOID) Dot11RadiotapHeader,
 					SIZEOF_RADIOTAP_BUFFER);
 		}
