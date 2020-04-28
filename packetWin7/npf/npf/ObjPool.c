@@ -124,12 +124,6 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize,
 	pPool->ulObjectSize = ulObjectSize;
 	pPool->ulIncrement = ulIncrement;
 
-	if (!NPF_ExtendObjectShelf(pPool))
-	{
-		NdisFreeMemory(pPool, sizeof(NPF_OBJ_POOL), 0);
-		return NULL;
-	}
-
 	return pPool;
 }
 
