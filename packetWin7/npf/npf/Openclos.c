@@ -540,8 +540,11 @@ NPF_CloseOpenInstance(
 	pOpen->OpenStatus = OpenClosed;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
-	// Remove all worker requests related to this instance.
-	NPF_PurgeRequests(pOpen->pFiltMod, NULL, pOpen);
+	if (pOpen->pFiltMod)
+	{
+		// Remove all worker requests related to this instance.
+		NPF_PurgeRequests(pOpen->pFiltMod, NULL, pOpen);
+	}
 }
 
 
