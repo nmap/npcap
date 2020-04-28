@@ -670,11 +670,13 @@ NPF_ReleaseFilterModuleResources(
 		pFiltMod->NBCopiesPool = NULL;
 	}
 
+#ifdef HAVE_DOT11_SUPPORT
 	if (pFiltMod->Dot11HeaderPool)
 	{
 		NPF_FreeObjectPool(pFiltMod->Dot11HeaderPool);
 		pFiltMod->Dot11HeaderPool = NULL;
 	}
+#endif
 
 	// Release the adapter name
 	if (pFiltMod->AdapterName.Buffer)
@@ -1709,8 +1711,11 @@ NPF_CreateFilterModule(
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;
 
+	// Pool sizes based on observations on a single-core Hyper-V VM while
+	// running our test suite.
+
 	//  Initialize the OID request pool
-	pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 16);
+	pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 8);
 	if (pFiltMod->InternalRequestPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
@@ -1727,7 +1732,7 @@ NPF_CreateFilterModule(
 	KeInitializeSemaphore(&pFiltMod->WriterSemaphore, 0, MAXLONG);
 	pFiltMod->WriterShouldStop = FALSE;
 	pFiltMod->WriterThreadObj = NULL;
-	pFiltMod->WriterRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_WRITER_REQUEST), 16);
+	pFiltMod->WriterRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_WRITER_REQUEST), 100);
 	if (pFiltMod->WriterRequestPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate WriterRequestPool");
@@ -1739,8 +1744,7 @@ NPF_CreateFilterModule(
 		return NULL;
 	}
 
-	// These are small, so allocate in larger multiples.
-	pFiltMod->NBCopiesPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_NB_COPIES), 32);
+	pFiltMod->NBCopiesPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_NB_COPIES), 64);
 	if (pFiltMod->NBCopiesPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
@@ -1753,6 +1757,7 @@ NPF_CreateFilterModule(
 		return NULL;
 	}
 	
+#ifdef HAVE_DOT11_SUPPORT
 	pFiltMod->Dot11HeaderPool = NPF_AllocateObjectPool(NdisFilterHandle, SIZEOF_RADIOTAP_BUFFER, 32);
 	if (pFiltMod->Dot11HeaderPool == NULL)
 	{
@@ -1765,6 +1770,7 @@ NPF_CreateFilterModule(
 		TRACE_EXIT();
 		return NULL;
 	}
+#endif
 	
 	// Default; expect this will be overwritten in NPF_Restart,
 	// or for Loopback when creating the fake module.
@@ -2714,8 +2720,6 @@ NOTE: called at PASSIVE_LEVEL
  * If pNBL or pOpen is NULL, it is ignored.
  * If both are NULL, all requests are purged, but all FREE requests are honored.
  * If either of them is a pointer to an actual object, it will be used as the criteria for matching.
- *
- * TODO: No need to match radiotap header/buffer: The only operation that needs to be purged is WRITE, which has a NBL. Make the caller pass in the NBL to purge.
  */
 VOID
 NPF_PurgeRequests(
