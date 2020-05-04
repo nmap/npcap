@@ -1,4 +1,43 @@
 ﻿
+## Npcap 0.9991 [2020-05-04]
+
+* Switched our code signing certificate back to DigiCert after some users found
+  older Windows versions could not validate the signature on our driver for
+  versions 0.9985 through 0.9990.  The driver is again dual-signed with SHA-1
+  and SHA-2 certificates.
+
+* Major changes to management of Npcap driver's circular packet buffer,
+  switching from per-CPU unshared segments to a single worker thread managing a
+  queue of work items. This improves buffer utilization, reduces the amount of
+  time spent processing in the network stack, and should reduce packet loss.
+  See [#1967](https://issues.nmap.org/1967).
+
+* Several performance-related improvements to the NDIS filter driver: Switched
+  from SpinLocks to ReadWriteLocks for several crucial shared data structures,
+  which will improve performance by reducing resource contention on
+  multiprocessor systems, and introduced an object-pool allocation pattern for
+  several frequently-used short-lifetime objects, improving performance by
+  reducing memory allocations.
+
+* Again restore "unused" NDIS filter callbacks which cause Windows 7 to lose
+  connectivity when they are removed. See [#1998](https://issues.nmap.org/1998).
+
+* Include debug symbols for `wpcap.dll` in our debug symbols zip file at
+  https://npcap.org/#download . Fixes [#1884](https://issues.nmap.org/1884).
+
+* Fixed [#1996](https://issues.nmap.org/1996): heap corruption in
+  `NPFInstall.exe` since Npcap 0.9989 leading to hung installs when the "raw
+  802.11 traffic" option was checked.
+
+* Fixed [#2014](https://issues.nmap.org/2014): Npcap OEM silent install
+  produced a dialog when installing over an existing installation of the same
+  version.
+
+* Uninstaller improvements related to removing the installation directory,
+  properly killing processes using Npcap DLLs, not leaving a partial
+  installation if a step fails. Fixes [#2013](https://issues.nmap.org/2013)
+  and [#2015](https://issues.nmap.org/2015).
+
 ## Npcap 0.9990 [2020-04-04]
 
 * Improve compatibility with WinPcap's behavior regarding injected traffic.
