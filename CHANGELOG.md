@@ -23,7 +23,7 @@
   connectivity when they are removed. See [#1998](https://issues.nmap.org/1998).
 
 * Include debug symbols for `wpcap.dll` in our debug symbols zip file at
-  https://npcap.org/#download . Fixes [#1884](https://issues.nmap.org/1884).
+  https://npcap.org/#download . Fixes [#1844](https://issues.nmap.org/1844).
 
 * Fixed [#1996](https://issues.nmap.org/1996): heap corruption in
   `NPFInstall.exe` since Npcap 0.9989 leading to hung installs when the "raw
