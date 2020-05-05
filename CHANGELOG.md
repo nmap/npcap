@@ -47,7 +47,7 @@
   protocol drivers, causing problems for some users who relied on this behavior.
   Now, injected traffic follows the same path as with WinPcap, though ordinary
   traffic is unaffected. For highest efficiency without loopback, use
-  `PacketSetLoopbackBehavior(PACKET_DISABLE_LOOPBACK)`. Fixes [#1343](https://issues.nmap.org/1343),
+  `PacketSetLoopbackBehavior(NPF_DISABLE_LOOPBACK)`. Fixes [#1343](https://issues.nmap.org/1343),
   [#1929](https://issues.nmap.org/1929), and [GNS3/gns3-gui#2936](https://github.com/GNS3/gns3-gui/issues/2936)
 
 * No longer honor `NDIS_PACKET_TYPE_ALL_LOCAL` set via `PacketSetHwFilter()`.

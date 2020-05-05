@@ -235,7 +235,7 @@ NPF_Write(
 		IrpSp->Parameters.Write.Length);
 
 	// WinPcap emulation: loop back injected packets if anyone's listening.
-	// Except when PACKET_DISABLE_LOOPBACK is chosen, then don't loop back.
+	// Except when NPF_DISABLE_LOOPBACK is chosen, then don't loop back.
 	if (!Open->SkipSentPackets)
 	{
 		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
@@ -489,7 +489,7 @@ NPF_BufferedWrite(
 	}
 
 	// WinPcap emulation: loop back injected packets if anyone's listening.
-	// Except when PACKET_DISABLE_LOOPBACK is chosen, then don't loop back.
+	// Except when NPF_DISABLE_LOOPBACK is chosen, then don't loop back.
 	if (!Open->SkipSentPackets)
 	{
 		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
