@@ -4,7 +4,7 @@
 * Switched our code signing certificate back to DigiCert after some users found
   older Windows versions could not validate the signature on our driver for
   versions 0.9985 through 0.9990.  The driver is again dual-signed with SHA-1
-  and SHA-2 certificates.
+  and SHA-2 certificates. See [#2012](https://issues.nmap.org/2012).
 
 * Major changes to management of Npcap driver's circular packet buffer,
   switching from per-CPU unshared segments to a single worker thread managing a
