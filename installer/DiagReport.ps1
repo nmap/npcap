@@ -61,6 +61,16 @@ function get_install_path()
 $os_bit = get_os_bit
 $install_path = get_install_path
 
+function get_props_safe($item)
+{
+	write_report ("${item}:")
+	try {
+		(Get-ItemProperty -erroraction stop $item | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
+	}
+	catch [System.Management.Automation.ItemNotFoundException] {
+		"Not present."
+	}
+}
 
 write_report ("*************************************************")
 write_report "DiagReport for Npcap ( http://npcap.org )"
@@ -125,7 +135,7 @@ write_report ("*************************************************")
 write_report ("NDIS Light-Weight Filter (LWF) Info:")
 write_report ("*************************************************")
 
-(Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Network\{4d36e974-e325-11ce-bfc1-08002be10318}\*' | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
+get_props_safe 'HKLM:\SYSTEM\CurrentControlSet\Control\Network\{4d36e974-e325-11ce-bfc1-08002be10318}\*'
 
 #########################################################
 write_report ("`n")
@@ -161,13 +171,11 @@ write_report ("*************************************************")
 
 if ($os_bit -eq "32-bit")
 {
-    write_report ("HKLM:\SOFTWARE\WinPcap:")
-    (Get-ItemProperty HKLM:\SOFTWARE\WinPcap | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
+    get_props_safe ("HKLM:\SOFTWARE\WinPcap")
 }
 else
 {
-    write_report ("HKLM:\SOFTWARE\WOW6432Node\WinPcap:")
-    (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\WinPcap | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
+    get_props_safe ("HKLM:\SOFTWARE\WOW6432Node\WinPcap")
 }
 
 #########################################################
@@ -178,33 +186,21 @@ write_report ("*************************************************")
 
 if ($os_bit -eq "32-bit")
 {
-    write_report ("HKLM:\SOFTWARE\Npcap:")
-    (Get-ItemProperty HKLM:\SOFTWARE\Npcap | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
+    get_props_safe ("HKLM:\SOFTWARE\Npcap")
 }
 else
 {
-    write_report ("HKLM:\SOFTWARE\WOW6432Node\Npcap:")
-    (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\Npcap | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
+    get_props_safe ("HKLM:\SOFTWARE\WOW6432Node\Npcap")
 }
 
-write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap:")
-(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
-write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap\Parameters:")
-(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap\Parameters | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
-write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi:")
-(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
-write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi\Parameters:")
-(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi\Parameters | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
+get_props_safe ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap")
+get_props_safe ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap\Parameters")
+get_props_safe ("HKLM:\SYSTEM\CurrentControlSet\Services\npcap_wifi")
 
 # WinPcap registry items
-write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf:")
-(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
-write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf\Parameters:")
-(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf\Parameters | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
-write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi:")
-(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
-write_report ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi\Parameters:")
-(Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi\Parameters | out-string -stream -Width 2147483647 | ? { $_ -NOTMATCH '^ps.+' })
+get_props_safe ("HKLM:\SYSTEM\CurrentControlSet\Services\npf")
+get_props_safe ("HKLM:\SYSTEM\CurrentControlSet\Services\npf\Parameters")
+get_props_safe ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi")
 
 #########################################################
 write_report ("`n")
