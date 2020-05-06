@@ -112,9 +112,7 @@ write_report ("*************************************************")
 write_report ("Network Adapter(s) Info:")
 write_report ("*************************************************")
 
-Get-NetAdapter
-
-(Get-WmiObject Win32_NetworkAdapter) | Where-Object {$_.GUID -ne $null} | Format-List Caption, GUID, Index, InterfaceIndex, Manufacturer, NetConnectionID, PNPDeviceID
+(Get-WmiObject Win32_NetworkAdapter) | Where-Object {$_.GUID -ne $null} | Format-List Caption, GUID, Index, InterfaceIndex, Manufacturer, MACAddress, Speed, NetConnectionID, NetConnectionStatus, PNPDeviceID, ServiceName, AdapterType
 
 #########################################################
 #write_report ("`n")
