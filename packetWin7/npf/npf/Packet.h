@@ -250,6 +250,8 @@ typedef struct _DEVICE_EXTENSION
 {
 	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
 										///< to open this adapter through Packet.dll.
+	SINGLE_LIST_ENTRY DetachedOpens; //GroupHead
+	KSPIN_LOCK DetachedOpensLock; // GroupLock
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 typedef enum _FILTER_STATE
@@ -268,7 +270,7 @@ typedef enum _FILTER_STATE
 typedef enum _OPEN_STATE
 {
 	OpenRunning,
-	OpenClosing,
+	OpenDetached,
 	OpenClosed
 } OPEN_STATE;
 
@@ -340,6 +342,7 @@ typedef struct _OPEN_INSTANCE
     SINGLE_LIST_ENTRY OpenInstancesEntry; //GroupNext
     PNPCAP_FILTER_MODULE pFiltMod;
 
+	PDEVICE_EXTENSION DeviceExtension;
 	ULONG					MyPacketFilter;
 	PKEVENT					ReadEvent;		///< Pointer to the event on which the read calls on this instance must wait.
 	PUCHAR					bpfprogram;		///< Pointer to the filtering pseudo-code associated with current instance of the driver.
@@ -402,7 +405,7 @@ typedef struct _OPEN_INSTANCE
 	ULONG Size; ///< Size of the kernel buffer
 	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
 	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
-	ULONG					NumPendingIrps;
+	ULONG PendingIrps[OpenClosed];
 
 	OPEN_STATE OpenStatus;
 	NDIS_SPIN_LOCK			OpenInUseLock;
@@ -1400,9 +1403,9 @@ VOID NPF_StopUsingBinding(IN PNPCAP_FILTER_MODULE pFiltMod);
 
 VOID NPF_CloseBinding(IN PNPCAP_FILTER_MODULE pFiltMod);
 
-BOOLEAN NPF_StartUsingOpenInstance(IN POPEN_INSTANCE pOpen);
+BOOLEAN NPF_StartUsingOpenInstance(IN POPEN_INSTANCE pOpen, OPEN_STATE MaxOpen);
 
-VOID NPF_StopUsingOpenInstance(IN POPEN_INSTANCE pOpen);
+VOID NPF_StopUsingOpenInstance(IN POPEN_INSTANCE pOpen, OPEN_STATE MaxOpen);
 
 VOID NPF_CloseOpenInstance(IN POPEN_INSTANCE pOpen);
 

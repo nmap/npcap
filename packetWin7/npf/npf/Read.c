@@ -112,7 +112,7 @@ NPF_Read(
 	struct bpf_hdr*			header;
 	ULONG					copied, plen, ToCopy, available;
 	LOCK_STATE lockState;
-	NDIS_STATUS Status = STATUS_SUCCESS;
+	NTSTATUS Status = STATUS_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -126,21 +126,16 @@ NPF_Read(
 			Status = STATUS_INVALID_HANDLE;
 			break;
 		}
-		if (NPF_StartUsingOpenInstance(Open) == FALSE)
+		if (!NPF_StartUsingOpenInstance(Open, OpenDetached))
 		{
-			// Filter module is detached.
+			// Instance is being closed
 			Status = STATUS_CANCELLED;
 			break;
 		}
 
-		/* TODO: Allow the read to continue if the filter module is
-		 * detached (NPF_StartUsingOpenInstance above returned false)
-		 * but we have packet data in the buffer that can still be
-		 * delivered. */
-
 		if (Open->Size == 0)
 		{
-			NPF_StopUsingOpenInstance(Open);
+			NPF_StopUsingOpenInstance(Open, OpenDetached);
 			Status = STATUS_UNSUCCESSFUL;
 			break;
 		}
@@ -149,7 +144,7 @@ NPF_Read(
 		if (Open->mode & MODE_DUMP && Open->DumpFileHandle == NULL)
 		{
 			// this instance is in dump mode, but the dump file has still not been opened
-			NPF_StopUsingOpenInstance(Open);
+			NPF_StopUsingOpenInstance(Open, OpenDetached);
 			Status = STATUS_UNSUCCESSFUL;
 			break;
 		}
@@ -172,7 +167,7 @@ NPF_Read(
 		if (Open->ReadEvent != NULL)
 		{
 			//wait until some packets arrive or the timeout expires
-			if (Open->TimeOut.QuadPart != (LONGLONG)IMMEDIATE)
+			if (Open->OpenStatus == OpenRunning && Open->TimeOut.QuadPart != (LONGLONG)IMMEDIATE)
 #pragma warning (disable: 28118)
 				KeWaitForSingleObject(Open->ReadEvent,
 				UserRequest,
@@ -190,7 +185,7 @@ NPF_Read(
 
 			if (CurrBuff == NULL)
 			{
-				NPF_StopUsingOpenInstance(Open);
+				NPF_StopUsingOpenInstance(Open, OpenDetached);
 				TRACE_EXIT();
 				EXIT_FAILURE(0);
 			}
@@ -199,7 +194,7 @@ NPF_Read(
 			{
 				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 24)
 				{
-					NPF_StopUsingOpenInstance(Open);
+					NPF_StopUsingOpenInstance(Open, OpenDetached);
 					Irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
 					IoCompleteRequest(Irp, IO_NO_INCREMENT);
 					TRACE_EXIT();
@@ -210,7 +205,7 @@ NPF_Read(
 			{
 				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 16)
 				{
-					NPF_StopUsingOpenInstance(Open);
+					NPF_StopUsingOpenInstance(Open, OpenDetached);
 					Irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
 					IoCompleteRequest(Irp, IO_NO_INCREMENT);
 					TRACE_EXIT();
@@ -248,7 +243,7 @@ NPF_Read(
 			Open->Nbytes.QuadPart = 0;
 			NdisReleaseSpinLock(&Open->CountersLock);
 
-			NPF_StopUsingOpenInstance(Open);
+			NPF_StopUsingOpenInstance(Open, OpenDetached);
 
 			Irp->IoStatus.Status = STATUS_SUCCESS;
 			IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -263,7 +258,7 @@ NPF_Read(
 		//
 		if (Open->mode == MODE_MON)   //this capture instance is in monitor mode
 		{
-			NPF_StopUsingOpenInstance(Open);
+			NPF_StopUsingOpenInstance(Open, OpenDetached);
 			TRACE_EXIT();
 			EXIT_FAILURE(0);
 		}
@@ -277,7 +272,7 @@ NPF_Read(
 
 	if (Irp->MdlAddress == 0x0)
 	{
-		NPF_StopUsingOpenInstance(Open);
+		NPF_StopUsingOpenInstance(Open, OpenDetached);
 		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
@@ -287,7 +282,7 @@ NPF_Read(
 
 	if (packp == NULL)
 	{
-		NPF_StopUsingOpenInstance(Open);
+		NPF_StopUsingOpenInstance(Open, OpenDetached);
 		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
@@ -350,7 +345,18 @@ NPF_Read(
 	}
 
 	NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
-	NPF_StopUsingOpenInstance(Open);
+	NPF_StopUsingOpenInstance(Open, OpenDetached);
+
+	if (copied == 0 && Open->OpenStatus == OpenDetached)
+	{
+		// Filter module is detached and there are no more packets in the buffer
+		Irp->IoStatus.Information = 0;
+		Irp->IoStatus.Status = STATUS_DEVICE_REMOVED;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return Status;
+	}
+
 	TRACE_EXIT();
 	EXIT_SUCCESS(copied);
 }
@@ -551,7 +557,7 @@ NPF_TapExForEachOpen(
 	
 	//TRACE_ENTER();
 
- 	if (!NPF_StartUsingOpenInstance(Open))
+	if (!NPF_StartUsingOpenInstance(Open, OpenRunning))
  	{
  		// The adapter is in use or even released, stop the tapping.
  		return;
@@ -958,7 +964,7 @@ NPF_TapExForEachOpen_End:;
 		pNetBufList = pNextNetBufList;
 	} // while (pNetBufList != NULL)
 
-	NPF_StopUsingOpenInstance(Open);
+	NPF_StopUsingOpenInstance(Open, OpenRunning);
 	//TRACE_EXIT();
 }
 			//////////////////////////////COPIA.C//////////////////////////////////////////77

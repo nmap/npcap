@@ -390,7 +390,8 @@ DriverEntry(
 	}
 
 	devExtP->ExportString = deviceSymLink.Buffer;
-
+	devExtP->DetachedOpens.Next = NULL;
+	KeInitializeSpinLock(&devExtP->DetachedOpensLock);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (g_LoopbackSupportMode) {
@@ -773,6 +774,7 @@ Return Value:
 
 --*/
 {
+	PSINGLE_LIST_ENTRY Curr = NULL;
 	PDEVICE_OBJECT DeviceObject;
 	PDEVICE_OBJECT OldDeviceObject;
 	PDEVICE_EXTENSION DeviceExtension;
@@ -828,6 +830,17 @@ Return Value:
 
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Deleting Adapter, Device Obj=%p (%p)",
 				DeviceObject, OldDeviceObject);
+
+		Curr = DeviceExtension->DetachedOpens.Next;
+		while (Curr != NULL)
+		{
+			pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+			Curr = Curr->Next;
+
+			NPF_CloseOpenInstance(pOpen);
+			NPF_ReleaseOpenInstanceResources(pOpen);
+			ExFreePool(pOpen);
+		}
 
 		if (DeviceExtension->ExportString)
 		{
@@ -891,29 +904,14 @@ Return Value:
 	// NdisFreeString(g_NPF_Prefix);
 }
 
-#define SET_FAILURE_BUFFER_SMALL() do{\
-	Information = 0; \
-	Status = STATUS_BUFFER_TOO_SMALL; \
-} while(FALSE)
-
 #define SET_RESULT_SUCCESS(__a__) do{\
 	Information = __a__;	\
 	Status = STATUS_SUCCESS;	\
 } while(FALSE)
 
-#define SET_FAILURE_INVALID_REQUEST() do{\
+#define SET_FAILURE(__STATUS_CODE) do{\
 	Information = 0; \
-	Status = STATUS_INVALID_DEVICE_REQUEST; \
-} while(FALSE)
-
-#define SET_FAILURE_UNSUCCESSFUL()  do{\
-	Information = 0; \
-	Status = STATUS_UNSUCCESSFUL; \
-} while(FALSE)
-
-#define SET_FAILURE_NOMEM()  do{\
-	Information = 0; \
-	Status = STATUS_INSUFFICIENT_RESOURCES; \
+	Status = __STATUS_CODE; \
 } while(FALSE)
 
 #define SET_FAILURE_CUSTOM(__b__) do{\
@@ -935,6 +933,7 @@ NPF_IoControl(
 	PSINGLE_LIST_ENTRY Curr;
 	PIO_STACK_LOCATION		IrpSp;
 	PINTERNAL_REQUEST		pRequest;
+	OPEN_STATE MaxState;
 	ULONG					FunctionCode;
 	NDIS_STATUS				Status = STATUS_INVALID_DEVICE_REQUEST;
 	ULONG					Information = 0;
@@ -959,7 +958,6 @@ NPF_IoControl(
 	BOOLEAN					IsExtendedFilter = FALSE;
 	ULONG					StringLength;
 	ULONG					NeededBytes;
-	BOOLEAN					bAttached;
 	PUINT					pStats;
 	ULONG					StatsLength;
 	PULONG					pCombinedPacketFilter;
@@ -986,7 +984,6 @@ NPF_IoControl(
 	}
 
 	/* If this instance is not attached to the NDIS filter module, we can't do some operations. */
-	bAttached = NPF_StartUsingOpenInstance(Open);
 	Irp->IoStatus.Status = STATUS_SUCCESS;
 
 	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
@@ -994,6 +991,33 @@ NPF_IoControl(
 		FunctionCode,
 		IrpSp->Parameters.DeviceIoControl.InputBufferLength,
 		IrpSp->Parameters.DeviceIoControl.OutputBufferLength);
+
+	switch (FunctionCode)
+	{
+		case BIOCSENDPACKETSSYNC:
+		case BIOCSENDPACKETSNOSYNC:
+		case BIOCSETOID:
+		case BIOCQUERYOID:
+			// These functions requires an attached adapter
+			MaxState = OpenRunning;
+			break;
+		default:
+			// All others can work with detached instance
+			MaxState = OpenDetached;
+			break;
+	}
+
+	if (!NPF_StartUsingOpenInstance(Open, MaxState))
+	{
+		SET_FAILURE(Open->OpenStatus == OpenDetached
+				? STATUS_DEVICE_REMOVED
+				: STATUS_CANCELLED);
+		Irp->IoStatus.Status = Status;
+		Irp->IoStatus.Information = Information;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return Status;
+	}
 
 	switch (FunctionCode)
 	{
@@ -1005,13 +1029,13 @@ NPF_IoControl(
 		StatsLength = 4 * sizeof(UINT);
 		if (IrpSp->Parameters.DeviceIoControl.OutputBufferLength < StatsLength)
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
 		if (Irp->AssociatedIrp.SystemBuffer == NULL)
 		{
-			SET_FAILURE_UNSUCCESSFUL();
+			SET_FAILURE(STATUS_UNSUCCESSFUL);
 			break;
 		}
 
@@ -1043,7 +1067,7 @@ NPF_IoControl(
 		// signals it.
 		// For the time being, we still leave this ioctl code here, and we simply fail.
 		//
-		SET_FAILURE_INVALID_REQUEST();
+		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 		break;
 
 #ifndef NPCAP_READ_ONLY
@@ -1053,12 +1077,6 @@ NPF_IoControl(
 	case BIOCSENDPACKETSNOSYNC:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSENDPACKETSNOSYNC");
 
-		if (!bAttached)
-		{
-			SET_FAILURE_UNSUCCESSFUL();
-			break;
-		}
-
 		NdisAcquireSpinLock(&Open->WriteLock);
 		if (Open->WriteInProgress)
 		{
@@ -1066,7 +1084,7 @@ NPF_IoControl(
 			//
 			// Another write operation is currently in progress
 			//
-			SET_FAILURE_CUSTOM(STATUS_DEVICE_BUSY);
+			SET_FAILURE(STATUS_DEVICE_BUSY);
 			break;
 		}
 		else
@@ -1105,7 +1123,7 @@ NPF_IoControl(
 
 		if (NewBpfProgram == NULL)
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
@@ -1136,7 +1154,7 @@ NPF_IoControl(
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error installing the BPF filter. The filter contains TME extensions,"
 					" not supported on 64bit platforms.");
 
-				SET_FAILURE_INVALID_REQUEST();
+				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 				break;
 			}
 
@@ -1151,7 +1169,7 @@ NPF_IoControl(
 					//FIXME: the machine has been initialized(?), but the operative code is wrong.
 					//we have to reset the machine!
 					//something like: reallocate the mem_ex, and reset the tme_core
-					SET_FAILURE_INVALID_REQUEST();
+					SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 					break;
 				}
 
@@ -1162,7 +1180,7 @@ NPF_IoControl(
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error - No memory for filter");
 				// no memory
 
-				SET_FAILURE_NOMEM();
+				SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
 				break;
 			}
 
@@ -1190,7 +1208,7 @@ NPF_IoControl(
 
 		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
@@ -1199,7 +1217,7 @@ NPF_IoControl(
 		///////kernel dump does not work at the moment//////////////////////////////////////////
 		if (mode & MODE_DUMP)
 		{
-			SET_FAILURE_INVALID_REQUEST();
+			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 			break;
 		}
 		///////kernel dump does not work at the moment//////////////////////////////////////////
@@ -1218,7 +1236,7 @@ NPF_IoControl(
 			// 64 bit architectures
 			//
 
-			SET_FAILURE_INVALID_REQUEST();
+			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 
 			break;
 		}
@@ -1246,7 +1264,7 @@ NPF_IoControl(
 			break;
 		}
 
-		SET_FAILURE_INVALID_REQUEST();
+		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 
 		break;
 
@@ -1302,7 +1320,7 @@ NPF_IoControl(
 		
 		EXIT_FAILURE(0);
 #else
-		SET_FAILURE_INVALID_REQUEST();
+		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 #endif
 		
 		break;
@@ -1325,7 +1343,7 @@ NPF_IoControl(
 		
 		EXIT_SUCCESS(0);
 #else
-		SET_FAILURE_INVALID_REQUEST();
+		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 #endif
 		
 		break;
@@ -1345,7 +1363,7 @@ NPF_IoControl(
 
 		EXIT_SUCCESS(4);
 #else
-		SET_FAILURE_INVALID_REQUEST();
+		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 #endif
 
 		break;
@@ -1353,7 +1371,7 @@ NPF_IoControl(
 	case BIOCISETLOBBEH:
 		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(INT))
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
@@ -1368,7 +1386,7 @@ NPF_IoControl(
 		else
 		{
 			// Unknown operation
-			SET_FAILURE_INVALID_REQUEST();
+			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 			break;
 		}
 
@@ -1391,7 +1409,7 @@ NPF_IoControl(
 			//
 			if (IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(hUserEvent32Bit))
 			{
-				SET_FAILURE_INVALID_REQUEST();
+				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 				break;
 			}
 
@@ -1406,7 +1424,7 @@ NPF_IoControl(
 			//
 			if (IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(hUserEvent))
 			{
-				SET_FAILURE_INVALID_REQUEST();
+				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 				break;
 			}
 
@@ -1435,7 +1453,7 @@ NPF_IoControl(
 			//
 
 			ObDereferenceObject(pKernelEvent);
-			SET_FAILURE_INVALID_REQUEST();
+			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 			break;
 		}
 
@@ -1449,7 +1467,7 @@ NPF_IoControl(
 
 		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
@@ -1459,7 +1477,7 @@ NPF_IoControl(
 		// verify that the provided size value is sensible
 		if (dim > NPF_MAX_BUFFER_SIZE)
 		{
-			SET_FAILURE_NOMEM();
+			SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
 			break;
 		} 
 		// If there's no change, we're done!
@@ -1479,7 +1497,7 @@ NPF_IoControl(
 			if (tpointer == NULL)
 			{
 				// no memory
-				SET_FAILURE_NOMEM();
+				SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
 				break;
 			}
 		}
@@ -1516,7 +1534,7 @@ NPF_IoControl(
 
 		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
@@ -1543,7 +1561,7 @@ NPF_IoControl(
 
 		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
@@ -1561,7 +1579,7 @@ NPF_IoControl(
 
 		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
@@ -1572,12 +1590,6 @@ NPF_IoControl(
 
 	case BIOCSETOID:
 	case BIOCQUERYOID:
-
-		if (!bAttached)
-		{
-			SET_FAILURE_UNSUCCESSFUL();
-			break;
-		}
 
 		OidData = Irp->AssociatedIrp.SystemBuffer;
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
@@ -1591,7 +1603,7 @@ NPF_IoControl(
 			// MAC unbindind or unbound
 			//
 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open->pFiltMod is unavailable or cannot bind, Open->pFiltMod=%p", Open->pFiltMod);
-			SET_FAILURE_INVALID_REQUEST();
+			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 			break;
 		}
 
@@ -1606,7 +1618,7 @@ NPF_IoControl(
 			NPF_StopUsingBinding(Open->pFiltMod);
 
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
-			SET_FAILURE_NOMEM();
+			SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
 			break;
 		}
 
@@ -1631,7 +1643,7 @@ NPF_IoControl(
 							break;
 						default:
 							TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID not supported for Loopback");
-							SET_FAILURE_INVALID_REQUEST();
+							SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 							break;
 					}
 				}
@@ -1661,7 +1673,7 @@ NPF_IoControl(
 							break;
 						default:
 							TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unsupported BIOCQUERYOID for Loopback");
-							SET_FAILURE_INVALID_REQUEST();
+							SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 							break;
 					}
 				}
@@ -1676,7 +1688,7 @@ NPF_IoControl(
 				if (FunctionCode == BIOCSETOID)
 				{
 					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
-					SET_FAILURE_UNSUCCESSFUL();
+					SET_FAILURE(STATUS_UNSUCCESSFUL);
 				}
 				else
 				{
@@ -1703,7 +1715,7 @@ NPF_IoControl(
 			if (OidBuffer == NULL)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OidBuffer");
-				SET_FAILURE_NOMEM();
+				SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
 				goto OID_REQUEST_DONE;
 			}
 			RtlCopyMemory(OidBuffer, OidData->Data, OidData->Length);
@@ -1814,7 +1826,7 @@ NPF_IoControl(
 			//  buffer too small
 			//
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "buffer is too small");
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			goto OID_REQUEST_DONE;
 		}
 
@@ -1886,7 +1898,7 @@ OID_REQUEST_DONE:
 	case BIOCSTIMESTAMPMODE:
 		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
 		{
-			SET_FAILURE_BUFFER_SMALL();
+			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
 			break;
 		}
 
@@ -1895,7 +1907,7 @@ OID_REQUEST_DONE:
 		// verify that the provided mode is supported
 		if (!NPF_TimestampModeSupported(dim))
 		{
-			SET_FAILURE_INVALID_REQUEST();
+			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 			break;
 		} 
 
@@ -1908,7 +1920,7 @@ OID_REQUEST_DONE:
 
 	default:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown IOCTL code");
-		SET_FAILURE_INVALID_REQUEST();
+		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 		break;
 	}
 
@@ -1921,8 +1933,7 @@ OID_REQUEST_DONE:
 	//
 	// release the Open structure
 	//
-	if (bAttached)
-		NPF_StopUsingOpenInstance(Open);
+	NPF_StopUsingOpenInstance(Open, MaxState);
 
 	//
 	// complete the IRP

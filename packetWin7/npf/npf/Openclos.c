@@ -316,7 +316,6 @@ NPF_OpenAdapter(
 	IN PIRP Irp
 	)
 {
-	PDEVICE_EXTENSION		DeviceExtension;
 	PNPCAP_FILTER_MODULE			pFiltMod;
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
@@ -324,8 +323,6 @@ NPF_OpenAdapter(
 	ULONG					localNumOpenedInstances;
 
 	TRACE_ENTER();
-
-	DeviceExtension = DeviceObject->DeviceExtension;
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	// Find the head adapter of the global array.
@@ -367,6 +364,7 @@ NPF_OpenAdapter(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	Open->pFiltMod = pFiltMod;
+	Open->DeviceExtension = DeviceObject->DeviceExtension;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
@@ -482,20 +480,20 @@ NPF_OpenAdapter_End:;
 
 BOOLEAN
 NPF_StartUsingOpenInstance(
-	IN POPEN_INSTANCE pOpen)
+	IN POPEN_INSTANCE pOpen, OPEN_STATE MaxState)
 
 {
 	BOOLEAN returnStatus;
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-	if (pOpen->OpenStatus != OpenRunning)
+	if (pOpen->OpenStatus > MaxState)
 	{
 		returnStatus = FALSE;
 	}
 	else
 	{
 		returnStatus = TRUE;
-		pOpen->NumPendingIrps ++;
+		pOpen->PendingIrps[MaxState]++;
 	}
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
@@ -506,12 +504,13 @@ NPF_StartUsingOpenInstance(
 
 VOID
 NPF_StopUsingOpenInstance(
-	IN POPEN_INSTANCE pOpen
+	IN POPEN_INSTANCE pOpen,
+	OPEN_STATE MaxState
 	)
 {
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-	ASSERT(pOpen->NumPendingIrps > 0);
-	pOpen->NumPendingIrps --;
+	ASSERT(pOpen->PendingIrps[MaxState] > 0);
+	pOpen->PendingIrps[MaxState]--;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 }
 
@@ -523,21 +522,25 @@ NPF_CloseOpenInstance(
 	)
 {
 	NDIS_EVENT Event;
+	OPEN_STATE state;
 
 	NdisInitializeEvent(&Event);
 	NdisResetEvent(&Event);
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-	pOpen->OpenStatus = OpenClosing;
+	pOpen->OpenStatus = OpenClosed;
 
-	while (pOpen->NumPendingIrps > 0)
+	// Wait for all IRPs to complete for all states
+	for (state = OpenRunning; state < OpenClosed; state++)
 	{
-		NdisReleaseSpinLock(&pOpen->OpenInUseLock);
-		NdisWaitEvent(&Event, 1);
-		NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+		while (pOpen->PendingIrps[state] > 0)
+		{
+			NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+			NdisWaitEvent(&Event, 1);
+			NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+		}
 	}
 
-	pOpen->OpenStatus = OpenClosed;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
 	if (pOpen->pFiltMod)
@@ -547,6 +550,44 @@ NPF_CloseOpenInstance(
 	}
 }
 
+//-------------------------------------------------------------------
+
+VOID
+NPF_DetachOpenInstance(
+	IN POPEN_INSTANCE pOpen
+	)
+{
+	NDIS_EVENT Event;
+	OPEN_STATE state;
+
+	NdisInitializeEvent(&Event);
+	NdisResetEvent(&Event);
+
+	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+	pOpen->OpenStatus = OpenDetached;
+
+	NPF_RemoveFromGroupOpenArray(pOpen); //Remove the Open from the filter module's list
+
+	// Wait for IRPs that require an attached adapter
+	while (pOpen->PendingIrps[OpenRunning] > 0)
+	{
+		NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+		NdisWaitEvent(&Event, 1);
+		NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+	}
+
+	// Do not purge worker requests; they should still work fine, and the
+	// worker will purge its own queue if it needs to shut down, i.e.
+	// FilterDetach
+
+	pOpen->pFiltMod = NULL;
+
+	ExInterlockedPushEntryList(
+			&pOpen->DeviceExtension->DetachedOpens,
+			&pOpen->OpenInstancesEntry,
+			&pOpen->DeviceExtension->DetachedOpensLock);
+	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+}
 
 //-------------------------------------------------------------------
 
@@ -1619,7 +1660,10 @@ NPF_CreateOpenObject()
 	// we can wait for those IRPs to be completed
 	//
 	Open->OpenStatus = OpenRunning;
-	Open->NumPendingIrps = 0;
+	for (OPEN_STATE state = 0; state < OpenClosed; state++)
+	{
+		Open->PendingIrps[state] = 0;
+	}
 	NdisAllocateSpinLock(&Open->OpenInUseLock);
 	Open->OpenInstancesEntry.Next = NULL;
 
@@ -2248,8 +2292,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 	{
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-		NPF_CloseOpenInstance(pOpen);
-		pOpen->pFiltMod = NULL;
+		NPF_DetachOpenInstance(pOpen);
 
 		if (pOpen->ReadEvent != NULL)
 			KeSetEvent(pOpen->ReadEvent, 0, FALSE);
