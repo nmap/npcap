@@ -564,6 +564,16 @@ NPF_ReleaseOpenInstanceResources(
 
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open= %p", pOpen);
 
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (Open->pFiltMod->Loopback && InterlockedDecrement(&g_NumLoopbackInstances) == 0)
+	{
+		// No more loopback handles open. Release WFP resources
+		NPF_UnregisterCallouts();
+		NPF_FreeInjectionHandles();
+	}
+#endif
+
 	//
 	// Free the filter if it's present
 	//
@@ -1158,13 +1168,6 @@ NPF_Cleanup(
 	// release all the resources
 	//
 	NPF_ReleaseOpenInstanceResources(Open);
-
-	if (InterlockedDecrement(&g_NumLoopbackInstances) == 0)
-	{
-		// No more loopback handles open. Release WFP resources
-		NPF_UnregisterCallouts();
-		NPF_FreeInjectionHandles();
-	}
 
 	//	IrpSp->FileObject->FsContext = NULL;
 
