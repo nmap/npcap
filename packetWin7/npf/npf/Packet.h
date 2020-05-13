@@ -1429,8 +1429,6 @@ NTSTATUS NPF_GetCurrentFrequency(IN PNPCAP_FILTER_MODULE pFiltMod, OUT PULONG pC
 ULONG NPF_GetCurrentFrequency_Wrapper(IN PNPCAP_FILTER_MODULE pFiltMod);
 #endif
 
-VOID NPF_ResetBufferContents(POPEN_INSTANCE Open);
-
 /**
  *  @}
  */

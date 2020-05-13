@@ -904,6 +904,8 @@ Return Value:
 	// NdisFreeString(g_NPF_Prefix);
 }
 
+VOID NPF_ResetBufferContents(POPEN_INSTANCE Open, BOOLEAN AcquireLock);
+
 #define SET_RESULT_SUCCESS(__a__) do{\
 	Information = __a__;	\
 	Status = STATUS_SUCCESS;	\
@@ -1197,7 +1199,7 @@ NPF_IoControl(
 		//
 		NdisReleaseReadWriteLock(&Open->MachineLock, &lockState);
 
-		NPF_ResetBufferContents(Open);
+		NPF_ResetBufferContents(Open, TRUE);
 
 		break;
 
@@ -1392,7 +1394,7 @@ NPF_IoControl(
 
 
 		// Reset the capture buffers, since they could contain loopbacked packets
-		NPF_ResetBufferContents(Open);
+		NPF_ResetBufferContents(Open, TRUE);
 
 		SET_RESULT_SUCCESS(0);
 		break;
@@ -1516,11 +1518,7 @@ NPF_IoControl(
 
 		Open->Buffer = (PUCHAR)tpointer; // May be NULL if dim == 0;
 		Open->Size = dim;
-		Open->Accepted = 0;
-		Open->Dropped = 0;
-		Open->Received = 0;
-		Open->C = 0;
-		Open->P = 0;
+		NPF_ResetBufferContents(Open, FALSE);
 
 		NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
 
@@ -1912,7 +1910,7 @@ OID_REQUEST_DONE:
 		} 
 
 		/* Reset buffer, since contents could have differing timestamps */
-		NPF_ResetBufferContents(Open);
+		NPF_ResetBufferContents(Open, TRUE);
 		Open->TimestampMode = dim;
 
 		SET_RESULT_SUCCESS(0);
@@ -1951,11 +1949,13 @@ OID_REQUEST_DONE:
 
 VOID
 NPF_ResetBufferContents(
-	IN POPEN_INSTANCE Open
+	IN POPEN_INSTANCE Open,
+	IN BOOLEAN AcquireLock
 	)
 {
 	LOCK_STATE lockState;
-	NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
+	if (AcquireLock)
+		NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
 	Open->Accepted = 0;
 	Open->Dropped = 0;
 	Open->Received = 0;
@@ -1966,5 +1966,6 @@ NPF_ResetBufferContents(
 	Open->C = 0;
 	Open->P = 0;
 	Open->Free = Open->Size;
-	NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
+	if (AcquireLock)
+		NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
 }
