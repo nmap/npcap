@@ -834,7 +834,7 @@ Return Value:
 		Curr = DeviceExtension->DetachedOpens.Next;
 		while (Curr != NULL)
 		{
-			pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+			POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
 			Curr = Curr->Next;
 
 			NPF_CloseOpenInstance(pOpen);

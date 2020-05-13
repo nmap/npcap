@@ -607,7 +607,7 @@ NPF_ReleaseOpenInstanceResources(
 
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (Open->pFiltMod->Loopback && InterlockedDecrement(&g_NumLoopbackInstances) == 0)
+	if (pOpen->pFiltMod->Loopback && InterlockedDecrement(&g_NumLoopbackInstances) == 0)
 	{
 		// No more loopback handles open. Release WFP resources
 		NPF_UnregisterCallouts();
