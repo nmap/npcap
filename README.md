@@ -30,8 +30,8 @@ can be downloaded from https://npcap.org/#download
 
 ## Bug report
 
-Please report any bugs or issues about Npcap at: [Nmap issues on
-GitHub](https://github.com/nmap/nmap/issues). In your report, please provide
+Please report any bugs or issues about Npcap at: [Npcap issues on
+GitHub](https://github.com/nmap/npcap/issues). In your report, please provide
 your
 [**DiagReport**](https://npcap.org/guide/npcap-users-guide.html#npcap-issues-diagreport)
 output, user software version (e.g. Nmap, Wireshark), reproduce steps and other
