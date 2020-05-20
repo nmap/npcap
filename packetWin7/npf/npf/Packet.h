@@ -400,7 +400,8 @@ typedef struct _OPEN_INSTANCE
 	ULONG Received; /// number of packet received by the network adapter
                         //  since the beginning of the capture session.
 	ULONG Dropped; /// A packet is dropped if there is no more space to
-                       //  store it in the circular buffer.
+		       //  store it in the circular buffer or if there is
+		       //  insufficient memory to allocate a copy.
 
 	ULONG Size; ///< Size of the kernel buffer
 	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)

@@ -540,6 +540,7 @@ NPF_TapExForEachOpen(
 {
 	UINT					fres;
 	UINT					TotalPacketSize;
+	UINT received = 0, dropped = 0;
 
 	PNET_BUFFER_LIST		pNetBufList;
 	PNET_BUFFER_LIST		pNextNetBufList;
@@ -784,7 +785,15 @@ NPF_TapExForEachOpen(
 #endif
 					// We can't continue traversing or the NBCopies
 					// and actual NBs won't line up.
-					return;
+					// Count remaining packets and bail;
+					for(; pNetBufList != NULL; pNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList)) {
+						for (; pNetBuf != NULL; pNetBuf = NET_BUFFER_NEXT_NB(pNetBuf)) {
+							received++;
+						}
+					}
+					pNextNetBufList = NULL;
+					pNextNetBuf = NULL;
+					goto NPF_TapExForEachOpen_End;
 				}
 				RtlZeroMemory(pNBCopy, sizeof(NPF_NB_COPIES));
 				pNBCopiesPrev->Next = &pNBCopy->CopiesEntry;
@@ -796,7 +805,7 @@ NPF_TapExForEachOpen(
 			pNBCopiesPrev = pNBCopiesPrev->Next;
 			pNextNetBuf = NET_BUFFER_NEXT_NB(pNetBuf);
 
-			InterlockedIncrement(&Open->Received);
+			received++;
 
 			// Lock BPF engine for reading.
 			NdisAcquireReadWriteLock(&Open->MachineLock, FALSE, &lockState);
@@ -849,7 +858,7 @@ NPF_TapExForEachOpen(
 
 			if (Open->Size == 0)
 			{
-				InterlockedIncrement(&Open->Dropped);
+				dropped++;
 				//return NDIS_STATUS_NOT_ACCEPTED;
 				goto NPF_TapExForEachOpen_End;
 			}
@@ -882,7 +891,7 @@ NPF_TapExForEachOpen(
 				if (pNBCopy->pNetBuffer == NULL)
 				{
 					// Insufficient memory
-					InterlockedIncrement(&Open->Dropped);
+					dropped++;
 					goto NPF_TapExForEachOpen_End;
 				}
 			}
@@ -898,7 +907,7 @@ NPF_TapExForEachOpen(
 					NormalPoolPriority);
 				if (pBuff == NULL)
 				{
-					InterlockedIncrement(&Open->Dropped);
+					dropped++;
 					goto NPF_TapExForEachOpen_End;
 				}
 				PMDL pMdl = NULL;
@@ -910,7 +919,7 @@ NPF_TapExForEachOpen(
 				if (pMdl->Next == NULL)
 				{
 					NdisFreeMemory(pBuff, fres - OldLength, 0);
-					InterlockedIncrement(&Open->Dropped);
+					dropped++;
 					goto NPF_TapExForEachOpen_End;
 				}
 				NdisCopyFromNetBufferToNetBuffer(
@@ -928,7 +937,7 @@ NPF_TapExForEachOpen(
 			{
 				// Insufficient memory
 				// Don't free pNBCopy; that's done later
-				InterlockedIncrement(&Open->Dropped);
+				dropped++;
 				goto NPF_TapExForEachOpen_End;
 			}
 			RtlZeroMemory(pReq, sizeof(NPF_WRITER_REQUEST));
@@ -964,6 +973,8 @@ NPF_TapExForEachOpen_End:;
 		pNetBufList = pNextNetBufList;
 	} // while (pNetBufList != NULL)
 
+	InterlockedExchangeAdd(&Open->Dropped, dropped);
+	InterlockedExchangeAdd(&Open->Received, received);
 	NPF_StopUsingOpenInstance(Open, OpenRunning);
 	//TRACE_EXIT();
 }
@@ -1016,7 +1027,8 @@ NPF_FillBuffer( POPEN_INSTANCE pOpen,
 #endif
 				> pOpen->Free)
 		{
-			// Not enough room in this buffer segment. Drop the packet.
+			// Not enough room in the buffer. Drop the packet.
+			InterlockedIncrement(&pOpen->Dropped);
 			IF_LOUD(DbgPrint("Dropped++, iFres = %d, pOpen->Free = %d\n", iFres, pOpen->Free);)
 			// May as well tell the application, even if MinToCopy is not met,
 			// to avoid dropping further packets
