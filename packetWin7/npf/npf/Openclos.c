@@ -2374,6 +2374,8 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 
 		if (Request->RequestType == NdisRequestSetInformation && Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER)
 		{
+			// ExAllocatePoolWithTag is permitted to be used at DISPATCH_LEVEL iff allocating from NonPagedPool
+#pragma warning(suppress: 28118)
 			pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), '0PWA');
 			if (pBuffer == NULL)
 			{
