@@ -329,7 +329,7 @@
             90-second delay in network availability</emphasis>. Some solutions you could try
           are: 1) wait for 90 seconds; 2) disable and re-enable the adapter icon in
           <command>ncpa.cpl</command>; 3) reboot. If this doesn't work,
-          please <ulink role="hidepdf" url="http://issues.nmap.org/new?title=Npcap+Bug+Report">file a bug report</ulink>.
+          please <ulink role="hidepdf" url="http://issues.npcap.org/new?title=Npcap+Bug+Report">file a bug report</ulink>.
       </para></listitem>
       <listitem><para>Installation fails with error code <varname>0x8004a029</varname>:
           The cause is that you have <quote>reached the maximum number of network filter
@@ -363,7 +363,7 @@
 
     <para>
       Please report any bugs or issues about Npcap on
-      <ulink role="hidepdf" url="http://issues.nmap.org/new?title=Npcap+Bug+Report">the Nmap Project's Issues tracker</ulink>.
+      <ulink role="hidepdf" url="http://issues.npcap.org/new?title=Npcap+Bug+Report">the Nmap Project's Issues tracker</ulink>.
       In your report, please provide your <emphasis>DiagReport</emphasis> output, user
       software version (e.g. Nmap, Wireshark), steps to reproduce the problem, and other information
       you think necessary. If your issue occurs only on a particular OS version (e.g. Win10
