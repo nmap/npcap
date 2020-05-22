@@ -570,197 +570,202 @@ NPF_TapExForEachOpen(
 		BOOLEAN withVlanTag = FALSE;
 		UCHAR pVlanTag[2];
 
-		// Handle IEEE802.1Q VLAN tag here, the tag in OOB field will be copied to the packet data, currently only Ethernet supported.
-		// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
-		if (g_VlanSupportMode && (NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo) != 0))
+		// Informational headers
+		// Only bother with these if we are capturing, i.e. not MODE_STAT
+		if (Open->mode & MODE_DUMP || !(Open->mode & MODE_STAT))
 		{
-			NDIS_NET_BUFFER_LIST_8021Q_INFO qInfo;
-			qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
-			if (qInfo.TagHeader.VlanId != 0)
+			// Handle IEEE802.1Q VLAN tag here, the tag in OOB field will be copied to the packet data, currently only Ethernet supported.
+			// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
+			if (g_VlanSupportMode && (NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo) != 0))
 			{
-				USHORT pTmpVlanTag;
-				withVlanTag = TRUE;
+				NDIS_NET_BUFFER_LIST_8021Q_INFO qInfo;
+				qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
+				if (qInfo.TagHeader.VlanId != 0)
+				{
+					USHORT pTmpVlanTag;
+					withVlanTag = TRUE;
 
-				pTmpVlanTag = ((qInfo.TagHeader.UserPriority & 0x07) << 13) |
-					((qInfo.TagHeader.CanonicalFormatId & 0x01) << 12) |
-					(qInfo.TagHeader.VlanId & 0x0FFF);
+					pTmpVlanTag = ((qInfo.TagHeader.UserPriority & 0x07) << 13) |
+						((qInfo.TagHeader.CanonicalFormatId & 0x01) << 12) |
+						(qInfo.TagHeader.VlanId & 0x0FFF);
 
-				pVlanTag[0] = ((UCHAR *)(&pTmpVlanTag))[1];
-				pVlanTag[1] = ((UCHAR *)(&pTmpVlanTag))[0];
+					pVlanTag[0] = ((UCHAR *)(&pTmpVlanTag))[1];
+					pVlanTag[1] = ((UCHAR *)(&pTmpVlanTag))[0];
+				}
 			}
-		}
 
 #ifdef HAVE_DOT11_SUPPORT
-		// Handle native 802.11 media specific OOB data here.
-		// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
-		if (Open->pFiltMod->Dot11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
-		{
-			PDOT11_EXTSTA_RECV_CONTEXT  pwInfo;
-			PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = NULL;
-
-			UINT cur = 0;
-
-			pwInfo = NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation);
-			if (pwInfo->Header.Type != NDIS_OBJECT_TYPE_DEFAULT
-				|| pwInfo->Header.Revision != DOT11_EXTSTA_RECV_CONTEXT_REVISION_1
-				|| pwInfo->Header.Size != sizeof(DOT11_EXTSTA_RECV_CONTEXT)) {
-				// This isn't the information we're looking for. Move along.
-				goto RadiotapDone;
-			}
-
-			Dot11RadiotapHeader = NPF_POOL_GET(Open->pFiltMod->Dot11HeaderPool, PUCHAR);
-			if (Dot11RadiotapHeader == NULL)
+			// Handle native 802.11 media specific OOB data here.
+			// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
+			if (Open->pFiltMod->Dot11 && (NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation) != 0))
 			{
-				// Insufficient memory
-				// TODO: Count this as a drop?
-				goto RadiotapDone;
-			}
-			pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) Dot11RadiotapHeader;
+				PDOT11_EXTSTA_RECV_CONTEXT  pwInfo;
+				PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = NULL;
 
-			// The radiotap header is also placed in the buffer.
-			cur += sizeof(IEEE80211_RADIOTAP_HEADER) / sizeof(UCHAR);
+				UINT cur = 0;
 
-			// [Radiotap] "TSFT" field.
-			// Size: 8 bytes, Alignment: 8 bytes.
-			if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP) == DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP)
-			{
-				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_TSFT);
-				RtlCopyMemory(Dot11RadiotapHeader + cur, &pwInfo->ullTimestamp, sizeof(INT64) / sizeof(UCHAR));
-				cur += sizeof(INT64) / sizeof(UCHAR);
-			}
-
-			// [Radiotap] "Flags" field.
-			// Size: 1 byte, Alignment: 1 byte.
-			if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET) != DOT11_RECV_FLAG_RAW_PACKET) // The packet doesn't have FCS. We always have no FCS for all packets currently.
-			{
-				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
-				*((UCHAR*)Dot11RadiotapHeader + cur) = 0x0; // 0x0: none
-				cur += sizeof(UCHAR) / sizeof(UCHAR);
-			}
-			else // The packet has FCS.
-			{
-				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
-				*((UCHAR*)Dot11RadiotapHeader + cur) = IEEE80211_RADIOTAP_F_FCS; // 0x10: frame includes FCS
-
-				// FCS check fails.
-				if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_FCS_FAILURE) == DOT11_RECV_FLAG_RAW_PACKET_FCS_FAILURE)
-				{
-					*((UCHAR*)Dot11RadiotapHeader + cur) |= IEEE80211_RADIOTAP_F_BADFCS; // 0x40: frame failed FCS check
+				pwInfo = NET_BUFFER_LIST_INFO(pNetBufList, MediaSpecificInformation);
+				if (pwInfo->Header.Type != NDIS_OBJECT_TYPE_DEFAULT
+					|| pwInfo->Header.Revision != DOT11_EXTSTA_RECV_CONTEXT_REVISION_1
+					|| pwInfo->Header.Size != sizeof(DOT11_EXTSTA_RECV_CONTEXT)) {
+					// This isn't the information we're looking for. Move along.
+					goto RadiotapDone;
 				}
 
-				cur += sizeof(UCHAR) / sizeof(UCHAR);
-			}
+				Dot11RadiotapHeader = NPF_POOL_GET(Open->pFiltMod->Dot11HeaderPool, PUCHAR);
+				if (Dot11RadiotapHeader == NULL)
+				{
+					// Insufficient memory
+					// TODO: Count this as a drop?
+					goto RadiotapDone;
+				}
+				pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) Dot11RadiotapHeader;
 
-			// [Radiotap] "Rate" field.
-			// Size: 1 byte, Alignment: 1 byte.
-			// Looking up the ucDataRate field's value in the data rate mapping table.
-			// If not found, return 0.
-			IF_LOUD(DbgPrint("pwInfo->ucDataRate = %d\n", pwInfo->ucDataRate);)
-			USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open->pFiltMod, pwInfo->ucDataRate);
-			if (usDataRateValue != 0) {
-				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
-				// The miniport might be providing data rate values > 127.5 Mb/s, but radiotap's "Rate" field is only 8 bits,
-				// so we at least make it the maximum value instead of overflowing it.
-				if (usDataRateValue > 255)
-				{
-					usDataRateValue = 255;
-				}
-				*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) usDataRateValue;
-				cur += sizeof(UCHAR) / sizeof(UCHAR);
-			}
+				// The radiotap header is also placed in the buffer.
+				cur += sizeof(IEEE80211_RADIOTAP_HEADER) / sizeof(UCHAR);
 
-			if (pwInfo->uPhyId || pwInfo->uChCenterFrequency)
-			{
-				USHORT flags = 0;
-				NPF_AlignProtocolField(2, &cur);
-				// [Radiotap] "Channel" field.
-				// Size: 2 bytes + 2 bytes, Alignment: 2 bytes.
-				IF_LOUD(DbgPrint("pwInfo->uPhyId = %x\n", pwInfo->uPhyId);)
-				if (pwInfo->uPhyId == dot11_phy_type_fhss)
+				// [Radiotap] "TSFT" field.
+				// Size: 8 bytes, Alignment: 8 bytes.
+				if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP) == DOT11_RECV_FLAG_RAW_PACKET_TIMESTAMP)
 				{
-					flags = IEEE80211_CHAN_GFSK; // 0x0800
+					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_TSFT);
+					RtlCopyMemory(Dot11RadiotapHeader + cur, &pwInfo->ullTimestamp, sizeof(INT64) / sizeof(UCHAR));
+					cur += sizeof(INT64) / sizeof(UCHAR);
 				}
-				else if (pwInfo->uPhyId == dot11_phy_type_ofdm)
+
+				// [Radiotap] "Flags" field.
+				// Size: 1 byte, Alignment: 1 byte.
+				if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET) != DOT11_RECV_FLAG_RAW_PACKET) // The packet doesn't have FCS. We always have no FCS for all packets currently.
 				{
-					flags = IEEE80211_CHAN_OFDM; // 0x0040
+					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
+					*((UCHAR*)Dot11RadiotapHeader + cur) = 0x0; // 0x0: none
+					cur += sizeof(UCHAR) / sizeof(UCHAR);
 				}
-				else if (pwInfo->uPhyId == dot11_phy_type_hrdsss)
+				else // The packet has FCS.
 				{
-					flags = IEEE80211_CHAN_CCK; // 0x0020
-				}
-				else if (pwInfo->uPhyId == dot11_phy_type_erp)
-				{
-					flags = IEEE80211_CHAN_OFDM; // 0x0040
-				}
-				else if (pwInfo->uPhyId != dot11_phy_type_irbaseband)
-				{
-					// 2484 is cutoff value used by Wireshark for CommView files, we follow this design here.
-					if (pwInfo->uChCenterFrequency > 2484) // 5 GHz
+					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_FLAGS);
+					*((UCHAR*)Dot11RadiotapHeader + cur) = IEEE80211_RADIOTAP_F_FCS; // 0x10: frame includes FCS
+
+					// FCS check fails.
+					if ((pwInfo->uReceiveFlags & DOT11_RECV_FLAG_RAW_PACKET_FCS_FAILURE) == DOT11_RECV_FLAG_RAW_PACKET_FCS_FAILURE)
 					{
-						flags = IEEE80211_CHAN_5GHZ; // 0x0100
+						*((UCHAR*)Dot11RadiotapHeader + cur) |= IEEE80211_RADIOTAP_F_BADFCS; // 0x40: frame failed FCS check
 					}
-					else // 2.4 GHz
+
+					cur += sizeof(UCHAR) / sizeof(UCHAR);
+				}
+
+				// [Radiotap] "Rate" field.
+				// Size: 1 byte, Alignment: 1 byte.
+				// Looking up the ucDataRate field's value in the data rate mapping table.
+				// If not found, return 0.
+				IF_LOUD(DbgPrint("pwInfo->ucDataRate = %d\n", pwInfo->ucDataRate);)
+				USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open->pFiltMod, pwInfo->ucDataRate);
+				if (usDataRateValue != 0) {
+					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
+					// The miniport might be providing data rate values > 127.5 Mb/s, but radiotap's "Rate" field is only 8 bits,
+					// so we at least make it the maximum value instead of overflowing it.
+					if (usDataRateValue > 255)
 					{
-						flags = IEEE80211_CHAN_2GHZ; // 0x0080
+						usDataRateValue = 255;
 					}
+					*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) usDataRateValue;
+					cur += sizeof(UCHAR) / sizeof(UCHAR);
 				}
 
-				// If the frequency is higher than 65535, radiotap can't hold this value because "Frequency" field is only 16 bits, we just leave it the maximum value 65535.
-				IF_LOUD(DbgPrint("pwInfo->uChCenterFrequency = %d\n", pwInfo->uChCenterFrequency);)
-				if (pwInfo->uChCenterFrequency <= 65535)
+				if (pwInfo->uPhyId || pwInfo->uChCenterFrequency)
 				{
-					*((USHORT*)Dot11RadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
+					USHORT flags = 0;
+					NPF_AlignProtocolField(2, &cur);
+					// [Radiotap] "Channel" field.
+					// Size: 2 bytes + 2 bytes, Alignment: 2 bytes.
+					IF_LOUD(DbgPrint("pwInfo->uPhyId = %x\n", pwInfo->uPhyId);)
+					if (pwInfo->uPhyId == dot11_phy_type_fhss)
+					{
+						flags = IEEE80211_CHAN_GFSK; // 0x0800
+					}
+					else if (pwInfo->uPhyId == dot11_phy_type_ofdm)
+					{
+						flags = IEEE80211_CHAN_OFDM; // 0x0040
+					}
+					else if (pwInfo->uPhyId == dot11_phy_type_hrdsss)
+					{
+						flags = IEEE80211_CHAN_CCK; // 0x0020
+					}
+					else if (pwInfo->uPhyId == dot11_phy_type_erp)
+					{
+						flags = IEEE80211_CHAN_OFDM; // 0x0040
+					}
+					else if (pwInfo->uPhyId != dot11_phy_type_irbaseband)
+					{
+						// 2484 is cutoff value used by Wireshark for CommView files, we follow this design here.
+						if (pwInfo->uChCenterFrequency > 2484) // 5 GHz
+						{
+							flags = IEEE80211_CHAN_5GHZ; // 0x0100
+						}
+						else // 2.4 GHz
+						{
+							flags = IEEE80211_CHAN_2GHZ; // 0x0080
+						}
+					}
+
+					// If the frequency is higher than 65535, radiotap can't hold this value because "Frequency" field is only 16 bits, we just leave it the maximum value 65535.
+					IF_LOUD(DbgPrint("pwInfo->uChCenterFrequency = %d\n", pwInfo->uChCenterFrequency);)
+					if (pwInfo->uChCenterFrequency <= 65535)
+					{
+						*((USHORT*)Dot11RadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
+					}
+					else
+					{
+						*((USHORT*)Dot11RadiotapHeader + cur) = 65535;
+					}
+					cur += sizeof(USHORT) / sizeof(UCHAR);
+
+					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_CHANNEL);
+					*((USHORT*)Dot11RadiotapHeader + cur) = flags;
+					cur += sizeof(USHORT) / sizeof(UCHAR);
 				}
-				else
+
+				// [Radiotap] "Antenna signal" field, 1 byte.
+				// Size: 1 byte, Alignment: 1 byte.
+				if (TRUE)
 				{
-					*((USHORT*)Dot11RadiotapHeader + cur) = 65535;
+					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
+					// We don't need to worry about that lRSSI value doesn't fit in 8 bits based on practical use.
+					*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) pwInfo->lRSSI;
+					cur += sizeof(UCHAR) / sizeof(UCHAR);
 				}
-				cur += sizeof(USHORT) / sizeof(UCHAR);
 
-				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_CHANNEL);
-				*((USHORT*)Dot11RadiotapHeader + cur) = flags;
-				cur += sizeof(USHORT) / sizeof(UCHAR);
+				// [Radiotap] "MCS" field.
+				// Size: 1 byte + 1 byte + 1 byte, Alignment: 1 byte.
+				if (pwInfo->uPhyId == dot11_phy_type_ht)
+				{
+					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_MCS);
+					RtlZeroMemory(Dot11RadiotapHeader + cur, 3 * sizeof(UCHAR) / sizeof(UCHAR));
+					cur += 3 * sizeof(UCHAR) / sizeof(UCHAR);
+				}
+				// [Radiotap] "VHT" field, 12 bytes.
+				// Size: 2 bytes + 1 byte + 1 byte + 4 * 1 byte + 1 byte + 1 byte + 2 bytes, Alignment: 2 bytes.
+				else if (pwInfo->uPhyId == dot11_phy_type_vht)
+				{
+					// Before putting the VHT field into the packet, because the VHT field has to be aligned on a 2-byte boundary,
+					// and the antenna field is on a 2-byte boundary but is only 1 byte long.
+					// (The MCS field, however, doesn't have to be aligned on a 2-byte boundary, so you *don't* need to pad anything for HT frames.)
+					// cur += sizeof(UCHAR) / sizeof(UCHAR);
+					NPF_AlignProtocolField(2, &cur);
+
+					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_VHT);
+					RtlZeroMemory(Dot11RadiotapHeader + cur, 12 * sizeof(UCHAR) / sizeof(UCHAR));
+					cur += 12 * sizeof(UCHAR) / sizeof(UCHAR);
+				}
+
+				Dot11RadiotapHeaderSize = cur;
+				pRadiotapHeader->it_version = 0x0;
+				pRadiotapHeader->it_len = (USHORT) Dot11RadiotapHeaderSize;
 			}
-
-			// [Radiotap] "Antenna signal" field, 1 byte.
-			// Size: 1 byte, Alignment: 1 byte.
-			if (TRUE)
-			{
-				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
-				// We don't need to worry about that lRSSI value doesn't fit in 8 bits based on practical use.
-				*((UCHAR*)Dot11RadiotapHeader + cur) = (UCHAR) pwInfo->lRSSI;
-				cur += sizeof(UCHAR) / sizeof(UCHAR);
-			}
-
-			// [Radiotap] "MCS" field.
-			// Size: 1 byte + 1 byte + 1 byte, Alignment: 1 byte.
-			if (pwInfo->uPhyId == dot11_phy_type_ht)
-			{
-				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_MCS);
-				RtlZeroMemory(Dot11RadiotapHeader + cur, 3 * sizeof(UCHAR) / sizeof(UCHAR));
-				cur += 3 * sizeof(UCHAR) / sizeof(UCHAR);
-			}
-			// [Radiotap] "VHT" field, 12 bytes.
-			// Size: 2 bytes + 1 byte + 1 byte + 4 * 1 byte + 1 byte + 1 byte + 2 bytes, Alignment: 2 bytes.
-			else if (pwInfo->uPhyId == dot11_phy_type_vht)
-			{
-				// Before putting the VHT field into the packet, because the VHT field has to be aligned on a 2-byte boundary,
-				// and the antenna field is on a 2-byte boundary but is only 1 byte long.
-				// (The MCS field, however, doesn't have to be aligned on a 2-byte boundary, so you *don't* need to pad anything for HT frames.)
-				// cur += sizeof(UCHAR) / sizeof(UCHAR);
-				NPF_AlignProtocolField(2, &cur);
-
-				pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_VHT);
-				RtlZeroMemory(Dot11RadiotapHeader + cur, 12 * sizeof(UCHAR) / sizeof(UCHAR));
-				cur += 12 * sizeof(UCHAR) / sizeof(UCHAR);
-			}
-
-			Dot11RadiotapHeaderSize = cur;
-			pRadiotapHeader->it_version = 0x0;
-			pRadiotapHeader->it_len = (USHORT) Dot11RadiotapHeaderSize;
-		}
-	RadiotapDone:;
+		RadiotapDone:;
 #endif
+		} // end of informational headers
 
 		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
 
