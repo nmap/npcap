@@ -395,6 +395,7 @@ DriverEntry(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (g_LoopbackSupportMode) {
+#ifndef NPCAP_READ_ONLY
 		// Use Winsock Kernel (WSK) to send loopback packets.
 		// TODO: Allow this to continue but disable loopback if there's an error
 		Status = NPF_WSKStartup();
@@ -411,6 +412,7 @@ DriverEntry(
 			TRACE_EXIT();
 			return Status;
 		}
+#endif
 
 		// Create the fake "filter module" for loopback capture
 		// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
@@ -418,8 +420,10 @@ DriverEntry(
 		PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(NULL, &LoopbackDeviceName, NdisMediumLoopback);
 		if (pFiltMod == NULL)
 		{
+#ifndef NPCAP_READ_ONLY
 			NPF_WSKFreeSockets();
 			NPF_WSKCleanup();
+#endif
 			TRACE_EXIT();
 			return NDIS_STATUS_RESOURCES;
 		}
@@ -431,8 +435,10 @@ DriverEntry(
 		{
 			NPF_ReleaseFilterModuleResources(pFiltMod);
 			ExFreePool(pFiltMod);
+#ifndef NPCAP_READ_ONLY
 			NPF_WSKFreeSockets();
 			NPF_WSKCleanup();
+#endif
 			TRACE_EXIT();
 			return Status;
 		}
@@ -463,8 +469,10 @@ DriverEntry(
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
+#ifndef NPCAP_READ_ONLY
 		NPF_WSKFreeSockets();
 		NPF_WSKCleanup();
+#endif
 #endif
 		NdisFreeSpinLock(&g_FilterArrayLock);
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter with NDIS, Status = %x", Status);
@@ -795,9 +803,11 @@ Return Value:
 		g_LoopbackAdapterName.Buffer = NULL;
 	}
 
+#ifndef NPCAP_READ_ONLY
 	// Release WSK resources.
 	NPF_WSKFreeSockets();
 	NPF_WSKCleanup();
+#endif
 
 	// Release WFP resources
 	NPF_UnregisterCallouts();
