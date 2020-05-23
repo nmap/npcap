@@ -382,34 +382,6 @@ NPF_OpenAdapter(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (pFiltMod->Loopback)
 	{
-		if (g_WFPEngineHandle == INVALID_HANDLE_VALUE)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init WSK injection handles and register callouts");
-			// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
-			Status = NPF_InitInjectionHandles();
-			if (!NT_SUCCESS(Status))
-			{
-				goto NPF_OpenAdapter_End;
-			}
-
-			Status = NPF_RegisterCallouts(DeviceObject);
-			if (!NT_SUCCESS(Status))
-			{
-				if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
-				{
-					NPF_UnregisterCallouts();
-				}
-
-				goto NPF_OpenAdapter_End;
-			}
-		}
-		else
-
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "g_WFPEngineHandle invalid, not initializing WSK handles");
-		}
-
-		Status = STATUS_SUCCESS;
 		InterlockedIncrement(&g_NumLoopbackInstances);
 	}
 #endif
@@ -417,21 +389,10 @@ NPF_OpenAdapter(
 #ifdef HAVE_DOT11_SUPPORT
 	if (pFiltMod->Dot11)
 	{
-		// Fetch the device's data rate mapping table with the OID_DOT11_DATA_RATE_MAPPING_TABLE OID.
-		if (NPF_GetDataRateMappingTable(pFiltMod, &pFiltMod->DataRateMappingTable) != STATUS_SUCCESS)
-		{
-			pFiltMod->HasDataRateMappingTable = FALSE;
-		}
-		else
-		{
-			pFiltMod->HasDataRateMappingTable = TRUE;
-		}
 		/* Update packet filter for raw wifi */
 		NPF_SetPacketFilter(Open, 0);
 	}
 #endif
-
-NPF_OpenAdapter_End:;
 
 	if (!NT_SUCCESS(Status))
 	{
@@ -478,6 +439,69 @@ NPF_OpenAdapter_End:;
 
 //-------------------------------------------------------------------
 
+NTSTATUS NPF_EnableOps(POPEN_INSTANCE pOpen)
+{
+	NTSTATUS Status = STATUS_SUCCESS;
+
+	ASSERT(pOpen->OpenStatus == OpenAttached);
+	if (pOpen->OpenStatus != OpenAttached)
+	{
+		return STATUS_INVALID_DEVICE_STATE;
+	}
+
+	do
+	{
+
+#ifdef HAVE_DOT11_SUPPORT
+		// DataRateMappingTable
+		if (pOpen->pFiltMod->Dot11)
+		{
+			// Fetch the device's data rate mapping table with the OID_DOT11_DATA_RATE_MAPPING_TABLE OID.
+			pOpen->pFiltMod->HasDataRateMappingTable = NT_SUCCESS(
+					NPF_GetDataRateMappingTable(
+						pOpen->pFiltMod,
+						&pOpen->pFiltMod->DataRateMappingTable
+						));
+		}
+#endif
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		if (pOpen->pFiltMod->Loopback)
+		{
+			if (g_WFPEngineHandle == INVALID_HANDLE_VALUE)
+			{
+				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init injection handles and register callouts");
+				// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
+				Status = NPF_InitInjectionHandles();
+				if (!NT_SUCCESS(Status))
+				{
+					break;
+				}
+
+				Status = NPF_RegisterCallouts(pOpen->DeviceExtension->pDevObj);
+				if (!NT_SUCCESS(Status))
+				{
+					if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+					{
+						NPF_UnregisterCallouts();
+					}
+					break;
+				}
+			}
+			else
+
+			{
+				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "g_WFPEngineHandle already initialized");
+			}
+
+			Status = STATUS_SUCCESS;
+		}
+#endif
+		// WriterThread?
+	} while (0);
+	return Status;
+}
+
 BOOLEAN
 NPF_StartUsingOpenInstance(
 	IN POPEN_INSTANCE pOpen, OPEN_STATE MaxState)
@@ -486,7 +510,16 @@ NPF_StartUsingOpenInstance(
 	BOOLEAN returnStatus;
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-	if (pOpen->OpenStatus > MaxState)
+	if (MaxState == OpenRunning && pOpen->OpenStatus == OpenAttached)
+	{
+		returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen));
+		if (returnStatus)
+		{
+			pOpen->OpenStatus = OpenRunning;
+			pOpen->PendingIrps[OpenRunning]++;
+		}
+	}
+	else if (pOpen->OpenStatus > MaxState)
 	{
 		returnStatus = FALSE;
 	}
@@ -569,11 +602,14 @@ NPF_DetachOpenInstance(
 	NPF_RemoveFromGroupOpenArray(pOpen); //Remove the Open from the filter module's list
 
 	// Wait for IRPs that require an attached adapter
-	while (pOpen->PendingIrps[OpenRunning] > 0)
+	for (state = OpenDetached - 1; state >= OpenRunning; state--)
 	{
-		NdisReleaseSpinLock(&pOpen->OpenInUseLock);
-		NdisWaitEvent(&Event, 1);
-		NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+		while (pOpen->PendingIrps[state] > 0)
+		{
+			NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+			NdisWaitEvent(&Event, 1);
+			NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+		}
 	}
 
 	// Do not purge worker requests; they should still work fine, and the
@@ -1658,8 +1694,6 @@ NPF_CreateOpenObject()
 	// we need to keep a counter of the pending IRPs
 	// so that when the IRP_MJ_CLEANUP dispatcher gets called,
 	// we can wait for those IRPs to be completed
-	//
-	Open->OpenStatus = OpenRunning;
 	for (OPEN_STATE state = 0; state < OpenClosed; state++)
 	{
 		Open->PendingIrps[state] = 0;
@@ -1671,6 +1705,8 @@ NPF_CreateOpenObject()
 	//allocate the spinlock for the statistic counters
 	//
 	NdisAllocateSpinLock(&Open->CountersLock);
+
+	Open->OpenStatus = OpenAttached;
 
 	TRACE_EXIT();
 	return Open;
@@ -3367,4 +3403,3 @@ Return Value:
 
 	TRACE_EXIT();
 }
-

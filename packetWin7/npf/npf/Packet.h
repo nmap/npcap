@@ -252,6 +252,7 @@ typedef struct _DEVICE_EXTENSION
 										///< to open this adapter through Packet.dll.
 	SINGLE_LIST_ENTRY DetachedOpens; //GroupHead
 	KSPIN_LOCK DetachedOpensLock; // GroupLock
+	PDEVICE_OBJECT pDevObj; // pointer to the DEVICE_OBJECT for this device
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 typedef enum _FILTER_STATE
@@ -269,9 +270,10 @@ typedef enum _FILTER_STATE
 
 typedef enum _OPEN_STATE
 {
-	OpenRunning,
-	OpenDetached,
-	OpenClosed
+	OpenRunning, // All features available
+	OpenAttached, // Some features need to be initialized.
+	OpenDetached, // No NDIS adapter associated, most features unavailable
+	OpenClosed // No features available, about to shut down
 } OPEN_STATE;
 
 #define OPEN_SIGNATURE 'NPFO'

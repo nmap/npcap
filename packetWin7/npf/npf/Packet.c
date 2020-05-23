@@ -371,6 +371,7 @@ DriverEntry(
 	}
 
 	PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
+	devExtP->pDevObj = devObjP;
 
 	devObjP->Flags |= DO_DIRECT_IO;
 
@@ -914,7 +915,11 @@ Return Value:
 	// NdisFreeString(g_NPF_Prefix);
 }
 
-VOID NPF_ResetBufferContents(POPEN_INSTANCE Open, BOOLEAN AcquireLock);
+VOID
+NPF_ResetBufferContents(
+	IN POPEN_INSTANCE Open,
+	IN BOOLEAN AcquireLock
+);
 
 #define SET_RESULT_SUCCESS(__a__) do{\
 	Information = __a__;	\
@@ -1006,11 +1011,17 @@ NPF_IoControl(
 
 	switch (FunctionCode)
 	{
+		// BIOCSETBUFFERSIZE and BIOCSMODE do not technically require
+		// an attached adapter, but NPF_StartUsingOpenInstance(x, OpenRunning)
+		// does some initialization that is needed to start actually
+		// processing packets
+		case BIOCSETBUFFERSIZE:
+		case BIOCSMODE:
+		// These functions require an attached adapter
 		case BIOCSENDPACKETSSYNC:
 		case BIOCSENDPACKETSNOSYNC:
 		case BIOCSETOID:
 		case BIOCQUERYOID:
-			// These functions requires an attached adapter
 			MaxState = OpenRunning;
 			break;
 		default:
