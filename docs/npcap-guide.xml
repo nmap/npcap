@@ -104,14 +104,16 @@
             <term><option>/winpcap_mode</option></term>
             <listitem><para>
                 <emphasis>Install Npcap in WinPcap API-compatible
-                  Mode</emphasis>. Npcap uses the same API and DLL names as
-                WinPcap, so to avoid unintentionally removing working WinPcap
-                installations, it places its DLLs in a different directory than
-                WinPcap. This option also installs the DLLs to the system
-                directory, so software written for WinPcap will work
-                seamlessly, though the new features of Npcap will not be
-                available. This requires removal of any old WinPcap
-                installations.
+                  Mode</emphasis>. The default for this option is
+                <option>yes<option> in Npcap 0.9985 and later. Npcap's DLLs
+                    have always been installed into a separate
+                    <literal>Npcap</literal> subdirectory of the system
+                    directory to avoid conflicting with existing WinPcap
+                    installations. This option also installs the DLLs to the
+                    system directory, replacing WinPcap. Any existing WinPcap
+                    installation will be removed.
+              </para>
+              <para>
             </para></listitem>
           </varlistentry>
         </variablelist>
