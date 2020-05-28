@@ -276,6 +276,14 @@ typedef enum _OPEN_STATE
 	OpenClosed // No features available, about to shut down
 } OPEN_STATE;
 
+typedef enum _FILTER_OPS_STATE
+{
+	OpsDisabled,
+	OpsEnabling,
+	OpsFailed,
+	OpsEnabled
+} FILTER_OPS_STATE;
+
 #define OPEN_SIGNATURE 'NPFO'
 
 /* Filter module (per-adapter) */
@@ -331,6 +339,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	ULONG					AdapterHandleUsageCounter;
 	NDIS_SPIN_LOCK			AdapterHandleLock;
 	FILTER_STATE					AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.
+	FILTER_OPS_STATE OpsState; // Whether all operations are enabled
 
 } 
 NPCAP_FILTER_MODULE, *PNPCAP_FILTER_MODULE;

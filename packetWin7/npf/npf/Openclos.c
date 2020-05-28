@@ -439,14 +439,46 @@ NPF_OpenAdapter(
 
 //-------------------------------------------------------------------
 
-NTSTATUS NPF_EnableOps(POPEN_INSTANCE pOpen)
+NTSTATUS NPF_EnableOps(PNPCAP_FILTER_MODULE pFiltMod, PDEVICE_OBJECT pDevObj)
 {
-	NTSTATUS Status = STATUS_SUCCESS;
+	NTSTATUS Status = STATUS_PENDING;
+	NDIS_EVENT Event;
 
-	ASSERT(pOpen->OpenStatus == OpenAttached);
-	if (pOpen->OpenStatus != OpenAttached)
+	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
+	if (pFiltMod->OpsState == OpsEnabled)
 	{
-		return STATUS_INVALID_DEVICE_STATE;
+		// Already good to go;
+		Status = STATUS_SUCCESS;
+	}
+	else if (pFiltMod->OpsState == OpsEnabling)
+	{
+		NdisInitializeEvent(&Event);
+		NdisResetEvent(&Event);
+		// Wait for other thread to finish enabling
+		while (pFiltMod->OpsState == OpsEnabling)
+		{
+			NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
+			NdisWaitEvent(&Event, 1);
+			NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
+		}
+		Status = (pFiltMod->OpsState == OpsEnabled
+				? STATUS_SUCCESS
+				: STATUS_DRIVER_INTERNAL_ERROR);
+	}
+	else if (pFiltMod->OpsState == OpsDisabled)
+	{
+		// Time to get to work
+		pFiltMod->OpsState = OpsEnabling;
+	}
+	else
+	{
+		Status = STATUS_INVALID_DEVICE_STATE;
+	}
+	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
+
+	if (Status != STATUS_PENDING)
+	{
+		return Status;
 	}
 
 	do
@@ -454,19 +486,19 @@ NTSTATUS NPF_EnableOps(POPEN_INSTANCE pOpen)
 
 #ifdef HAVE_DOT11_SUPPORT
 		// DataRateMappingTable
-		if (pOpen->pFiltMod->Dot11)
+		if (pFiltMod->Dot11)
 		{
 			// Fetch the device's data rate mapping table with the OID_DOT11_DATA_RATE_MAPPING_TABLE OID.
-			pOpen->pFiltMod->HasDataRateMappingTable = NT_SUCCESS(
+			pFiltMod->HasDataRateMappingTable = NT_SUCCESS(
 					NPF_GetDataRateMappingTable(
-						pOpen->pFiltMod,
-						&pOpen->pFiltMod->DataRateMappingTable
+						pFiltMod,
+						&pFiltMod->DataRateMappingTable
 						));
 		}
 #endif
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		if (pOpen->pFiltMod->Loopback)
+		if (pFiltMod->Loopback)
 		{
 			if (g_WFPEngineHandle == INVALID_HANDLE_VALUE)
 			{
@@ -478,7 +510,7 @@ NTSTATUS NPF_EnableOps(POPEN_INSTANCE pOpen)
 					break;
 				}
 
-				Status = NPF_RegisterCallouts(pOpen->DeviceExtension->pDevObj);
+				Status = NPF_RegisterCallouts(pDevObj);
 				if (!NT_SUCCESS(Status))
 				{
 					if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
@@ -499,6 +531,8 @@ NTSTATUS NPF_EnableOps(POPEN_INSTANCE pOpen)
 #endif
 		// WriterThread?
 	} while (0);
+
+	pFiltMod->OpsState = NT_SUCCESS(Status) ? OpsEnabled : OpsDisabled;
 	return Status;
 }
 
@@ -512,7 +546,11 @@ NPF_StartUsingOpenInstance(
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 	if (MaxState == OpenRunning && pOpen->OpenStatus == OpenAttached)
 	{
-		returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen));
+		// NPF_EnableOps must be called at PASSIVE_LEVEL. Release the lock first.
+		NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+		returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen->pFiltMod, pOpen->DeviceExtension->pDevObj));
+		NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+
 		if (returnStatus)
 		{
 			pOpen->OpenStatus = OpenRunning;
