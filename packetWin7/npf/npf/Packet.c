@@ -1017,12 +1017,15 @@ NPF_IoControl(
 		// processing packets
 		case BIOCSETBUFFERSIZE:
 		case BIOCSMODE:
-		// These functions require an attached adapter
 		case BIOCSENDPACKETSSYNC:
 		case BIOCSENDPACKETSNOSYNC:
+			MaxState = OpenRunning;
+			break;
+		// These functions require an attached adapter, but do not have
+		// to have support for capture/injection
 		case BIOCSETOID:
 		case BIOCQUERYOID:
-			MaxState = OpenRunning;
+			MaxState = OpenAttached;
 			break;
 		default:
 			// All others can work with detached instance
