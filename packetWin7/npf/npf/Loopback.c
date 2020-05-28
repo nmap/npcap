@@ -1070,40 +1070,33 @@ Callouts and filters will be removed during DriverUnload.
 -- */
 {
 	TRACE_ENTER();
-	NTSTATUS status = STATUS_SUCCESS;
+	DWORD status = ERROR_SUCCESS;
 	FWPM_SUBLAYER NPFSubLayer;
 
 	BOOLEAN engineOpened = FALSE;
 	BOOLEAN inTransaction = FALSE;
 
 	FWPM_SESSION session = { 0 };
-	HANDLE hEngineHandle = NULL;
 
 	session.flags = FWPM_SESSION_FLAG_DYNAMIC;
-	session.sessionKey = NPF_FWPM_SESSION_GUID;
 
 	status = FwpmEngineOpen(
 		NULL,
 		RPC_C_AUTHN_WINNT,
 		NULL,
 		&session,
-		&hEngineHandle
+		&g_WFPEngineHandle
 		);
-	if (status == FWP_E_ALREADY_EXISTS) {
-		// Exit with success
-		status = ERROR_SUCCESS;
-		goto Exit;
-	}
-	g_WFPEngineHandle = hEngineHandle;
 
-	if (!NT_SUCCESS(status) || !g_WFPEngineHandle || g_WFPEngineHandle == INVALID_HANDLE_VALUE)
+	if (status != NO_ERROR || !g_WFPEngineHandle || g_WFPEngineHandle == INVALID_HANDLE_VALUE)
 	{
+		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
 		goto Exit;
 	}
 	engineOpened = TRUE;
 
 	status = FwpmTransactionBegin(g_WFPEngineHandle, 0);
-	if (!NT_SUCCESS(status))
+	if (status != NO_ERROR)
 	{
 		goto Exit;
 	}
@@ -1121,7 +1114,7 @@ Callouts and filters will be removed during DriverUnload.
 	// implementation.
 
 	status = FwpmSubLayerAdd(g_WFPEngineHandle, &NPFSubLayer, NULL);
-	if (!NT_SUCCESS(status))
+	if (status != NO_ERROR)
 	{
 		goto Exit;
 	}
