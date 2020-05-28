@@ -1069,7 +1069,6 @@ NPF_FillBuffer( POPEN_INSTANCE pOpen,
 		{
 			ulSize = pRadiotapHeader->it_len;
 			pBufferHeader->bh_caplen += ulSize;
-			pBufferHeader->bh_caplen += ulSize;
 			NPF_CircularFill(pOpen, pDot11Data, ulSize);
 		}
 #endif
@@ -1103,11 +1102,6 @@ NPF_FillBuffer( POPEN_INSTANCE pOpen,
 			pDataLinkBuffer += Offset;
 
 			CopyLengthForMDL = min(iFres, BufferLength);
-
-			if (pOpen->P == pOpen->Size)
-			{
-				pOpen->P = 0;
-			}
 
 			NPF_CircularFill(pOpen, pDataLinkBuffer, CopyLengthForMDL);
 			iFres -= CopyLengthForMDL;
