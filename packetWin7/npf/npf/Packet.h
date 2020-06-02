@@ -295,13 +295,14 @@ typedef struct _NPCAP_FILTER_MODULE
 	SINGLE_LIST_ENTRY OpenInstances; //GroupHead
 	NDIS_RW_LOCK OpenInstancesLock; // GroupLock
 
-	LIST_ENTRY WriterRequestList; // Head of writer thread request queue
-	KSPIN_LOCK WriterRequestLock; // Lock controlling request queue
-	KSEMAPHORE WriterSemaphore; // Semaphore to signal writer thread of new requests
-	BOOLEAN WriterShouldStop; // Flag to kill writer thread
-	PVOID WriterThreadObj; // Pointer to the writer thread itself.
-	PNPF_OBJ_POOL WriterRequestPool; // Pool of request objects
-	PNPF_OBJ_POOL NBCopiesPool; // Pool of NET_BUFFER copy objects
+	PNPF_OBJ_POOL NBLCopyPool; // Pool of NPF_NBL_COPY objects
+	PNPF_OBJ_POOL NBCopiesPool; // Pool of NPF_NB_COPIES objects
+
+	/* TODO: Make this pool part of OPEN_INSTANCE instead so that it can be
+	 * freed/resized after capture ends. Currently, it expands as necessary
+	 * to accommodate all captures, but does not shrink again afterwards.
+	 */
+	PNPF_OBJ_POOL CapturePool; // Pool of NPF_CAP_DATA objects
 
 	NDIS_STRING				AdapterName;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -398,10 +399,9 @@ typedef struct _OPEN_INSTANCE
 	NDIS_RW_LOCK MachineLock; ///< Lock that protects the BPF filter while in use.
 
 	/* Buffer */
-	PUCHAR Buffer; // The kernel ring buffer
 	NDIS_RW_LOCK BufferLock; // Lock for modifying the buffer size/configuration
-	ULONG C; // Consumer's index in the buffer
-	ULONG P; // Producer's index in the buffer
+	LIST_ENTRY PacketQueue; // Head of packet buffer queue
+	KSPIN_LOCK PacketQueueLock; // Lock controlling buffer queue
 	ULONG Free; // Bytes of buffer free for writing
 
 	/* Stats */
@@ -436,48 +436,61 @@ typedef enum
 	NPF_WRITER_FREE_MEM,
 } NPF_WRITER_FUNCTION_CODE;
 
-/* Structure of a serialized request to the writer thread */
-typedef struct _NPF_WRITER_REQUEST
-{
-	LIST_ENTRY WriterRequestEntry;
-	NPF_WRITER_FUNCTION_CODE FunctionCode;
-	POPEN_INSTANCE pOpen;
-	PNET_BUFFER_LIST pNBL;
-	PNET_BUFFER pNetBuffer;
-	struct bpf_hdr BpfHeader;
-	PVOID pBuffer;
-	SINGLE_LIST_ENTRY NBCopiesHead;
-}
-NPF_WRITER_REQUEST, *PNPF_WRITER_REQUEST;
-
-// no idea really, but Nmap uses this snaplen.
+/* This value should be sized to hold most packets processed by the driver. If
+ * a packet (snaplen) exceeds this size, it will cost an additional buffer+MDL
+ * allocation/free. On the other hand, every captured packet will use up at
+ * least this much space in memory, so keep it small. Nmap uses 256 snaplen, so
+ * we'll try that.
+ */
 #define NPF_NBCOPY_INITIAL_DATA_SIZE 256
+
+typedef struct _NPF_NBL_COPY
+{
+	SINGLE_LIST_ENTRY NBCopiesHead;
+	SINGLE_LIST_ENTRY NBLCopyEntry;
+	PNPCAP_FILTER_MODULE pFiltMod;
+#ifdef HAVE_DOT11_SUPPORT
+	PUCHAR Dot11RadiotapHeader;
+#endif
+} NPF_NBL_COPY, *PNPF_NBL_COPY;
+
+VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy);
 
 typedef struct _NPF_NB_COPIES
 {
 	SINGLE_LIST_ENTRY CopiesEntry;
+	PNPF_NBL_COPY pNBLCopy;
 	PNET_BUFFER pNetBuffer; // May be NULL, hence why we can't just use NET_BUFFER.Next
+	ULONG ulSize; //Size of all allocated space in the netbuffer.
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
-VOID NPF_QueueRequest(PNPCAP_FILTER_MODULE pFiltMod,
-	PNPF_WRITER_REQUEST pReq);
+VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy);
 
-VOID NPF_QueuedFree(
-	PNPCAP_FILTER_MODULE pFiltMod,
-	NPF_WRITER_FUNCTION_CODE FunctionCode,
-	PNET_BUFFER_LIST pNBL,
-	PVOID pItem,
-	ULONG ulSize
-	);
+/* Structure of a captured packet data description */
+typedef struct _NPF_CAP_DATA
+{
+	LIST_ENTRY PacketQueueEntry;
+	PNPF_NB_COPIES pNBCopy;
+	struct bpf_hdr BpfHeader;
+}
+NPF_CAP_DATA, *PNPF_CAP_DATA;
 
-VOID NPF_PurgeRequests(PNPCAP_FILTER_MODULE pFiltMod,
-	PNET_BUFFER_LIST pNBL,
-	POPEN_INSTANCE pOpen);
+VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData);
 
-VOID NPF_FillBuffer(POPEN_INSTANCE pOpen,
-	PNET_BUFFER pNB,
-	struct bpf_hdr *pBpfHeader,
-	PUCHAR pDot11Data);
+#ifdef HAVE_DOT11_SUPPORT
+#define NPF_CAP_SIZE(_P, _R) ((_P)->BpfHeader.bh_hdrlen \
+		+ (_P)->BpfHeader.bh_caplen \
+		+ (_R != NULL ? _R->it_len : 0))
+#else
+#define NPF_CAP_SIZE(_P, _N) ((_P)->BpfHeader.bh_hdrlen \
+		+ (_P)->BpfHeader.bh_caplen)
+#endif
+
+VOID
+NPF_ResetBufferContents(
+	IN POPEN_INSTANCE Open,
+	IN BOOLEAN AcquireLock
+);
 
 /*!
 \brief Context information for originated sent packets

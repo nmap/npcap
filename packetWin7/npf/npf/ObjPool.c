@@ -129,6 +129,7 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize,
 
 PNPF_OBJ_POOL_ELEM NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 {
+	PNPF_OBJ_POOL_ELEM pElem = NULL;
 	PLIST_ENTRY pEntry = ExInterlockedRemoveHeadList(&pPool->ObjectsHead, &pPool->ObjectsLock);
 	if (pEntry == NULL)
 	{
@@ -144,7 +145,9 @@ PNPF_OBJ_POOL_ELEM NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 		return NULL;
 	}
 
-	return CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, ObjectsEntry);
+	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, ObjectsEntry);
+	pElem->Refcount = 1;
+	return pElem;
 }
 
 VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
@@ -161,9 +164,22 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 	NdisFreeMemory(pPool, sizeof(NPF_OBJ_POOL), 0);
 }
 
-VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PNPF_OBJ_POOL_ELEM pElem)
+VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PNPF_OBJ_POOL_ELEM pElem, PNPF_OBJ_CLEANUP CleanupFunc)
 {
-	// Insert at the head instead of the tail, hoping the next Get will
-	// avoid a cache miss.
-	ExInterlockedInsertHeadList(&pPool->ObjectsHead, &pElem->ObjectsEntry, &pPool->ObjectsLock);
+	ULONG refcount = InterlockedDecrement(&pElem->Refcount);
+	if (refcount == 0)
+	{
+		if (CleanupFunc)
+		{
+			CleanupFunc(pElem->pObject);
+		}
+		// Insert at the head instead of the tail, hoping the next Get will
+		// avoid a cache miss.
+		ExInterlockedInsertHeadList(&pPool->ObjectsHead, &pElem->ObjectsEntry, &pPool->ObjectsLock);
+	}
+}
+
+VOID NPF_ReferenceObject(PNPF_OBJ_POOL_ELEM pElem)
+{
+	InterlockedIncrement(&pElem->Refcount);
 }

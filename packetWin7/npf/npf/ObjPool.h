@@ -61,6 +61,7 @@ typedef struct _NPF_OBJ_POOL *PNPF_OBJ_POOL;
 typedef struct _NPF_OBJ_POOL_ELEM
 {
 	LIST_ENTRY ObjectsEntry;
+	ULONG Refcount;
 	UCHAR pObject[];
 } NPF_OBJ_POOL_ELEM, *PNPF_OBJ_POOL_ELEM;
 
@@ -89,15 +90,30 @@ PNPF_OBJ_POOL_ELEM NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool);
  */
 #define NPF_POOL_GET(_P, _T) ((_T) (NPF_ObjectPoolGet(_P))->pObject)
 
-/* Return an object to the pool.
- * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool
- * param pElem A pointer to a NPF_OBJ_POOL_ELEM containing the object to return 
- */
-VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PNPF_OBJ_POOL_ELEM pElem);
+typedef VOID (*PNPF_OBJ_CLEANUP)(PVOID pObject);
 
+/* Return an object to the pool. Decrements the refcount. If it is 0, the
+ * object is returned to the pool.
+ * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool
+ * param pElem A pointer to a NPF_OBJ_POOL_ELEM containing the object to return
+ * param CleanupFunc Optional function to perform cleanup of the object before returning it (free referenced memory, e.g.). Use NULL if no such function is needed.
+ */
+VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PNPF_OBJ_POOL_ELEM pElem, PNPF_OBJ_CLEANUP CleanupFunc)
+;
 /* Convenient macro to return directly from a pointer to the object.
  * param _P A pointer to the pool obtained via NPF_AllocateObjectPool
  * param _O A pointer to an object stored within a NPF_OBJ_POOL_ELEM
+ * param _F Cleanup function
  */
-#define NPF_POOL_RETURN(_P, _O) (NPF_ObjectPoolReturn(_P, CONTAINING_RECORD((_O), NPF_OBJ_POOL_ELEM, pObject)))
+#define NPF_POOL_RETURN(_P, _O, _F) (NPF_ObjectPoolReturn(_P, CONTAINING_RECORD((_O), NPF_OBJ_POOL_ELEM, pObject), _F))
 
+/* Reference an object from a pool. Increments the refcount.
+ * param pElem A pointer to a NPF_OBJ_POOL_ELEM containing the object to reference.
+ */
+VOID NPF_ReferenceObject(PNPF_OBJ_POOL_ELEM pElem);
+
+/* Convenient macro to reference an object pool element directly from a pointer
+ * to the object.
+ * param _O A pointer to an object stored within a NPF_OBJ_POOL_ELEM
+ */
+#define NPF_POOL_REFERENCE(_O) (NPF_ReferenceObject(CONTAINING_RECORD((_O), NPF_OBJ_POOL_ELEM, pObject)))

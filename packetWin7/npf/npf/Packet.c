@@ -430,30 +430,7 @@ DriverEntry(
 		}
 		pFiltMod->Loopback = TRUE;
 		pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
-		Status = PsCreateSystemThread(&threadHandle, THREAD_ALL_ACCESS,
-				NULL, NULL, NULL, NPF_WriterThread, pFiltMod);
-		if (Status != STATUS_SUCCESS)
-		{
-			NPF_ReleaseFilterModuleResources(pFiltMod);
-			ExFreePool(pFiltMod);
-#ifndef NPCAP_READ_ONLY
-			NPF_WSKFreeSockets();
-			NPF_WSKCleanup();
-#endif
-			TRACE_EXIT();
-			return Status;
-		}
 
-		// Convert the Thread object handle into a pointer to the Thread object
-		// itself. Then close the handle.
-		ObReferenceObjectByHandle(threadHandle,
-			THREAD_ALL_ACCESS,
-			NULL,
-			KernelMode,
-			&pFiltMod->WriterThreadObj,
-			NULL);
-
-		ZwClose(threadHandle);
 		// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
 		NPF_AddToFilterModuleArray(pFiltMod);
 	}
@@ -914,12 +891,6 @@ Return Value:
 	// Free the device names string that was allocated in the DriverEntry
 	// NdisFreeString(g_NPF_Prefix);
 }
-
-VOID
-NPF_ResetBufferContents(
-	IN POPEN_INSTANCE Open,
-	IN BOOLEAN AcquireLock
-);
 
 #define SET_RESULT_SUCCESS(__a__) do{\
 	Information = __a__;	\
@@ -1512,35 +1483,12 @@ NPF_IoControl(
 			break;
 		}
 
-		// Reallocate the buffer.
-		if (dim < sizeof(struct bpf_hdr))
-		{
-			dim = 0;
-		}
-		else
-		{
-			tpointer = ExAllocatePoolWithTag(NonPagedPool, dim, '6PWA');
-			if (tpointer == NULL)
-			{
-				// no memory
-				SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
-				break;
-			}
-		}
-
 		// Acquire buffer lock
 		NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
 
-		//
-		// free the old buffer, if any
-		//
-		if (Open->Buffer != NULL)
-		{
-			ExFreePool(Open->Buffer);
-			Open->Buffer = NULL;
-		}
-
-		Open->Buffer = (PUCHAR)tpointer; // May be NULL if dim == 0;
+		// TODO: Could we avoid clearing the buffer but instead allow a
+		// negative Free count or maybe just clear out the amount that
+		// exceeds Size?
 		Open->Size = dim;
 		NPF_ResetBufferContents(Open, FALSE);
 
@@ -1913,7 +1861,7 @@ OID_REQUEST_DONE:
 		//
 		NPF_StopUsingBinding(Open->pFiltMod);
 
-		NPF_POOL_RETURN(Open->pFiltMod->InternalRequestPool, pRequest);
+		NPF_POOL_RETURN(Open->pFiltMod->InternalRequestPool, pRequest, NULL);
 
 		break;
 
@@ -1967,29 +1915,4 @@ OID_REQUEST_DONE:
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %#x", Status);
 	TRACE_EXIT();
 	return Status;
-}
-
-//-------------------------------------------------------------------
-
-VOID
-NPF_ResetBufferContents(
-	IN POPEN_INSTANCE Open,
-	IN BOOLEAN AcquireLock
-	)
-{
-	LOCK_STATE lockState;
-	if (AcquireLock)
-		NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
-	Open->Accepted = 0;
-	Open->Dropped = 0;
-	Open->Received = 0;
-
-	//
-	// reset their pointers
-	//
-	Open->C = 0;
-	Open->P = 0;
-	Open->Free = Open->Size;
-	if (AcquireLock)
-		NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
 }

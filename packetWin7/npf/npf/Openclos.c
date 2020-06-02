@@ -208,106 +208,101 @@ NPF_CloseBinding(
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 }
 
-VOID NPF_FreeNBCopies(PNPCAP_FILTER_MODULE pFiltMod, PSINGLE_LIST_ENTRY NBCopiesHead)
-{
-	PVOID pDeleteMe = NULL;
-	PNPF_NB_COPIES pNBCopy = NULL;
-	PMDL pMdl = NULL;
-	ULONG ulSize = 0;
-	PSINGLE_LIST_ENTRY pNBCopyEntry = NBCopiesHead->Next;
-
-	while (pNBCopyEntry != NULL)
-	{
-		pNBCopy = CONTAINING_RECORD(pNBCopyEntry, NPF_NB_COPIES, CopiesEntry);
-		if (pNBCopy->pNetBuffer != NULL)
-		{
-			// Skip the first MDL/buffer (allocated by NdisAllocateNetBufferMdlAndData)
-			pMdl = NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next;
-			while (pMdl)
-			{
-				NdisQueryMdl(pMdl,
-						&pDeleteMe,
-						&ulSize,
-						NormalPagePriority);
-				if (pDeleteMe != NULL)
-				{
-					NdisFreeMemory(pDeleteMe, ulSize, 0);
-				}
-				pDeleteMe = pMdl;
-				pMdl = pMdl->Next;
-				NdisFreeMdl((PMDL)pDeleteMe);
-			}
-			NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next = NULL;
-			NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = 0;
-			NET_BUFFER_DATA_OFFSET(pNBCopy->pNetBuffer) = 0;
-			NdisFreeNetBuffer(pNBCopy->pNetBuffer);
-		}
-		pDeleteMe = pNBCopyEntry;
-		pNBCopyEntry = pNBCopyEntry->Next;
-		NPF_POOL_RETURN(pFiltMod->NBCopiesPool, pDeleteMe);
-	}
-}
+//-------------------------------------------------------------------
 
 VOID
-NPF_WriterThread(
-		_In_ PVOID Context
-		)
+NPF_ResetBufferContents(
+	IN POPEN_INSTANCE Open,
+	IN BOOLEAN AcquireLock
+)
 {
-	PNPCAP_FILTER_MODULE pFiltMod = Context;
+	LOCK_STATE lockState;
+	PLIST_ENTRY Curr;
+	PNPF_CAP_DATA pCapData;
 
-	PLIST_ENTRY RequestListEntry = NULL;
-	PNPF_WRITER_REQUEST pReq = NULL;
-	KIRQL oldIrql;
+	if (AcquireLock)
+		NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
+	Open->Accepted = 0;
+	Open->Dropped = 0;
+	Open->Received = 0;
 
-	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY );
-
-	for (;;)
+	// Clear packets from the buffer
+	for (Curr = Open->PacketQueue.Flink; Curr != &Open->PacketQueue; Curr = Curr->Flink)
 	{
-		// Wait for work to appear
-		KeWaitForSingleObject(&pFiltMod->WriterSemaphore,
-				Executive,
-				KernelMode,
-				FALSE,
-				NULL);
-		// Check if we're being told to die
-		if (pFiltMod->WriterShouldStop) {
-			// Clean up!
- 			NPF_PurgeRequests(pFiltMod, NULL, NULL);
-			PsTerminateSystemThread( STATUS_SUCCESS );
-		}
+		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
+		NPF_POOL_RETURN(Open->pFiltMod->CapturePool, pCapData, NPF_FreeCapData);
+	}
+	// Remove links
+	InitializeListHead(&Open->PacketQueue);
+	// Reset Free counter
+	Open->Free = Open->Size;
+	if (AcquireLock)
+		NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
+}
 
-		// Grab the next work request
-		RequestListEntry = ExInterlockedRemoveHeadList(&pFiltMod->WriterRequestList, &pFiltMod->WriterRequestLock);
-		if (RequestListEntry == NULL) {
-			// That's weird, no work to do.
-			continue;
-		}
-		pReq = CONTAINING_RECORD(RequestListEntry, NPF_WRITER_REQUEST, WriterRequestEntry);
-		switch (pReq->FunctionCode)
+VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy)
+{
+	PNPCAP_FILTER_MODULE pFiltMod = pNBCopy->pNBLCopy->pFiltMod;
+	PVOID pDeleteMe = NULL;
+	PMDL pMdl = NULL;
+	ULONG ulSize = 0;
+
+	if (pNBCopy->pNetBuffer != NULL)
+	{
+		// Skip the first MDL/buffer (allocated by NdisAllocateNetBufferMdlAndData)
+		pMdl = NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next;
+		while (pMdl)
 		{
-			case NPF_WRITER_WRITE:
-				NPF_FillBuffer(pReq->pOpen,
-					pReq->pNetBuffer,
-					&pReq->BpfHeader,
-					(PUCHAR) pReq->pBuffer);
-				break;
-			case NPF_WRITER_FREE_MEM:
-				NdisFreeMemory(pReq->pBuffer, pReq->BpfHeader.bh_datalen, 0);
-				break;
-			case NPF_WRITER_FREE_NB_COPIES:
-				NPF_FreeNBCopies(pFiltMod, &pReq->NBCopiesHead);
-				break;
-#ifdef HAVE_DOT11_SUPPORT
-			case NPF_WRITER_FREE_RADIOTAP:
-				NPF_POOL_RETURN(pFiltMod->Dot11HeaderPool, pReq->pBuffer);
-				break;
-#endif
-			default:
-				break;
+			NdisQueryMdl(pMdl,
+					&pDeleteMe,
+					&ulSize,
+					NormalPagePriority);
+			if (pDeleteMe != NULL)
+			{
+				NdisFreeMemory(pDeleteMe, ulSize, 0);
+			}
+			pDeleteMe = pMdl;
+			pMdl = pMdl->Next;
+			NdisFreeMdl((PMDL)pDeleteMe);
 		}
-		NPF_POOL_RETURN(pFiltMod->WriterRequestPool, pReq);
+		NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next = NULL;
+		NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = 0;
+		NET_BUFFER_DATA_OFFSET(pNBCopy->pNetBuffer) = 0;
+		NdisFreeNetBuffer(pNBCopy->pNetBuffer);
 	}
 }
+
+/* NPF_POOL_RETURN Free handler for NBLCopyPool */
+VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy)
+{
+	PNPF_NB_COPIES pNBCopies = NULL;
+	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
+	PNPCAP_FILTER_MODULE pFiltMod = NULL;
+
+	pFiltMod = pNBLCopy->pFiltMod;
+
+	pNBCopiesEntry = pNBLCopy->NBCopiesHead.Next;
+	while (pNBCopiesEntry != NULL)
+	{
+		pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
+		pNBCopiesEntry = pNBCopiesEntry->Next;
+
+		NPF_POOL_RETURN(pFiltMod->NBCopiesPool, pNBCopies, NPF_FreeNBCopies);
+	}
+
+	if (pNBLCopy->Dot11RadiotapHeader != NULL)
+	{
+		NPF_POOL_RETURN(pFiltMod->Dot11HeaderPool, pNBLCopy->Dot11RadiotapHeader, NULL);
+	}
+}
+
+VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData)
+{
+	PNPCAP_FILTER_MODULE pFiltMod = pCapData->pNBCopy->pNBLCopy->pFiltMod;
+	NPF_POOL_RETURN(pFiltMod->NBLCopyPool, pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy);
+	NPF_POOL_RETURN(pFiltMod->NBCopiesPool, pCapData->pNBCopy, NPF_FreeNBCopies);
+}
+
 //-------------------------------------------------------------------
 
 NTSTATUS
@@ -481,6 +476,7 @@ NTSTATUS NPF_EnableOps(PNPCAP_FILTER_MODULE pFiltMod, PDEVICE_OBJECT pDevObj)
 		return Status;
 	}
 
+	Status = STATUS_SUCCESS;
 	do
 	{
 
@@ -525,11 +521,8 @@ NTSTATUS NPF_EnableOps(PNPCAP_FILTER_MODULE pFiltMod, PDEVICE_OBJECT pDevObj)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "g_WFPEngineHandle already initialized");
 			}
-
-			Status = STATUS_SUCCESS;
 		}
 #endif
-		// WriterThread?
 	} while (0);
 
 	pFiltMod->OpsState = NT_SUCCESS(Status) ? OpsEnabled : OpsDisabled;
@@ -613,12 +606,6 @@ NPF_CloseOpenInstance(
 	}
 
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
-
-	if (pOpen->pFiltMod)
-	{
-		// Remove all worker requests related to this instance.
-		NPF_PurgeRequests(pOpen->pFiltMod, NULL, pOpen);
-	}
 }
 
 //-------------------------------------------------------------------
@@ -713,9 +700,7 @@ NPF_ReleaseOpenInstanceResources(
 	//
 	if (pOpen->Size > 0)
 	{
-		ExFreePool(pOpen->Buffer);
-		pOpen->Buffer = NULL;
-		pOpen->Size = 0;
+		NPF_ResetBufferContents(pOpen, FALSE);
 	}
 
 	// Reminder for upgrade to NDIS 6.20: free this lock!
@@ -750,20 +735,6 @@ NPF_ReleaseFilterModuleResources(
 
 	ASSERT(pFiltMod != NULL);
 	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
-	// Stop the writer thread
-	pFiltMod->WriterShouldStop = TRUE;
-	KeReleaseSemaphore(&pFiltMod->WriterSemaphore,
-			0,  // No priority boost
-			1,  // Increment semaphore by 1
-			TRUE );// WaitForXxx after this call
-	// Wait for the thread to terminate
-	KeWaitForSingleObject(pFiltMod->WriterThreadObj,
-			Executive,
-			KernelMode,
-			FALSE,
-			NULL );
-
-	ObDereferenceObject(pFiltMod->WriterThreadObj);
 
 	if (pFiltMod->PacketPool) // Release the packet buffer pool
 	{
@@ -783,16 +754,22 @@ NPF_ReleaseFilterModuleResources(
 		pFiltMod->InternalRequestPool = NULL;
 	}
 
-	if (pFiltMod->WriterRequestPool)
+	if (pFiltMod->NBLCopyPool)
 	{
-		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
-		pFiltMod->WriterRequestPool = NULL;
+		NPF_FreeObjectPool(pFiltMod->NBLCopyPool);
+		pFiltMod->NBLCopyPool = NULL;
 	}
 
 	if (pFiltMod->NBCopiesPool)
 	{
 		NPF_FreeObjectPool(pFiltMod->NBCopiesPool);
 		pFiltMod->NBCopiesPool = NULL;
+	}
+
+	if (pFiltMod->CapturePool)
+	{
+		NPF_FreeObjectPool(pFiltMod->CapturePool);
+		pFiltMod->CapturePool = NULL;
 	}
 
 #ifdef HAVE_DOT11_SUPPORT
@@ -1211,7 +1188,6 @@ NPF_Cleanup(
 	POPEN_INSTANCE Open;
 	NDIS_STATUS Status;
 	PIO_STACK_LOCATION IrpSp;
-	LARGE_INTEGER ThreadDelay;
 
 	TRACE_ENTER();
 
@@ -1238,6 +1214,7 @@ NPF_Cleanup(
 		KeSetEvent(Open->ReadEvent, 0, FALSE);
 
 #ifdef NPCAP_KDUMP
+	LARGE_INTEGER ThreadDelay;
 	
 	if (AdapterAlreadyClosing == FALSE)
 	{
@@ -1690,6 +1667,8 @@ NPF_CreateOpenObject()
 
 	/* Buffer */
 	NdisInitializeReadWriteLock(&Open->BufferLock);
+	InitializeListHead(&Open->PacketQueue);
+	KeInitializeSpinLock(&Open->PacketQueueLock);
 	Open->Accepted = 0;
 	Open->Received = 0;
 	Open->Dropped = 0;
@@ -1761,7 +1740,7 @@ NPF_CreateFilterModule(
 	PNPCAP_FILTER_MODULE pFiltMod;
 	NET_BUFFER_LIST_POOL_PARAMETERS PoolParameters;
 	NET_BUFFER_POOL_PARAMETERS NBPoolParams;
-	UINT i;
+	BOOLEAN bAllocFailed = FALSE;
 
 	// allocate some memory for the filter module structure
 	pFiltMod = ExAllocatePoolWithTag(NonPagedPool, sizeof(NPCAP_FILTER_MODULE), '0OWA');
@@ -1792,42 +1771,6 @@ NPF_CreateFilterModule(
 	pFiltMod->HasDataRateMappingTable = FALSE;
 #endif
 
-	NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
-	PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
-	PoolParameters.Header.Revision = NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
-	PoolParameters.Header.Size = NDIS_SIZEOF_NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
-	PoolParameters.ProtocolId = NDIS_PROTOCOL_ID_DEFAULT;
-	PoolParameters.fAllocateNetBuffer = TRUE;
-	PoolParameters.ContextSize = sizeof(PACKET_RESERVED);
-	PoolParameters.PoolTag = NPF_ALLOC_TAG;
-	PoolParameters.DataSize = 0;
-
-	pFiltMod->PacketPool = NdisAllocateNetBufferListPool(NdisFilterHandle, &PoolParameters);
-	if (pFiltMod->PacketPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate packet pool");
-		ExFreePool(pFiltMod);
-		TRACE_EXIT();
-		return NULL;
-	}
-
-	NdisZeroMemory(&NBPoolParams, sizeof(NET_BUFFER_POOL_PARAMETERS));
-	NBPoolParams.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
-	NBPoolParams.Header.Revision = NET_BUFFER_POOL_PARAMETERS_REVISION_1;
-	NBPoolParams.Header.Size = NDIS_SIZEOF_NET_BUFFER_POOL_PARAMETERS_REVISION_1;
-	NBPoolParams.PoolTag = NPF_ALLOC_TAG;
-	NBPoolParams.DataSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
-
-	pFiltMod->TapNBPool = NdisAllocateNetBufferPool(NdisFilterHandle, &NBPoolParams);
-	if (pFiltMod->TapNBPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate TapNBPool");
-		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
-		ExFreePool(pFiltMod);
-		TRACE_EXIT();
-		return NULL;
-	}
-
 	NdisInitializeReadWriteLock(&pFiltMod->OpenInstancesLock);
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;
@@ -1835,63 +1778,105 @@ NPF_CreateFilterModule(
 	// Pool sizes based on observations on a single-core Hyper-V VM while
 	// running our test suite.
 
-	//  Initialize the OID request pool
-	pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 8);
-	if (pFiltMod->InternalRequestPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
-		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
-		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
-		ExFreePool(pFiltMod);
-		TRACE_EXIT();
-		return NULL;
-	}
+	//  Initialize the pools
+	do {
+		NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
+		PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
+		PoolParameters.Header.Revision = NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
+		PoolParameters.Header.Size = NDIS_SIZEOF_NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
+		PoolParameters.ProtocolId = NDIS_PROTOCOL_ID_DEFAULT;
+		PoolParameters.fAllocateNetBuffer = TRUE;
+		PoolParameters.ContextSize = sizeof(PACKET_RESERVED);
+		PoolParameters.PoolTag = NPF_ALLOC_TAG;
+		PoolParameters.DataSize = 0;
 
-	//  Initialize the writer request list
-	KeInitializeSpinLock(&pFiltMod->WriterRequestLock);
-	InitializeListHead(&pFiltMod->WriterRequestList);
-	KeInitializeSemaphore(&pFiltMod->WriterSemaphore, 0, MAXLONG);
-	pFiltMod->WriterShouldStop = FALSE;
-	pFiltMod->WriterThreadObj = NULL;
-	pFiltMod->WriterRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_WRITER_REQUEST), 100);
-	if (pFiltMod->WriterRequestPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate WriterRequestPool");
-		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
-		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
-		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
-		ExFreePool(pFiltMod);
-		TRACE_EXIT();
-		return NULL;
-	}
+		pFiltMod->PacketPool = NdisAllocateNetBufferListPool(NdisFilterHandle, &PoolParameters);
+		if (pFiltMod->PacketPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate packet pool");
+			bAllocFailed = TRUE;
+			break;
+		}
 
-	pFiltMod->NBCopiesPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_NB_COPIES), 64);
-	if (pFiltMod->NBCopiesPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
-		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
-		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
-		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
-		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
-		ExFreePool(pFiltMod);
-		TRACE_EXIT();
-		return NULL;
-	}
-	
+		NdisZeroMemory(&NBPoolParams, sizeof(NET_BUFFER_POOL_PARAMETERS));
+		NBPoolParams.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
+		NBPoolParams.Header.Revision = NET_BUFFER_POOL_PARAMETERS_REVISION_1;
+		NBPoolParams.Header.Size = NDIS_SIZEOF_NET_BUFFER_POOL_PARAMETERS_REVISION_1;
+		NBPoolParams.PoolTag = NPF_ALLOC_TAG;
+		NBPoolParams.DataSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
+		pFiltMod->TapNBPool = NdisAllocateNetBufferPool(NdisFilterHandle, &NBPoolParams);
+
+		if (pFiltMod->TapNBPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate TapNBPool");
+			bAllocFailed = TRUE;
+			break;
+		}
+
+		pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 8);
+		if (pFiltMod->InternalRequestPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
+			bAllocFailed = TRUE;
+			break;
+		}
+
+		pFiltMod->NBLCopyPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_NBL_COPY), 64);
+		if (pFiltMod->NBLCopyPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
+			bAllocFailed = TRUE;
+			break;
+		}
+
+		pFiltMod->NBCopiesPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_NB_COPIES), 64);
+		if (pFiltMod->NBCopiesPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
+			bAllocFailed = TRUE;
+			break;
+		}
+
+		pFiltMod->CapturePool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_CAP_DATA), 1024);
+		if (pFiltMod->CapturePool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
+			bAllocFailed = TRUE;
+			break;
+		}
+
 #ifdef HAVE_DOT11_SUPPORT
-	pFiltMod->Dot11HeaderPool = NPF_AllocateObjectPool(NdisFilterHandle, SIZEOF_RADIOTAP_BUFFER, 32);
-	if (pFiltMod->Dot11HeaderPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
-		NPF_FreeObjectPool(pFiltMod->WriterRequestPool);
-		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
-		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
-		NdisFreeNetBufferListPool(pFiltMod->PacketPool);
+		pFiltMod->Dot11HeaderPool = NPF_AllocateObjectPool(NdisFilterHandle, SIZEOF_RADIOTAP_BUFFER, 32);
+		if (pFiltMod->Dot11HeaderPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
+			bAllocFailed = TRUE;
+			break;
+		}
+#endif
+	} while (0);
+
+	if (bAllocFailed) {
+#ifdef HAVE_DOT11_SUPPORT
+		if (pFiltMod->Dot11HeaderPool)
+			NPF_FreeObjectPool(pFiltMod->Dot11HeaderPool);
+#endif
+		if (pFiltMod->CapturePool)
+			NPF_FreeObjectPool(pFiltMod->CapturePool);
+		if (pFiltMod->NBCopiesPool)
+			NPF_FreeObjectPool(pFiltMod->NBCopiesPool);
+		if (pFiltMod->NBLCopyPool)
+			NPF_FreeObjectPool(pFiltMod->NBLCopyPool);
+		if (pFiltMod->InternalRequestPool)
+			NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
+		if (pFiltMod->TapNBPool)
+			NdisFreeNetBufferPool(pFiltMod->TapNBPool);
+		if (pFiltMod->PacketPool)
+			NdisFreeNetBufferListPool(pFiltMod->PacketPool);
 		ExFreePool(pFiltMod);
 		TRACE_EXIT();
 		return NULL;
 	}
-#endif
 	
 	// Default; expect this will be overwritten in NPF_Restart,
 	// or for Loopback when creating the fake module.
@@ -2153,25 +2138,6 @@ NPF_AttachAdapter(
 		}
 #endif
 
-		Status = PsCreateSystemThread(&threadHandle, THREAD_ALL_ACCESS,
-				NULL, NULL, NULL, NPF_WriterThread, pFiltMod);
-		if (Status != STATUS_SUCCESS)
-		{
-			returnStatus = Status;
-			IF_LOUD(DbgPrint("PsCreateSystemThread: error, Status=%x.\n", Status);)
-			break;
-		}
-
-		// Convert the Thread object handle into a pointer to the Thread object
-		// itself. Then close the handle.
-		ObReferenceObjectByHandle(threadHandle,
-			THREAD_ALL_ACCESS,
-			NULL,
-			KernelMode,
-			&pFiltMod->WriterThreadObj,
-			NULL);
-
-		ZwClose(threadHandle);
 		NdisZeroMemory(&FilterAttributes, sizeof(NDIS_FILTER_ATTRIBUTES));
 		FilterAttributes.Header.Revision = NDIS_FILTER_ATTRIBUTES_REVISION_1;
 		FilterAttributes.Header.Size = sizeof(NDIS_FILTER_ATTRIBUTES);
@@ -2834,135 +2800,6 @@ NOTE: called at PASSIVE_LEVEL
 }
 
 //-------------------------------------------------------------------
-
-/* This function is a last resort when we can't tell the WriterThread to free
- * something, like if something it needs becomes invalid or we can't allocate a
- * request object. Locks the whole request queue while it works.
- *
- * If pNBL or pOpen is NULL, it is ignored.
- * If both are NULL, all requests are purged, but all FREE requests are honored.
- * If either of them is a pointer to an actual object, it will be used as the criteria for matching.
- */
-VOID
-NPF_PurgeRequests(
-		PNPCAP_FILTER_MODULE pFiltMod,
-		PNET_BUFFER_LIST pNBL,
-		POPEN_INSTANCE pOpen
-		)
-{
-	KIRQL OldIrql;
-	PLIST_ENTRY Curr = NULL;
-	PLIST_ENTRY Prev = NULL;
-	PNPF_WRITER_REQUEST pReq = NULL;
-
-	BOOLEAN bPurgeAll = !(pNBL || pOpen);
-
-	KeAcquireSpinLock(&pFiltMod->WriterRequestLock, &OldIrql);
-	Prev = &pFiltMod->WriterRequestList;
-	Curr = Prev->Flink;
-	while (Curr && Curr != &pFiltMod->WriterRequestList)
-	{
-		pReq = CONTAINING_RECORD(Curr, NPF_WRITER_REQUEST, WriterRequestEntry);
-		if ( bPurgeAll
-			|| (pNBL && pReq->pNBL == pNBL)
-			|| (pOpen && pReq->pOpen == pOpen)
-		   )
-		{
-			// Unlink and free
-			Prev->Flink = Curr->Flink;
-			Curr->Flink->Blink = Prev;
-			
-			switch (pReq->FunctionCode)
-			{
-				case NPF_WRITER_FREE_MEM:
-					NdisFreeMemory(pReq->pBuffer, pReq->BpfHeader.bh_datalen, 0);
-					break;
-				case NPF_WRITER_FREE_NB_COPIES:
-					NPF_FreeNBCopies(pFiltMod, &pReq->NBCopiesHead);
-					break;
-#ifdef HAVE_DOT11_SUPPORT
-				case NPF_WRITER_FREE_RADIOTAP:
-					NPF_POOL_RETURN(pFiltMod->Dot11HeaderPool, pReq->pBuffer);
-					break;
-#endif
-				case NPF_WRITER_WRITE:
-					// If this was a packet to be written,
-					// count it as a drop
-					InterlockedIncrement(&pReq->pOpen->Dropped);
-					break;
-				default:
-					break;
-			}
-			NPF_POOL_RETURN(pFiltMod->WriterRequestPool, pReq);
-			Curr = Prev;
-		}
-		else
-		{
-			Prev = Curr;
-		}
-		Curr = Curr->Flink;
-	}
-	KeReleaseSpinLock(&pFiltMod->WriterRequestLock, OldIrql);
-}
-
-VOID NPF_QueueRequest(PNPCAP_FILTER_MODULE pFiltMod,
-	       	PNPF_WRITER_REQUEST pReq)
-{
-	// Enqueue the request
-	ExInterlockedInsertTailList(&pFiltMod->WriterRequestList,
-			&pReq->WriterRequestEntry,
-			&pFiltMod->WriterRequestLock);
-	// Wake the worker to deal with it.
-	KeReleaseSemaphore(&pFiltMod->WriterSemaphore,
-			0, // No priority boost
-			1, // Increment semaphore by 1
-			FALSE); // No WaitForXxx after this call
-}
-
-VOID
-NPF_QueuedFree(
-		PNPCAP_FILTER_MODULE pFiltMod,
-		NPF_WRITER_FUNCTION_CODE FunctionCode,
-		PNET_BUFFER_LIST pNBL,
-		PVOID pItem,
-		ULONG ulSize
-		)
-{
-	PNPF_WRITER_REQUEST pReq = NULL;
-
-	pReq = NPF_POOL_GET(pFiltMod->WriterRequestPool, PNPF_WRITER_REQUEST);
-	if (pReq == NULL)
-	{
-		// Insufficient memory
-		// Can't free it yet or writer will BSOD accessing it.
-		ASSERT(pNBL != NULL);
-		NPF_PurgeRequests(pFiltMod, pNBL, NULL);
-		switch (FunctionCode)
-		{
-			case NPF_WRITER_FREE_MEM:
-				NdisFreeMemory(pItem, ulSize, 0);
-				break;
-#ifdef HAVE_DOT11_SUPPORT
-			case NPF_WRITER_FREE_RADIOTAP:
-				NPF_POOL_RETURN(pFiltMod->Dot11HeaderPool, pItem);
-				break;
-#endif
-			default:
-				// NPF_QueuedFree must not be used to queue other request types.
-				ASSERT(FALSE);
-				break;
-		}
-	}
-	else
-	{
-		RtlZeroMemory(pReq, sizeof(NPF_WRITER_REQUEST));
-		pReq->FunctionCode = FunctionCode;
-		pReq->pNBL = pNBL;
-		pReq->pBuffer = pItem;
-		pReq->BpfHeader.bh_datalen = ulSize;
-		NPF_QueueRequest(pFiltMod, pReq);
-	}
-}
 
 _Use_decl_annotations_
 VOID
