@@ -406,22 +406,17 @@ BOOL killProcess_Soft(DWORD dwProcessID)
 {
 	TRACE_ENTER();
 
-	tstring strCommand = _T("taskkill /pid ");
 	TCHAR buf[256];
-	errno_t err = _itot_s(dwProcessID, buf, 10);
-	if (err != 0) {
+	int rc = _sntprintf_s(buf, _countof(buf), _T("taskkill /pid %d"), dwProcessID);
+	if (rc <= 0) {
 		TRACE_PRINT1("Can't convert process ID %d to string.", dwProcessID);
 		TRACE_EXIT();
 		return FALSE;
 	}
-	strCommand += buf;
 
-	TCHAR* cmdLine = new TCHAR[(strCommand.length() + 1) * sizeof(TCHAR)];
-	_tcscpy_s(cmdLine, strCommand.length(), (TCHAR*)strCommand.c_str());
-	tstring strResult = executeCommand(cmdLine);
-	delete[] cmdLine;
+	tstring strResult = executeCommand(buf);
 
-	if (_tcsncmp(strResult.c_str(), _T("SUCCESS"), _tcslen(_T("SUCCESS"))) == 0)
+	if (strResult.compare(0, _tcslen(_T("SUCCESS")), _T("SUCCESS")) == 0)
 	{
 		TRACE_PRINT1("killProcess_Soft: gracefully kill process, bResult = 1, dwProcessID = %d.", dwProcessID);
 		TRACE_EXIT();
