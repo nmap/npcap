@@ -216,12 +216,12 @@ NPF_ResetBufferContents(
 	IN BOOLEAN AcquireLock
 )
 {
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 	PLIST_ENTRY Curr;
 	PNPF_CAP_DATA pCapData;
 
 	if (AcquireLock)
-		NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
+		NdisAcquireRWLockWrite(Open->BufferLock, &lockState, 0);
 	Open->Accepted = 0;
 	Open->Dropped = 0;
 	Open->Received = 0;
@@ -237,7 +237,7 @@ NPF_ResetBufferContents(
 	// Reset Free counter
 	Open->Free = Open->Size;
 	if (AcquireLock)
-		NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
+		NdisReleaseRWLock(Open->BufferLock, &lockState);
 }
 
 VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy)
@@ -350,7 +350,7 @@ NPF_OpenAdapter(
 	}
 
 	// Create a group child adapter object from the head adapter.
-	Open = NPF_CreateOpenObject();
+	Open = NPF_CreateOpenObject(pFiltMod->AdapterHandle);
 	if (Open == NULL)
 	{
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
@@ -699,9 +699,8 @@ NPF_ReleaseOpenInstanceResources(
 		NPF_ResetBufferContents(pOpen, FALSE);
 	}
 
-	// Reminder for upgrade to NDIS 6.20: free this lock!
-	//NdisFreeRWLock(pOpen->BufferLock);
-	//NdisFreeRWLock(pOpen->MachineLock);
+	NdisFreeRWLock(pOpen->BufferLock);
+	NdisFreeRWLock(pOpen->MachineLock);
 	NdisFreeSpinLock(&pOpen->CountersLock);
 	NdisFreeSpinLock(&pOpen->WriteLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
@@ -786,8 +785,7 @@ NPF_ReleaseFilterModuleResources(
 	}
 
 	NdisFreeSpinLock(&pFiltMod->OIDLock);
-	// Reminder for upgrade to NDIS 6.20: free this lock!
-	//NdisFreeRWLock(pFiltMod->OpenInstancesLock);
+	NdisFreeRWLock(pFiltMod->OpenInstancesLock);
 	NdisFreeSpinLock(&pFiltMod->AdapterHandleLock);
 
 	TRACE_EXIT();
@@ -1297,14 +1295,14 @@ NPF_AddToGroupOpenArray(
 {
 	TRACE_ENTER();
 
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 
 	// Acquire lock for writing (modify list)
-	NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, TRUE, &lockState);
+	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
 	PushEntryList(&pFiltMod->OpenInstances, &pOpen->OpenInstancesEntry);
 
-	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
+	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
 	TRACE_EXIT();
 }
@@ -1356,7 +1354,7 @@ NPF_RemoveFromGroupOpenArray(
 	ULONG BytesProcessed;
 	PVOID pBuffer = NULL;
 	BOOL found = FALSE;
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 
 	TRACE_ENTER();
 
@@ -1369,7 +1367,7 @@ NPF_RemoveFromGroupOpenArray(
 	}
 
 	// Acquire lock for writing (modify list)
-	NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, TRUE, &lockState);
+	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
 	/* Store the previous combined packet filter */
 	OldPacketFilter = pFiltMod->MyPacketFilter;
@@ -1405,7 +1403,7 @@ NPF_RemoveFromGroupOpenArray(
 		Curr = Prev->Next;
 	}
 
-	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
+	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
 	/* If the packet filter has changed, originate an OID Request to set it to the new value */
 	if (pFiltMod->MyPacketFilter != OldPacketFilter)
@@ -1642,7 +1640,7 @@ NPF_GetLoopbackFilterModule()
 //-------------------------------------------------------------------
 
 POPEN_INSTANCE
-NPF_CreateOpenObject()
+NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 {
 	POPEN_INSTANCE Open;
 	UINT i;
@@ -1662,7 +1660,14 @@ NPF_CreateOpenObject()
 	RtlZeroMemory(Open, sizeof(OPEN_INSTANCE));
 
 	/* Buffer */
-	NdisInitializeReadWriteLock(&Open->BufferLock);
+	Open->BufferLock = NdisAllocateRWLock(NdisHandle);
+	if (Open->BufferLock == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferLock");
+		ExFreePool(Open);
+		TRACE_EXIT();
+		return NULL;
+	}
 	InitializeListHead(&Open->PacketQueue);
 	KeInitializeSpinLock(&Open->PacketQueueLock);
 	Open->Accepted = 0;
@@ -1677,7 +1682,15 @@ NPF_CreateOpenObject()
 #ifdef NPCAP_KDUMP
 	NdisInitializeEvent(&Open->DumpEvent);
 #endif
-	NdisInitializeReadWriteLock(&Open->MachineLock);
+	Open->MachineLock = NdisAllocateRWLock(NdisHandle);
+	if (Open->MachineLock == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate MachineLock");
+		NdisFreeRWLock(Open->BufferLock);
+		ExFreePool(Open);
+		TRACE_EXIT();
+		return NULL;
+	}
 	NdisAllocateSpinLock(&Open->WriteLock);
 	Open->WriteInProgress = FALSE;
 
@@ -1767,7 +1780,6 @@ NPF_CreateFilterModule(
 	pFiltMod->HasDataRateMappingTable = FALSE;
 #endif
 
-	NdisInitializeReadWriteLock(&pFiltMod->OpenInstancesLock);
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;
 
@@ -1776,6 +1788,14 @@ NPF_CreateFilterModule(
 
 	//  Initialize the pools
 	do {
+		pFiltMod->OpenInstancesLock = NdisAllocateRWLock(NdisFilterHandle);
+		if (pFiltMod->OpenInstancesLock == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OpenInstancesLock");
+			bAllocFailed = TRUE;
+			break;
+		}
+
 		NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
 		PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
 		PoolParameters.Header.Revision = NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
@@ -1869,6 +1889,8 @@ NPF_CreateFilterModule(
 			NdisFreeNetBufferPool(pFiltMod->TapNBPool);
 		if (pFiltMod->PacketPool)
 			NdisFreeNetBufferListPool(pFiltMod->PacketPool);
+		if (pFiltMod->OpenInstancesLock)
+			NdisFreeRWLock(pFiltMod->OpenInstancesLock);
 		ExFreePool(pFiltMod);
 		TRACE_EXIT();
 		return NULL;
@@ -3018,7 +3040,7 @@ NPF_SetPacketFilter(
 	PSINGLE_LIST_ENTRY Prev = NULL;
 	PSINGLE_LIST_ENTRY Curr = NULL;
 	PNPCAP_FILTER_MODULE pFiltMod = pOpen->pFiltMod;
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 	
 	ASSERT(pFiltMod != NULL);
 
@@ -3029,7 +3051,7 @@ NPF_SetPacketFilter(
 	}
 
 	// Not modifying list, read-lock
-	NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, FALSE, &lockState);
+	NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState, 0);
 	pOpen->MyPacketFilter = PacketFilter;
 	Prev = &(pFiltMod->OpenInstances);
 	Curr = Prev->Next;
@@ -3040,7 +3062,7 @@ NPF_SetPacketFilter(
 		Prev = Curr;
 		Curr = Prev->Next;
 	}
-	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
+	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
 #ifdef HAVE_DOT11_SUPPORT
 	// Check if we should be setting the raw wifi filter

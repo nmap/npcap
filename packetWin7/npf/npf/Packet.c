@@ -952,7 +952,7 @@ NPF_IoControl(
 
 	HANDLE					hUserEvent;
 	PKEVENT					pKernelEvent;
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 #ifdef _AMD64_
 	VOID* POINTER_32		hUserEvent32Bit;
 #endif //_AMD64_
@@ -1125,7 +1125,7 @@ NPF_IoControl(
 		}
 
 		// Lock the BPF engine for writing. 
-		NdisAcquireReadWriteLock(&Open->MachineLock, TRUE, &lockState);
+		NdisAcquireRWLockWrite(Open->MachineLock, &lockState, 0);
 
 		do
 		{
@@ -1192,7 +1192,7 @@ NPF_IoControl(
 		//
 		// release the machine lock and then reset the buffer
 		//
-		NdisReleaseReadWriteLock(&Open->MachineLock, &lockState);
+		NdisReleaseRWLock(Open->MachineLock, &lockState);
 
 		NPF_ResetBufferContents(Open, TRUE);
 
@@ -1484,7 +1484,7 @@ NPF_IoControl(
 		}
 
 		// Acquire buffer lock
-		NdisAcquireReadWriteLock(&Open->BufferLock, TRUE, &lockState);
+		NdisAcquireRWLockWrite(Open->BufferLock, &lockState, 0);
 
 		// TODO: Could we avoid clearing the buffer but instead allow a
 		// negative Free count or maybe just clear out the amount that
@@ -1492,7 +1492,7 @@ NPF_IoControl(
 		Open->Size = dim;
 		NPF_ResetBufferContents(Open, FALSE);
 
-		NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
+		NdisReleaseRWLock(Open->BufferLock, &lockState);
 
 		SET_RESULT_SUCCESS(0);
 		break;
@@ -1760,7 +1760,7 @@ NPF_IoControl(
 					goto OID_REQUEST_DONE;
 				}
 				// Set the filter module's packet filter to the union of all instances' filters
-				NdisAcquireReadWriteLock(&Open->pFiltMod->OpenInstancesLock, FALSE, &lockState);
+				NdisAcquireRWLockRead(Open->pFiltMod->OpenInstancesLock, &lockState, 0);
 				// Stash the old filter
 				dim = Open->pFiltMod->MyPacketFilter;
 				Open->pFiltMod->MyPacketFilter = 0;
@@ -1768,7 +1768,7 @@ NPF_IoControl(
 				{
 					Open->pFiltMod->MyPacketFilter |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
 				}
-				NdisReleaseReadWriteLock(&Open->pFiltMod->OpenInstancesLock, &lockState);
+				NdisReleaseRWLock(Open->pFiltMod->OpenInstancesLock, &lockState);
 
 				// If the new packet filter is the same as the old one...
 				if (Open->pFiltMod->MyPacketFilter == dim
