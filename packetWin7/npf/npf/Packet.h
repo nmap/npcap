@@ -880,6 +880,7 @@ NPF_SetPacketFilter(
   NOTE: this assumes that the calling routine ensures validity
   of the filter handle until this returns.
 */
+_IRQL_requires_(PASSIVE_LEVEL)
 NDIS_STATUS
 NPF_DoInternalRequest(
 	_In_ NDIS_HANDLE					FilterModuleContext,
@@ -1110,6 +1111,7 @@ DRIVER_DISPATCH NPF_IoControl;
   packet can be sent for performance reasons.
 */
 _Dispatch_type_(IRP_MJ_WRITE)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 DRIVER_DISPATCH NPF_Write;
 // NTSTATUS
 // NPF_Write(
