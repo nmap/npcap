@@ -293,7 +293,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	// List of open instances needs to be write-locked only when inserting/removing.
 	// Ordinary traversal can use faster and concurrent read-lock.
 	SINGLE_LIST_ENTRY OpenInstances; //GroupHead
-	NDIS_RW_LOCK OpenInstancesLock; // GroupLock
+	PNDIS_RW_LOCK_EX OpenInstancesLock; // GroupLock
 
 	PNPF_OBJ_POOL NBLCopyPool; // Pool of NPF_NBL_COPY objects
 	PNPF_OBJ_POOL NBCopiesPool; // Pool of NPF_NB_COPIES objects
@@ -396,10 +396,10 @@ typedef struct _OPEN_INSTANCE
 											///< reached.
 #endif
 
-	NDIS_RW_LOCK MachineLock; ///< Lock that protects the BPF filter while in use.
+	PNDIS_RW_LOCK_EX MachineLock; ///< Lock that protects the BPF filter while in use.
 
 	/* Buffer */
-	NDIS_RW_LOCK BufferLock; // Lock for modifying the buffer size/configuration
+	PNDIS_RW_LOCK_EX BufferLock; // Lock for modifying the buffer size/configuration
 	LIST_ENTRY PacketQueue; // Head of packet buffer queue
 	KSPIN_LOCK PacketQueueLock; // Lock controlling buffer queue
 	ULONG Free; // Bytes of buffer free for writing

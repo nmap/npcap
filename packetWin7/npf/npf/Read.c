@@ -111,7 +111,7 @@ NPF_Read(
 	PUCHAR					CurrBuff;
 	struct bpf_hdr*			header;
 	ULONG					copied, plen, available;
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 	NTSTATUS Status = STATUS_SUCCESS;
 
 	TRACE_ENTER();
@@ -290,7 +290,7 @@ NPF_Read(
 	if (Open->ReadEvent != NULL)
 		KeClearEvent(Open->ReadEvent);
 
-	NdisAcquireReadWriteLock(&Open->BufferLock, FALSE, &lockState);
+	NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);
 
 	while (available > copied && Open->Free < Open->Size)
 	{
@@ -369,7 +369,7 @@ NPF_Read(
 		ASSERT(Open->Free <= Open->Size);
 	}
 
-	NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
+	NdisReleaseRWLock(Open->BufferLock, &lockState);
 	NPF_StopUsingOpenInstance(Open, OpenDetached);
 
 	if (copied == 0 && Open->OpenStatus == OpenDetached)
@@ -403,14 +403,14 @@ NPF_DoTap(
 {
 	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE TempOpen;
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	SINGLE_LIST_ENTRY NBLCopiesHead;
 	NBLCopiesHead.Next = NULL;
 
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
-	NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, FALSE, &lockState);
+	NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState, 0);
 
 	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 	{
@@ -425,7 +425,7 @@ NPF_DoTap(
 		}
 	}
 	/* Release the spin lock no matter what. */
-	NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
+	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
 	for (Curr = NBLCopiesHead.Next; Curr != NULL; Curr = Curr->Next)
 	{
@@ -560,7 +560,7 @@ NPF_TapExForEachOpen(
 	PNET_BUFFER_LIST		pNextNetBufList;
 	PNET_BUFFER				pNetBuf = NULL;
 	PNET_BUFFER				pNextNetBuf;
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 
 	PNPF_NB_COPIES pNBCopy = NULL;
 	PNPF_NBL_COPY pNBLCopy = NULL;
@@ -832,7 +832,7 @@ NPF_TapExForEachOpen(
 			received++;
 
 			// Lock BPF engine for reading.
-			NdisAcquireReadWriteLock(&Open->MachineLock, FALSE, &lockState);
+			NdisAcquireRWLockRead(Open->MachineLock, &lockState, 0);
 
 			// Get the whole packet length.
 			TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
@@ -843,7 +843,7 @@ NPF_TapExForEachOpen(
 					TotalPacketSize);
 			IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
 
-			NdisReleaseReadWriteLock(&Open->MachineLock, &lockState);
+			NdisReleaseRWLock(Open->MachineLock, &lockState);
 
 			if (fres == 0)
 			{
@@ -900,7 +900,7 @@ NPF_TapExForEachOpen(
 			}
 #endif
 			// Lock "buffer" whenever checking Size/Free
-			NdisAcquireReadWriteLock(&Open->BufferLock, FALSE, &lockState);
+			NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);
 			if (Open->Size == 0)
 			{
 				dropped++;
@@ -1024,7 +1024,7 @@ NPF_TapExForEachOpen(
 			}
 
 TEFEO_release_BufferLock:
-			NdisReleaseReadWriteLock(&Open->BufferLock, &lockState);
+			NdisReleaseRWLock(Open->BufferLock, &lockState);
 
 TEFEO_next_NB:
 			pNetBuf = pNextNetBuf;

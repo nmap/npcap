@@ -878,7 +878,7 @@ Return Value:
 	POPEN_INSTANCE		ChildOpen;
 	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE		TempOpen;
-	LOCK_STATE lockState;
+	LOCK_STATE_EX lockState;
 	BOOLEAN				FreeBufAfterWrite;
 	PNET_BUFFER_LIST    pNetBufList;
 	PNET_BUFFER_LIST    pNextNetBufList;
@@ -909,7 +909,7 @@ Return Value:
 			NPF_FreePackets(pNetBufList);
 
 			/* Lock the group */
-			NdisAcquireReadWriteLock(&pFiltMod->OpenInstancesLock, FALSE, &lockState);
+			NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState, 0);
 
 			for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 			{
@@ -922,7 +922,7 @@ Return Value:
 
 			}
 			/* Release the spin lock no matter what. */
-			NdisReleaseReadWriteLock(&pFiltMod->OpenInstancesLock, &lockState);
+			NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 		}
 		else
 		{
