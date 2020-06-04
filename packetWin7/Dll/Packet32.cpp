@@ -622,7 +622,7 @@ void NpcapGetLoopbackInterfaceName()
 		{
 			g_bLoopbackSupport = (0 != *((DWORD *) buffer));
 		}
-
+		size = sizeof(buffer);
 		if (g_bLoopbackSupport && RegQueryValueExA(hKey, "LoopbackAdapter", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
 		{
 			strncpy_s(g_strLoopbackAdapterName, 512, buffer, sizeof(g_strLoopbackAdapterName)/ sizeof(g_strLoopbackAdapterName[0]) - 1);
