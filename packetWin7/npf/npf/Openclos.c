@@ -2949,7 +2949,7 @@ NPF_GetPhysicalMedium(
 	// get the PhysicalMedium when filter driver loads
 	NPF_DoInternalRequest(FilterModuleContext,
 		NdisRequestQueryInformation,
-		OID_GEN_PHYSICAL_MEDIUM,
+		OID_GEN_PHYSICAL_MEDIUM_EX,
 		pBuffer,
 		sizeof(PhysicalMedium),
 		0,
