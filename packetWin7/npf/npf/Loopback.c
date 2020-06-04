@@ -419,7 +419,7 @@ NPF_TapLoopback(
 
 
 			// TODO: handle SkipSentPackets?
-			NPF_DoTap(pLoopbackFilter, pFakeNbl, NULL);
+			NPF_DoTap(pLoopbackFilter, pFakeNbl, NULL, FALSE);
 		} while (0);
 
 		if (pFakeNbl != NULL) {
@@ -746,7 +746,7 @@ NPF_NetworkClassifyInbound(
 
 
 				// TODO: handle SkipSentPackets?
-				NPF_DoTap(pLoopbackFilter, pClonedNetBufferList, NULL);
+				NPF_DoTap(pLoopbackFilter, pClonedNetBufferList, NULL, FALSE);
 			} while (0);
 			NPF_StopUsingBinding(pLoopbackFilter);
 		}

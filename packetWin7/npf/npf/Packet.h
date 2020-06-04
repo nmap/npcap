@@ -1048,6 +1048,7 @@ DRIVER_DISPATCH NPF_CloseAdapter;
   \param pFiltMod Pointer to a filter module where the packets should be captured
   \param pNetBufferLists A List of NetBufferLists to receive.
   \param pOpenOriginating A pointer to the OpenInstance that originated/injected these packets so SkipSentPackets can be honored. NULL if not applicable.
+  \param AtDispatchLevel Set to TRUE if the caller knows they are at DISPATCH_LEVEL.
 
   NPF_DoTap() is called for every incoming and outgoing packet. It is the most important and one of
   the most complex functions of NPF: it executes the filter, runs the statistical engine (if the instance is in
@@ -1059,7 +1060,8 @@ VOID
 NPF_DoTap(
 	PNPCAP_FILTER_MODULE pFiltMod,
 	PNET_BUFFER_LIST NetBufferLists,
-	POPEN_INSTANCE pOpenOriginating
+	POPEN_INSTANCE pOpenOriginating,
+	BOOLEAN AtDispatchLevel
 	);
 
 /*!

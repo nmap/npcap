@@ -391,14 +391,16 @@ VOID
 NPF_TapExForEachOpen(
 	IN POPEN_INSTANCE Open,
 	IN PNET_BUFFER_LIST pNetBufferLists,
-	IN PSINGLE_LIST_ENTRY NBLCopyHead
+	IN PSINGLE_LIST_ENTRY NBLCopyHead,
+	IN BOOLEAN AtDispatchLevel
 	);
 
 VOID
 NPF_DoTap(
 	PNPCAP_FILTER_MODULE pFiltMod,
 	PNET_BUFFER_LIST NetBufferLists,
-	POPEN_INSTANCE pOpenOriginating
+	POPEN_INSTANCE pOpenOriginating,
+	BOOLEAN AtDispatchLevel
 	)
 {
 	PSINGLE_LIST_ENTRY Curr;
@@ -410,7 +412,8 @@ NPF_DoTap(
 
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
-	NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState, 0);
+	NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState,
+			AtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
 
 	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 	{
@@ -420,7 +423,7 @@ NPF_DoTap(
 			// If this instance originated the packet and doesn't want to see it, don't capture.
 			if (!(TempOpen == pOpenOriginating && TempOpen->SkipSentPackets))
 			{
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead);
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, AtDispatchLevel);
 			}
 		}
 	}
@@ -454,7 +457,7 @@ NPF_SendEx(
 	if (pFiltMod->Loopback == FALSE)
 	{
 #endif
-		NPF_DoTap(pFiltMod, NetBufferLists, NULL);
+		NPF_DoTap(pFiltMod, NetBufferLists, NULL, NDIS_TEST_SEND_AT_DISPATCH_LEVEL(SendFlags));
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif
@@ -501,7 +504,7 @@ NPF_TapEx(
 #endif
 	   )
 	{
-		NPF_DoTap(pFiltMod, NetBufferLists, NULL);
+		NPF_DoTap(pFiltMod, NetBufferLists, NULL, NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags));
 	}
 
 #ifdef HAVE_RX_SUPPORT
@@ -549,7 +552,8 @@ VOID
 NPF_TapExForEachOpen(
 	IN POPEN_INSTANCE Open,
 	IN PNET_BUFFER_LIST pNetBufferLists,
-	IN PSINGLE_LIST_ENTRY NBLCopyHead
+	IN PSINGLE_LIST_ENTRY NBLCopyHead,
+	IN BOOLEAN AtDispatchLevel
 	)
 {
 	UINT					fres;
