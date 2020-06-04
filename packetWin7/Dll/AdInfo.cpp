@@ -932,9 +932,14 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 	// Copy the MAC address
 	TmpAdInfo->MacAddressLen = IphAd->AddressLength;
 	
-	memcpy(TmpAdInfo->MacAddress, 
-		IphAd->Address, 
-		(MAX_MAC_ADDR_LENGTH<MAX_ADAPTER_ADDRESS_LENGTH)? MAX_MAC_ADDR_LENGTH:MAX_ADAPTER_ADDRESS_LENGTH);
+	memcpy(TmpAdInfo->MacAddress,
+		IphAd->Address,
+#if MAX_MAC_ADDR_LENGTH < MAX_ADAPTER_ADDRESS_LENGTH
+		MAX_MAC_ADDR_LENGTH
+#else
+		MAX_ADAPTER_ADDRESS_LENGTH
+#endif
+		);
 	
 	// Calculate the number of IP addresses of this interface
 	for(TmpAddrStr = &IphAd->IpAddressList, i = 0; TmpAddrStr != NULL; TmpAddrStr = TmpAddrStr->Next, i++)
