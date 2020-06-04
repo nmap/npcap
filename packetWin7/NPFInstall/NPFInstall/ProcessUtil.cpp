@@ -407,7 +407,7 @@ BOOL killProcess_Soft(DWORD dwProcessID)
 	TRACE_ENTER();
 
 	TCHAR buf[256];
-	int rc = _sntprintf_s(buf, _countof(buf), _T("taskkill /pid %d"), dwProcessID);
+	int rc = _sntprintf_s(buf, _countof(buf), _T("taskkill /pid %ul"), dwProcessID);
 	if (rc <= 0) {
 		TRACE_PRINT1("Can't convert process ID %d to string.", dwProcessID);
 		TRACE_EXIT();
