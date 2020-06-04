@@ -624,8 +624,6 @@ NPF_DetachOpenInstance(
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 	pOpen->OpenStatus = OpenDetached;
 
-	NPF_RemoveFromGroupOpenArray(pOpen); //Remove the Open from the filter module's list
-
 	// Wait for IRPs that require an attached adapter
 	for (state = OpenDetached - 1; state >= OpenRunning; state--)
 	{
@@ -636,10 +634,9 @@ NPF_DetachOpenInstance(
 			NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 		}
 	}
+	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
-	// Do not purge worker requests; they should still work fine, and the
-	// worker will purge its own queue if it needs to shut down, i.e.
-	// FilterDetach
+	NPF_RemoveFromGroupOpenArray(pOpen); //Remove the Open from the filter module's list
 
 	pOpen->pFiltMod = NULL;
 
@@ -647,7 +644,6 @@ NPF_DetachOpenInstance(
 			&pOpen->DeviceExtension->DetachedOpens,
 			&pOpen->OpenInstancesEntry,
 			&pOpen->DeviceExtension->DetachedOpensLock);
-	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 }
 
 //-------------------------------------------------------------------
