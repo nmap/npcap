@@ -440,34 +440,40 @@ NTSTATUS NPF_EnableOps(PNPCAP_FILTER_MODULE pFiltMod, PDEVICE_OBJECT pDevObj)
 	NDIS_EVENT Event;
 
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	if (pFiltMod->OpsState == OpsEnabled)
+	switch(pFiltMod->OpsState)
 	{
-		// Already good to go;
-		Status = STATUS_SUCCESS;
-	}
-	else if (pFiltMod->OpsState == OpsEnabling)
-	{
-		NdisInitializeEvent(&Event);
-		NdisResetEvent(&Event);
-		// Wait for other thread to finish enabling
-		while (pFiltMod->OpsState == OpsEnabling)
-		{
-			NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
-			NdisWaitEvent(&Event, 1);
-			NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-		}
-		Status = (pFiltMod->OpsState == OpsEnabled
-				? STATUS_SUCCESS
-				: STATUS_DRIVER_INTERNAL_ERROR);
-	}
-	else if (pFiltMod->OpsState == OpsDisabled)
-	{
-		// Time to get to work
-		pFiltMod->OpsState = OpsEnabling;
-	}
-	else
-	{
-		Status = STATUS_INVALID_DEVICE_STATE;
+		case OpsEnabled:
+			// Already good to go;
+			Status = STATUS_SUCCESS;
+			break;
+		case OpsEnabling:
+		case OpsDisabling:
+			NdisInitializeEvent(&Event);
+			NdisResetEvent(&Event);
+			// Wait for other thread to finish enabling
+			while (pFiltMod->OpsState == OpsEnabling || pFiltMod->OpsState == OpsDisabling)
+			{
+				NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
+				NdisWaitEvent(&Event, 1);
+				NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
+			}
+			if (pFiltMod->OpsState == OpsEnabled)
+			{
+				Status = STATUS_SUCCESS;
+				break;
+			}
+			else if (pFiltMod->OpsState != OpsDisabled)
+			{
+				Status = STATUS_DRIVER_INTERNAL_ERROR;
+				break;
+			}
+			// else drop through to OpsDisabled:
+		case OpsDisabled:
+			// Time to get to work
+			pFiltMod->OpsState = OpsEnabling;
+			break;
+		default:
+			Status = STATUS_INVALID_DEVICE_STATE;
 	}
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
@@ -664,11 +670,23 @@ NPF_ReleaseOpenInstanceResources(
 
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pOpen->pFiltMod->Loopback && InterlockedDecrement(&g_NumLoopbackInstances) == 0)
+	if (pOpen->pFiltMod->Loopback)
 	{
-		// No more loopback handles open. Release WFP resources
-		NPF_UnregisterCallouts();
-		NPF_FreeInjectionHandles();
+		NdisAcquireSpinLock(&pOpen->pFiltMod->AdapterHandleLock);
+		if (InterlockedDecrement(&g_NumLoopbackInstances) == 0)
+		{
+			pOpen->pFiltMod->OpsState = OpsDisabling;
+			NdisReleaseSpinLock(&pOpen->pFiltMod->AdapterHandleLock);
+
+			// No more loopback handles open. Release WFP resources
+			NPF_UnregisterCallouts();
+			NPF_FreeInjectionHandles();
+
+			// Set OpsState so we re-enable these if necessary
+			NdisAcquireSpinLock(&pOpen->pFiltMod->AdapterHandleLock);
+			pOpen->pFiltMod->OpsState = OpsDisabled;
+		}
+		NdisReleaseSpinLock(&pOpen->pFiltMod->AdapterHandleLock);
 	}
 #endif
 

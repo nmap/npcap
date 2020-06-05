@@ -278,6 +278,7 @@ typedef enum _OPEN_STATE
 
 typedef enum _FILTER_OPS_STATE
 {
+	OpsDisabling,
 	OpsDisabled,
 	OpsEnabling,
 	OpsFailed,
