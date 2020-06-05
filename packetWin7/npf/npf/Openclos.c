@@ -1947,6 +1947,7 @@ NPF_CreateFilterModule(
 	NdisAllocateSpinLock(&pFiltMod->AdapterHandleLock);
 
 	pFiltMod->Medium = SelectedIndex; //Can be 0 before the first bindding.
+	pFiltMod->OpsState = OpsDisabled;
 
 	TRACE_EXIT();
 	return pFiltMod;
