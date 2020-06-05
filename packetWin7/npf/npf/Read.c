@@ -364,7 +364,7 @@ NPF_Read(
 		InterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
 
 		// Return this capture data
-		NPF_POOL_RETURN(Open->pFiltMod->CapturePool, pCapData, NPF_FreeCapData);
+		NPF_POOL_RETURN(Open->CapturePool, pCapData, NPF_FreeCapData);
 
 		ASSERT(Open->Free <= Open->Size);
 	}
@@ -990,7 +990,7 @@ NPF_TapExForEachOpen(
 				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = fres;
 			}
 
-			PNPF_CAP_DATA pCapData = NPF_POOL_GET(Open->pFiltMod->CapturePool, PNPF_CAP_DATA);
+			PNPF_CAP_DATA pCapData = NPF_POOL_GET(Open->CapturePool, PNPF_CAP_DATA);
 			if (pCapData == NULL)
 			{
 				// Insufficient memory

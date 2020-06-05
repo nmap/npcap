@@ -298,12 +298,6 @@ typedef struct _NPCAP_FILTER_MODULE
 	PNPF_OBJ_POOL NBLCopyPool; // Pool of NPF_NBL_COPY objects
 	PNPF_OBJ_POOL NBCopiesPool; // Pool of NPF_NB_COPIES objects
 
-	/* TODO: Make this pool part of OPEN_INSTANCE instead so that it can be
-	 * freed/resized after capture ends. Currently, it expands as necessary
-	 * to accommodate all captures, but does not shrink again afterwards.
-	 */
-	PNPF_OBJ_POOL CapturePool; // Pool of NPF_CAP_DATA objects
-
 	NDIS_STRING				AdapterName;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	BOOLEAN					Loopback;
@@ -399,6 +393,7 @@ typedef struct _OPEN_INSTANCE
 	PNDIS_RW_LOCK_EX MachineLock; ///< Lock that protects the BPF filter while in use.
 
 	/* Buffer */
+	PNPF_OBJ_POOL CapturePool; // Pool of NPF_CAP_DATA objects
 	PNDIS_RW_LOCK_EX BufferLock; // Lock for modifying the buffer size/configuration
 	LIST_ENTRY PacketQueue; // Head of packet buffer queue
 	KSPIN_LOCK PacketQueueLock; // Lock controlling buffer queue

@@ -230,7 +230,7 @@ NPF_ResetBufferContents(
 	for (Curr = Open->PacketQueue.Flink; Curr != &Open->PacketQueue; Curr = Curr->Flink)
 	{
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
-		NPF_POOL_RETURN(Open->pFiltMod->CapturePool, pCapData, NPF_FreeCapData);
+		NPF_POOL_RETURN(Open->CapturePool, pCapData, NPF_FreeCapData);
 	}
 	// Remove links
 	InitializeListHead(&Open->PacketQueue);
@@ -698,6 +698,12 @@ NPF_ReleaseOpenInstanceResources(
 	{
 		NPF_ResetBufferContents(pOpen, FALSE);
 	}
+	if (pOpen->CapturePool)
+	{
+		NPF_FreeObjectPool(pOpen->CapturePool);
+		pOpen->CapturePool = NULL;
+	}
+
 
 	NdisFreeRWLock(pOpen->BufferLock);
 	NdisFreeRWLock(pOpen->MachineLock);
@@ -759,12 +765,6 @@ NPF_ReleaseFilterModuleResources(
 	{
 		NPF_FreeObjectPool(pFiltMod->NBCopiesPool);
 		pFiltMod->NBCopiesPool = NULL;
-	}
-
-	if (pFiltMod->CapturePool)
-	{
-		NPF_FreeObjectPool(pFiltMod->CapturePool);
-		pFiltMod->CapturePool = NULL;
 	}
 
 #ifdef HAVE_DOT11_SUPPORT
@@ -1668,6 +1668,16 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 		TRACE_EXIT();
 		return NULL;
 	}
+	Open->CapturePool = NPF_AllocateObjectPool(NdisHandle, sizeof(NPF_CAP_DATA), 1024);
+	if (Open->CapturePool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
+		NdisFreeRWLock(Open->BufferLock);
+		ExFreePool(Open);
+		TRACE_EXIT();
+		return NULL;
+	}
+
 	InitializeListHead(&Open->PacketQueue);
 	KeInitializeSpinLock(&Open->PacketQueueLock);
 	Open->Accepted = 0;
@@ -1686,6 +1696,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	if (Open->MachineLock == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate MachineLock");
+		NPF_FreeObjectPool(Open->CapturePool);
 		NdisFreeRWLock(Open->BufferLock);
 		ExFreePool(Open);
 		TRACE_EXIT();
@@ -1853,14 +1864,6 @@ NPF_CreateFilterModule(
 			break;
 		}
 
-		pFiltMod->CapturePool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_CAP_DATA), 1024);
-		if (pFiltMod->CapturePool == NULL)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
-			bAllocFailed = TRUE;
-			break;
-		}
-
 #ifdef HAVE_DOT11_SUPPORT
 		pFiltMod->Dot11HeaderPool = NPF_AllocateObjectPool(NdisFilterHandle, SIZEOF_RADIOTAP_BUFFER, 32);
 		if (pFiltMod->Dot11HeaderPool == NULL)
@@ -1877,8 +1880,6 @@ NPF_CreateFilterModule(
 		if (pFiltMod->Dot11HeaderPool)
 			NPF_FreeObjectPool(pFiltMod->Dot11HeaderPool);
 #endif
-		if (pFiltMod->CapturePool)
-			NPF_FreeObjectPool(pFiltMod->CapturePool);
 		if (pFiltMod->NBCopiesPool)
 			NPF_FreeObjectPool(pFiltMod->NBCopiesPool);
 		if (pFiltMod->NBLCopyPool)
