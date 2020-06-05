@@ -396,8 +396,6 @@ NPF_Write(
 #endif
 		NdisWaitEvent(&Open->NdisWriteCompleteEvent, 0);
 
-NPF_Write_End:
-
 	//
 	// no more writes are in progress
 	//
