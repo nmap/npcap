@@ -128,7 +128,6 @@ NPF_StartUsingBinding(
 	IN PNPCAP_FILTER_MODULE pFiltMod
 	)
 {
-	ASSERT(pFiltMod != NULL);
 	if (!pFiltMod) {
 		return FALSE;
 	}
@@ -542,6 +541,12 @@ NPF_StartUsingOpenInstance(
 {
 	BOOLEAN returnStatus;
 
+	if (MaxState <= OpenAttached && !NPF_StartUsingBinding(pOpen->pFiltMod))
+	{
+		// Not attached, but need to be.
+		return FALSE;
+	}
+
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 	if (MaxState == OpenRunning && pOpen->OpenStatus == OpenAttached)
 	{
@@ -582,6 +587,11 @@ NPF_StopUsingOpenInstance(
 	ASSERT(pOpen->PendingIrps[MaxState] > 0);
 	pOpen->PendingIrps[MaxState]--;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+
+	if (MaxState <= OpenAttached)
+	{
+		NPF_StopUsingBinding(pOpen->pFiltMod);
+	}
 }
 
 //-------------------------------------------------------------------

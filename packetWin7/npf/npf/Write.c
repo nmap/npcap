@@ -252,12 +252,6 @@ NPF_Write(
 
 	while (numSentPackets < NumSends)
 	{
-		if (!NPF_StartUsingBinding(Open->pFiltMod)) {
-			// The adapter is pending to pause, so we don't send the packets.
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "The adapter is pending to pause, unable to send the packets.");
-			Status = STATUS_DEVICE_DOES_NOT_EXIST;
-			goto NPF_Write_End;
-		}
 		/* Unlike NPF_BufferedWrite, we can directly allocate NBLs
 		 * using the MDL in the IRP because the device was created with
 		 * DO_DIRECT_IO. */
@@ -572,12 +566,6 @@ NPF_BufferedWrite(
 		}
 		RtlCopyMemory(npBuff, UserBuff + Pos, pWinpcapHdr->caplen);
 
-		if (!NPF_StartUsingBinding(Open->pFiltMod)) {
-			// The adapter is pending to pause, so we don't send the packets.
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "The adapter is pending to pause, unable to send the packets.");
-			result = -STATUS_DEVICE_DOES_NOT_EXIST;
-			break;
-		}
 		// Allocate an MDL to map the packet data
 		TmpMdl = NdisAllocateMdl(Open->pFiltMod, npBuff, pWinpcapHdr->caplen);
 

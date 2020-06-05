@@ -1564,20 +1564,6 @@ NPF_IoControl(
 		OidData = Irp->AssociatedIrp.SystemBuffer;
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
 
-		//
-		// gain ownership of the Ndis Handle
-		//
-		if (!Open->pFiltMod || NPF_StartUsingBinding(Open->pFiltMod) == FALSE)
-		{
-			//
-			// MAC unbindind or unbound
-			//
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open->pFiltMod is unavailable or cannot bind, Open->pFiltMod=%p", Open->pFiltMod);
-			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-			break;
-		}
-
-
 		// Extract a request from the list of free ones
 		pRequest = NPF_POOL_GET(Open->pFiltMod->InternalRequestPool, PINTERNAL_REQUEST);
 		if (pRequest == NULL)
