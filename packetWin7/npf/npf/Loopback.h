@@ -176,19 +176,23 @@ typedef struct _ICMP4_HEADER
 // Shared function prototypes
 //
 
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 NPF_RegisterCallouts(
 _Inout_ void* deviceObject
 	);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 void
 NPF_UnregisterCallouts(
 	);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 NPF_InitInjectionHandles(
 	);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 NPF_FreeInjectionHandles(
 	);

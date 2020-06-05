@@ -1055,6 +1055,7 @@ Exit:
 	return status;
 }
 
+_Use_decl_annotations_
 NTSTATUS
 NPF_RegisterCallouts(
 _Inout_ void* deviceObject
@@ -1200,6 +1201,8 @@ Exit:
 	return status;
 }
 
+
+_Use_decl_annotations_
 void
 NPF_UnregisterCallouts(
 	)
@@ -1232,6 +1235,7 @@ NPF_UnregisterCallouts(
 	TRACE_EXIT();
 }
 
+_Use_decl_annotations_
 NTSTATUS
 NPF_InitInjectionHandles(
 )
@@ -1279,6 +1283,7 @@ injection handles will be removed during DriverUnload.
 	return status;
 }
 
+_Use_decl_annotations_
 NTSTATUS
 NPF_FreeInjectionHandles(
 	)
