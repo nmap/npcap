@@ -378,7 +378,6 @@ NPF_Write(
 			//
 			NdisWaitEvent(&Open->WriteEvent, 1);
 		}
-		NPF_StopUsingBinding(Open->pFiltMod);
 	}
 
 	//
@@ -572,7 +571,6 @@ NPF_BufferedWrite(
 			// Unable to map the memory: packet lost
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate the MDL.\n");)
 
-			NPF_StopUsingBinding(Open->pFiltMod);
 			result = -STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
@@ -613,7 +611,6 @@ NPF_BufferedWrite(
 				// Second failure, report an error
 				NdisFreeMdl(TmpMdl);
 
-				NPF_StopUsingBinding(Open->pFiltMod);
 				result = -STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
@@ -667,11 +664,6 @@ NPF_BufferedWrite(
 					NDIS_DEFAULT_PORT_NUMBER,
 					SendFlags);
 			}
-
-		// 
-		// release ownership of the NdisAdapter binding
-		//
-		NPF_StopUsingBinding(Open->pFiltMod);
 
 		// We've sent the packet, so leave it up to SendComplete to free the buffer
 		npBuff = NULL;

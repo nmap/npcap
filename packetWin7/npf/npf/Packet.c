@@ -1568,11 +1568,6 @@ NPF_IoControl(
 		pRequest = NPF_POOL_GET(Open->pFiltMod->InternalRequestPool, PINTERNAL_REQUEST);
 		if (pRequest == NULL)
 		{
-			//
-			// Release ownership of the Ndis Handle
-			//
-			NPF_StopUsingBinding(Open->pFiltMod);
-
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
 			SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
 			break;
@@ -1842,10 +1837,6 @@ NPF_IoControl(
 		}
 
 OID_REQUEST_DONE:
-		//
-		// Release ownership of the Ndis Handle
-		//
-		NPF_StopUsingBinding(Open->pFiltMod);
 
 		NPF_POOL_RETURN(Open->pFiltMod->InternalRequestPool, pRequest, NULL);
 
