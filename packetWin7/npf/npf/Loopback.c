@@ -398,7 +398,7 @@ NPF_TapLoopback(
 					pMdl->Next = NET_BUFFER_CURRENT_MDL(pNetBuffer);
 				}
 				NET_BUFFER_FIRST_MDL(pFakeNetBuffer) = pMdl;
-				NET_BUFFER_DATA_LENGTH(pFakeNetBuffer) = FirstMDLLen + NET_BUFFER_DATA_LENGTH(pNetBuffer);
+				NET_BUFFER_DATA_LENGTH(pFakeNetBuffer) = numBytes + NET_BUFFER_DATA_LENGTH(pNetBuffer);
 				NET_BUFFER_DATA_OFFSET(pFakeNetBuffer) = 0;
 				NET_BUFFER_CURRENT_MDL(pFakeNetBuffer) = pMdl;
 				NET_BUFFER_CURRENT_MDL_OFFSET(pFakeNetBuffer) = 0;
