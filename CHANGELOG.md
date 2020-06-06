@@ -1,4 +1,28 @@
 ﻿
+## Npcap 0.9993 [2020-06-05]
+
+* Fix a BSoD crash in `NPF_DoInternalRequest` triggered by suspending the
+  system while a capture is running. Added source annotations to allow static
+  analysis to catch bugs like this in the future. Fixes [#181](http://issues.npcap.org/181).
+
+* Fix a bug introduced in Npcap 0.9992 which caused loopback capture to fail if
+  any loopback capture had been previously started and finished.
+
+* Fix packet length calculation for loopback capture. The packet length was
+  being counted twice, leading to junk data being appended to captured packets.
+
+* If installation fails for any reason other than a failure to uninstall the
+  previous version of Npcap, the current version's uninstaller will be used to
+  clean up any partial installation. The only remaining files will be the
+  `install.log` and `NPFInstall.log` in the  Npcap installation directory.
+
+* Replaced ReadWriteLock mechanisms with improved `NDIS_RW_LOCK_EX` new in NDIS
+  6.20 for improved performance.
+
+* Moved object pool for captured packets from the filter module (adapter)
+  object to the open instance (pcap handle) to allow memory to be recovered
+  after a capture is closed.
+
 ## Npcap 0.9992 [2020-06-03]
 
 * Npcap issues are now tracked on [their own Github Issues
