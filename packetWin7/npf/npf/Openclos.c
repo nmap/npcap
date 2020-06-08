@@ -373,13 +373,6 @@ NPF_OpenAdapter(
 		Open);
 #endif
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pFiltMod->Loopback)
-	{
-		InterlockedIncrement(&g_NumLoopbackInstances);
-	}
-#endif
-
 #ifdef HAVE_DOT11_SUPPORT
 	if (pFiltMod->Dot11)
 	{
@@ -557,6 +550,11 @@ NPF_StartUsingOpenInstance(
 
 		if (returnStatus)
 		{
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+			// Keep track of how many active loopback captures there are
+			InterlockedIncrement(&g_NumLoopbackInstances);
+#endif
+
 			pOpen->OpenStatus = OpenRunning;
 			pOpen->PendingIrps[OpenRunning]++;
 		}
@@ -626,18 +624,42 @@ NPF_CloseOpenInstance(
 
 //-------------------------------------------------------------------
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+VOID
+NPF_DecrementLoopbackInstances(PNPCAP_FILTER_MODULE pFiltMod)
+{
+	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
+	if (InterlockedDecrement(&g_NumLoopbackInstances) == 0)
+	{
+		pFiltMod->OpsState = OpsDisabling;
+		NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
+
+		// No more loopback handles open. Release WFP resources
+		NPF_UnregisterCallouts();
+		NPF_FreeInjectionHandles();
+
+		// Set OpsState so we re-enable these if necessary
+		NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
+		pFiltMod->OpsState = OpsDisabled;
+	}
+	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
+}
+#endif
+
 VOID
 NPF_DetachOpenInstance(
 	IN POPEN_INSTANCE pOpen
 	)
 {
 	NDIS_EVENT Event;
+	OPEN_STATE old_state;
 	OPEN_STATE state;
 
 	NdisInitializeEvent(&Event);
 	NdisResetEvent(&Event);
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+	old_state = pOpen->OpenStatus;
 	pOpen->OpenStatus = OpenDetached;
 
 	// Wait for IRPs that require an attached adapter
@@ -653,6 +675,16 @@ NPF_DetachOpenInstance(
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
 	NPF_RemoveFromGroupOpenArray(pOpen); //Remove the Open from the filter module's list
+
+	if (old_state == OpenRunning)
+	{
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		if (pOpen->pFiltMod && pOpen->pFiltMod->Loopback)
+		{
+			NPF_DecrementLoopbackInstances(pOpen->pFiltMod);
+		}
+#endif
+	}
 
 	pOpen->pFiltMod = NULL;
 
@@ -680,23 +712,9 @@ NPF_ReleaseOpenInstanceResources(
 
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pOpen->pFiltMod->Loopback)
+	if (pOpen->OpenStatus == OpenRunning && pOpen->pFiltMod && pOpen->pFiltMod->Loopback)
 	{
-		NdisAcquireSpinLock(&pOpen->pFiltMod->AdapterHandleLock);
-		if (InterlockedDecrement(&g_NumLoopbackInstances) == 0)
-		{
-			pOpen->pFiltMod->OpsState = OpsDisabling;
-			NdisReleaseSpinLock(&pOpen->pFiltMod->AdapterHandleLock);
-
-			// No more loopback handles open. Release WFP resources
-			NPF_UnregisterCallouts();
-			NPF_FreeInjectionHandles();
-
-			// Set OpsState so we re-enable these if necessary
-			NdisAcquireSpinLock(&pOpen->pFiltMod->AdapterHandleLock);
-			pOpen->pFiltMod->OpsState = OpsDisabled;
-		}
-		NdisReleaseSpinLock(&pOpen->pFiltMod->AdapterHandleLock);
+		NPF_DecrementLoopbackInstances(pOpen->pFiltMod);
 	}
 #endif
 
