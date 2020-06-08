@@ -551,8 +551,11 @@ NPF_StartUsingOpenInstance(
 		if (returnStatus)
 		{
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			// Keep track of how many active loopback captures there are
-			InterlockedIncrement(&g_NumLoopbackInstances);
+			if (pOpen->pFiltMod->Loopback)
+			{
+				// Keep track of how many active loopback captures there are
+				InterlockedIncrement(&g_NumLoopbackInstances);
+			}
 #endif
 
 			pOpen->OpenStatus = OpenRunning;
