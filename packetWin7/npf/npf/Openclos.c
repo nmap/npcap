@@ -373,14 +373,6 @@ NPF_OpenAdapter(
 		Open);
 #endif
 
-#ifdef HAVE_DOT11_SUPPORT
-	if (pFiltMod->Dot11)
-	{
-		/* Update packet filter for raw wifi */
-		NPF_SetPacketFilter(Open, 0);
-	}
-#endif
-
 	if (!NT_SUCCESS(Status))
 	{
 		// Free the open instance' resources
@@ -555,6 +547,14 @@ NPF_StartUsingOpenInstance(
 			{
 				// Keep track of how many active loopback captures there are
 				InterlockedIncrement(&g_NumLoopbackInstances);
+			}
+#endif
+
+#ifdef HAVE_DOT11_SUPPORT
+			if (pFiltMod->Dot11)
+			{
+				/* Update packet filter for raw wifi */
+				NPF_SetPacketFilter(Open, 0);
 			}
 #endif
 
