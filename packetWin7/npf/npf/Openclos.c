@@ -400,10 +400,6 @@ NPF_OpenAdapter(
 	//
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
 
-	// Get the absolute value of the system boot time.
-	// This is used for timestamp conversion.
-	TIME_SYNCHRONIZE(&Open->start, Open->TimestampMode);
-
 	NPF_AddToGroupOpenArray(Open, pFiltMod);
 
 	NPF_StopUsingBinding(pFiltMod);
@@ -542,6 +538,10 @@ NPF_StartUsingOpenInstance(
 
 		if (returnStatus)
 		{
+			// Get the absolute value of the system boot time.
+			// This is used for timestamp conversion.
+			TIME_SYNCHRONIZE(&Open->start, Open->TimestampMode);
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			if (pOpen->pFiltMod->Loopback)
 			{
