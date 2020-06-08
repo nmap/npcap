@@ -2212,7 +2212,7 @@ NPF_AttachAdapter(
 		FilterAttributes.Header.Type = NDIS_OBJECT_TYPE_FILTER_ATTRIBUTES;
 		FilterAttributes.Flags = 0;
 
-		NDIS_DECLARE_FILTER_MODULE_CONTEXT(OPEN_INSTANCE);
+		NDIS_DECLARE_FILTER_MODULE_CONTEXT(NPCAP_FILTER_MODULE);
 		Status = NdisFSetAttributes(NdisFilterHandle,
 			pFiltMod,
 			&FilterAttributes);
