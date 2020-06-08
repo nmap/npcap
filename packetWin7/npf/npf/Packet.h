@@ -325,8 +325,6 @@ typedef struct _NPCAP_FILTER_MODULE
 	PNDIS_OID_REQUEST		PendingOidRequest;
 
 	NDIS_HANDLE				AdapterHandle;	///< NDIS idetifier of the adapter used by this instance.
-	UINT					Medium;			///< Type of physical medium the underlying NDIS driver uses. See the
-											///< documentation of NdisOpenAdapter in the MS DDK for details.
 	NDIS_HANDLE				PacketPool;		///< Pool of NDIS_PACKET structures used to transfer the packets from and to the NIC driver.
 	NDIS_HANDLE TapNBPool; // Pool of NET_BUFFERs to hold capture data temporarily.
 	PNPF_OBJ_POOL InternalRequestPool; // Pool of INTERNAL_REQUEST structures that wrap every single OID request.
@@ -812,19 +810,6 @@ FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
 // 	NPF_SetModuleOptions(
 // 	NDIS_HANDLE             FilterModuleContext
 // 	);
-
-/*!
-\brief Get the physical medium of the adapter.
-\param FilterModuleContext Pointer to the filter context structure.
-\return the physical medium.
-
-This function is used to get the original adapter physical medium with
-a NPF_AttachAdapter().
-*/
-ULONG
-NPF_GetPhysicalMedium(
-	NDIS_HANDLE FilterModuleContext
-	);
 
 /*!
   \brief Get the packet filter of the adapter.

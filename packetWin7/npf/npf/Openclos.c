@@ -1967,7 +1967,6 @@ NPF_CreateFilterModule(
 	pFiltMod->AdapterHandleUsageCounter = 0;
 	NdisAllocateSpinLock(&pFiltMod->AdapterHandleLock);
 
-	pFiltMod->Medium = SelectedIndex; //Can be 0 before the first bindding.
 	pFiltMod->OpsState = OpsDisabled;
 
 	TRACE_EXIT();
@@ -2975,55 +2974,6 @@ Return Value:
 
    return Status;
 }
-
-//-------------------------------------------------------------------
-
-ULONG
-NPF_GetPhysicalMedium(
-	NDIS_HANDLE FilterModuleContext
-)
-{
-	TRACE_ENTER();
-
-	ULONG PhysicalMedium = 0;
-	ULONG BytesProcessed = 0;
-    PVOID pBuffer = NULL;
-
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PhysicalMedium), '0PWA');
-    if (pBuffer == NULL)
-    {
-        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
-            TRACE_EXIT();
-        return 0;
-    }
-
-	// get the PhysicalMedium when filter driver loads
-	NPF_DoInternalRequest(FilterModuleContext,
-		NdisRequestQueryInformation,
-		OID_GEN_PHYSICAL_MEDIUM_EX,
-		pBuffer,
-		sizeof(PhysicalMedium),
-		0,
-		0,
-		&BytesProcessed
-	);
-
-    PhysicalMedium = *(ULONG *)pBuffer;
-    ExFreePoolWithTag(pBuffer, '0PWA');
-
-	if (BytesProcessed != sizeof(PhysicalMedium))
-	{
-		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PhysicalMedium), BytesProcessed = %x, sizeof(PhysicalMedium) = %x\n", BytesProcessed, sizeof(PhysicalMedium));)
-			TRACE_EXIT();
-		return 0;
-	}
-	else
-	{
-		TRACE_EXIT();
-		return PhysicalMedium;
-	}
-}
-
 
 //-------------------------------------------------------------------
 
