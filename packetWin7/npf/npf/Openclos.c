@@ -540,7 +540,7 @@ NPF_StartUsingOpenInstance(
 		{
 			// Get the absolute value of the system boot time.
 			// This is used for timestamp conversion.
-			TIME_SYNCHRONIZE(&Open->start, Open->TimestampMode);
+			TIME_SYNCHRONIZE(&pOpen->start, pOpen->TimestampMode);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			if (pOpen->pFiltMod->Loopback)
@@ -551,10 +551,10 @@ NPF_StartUsingOpenInstance(
 #endif
 
 #ifdef HAVE_DOT11_SUPPORT
-			if (pFiltMod->Dot11)
+			if (pOpen->pFiltMod->Dot11)
 			{
 				/* Update packet filter for raw wifi */
-				NPF_SetPacketFilter(Open, 0);
+				NPF_SetPacketFilter(pOpen, 0);
 			}
 #endif
 
