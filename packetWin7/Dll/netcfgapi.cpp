@@ -582,7 +582,7 @@ BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR szComponentId)
 	TRACE_ENTER();
 
 	hr = netcfg->FindComponent(szComponentId, &comp);
-	if (FAILED(hr))
+	if (FAILED(hr) || !comp)
 	{
 		TRACE_PRINT1("INetCfg::FindComponent: error, hr = 0x%08x.", hr);
 		TRACE_EXIT();
