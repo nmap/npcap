@@ -651,13 +651,13 @@ NPF_TapExForEachOpen(
 				}
 
 				pNBLCopy->Dot11RadiotapHeader = NPF_POOL_GET(Open->pFiltMod->Dot11HeaderPool, PUCHAR);
-				RtlZeroMemory(pNBLCopy->Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER);
 				if (pNBLCopy->Dot11RadiotapHeader == NULL)
 				{
 					// Insufficient memory
 					// TODO: Count this as a drop?
 					goto RadiotapDone;
 				}
+				RtlZeroMemory(pNBLCopy->Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER);
 				pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pNBLCopy->Dot11RadiotapHeader;
 
 				// The radiotap header is also placed in the buffer.
