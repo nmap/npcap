@@ -364,7 +364,7 @@ NPF_Read(
 		InterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
 
 		// Return this capture data
-		NPF_POOL_RETURN(Open->CapturePool, pCapData, NPF_FreeCapData);
+		NPF_ObjectPoolReturn(Open->CapturePool, pCapData, NPF_FreeCapData);
 
 		ASSERT(Open->Free <= Open->Size);
 	}
@@ -433,7 +433,7 @@ NPF_DoTap(
 	for (Curr = NBLCopiesHead.Next; Curr != NULL; Curr = Curr->Next)
 	{
 		pNBLCopy = CONTAINING_RECORD(Curr, NPF_NBL_COPY, NBLCopyEntry); 
-		NPF_POOL_RETURN(pFiltMod->NBLCopyPool, pNBLCopy, NPF_FreeNBLCopy);
+		NPF_ObjectPoolReturn(pFiltMod->NBLCopyPool, pNBLCopy, NPF_FreeNBLCopy);
 	}
 
 	return;
@@ -593,7 +593,7 @@ NPF_TapExForEachOpen(
 		if (pNBLCopyPrev->Next == NULL)
 		{
 			// Add another NBL copy to the chain
-			pNBLCopy = NPF_POOL_GET(Open->pFiltMod->NBLCopyPool, PNPF_NBL_COPY);
+			pNBLCopy = (PNPF_NBL_COPY) NPF_ObjectPoolGet(Open->pFiltMod->NBLCopyPool);
 			if (pNBLCopy == NULL)
 			{
 				//Insufficient resources.
@@ -650,7 +650,7 @@ NPF_TapExForEachOpen(
 					goto RadiotapDone;
 				}
 
-				pNBLCopy->Dot11RadiotapHeader = NPF_POOL_GET(Open->pFiltMod->Dot11HeaderPool, PUCHAR);
+				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) NPF_ObjectPoolGet(Open->pFiltMod->Dot11HeaderPool);
 				if (pNBLCopy->Dot11RadiotapHeader == NULL)
 				{
 					// Insufficient memory
@@ -814,7 +814,7 @@ NPF_TapExForEachOpen(
 			if (pNBCopiesPrev->Next == NULL)
 			{
 				// Add another copy to the chain
-				pNBCopy = NPF_POOL_GET(Open->pFiltMod->NBCopiesPool, PNPF_NB_COPIES);
+				pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->pFiltMod->NBCopiesPool);
 				if (pNBCopy == NULL)
 				{
 					//Insufficient resources.
@@ -990,7 +990,7 @@ NPF_TapExForEachOpen(
 				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = fres;
 			}
 
-			PNPF_CAP_DATA pCapData = NPF_POOL_GET(Open->CapturePool, PNPF_CAP_DATA);
+			PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(Open->CapturePool);
 			if (pCapData == NULL)
 			{
 				// Insufficient memory
@@ -1001,8 +1001,8 @@ NPF_TapExForEachOpen(
 			RtlZeroMemory(pCapData, sizeof(NPF_CAP_DATA));
 			// Increment refcounts on relevant structures
 			pCapData->pNBCopy = pNBCopy;
-			NPF_POOL_REFERENCE(pNBCopy);
-			NPF_POOL_REFERENCE(pNBLCopy);
+			NPF_ReferenceObject(pNBCopy);
+			NPF_ReferenceObject(pNBLCopy);
 
 			GET_TIME(&pCapData->BpfHeader.bh_tstamp, &Open->start, Open->TimestampMode);
 			pCapData->BpfHeader.bh_caplen = fres;

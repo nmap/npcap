@@ -51,6 +51,16 @@
 
 // TODO: Implement a way to shrink the pool occasionally?
 
+/* Objects in the pool are retrieved and returned using this struct.
+ * pObject is an uninitialized array of ulObjectSize bytes.
+ */
+typedef struct _NPF_OBJ_POOL_ELEM
+{
+	LIST_ENTRY ObjectsEntry;
+	ULONG Refcount;
+	UCHAR pObject[];
+} NPF_OBJ_POOL_ELEM, *PNPF_OBJ_POOL_ELEM;
+
 typedef struct _NPF_OBJ_SHELF
 {
 	LIST_ENTRY ShelfEntry;
@@ -127,7 +137,7 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize,
 	return pPool;
 }
 
-PNPF_OBJ_POOL_ELEM NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
+PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 {
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
 	PLIST_ENTRY pEntry = ExInterlockedRemoveHeadList(&pPool->ObjectsHead, &pPool->ObjectsLock);
@@ -147,7 +157,7 @@ PNPF_OBJ_POOL_ELEM NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 
 	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, ObjectsEntry);
 	pElem->Refcount = 1;
-	return pElem;
+	return pElem->pObject;
 }
 
 VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
@@ -164,8 +174,9 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 	NdisFreeMemory(pPool, sizeof(NPF_OBJ_POOL), 0);
 }
 
-VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PNPF_OBJ_POOL_ELEM pElem, PNPF_OBJ_CLEANUP CleanupFunc)
+VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 {
+	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 	ULONG refcount = InterlockedDecrement(&pElem->Refcount);
 	if (refcount == 0)
 	{
@@ -179,7 +190,9 @@ VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PNPF_OBJ_POOL_ELEM pElem, PNPF_OB
 	}
 }
 
-VOID NPF_ReferenceObject(PNPF_OBJ_POOL_ELEM pElem)
+VOID NPF_ReferenceObject(PVOID pObject)
 {
+	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
+
 	InterlockedIncrement(&pElem->Refcount);
 }

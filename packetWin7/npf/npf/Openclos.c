@@ -229,7 +229,7 @@ NPF_ResetBufferContents(
 	for (Curr = Open->PacketQueue.Flink; Curr != &Open->PacketQueue; Curr = Curr->Flink)
 	{
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
-		NPF_POOL_RETURN(Open->CapturePool, pCapData, NPF_FreeCapData);
+		NPF_ObjectPoolReturn(Open->CapturePool, pCapData, NPF_FreeCapData);
 	}
 	// Remove links
 	InitializeListHead(&Open->PacketQueue);
@@ -271,7 +271,7 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy)
 	}
 }
 
-/* NPF_POOL_RETURN Free handler for NBLCopyPool */
+/* NPF_ObjectPoolReturn Free handler for NBLCopyPool */
 VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy)
 {
 	PNPF_NB_COPIES pNBCopies = NULL;
@@ -286,20 +286,20 @@ VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy)
 		pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
 		pNBCopiesEntry = pNBCopiesEntry->Next;
 
-		NPF_POOL_RETURN(pFiltMod->NBCopiesPool, pNBCopies, NPF_FreeNBCopies);
+		NPF_ObjectPoolReturn(pFiltMod->NBCopiesPool, pNBCopies, NPF_FreeNBCopies);
 	}
 
 	if (pNBLCopy->Dot11RadiotapHeader != NULL)
 	{
-		NPF_POOL_RETURN(pFiltMod->Dot11HeaderPool, pNBLCopy->Dot11RadiotapHeader, NULL);
+		NPF_ObjectPoolReturn(pFiltMod->Dot11HeaderPool, pNBLCopy->Dot11RadiotapHeader, NULL);
 	}
 }
 
 VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData)
 {
 	PNPCAP_FILTER_MODULE pFiltMod = pCapData->pNBCopy->pNBLCopy->pFiltMod;
-	NPF_POOL_RETURN(pFiltMod->NBLCopyPool, pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy);
-	NPF_POOL_RETURN(pFiltMod->NBCopiesPool, pCapData->pNBCopy, NPF_FreeNBCopies);
+	NPF_ObjectPoolReturn(pFiltMod->NBLCopyPool, pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy);
+	NPF_ObjectPoolReturn(pFiltMod->NBCopiesPool, pCapData->pNBCopy, NPF_FreeNBCopies);
 }
 
 //-------------------------------------------------------------------
