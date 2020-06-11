@@ -977,6 +977,7 @@ NPF_TapExForEachOpen(
 						dropped++;
 						goto TEFEO_release_BufferLock;
 					}
+					pNBCopy->ulSize += toAlloc;
 				}
 				// Now the NB has enough space.
 				ULONG BytesCopied = 0;
