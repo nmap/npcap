@@ -609,6 +609,8 @@ NPF_TapExForEachOpen(
 		{
 			pNBLCopy = CONTAINING_RECORD(pNBLCopyPrev->Next, NPF_NBL_COPY, NBLCopyEntry);
 		}
+		pNBLCopyPrev = pNBLCopyPrev->Next;
+
 		// Informational headers
 		// Only bother with these if we are capturing, i.e. not MODE_STAT
 		if (Open->mode & MODE_DUMP || !(Open->mode & MODE_STAT))
