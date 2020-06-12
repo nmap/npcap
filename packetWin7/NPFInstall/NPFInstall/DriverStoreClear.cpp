@@ -100,12 +100,8 @@ vector<tstring> getInfNamesFromPnpUtilOutput(tstring strOutput)
 
 	while ((iStart = strOutput.find(_T(':'), iStart + 1)) != tstring::npos)
 	{
-		iStart ++;
-		while (strOutput[iStart] == _T(' ') || strOutput[iStart] == _T('\t'))
-		{
-			iStart ++;
-		}
-		iEnd = strOutput.find(_T('\n'), iStart + 1);
+		iStart = strOutput.find_first_not_of(_T(" \t"), iStart + 1);
+		iEnd = strOutput.find_first_of(_T("\r\n"), iStart + 1);
 		tstring strText = strOutput.substr(iStart, iEnd - iStart);
 
 		if (iTime == 0)
