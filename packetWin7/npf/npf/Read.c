@@ -844,10 +844,10 @@ NPF_TapExForEachOpen(
 			TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 
 			fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
-					NET_BUFFER_FIRST_MDL(pNetBuf),
+					NET_BUFFER_CURRENT_MDL(pNetBuf),
 					NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf),
 					TotalPacketSize);
-			IF_LOUD(DbgPrint("\nFirst MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_FIRST_MDL(pNetBuf)), TotalPacketSize, fres);)
+			IF_LOUD(DbgPrint("\nCurrent MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_CURRENT_MDL(pNetBuf)), TotalPacketSize, fres);)
 
 			NdisReleaseRWLock(Open->MachineLock, &lockState);
 
