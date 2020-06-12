@@ -158,7 +158,7 @@ PQUERYSYSTEMTIME g_ptrQuerySystemTime = NULL;
 // this function wraps the macro execution.
 void
 KeQuerySystemTimeWrapper(
-	PLARGE_INTEGER CurrentTime
+	_Out_ PLARGE_INTEGER CurrentTime
 )
 {
 	KeQuerySystemTime(CurrentTime);
@@ -171,6 +171,7 @@ KeQuerySystemTimeWrapper(
 _Dispatch_type_(IRP_MJ_WRITE)
 DRIVER_DISPATCH NPF_Deny;
 
+_Use_decl_annotations_
 NTSTATUS NPF_Deny(
 		IN PDEVICE_OBJECT DeviceObject,
 		IN PIRP Irp
@@ -185,6 +186,41 @@ NTSTATUS NPF_Deny(
 	return STATUS_UNSUCCESSFUL;
 }
 #endif
+
+/*!
+  \brief The initialization routine of the LWF data structure.
+  \param pFChars The LWF data structure.
+  \param bWiFiOrNot Whether the LWF is registered as a WiFi one or standard one.
+  \return NULL
+*/
+VOID
+NPF_registerLWF(
+	_In_ PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars,
+	_In_ BOOLEAN bWiFiOrNot
+	);
+
+/*!
+  \brief read Npcap software's registry, get the option.
+
+  If the registry key doesn't exist, we view the result as 0.
+*/
+ULONG
+NPF_GetRegistryOption_Integer(
+	_In_ PUNICODE_STRING RegistryPath,
+	_In_ PUNICODE_STRING RegValueName
+	);
+
+/*!
+  \brief read Npcap software's registry, get the option
+
+  If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
+*/
+VOID
+NPF_GetRegistryOption_String(
+	_In_ PUNICODE_STRING RegistryPath,
+	_In_ PUNICODE_STRING RegValueName,
+	_Inout_ PNDIS_STRING g_OutputString
+	);
 
 //-------------------------------------------------------------------
 //
@@ -492,6 +528,7 @@ DriverEntry(
 }
 
 //-------------------------------------------------------------------
+_Use_decl_annotations_
 VOID
 NPF_registerLWF(
 	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars,
@@ -566,6 +603,7 @@ NPF_registerLWF(
 
 
 //-------------------------------------------------------------------
+_Use_decl_annotations_
 ULONG
 NPF_GetRegistryOption_Integer(
 	PUNICODE_STRING RegistryPath,
@@ -657,6 +695,7 @@ REGISTRY_QUERY_VALUE_KEY:
 }
 
 //-------------------------------------------------------------------
+_Use_decl_annotations_
 VOID
 NPF_GetRegistryOption_String(
 	PUNICODE_STRING RegistryPath,

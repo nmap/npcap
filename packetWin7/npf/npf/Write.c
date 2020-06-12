@@ -89,12 +89,50 @@
 #include "debug.h"
 #include "packet.h"
 
+/*!
+  \brief Function to free the Net Buffer Lists initiated by ourself.
+*/
+VOID
+NPF_FreePackets(
+	_In_ PNET_BUFFER_LIST    NetBufferLists
+	);
+
+/*!
+  \brief Ends a send operation.
+  \param pFiltMod Pointer to filter module context structure
+  \param FreeBufAfterWrite Whether the buffer should be freed.
+
+  Callback function associated with the NdisFSend() NDIS function. It is invoked by NPF_SendCompleteEx() when the NIC
+  driver has finished an OID request operation that was previously started by NPF_Write().
+*/
+VOID
+NPF_SendCompleteExForEachOpen(
+	_In_ POPEN_INSTANCE Open,
+	_In_ BOOLEAN FreeBufAfterWrite
+	);
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+/*!
+  \brief Send a loopback NBL.
+  \param NetBufferList Pointer to NBL.
+
+  Alternative to NdisFSendNetBufferLists, use the same NBL parameter, but it calls Winsock Kernel to send packet instead
+  of NDIS functions.
+*/
+VOID
+NPF_LoopbackSendNetBufferLists(
+	_In_ NDIS_HANDLE FilterModuleContext,
+	_In_ PNET_BUFFER_LIST NetBufferList
+	);
+#endif
+
 //-------------------------------------------------------------------
 
+_Use_decl_annotations_
 NTSTATUS
 NPF_Write(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
+	PDEVICE_OBJECT DeviceObject,
+	PIRP Irp
 	)
 {
 	POPEN_INSTANCE		Open;
@@ -418,11 +456,41 @@ NPF_Write(
 
 //-------------------------------------------------------------------
 
+/*!
+  \brief Waits the completion of all the sends performed by NPF_BufferedWrite.
+  \param Open Pointer to open context structure.
+
+  This function is used by NPF_BufferedWrite to wait the completion of
+  all the sends before returning the control to the user.
+*/
+VOID
+NPF_WaitEndOfBufferedWrite(
+	_In_ POPEN_INSTANCE Open
+	)
+{
+	UINT i;
+
+	TRACE_ENTER();
+
+	NdisResetEvent(&Open->WriteEvent);
+
+	for (i = 0; Open->Multiple_Write_Counter > 0 && i < TRANSMIT_PACKETS; i++)
+	{
+		NdisWaitEvent(&Open->WriteEvent, 100);  
+		NdisResetEvent(&Open->WriteEvent);
+	}
+
+	TRACE_EXIT();
+}
+
+//-------------------------------------------------------------------
+
+_Use_decl_annotations_
 INT
 NPF_BufferedWrite(
-	IN PIRP Irp,
-	IN PCHAR UserBuff,
-	IN ULONG UserBuffSize,
+	PIRP Irp,
+	PCHAR UserBuff,
+	ULONG UserBuffSize,
 	BOOLEAN Sync)
 {
 	POPEN_INSTANCE			Open;
@@ -735,28 +803,7 @@ NPF_BufferedWrite(
 
 //-------------------------------------------------------------------
 
-VOID
-NPF_WaitEndOfBufferedWrite(
-	POPEN_INSTANCE Open
-	)
-{
-	UINT i;
-
-	TRACE_ENTER();
-
-	NdisResetEvent(&Open->WriteEvent);
-
-	for (i = 0; Open->Multiple_Write_Counter > 0 && i < TRANSMIT_PACKETS; i++)
-	{
-		NdisWaitEvent(&Open->WriteEvent, 100);  
-		NdisResetEvent(&Open->WriteEvent);
-	}
-
-	TRACE_EXIT();
-}
-
-//-------------------------------------------------------------------
-
+_Use_decl_annotations_
 VOID
 NPF_FreePackets(
 	PNET_BUFFER_LIST    NetBufferLists
@@ -917,10 +964,11 @@ Return Value:
 
 //-------------------------------------------------------------------
 
+_Use_decl_annotations_
 VOID
 NPF_SendCompleteExForEachOpen(
-	IN POPEN_INSTANCE Open,
-	IN BOOLEAN FreeBufAfterWrite
+	POPEN_INSTANCE Open,
+	BOOLEAN FreeBufAfterWrite
 	)
 {
 	//TRACE_ENTER();
@@ -976,10 +1024,11 @@ NPF_SendCompleteExForEachOpen(
 //-------------------------------------------------------------------
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
+_Use_decl_annotations_
 VOID
 NPF_LoopbackSendNetBufferLists(
-	IN NDIS_HANDLE FilterModuleContext,
-	IN PNET_BUFFER_LIST NetBufferList
+	NDIS_HANDLE FilterModuleContext,
+	PNET_BUFFER_LIST NetBufferList
 	)
 {
 	TRACE_ENTER();

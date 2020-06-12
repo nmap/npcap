@@ -391,11 +391,12 @@ VOID
 NPF_TapExForEachOpen(
 	_In_ POPEN_INSTANCE Open,
 	_In_ PNET_BUFFER_LIST pNetBufferLists,
-	_In_ PSINGLE_LIST_ENTRY NBLCopyHead,
-	_In_ struct timeval *tstamp,
+	_Inout_ PSINGLE_LIST_ENTRY NBLCopyHead,
+	_Inout_ struct timeval *tstamp,
 	_In_ BOOLEAN AtDispatchLevel
 	);
 
+_Use_decl_annotations_
 VOID
 NPF_DoTap(
 	PNPCAP_FILTER_MODULE pFiltMod,

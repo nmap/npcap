@@ -448,7 +448,7 @@ typedef struct _NPF_NBL_COPY
 #endif
 } NPF_NBL_COPY, *PNPF_NBL_COPY;
 
-VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy);
+VOID NPF_FreeNBLCopy(_In_ PNPF_NBL_COPY pNBLCopy);
 
 typedef struct _NPF_NB_COPIES
 {
@@ -458,7 +458,7 @@ typedef struct _NPF_NB_COPIES
 	ULONG ulSize; //Size of all allocated space in the netbuffer.
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
-VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy);
+VOID NPF_FreeNBCopies(_In_ PNPF_NB_COPIES pNBCopy);
 
 /* Structure of a captured packet data description */
 typedef struct _NPF_CAP_DATA
@@ -469,7 +469,7 @@ typedef struct _NPF_CAP_DATA
 }
 NPF_CAP_DATA, *PNPF_CAP_DATA;
 
-VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData);
+VOID NPF_FreeCapData(_In_ PNPF_CAP_DATA pCapData);
 
 #ifdef HAVE_DOT11_SUPPORT
 #define NPF_CAP_SIZE(_P, _R) ((_P)->BpfHeader.bh_hdrlen \
@@ -482,8 +482,8 @@ VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData);
 
 VOID
 NPF_ResetBufferContents(
-	IN POPEN_INSTANCE Open,
-	IN BOOLEAN AcquireLock
+	_In_ POPEN_INSTANCE Open,
+	_In_ BOOLEAN AcquireLock
 );
 
 /*!
@@ -718,14 +718,6 @@ FILTER_RETURN_NET_BUFFER_LISTS NPF_ReturnEx;
 // 	);
 
 /*!
-  \brief Function to free the Net Buffer Lists initiated by ourself.
-*/
-VOID
-NPF_FreePackets(
-	PNET_BUFFER_LIST    NetBufferLists
-	);
-
-/*!
   \brief Callback for NDIS SendNetBufferListsCompleteHandler.
   \param FilterModuleContext Pointer to the filter context structure.
   \param NetBufferLists A chain of NBLs that are being returned to you.
@@ -812,88 +804,6 @@ FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
 // 	);
 
 /*!
-  \brief Get the packet filter of the adapter.
-  \param FilterModuleContext Pointer to the filter context structure.
-  \return the packet filter.
-
-  This function is used to get the original adapter packet filter with
-  a NPF_AttachAdapter(), it is stored in the HigherPacketFilter, the combination
-  of HigherPacketFilter and MyPacketFilter will be the final packet filter
-  the low-level adapter sees.
-*/
-ULONG
-NPF_GetPacketFilter(
-	NDIS_HANDLE FilterModuleContext
-	);
-
-/*!
-  \brief Set the packet filter of the adapter.
-  \param FilterModuleContext Pointer to the filter context structure.
-  \param packet filter The packet filter
-  \return Status of the set/query request.
-
-This function is used to get the original adapter packet filter with
-a NPF_AttachAdapter(), it is stored in the HigherPacketFilter, the combination
-of HigherPacketFilter and MyPacketFilter will be the final packet filter
-the low-level adapter sees.
-*/
-NDIS_STATUS
-NPF_SetPacketFilter(
-	NDIS_HANDLE FilterModuleContext,
-	ULONG PacketFilter
-);
-
-
-/*!
-  \brief Utility routine that forms and sends an NDIS_OID_REQUEST to the miniport adapter.
-  \param FilterModuleContext Pointer to the filter context structure.
-  \param RequestType NdisRequest[Set|Query|method]Information.
-  \param Oid The object being set/queried.
-  \param InformationBuffer Data for the request.
-  \param InformationBufferLength Length of the above.
-  \param OutputBufferLength Valid only for method request.
-  \param MethodId Valid only for method request.
-  \param pBytesProcessed Place to return bytes read/written.
-  \return Status of the set/query request.
-
-  Utility routine that forms and sends an NDIS_OID_REQUEST to the miniport,
-  waits for it to complete, and returns status to the caller.
-  NOTE: this assumes that the calling routine ensures validity
-  of the filter handle until this returns.
-*/
-_IRQL_requires_(PASSIVE_LEVEL)
-NDIS_STATUS
-NPF_DoInternalRequest(
-	_In_ NDIS_HANDLE					FilterModuleContext,
-	_In_ NDIS_REQUEST_TYPE				RequestType,
-	_In_ NDIS_OID						Oid,
-	_Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed)
-	PVOID								InformationBuffer,
-	_In_ ULONG							InformationBufferLength,
-	_In_opt_ ULONG						OutputBufferLength,
-	_In_ ULONG							MethodId,
-	_Out_ PULONG						pBytesProcessed
-	);
-
-
-/*!
-  \brief Self-sent request handler.
-  \param FilterModuleContext Pointer to the filter context structure.
-  \param NdisRequest Pointer to NDIS request.
-  \param Status Status of request completion.
-
-  NDIS entry point indicating completion of a pended self-sent NDIS_OID_REQUEST,
-  called by NPF_OidRequestComplete.
-*/
-VOID
-NPF_InternalRequestComplete(
-	_In_ NDIS_HANDLE                  FilterModuleContext,
-	_In_ PNDIS_OID_REQUEST            NdisRequest,
-	_In_ NDIS_STATUS                  Status
-	);
-
-
-/*!
   \brief The initialization routine of the driver.
   \param DriverObject The driver object of NPF created by the system.
   \param RegistryPath The registry path containing the keys related to the driver.
@@ -911,59 +821,6 @@ DRIVER_INITIALIZE DriverEntry;
 // 	IN PDRIVER_OBJECT DriverObject,
 // 	IN PUNICODE_STRING RegistryPath
 // 	);
-
-
-/*!
-  \brief The initialization routine of the LWF data structure.
-  \param pFChars The LWF data structure.
-  \param bWiFiOrNot Whether the LWF is registered as a WiFi one or standard one.
-  \return NULL
-*/
-VOID
-NPF_registerLWF(
-	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars,
-	BOOLEAN bWiFiOrNot
-	);
-
-
-/*!
-  \brief read Npcap software's registry, get the option.
-
-  If the registry key doesn't exist, we view the result as 0.
-*/
-ULONG
-NPF_GetRegistryOption_Integer(
-	PUNICODE_STRING RegistryPath,
-	PUNICODE_STRING RegValueName
-	);
-
-/*!
-  \brief read Npcap software's registry, get the loopback adapter's device name and then put the name into global variable: g_LoopbackAdapterName. This name will be check in NPF_CreateDevice() function.
-
-  If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
-*/
-VOID
-NPF_GetRegistryOption_String(
-	);
-
-/*!
-  \brief Creates a device for a given MAC.
-  \param adriverObjectP The driver object that will be associated with the device, i.e. the one of NPF.
-  \param amacNameP The name of the network interface that the device will point.
-  \return If the function succeeds, the return value is nonzero.
-
-  NPF creates a device for every valid network adapter. The new device points to the NPF driver, but contains
-  information about the original device. In this way, when the user opens the new device, NPF will be able to
-  determine the correct adapter to use.
-*/
-BOOLEAN
-NPF_CreateDevice(
-	IN OUT PDRIVER_OBJECT DriverObject,
-	IN PUNICODE_STRING AdapterName,
-	IN PUNICODE_STRING NPF_Prefix,
-	IN BOOLEAN Dot11
-	);
-
 
 /*!
   \brief Opens a new instance of the driver.
@@ -1040,10 +897,10 @@ DRIVER_DISPATCH NPF_CloseAdapter;
 */
 VOID
 NPF_DoTap(
-	PNPCAP_FILTER_MODULE pFiltMod,
-	PNET_BUFFER_LIST NetBufferLists,
-	POPEN_INSTANCE pOpenOriginating,
-	BOOLEAN AtDispatchLevel
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PNET_BUFFER_LIST NetBufferLists,
+	_In_opt_ POPEN_INSTANCE pOpenOriginating,
+	_In_ BOOLEAN AtDispatchLevel
 	);
 
 /*!
@@ -1121,73 +978,11 @@ DRIVER_DISPATCH NPF_Write;
 */
 INT
 NPF_BufferedWrite(
-	IN PIRP Irp,
-	IN PCHAR UserBuff,
-	IN ULONG UserBuffSize,
-	BOOLEAN sync
+	_In_ PIRP Irp,
+	_In_reads_(UserBuffSize) PCHAR UserBuff,
+	_In_ ULONG UserBuffSize,
+	_In_ BOOLEAN sync
 	);
-
-
-/*!
-  \brief Waits the completion of all the sends performed by NPF_BufferedWrite.
-  \param Open Pointer to open context structure.
-
-  This function is used by NPF_BufferedWrite to wait the completion of
-  all the sends before returning the control to the user.
-*/
-VOID
-NPF_WaitEndOfBufferedWrite(
-	POPEN_INSTANCE Open
-	);
-
-
-/*!
-  \brief Ends a send operation.
-  \param pFiltMod Pointer to filter module context structure
-  \param FreeBufAfterWrite Whether the buffer should be freed.
-
-  Callback function associated with the NdisFSend() NDIS function. It is invoked by NPF_SendCompleteEx() when the NIC
-  driver has finished an OID request operation that was previously started by NPF_Write().
-*/
-VOID
-NPF_SendCompleteExForEachOpen(
-	IN POPEN_INSTANCE Open,
-	BOOLEAN FreeBufAfterWrite
-	);
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-/*!
-  \brief Send a loopback NBL.
-  \param NetBufferList Pointer to NBL.
-
-  Alternative to NdisFSendNetBufferLists, use the same NBL parameter, but it calls Winsock Kernel to send packet instead
-  of NDIS functions.
-*/
-VOID
-NPF_LoopbackSendNetBufferLists(
-	IN NDIS_HANDLE FilterModuleContext,
-	IN PNET_BUFFER_LIST NetBufferList
-	);
-#endif
-
-/*!
-  \brief Callback for NDIS StatusHandler. Not used by NPF
-*/
-VOID
-NPF_StatusEx(
-	IN NDIS_HANDLE ProtocolBindingContext,
-	IN PNDIS_STATUS_INDICATION StatusIndication
-	);
-
-
-/*!
-  \brief Callback for NDIS StatusCompleteHandler. Not used by NPF
-*/
-VOID
-NPF_StatusComplete(
-	IN NDIS_HANDLE ProtocolBindingContext
-	);
-
 
 /*!
   \brief Function that serves the user's reads.
@@ -1225,97 +1020,16 @@ DRIVER_DISPATCH NPF_Read;
 */
 void
 NPF_AddToFilterModuleArray(
-	PNPCAP_FILTER_MODULE pFiltMod
-	);
-
-
-/*!
-  \brief Add the open context to the group open array of a filter module.
-  \param pOpen Pointer to open context structure.
-  \param pFiltMod Pointer to filter module context structure.
-
-  This function is used by NPF_OpenAdapter to add a new open context to
-  the group open array of a filter module, this array is designed to help find and clean the specific adapter context.
-  A filter module context is generated by NPF_AttachAdapter(), it handles with NDIS.
-  A open instance is generated by NPF_OpenAdapter(), it handles with the WinPcap
-  up-level packet.dll and so on.
-*/
-void
-NPF_AddToGroupOpenArray(
-	POPEN_INSTANCE pOpen,
-	PNPCAP_FILTER_MODULE pFiltMod
-	);
-
-
-/*!
-  \brief Remove the filter module context from the global filter module array.
-  \param pFiltMod Pointer to filter module context structure.
-
-  This function is used by NPF_DetachAdapter(), NPF_Cleanup() and NPF_CleanupForUnclosed()
-  to remove a filter module context from the global filter module array.
-*/
-void
-NPF_RemoveFromFilterModuleArray(
-	PNPCAP_FILTER_MODULE pFiltMod
-	);
-
-
-/*!
-  \brief Remove the open context from the group open array of a filter module.
-  \param pOpen Pointer to open context structure.
-
-  This function is used by NPF_Cleanup() and NPF_CleanupForUnclosed()
-  to remove an open context from the group open array of a filter module.
-*/
-void
-NPF_RemoveFromGroupOpenArray(
-	POPEN_INSTANCE pOpen
-	);
-
-
-/*!
-  \brief Compare two NDIS strings.
-  \param s1 The first string.
-  \param s2 The second string.
-  \return  1 if s1 > s2
-		   0 if s1 = s2
-		  -1 if s1 < s2
-
-  This function is used to help decide whether two adapter names are the same.
-*/
-BOOLEAN
-NPF_EqualAdapterName(
-	PNDIS_STRING s1,
-	PNDIS_STRING s2
-	);
-
-
-/*!
-  \brief Get a pointer to filter module from the global array.
-  \param pAdapterName The adapter name of the target filter module.
-  \return Pointer to the filter module, or NULL if not found.
-
-  This function is used to create a group member adapter for the group head one.
-*/
-PNPCAP_FILTER_MODULE
-NPF_GetFilterModuleByAdapterName(
-	PNDIS_STRING pAdapterName
+	_In_ PNPCAP_FILTER_MODULE pFiltMod
 	);
 
 /*!
   \brief Get the filter module for the loopback adapter
   \return Pointer to the loopback filter module.
  */
+_Ret_maybenull_
 PNPCAP_FILTER_MODULE
 NPF_GetLoopbackFilterModule();
-
-/*!
-  \brief Create a new Open instance
-  \return Pointer to the new open instance.
-
-*/
-POPEN_INSTANCE
-NPF_CreateOpenObject();
 
 
 /*!
@@ -1326,19 +1040,18 @@ NPF_CreateOpenObject();
 
   This function is used to create a filter module context object
 */
+_Ret_maybenull_
 PNPCAP_FILTER_MODULE
 NPF_CreateFilterModule(
-	NDIS_HANDLE NdisFilterHandle,
-	PNDIS_STRING AdapterName,
-	UINT SelectedIndex
+	_In_ NDIS_HANDLE NdisFilterHandle,
+	_In_ PNDIS_STRING AdapterName,
+	_In_ UINT SelectedIndex
 	);
 
 VOID
-NPF_WriterThread(_In_ PVOID Context);
+NPF_ReleaseOpenInstanceResources(_In_ POPEN_INSTANCE pOpen);
 VOID
-NPF_ReleaseOpenInstanceResources(POPEN_INSTANCE pOpen);
-VOID
-NPF_ReleaseFilterModuleResources(PNPCAP_FILTER_MODULE pFiltMod);
+NPF_ReleaseFilterModuleResources(_In_ PNPCAP_FILTER_MODULE pFiltMod);
 
 
 #ifdef NPCAP_KDUMP
@@ -1405,38 +1118,25 @@ VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Len
 NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
 #endif
 
-BOOLEAN NPF_IsOpenInstance(IN POPEN_INSTANCE pOpen);
+BOOLEAN NPF_IsOpenInstance(_In_ POPEN_INSTANCE pOpen);
 
-BOOLEAN NPF_StartUsingBinding(IN PNPCAP_FILTER_MODULE pFiltMod);
+BOOLEAN NPF_StartUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod);
 
-VOID NPF_StopUsingBinding(IN PNPCAP_FILTER_MODULE pFiltMod);
+VOID NPF_StopUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod);
 
-VOID NPF_CloseBinding(IN PNPCAP_FILTER_MODULE pFiltMod);
+BOOLEAN NPF_StartUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen);
 
-BOOLEAN NPF_StartUsingOpenInstance(IN POPEN_INSTANCE pOpen, OPEN_STATE MaxOpen);
+VOID NPF_StopUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen);
 
-VOID NPF_StopUsingOpenInstance(IN POPEN_INSTANCE pOpen, OPEN_STATE MaxOpen);
+VOID NPF_CloseOpenInstance(_In_ POPEN_INSTANCE pOpen);
 
-VOID NPF_CloseOpenInstance(IN POPEN_INSTANCE pOpen);
-
-NTSTATUS NPF_GetDeviceMTU(IN PNPCAP_FILTER_MODULE pFiltMod, OUT PUINT  pMtu);
+NTSTATUS NPF_GetDeviceMTU(_In_ PNPCAP_FILTER_MODULE pFiltMod, _Out_ PUINT  pMtu);
 
 #ifdef HAVE_DOT11_SUPPORT
-NTSTATUS NPF_GetDataRateMappingTable(IN PNPCAP_FILTER_MODULE pFiltMod, OUT PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable);
-
-USHORT NPF_LookUpDataRateMappingTable(IN PNPCAP_FILTER_MODULE pFiltMod, IN UCHAR ucDataRate);
-
-NTSTATUS NPF_GetCurrentOperationMode(IN PNPCAP_FILTER_MODULE pFiltMod, OUT PDOT11_CURRENT_OPERATION_MODE pCurrentOperationMode);
-
-ULONG NPF_GetCurrentOperationMode_Wrapper(IN PNPCAP_FILTER_MODULE pFiltMod);
-
-NTSTATUS NPF_GetCurrentChannel(IN PNPCAP_FILTER_MODULE pFiltMod, OUT PULONG pCurrentChannel);
-
-ULONG NPF_GetCurrentChannel_Wrapper(IN PNPCAP_FILTER_MODULE pFiltMod);
-
-NTSTATUS NPF_GetCurrentFrequency(IN PNPCAP_FILTER_MODULE pFiltMod, OUT PULONG pCurrentFrequency);
-
-ULONG NPF_GetCurrentFrequency_Wrapper(IN PNPCAP_FILTER_MODULE pFiltMod);
+USHORT NPF_LookUpDataRateMappingTable(
+	       _In_ PNPCAP_FILTER_MODULE pFiltMod,
+	       _In_ UCHAR ucDataRate
+	       );
 #endif
 
 /**
