@@ -389,10 +389,11 @@ NPF_Read(
 //-------------------------------------------------------------------
 VOID
 NPF_TapExForEachOpen(
-	IN POPEN_INSTANCE Open,
-	IN PNET_BUFFER_LIST pNetBufferLists,
-	IN PSINGLE_LIST_ENTRY NBLCopyHead,
-	IN BOOLEAN AtDispatchLevel
+	_In_ POPEN_INSTANCE Open,
+	_In_ PNET_BUFFER_LIST pNetBufferLists,
+	_In_ PSINGLE_LIST_ENTRY NBLCopyHead,
+	_In_ struct timeval *tstamp,
+	_In_ BOOLEAN AtDispatchLevel
 	);
 
 VOID
@@ -408,6 +409,7 @@ NPF_DoTap(
 	LOCK_STATE_EX lockState;
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	SINGLE_LIST_ENTRY NBLCopiesHead;
+	struct timeval tstamp = {0, 0};
 	NBLCopiesHead.Next = NULL;
 
 	/* Lock the group */
@@ -423,7 +425,7 @@ NPF_DoTap(
 			// If this instance originated the packet and doesn't want to see it, don't capture.
 			if (!(TempOpen == pOpenOriginating && TempOpen->SkipSentPackets))
 			{
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, AtDispatchLevel);
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, &tstamp, AtDispatchLevel);
 			}
 		}
 	}
@@ -548,12 +550,14 @@ NPF_AlignProtocolField(
 
 //-------------------------------------------------------------------
 
+_Use_decl_annotations_
 VOID
 NPF_TapExForEachOpen(
-	IN POPEN_INSTANCE Open,
-	IN PNET_BUFFER_LIST pNetBufferLists,
-	IN PSINGLE_LIST_ENTRY NBLCopyHead,
-	IN BOOLEAN AtDispatchLevel
+	POPEN_INSTANCE Open,
+	PNET_BUFFER_LIST pNetBufferLists,
+	PSINGLE_LIST_ENTRY NBLCopyHead,
+	struct timeval *tstamp,
+	BOOLEAN AtDispatchLevel
 	)
 {
 	UINT					fres;
@@ -570,6 +574,7 @@ NPF_TapExForEachOpen(
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	PSINGLE_LIST_ENTRY pNBLCopyPrev = NBLCopyHead;
 	PSINGLE_LIST_ENTRY pNBCopiesPrev = NULL;
+	ASSERT(tstamp != NULL);
 	
 	//TRACE_ENTER();
 
@@ -1009,7 +1014,13 @@ NPF_TapExForEachOpen(
 			NPF_ReferenceObject(pNBCopy);
 			NPF_ReferenceObject(pNBLCopy);
 
-			GET_TIME(&pCapData->BpfHeader.bh_tstamp, &Open->start, Open->TimestampMode);
+			if (tstamp->tv_sec == 0)
+			{
+				// We only get the timestamp once for all packets in this set of NBLs
+				// since they were all delivered at the same time.
+				GET_TIME(tstamp, &Open->start, Open->TimestampMode);
+			}
+			pCapData->BpfHeader.bh_tstamp = *tstamp;
 			pCapData->BpfHeader.bh_caplen = fres;
 			pCapData->BpfHeader.bh_datalen = TotalPacketSize;
 			pCapData->BpfHeader.bh_hdrlen = sizeof(struct bpf_hdr);
