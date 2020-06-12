@@ -430,48 +430,6 @@ DriverEntry(
 	devExtP->DetachedOpens.Next = NULL;
 	KeInitializeSpinLock(&devExtP->DetachedOpensLock);
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (g_LoopbackSupportMode) {
-#ifndef NPCAP_READ_ONLY
-		// Use Winsock Kernel (WSK) to send loopback packets.
-		// TODO: Allow this to continue but disable loopback if there's an error
-		Status = NPF_WSKStartup();
-		if (!NT_SUCCESS(Status))
-		{
-			TRACE_EXIT();
-			return Status;
-		}
-
-		Status = NPF_WSKInitSockets();
-		if (!NT_SUCCESS(Status))
-		{
-			NPF_WSKCleanup();
-			TRACE_EXIT();
-			return Status;
-		}
-#endif
-
-		// Create the fake "filter module" for loopback capture
-		// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
-		NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
-		PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(NULL, &LoopbackDeviceName, NdisMediumLoopback);
-		if (pFiltMod == NULL)
-		{
-#ifndef NPCAP_READ_ONLY
-			NPF_WSKFreeSockets();
-			NPF_WSKCleanup();
-#endif
-			TRACE_EXIT();
-			return NDIS_STATUS_RESOURCES;
-		}
-		pFiltMod->Loopback = TRUE;
-		pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
-
-		// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
-		NPF_AddToFilterModuleArray(pFiltMod);
-	}
-#endif
-
 	/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */
 	NdisAllocateSpinLock(&g_FilterArrayLock);
 
@@ -482,12 +440,6 @@ DriverEntry(
 		&FilterDriverHandle);
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-#ifndef NPCAP_READ_ONLY
-		NPF_WSKFreeSockets();
-		NPF_WSKCleanup();
-#endif
-#endif
 		NdisFreeSpinLock(&g_FilterArrayLock);
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter with NDIS, Status = %x", Status);
 		TRACE_EXIT();
@@ -497,6 +449,46 @@ DriverEntry(
 	{
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %p", Status, FilterDriverHandle);
 	}
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (g_LoopbackSupportMode) {
+		do {
+#ifndef NPCAP_READ_ONLY
+			// Use Winsock Kernel (WSK) to send loopback packets.
+			Status = NPF_WSKStartup();
+			if (!NT_SUCCESS(Status))
+			{
+				break;
+			}
+
+			Status = NPF_WSKInitSockets();
+			if (!NT_SUCCESS(Status))
+			{
+				NPF_WSKCleanup();
+				break;
+			}
+#endif
+
+			// Create the fake "filter module" for loopback capture
+			// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
+			NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
+			PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(FilterDriverHandle, &LoopbackDeviceName, NdisMediumLoopback);
+			if (pFiltMod == NULL)
+			{
+#ifndef NPCAP_READ_ONLY
+				NPF_WSKFreeSockets();
+				NPF_WSKCleanup();
+#endif
+				break;
+			}
+			pFiltMod->Loopback = TRUE;
+			pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
+
+			// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
+			NPF_AddToFilterModuleArray(pFiltMod);
+		} while (0);
+	}
+#endif
 
 	if (g_Dot11SupportMode)
 	{
