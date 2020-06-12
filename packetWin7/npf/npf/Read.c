@@ -942,7 +942,9 @@ NPF_TapExForEachOpen(
 					goto TEFEO_release_BufferLock;
 				}
 				pNBCopy->ulSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
-				NET_BUFFER_CURRENT_MDL_OFFSET(pNBCopy->pNetBuffer) = 0;
+				NET_BUFFER_DATA_OFFSET(pNBCopy->pNetBuffer) = 0;
+				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = 0;
+				NdisAdjustNetBufferCurrentMdl(pNBCopy->pNetBuffer);
 			}
 			ULONG OldLength = NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer);
 
