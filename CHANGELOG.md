@@ -1,4 +1,41 @@
 ﻿
+## Npcap 0.9994 [2020-06-12]
+
+* Fix a BSoD crash in `NPF_ReleaseOpenInstanceResources` due to miscounting of
+  number of open Loopback capture instances. Fixes [#185](http://issues.npcap.org/185).
+
+* Fix corrupted and missing packets in Npcap 0.9992 and 0.9993 due to reusing a
+  data structure that already contained packet data.
+
+* Fix a crash in `NPFInstall.exe` that happened when trying to rebind Npcap to
+  the network stack as part of some installations. Reported by Microsoft App
+  Assure ISV Outreach Team.
+
+* When multiple packets are indicated in a single `FilterReceiveNetBufferLists`
+  callback, only get a single timestamp for all of them. Avoids extra calls to
+  KeQueryPerformanceCounter or KeQuerySystemTimePrecise which only ended up
+  measuring Npcap processing delay, not actual packet arrival time.
+
+* Fix a potential NULL pointer deref issue in `Objpool.h` macros if an
+  allocation were to fail and return a NULL pointer.
+
+* Fix parsing of `pnputil.exe` output that resulted in Npcap drivers not being
+  cleared from the DriverStore before installing or upgrading. This led to
+  older drivers being preferred in some cases, such as installing an unsigned
+  driver in test mode.
+
+* Move all capture- and injection-related initialization code out of
+  `NPF_OpenAdapter`, improving efficiency of operations like listing adapters
+  or performing OID requests without starting a full capture.
+
+* Added SAL annotations to most driver functions to improve static analysis.
+  Found one issue related to using a NULL NDIS handle in an allocation
+  function, which is not supported on Windows 7.
+
+* Allow driver to load even if there is a problem initializing loopback capture
+  or injection functions. The loopback capture device will simply be
+  unavailable in that case.
+
 ## Npcap 0.9993 [2020-06-05]
 
 * Fix a BSoD crash in `NPF_DoInternalRequest` triggered by suspending the
