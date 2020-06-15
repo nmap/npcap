@@ -127,7 +127,8 @@ struct timeval
 #pragma optimize ("g",off)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
 /* KeQueryPerformanceCounter TimeStamps */
-__inline void SynchronizeOnCpu(struct timeval* start)
+__inline void TIME_SYNCHRONIZE(
+		_Out_ struct timeval* start)
 {
 	//	struct timeval *start = (struct timeval*)Data;
 
@@ -156,27 +157,6 @@ __inline void SynchronizeOnCpu(struct timeval* start)
 		start->tv_usec += 1000000;
 	}
 }	
-
-
-#pragma optimize ("g",on)  //Due to some weird behaviour of the optimizer of DDK build 2600 
-
-__inline VOID TIME_SYNCHRONIZE(struct timeval* start, ULONG TimestampMode)
-{
-
-	switch (TimestampMode)
-	{
-		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION:
-			SynchronizeOnCpu(start);
-			break;
-		default:
-			//do nothing
-			break;
-	}
-	return;
-}
-
-
-#pragma optimize ("g",off)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
 __inline void GetTimeKQPC(
 		_Out_ struct timeval* dst,

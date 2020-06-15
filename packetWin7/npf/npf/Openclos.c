@@ -721,7 +721,7 @@ NPF_StartUsingOpenInstance(
 		{
 			// Get the absolute value of the system boot time.
 			// This is used for timestamp conversion.
-			TIME_SYNCHRONIZE(&pOpen->start, pOpen->TimestampMode);
+			TIME_SYNCHRONIZE(&pOpen->start);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			if (pOpen->pFiltMod->Loopback)
