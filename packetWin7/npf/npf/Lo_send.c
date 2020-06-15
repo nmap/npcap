@@ -335,10 +335,11 @@ NPF_WSKCleanup(
 // 	return status;
 // }
 
+_Use_decl_annotations_
 NTSTATUS
 NTAPI
 NPF_WSKSendPacket_NBL(
-	IN PNET_BUFFER_LIST NetBufferList
+	PNET_BUFFER_LIST NetBufferList
 	)
 {
 	PMDL				pMdl = NULL;
@@ -414,12 +415,13 @@ NPF_WSKSendPacket_NBL(
 	return status;
 }
 
+_Use_decl_annotations_
 NTSTATUS
 NTAPI
 WSKSendPacketInternal_NBL(
-	IN BOOLEAN bIPv4,
-	IN PNET_BUFFER_LIST NetBufferList,
-	IN ULONG Offset
+	BOOLEAN bIPv4,
+	PNET_BUFFER_LIST NetBufferList,
+	ULONG Offset
 	)
 {
 	NTSTATUS		status = STATUS_SUCCESS;
@@ -444,10 +446,10 @@ static
 NTSTATUS
 NTAPI
 CompletionRoutine(
-IN PDEVICE_OBJECT 		DeviceObject,
-IN PIRP                   Irp,
-IN PKEVENT                CompletionEvent
-)
+	_In_ PDEVICE_OBJECT DeviceObject,
+	_In_ PIRP Irp,
+	_In_ PKEVENT CompletionEvent
+	)
 {
 	ASSERT(CompletionEvent);
 
@@ -464,8 +466,8 @@ IN PKEVENT                CompletionEvent
 static
 NTSTATUS
 InitWskData(
-	OUT PIRP* pIrp,
-	OUT PKEVENT CompletionEvent
+	_Outptr_ PIRP* pIrp,
+	_Inout_ PKEVENT CompletionEvent
 	)
 {
 	ASSERT(pIrp);
@@ -556,9 +558,9 @@ InitWskData(
 static
 NTSTATUS
 InitWskBuffer_NBL(
-	IN PNET_BUFFER_LIST NetBufferList,
-	IN ULONG BufferOffset,
-	OUT PWSK_BUF WskBuffer
+	_In_ PNET_BUFFER_LIST NetBufferList,
+	_In_ ULONG BufferOffset,
+	_Out_ PWSK_BUF WskBuffer
 	)
 {
 	NTSTATUS Status = STATUS_SUCCESS;
@@ -601,7 +603,7 @@ InitWskBuffer_NBL(
 static
 VOID
 FreeWskBuffer_NBL(
-	IN PWSK_BUF WskBuffer
+	_Inout_ PWSK_BUF WskBuffer
 	)
 {
 	ASSERT(WskBuffer);
@@ -617,13 +619,14 @@ FreeWskBuffer_NBL(
 	TRACE_EXIT();
 }
 
+_Use_decl_annotations_
 PWSK_SOCKET
 NTAPI
 WSKCreateSocket(
-	IN ADDRESS_FAMILY AddressFamily,
-	IN USHORT SocketType,
-	IN ULONG Protocol,
-	IN ULONG Flags
+	ADDRESS_FAMILY AddressFamily,
+	USHORT SocketType,
+	ULONG Protocol,
+	ULONG Flags
 	)
 {
 	KEVENT                  CompletionEvent = { 0 };
@@ -677,10 +680,11 @@ WSKCreateSocket(
 	return (PWSK_SOCKET)WskSocket;
 }
 
+_Use_decl_annotations_
 NTSTATUS
 NTAPI
 WSKCloseSocket(
-	IN PWSK_SOCKET WskSocket
+	PWSK_SOCKET WskSocket
 	)
 {
 	KEVENT          CompletionEvent = { 0 };
@@ -848,13 +852,14 @@ WSKCloseSocket(
 // 	return BytesSent;
 // }
 
+_Use_decl_annotations_
 LONG
 NTAPI
 WSKSendTo_NBL(
-	IN PWSK_SOCKET WskSocket,
-	IN PNET_BUFFER_LIST	NetBufferList,
-	IN ULONG BufferOffset,
-	__in_opt PSOCKADDR RemoteAddress
+	PWSK_SOCKET WskSocket,
+	PNET_BUFFER_LIST	NetBufferList,
+	ULONG BufferOffset,
+	PSOCKADDR RemoteAddress
 	)
 {
 	KEVENT          CompletionEvent = { 0 };
@@ -910,11 +915,12 @@ WSKSendTo_NBL(
 	return BytesSent;
 }
 
+_Use_decl_annotations_
 NTSTATUS
 NTAPI
 WSKBind(
-	IN PWSK_SOCKET WskSocket,
-	IN PSOCKADDR LocalAddress
+	PWSK_SOCKET WskSocket,
+	PSOCKADDR LocalAddress
 	)
 {
 	KEVENT          CompletionEvent = { 0 };

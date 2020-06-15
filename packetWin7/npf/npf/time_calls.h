@@ -95,7 +95,7 @@
 #define TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE 4
 #define /* DEPRECATED */ TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
 
-__inline BOOLEAN NPF_TimestampModeSupported(ULONG mode)
+__inline BOOLEAN NPF_TimestampModeSupported(_In_ ULONG mode)
 {
 	return mode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
 		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME
@@ -178,7 +178,9 @@ __inline VOID TIME_SYNCHRONIZE(struct timeval* start, ULONG TimestampMode)
 
 #pragma optimize ("g",off)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
-__inline void GetTimeKQPC(struct timeval* dst, struct timeval* start)
+__inline void GetTimeKQPC(
+		_Out_ struct timeval* dst,
+		_In_ struct timeval* start)
 {
 	LARGE_INTEGER PTime, TimeFreq;
 	LONG tmp;
@@ -197,7 +199,8 @@ __inline void GetTimeKQPC(struct timeval* dst, struct timeval* start)
 	}
 }
 
-__inline void GetTimeQST(struct timeval* dst)
+__inline void GetTimeQST(
+		_Out_ struct timeval* dst)
 {
 	LARGE_INTEGER SystemTime;
 
@@ -207,7 +210,8 @@ __inline void GetTimeQST(struct timeval* dst)
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
 }
 
-__inline void GetTimeQST_precise(struct timeval* dst)
+__inline void GetTimeQST_precise(
+		_Out_ struct timeval* dst)
 {
 	LARGE_INTEGER SystemTime;
 
@@ -221,7 +225,10 @@ __inline void GetTimeQST_precise(struct timeval* dst)
 #pragma optimize ("g",on)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
 
-__inline void GET_TIME(struct timeval* dst, struct timeval* start, ULONG TimestampMode)
+__inline void GET_TIME(
+		_Out_ struct timeval* dst,
+		_In_ struct timeval* start,
+		_In_ ULONG TimestampMode)
 {
 	switch (TimestampMode)
 	{
@@ -240,12 +247,16 @@ __inline void GET_TIME(struct timeval* dst, struct timeval* start, ULONG Timesta
 
 #else /*WIN_NT_DRIVER*/
 
-__inline void FORCE_TIME(struct timeval* src, struct timeval* dest)
+__inline void FORCE_TIME(
+		_In_ struct timeval* src,
+		_Out_ struct timeval* dest)
 {
 	*dest = *src;
 }
 
-__inline void GET_TIME(struct timeval* dst, struct timeval* data)
+__inline void GET_TIME(
+		_Out_ struct timeval* dst,
+		_In_ struct timeval* data)
 {
 	*dst = *data;
 }

@@ -812,7 +812,8 @@ NPF_CloseOpenInstance(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 VOID
-NPF_DecrementLoopbackInstances(PNPCAP_FILTER_MODULE pFiltMod)
+NPF_DecrementLoopbackInstances(
+		_Inout_ PNPCAP_FILTER_MODULE pFiltMod)
 {
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
 	if (InterlockedDecrement(&g_NumLoopbackInstances) == 0)
@@ -834,7 +835,7 @@ NPF_DecrementLoopbackInstances(PNPCAP_FILTER_MODULE pFiltMod)
 
 VOID
 NPF_DetachOpenInstance(
-	IN POPEN_INSTANCE pOpen
+	_Inout_ POPEN_INSTANCE pOpen
 	)
 {
 	NDIS_EVENT Event;
@@ -2236,8 +2237,8 @@ Return Value:
 //-------------------------------------------------------------------
 
 static NDIS_STATUS NPF_ValidateParameters(
-		BOOLEAN bDot11,
-        NDIS_MEDIUM MiniportMediaType
+	_In_ BOOLEAN bDot11,
+	_In_ NDIS_MEDIUM MiniportMediaType
         )
 {
     // Verify the media type is supported.  This is a last resort; the

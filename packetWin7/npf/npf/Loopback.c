@@ -143,6 +143,7 @@ HANDLE g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
 HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 
 _Success_(return)
+_Must_inspect_result_
 BOOLEAN
 NPF_IsPacketSelfSent(
 	_In_ PNET_BUFFER_LIST pNetBufferList,
@@ -293,8 +294,8 @@ NPF_NetworkInjectionComplete(
 // Send the loopback packets data to the user-mode code.
 VOID
 NPF_TapLoopback(
-        BOOLEAN bIPv4,
-        PNET_BUFFER_LIST pNetBufferList
+        _In_ BOOLEAN bIPv4,
+        _In_ PNET_BUFFER_LIST pNetBufferList
         )
 {
 	PNPCAP_FILTER_MODULE pLoopbackFilter = NULL;
@@ -487,6 +488,7 @@ NPF_TapLoopback(
 	}
 }
 
+_Must_inspect_result_
 BOOL NPF_ShouldProcess(
 		_In_ const FWPS_INCOMING_VALUES* inFixedValues,
 		_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
@@ -1077,7 +1079,7 @@ Exit:
 _Use_decl_annotations_
 NTSTATUS
 NPF_RegisterCallouts(
-_Inout_ void* deviceObject
+void* deviceObject
 )
 /* ++
 

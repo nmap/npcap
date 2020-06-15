@@ -60,21 +60,29 @@ typedef struct _NPF_OBJ_POOL *PNPF_OBJ_POOL;
  * param ulObjectSize The size of object this pool will create
  * param ulIncrement Objects are allocated in multiples of this parameter
  */
-PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize, ULONG ulIncrement);
+_Ret_maybenull_
+PNPF_OBJ_POOL NPF_AllocateObjectPool(
+	_In_ NDIS_HANDLE NdisHandle,
+	_In_ ULONG ulObjectSize,
+	_In_ ULONG ulIncrement);
 
 /* Frees an object pool and all associated memory.
  * All objects obtained from the pool are invalid.
  * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool
  */
-VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool);
+VOID NPF_FreeObjectPool(
+	_In_ PNPF_OBJ_POOL pPool);
 
 /* Retrieve an object from the pool. The object is uninitialized and pointed to
  * by the pObject member of the returned element.
  * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool
  */
-PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool);
+_Ret_maybenull_
+PVOID NPF_ObjectPoolGet(
+	_In_ PNPF_OBJ_POOL pPool);
 
-typedef VOID (*PNPF_OBJ_CLEANUP)(PVOID pObject);
+typedef VOID (*PNPF_OBJ_CLEANUP)(
+	_In_ PVOID pObject);
 
 /* Return an object to the pool. Decrements the refcount. If it is 0, the
  * object is returned to the pool.
@@ -82,9 +90,13 @@ typedef VOID (*PNPF_OBJ_CLEANUP)(PVOID pObject);
  * param pObject A pointer to an object to return
  * param CleanupFunc Optional function to perform cleanup of the object before returning it (free referenced memory, e.g.). Use NULL if no such function is needed.
  */
-VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc);
+VOID NPF_ObjectPoolReturn(
+	_In_ PNPF_OBJ_POOL pPool,
+	_In_ PVOID pObject,
+	_In_opt_ PNPF_OBJ_CLEANUP CleanupFunc);
 
 /* Reference an object from a pool. Increments the refcount.
  * param pObject A pointer to an object to reference.
  */
-VOID NPF_ReferenceObject(PVOID pObject);
+VOID NPF_ReferenceObject(
+	_In_ PVOID pObject);
