@@ -105,7 +105,7 @@
             <listitem><para>
                 <emphasis>Install Npcap in WinPcap API-compatible
                   Mode</emphasis>. The default for this option is
-                <option>yes<option> in Npcap 0.9985 and later. Npcap's DLLs
+		  <option>yes</option> in Npcap 0.9985 and later. Npcap's DLLs
                     have always been installed into a separate
                     <literal>Npcap</literal> subdirectory of the system
                     directory to avoid conflicting with existing WinPcap
