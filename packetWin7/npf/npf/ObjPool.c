@@ -51,22 +51,23 @@
 
 // TODO: Implement a way to shrink the pool occasionally?
 
+typedef struct _NPF_OBJ_SHELF
+{
+	LIST_ENTRY ShelfEntry;
+	PNPF_OBJ_POOL pPool;
+	UCHAR pBuffer[];
+} NPF_OBJ_SHELF, *PNPF_OBJ_SHELF;
+
 /* Objects in the pool are retrieved and returned using this struct.
  * pObject is an uninitialized array of ulObjectSize bytes.
  */
 typedef struct _NPF_OBJ_POOL_ELEM
 {
 	LIST_ENTRY ObjectsEntry;
-	PNPF_OBJ_POOL pPool;
+	PNPF_OBJ_SHELF pShelf;
 	ULONG Refcount;
 	UCHAR pObject[];
 } NPF_OBJ_POOL_ELEM, *PNPF_OBJ_POOL_ELEM;
-
-typedef struct _NPF_OBJ_SHELF
-{
-	LIST_ENTRY ShelfEntry;
-	UCHAR pBuffer[];
-} NPF_OBJ_SHELF, *PNPF_OBJ_SHELF;
 
 typedef struct _NPF_OBJ_POOL
 {
@@ -105,6 +106,7 @@ NPF_ExtendObjectShelf(
 		return FALSE;
 	}
 	RtlZeroMemory(pShelf, NPF_OBJ_SHELF_ALLOC_SIZE(pPool));
+	pShelf->pPool = pPool;
 
 	ExInterlockedInsertTailList(&pPool->ShelfHead, &pShelf->ShelfEntry, &pPool->ShelfLock);
 
@@ -114,6 +116,7 @@ NPF_ExtendObjectShelf(
 	for (i=0; i < pPool->ulIncrement; i++)
 	{
 		pElem = (PNPF_OBJ_POOL_ELEM) (pShelf->pBuffer + i * NPF_OBJ_ELEM_ALLOC_SIZE(pPool));
+		pElem->pShelf = pShelf;
 		InsertTailList(&tmpList, &pElem->ObjectsEntry);
 	}
 
@@ -208,7 +211,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 		}
 		// Insert at the head instead of the tail, hoping the next Get will
 		// avoid a cache miss.
-		ExInterlockedInsertHeadList(&pElem->pPool->ObjectsHead, &pElem->ObjectsEntry, &pElem->pPool->ObjectsLock);
+		ExInterlockedInsertHeadList(&pElem->pShelf->pPool->ObjectsHead, &pElem->ObjectsEntry, &pElem->pShelf->pPool->ObjectsLock);
 	}
 }
 
