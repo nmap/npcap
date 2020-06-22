@@ -163,14 +163,22 @@ _Use_decl_annotations_
 PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 {
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
-	PLIST_ENTRY pEntry = ExInterlockedRemoveHeadList(&pPool->ObjectsHead, &pPool->ObjectsLock);
+	PLIST_ENTRY pEntry = NULL;
+	KIRQL OldIrql;
+
+	KeAcquireSpinLock(&pPool->ObjectsLock, &OldIrql);
+	pEntry = RemoveHeadList(&pPool->ObjectsHead);
+	KeReleaseSpinLock(&pPool->ObjectsLock, OldIrql);
+
 	if (pEntry == NULL)
 	{
 		if (!NPF_ExtendObjectShelf(pPool))
 		{
 			return NULL;
 		}
-		pEntry = ExInterlockedRemoveHeadList(&pPool->ObjectsHead, &pPool->ObjectsLock);
+		KeAcquireSpinLock(&pPool->ObjectsLock, &OldIrql);
+		pEntry = RemoveHeadList(&pPool->ObjectsHead);
+		KeReleaseSpinLock(&pPool->ObjectsLock, OldIrql);
 	}
 
 	if (pEntry == NULL)
@@ -201,6 +209,7 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 _Use_decl_annotations_
 VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 {
+	KIRQL OldIrql;
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 	ULONG refcount = InterlockedDecrement(&pElem->Refcount);
 	if (refcount == 0)
@@ -211,7 +220,9 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 		}
 		// Insert at the head instead of the tail, hoping the next Get will
 		// avoid a cache miss.
-		ExInterlockedInsertHeadList(&pElem->pShelf->pPool->ObjectsHead, &pElem->ObjectsEntry, &pElem->pShelf->pPool->ObjectsLock);
+		KeAcquireSpinLock(&pElem->pShelf->pPool->ObjectsLock, &OldIrql);
+		InsertHeadList(&pElem->pShelf->pPool->ObjectsHead, &pElem->ObjectsEntry);
+		KeReleaseSpinLock(&pElem->pShelf->pPool->ObjectsLock, OldIrql);
 	}
 }
 
