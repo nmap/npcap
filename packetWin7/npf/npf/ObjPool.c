@@ -91,6 +91,9 @@ NPF_ExtendObjectShelf(
 {
 	PNPF_OBJ_SHELF pShelf = NULL;
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
+	LIST_ENTRY tmpList;
+	PLIST_ENTRY toAppend;
+	KIRQL OldIrql;
 	ULONG i;
 
        	pShelf = (PNPF_OBJ_SHELF) NdisAllocateMemoryWithTagPriority(pPool->NdisHandle,
@@ -105,12 +108,23 @@ NPF_ExtendObjectShelf(
 
 	ExInterlockedInsertTailList(&pPool->ShelfHead, &pShelf->ShelfEntry, &pPool->ShelfLock);
 
+	InitializeListHead(&tmpList);
 	// Buffer starts after the shelf itself
+	// Append to a temporary non-interlocked list
 	for (i=0; i < pPool->ulIncrement; i++)
 	{
 		pElem = (PNPF_OBJ_POOL_ELEM) (pShelf->pBuffer + i * NPF_OBJ_ELEM_ALLOC_SIZE(pPool));
-		ExInterlockedInsertTailList(&pPool->ObjectsHead, &pElem->ObjectsEntry, &pPool->ObjectsLock);
+		InsertTailList(&tmpList, &pElem->ObjectsEntry);
 	}
+
+	// Make the temp list headless
+	toAppend = tmpList.Flink;
+	RemoveEntryList(&tmpList);
+
+	// And append the whole new chunk to the end of the pool's list
+	KeAcquireSpinLock(&pPool->ObjectsLock, &OldIrql);
+	AppendTailList(&pPool->ObjectsHead, toAppend);
+	KeReleaseSpinLock(&pPool->ObjectsLock, OldIrql);
 
 	return TRUE;
 }
