@@ -450,6 +450,63 @@ DriverEntry(
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %p", Status, FilterDriverHandle);
 	}
 
+	devExtP->NBLCopyPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NBL_COPY), 256);
+	if (devExtP->NBLCopyPool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
+
+		NdisFDeregisterFilterDriver(FilterDriverHandle);
+		IoDeleteSymbolicLink(&deviceSymLink);
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceSymLink.Buffer);
+		devExtP->ExportString = NULL;
+
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	devExtP->NBCopiesPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NB_COPIES), 256);
+	if (devExtP->NBCopiesPool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
+
+		NPF_FreeObjectPool(devExtP->NBLCopyPool);
+		NdisFDeregisterFilterDriver(FilterDriverHandle);
+		IoDeleteSymbolicLink(&deviceSymLink);
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceSymLink.Buffer);
+		devExtP->ExportString = NULL;
+
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+#ifdef HAVE_DOT11_SUPPORT
+	if (g_Dot11SupportMode)
+	{
+		devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NB_COPIES), 256);
+		if (devExtP->Dot11HeaderPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
+
+			NPF_FreeObjectPool(devExtP->NBLCopyPool);
+			NdisFDeregisterFilterDriver(FilterDriverHandle);
+			IoDeleteSymbolicLink(&deviceSymLink);
+			IoDeleteDevice(devObjP);
+			ExFreePool(deviceSymLink.Buffer);
+			devExtP->ExportString = NULL;
+
+			TRACE_EXIT();
+			return STATUS_INSUFFICIENT_RESOURCES;
+		}
+	}
+	else
+	{
+		devExtP->Dot11HeaderPool = NULL;
+	}
+#endif
+
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (g_LoopbackSupportMode) {
 		do {
@@ -871,6 +928,23 @@ Return Value:
 			ExFreePool(DeviceExtension->ExportString);
 			DeviceExtension->ExportString = NULL;
 		}
+
+		if (DeviceExtension->NBLCopyPool)
+		{
+			NPF_FreeObjectPool(DeviceExtension->NBLCopyPool);
+		}
+
+		if (DeviceExtension->NBCopiesPool)
+		{
+			NPF_FreeObjectPool(DeviceExtension->NBCopiesPool);
+		}
+
+#ifdef HAVE_DOT11_SUPPORT
+		if (DeviceExtension->Dot11HeaderPool)
+		{
+			NPF_FreeObjectPool(DeviceExtension->Dot11HeaderPool);
+		}
+#endif
 
 		IoDeleteDevice(OldDeviceObject);
 	}
@@ -1869,7 +1943,7 @@ NPF_IoControl(
 
 OID_REQUEST_DONE:
 
-		NPF_ObjectPoolReturn(Open->pFiltMod->InternalRequestPool, pRequest, NULL);
+		NPF_ObjectPoolReturn(pRequest, NULL);
 
 		break;
 

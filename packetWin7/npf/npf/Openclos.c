@@ -405,7 +405,7 @@ NPF_ResetBufferContents(
 	for (Curr = Open->PacketQueue.Flink; Curr != &Open->PacketQueue; Curr = Curr->Flink)
 	{
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
-		NPF_ObjectPoolReturn(Open->CapturePool, pCapData, NPF_FreeCapData);
+		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData);
 	}
 	// Remove links
 	InitializeListHead(&Open->PacketQueue);
@@ -418,7 +418,6 @@ NPF_ResetBufferContents(
 _Use_decl_annotations_
 VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy)
 {
-	PNPCAP_FILTER_MODULE pFiltMod = pNBCopy->pNBLCopy->pFiltMod;
 	PVOID pDeleteMe = NULL;
 	PMDL pMdl = NULL;
 	ULONG ulSize = 0;
@@ -454,9 +453,6 @@ VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy)
 {
 	PNPF_NB_COPIES pNBCopies = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
-	PNPCAP_FILTER_MODULE pFiltMod = NULL;
-
-	pFiltMod = pNBLCopy->pFiltMod;
 
 	pNBCopiesEntry = pNBLCopy->NBCopiesHead.Next;
 	while (pNBCopiesEntry != NULL)
@@ -464,21 +460,20 @@ VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy)
 		pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
 		pNBCopiesEntry = pNBCopiesEntry->Next;
 
-		NPF_ObjectPoolReturn(pFiltMod->NBCopiesPool, pNBCopies, NPF_FreeNBCopies);
+		NPF_ObjectPoolReturn(pNBCopies, NPF_FreeNBCopies);
 	}
 
 	if (pNBLCopy->Dot11RadiotapHeader != NULL)
 	{
-		NPF_ObjectPoolReturn(pFiltMod->Dot11HeaderPool, pNBLCopy->Dot11RadiotapHeader, NULL);
+		NPF_ObjectPoolReturn(pNBLCopy->Dot11RadiotapHeader, NULL);
 	}
 }
 
 _Use_decl_annotations_
 VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData)
 {
-	PNPCAP_FILTER_MODULE pFiltMod = pCapData->pNBCopy->pNBLCopy->pFiltMod;
-	NPF_ObjectPoolReturn(pFiltMod->NBLCopyPool, pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy);
-	NPF_ObjectPoolReturn(pFiltMod->NBCopiesPool, pCapData->pNBCopy, NPF_FreeNBCopies);
+	NPF_ObjectPoolReturn(pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy);
+	NPF_ObjectPoolReturn(pCapData->pNBCopy, NPF_FreeNBCopies);
 }
 
 //-------------------------------------------------------------------
@@ -989,26 +984,6 @@ NPF_ReleaseFilterModuleResources(
 		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
 		pFiltMod->InternalRequestPool = NULL;
 	}
-
-	if (pFiltMod->NBLCopyPool)
-	{
-		NPF_FreeObjectPool(pFiltMod->NBLCopyPool);
-		pFiltMod->NBLCopyPool = NULL;
-	}
-
-	if (pFiltMod->NBCopiesPool)
-	{
-		NPF_FreeObjectPool(pFiltMod->NBCopiesPool);
-		pFiltMod->NBCopiesPool = NULL;
-	}
-
-#ifdef HAVE_DOT11_SUPPORT
-	if (pFiltMod->Dot11HeaderPool)
-	{
-		NPF_FreeObjectPool(pFiltMod->Dot11HeaderPool);
-		pFiltMod->Dot11HeaderPool = NULL;
-	}
-#endif
 
 	// Release the adapter name
 	if (pFiltMod->AdapterName.Buffer)
@@ -2112,43 +2087,9 @@ NPF_CreateFilterModule(
 			bAllocFailed = TRUE;
 			break;
 		}
-
-		pFiltMod->NBLCopyPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_NBL_COPY), 64);
-		if (pFiltMod->NBLCopyPool == NULL)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
-			bAllocFailed = TRUE;
-			break;
-		}
-
-		pFiltMod->NBCopiesPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(NPF_NB_COPIES), 64);
-		if (pFiltMod->NBCopiesPool == NULL)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
-			bAllocFailed = TRUE;
-			break;
-		}
-
-#ifdef HAVE_DOT11_SUPPORT
-		pFiltMod->Dot11HeaderPool = NPF_AllocateObjectPool(NdisFilterHandle, SIZEOF_RADIOTAP_BUFFER, 32);
-		if (pFiltMod->Dot11HeaderPool == NULL)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
-			bAllocFailed = TRUE;
-			break;
-		}
-#endif
 	} while (0);
 
 	if (bAllocFailed) {
-#ifdef HAVE_DOT11_SUPPORT
-		if (pFiltMod->Dot11HeaderPool)
-			NPF_FreeObjectPool(pFiltMod->Dot11HeaderPool);
-#endif
-		if (pFiltMod->NBCopiesPool)
-			NPF_FreeObjectPool(pFiltMod->NBCopiesPool);
-		if (pFiltMod->NBLCopyPool)
-			NPF_FreeObjectPool(pFiltMod->NBLCopyPool);
 		if (pFiltMod->InternalRequestPool)
 			NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
 		if (pFiltMod->TapNBPool)

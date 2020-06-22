@@ -57,6 +57,7 @@
 typedef struct _NPF_OBJ_POOL_ELEM
 {
 	LIST_ENTRY ObjectsEntry;
+	PNPF_OBJ_POOL pPool;
 	ULONG Refcount;
 	UCHAR pObject[];
 } NPF_OBJ_POOL_ELEM, *PNPF_OBJ_POOL_ELEM;
@@ -181,7 +182,7 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 }
 
 _Use_decl_annotations_
-VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
+VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 {
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 	ULONG refcount = InterlockedDecrement(&pElem->Refcount);
@@ -193,7 +194,7 @@ VOID NPF_ObjectPoolReturn(PNPF_OBJ_POOL pPool, PVOID pObject, PNPF_OBJ_CLEANUP C
 		}
 		// Insert at the head instead of the tail, hoping the next Get will
 		// avoid a cache miss.
-		ExInterlockedInsertHeadList(&pPool->ObjectsHead, &pElem->ObjectsEntry, &pPool->ObjectsLock);
+		ExInterlockedInsertHeadList(&pElem->pPool->ObjectsHead, &pElem->ObjectsEntry, &pElem->pPool->ObjectsLock);
 	}
 }
 
