@@ -226,6 +226,54 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 }
 
 _Use_decl_annotations_
+VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
+{
+	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
+	PSINGLE_LIST_ENTRY pEmptyNext = NULL;
+	ULONG TotalUnused = 0;
+	BOOLEAN bKeepOne = TRUE;
+
+	if (pPool->EmptyShelfHead.Next == NULL)
+	{
+		// No empty shelves to free
+		return;
+	}
+
+	NdisAcquireSpinLock(&pPool->ShelfLock);
+
+	for (pShelfEntry = pPool->PartialShelfHead.Next; pShelfEntry != NULL; pShelfEntry = pShelfEntry->Next)
+	{
+		TotalUnused += pPool->ulIncrement - CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry)->ulUsed;
+		if (TotalUnused >= pPool->ulIncrement)
+		{
+			// There's at least 1 shelf's worth of unused space
+			bKeepOne = FALSE;
+			break;
+		}
+	}
+
+	// While there are empty shelves available
+	while (pPool->EmptyShelfHead.Next != NULL
+			// and we either don't need to keep one or there's one more after this one,
+			&& (!bKeepOne || pPool->EmptyShelfHead.Next->Next != NULL))
+	{
+		// Pop one off and free it.
+		pShelfEntry = PopEntryList(&pPool->EmptyShelfHead);
+		ASSERT(pShelfEntry);
+		if (!pShelfEntry) {
+			// Shouldn't happen because of the loop condition, but Code Analysis complains.
+			break;
+		}
+		NdisFreeMemory(
+				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
+				NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
+				0);
+	}
+
+	NdisReleaseSpinLock(&pPool->ShelfLock);
+}
+
+_Use_decl_annotations_
 VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 {
 	PNPF_OBJ_SHELF pShelf = NULL;

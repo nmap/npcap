@@ -73,6 +73,12 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(
 VOID NPF_FreeObjectPool(
 	_In_ PNPF_OBJ_POOL pPool);
 
+/* Shrinks an object pool by freeing any empty shelves (slabs) provided there
+ * are enough unused slots in the existing partial slabs.
+ */
+VOID NPF_ShrinkObjectPool(
+	_In_ PNPF_OBJ_POOL pPool);
+
 /* Retrieve an object from the pool. The object is uninitialized and pointed to
  * by the pObject member of the returned element.
  * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool

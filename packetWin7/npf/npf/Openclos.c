@@ -476,6 +476,24 @@ VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData)
 	NPF_ObjectPoolReturn(pCapData->pNBCopy, NPF_FreeNBCopies);
 }
 
+VOID
+NPF_ShrinkPools(_In_ PDEVICE_EXTENSION pDevExt)
+{
+	if (pDevExt->NBLCopyPool)
+	{
+		NPF_ShrinkObjectPool(pDevExt->NBLCopyPool);
+	}
+	if (pDevExt->NBCopiesPool)
+	{
+		NPF_ShrinkObjectPool(pDevExt->NBCopiesPool);
+	}
+#ifdef HAVE_DOT11_SUPPORT
+	if (pDevExt->Dot11HeaderPool)
+	{
+		NPF_ShrinkObjectPool(pDevExt->Dot11HeaderPool);
+	}
+#endif
+}
 //-------------------------------------------------------------------
 
 _Use_decl_annotations_
@@ -1476,6 +1494,9 @@ NPF_Cleanup(
 	// release all the resources
 	//
 	NPF_ReleaseOpenInstanceResources(Open);
+
+	// Shrink object pools if possible
+	NPF_ShrinkPools(Open->DeviceExtension);
 
 	//	IrpSp->FileObject->FsContext = NULL;
 
