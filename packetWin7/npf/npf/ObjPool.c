@@ -49,12 +49,12 @@
 #include "ObjPool.h"
 #include <ndis.h>
 
-// TODO: Implement a way to shrink the pool occasionally?
-
 typedef struct _NPF_OBJ_SHELF
 {
-	LIST_ENTRY ShelfEntry;
+	SINGLE_LIST_ENTRY ShelfEntry;
 	PNPF_OBJ_POOL pPool;
+	ULONG ulUsed;
+	SINGLE_LIST_ENTRY UnusedHead;
 	UCHAR pBuffer[];
 } NPF_OBJ_SHELF, *PNPF_OBJ_SHELF;
 
@@ -63,18 +63,17 @@ typedef struct _NPF_OBJ_SHELF
  */
 typedef struct _NPF_OBJ_POOL_ELEM
 {
-	LIST_ENTRY ObjectsEntry;
-	PNPF_OBJ_SHELF pShelf;
+	USHORT idxShelfOffset;
+	SINGLE_LIST_ENTRY UnusedEntry;
 	ULONG Refcount;
 	UCHAR pObject[];
 } NPF_OBJ_POOL_ELEM, *PNPF_OBJ_POOL_ELEM;
 
 typedef struct _NPF_OBJ_POOL
 {
-	LIST_ENTRY ShelfHead;
-	KSPIN_LOCK ShelfLock;
-	LIST_ENTRY ObjectsHead;
-	KSPIN_LOCK ObjectsLock;
+	SINGLE_LIST_ENTRY EmptyShelfHead;
+	SINGLE_LIST_ENTRY PartialShelfHead;
+	NDIS_SPIN_LOCK ShelfLock;
 	NDIS_HANDLE NdisHandle;
 	ULONG ulObjectSize;
 	ULONG ulIncrement;
@@ -84,17 +83,15 @@ typedef struct _NPF_OBJ_POOL
 
 #define NPF_OBJ_ELEM_ALLOC_SIZE(POOL) (sizeof(NPF_OBJ_POOL_ELEM) + (POOL)->ulObjectSize)
 #define NPF_OBJ_SHELF_ALLOC_SIZE(POOL) ( sizeof(NPF_OBJ_SHELF) + NPF_OBJ_ELEM_ALLOC_SIZE(POOL) * (POOL)->ulIncrement)
+#define NPF_OBJ_ELEM_MAX_IDX(POOL) (NPF_OBJ_SHELF_ALLOC_SIZE(pPool) - sizeof(NPF_OBJ_SHELF))
 
-_Success_(return != 0)
-BOOLEAN
-NPF_ExtendObjectShelf(
+_Ret_maybenull_
+PNPF_OBJ_SHELF
+NPF_NewObjectShelf(
 		_In_ PNPF_OBJ_POOL pPool)
 {
 	PNPF_OBJ_SHELF pShelf = NULL;
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
-	LIST_ENTRY tmpList;
-	PLIST_ENTRY toAppend;
-	KIRQL OldIrql;
 	ULONG i;
 
        	pShelf = (PNPF_OBJ_SHELF) NdisAllocateMemoryWithTagPriority(pPool->NdisHandle,
@@ -103,40 +100,26 @@ NPF_ExtendObjectShelf(
 			NormalPoolPriority);
 	if (pShelf == NULL)
 	{
-		return FALSE;
+		return NULL;
 	}
 	RtlZeroMemory(pShelf, NPF_OBJ_SHELF_ALLOC_SIZE(pPool));
 	pShelf->pPool = pPool;
 
-	ExInterlockedInsertTailList(&pPool->ShelfHead, &pShelf->ShelfEntry, &pPool->ShelfLock);
-
-	InitializeListHead(&tmpList);
 	// Buffer starts after the shelf itself
-	// Append to a temporary non-interlocked list
 	for (i=0; i < pPool->ulIncrement; i++)
 	{
 		pElem = (PNPF_OBJ_POOL_ELEM) (pShelf->pBuffer + i * NPF_OBJ_ELEM_ALLOC_SIZE(pPool));
-		pElem->pShelf = pShelf;
-		InsertTailList(&tmpList, &pElem->ObjectsEntry);
+		pElem->idxShelfOffset = (USHORT)((PUCHAR) pElem - (PUCHAR) (pShelf->pBuffer));
+		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
 	}
 
-	// Make the temp list headless
-	toAppend = tmpList.Flink;
-	RemoveEntryList(&tmpList);
-
-	// And append the whole new chunk to the end of the pool's list
-	KeAcquireSpinLock(&pPool->ObjectsLock, &OldIrql);
-	AppendTailList(&pPool->ObjectsHead, toAppend);
-	KeReleaseSpinLock(&pPool->ObjectsLock, OldIrql);
-
-	return TRUE;
+	return pShelf;
 }
 
 _Use_decl_annotations_
-PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize, ULONG ulIncrement)
+PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize, USHORT ulIncrement)
 {
 	PNPF_OBJ_POOL pPool = NULL;
-	PNPF_OBJ_SHELF pShelf = NULL;
 
 	pPool = NdisAllocateMemoryWithTagPriority(NdisHandle,
 			sizeof(NPF_OBJ_POOL),
@@ -146,11 +129,9 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize,
 	{
 		return NULL;
 	}
+	RtlZeroMemory(pPool, sizeof(NPF_OBJ_POOL));
 
-	InitializeListHead(&pPool->ShelfHead);
-	KeInitializeSpinLock(&pPool->ShelfLock);
-	InitializeListHead(&pPool->ObjectsHead);
-	KeInitializeSpinLock(&pPool->ObjectsLock);
+	NdisAllocateSpinLock(&pPool->ShelfLock);
 
 	pPool->NdisHandle = NdisHandle;
 	pPool->ulObjectSize = ulObjectSize;
@@ -163,30 +144,56 @@ _Use_decl_annotations_
 PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 {
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
-	PLIST_ENTRY pEntry = NULL;
-	KIRQL OldIrql;
+	PSINGLE_LIST_ENTRY pEntry = NULL;
+	PNPF_OBJ_SHELF pShelf = NULL;
 
-	KeAcquireSpinLock(&pPool->ObjectsLock, &OldIrql);
-	pEntry = RemoveHeadList(&pPool->ObjectsHead);
-	KeReleaseSpinLock(&pPool->ObjectsLock, OldIrql);
+	NdisAcquireSpinLock(&pPool->ShelfLock);
+	// Get the first partial shelf
+	pEntry = pPool->PartialShelfHead.Next;
 
+	// If there are no partial shelves, get an empty one
 	if (pEntry == NULL)
 	{
-		if (!NPF_ExtendObjectShelf(pPool))
+		pEntry = pPool->EmptyShelfHead.Next;
+		// If there are no empty shelves, allocate a new one
+		if (pEntry == NULL)
 		{
-			return NULL;
+			pShelf = NPF_NewObjectShelf(pPool);
+			// If we couldn't allocate one, bail.
+			if (pShelf == NULL)
+			{
+				NdisReleaseSpinLock(&pPool->ShelfLock);
+				return NULL;
+			}
+			pEntry = &pShelf->ShelfEntry;
 		}
-		KeAcquireSpinLock(&pPool->ObjectsLock, &OldIrql);
-		pEntry = RemoveHeadList(&pPool->ObjectsHead);
-		KeReleaseSpinLock(&pPool->ObjectsLock, OldIrql);
+		// Now pEntry is an empty shelf. Move it to partials.
+		PushEntryList(&pPool->PartialShelfHead, pEntry);
 	}
 
+	pShelf = CONTAINING_RECORD(pEntry, NPF_OBJ_SHELF, ShelfEntry);
+	pShelf->ulUsed++;
+	pEntry = PopEntryList(&pShelf->UnusedHead);
 	if (pEntry == NULL)
 	{
+		// Should be impossible since all tracked shelves are partial or empty
+		ASSERT(pEntry != NULL);
+		NdisReleaseSpinLock(&pPool->ShelfLock);
 		return NULL;
 	}
+	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, UnusedEntry);
 
-	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, ObjectsEntry);
+	// If there aren't any more unused slots on this shelf, unlink it
+	if (pShelf->UnusedHead.Next == NULL)
+	{
+		// We always use the first partial shelf on the stack, so pop it off.
+		// No need to keep track of it; Return operation will re-link
+		// it into partials.
+		PopEntryList(&pPool->PartialShelfHead);
+	}
+
+	NdisReleaseSpinLock(&pPool->ShelfLock);
+
 	pElem->Refcount = 1;
 	return pElem->pObject;
 }
@@ -194,35 +201,78 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 _Use_decl_annotations_
 VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 {
-	PLIST_ENTRY pShelfEntry = NULL;
+	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
 
-	while ((pShelfEntry = ExInterlockedRemoveHeadList(&pPool->ShelfHead, &pPool->ShelfLock)) != NULL)
+	NdisAcquireSpinLock(&pPool->ShelfLock);
+
+	while ((pShelfEntry = PopEntryList(&pPool->PartialShelfHead)) != NULL)
 	{
 		NdisFreeMemory(
 				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
 				NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
 				0);
 	}
+	while ((pShelfEntry = PopEntryList(&pPool->EmptyShelfHead)) != NULL)
+	{
+		NdisFreeMemory(
+				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
+				NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
+				0);
+	}
+	NdisReleaseSpinLock(&pPool->ShelfLock);
+
+	NdisFreeSpinLock(&pPool->ShelfLock);
 	NdisFreeMemory(pPool, sizeof(NPF_OBJ_POOL), 0);
 }
 
 _Use_decl_annotations_
 VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 {
-	KIRQL OldIrql;
+	PNPF_OBJ_SHELF pShelf = NULL;
+	PNPF_OBJ_POOL pPool = NULL;
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 	ULONG refcount = InterlockedDecrement(&pElem->Refcount);
+
 	if (refcount == 0)
 	{
 		if (CleanupFunc)
 		{
 			CleanupFunc(pElem->pObject);
 		}
-		// Insert at the head instead of the tail, hoping the next Get will
-		// avoid a cache miss.
-		KeAcquireSpinLock(&pElem->pShelf->pPool->ObjectsLock, &OldIrql);
-		InsertHeadList(&pElem->pShelf->pPool->ObjectsHead, &pElem->ObjectsEntry);
-		KeReleaseSpinLock(&pElem->pShelf->pPool->ObjectsLock, OldIrql);
+		pShelf = CONTAINING_RECORD((PUCHAR) pElem - pElem->idxShelfOffset, NPF_OBJ_SHELF, pBuffer);
+		pPool = pShelf->pPool;
+		NdisAcquireSpinLock(&pPool->ShelfLock);
+
+		refcount = InterlockedDecrement(&pShelf->ulUsed);
+		if (refcount == 0)
+		{
+			// Empty shelf. Move it to the other list.
+			PSINGLE_LIST_ENTRY pEntry = pPool->PartialShelfHead.Next;
+			PSINGLE_LIST_ENTRY pPrev = &pPool->PartialShelfHead;
+			while (pEntry)
+			{
+				if (pEntry == &pShelf->ShelfEntry)
+				{
+					// Found it. Unlink and stop looking.
+					pPrev->Next = pEntry->Next;
+					pEntry->Next = NULL;
+					break;
+				}
+				pPrev = pEntry;
+				pEntry = pPrev->Next;
+			}
+
+			PushEntryList(&pPool->EmptyShelfHead, &pShelf->ShelfEntry);
+		}
+		else if (refcount == pPool->ulIncrement - 1)
+		{
+			// This shelf was full and now it's partial. Link it in.
+			PushEntryList(&pPool->PartialShelfHead, &pShelf->ShelfEntry);
+		}
+
+		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
+
+		NdisReleaseSpinLock(&pPool->ShelfLock);
 	}
 }
 

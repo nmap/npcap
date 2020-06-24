@@ -64,7 +64,7 @@ _Ret_maybenull_
 PNPF_OBJ_POOL NPF_AllocateObjectPool(
 	_In_ NDIS_HANDLE NdisHandle,
 	_In_ ULONG ulObjectSize,
-	_In_ ULONG ulIncrement);
+	_In_ USHORT ulIncrement);
 
 /* Frees an object pool and all associated memory.
  * All objects obtained from the pool are invalid.
