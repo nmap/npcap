@@ -594,13 +594,15 @@ NPF_registerLWF(
 	NdisZeroMemory(pFChars, sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS));
 	pFChars->Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
 	pFChars->Header.Size = sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS);
-#if NDIS_SUPPORT_NDIS61
+#if NDIS_SUPPORT_NDIS680
+	pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_3;
+#elif NDIS_SUPPORT_NDIS61
 	pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_2;
 #else
 	pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
 #endif
 
-	pFChars->MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION; // NDIS version is 6.2 (Windows 7)
+	pFChars->MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION;
 	pFChars->MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
 	pFChars->MajorDriverVersion = WINPCAP_MINOR;
 	/* TODO: Stop using minor version numbers greater than 255 */
@@ -639,6 +641,17 @@ NPF_registerLWF(
 	pFChars->NetPnPEventHandler = NPF_NetPnPEvent;
 	pFChars->StatusHandler = NPF_Status;
 	pFChars->CancelSendNetBufferListsHandler = NPF_CancelSendNetBufferLists;
+
+#if NDIS_SUPPORT_NDIS61
+	pFChars->DirectOidRequestHandler = NULL;
+	pFChars->DirectOidRequestCompleteHandler = NULL;
+	pFChars->CancelDirectOidRequestHandler = NULL;
+#endif
+
+#if NDIS_SUPPORT_NDIS680
+	pFChars->SynchronousOidRequestHandler = NULL;
+	pFChars->SynchronousOidRequestCompleteHandler = NULL;
+#endif
 }
 
 //-------------------------------------------------------------------
