@@ -1,6 +1,30 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Win10 OEM Release|Win32">
+      <Configuration>Win10 OEM Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win10 OEM Release|x64">
+      <Configuration>Win10 OEM Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win10 OEM RO Release|Win32">
+      <Configuration>Win10 OEM RO Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win10 OEM RO Release|x64">
+      <Configuration>Win10 OEM RO Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win10 Release|Win32">
+      <Configuration>Win10 Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win10 Release|x64">
+      <Configuration>Win10 Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Win7 OEM RO Release|Win32">
       <Configuration>Win7 OEM RO Release</Configuration>
       <Platform>Win32</Platform>
@@ -70,6 +94,21 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|Win32'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|Win32'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|Win32'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release|Win32'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -95,6 +134,21 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|x64'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|x64'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|x64'" Label="Configuration">
+    <TargetVersion>Windows10</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release|x64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -111,7 +165,10 @@
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetVersion)'=='Windows7'">
-	  <_NT_TARGET_VERSION>0x0601</_NT_TARGET_VERSION>
+    <_NT_TARGET_VERSION>0x0601</_NT_TARGET_VERSION>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetVersion)'=='Windows10'">
+    <_NT_TARGET_VERSION>0x0A00</_NT_TARGET_VERSION>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -131,6 +188,27 @@
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|Win32'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|Win32'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|Win32'">
     <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
@@ -166,6 +244,27 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|x64'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|x64'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|x64'">
     <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
@@ -229,6 +328,39 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -268,6 +400,39 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;Ntstrsafe.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;$(DDK_LIB_PATH)\netio.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -344,11 +509,17 @@
   <ItemGroup>
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 Debug'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 Release'" />
+    <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win10 Release'" />
+    <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win10 OEM Release'" />
+    <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win10 OEM RO Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 OEM Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 OEM RO Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 Release SDV'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 Debug'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 Release'" />
+    <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win10 Release'" />
+    <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win10 OEM Release'" />
+    <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win10 OEM RO Release'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 OEM Release'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 OEM RO Release'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 Release SDV'" />
@@ -356,6 +527,9 @@
   <ItemGroup>
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 Debug'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 Release'" />
+    <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win10 Release'" />
+    <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win10 OEM Release'" />
+    <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win10 OEM RO Release'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 OEM Release'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 OEM RO Release'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 Release SDV'" />
