@@ -547,16 +547,30 @@ packets (outbound) are queued to the packet queue to be processed
 by the worker thread.
 
 -- */
+#if(NTDDI_VERSION >= NTDDI_WIN8)
+// FWPS_CALLOUT_CLASSIFY_FN2
+void NPF_NetworkClassifyOutbound(
+	_In_ const FWPS_INCOMING_VALUES0 *inFixedValues,
+	_In_ const FWPS_INCOMING_METADATA_VALUES0 *inMetaValues,
+	_Inout_opt_ void *layerData,
+	_In_opt_ const void *classifyContext,
+	_In_ const FWPS_FILTER2 *filter,
+	_In_ UINT64 flowContext,
+	_Inout_ FWPS_CLASSIFY_OUT0 *classifyOut
+	)
+#elif(NTDDI_VERSION >= NTDDI_WIN7)
+// FWPS_CALLOUT_CLASSIFY_FN1
 void
 NPF_NetworkClassifyOutbound(
-	_In_ const FWPS_INCOMING_VALUES* inFixedValues,
-	_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
+	_In_ const FWPS_INCOMING_VALUES0* inFixedValues,
+	_In_ const FWPS_INCOMING_METADATA_VALUES0* inMetaValues,
 	_Inout_opt_ void* layerData,
 	_In_opt_ const void* classifyContext,
-	_In_ const FWPS_FILTER* filter,
+	_In_ const FWPS_FILTER1* filter,
 	_In_ UINT64 flowContext,
-	_Inout_ FWPS_CLASSIFY_OUT* classifyOut
+	_Inout_ FWPS_CLASSIFY_OUT0* classifyOut
 	)
+#endif
 {
 	BOOLEAN				bIPv4;
 	PNET_BUFFER_LIST	pNetBufferList = (NET_BUFFER_LIST*) layerData;
@@ -608,16 +622,30 @@ packets (inbound) are queued to the packet queue to be processed
 by the worker thread.
 
 -- */
+#if(NTDDI_VERSION >= NTDDI_WIN8)
+// FWPS_CALLOUT_CLASSIFY_FN2
+void NPF_NetworkClassifyInbound(
+	_In_ const FWPS_INCOMING_VALUES0 *inFixedValues,
+	_In_ const FWPS_INCOMING_METADATA_VALUES0 *inMetaValues,
+	_Inout_opt_ void *layerData,
+	_In_opt_ const void *classifyContext,
+	_In_ const FWPS_FILTER2 *filter,
+	_In_ UINT64 flowContext,
+	_Inout_ FWPS_CLASSIFY_OUT0 *classifyOut
+	)
+#elif(NTDDI_VERSION >= NTDDI_WIN7)
+// FWPS_CALLOUT_CLASSIFY_FN1
 void
 NPF_NetworkClassifyInbound(
-	_In_ const FWPS_INCOMING_VALUES* inFixedValues,
-	_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
+	_In_ const FWPS_INCOMING_VALUES0* inFixedValues,
+	_In_ const FWPS_INCOMING_METADATA_VALUES0* inMetaValues,
 	_Inout_opt_ void* layerData,
 	_In_opt_ const void* classifyContext,
-	_In_ const FWPS_FILTER* filter,
+	_In_ const FWPS_FILTER1* filter,
 	_In_ UINT64 flowContext,
-	_Inout_ FWPS_CLASSIFY_OUT* classifyOut
+	_Inout_ FWPS_CLASSIFY_OUT0* classifyOut
 	)
+#endif
 {
 	NDIS_STATUS status = NDIS_STATUS_SUCCESS;
 	UINT32				ipHeaderSize = 0;
@@ -990,6 +1018,11 @@ FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
 	sCallout.calloutKey = *calloutKey;
 	sCallout.classifyFn = classifyFn;
 	sCallout.notifyFn = NPF_NetworkNotify;
+	sCallout.flags = FWP_CALLOUT_FLAG_ALLOW_OFFLOAD
+#if(NTDDI_VERSION >= NTDDI_WIN8)
+		| FWP_CALLOUT_FLAG_ALLOW_RSC
+#endif
+		;
 
 	status = FwpsCalloutRegister(
 		deviceObject,
