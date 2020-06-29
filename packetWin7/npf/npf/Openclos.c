@@ -1021,7 +1021,6 @@ NPF_ReleaseFilterModuleResources(
 
 //-------------------------------------------------------------------
 
-/* Not currently used, but see npcap issue #186 */
 _Use_decl_annotations_
 NTSTATUS
 NPF_GetDeviceMTU(
@@ -2503,6 +2502,8 @@ NPF_Restart(
 
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE)FilterModuleContext;
 	NDIS_STATUS		Status;
+	NTSTATUS ntStatus;
+	UINT Mtu;
 	PNDIS_RESTART_ATTRIBUTES Curr = RestartParameters->RestartAttributes;
 	PNDIS_RESTART_GENERAL_ATTRIBUTES GenAttr = NULL;
 
@@ -2517,12 +2518,15 @@ NPF_Restart(
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
 	ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused);
 	pFiltMod->AdapterBindingStatus = FilterRestarting;
+	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
 	Status = NPF_ValidateParameters(pFiltMod->Dot11, RestartParameters->MiniportMediaType);
 	if (Status != NDIS_STATUS_SUCCESS) {
 		goto NPF_Restart_End;
 	}
 
+	// MtuSize is actually OID_GEN_MAXIMUM_FRAME_SIZE and does not include link header
+	// We'll grab it because it's available, but we'll try to get something better
 	while (Curr) {
 		if (Curr->Oid == OID_GEN_MINIPORT_RESTART_ATTRIBUTES) {
 			GenAttr = (PNDIS_RESTART_GENERAL_ATTRIBUTES) Curr->Data;
@@ -2531,9 +2535,17 @@ NPF_Restart(
 		}
 		Curr = Curr->Next;
 	}
+	// Now try OID_GEN_MAXIMUM_TOTAL_SIZE, including link header
+	// If it fails, no big deal; we have the MTU at least.
+	ntStatus = NPF_GetDeviceMTU(pFiltMod, &Mtu);
+	if (NT_SUCCESS(ntStatus))
+	{
+		pFiltMod->MaxFrameSize = Mtu;
+	}
 
 
 NPF_Restart_End:
+	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
 	pFiltMod->AdapterBindingStatus = NDIS_STATUS_SUCCESS == Status ? FilterRunning : FilterPaused;
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
