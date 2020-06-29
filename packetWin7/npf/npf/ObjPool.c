@@ -154,7 +154,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 	// If there are no partial shelves, get an empty one
 	if (pEntry == NULL)
 	{
-		pEntry = pPool->EmptyShelfHead.Next;
+		pEntry = PopEntryList(&pPool->EmptyShelfHead);
 		// If there are no empty shelves, allocate a new one
 		if (pEntry == NULL)
 		{
@@ -172,7 +172,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 	}
 
 	pShelf = CONTAINING_RECORD(pEntry, NPF_OBJ_SHELF, ShelfEntry);
-	pShelf->ulUsed++;
+	InterlockedIncrement(&pShelf->ulUsed);
 	pEntry = PopEntryList(&pShelf->UnusedHead);
 	if (pEntry == NULL)
 	{
@@ -308,6 +308,12 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 				}
 				pPrev = pEntry;
 				pEntry = pPrev->Next;
+			}
+			if (pEntry == NULL)
+			{
+				ASSERT(pEntry != NULL);
+				NdisReleaseSpinLock(&pPool->ShelfLock);
+				return;
 			}
 
 			PushEntryList(&pPool->EmptyShelfHead, &pShelf->ShelfEntry);
