@@ -2036,6 +2036,7 @@ NPF_CreateFilterModule(
 
 	RtlZeroMemory(pFiltMod, sizeof(NPCAP_FILTER_MODULE));
 
+	pFiltMod->AdapterHandle = NdisFilterHandle;
 	pFiltMod->AdapterBindingStatus = FilterAttaching;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	pFiltMod->Loopback = FALSE;
@@ -2402,7 +2403,6 @@ NPF_AttachAdapter(
 			break;
 		}
 
-		pFiltMod->AdapterHandle = NdisFilterHandle;
 		pFiltMod->HigherPacketFilter = NPF_GetPacketFilter(pFiltMod);
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 			"HigherPacketFilter=%x",

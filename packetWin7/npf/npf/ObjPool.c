@@ -63,7 +63,7 @@ typedef struct _NPF_OBJ_SHELF
  */
 typedef struct _NPF_OBJ_POOL_ELEM
 {
-	USHORT idxShelfOffset;
+	PNPF_OBJ_SHELF pShelf;
 	SINGLE_LIST_ENTRY UnusedEntry;
 	ULONG Refcount;
 	UCHAR pObject[];
@@ -109,7 +109,7 @@ NPF_NewObjectShelf(
 	for (i=0; i < pPool->ulIncrement; i++)
 	{
 		pElem = (PNPF_OBJ_POOL_ELEM) (pShelf->pBuffer + i * NPF_OBJ_ELEM_ALLOC_SIZE(pPool));
-		pElem->idxShelfOffset = (USHORT)((PUCHAR) pElem - (PUCHAR) (pShelf->pBuffer));
+		pElem->pShelf= pShelf;
 		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
 	}
 
@@ -287,7 +287,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 		{
 			CleanupFunc(pElem->pObject);
 		}
-		pShelf = CONTAINING_RECORD((PUCHAR) pElem - pElem->idxShelfOffset, NPF_OBJ_SHELF, pBuffer);
+		pShelf = pElem->pShelf;
 		pPool = pShelf->pPool;
 		NdisAcquireSpinLock(&pPool->ShelfLock);
 
