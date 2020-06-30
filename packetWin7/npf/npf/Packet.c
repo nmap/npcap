@@ -1067,6 +1067,7 @@ NPF_IoControl(
 	PUINT					pStats;
 	ULONG					StatsLength;
 	PULONG					pCombinedPacketFilter;
+	PNDIS_LINK_STATE pLinkState;
 
 	HANDLE					hUserEvent;
 	PKEVENT					pKernelEvent;
@@ -1722,8 +1723,8 @@ NPF_IoControl(
 						case OID_GEN_MAXIMUM_TOTAL_SIZE:
 						case OID_GEN_TRANSMIT_BUFFER_SPACE:
 						case OID_GEN_RECEIVE_BUFFER_SPACE:
-							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN);
-							*((PUINT)OidData->Data) = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
+							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, Open->pFiltMod->MaxFrameSize);
+							*((PUINT)OidData->Data) = Open->pFiltMod->MaxFrameSize;
 							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 							break;
 
@@ -1740,6 +1741,21 @@ NPF_IoControl(
 							OidData->Length = sizeof(UINT);
 							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 							break;
+						case OID_GEN_LINK_STATE:
+							if (OidData->Length < sizeof(NDIS_LINK_STATE))
+							{
+								SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
+							}
+							else
+							{
+								pLinkState = (PNDIS_LINK_STATE) OidData->Data;
+								pLinkState->MediaConnectState = MediaConnectStateConnected;
+								pLinkState->MediaDuplexState = MediaDuplexStateFull;
+								pLinkState->XmitLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
+								pLinkState->RcvLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
+								pLinkState->PauseFunctions = NdisPauseFunctionsUnsupported;
+								SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
+							}
 						default:
 							TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unsupported BIOCQUERYOID for Loopback");
 							SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
