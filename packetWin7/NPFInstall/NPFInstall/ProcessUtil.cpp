@@ -201,7 +201,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 
 	if (EnumProcessModulesEx(hProcess, hArrModules, sizeof(hArrModules), &cbNeeded, LIST_MODULES_ALL))
 	{
-		for (DWORD i = 0; i < cbNeeded / sizeof(HMODULE); i ++)
+		for (DWORD i = 0; !bResult && i < cbNeeded / sizeof(HMODULE); i ++)
 		{
 			TCHAR szModName[MAX_PATH];
 
