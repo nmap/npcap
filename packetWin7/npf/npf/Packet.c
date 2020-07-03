@@ -1015,6 +1015,11 @@ Return Value:
 	Status = STATUS_SUCCESS;	\
 } while(FALSE)
 
+#define SET_FAILURE_BUFFER(__len__) do {\
+	Information = __len__; \
+	Status = STATUS_BUFFER_TOO_SMALL; \
+} while(FALSE)
+
 #define SET_FAILURE(__STATUS_CODE) do{\
 	Information = 0; \
 	Status = __STATUS_CODE; \
@@ -1135,6 +1140,14 @@ NPF_IoControl(
 		return Status;
 	}
 
+#define FAIL_IF_BUFFER_SMALL(__size__) \
+	if (Irp->AssociatedIrp.SystemBuffer == NULL || \
+		IrpSp->Parameters.DeviceIoControl.OutputBufferLength < __size__) \
+	{ \
+		SET_FAILURE_BUFFER(__size__); \
+		break; \
+	}
+
 	switch (FunctionCode)
 	{
 	case BIOCGSTATS:
@@ -1143,17 +1156,7 @@ NPF_IoControl(
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCGSTATS");
 
 		StatsLength = 4 * sizeof(UINT);
-		if (IrpSp->Parameters.DeviceIoControl.OutputBufferLength < StatsLength)
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
-
-		if (Irp->AssociatedIrp.SystemBuffer == NULL)
-		{
-			SET_FAILURE(STATUS_UNSUCCESSFUL);
-			break;
-		}
+		FAIL_IF_BUFFER_SMALL(StatsLength);
 
 		//
 		// temp fix to a GIANT bug from LD. The CTL code has been defined as METHOD_NEITHER, so it
@@ -1232,16 +1235,11 @@ NPF_IoControl(
 	case BIOCSETF:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETF");
 
+		FAIL_IF_BUFFER_SMALL(sizeof(struct bpf_insn));
 		//
 		// Get the pointer to the new program
 		//
 		NewBpfProgram = (struct bpf_insn *)Irp->AssociatedIrp.SystemBuffer;
-
-		if (NewBpfProgram == NULL)
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
 
 		// Lock the BPF engine for writing. 
 		NdisAcquireRWLockWrite(Open->MachineLock, &lockState, 0);
@@ -1322,11 +1320,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSMODE");
 
-		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
+		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
 
 		mode = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
@@ -1485,11 +1479,7 @@ NPF_IoControl(
 		break;
 
 	case BIOCISETLOBBEH:
-		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(INT))
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
+		FAIL_IF_BUFFER_SMALL(sizeof(INT));
 
 		if (*(PINT) Irp->AssociatedIrp.SystemBuffer == NPF_DISABLE_LOOPBACK)
 		{
@@ -1581,11 +1571,7 @@ NPF_IoControl(
 	case BIOCSETBUFFERSIZE:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETBUFFERSIZE");
 
-		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
+		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
 
 		// Get the number of bytes to allocate
 		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
@@ -1621,11 +1607,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSRTIMEOUT");
 
-		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
+		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
 
 		timeout = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 		if (timeout == (ULONG) - 1)
@@ -1648,11 +1630,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSWRITEREP");
 
-		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
+		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
 
 		Open->Nwrites = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
@@ -1666,11 +1644,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSMINTOCOPY");
 
-		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
+		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
 
 		Open->MinToCopy = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
@@ -1744,7 +1718,7 @@ NPF_IoControl(
 						case OID_GEN_LINK_STATE:
 							if (OidData->Length < sizeof(NDIS_LINK_STATE))
 							{
-								SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
+								SET_FAILURE_BUFFER(sizeof(NDIS_LINK_STATE));
 							}
 							else
 							{
@@ -1977,11 +1951,7 @@ OID_REQUEST_DONE:
 		break;
 
 	case BIOCSTIMESTAMPMODE:
-		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
-		{
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
-			break;
-		}
+		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
 
 		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 		
