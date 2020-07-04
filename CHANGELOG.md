@@ -7,6 +7,10 @@
 * Fix corrupted and missing packets in Npcap 0.9992 and 0.9993 due to reusing a
   data structure that already contained packet data.
 
+* Ensure our SHA-1 code signing certificate is also installed on systems which
+  may require it. This was preventing installation on older platforms since
+  Npcap 0.9991.
+
 * Fix a crash in `NPFInstall.exe` that happened when trying to rebind Npcap to
   the network stack as part of some installations. Reported by Microsoft App
   Assure ISV Outreach Team.
