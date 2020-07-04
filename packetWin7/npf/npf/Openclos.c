@@ -82,10 +82,6 @@
 
 #include "stdafx.h"
 
-#include <ntddk.h>
-#include <ndis.h>
-
-#include "debug.h"
 #include "packet.h"
 #include "Loopback.h"
 #include "Lo_send.h"

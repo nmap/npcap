@@ -63,7 +63,6 @@
 
 #include "Loopback.h"
 #include "Lo_send.h"
-#include "debug.h"
 
 #define NPF_LOOPBACK_SEND_TYPE_IPV4		1
 #define NPF_LOOPBACK_SEND_TYPE_IPV6		0

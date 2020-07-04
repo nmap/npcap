@@ -82,11 +82,7 @@
 
 #include "stdafx.h"
 
-#include <ntddk.h>
-#include <ndis.h>
-
 #include "Lo_send.h"
-#include "debug.h"
 #include "packet.h"
 
 /*!

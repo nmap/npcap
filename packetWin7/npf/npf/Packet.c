@@ -82,12 +82,8 @@
 
 #include "stdafx.h"
 
-#include <ntddk.h>
-#include <ndis.h>
-
 #include "Loopback.h"
 #include "Lo_send.h"
-#include "debug.h"
 #include "packet.h"
 #include "win_bpf.h"
 #include "ioctls.h"

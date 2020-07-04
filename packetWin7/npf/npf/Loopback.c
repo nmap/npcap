@@ -63,9 +63,7 @@
 
 #include "Loopback.h"
 #include "packet.h"
-#include "debug.h"
 #include "winerror.h"
-#include <ndis.h>
 
 #define NPCAP_CALLOUT_DRIVER_TAG (UINT32) 'NPCA'
 

@@ -82,10 +82,6 @@
 
 #include "stdafx.h"
 
-#include <ntddk.h>
-#include <ndis.h>
-
-#include "debug.h"
 #include "packet.h"
 #include "win_bpf.h"
 #include "time_calls.h"
