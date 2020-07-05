@@ -58,6 +58,7 @@
 
 #define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
 
+#include <ntifs.h>
 #include <ntddk.h>
 #include <ndis.h>
 #include <wmistr.h>

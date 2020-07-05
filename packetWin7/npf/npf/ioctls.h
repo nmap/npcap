@@ -270,7 +270,10 @@
  *  @}
  */
 
+/* IOCTL codes for driver control */
 
-
+// Get a list of process IDs which have opened or used handles to the driver.
+// Because handles can be inherited, this may not be a complete set.
+#define BIOCGETPIDS CTL_CODE(FILE_DEVICE_TRANSPORT, 0xb01, METHOD_BUFFERED, FILE_READ_DATA)
 
 #endif //__NPF_IOCTLS_H__

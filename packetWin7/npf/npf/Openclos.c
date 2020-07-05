@@ -492,6 +492,28 @@ NPF_ShrinkPools(_In_ PDEVICE_EXTENSION pDevExt)
 }
 //-------------------------------------------------------------------
 
+VOID
+NPF_AddToAllOpensList(_In_ POPEN_INSTANCE pOpen)
+{
+	LOCK_STATE_EX lockState;
+	PDEVICE_EXTENSION pDevExt = pOpen->DeviceExtension;
+
+	NdisAcquireRWLockWrite(pDevExt->AllOpensLock, &lockState, 0);
+	InsertTailList(&pDevExt->AllOpens, &pOpen->AllOpensEntry);
+	NdisReleaseRWLock(pDevExt->AllOpensLock, &lockState);
+}
+
+VOID
+NPF_RemoveFromAllOpensList(_In_ POPEN_INSTANCE pOpen)
+{
+	LOCK_STATE_EX lockState;
+	PDEVICE_EXTENSION pDevExt = pOpen->DeviceExtension;
+
+	NdisAcquireRWLockWrite(pDevExt->AllOpensLock, &lockState, 0);
+	RemoveEntryList(&pOpen->AllOpensEntry);
+	NdisReleaseRWLock(pDevExt->AllOpensLock, &lockState);
+}
+
 _Use_decl_annotations_
 NTSTATUS
 NPF_OpenAdapter(
@@ -499,53 +521,69 @@ NPF_OpenAdapter(
 	PIRP Irp
 	)
 {
-	PNPCAP_FILTER_MODULE			pFiltMod;
+	PNPCAP_FILTER_MODULE			pFiltMod = NULL;
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
 	NDIS_STATUS				Status = STATUS_SUCCESS;
-	ULONG					localNumOpenedInstances;
+	ULONG idx;
+	PUNICODE_STRING FileName;
+	NDIS_HANDLE NdisFilterHandle = ((PDEVICE_EXTENSION)(DeviceObject->DeviceExtension))->FilterDriverHandle;
 
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
-	// Find the head adapter of the global array.
-	pFiltMod = NPF_GetFilterModuleByAdapterName(&IrpSp->FileObject->FileName);
 
-	if (pFiltMod == NULL)
+	FileName = &IrpSp->FileObject->FileName;
+	// Skip leading slashes
+	for (idx = 0; idx < FileName->Length && FileName->Buffer[idx] == L'\\'; idx++);
+	// If the filename is empty or all slashes, this is a request for the "root" device.
+	// Otherwise, look for a filter module for it.
+	if (idx != FileName->Length)
 	{
-		// Can't find the adapter from the global open array.
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_GetFilterModuleByAdapterName error, pFiltMod=NULL, AdapterName=%ws",
-			IrpSp->FileObject->FileName.Buffer);
+		// Find the head adapter of the global array.
+		pFiltMod = NPF_GetFilterModuleByAdapterName(&IrpSp->FileObject->FileName);
 
-		Irp->IoStatus.Status = STATUS_NDIS_INTERFACE_NOT_FOUND;
-		Irp->IoStatus.Information = FILE_DOES_NOT_EXIST;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return STATUS_NDIS_INTERFACE_NOT_FOUND;
-	}
+		if (pFiltMod == NULL)
+		{
+			// Can't find the adapter from the global open array.
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_GetFilterModuleByAdapterName error, pFiltMod=NULL, AdapterName=%ws",
+				IrpSp->FileObject->FileName.Buffer);
 
-	if (NPF_StartUsingBinding(pFiltMod) == FALSE)
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_StartUsingBinding error, AdapterName=%ws",
-			IrpSp->FileObject->FileName.Buffer);
+			Irp->IoStatus.Status = STATUS_NDIS_INTERFACE_NOT_FOUND;
+			Irp->IoStatus.Information = FILE_DOES_NOT_EXIST;
+			IoCompleteRequest(Irp, IO_NO_INCREMENT);
+			TRACE_EXIT();
+			return STATUS_NDIS_INTERFACE_NOT_FOUND;
+		}
 
-		Irp->IoStatus.Status = STATUS_NDIS_OPEN_FAILED;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return STATUS_NDIS_OPEN_FAILED;
+		if (NPF_StartUsingBinding(pFiltMod) == FALSE)
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+				"NPF_StartUsingBinding error, AdapterName=%ws",
+				IrpSp->FileObject->FileName.Buffer);
+
+			Irp->IoStatus.Status = STATUS_NDIS_OPEN_FAILED;
+			IoCompleteRequest(Irp, IO_NO_INCREMENT);
+			TRACE_EXIT();
+			return STATUS_NDIS_OPEN_FAILED;
+		}
+
+		NdisFilterHandle = pFiltMod->AdapterHandle;
 	}
 
 	// Create a group child adapter object from the head adapter.
-	Open = NPF_CreateOpenObject(pFiltMod->AdapterHandle);
+	Open = NPF_CreateOpenObject(NdisFilterHandle);
 	if (Open == NULL)
 	{
+		if (pFiltMod)
+			NPF_StopUsingBinding(pFiltMod);
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
+	Open->UserPID = IoGetRequestorProcessId(Irp);
 	Open->pFiltMod = pFiltMod;
 	Open->DeviceExtension = DeviceObject->DeviceExtension;
 
@@ -554,7 +592,7 @@ NPF_OpenAdapter(
 		"Opening the device %ws, BindingContext=%p, Loopback=%u",
 		IrpSp->FileObject->FileName.Buffer,
 		Open,
-		pFiltMod->Loopback);
+		pFiltMod ? pFiltMod->Loopback : 0);
 #else
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
 		"Opening the device %ws, BindingContext=%p, Loopback=<Not supported>",
@@ -584,14 +622,18 @@ NPF_OpenAdapter(
 		IrpSp->FileObject->FsContext = Open;
 	}
 
+	NPF_AddToAllOpensList(Open);
+
 	//
 	// complete the open
 	//
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
 
-	NPF_AddToGroupOpenArray(Open, pFiltMod);
-
-	NPF_StopUsingBinding(pFiltMod);
+	if (pFiltMod)
+	{
+		NPF_AddToGroupOpenArray(Open, pFiltMod);
+		NPF_StopUsingBinding(pFiltMod);
+	}
 
 	Irp->IoStatus.Status = Status;
 	Irp->IoStatus.Information = FILE_OPENED;
@@ -1489,6 +1531,7 @@ NPF_Cleanup(
 	// release all the resources
 	//
 	NPF_ReleaseOpenInstanceResources(Open);
+	NPF_RemoveFromAllOpensList(Open);
 
 	// Shrink object pools if possible
 	NPF_ShrinkPools(Open->DeviceExtension);

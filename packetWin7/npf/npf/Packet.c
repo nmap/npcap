@@ -446,11 +446,29 @@ DriverEntry(
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %p", Status, FilterDriverHandle);
 	}
 
+	devExtP->FilterDriverHandle = FilterDriverHandle;
+	InitializeListHead(&devExtP->AllOpens);
+	devExtP->AllOpensLock = NdisAllocateRWLock(FilterDriverHandle);
+	if (devExtP->AllOpensLock == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate AllOpensLock");
+
+		NdisFDeregisterFilterDriver(FilterDriverHandle);
+		IoDeleteSymbolicLink(&deviceSymLink);
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceSymLink.Buffer);
+		devExtP->ExportString = NULL;
+
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
 	devExtP->NBLCopyPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NBL_COPY), 256);
 	if (devExtP->NBLCopyPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
 
+		NdisFreeRWLock(devExtP->AllOpensLock);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
 		IoDeleteSymbolicLink(&deviceSymLink);
 		IoDeleteDevice(devObjP);
@@ -467,6 +485,7 @@ DriverEntry(
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
 
 		NPF_FreeObjectPool(devExtP->NBLCopyPool);
+		NdisFreeRWLock(devExtP->AllOpensLock);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
 		IoDeleteSymbolicLink(&deviceSymLink);
 		IoDeleteDevice(devObjP);
@@ -485,7 +504,9 @@ DriverEntry(
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
 
+			NPF_FreeObjectPool(devExtP->NBCopiesPool);
 			NPF_FreeObjectPool(devExtP->NBLCopyPool);
+			NdisFreeRWLock(devExtP->AllOpensLock);
 			NdisFDeregisterFilterDriver(FilterDriverHandle);
 			IoDeleteSymbolicLink(&deviceSymLink);
 			IoDeleteDevice(devObjP);
@@ -955,6 +976,7 @@ Return Value:
 		}
 #endif
 
+		NdisFreeRWLock(DeviceExtension->AllOpensLock);
 		IoDeleteDevice(OldDeviceObject);
 	}
 
@@ -1044,7 +1066,8 @@ NPF_IoControl(
 	ULONG					FunctionCode;
 	NDIS_STATUS				Status = STATUS_INVALID_DEVICE_REQUEST;
 	ULONG					Information = 0;
-	PLIST_ENTRY				PacketListEntry;
+	PLIST_ENTRY				CurrEntry;
+	PULONG pUL;
 	UINT					i;
 	PUCHAR					tpointer = NULL; //assign NULL to suppress error C4703: potentially uninitialized local pointer variable
 	ULONG					dim, timeout;
@@ -1963,6 +1986,34 @@ OID_REQUEST_DONE:
 		Open->TimestampMode = dim;
 
 		SET_RESULT_SUCCESS(0);
+		break;
+
+	case BIOCGETPIDS:
+		// Need to at least deliver the number of PIDS
+		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
+
+		dim = IrpSp->Parameters.DeviceIoControl.OutputBufferLength / sizeof(ULONG);
+		cnt = 0;
+		pUL = (PULONG)Irp->AssociatedIrp.SystemBuffer;
+
+		NdisAcquireRWLockRead(Open->DeviceExtension->AllOpensLock, &lockState, 0);
+
+		for (CurrEntry = Open->DeviceExtension->AllOpens.Flink;
+				CurrEntry != &Open->DeviceExtension->AllOpens;
+				CurrEntry = CurrEntry->Flink)
+		{
+			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
+			cnt++;
+			if (cnt < dim)
+			{
+				pUL[cnt] = pOpen->UserPID;
+			}
+		}
+		NdisReleaseRWLock(Open->DeviceExtension->AllOpensLock, &lockState);
+
+		*pUL = cnt;
+		Information = sizeof(ULONG) * (cnt+1);
+		Status = (cnt < dim) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
 		break;
 
 	default:

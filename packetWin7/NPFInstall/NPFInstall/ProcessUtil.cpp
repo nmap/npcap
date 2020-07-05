@@ -66,9 +66,11 @@ Get processes which are using Npcap DLLs.
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <set>
 using namespace std;
 
 #include "..\..\Common\WpcapNames.h"
+#include "..\npf\npf\ioctls.h"
 
 #include "ProcessUtil.h"
 #include "LoopbackRename2.h"
@@ -242,11 +244,53 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 	return bResult;
 }
 
+set<ULONG> getNpcapPIDs()
+{
+	set<ULONG> empty;
+	DWORD dwLen = 1024;
+	DWORD BytesReturned = 0;
+	HANDLE hFile = CreateFile(L"\\\\.\\Global\\NPCAP", GENERIC_WRITE|GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+	if (hFile != NULL && hFile != INVALID_HANDLE_VALUE)
+	{
+		HANDLE hHeap = GetProcessHeap();
+		if (!hHeap)
+		{
+			TRACE_PRINT1("GetProcessHeap: error, errCode = 0x%08x.", GetLastError());
+			return empty;
+		}
+
+		PULONG pids = (PULONG)HeapAlloc(hHeap, 0, dwLen);
+		if (!DeviceIoControl(hFile, BIOCGETPIDS, NULL, 0, &pids, dwLen, &BytesReturned, NULL))
+		{
+			if (BytesReturned >= 4 && GetLastError() == ERROR_MORE_DATA)
+			{
+				dwLen = pids[0] * sizeof(ULONG);
+				HeapFree(hHeap, 0, pids);
+				pids = (PULONG)HeapAlloc(hHeap, 0, dwLen);
+				if (!DeviceIoControl(hFile, BIOCGETPIDS, NULL, 0, &pids, dwLen, &BytesReturned, NULL))
+				{
+					HeapFree(hHeap, 0, pids);
+					CloseHandle(hFile);
+					return empty;
+				}
+			}
+		}
+
+		set<ULONG> Ret(pids+1, pids+pids[0]);
+		HeapFree(hHeap, 0, pids);
+		CloseHandle(hFile);
+		return Ret;
+	}
+	return empty;
+}
+
 vector<tstring> enumProcesses()
 {
 	TRACE_ENTER();
 
 	vector<tstring> strArrProcessNames;
+	set<ULONG> pids = getNpcapPIDs();
+	DWORD my_pid = GetCurrentProcessId();
 
 	enableDebugPrivilege(TRUE);
 
@@ -260,10 +304,13 @@ vector<tstring> enumProcesses()
 		while (bHasNextProcess)
 		{
 			bHasNextProcess = Process32Next(hSnapshot, &PEInfo);
+			if (PEInfo.th32ProcessID == my_pid)
+			{
+				continue;
+			}
 			tstring strProcessName = PEInfo.szExeFile;
-			// _tprintf(_T("szExeFile = %s, th32ProcessID = %d\n"), PEInfo.szExeFile, PEInfo.th32ProcessID);
-			BOOL bHasNpcapDLL = enumDLLs(strProcessName, PEInfo.th32ProcessID);
-			if (bHasNpcapDLL)
+			if (pids.find(PEInfo.th32ProcessID) != pids.end()
+					|| enumDLLs(strProcessName, PEInfo.th32ProcessID))
 			{
 				strArrProcessNames.push_back(strProcessName);
 			}
@@ -287,6 +334,8 @@ vector<DWORD> enumProcesses_PID()
 	TRACE_ENTER();
 
 	vector<DWORD> strArrProcessIDs;
+	set<ULONG> pids = getNpcapPIDs();
+	DWORD my_pid = GetCurrentProcessId();
 
 	enableDebugPrivilege(TRUE);
 
@@ -300,10 +349,13 @@ vector<DWORD> enumProcesses_PID()
 		while (bHasNextProcess)
 		{
 			bHasNextProcess = Process32Next(hSnapshot, &PEInfo);
+			if (PEInfo.th32ProcessID == my_pid)
+			{
+				continue;
+			}
 			tstring strProcessName = PEInfo.szExeFile;
-			// _tprintf(_T("szExeFile = %s, th32ProcessID = %d\n"), PEInfo.szExeFile, PEInfo.th32ProcessID);
-			BOOL bHasNpcapDLL = enumDLLs(strProcessName, PEInfo.th32ProcessID);
-			if (bHasNpcapDLL)
+			if (pids.find(PEInfo.th32ProcessID) != pids.end()
+					|| enumDLLs(strProcessName, PEInfo.th32ProcessID))
 			{
 				strArrProcessIDs.push_back(PEInfo.th32ProcessID);
 			}
