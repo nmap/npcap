@@ -1179,11 +1179,6 @@ NPF_IoControl(
 		StatsLength = 4 * sizeof(UINT);
 		FAIL_IF_OUTPUT_SMALL(StatsLength);
 
-		//
-		// temp fix to a GIANT bug from LD. The CTL code has been defined as METHOD_NEITHER, so it
-		// might well be a dangling pointer. We need to probe and lock the address.
-		//
-
 		pStats = (PUINT)(Irp->AssociatedIrp.SystemBuffer);
 		
 		pStats[3] = Open->Accepted;
