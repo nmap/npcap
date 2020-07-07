@@ -1159,13 +1159,15 @@ NPF_IoControl(
 		return Status;
 	}
 
-#define FAIL_IF_BUFFER_SMALL(__size__) \
+#define _FAIL_IF_BUFFER_SMALL(__size__, __lenparam__) \
 	if (Irp->AssociatedIrp.SystemBuffer == NULL || \
-		IrpSp->Parameters.DeviceIoControl.OutputBufferLength < __size__) \
+		IrpSp->Parameters.DeviceIoControl.__lenparam__ < __size__) \
 	{ \
 		SET_FAILURE_BUFFER(__size__); \
 		break; \
 	}
+#define FAIL_IF_INPUT_SMALL(__size__) _FAIL_IF_BUFFER_SMALL(__size__, InputBufferLength)
+#define FAIL_IF_OUTPUT_SMALL(__size__) _FAIL_IF_BUFFER_SMALL(__size__, OutputBufferLength)
 
 	switch (FunctionCode)
 	{
@@ -1175,7 +1177,7 @@ NPF_IoControl(
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCGSTATS");
 
 		StatsLength = 4 * sizeof(UINT);
-		FAIL_IF_BUFFER_SMALL(StatsLength);
+		FAIL_IF_OUTPUT_SMALL(StatsLength);
 
 		//
 		// temp fix to a GIANT bug from LD. The CTL code has been defined as METHOD_NEITHER, so it
@@ -1254,7 +1256,7 @@ NPF_IoControl(
 	case BIOCSETF:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETF");
 
-		FAIL_IF_BUFFER_SMALL(sizeof(struct bpf_insn));
+		FAIL_IF_INPUT_SMALL(sizeof(struct bpf_insn));
 		//
 		// Get the pointer to the new program
 		//
@@ -1339,7 +1341,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSMODE");
 
-		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
+		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
 
 		mode = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
@@ -1498,7 +1500,7 @@ NPF_IoControl(
 		break;
 
 	case BIOCISETLOBBEH:
-		FAIL_IF_BUFFER_SMALL(sizeof(INT));
+		FAIL_IF_INPUT_SMALL(sizeof(INT));
 
 		if (*(PINT) Irp->AssociatedIrp.SystemBuffer == NPF_DISABLE_LOOPBACK)
 		{
@@ -1590,7 +1592,7 @@ NPF_IoControl(
 	case BIOCSETBUFFERSIZE:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETBUFFERSIZE");
 
-		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
+		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
 
 		// Get the number of bytes to allocate
 		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
@@ -1626,7 +1628,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSRTIMEOUT");
 
-		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
+		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
 
 		timeout = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 		if (timeout == (ULONG) - 1)
@@ -1649,7 +1651,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSWRITEREP");
 
-		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
+		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
 
 		Open->Nwrites = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
@@ -1663,7 +1665,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSMINTOCOPY");
 
-		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
+		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
 
 		Open->MinToCopy = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
@@ -1970,7 +1972,7 @@ OID_REQUEST_DONE:
 		break;
 
 	case BIOCSTIMESTAMPMODE:
-		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
+		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
 
 		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 		
@@ -1990,7 +1992,7 @@ OID_REQUEST_DONE:
 
 	case BIOCGETPIDS:
 		// Need to at least deliver the number of PIDS
-		FAIL_IF_BUFFER_SMALL(sizeof(ULONG));
+		FAIL_IF_OUTPUT_SMALL(sizeof(ULONG));
 
 		dim = IrpSp->Parameters.DeviceIoControl.OutputBufferLength / sizeof(ULONG);
 		cnt = 0;
