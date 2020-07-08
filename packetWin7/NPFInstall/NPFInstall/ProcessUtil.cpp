@@ -249,38 +249,63 @@ set<ULONG> getNpcapPIDs()
 	set<ULONG> empty;
 	DWORD dwLen = 1024;
 	DWORD BytesReturned = 0;
+	DWORD lasterr;
+	HANDLE hHeap = GetProcessHeap();
+	if (!hHeap)
+	{
+		TRACE_PRINT1("GetProcessHeap: error, errCode = 0x%08x.", GetLastError());
+		return empty;
+	}
+	TRACE_ENTER();
+
 	HANDLE hFile = CreateFile(L"\\\\.\\Global\\NPCAP", GENERIC_WRITE|GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
 	if (hFile != NULL && hFile != INVALID_HANDLE_VALUE)
 	{
-		HANDLE hHeap = GetProcessHeap();
-		if (!hHeap)
-		{
-			TRACE_PRINT1("GetProcessHeap: error, errCode = 0x%08x.", GetLastError());
-			return empty;
-		}
-
+		TRACE_PRINT("Npcap handle opened");
 		PULONG pids = (PULONG)HeapAlloc(hHeap, 0, dwLen);
-		if (!DeviceIoControl(hFile, BIOCGETPIDS, NULL, 0, &pids, dwLen, &BytesReturned, NULL))
+		if (!DeviceIoControl(hFile, BIOCGETPIDS, NULL, 0, pids, dwLen, &BytesReturned, NULL))
 		{
-			if (BytesReturned >= 4 && GetLastError() == ERROR_MORE_DATA)
+			lasterr = GetLastError();
+			TRACE_PRINT2("BIOCGETPIDS failed. err=%08x, bytes=%08x", lasterr, BytesReturned);
+			if (BytesReturned >= sizeof(ULONG) && lasterr == ERROR_MORE_DATA)
 			{
-				dwLen = pids[0] * sizeof(ULONG);
+				dwLen = (pids[0] + 1) * sizeof(ULONG);
 				HeapFree(hHeap, 0, pids);
 				pids = (PULONG)HeapAlloc(hHeap, 0, dwLen);
-				if (!DeviceIoControl(hFile, BIOCGETPIDS, NULL, 0, &pids, dwLen, &BytesReturned, NULL))
+				if (!DeviceIoControl(hFile, BIOCGETPIDS, NULL, 0, pids, dwLen, &BytesReturned, NULL))
 				{
+					lasterr = GetLastError();
+					TRACE_PRINT2("BIOCGETPIDS failed. err=%08x, bytes=%08x", lasterr, BytesReturned);
 					HeapFree(hHeap, 0, pids);
 					CloseHandle(hFile);
+					TRACE_EXIT();
 					return empty;
 				}
 			}
+			else
+			{
+				HeapFree(hHeap, 0, pids);
+				CloseHandle(hFile);
+				TRACE_EXIT();
+				return empty;
+			}
 		}
 
+		TRACE_PRINT2("BIOCGETPIDS returned %lu bytes, %lu pids", BytesReturned, BytesReturned < sizeof(ULONG) ? 0 : pids[0]);
+		if (BytesReturned < sizeof(ULONG) || BytesReturned < sizeof(ULONG) * (pids[0] + 1))
+		{
+			HeapFree(hHeap, 0, pids);
+			CloseHandle(hFile);
+			TRACE_EXIT();
+			return empty;
+		}
 		set<ULONG> Ret(pids+1, pids+pids[0]);
 		HeapFree(hHeap, 0, pids);
 		CloseHandle(hFile);
+		TRACE_EXIT();
 		return Ret;
 	}
+	TRACE_EXIT();
 	return empty;
 }
 
