@@ -250,8 +250,6 @@ typedef struct _DEVICE_EXTENSION
 {
 	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
 										///< to open this adapter through Packet.dll.
-	SINGLE_LIST_ENTRY DetachedOpens; //GroupHead
-	KSPIN_LOCK DetachedOpensLock; // GroupLock
 	LIST_ENTRY AllOpens;
 	PNDIS_RW_LOCK_EX AllOpensLock;
 	NDIS_HANDLE FilterDriverHandle;

@@ -423,8 +423,6 @@ DriverEntry(
 	}
 
 	devExtP->ExportString = deviceSymLink.Buffer;
-	devExtP->DetachedOpens.Next = NULL;
-	KeInitializeSpinLock(&devExtP->DetachedOpensLock);
 
 	/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */
 	NdisAllocateSpinLock(&g_FilterArrayLock);
@@ -878,13 +876,14 @@ Return Value:
 
 --*/
 {
-	PSINGLE_LIST_ENTRY Curr = NULL;
+	PLIST_ENTRY CurrEntry = NULL;
 	PDEVICE_OBJECT DeviceObject;
 	PDEVICE_OBJECT OldDeviceObject;
 	PDEVICE_EXTENSION DeviceExtension;
 	NDIS_STATUS Status;
 	NDIS_STRING SymLink;
 	NDIS_EVENT Event;
+	LOCK_STATE_EX lockState;
 
 	TRACE_ENTER();
 
@@ -937,16 +936,23 @@ Return Value:
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Deleting Adapter, Device Obj=%p (%p)",
 				DeviceObject, OldDeviceObject);
 
-		Curr = DeviceExtension->DetachedOpens.Next;
-		while (Curr != NULL)
+		NdisAcquireRWLockWrite(DeviceExtension->AllOpensLock, &lockState, 0);
+		for (CurrEntry = DeviceExtension->AllOpens.Flink;
+				CurrEntry != &DeviceExtension->AllOpens;
+				CurrEntry = CurrEntry->Flink)
 		{
-			POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-			Curr = Curr->Next;
+			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
+			if (pOpen->OpenStatus == OpenDetached)
+			{
+				CurrEntry = CurrEntry->Blink;
+				RemoveEntryList(&pOpen->AllOpensEntry);
 
-			NPF_CloseOpenInstance(pOpen);
-			NPF_ReleaseOpenInstanceResources(pOpen);
-			ExFreePool(pOpen);
+				NPF_CloseOpenInstance(pOpen);
+				NPF_ReleaseOpenInstanceResources(pOpen);
+				ExFreePool(pOpen);
+			}
 		}
+		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
 
 		if (DeviceExtension->ExportString)
 		{

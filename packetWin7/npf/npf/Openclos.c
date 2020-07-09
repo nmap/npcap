@@ -925,11 +925,6 @@ NPF_DetachOpenInstance(
 	}
 
 	pOpen->pFiltMod = NULL;
-
-	ExInterlockedPushEntryList(
-			&pOpen->DeviceExtension->DetachedOpens,
-			&pOpen->OpenInstancesEntry,
-			&pOpen->DeviceExtension->DetachedOpensLock);
 }
 
 //-------------------------------------------------------------------
