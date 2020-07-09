@@ -292,6 +292,17 @@ NPF_Read(
 	{
 		//there are some packets in the buffer
 		PLIST_ENTRY pCapDataEntry = ExInterlockedRemoveHeadList(&Open->PacketQueue, &Open->PacketQueueLock);
+		if (pCapDataEntry == NULL)
+		{
+			/* No packets in queue. Maybe someone else is calling NPF_Read?
+			* This was reported as a crash (null ptr deref) 2 lines down, but I can't see a reason for it
+			* unless compiler is reordering calls such that Open->Free is decremented before the packet is
+			* put in the queue down in TEFEO.  We could continue here to try to get more packets, but if
+			* it's an actual accounting bug, we'd get infite loop hangs. I'd rather break and see Read calls
+			* returning no or few packets and eventually unexplained packet drops.
+			*/
+			break;
+		}
 		PNPF_CAP_DATA pCapData = CONTAINING_RECORD(pCapDataEntry, NPF_CAP_DATA, PacketQueueEntry);
 
 #ifdef HAVE_DOT11_SUPPORT
