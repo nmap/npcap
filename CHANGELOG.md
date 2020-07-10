@@ -1,4 +1,29 @@
 ﻿
+## Npcap 0.9995 [2020-07-10]
+
+* Fix a BSoD crash in `NPF_Read` when NDIS filter module is detached from the
+  adapter. Fixes [#194](http://issues.npcap.org/194)
+
+* On Windows 10, the Npcap driver has been updated to NDIS 6.50 and Windows 10
+  WFP compatibility, supporting network stack improvements like RSC.
+  Fixes [#196](http://issues.npcap.org/196).
+
+* Correctly obey maximum frame size for an adapter by querying
+  `OID_GEN_MAXIMUM_TOTAL_SIZE` instead of using MTU, which does not include
+  space for the link layer header. Fixes [#186](http://issues.npcap.org/186).
+
+* Fix detection of processes using Npcap resources during uninstall or upgrade.
+  The fix for [#2015](http://issues.nmap.org/2015) had broken this so such
+  processes were not terminated, leading to failed installations.
+
+* Obey snaplen (`pcap_set_snaplen()`) even if a packet filter is not set. This
+  is a backported change from upstream libpcap that corrects a deficiency that
+  has been present in all previous versions of WinPcap and Npcap.
+  Fixes [#201](http://issues.npcap.org/201).
+
+* Improvements to object pool/slab allocator to allow nonpaged memory to be
+  freed when not in use.
+
 ## Npcap 0.9994 [2020-06-12]
 
 * Fix a BSoD crash in `NPF_ReleaseOpenInstanceResources` due to miscounting of
