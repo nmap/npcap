@@ -850,7 +850,8 @@ NPF_TapExForEachOpen(
 			received++;
 
 			// Lock BPF engine for reading.
-			NdisAcquireRWLockRead(Open->MachineLock, &lockState, 0);
+			NdisAcquireRWLockRead(Open->MachineLock, &lockState,
+					AtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
 
 			// Get the whole packet length.
 			TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
@@ -918,7 +919,8 @@ NPF_TapExForEachOpen(
 			}
 #endif
 			// Lock "buffer" whenever checking Size/Free
-			NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);
+			NdisAcquireRWLockRead(Open->BufferLock, &lockState,
+					AtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
 			if (Open->Size == 0)
 			{
 				dropped++;
