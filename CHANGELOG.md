@@ -24,6 +24,9 @@
 * Improvements to object pool/slab allocator to allow nonpaged memory to be
   freed when not in use.
 
+* When installing Npcap OEM in silent mode, avoid running `C:\Uninstall.exe` if
+  no existing Npcap installation is present.
+
 ## Npcap 0.9994 [2020-06-12]
 
 * Fix a BSoD crash in `NPF_ReleaseOpenInstanceResources` due to miscounting of
