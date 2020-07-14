@@ -634,6 +634,10 @@ NPF_OpenAdapter(
 		NPF_AddToGroupOpenArray(Open, pFiltMod);
 		NPF_StopUsingBinding(pFiltMod);
 	}
+	else
+	{
+		Open->OpenStatus = OpenDetached;
+	}
 
 	Irp->IoStatus.Status = Status;
 	Irp->IoStatus.Information = FILE_OPENED;
@@ -649,6 +653,11 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ PDEVICE_OBJECT p
 {
 	NTSTATUS Status = STATUS_PENDING;
 	NDIS_EVENT Event;
+
+	if (pFiltMod == NULL)
+	{
+		return STATUS_INVALID_DEVICE_REQUEST;
+	}
 
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
 	switch(pFiltMod->OpsState)
