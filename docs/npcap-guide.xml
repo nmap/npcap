@@ -325,12 +325,17 @@
     <title>Q &amp; A</title>
 
     <itemizedlist>
-      <listitem><para>Network disconnects after installing Npcap: As Microsoft states
-          <ulink role="hidepdf" url="https://support.microsoft.com/en-us/kb/2019184">here</ulink>,
+	<listitem><para>Network interruption while installing Npcap: Installing a filter driver may
+	    cause brief interruptions to network connectivity based on the specific changes needed
+	    to install the driver in the network stack. This known issue is documented as
+	    <ulink role="hidepdf" url="">issue #53</ulink> on our tracker.</para>
+	<para> A separate issue is a longer interruption in connectivity if the
+	    <varname>npcap</varname> service is not started, which used to be an installer option.
+	    As Microsoft states <ulink role="hidepdf" url="https://support.microsoft.com/en-us/kb/2019184">here</ulink>,
           <emphasis>an optional NDIS light-weight filter (LWF) driver like Npcap could cause
             90-second delay in network availability</emphasis>. Some solutions you could try
           are: 1) wait for 90 seconds; 2) disable and re-enable the adapter icon in
-          <command>ncpa.cpl</command>; 3) reboot. If this doesn't work,
+          <command>ncpa.cpl</command>; 3) reboot. If the network is still unable to connect,
           please <ulink role="hidepdf" url="http://issues.npcap.org/new?title=Npcap+Bug+Report">file a bug report</ulink>.
       </para></listitem>
       <listitem><para>Installation fails with error code <varname>0x8004a029</varname>:
