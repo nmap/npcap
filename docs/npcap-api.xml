@@ -110,9 +110,7 @@
             <emphasis>Portability note:</emphasis> This function is the Windows
             alternative to <ulink
               url="wpcap/pcap_get_selectable_fd.html">pcap_get_selectable_fd()</ulink>,
-            which is only available on UNIX-like systems. Most applications
-            will not need an event loop that waits on multiple packet capture
-            handles.
+            which is only available on UNIX-like systems.
 	  </para>
         </listitem>
       </varlistentry>
