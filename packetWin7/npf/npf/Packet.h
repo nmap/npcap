@@ -94,8 +94,16 @@
 
 #include "win_bpf.h"
 
-#define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel) NdisAcquireSpinLock(_pLock)
-#define FILTER_RELEASE_LOCK(_pLock, DispatchLevel) NdisReleaseSpinLock(_pLock)
+#define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel) if (DispatchLevel) { \
+	NdisDprAcquireSpinLock(_pLock); \
+} else { \
+	NdisAcquireSpinLock(_pLock); \
+}
+#define FILTER_RELEASE_LOCK(_pLock, DispatchLevel) if (DispatchLevel) { \
+	NdisDprReleaseSpinLock(_pLock); \
+} else { \
+	NdisReleaseSpinLock(_pLock); \
+}
 
 typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTEXT;
 

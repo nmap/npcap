@@ -2823,9 +2823,8 @@ Arguments:
 	PNDIS_OID_REQUEST                   Request = NULL;
 	PFILTER_REQUEST_CONTEXT             Context;
 	PNDIS_OID_REQUEST                   OriginalRequest = NULL;
-	BOOLEAN                             bFalse = FALSE;
 
-	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, bFalse);
+	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, FALSE);
 
 	Request = pFiltMod->PendingOidRequest;
 
@@ -2838,13 +2837,13 @@ Arguments:
 
 	if ((OriginalRequest != NULL) && (OriginalRequest->RequestId == RequestId))
 	{
-		FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, bFalse);
+		FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, FALSE);
 
 		NdisFCancelOidRequest(pFiltMod->AdapterHandle, RequestId);
 	}
 	else
 	{
-		FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, bFalse);
+		FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, FALSE);
 	}
 }
 
@@ -2883,7 +2882,6 @@ Arguments:
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 	PNDIS_OID_REQUEST                   OriginalRequest;
 	PFILTER_REQUEST_CONTEXT             Context;
-	BOOLEAN                             bFalse = FALSE;
 
 	TRACE_ENTER();
 
@@ -2902,12 +2900,12 @@ Arguments:
 	}
 
 
-	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, bFalse);
+	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, FALSE);
 
 	ASSERT(pFiltMod->PendingOidRequest == Request);
 	pFiltMod->PendingOidRequest = NULL;
 
-	FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, bFalse);
+	FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, FALSE);
 
 
 	//
@@ -3376,11 +3374,9 @@ NDIS_STATUS NPF_DoInternalRequest(
 	INTERNAL_REQUEST            FilterRequest;
 	PNDIS_OID_REQUEST           NdisRequest = &FilterRequest.Request;
 	NDIS_STATUS                 Status = NDIS_STATUS_FAILURE;
-	BOOLEAN                     bFalse;
 
 	FilterRequest.RequestStatus = NDIS_STATUS_PENDING;
 
-	bFalse = FALSE;
 	*pBytesProcessed = 0;
 	NdisZeroMemory(NdisRequest, sizeof(NDIS_OID_REQUEST));
 
@@ -3425,7 +3421,6 @@ NDIS_STATUS NPF_DoInternalRequest(
 			IF_LOUD(DbgPrint("Status = %x\n", Status);)
 			TRACE_EXIT();
 			return Status;
-			// ASSERT(bFalse);
 			// break;
 	}
 
