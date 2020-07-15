@@ -46,8 +46,8 @@
  * https://github.com/nmap/npcap/blob/master/LICENSE.                      *
  *                                                                         *
  ***************************************************************************/
+#include "Packet.h"
 #include "ObjPool.h"
-#include <ndis.h>
 
 typedef struct _NPF_OBJ_SHELF
 {
@@ -141,13 +141,14 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize,
 }
 
 _Use_decl_annotations_
-PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
+PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
+		BOOLEAN bAtDispatchLevel)
 {
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
 	PSINGLE_LIST_ENTRY pEntry = NULL;
 	PNPF_OBJ_SHELF pShelf = NULL;
 
-	NdisAcquireSpinLock(&pPool->ShelfLock);
+	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 	// Get the first partial shelf
 	pEntry = pPool->PartialShelfHead.Next;
 
@@ -162,7 +163,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 			// If we couldn't allocate one, bail.
 			if (pShelf == NULL)
 			{
-				NdisReleaseSpinLock(&pPool->ShelfLock);
+				FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 				return NULL;
 			}
 			pEntry = &pShelf->ShelfEntry;
@@ -178,7 +179,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 	{
 		// Should be impossible since all tracked shelves are partial or empty
 		ASSERT(pEntry != NULL);
-		NdisReleaseSpinLock(&pPool->ShelfLock);
+		FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 		return NULL;
 	}
 	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, UnusedEntry);
@@ -192,7 +193,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 		PopEntryList(&pPool->PartialShelfHead);
 	}
 
-	NdisReleaseSpinLock(&pPool->ShelfLock);
+	FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 
 	pElem->Refcount = 1;
 	return pElem->pObject;
@@ -203,7 +204,7 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 {
 	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
 
-	NdisAcquireSpinLock(&pPool->ShelfLock);
+	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, 0);
 
 	while ((pShelfEntry = PopEntryList(&pPool->PartialShelfHead)) != NULL)
 	{
@@ -219,7 +220,7 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 				NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
 				0);
 	}
-	NdisReleaseSpinLock(&pPool->ShelfLock);
+	FILTER_RELEASE_LOCK(&pPool->ShelfLock, 0);
 
 	NdisFreeSpinLock(&pPool->ShelfLock);
 	NdisFreeMemory(pPool, sizeof(NPF_OBJ_POOL), 0);
@@ -239,7 +240,7 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 		return;
 	}
 
-	NdisAcquireSpinLock(&pPool->ShelfLock);
+	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, 0);
 
 	for (pShelfEntry = pPool->PartialShelfHead.Next; pShelfEntry != NULL; pShelfEntry = pShelfEntry->Next)
 	{
@@ -270,11 +271,11 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 				0);
 	}
 
-	NdisReleaseSpinLock(&pPool->ShelfLock);
+	FILTER_RELEASE_LOCK(&pPool->ShelfLock, 0);
 }
 
 _Use_decl_annotations_
-VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
+VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc, BOOLEAN bAtDispatchLevel)
 {
 	PNPF_OBJ_SHELF pShelf = NULL;
 	PNPF_OBJ_POOL pPool = NULL;
@@ -289,7 +290,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 		}
 		pShelf = pElem->pShelf;
 		pPool = pShelf->pPool;
-		NdisAcquireSpinLock(&pPool->ShelfLock);
+		FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 
 		refcount = InterlockedDecrement(&pShelf->ulUsed);
 		if (refcount == 0)
@@ -312,7 +313,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 			if (pEntry == NULL)
 			{
 				ASSERT(pEntry != NULL);
-				NdisReleaseSpinLock(&pPool->ShelfLock);
+				FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 				return;
 			}
 
@@ -326,7 +327,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc)
 
 		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
 
-		NdisReleaseSpinLock(&pPool->ShelfLock);
+		FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 	}
 }
 

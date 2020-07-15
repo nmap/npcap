@@ -82,10 +82,12 @@ VOID NPF_ShrinkObjectPool(
 /* Retrieve an object from the pool. The object is uninitialized and pointed to
  * by the pObject member of the returned element.
  * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool
+ * param bAtDispatchLevel Set TRUE if caller is at DISPATCH_LEVEL spinlock optimization
  */
 _Ret_maybenull_
 PVOID NPF_ObjectPoolGet(
-	_In_ PNPF_OBJ_POOL pPool);
+	_In_ PNPF_OBJ_POOL pPool,
+	_In_ BOOLEAN bAtDispatchLevel);
 
 typedef VOID (*PNPF_OBJ_CLEANUP)(
 	_In_ PVOID pObject);
@@ -95,10 +97,12 @@ typedef VOID (*PNPF_OBJ_CLEANUP)(
  * the object's memory.
  * param pObject A pointer to an object to return
  * param CleanupFunc Optional function to perform cleanup of the object before returning it (free referenced memory, e.g.). Use NULL if no such function is needed.
+ * param bAtDispatchLevel Set TRUE if caller is at DISPATCH_LEVEL spinlock optimization
  */
 VOID NPF_ObjectPoolReturn(
 	_In_ PVOID pObject,
-	_In_opt_ PNPF_OBJ_CLEANUP CleanupFunc);
+	_In_opt_ PNPF_OBJ_CLEANUP CleanupFunc,
+	_In_ BOOLEAN bAtDispatchLevel);
 
 /* Reference an object from a pool. Increments the refcount.
  * param pObject A pointer to an object to reference.

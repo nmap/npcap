@@ -234,10 +234,10 @@ NPF_Read(
 			*(LONGLONG *) (CurrBuff + sizeof(struct bpf_hdr) + 8) = Open->Nbytes.QuadPart;
 
 			//reset the countetrs
-			NdisAcquireSpinLock(&Open->CountersLock);
+			FILTER_ACQUIRE_LOCK(&Open->CountersLock, 0);
 			Open->Npackets.QuadPart = 0;
 			Open->Nbytes.QuadPart = 0;
-			NdisReleaseSpinLock(&Open->CountersLock);
+			FILTER_RELEASE_LOCK(&Open->CountersLock, 0);
 
 			NPF_StopUsingOpenInstance(Open, OpenDetached);
 
@@ -371,7 +371,7 @@ NPF_Read(
 		InterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
 
 		// Return this capture data
-		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData);
+		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData, 0);
 
 		ASSERT(Open->Free <= Open->Size);
 	}
@@ -443,7 +443,7 @@ NPF_DoTap(
 	for (Curr = NBLCopiesHead.Next; Curr != NULL; Curr = Curr->Next)
 	{
 		pNBLCopy = CONTAINING_RECORD(Curr, NPF_NBL_COPY, NBLCopyEntry); 
-		NPF_ObjectPoolReturn(pNBLCopy, NPF_FreeNBLCopy);
+		NPF_ObjectPoolReturn(pNBLCopy, NPF_FreeNBLCopy, AtDispatchLevel);
 	}
 
 	return;
@@ -606,7 +606,7 @@ NPF_TapExForEachOpen(
 		if (pNBLCopyPrev->Next == NULL)
 		{
 			// Add another NBL copy to the chain
-			pNBLCopy = (PNPF_NBL_COPY) NPF_ObjectPoolGet(Open->DeviceExtension->NBLCopyPool);
+			pNBLCopy = (PNPF_NBL_COPY) NPF_ObjectPoolGet(Open->DeviceExtension->NBLCopyPool, AtDispatchLevel);
 			if (pNBLCopy == NULL)
 			{
 				//Insufficient resources.
@@ -664,7 +664,7 @@ NPF_TapExForEachOpen(
 					goto RadiotapDone;
 				}
 
-				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) NPF_ObjectPoolGet(Open->DeviceExtension->Dot11HeaderPool);
+				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) NPF_ObjectPoolGet(Open->DeviceExtension->Dot11HeaderPool, AtDispatchLevel);
 				if (pNBLCopy->Dot11RadiotapHeader == NULL)
 				{
 					// Insufficient memory
@@ -828,7 +828,7 @@ NPF_TapExForEachOpen(
 			if (pNBCopiesPrev->Next == NULL)
 			{
 				// Add another copy to the chain
-				pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool);
+				pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, AtDispatchLevel);
 				if (pNBCopy == NULL)
 				{
 					//Insufficient resources.
@@ -878,7 +878,7 @@ NPF_TapExForEachOpen(
 			if (Open->mode & MODE_STAT)
 			{
 				// we are in statistics mode
-				NdisAcquireSpinLock(&Open->CountersLock);
+				FILTER_ACQUIRE_LOCK(&Open->CountersLock, AtDispatchLevel);
 
 				Open->Npackets.QuadPart++;
 
@@ -890,7 +890,7 @@ NPF_TapExForEachOpen(
 				// these values must be considered because are not part of the packet received from NDIS
 				Open->Nbytes.QuadPart += 12;
 
-				NdisReleaseSpinLock(&Open->CountersLock);
+				FILTER_RELEASE_LOCK(&Open->CountersLock, AtDispatchLevel);
 
 				if (!(Open->mode & MODE_DUMP))
 				{
@@ -1009,7 +1009,7 @@ NPF_TapExForEachOpen(
 				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = fres;
 			}
 
-			PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(Open->CapturePool);
+			PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(Open->CapturePool, AtDispatchLevel);
 			if (pCapData == NULL)
 			{
 				// Insufficient memory
