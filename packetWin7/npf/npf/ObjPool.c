@@ -204,7 +204,7 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 {
 	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
 
-	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, 0);
+	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 
 	while ((pShelfEntry = PopEntryList(&pPool->PartialShelfHead)) != NULL)
 	{
@@ -220,7 +220,7 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 				NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
 				0);
 	}
-	FILTER_RELEASE_LOCK(&pPool->ShelfLock, 0);
+	FILTER_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 
 	NdisFreeSpinLock(&pPool->ShelfLock);
 	NdisFreeMemory(pPool, sizeof(NPF_OBJ_POOL), 0);
@@ -240,7 +240,7 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 		return;
 	}
 
-	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, 0);
+	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 
 	for (pShelfEntry = pPool->PartialShelfHead.Next; pShelfEntry != NULL; pShelfEntry = pShelfEntry->Next)
 	{
@@ -271,7 +271,7 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 				0);
 	}
 
-	FILTER_RELEASE_LOCK(&pPool->ShelfLock, 0);
+	FILTER_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 }
 
 _Use_decl_annotations_

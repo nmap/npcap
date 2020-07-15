@@ -234,12 +234,12 @@ NPF_Read(
 			*(LONGLONG *) (CurrBuff + sizeof(struct bpf_hdr) + 8) = Open->Nbytes.QuadPart;
 
 			//reset the countetrs
-			FILTER_ACQUIRE_LOCK(&Open->CountersLock, 0);
+			FILTER_ACQUIRE_LOCK(&Open->CountersLock, NPF_IRQL_UNKNOWN);
 			Open->Npackets.QuadPart = 0;
 			Open->Nbytes.QuadPart = 0;
-			FILTER_RELEASE_LOCK(&Open->CountersLock, 0);
+			FILTER_RELEASE_LOCK(&Open->CountersLock, NPF_IRQL_UNKNOWN);
 
-			NPF_StopUsingOpenInstance(Open, OpenDetached);
+			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 
 			Irp->IoStatus.Status = STATUS_SUCCESS;
 			IoCompleteRequest(Irp, IO_NO_INCREMENT);

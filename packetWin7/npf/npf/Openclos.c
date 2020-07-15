@@ -2824,7 +2824,7 @@ Arguments:
 	PFILTER_REQUEST_CONTEXT             Context;
 	PNDIS_OID_REQUEST                   OriginalRequest = NULL;
 
-	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, FALSE);
+	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, NPF_IRQL_UNKNOWN);
 
 	Request = pFiltMod->PendingOidRequest;
 
@@ -2837,13 +2837,13 @@ Arguments:
 
 	if ((OriginalRequest != NULL) && (OriginalRequest->RequestId == RequestId))
 	{
-		FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, FALSE);
+		FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, NPF_IRQL_UNKNOWN);
 
 		NdisFCancelOidRequest(pFiltMod->AdapterHandle, RequestId);
 	}
 	else
 	{
-		FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, FALSE);
+		FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, NPF_IRQL_UNKNOWN);
 	}
 }
 
@@ -2900,12 +2900,12 @@ Arguments:
 	}
 
 
-	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, FALSE);
+	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, NPF_IRQL_UNKNOWN);
 
 	ASSERT(pFiltMod->PendingOidRequest == Request);
 	pFiltMod->PendingOidRequest = NULL;
 
-	FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, FALSE);
+	FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, NPF_IRQL_UNKNOWN);
 
 
 	//

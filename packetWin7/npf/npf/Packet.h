@@ -94,6 +94,10 @@
 
 #include "win_bpf.h"
 
+/* If DISPATCH_LEVEL can be determined, use that in the FILTER_*_LOCK macros
+ * Otherwise, use NPF_IRQL_UNKNOWN so we can find and update them as we add more tracking
+ */
+#define NPF_IRQL_UNKNOWN FALSE
 #define FILTER_ACQUIRE_LOCK(_pLock, DispatchLevel) if (DispatchLevel) { \
 	NdisDprAcquireSpinLock(_pLock); \
 } else { \

@@ -320,7 +320,7 @@ NPF_Write(
 			if (Open->pFiltMod->Loopback == FALSE)
 			{
 #endif
-				NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, FALSE);
+				NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			}
 #endif
@@ -692,7 +692,7 @@ NPF_BufferedWrite(
 
 		//receive the packets before sending them
 		// TODO: Should we check for loopback like we do in NPF_Write?
-		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, FALSE);
+		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
 
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
