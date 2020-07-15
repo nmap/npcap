@@ -122,7 +122,7 @@ NPF_Read(
 			Status = STATUS_INVALID_HANDLE;
 			break;
 		}
-		if (!NPF_StartUsingOpenInstance(Open, OpenDetached))
+		if (!NPF_StartUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN))
 		{
 			// Instance is being closed
 			Status = STATUS_CANCELLED;
@@ -131,7 +131,7 @@ NPF_Read(
 
 		if (Open->Size == 0)
 		{
-			NPF_StopUsingOpenInstance(Open, OpenDetached);
+			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 			Status = STATUS_UNSUCCESSFUL;
 			break;
 		}
@@ -140,7 +140,7 @@ NPF_Read(
 		if (Open->mode & MODE_DUMP && Open->DumpFileHandle == NULL)
 		{
 			// this instance is in dump mode, but the dump file has still not been opened
-			NPF_StopUsingOpenInstance(Open, OpenDetached);
+			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 			Status = STATUS_UNSUCCESSFUL;
 			break;
 		}
@@ -181,7 +181,7 @@ NPF_Read(
 
 			if (CurrBuff == NULL)
 			{
-				NPF_StopUsingOpenInstance(Open, OpenDetached);
+				NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 				TRACE_EXIT();
 				EXIT_FAILURE(0);
 			}
@@ -190,7 +190,7 @@ NPF_Read(
 			{
 				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 24)
 				{
-					NPF_StopUsingOpenInstance(Open, OpenDetached);
+					NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 					Irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
 					IoCompleteRequest(Irp, IO_NO_INCREMENT);
 					TRACE_EXIT();
@@ -201,7 +201,7 @@ NPF_Read(
 			{
 				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 16)
 				{
-					NPF_StopUsingOpenInstance(Open, OpenDetached);
+					NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 					Irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
 					IoCompleteRequest(Irp, IO_NO_INCREMENT);
 					TRACE_EXIT();
@@ -254,7 +254,7 @@ NPF_Read(
 		//
 		if (Open->mode == MODE_MON)   //this capture instance is in monitor mode
 		{
-			NPF_StopUsingOpenInstance(Open, OpenDetached);
+			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 			TRACE_EXIT();
 			EXIT_FAILURE(0);
 		}
@@ -268,7 +268,7 @@ NPF_Read(
 
 	if (Irp->MdlAddress == 0x0)
 	{
-		NPF_StopUsingOpenInstance(Open, OpenDetached);
+		NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
@@ -278,7 +278,7 @@ NPF_Read(
 
 	if (packp == NULL)
 	{
-		NPF_StopUsingOpenInstance(Open, OpenDetached);
+		NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 		TRACE_EXIT();
 		EXIT_FAILURE(0);
 	}
@@ -377,7 +377,7 @@ NPF_Read(
 	}
 
 	NdisReleaseRWLock(Open->BufferLock, &lockState);
-	NPF_StopUsingOpenInstance(Open, OpenDetached);
+	NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 
 	if (copied == 0 && Open->OpenStatus == OpenDetached)
 	{
@@ -586,7 +586,7 @@ NPF_TapExForEachOpen(
 	
 	//TRACE_ENTER();
 
-	if (!NPF_StartUsingOpenInstance(Open, OpenRunning))
+	if (!NPF_StartUsingOpenInstance(Open, OpenRunning, AtDispatchLevel))
  	{
  		// The adapter is in use or even released, stop the tapping.
  		return;
@@ -1073,6 +1073,6 @@ TEFEO_done_with_NBs:
 
 	InterlockedExchangeAdd(&Open->Dropped, dropped);
 	InterlockedExchangeAdd(&Open->Received, received);
-	NPF_StopUsingOpenInstance(Open, OpenRunning);
+	NPF_StopUsingOpenInstance(Open, OpenRunning, AtDispatchLevel);
 	//TRACE_EXIT();
 }

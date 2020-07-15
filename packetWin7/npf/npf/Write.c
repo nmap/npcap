@@ -153,7 +153,7 @@ NPF_Write(
 		return STATUS_INVALID_HANDLE;
 	}
 
-	if (!NPF_StartUsingOpenInstance(Open, OpenRunning))
+	if (!NPF_StartUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN))
 	{
 		// Write requires an attached adapter.
 		Irp->IoStatus.Information = 0;
@@ -172,7 +172,7 @@ NPF_Write(
 	//
 	if (NumSends == 0)
 	{
-		NPF_StopUsingOpenInstance(Open, OpenRunning);
+		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = STATUS_SUCCESS;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -193,7 +193,7 @@ NPF_Write(
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Write parameters empty. Send aborted");
 
-		NPF_StopUsingOpenInstance(Open, OpenRunning);
+		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
 		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
@@ -210,7 +210,7 @@ NPF_Write(
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Adapter is probably unbinding, cannot send packets");
 
-		NPF_StopUsingOpenInstance(Open, OpenRunning);
+		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
 		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
@@ -226,7 +226,7 @@ NPF_Write(
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Frame size out of range, or maxFrameSize = 0. Send aborted");
 
-		NPF_StopUsingOpenInstance(Open, OpenRunning);
+		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
 		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
@@ -245,7 +245,7 @@ NPF_Write(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Another Send operation is in progress, aborting.");
 
-		NPF_StopUsingOpenInstance(Open, OpenRunning);
+		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
 		Irp->IoStatus.Information = 0;
 		Irp->IoStatus.Status = STATUS_DEVICE_BUSY;
@@ -436,7 +436,7 @@ NPF_Write(
 	Open->WriteInProgress = FALSE;
 	NdisReleaseSpinLock(&Open->WriteLock);
 
-	NPF_StopUsingOpenInstance(Open, OpenRunning);
+	NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
 	//
 	// Complete the Irp and return success

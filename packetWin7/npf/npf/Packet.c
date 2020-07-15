@@ -1153,7 +1153,7 @@ NPF_IoControl(
 			break;
 	}
 
-	if (!NPF_StartUsingOpenInstance(Open, MaxState))
+	if (!NPF_StartUsingOpenInstance(Open, MaxState, NPF_IRQL_UNKNOWN))
 	{
 		SET_FAILURE(Open->OpenStatus == OpenDetached
 				? STATUS_DEVICE_REMOVED
@@ -2034,7 +2034,7 @@ OID_REQUEST_DONE:
 	//
 	// release the Open structure
 	//
-	NPF_StopUsingOpenInstance(Open, MaxState);
+	NPF_StopUsingOpenInstance(Open, MaxState, NPF_IRQL_UNKNOWN);
 
 	//
 	// complete the IRP

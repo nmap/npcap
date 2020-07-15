@@ -758,8 +758,7 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ PDEVICE_OBJECT p
 _Use_decl_annotations_
 BOOLEAN
 NPF_StartUsingOpenInstance(
-	POPEN_INSTANCE pOpen, OPEN_STATE MaxState)
-
+	POPEN_INSTANCE pOpen, OPEN_STATE MaxState, BOOLEAN AtDispatchLevel)
 {
 	BOOLEAN returnStatus;
 
@@ -769,13 +768,13 @@ NPF_StartUsingOpenInstance(
 		return FALSE;
 	}
 
-	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 	if (MaxState == OpenRunning && pOpen->OpenStatus == OpenAttached)
 	{
 		// NPF_EnableOps must be called at PASSIVE_LEVEL. Release the lock first.
-		NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+		FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 		returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen->pFiltMod, pOpen->DeviceExtension->pDevObj));
-		NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+		FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 
 		if (returnStatus)
 		{
@@ -812,7 +811,7 @@ NPF_StartUsingOpenInstance(
 		returnStatus = TRUE;
 		pOpen->PendingIrps[MaxState]++;
 	}
-	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 
 	return returnStatus;
 }
@@ -823,13 +822,14 @@ _Use_decl_annotations_
 VOID
 NPF_StopUsingOpenInstance(
 	POPEN_INSTANCE pOpen,
-	OPEN_STATE MaxState
+	OPEN_STATE MaxState,
+	BOOLEAN AtDispatchLevel
 	)
 {
-	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
+	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 	ASSERT(pOpen->PendingIrps[MaxState] > 0);
 	pOpen->PendingIrps[MaxState]--;
-	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 
 	if (MaxState <= OpenAttached)
 	{

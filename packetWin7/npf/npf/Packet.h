@@ -1139,9 +1139,9 @@ BOOLEAN NPF_StartUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod);
 
 VOID NPF_StopUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod);
 
-BOOLEAN NPF_StartUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen);
+BOOLEAN NPF_StartUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
-VOID NPF_StopUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen);
+VOID NPF_StopUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
 VOID NPF_CloseOpenInstance(_In_ POPEN_INSTANCE pOpen);
 
