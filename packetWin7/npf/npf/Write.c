@@ -101,6 +101,7 @@ NPF_FreePackets(
   Callback function associated with the NdisFSend() NDIS function. It is invoked by NPF_SendCompleteEx() when the NIC
   driver has finished an OID request operation that was previously started by NPF_Write().
 */
+_IRQL_requires_min_(DISPATCH_LEVEL)
 VOID
 NPF_SendCompleteExForEachOpen(
 	_In_ POPEN_INSTANCE Open,
@@ -969,7 +970,7 @@ NPF_SendCompleteExForEachOpen(
 {
 	//TRACE_ENTER();
 
-	NdisAcquireSpinLock(&Open->OpenInUseLock);
+	FILTER_ACQUIRE_LOCK(&Open->OpenInUseLock, TRUE);
 
 	if (FreeBufAfterWrite)
 	{
@@ -1014,7 +1015,7 @@ NPF_SendCompleteExForEachOpen(
 		//TRACE_EXIT();
 	}
 
-	NdisReleaseSpinLock(&Open->OpenInUseLock);
+	FILTER_RELEASE_LOCK(&Open->OpenInUseLock, TRUE);
 }
 
 //-------------------------------------------------------------------

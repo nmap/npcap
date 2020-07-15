@@ -286,6 +286,7 @@ NPF_Read(
 	if (Open->ReadEvent != NULL)
 		KeClearEvent(Open->ReadEvent);
 
+	// "NdisAcquireRWLockRead always raises the IRQL to IRQL = DISPATCH_LEVEL"
 	NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);
 
 	while (available > copied && Open->Free < Open->Size)
@@ -371,7 +372,7 @@ NPF_Read(
 		InterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
 
 		// Return this capture data
-		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData, 0);
+		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData, TRUE);
 
 		ASSERT(Open->Free <= Open->Size);
 	}
@@ -433,7 +434,8 @@ NPF_DoTap(
 			// If this instance originated the packet and doesn't want to see it, don't capture.
 			if (!(TempOpen == pOpenOriginating && TempOpen->SkipSentPackets))
 			{
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, &tstamp, AtDispatchLevel);
+				// NdisAcquireRWLockRead above raised to DISPATCH_LEVEL
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, &tstamp, TRUE);
 			}
 		}
 	}
@@ -1009,7 +1011,8 @@ NPF_TapExForEachOpen(
 				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = fres;
 			}
 
-			PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(Open->CapturePool, AtDispatchLevel);
+			// While BufferLock is held we are at DISPATCH_LEVEL
+			PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(Open->CapturePool, TRUE);
 			if (pCapData == NULL)
 			{
 				// Insufficient memory

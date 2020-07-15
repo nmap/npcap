@@ -401,7 +401,8 @@ NPF_ResetBufferContents(
 	for (Curr = Open->PacketQueue.Flink; Curr != &Open->PacketQueue; Curr = Curr->Flink)
 	{
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
-		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData, 0);
+		// If AcquireLock, then we are at DISPATCH_LEVEL
+		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData, AcquireLock);
 	}
 	// Remove links
 	InitializeListHead(&Open->PacketQueue);
