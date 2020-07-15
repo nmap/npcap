@@ -456,20 +456,20 @@ VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy)
 		pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
 		pNBCopiesEntry = pNBCopiesEntry->Next;
 
-		NPF_ObjectPoolReturn(pNBCopies, NPF_FreeNBCopies, 0);
+		NPF_ObjectPoolReturn(pNBCopies, NPF_FreeNBCopies, NPF_IRQL_UNKNOWN);
 	}
 
 	if (pNBLCopy->Dot11RadiotapHeader != NULL)
 	{
-		NPF_ObjectPoolReturn(pNBLCopy->Dot11RadiotapHeader, NULL, 0);
+		NPF_ObjectPoolReturn(pNBLCopy->Dot11RadiotapHeader, NULL, NPF_IRQL_UNKNOWN);
 	}
 }
 
 _Use_decl_annotations_
 VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData)
 {
-	NPF_ObjectPoolReturn(pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy, 0);
-	NPF_ObjectPoolReturn(pCapData->pNBCopy, NPF_FreeNBCopies, 0);
+	NPF_ObjectPoolReturn(pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy, NPF_IRQL_UNKNOWN);
+	NPF_ObjectPoolReturn(pCapData->pNBCopy, NPF_FreeNBCopies, NPF_IRQL_UNKNOWN);
 }
 
 VOID

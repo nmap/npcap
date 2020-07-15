@@ -1680,7 +1680,7 @@ NPF_IoControl(
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
 
 		// Extract a request from the list of free ones
-		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->pFiltMod->InternalRequestPool, 0);
+		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->pFiltMod->InternalRequestPool, NPF_IRQL_UNKNOWN);
 		if (pRequest == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
@@ -1968,7 +1968,7 @@ NPF_IoControl(
 
 OID_REQUEST_DONE:
 
-		NPF_ObjectPoolReturn(pRequest, NULL, 0);
+		NPF_ObjectPoolReturn(pRequest, NULL, NPF_IRQL_UNKNOWN);
 
 		break;
 
