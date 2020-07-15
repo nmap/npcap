@@ -286,7 +286,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc, BOOLEAN b
 	{
 		if (CleanupFunc)
 		{
-			CleanupFunc(pElem->pObject);
+			CleanupFunc(pElem->pObject, bAtDispatchLevel);
 		}
 		pShelf = pElem->pShelf;
 		pPool = pShelf->pPool;

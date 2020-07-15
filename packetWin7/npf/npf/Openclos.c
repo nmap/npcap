@@ -413,11 +413,13 @@ NPF_ResetBufferContents(
 }
 
 _Use_decl_annotations_
-VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy)
+VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
 {
 	PVOID pDeleteMe = NULL;
 	PMDL pMdl = NULL;
 	ULONG ulSize = 0;
+
+	UNREFERENCED_PARAMETER(bAtDispatchLevel);
 
 	if (pNBCopy->pNetBuffer != NULL)
 	{
@@ -446,7 +448,7 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy)
 
 /* NPF_ObjectPoolReturn Free handler for NBLCopyPool */
 _Use_decl_annotations_
-VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy)
+VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy, BOOLEAN bAtDispatchLevel)
 {
 	PNPF_NB_COPIES pNBCopies = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
@@ -457,20 +459,20 @@ VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy)
 		pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
 		pNBCopiesEntry = pNBCopiesEntry->Next;
 
-		NPF_ObjectPoolReturn(pNBCopies, NPF_FreeNBCopies, NPF_IRQL_UNKNOWN);
+		NPF_ObjectPoolReturn(pNBCopies, NPF_FreeNBCopies, bAtDispatchLevel);
 	}
 
 	if (pNBLCopy->Dot11RadiotapHeader != NULL)
 	{
-		NPF_ObjectPoolReturn(pNBLCopy->Dot11RadiotapHeader, NULL, NPF_IRQL_UNKNOWN);
+		NPF_ObjectPoolReturn(pNBLCopy->Dot11RadiotapHeader, NULL, bAtDispatchLevel);
 	}
 }
 
 _Use_decl_annotations_
-VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData)
+VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData, BOOLEAN bAtDispatchLevel)
 {
-	NPF_ObjectPoolReturn(pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy, NPF_IRQL_UNKNOWN);
-	NPF_ObjectPoolReturn(pCapData->pNBCopy, NPF_FreeNBCopies, NPF_IRQL_UNKNOWN);
+	NPF_ObjectPoolReturn(pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy, bAtDispatchLevel);
+	NPF_ObjectPoolReturn(pCapData->pNBCopy, NPF_FreeNBCopies, bAtDispatchLevel);
 }
 
 VOID

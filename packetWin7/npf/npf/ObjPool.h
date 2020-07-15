@@ -90,7 +90,8 @@ PVOID NPF_ObjectPoolGet(
 	_In_ BOOLEAN bAtDispatchLevel);
 
 typedef VOID (*PNPF_OBJ_CLEANUP)(
-	_In_ PVOID pObject);
+	_In_ PVOID pObject,
+	_In_ BOOLEAN bAtDispatchLevel);
 
 /* Return an object to the pool. Decrements the refcount. If it is 0, the
  * object is returned to the pool. The pool is identified by the location of
