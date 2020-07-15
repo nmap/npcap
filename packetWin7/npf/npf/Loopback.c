@@ -311,7 +311,7 @@ NPF_TapLoopback(
     PMDL pMdl = NULL;
 
 	pLoopbackFilter = NPF_GetLoopbackFilterModule();
-	if (pLoopbackFilter && NPF_StartUsingBinding(pLoopbackFilter)) {
+	if (pLoopbackFilter && NPF_StartUsingBinding(pLoopbackFilter, TRUE)) {
 		do {
 			/* Quick check to avoid extra work.
 			 * Won't lock because we're not actually traversing. */
@@ -440,7 +440,7 @@ NPF_TapLoopback(
 
 
 			// TODO: handle SkipSentPackets?
-			NPF_DoTap(pLoopbackFilter, pFakeNbl, NULL, NPF_IRQL_UNKNOWN);
+			NPF_DoTap(pLoopbackFilter, pFakeNbl, NULL, TRUE);
 		} while (0);
 
 		if (pFakeNbl != NULL) {
@@ -482,7 +482,7 @@ NPF_TapLoopback(
 			NdisFreeMemory(npBuff, numBytes, 0);
 		}
 
-		NPF_StopUsingBinding(pLoopbackFilter);
+		NPF_StopUsingBinding(pLoopbackFilter, TRUE);
 	}
 }
 
@@ -547,6 +547,7 @@ by the worker thread.
 -- */
 #if(NTDDI_VERSION >= NTDDI_WIN8)
 // FWPS_CALLOUT_CLASSIFY_FN2
+_IRQL_requires_max_(DISPATCH_LEVEL)
 void NPF_NetworkClassifyOutbound(
 	_In_ const FWPS_INCOMING_VALUES0 *inFixedValues,
 	_In_ const FWPS_INCOMING_METADATA_VALUES0 *inMetaValues,
@@ -558,6 +559,7 @@ void NPF_NetworkClassifyOutbound(
 	)
 #elif(NTDDI_VERSION >= NTDDI_WIN7)
 // FWPS_CALLOUT_CLASSIFY_FN1
+_IRQL_requires_max_(DISPATCH_LEVEL)
 void
 NPF_NetworkClassifyOutbound(
 	_In_ const FWPS_INCOMING_VALUES0* inFixedValues,
@@ -622,6 +624,7 @@ by the worker thread.
 -- */
 #if(NTDDI_VERSION >= NTDDI_WIN8)
 // FWPS_CALLOUT_CLASSIFY_FN2
+_IRQL_requires_max_(DISPATCH_LEVEL)
 void NPF_NetworkClassifyInbound(
 	_In_ const FWPS_INCOMING_VALUES0 *inFixedValues,
 	_In_ const FWPS_INCOMING_METADATA_VALUES0 *inMetaValues,
@@ -633,6 +636,7 @@ void NPF_NetworkClassifyInbound(
 	)
 #elif(NTDDI_VERSION >= NTDDI_WIN7)
 // FWPS_CALLOUT_CLASSIFY_FN1
+_IRQL_requires_max_(DISPATCH_LEVEL)
 void
 NPF_NetworkClassifyInbound(
 	_In_ const FWPS_INCOMING_VALUES0* inFixedValues,
@@ -743,7 +747,7 @@ NPF_NetworkClassifyInbound(
 
 		// Send the loopback packets data to the user-mode code.
 		pLoopbackFilter = NPF_GetLoopbackFilterModule();
-		if (pLoopbackFilter && NPF_StartUsingBinding(pLoopbackFilter)) {
+		if (pLoopbackFilter && NPF_StartUsingBinding(pLoopbackFilter, TRUE)) {
 			do {
 				bytesRetreatedEthernet = g_DltNullMode ? DLT_NULL_HDR_LEN : ETHER_HDR_LEN;
 				status = NdisRetreatNetBufferListDataStart(pClonedNetBufferList,
@@ -793,9 +797,9 @@ NPF_NetworkClassifyInbound(
 
 
 				// TODO: handle SkipSentPackets?
-				NPF_DoTap(pLoopbackFilter, pClonedNetBufferList, NULL, NPF_IRQL_UNKNOWN);
+				NPF_DoTap(pLoopbackFilter, pClonedNetBufferList, NULL, TRUE);
 			} while (0);
-			NPF_StopUsingBinding(pLoopbackFilter);
+			NPF_StopUsingBinding(pLoopbackFilter, TRUE);
 		}
 
 		// Advance the offset back to the original position.

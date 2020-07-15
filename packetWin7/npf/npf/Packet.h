@@ -1135,9 +1135,9 @@ NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
 
 BOOLEAN NPF_IsOpenInstance(_In_ POPEN_INSTANCE pOpen);
 
-BOOLEAN NPF_StartUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod);
+BOOLEAN NPF_StartUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
 
-VOID NPF_StopUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod);
+VOID NPF_StopUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
 
 BOOLEAN NPF_StartUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 

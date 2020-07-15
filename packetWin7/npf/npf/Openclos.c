@@ -295,7 +295,7 @@ NPF_IsOpenInstance(
 _Use_decl_annotations_
 BOOLEAN
 NPF_StartUsingBinding(
-	PNPCAP_FILTER_MODULE pFiltMod
+	PNPCAP_FILTER_MODULE pFiltMod, BOOLEAN AtDispatchLevel
 	)
 {
 	if (!pFiltMod) {
@@ -304,17 +304,17 @@ NPF_StartUsingBinding(
 	// NPF_OpenAdapter() is not called on PASSIVE_LEVEL, so the assertion will fail.
 	// ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
+	FILTER_ACQUIRE_LOCK(&pFiltMod->AdapterHandleLock, AtDispatchLevel);
 
 	if (pFiltMod->AdapterBindingStatus != FilterRunning)
 	{
-		NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
+		FILTER_RELEASE_LOCK(&pFiltMod->AdapterHandleLock, AtDispatchLevel);
 		return FALSE;
 	}
 
 	pFiltMod->AdapterHandleUsageCounter++;
 
-	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
+	FILTER_RELEASE_LOCK(&pFiltMod->AdapterHandleLock, AtDispatchLevel);
 
 	return TRUE;
 }
@@ -324,7 +324,7 @@ NPF_StartUsingBinding(
 _Use_decl_annotations_
 VOID
 NPF_StopUsingBinding(
-	PNPCAP_FILTER_MODULE pFiltMod
+	PNPCAP_FILTER_MODULE pFiltMod, BOOLEAN AtDispatchLevel
 	)
 {
 	ASSERT(pFiltMod != NULL);
@@ -335,13 +335,13 @@ NPF_StopUsingBinding(
 	//
 	//	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
+	FILTER_ACQUIRE_LOCK(&pFiltMod->AdapterHandleLock, AtDispatchLevel);
 
 	ASSERT(pFiltMod->AdapterHandleUsageCounter > 0);
 
 	pFiltMod->AdapterHandleUsageCounter--;
 
-	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
+	FILTER_RELEASE_LOCK(&pFiltMod->AdapterHandleLock, AtDispatchLevel);
 }
 
 //-------------------------------------------------------------------
@@ -557,7 +557,7 @@ NPF_OpenAdapter(
 			return STATUS_NDIS_INTERFACE_NOT_FOUND;
 		}
 
-		if (NPF_StartUsingBinding(pFiltMod) == FALSE)
+		if (NPF_StartUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN) == FALSE)
 		{
 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
 				"NPF_StartUsingBinding error, AdapterName=%ws",
@@ -577,7 +577,7 @@ NPF_OpenAdapter(
 	if (Open == NULL)
 	{
 		if (pFiltMod)
-			NPF_StopUsingBinding(pFiltMod);
+			NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 		Irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
@@ -609,7 +609,7 @@ NPF_OpenAdapter(
 		ExFreePool(Open);
 		Open = NULL;
 
-		NPF_StopUsingBinding(pFiltMod);
+		NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 
 		Irp->IoStatus.Status = Status;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -632,7 +632,7 @@ NPF_OpenAdapter(
 	if (pFiltMod)
 	{
 		NPF_AddToGroupOpenArray(Open, pFiltMod);
-		NPF_StopUsingBinding(pFiltMod);
+		NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 	}
 	else
 	{
@@ -762,7 +762,7 @@ NPF_StartUsingOpenInstance(
 {
 	BOOLEAN returnStatus;
 
-	if (MaxState <= OpenAttached && !NPF_StartUsingBinding(pOpen->pFiltMod))
+	if (MaxState <= OpenAttached && !NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel))
 	{
 		// Not attached, but need to be.
 		return FALSE;
@@ -833,7 +833,7 @@ NPF_StopUsingOpenInstance(
 
 	if (MaxState <= OpenAttached)
 	{
-		NPF_StopUsingBinding(pOpen->pFiltMod);
+		NPF_StopUsingBinding(pOpen->pFiltMod, AtDispatchLevel);
 	}
 }
 
@@ -1874,14 +1874,14 @@ NPF_GetFilterModuleByAdapterName(
 	for (Curr = g_arrFiltMod.Next; Curr != NULL; Curr = Curr->Next)
 	{
 		pFiltMod = CONTAINING_RECORD(Curr, NPCAP_FILTER_MODULE, FilterModulesEntry);
-		if (NPF_StartUsingBinding(pFiltMod) == FALSE)
+		if (NPF_StartUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN) == FALSE)
 		{
 			continue;
 		}
 
 		if (pFiltMod->Dot11 == Dot11 && NPF_EqualAdapterName(&pFiltMod->AdapterName, &BaseName))
 		{
-			NPF_StopUsingBinding(pFiltMod);
+			NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 			NdisReleaseSpinLock(&g_FilterArrayLock);
 			if (!Loopback) {
 				ExFreePoolWithTag(BaseName.Buffer, 'GFBN');
@@ -1890,7 +1890,7 @@ NPF_GetFilterModuleByAdapterName(
 		}
 		else
 		{
-			NPF_StopUsingBinding(pFiltMod);
+			NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 		}
 	}
 	NdisReleaseSpinLock(&g_FilterArrayLock);
@@ -1916,20 +1916,20 @@ NPF_GetLoopbackFilterModule()
 	for (Curr = g_arrFiltMod.Next; Curr != NULL; Curr = Curr->Next)
 	{
 		pFiltMod = CONTAINING_RECORD(Curr, NPCAP_FILTER_MODULE, FilterModulesEntry);
-		if (NPF_StartUsingBinding(pFiltMod) == FALSE)
+		if (NPF_StartUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN) == FALSE)
 		{
 			continue;
 		}
 
 		if (pFiltMod->Loopback)
 		{
-			NPF_StopUsingBinding(pFiltMod);
+			NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 			NdisReleaseSpinLock(&g_FilterArrayLock);
 			return pFiltMod;
 		}
 		else
 		{
-			NPF_StopUsingBinding(pFiltMod);
+			NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 		}
 	}
 	NdisReleaseSpinLock(&g_FilterArrayLock);
