@@ -1190,6 +1190,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 		memset(TmpAdInfo->MacAddress,'\0',6);
 		TmpAdInfo->MacAddressLen = 6;
 		TmpAdInfo->pNetworkAddresses = NULL;
+		PacketCloseAdapter(adapter);
 	}
 	else if(flags != INFO_FLAG_DONT_EXPORT)
 	{
