@@ -195,6 +195,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 
 	FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 
+	RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
 	pElem->Refcount = 1;
 	return pElem->pObject;
 }

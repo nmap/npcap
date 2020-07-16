@@ -616,7 +616,6 @@ NPF_TapExForEachOpen(
 				// and actual NBs won't line up.
 				goto TEFEO_done_with_NBs;
 			}
-			RtlZeroMemory(pNBLCopy, sizeof(NPF_NBL_COPY));
 			pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
 		}
 		else
@@ -673,7 +672,6 @@ NPF_TapExForEachOpen(
 					// TODO: Count this as a drop?
 					goto RadiotapDone;
 				}
-				RtlZeroMemory(pNBLCopy->Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER);
 				pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pNBLCopy->Dot11RadiotapHeader;
 
 				// The radiotap header is also placed in the buffer.
@@ -838,7 +836,6 @@ NPF_TapExForEachOpen(
 					// and actual NBs won't line up.
 					goto TEFEO_done_with_NBs;
 				}
-				RtlZeroMemory(pNBCopy, sizeof(NPF_NB_COPIES));
 				pNBCopiesPrev->Next = &pNBCopy->CopiesEntry;
 				pNBCopy->pNBLCopy = pNBLCopy;
 			}
@@ -1020,7 +1017,6 @@ NPF_TapExForEachOpen(
 				dropped++;
 				goto TEFEO_release_BufferLock;
 			}
-			RtlZeroMemory(pCapData, sizeof(NPF_CAP_DATA));
 			// Increment refcounts on relevant structures
 			pCapData->pNBCopy = pNBCopy;
 			NPF_ReferenceObject(pNBCopy);
