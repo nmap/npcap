@@ -194,6 +194,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool)
 
 	NdisReleaseSpinLock(&pPool->ShelfLock);
 
+	RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
 	pElem->Refcount = 1;
 	return pElem->pObject;
 }
