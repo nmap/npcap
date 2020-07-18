@@ -2386,6 +2386,7 @@ NPF_AttachAdapter(
 			TRACE_EXIT();
 			return returnStatus;
 		}
+		pFiltMod->AdapterBindingStatus = FilterAttaching;
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
@@ -2478,6 +2479,7 @@ NPF_AttachAdapter(
 #endif
 
 		returnStatus = STATUS_SUCCESS;
+		pFiltMod->AdapterBindingStatus = FilterPaused;
 		NPF_AddToFilterModuleArray(pFiltMod);
 	}
 	while (bFalse);
@@ -2518,6 +2520,7 @@ NPF_Pause(
 	NdisResetEvent(&Event);
 
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
+	ASSERT(pFiltMod->AdapterBindingStatus == FilterRunning);
 	pFiltMod->AdapterBindingStatus = FilterPausing;
 	
 	while (pFiltMod->AdapterHandleUsageCounter > 0)
