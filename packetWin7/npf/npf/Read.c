@@ -306,6 +306,11 @@ NPF_Read(
 		}
 		PNPF_CAP_DATA pCapData = CONTAINING_RECORD(pCapDataEntry, NPF_CAP_DATA, PacketQueueEntry);
 
+		/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
+		ASSERT(pCapData->pNBCopy);
+		ASSERT(pCapData->pNBCopy->pNBLCopy);
+		ASSERT(pCapData->pNBCopy->pNetBuffer);
+
 #ifdef HAVE_DOT11_SUPPORT
 		PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pCapData->pNBCopy->pNBLCopy->Dot11RadiotapHeader;
 #else
@@ -1032,6 +1037,15 @@ NPF_TapExForEachOpen(
 			pCapData->BpfHeader.bh_caplen = fres;
 			pCapData->BpfHeader.bh_datalen = TotalPacketSize;
 			pCapData->BpfHeader.bh_hdrlen = sizeof(struct bpf_hdr);
+			// We need to be sure that pCapData is completely
+			// populated before we put it in the queue, since
+			// NPF_Read could pull it out of the queue immediately
+			// afterwards.
+			KeMemoryBarrier();
+			/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
+			ASSERT(pCapData->pNBCopy);
+			ASSERT(pCapData->pNBCopy->pNBLCopy);
+			ASSERT(pCapData->pNBCopy->pNetBuffer);
 			ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
 
 			InterlockedExchangeAdd(&Open->Free, -(LONG)NPF_CAP_SIZE(pCapData, pRadiotapHeader));
