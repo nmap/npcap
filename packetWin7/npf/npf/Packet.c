@@ -295,7 +295,7 @@ DriverEntry(
 			NPF_GetRegistryOption_String(&parametersPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
 			if (g_LoopbackAdapterName.Buffer != NULL && g_LoopbackAdapterName.Length != ADAPTER_NAME_SIZE * 2)
 			{
-				TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_LoopbackAdapterName is invalid, g_LoopbackAdapterName.Length = %d, ADAPTER_NAME_SIZE * 2 = %d\n",
+				TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_LoopbackAdapterName is invalid, g_LoopbackAdapterName.Length = %lu, ADAPTER_NAME_SIZE * 2 = %zu\n",
 						g_LoopbackAdapterName.Length, ADAPTER_NAME_SIZE * 2);
 				ExFreePool(g_LoopbackAdapterName.Buffer);
 				g_LoopbackAdapterName.Buffer = NULL;
@@ -827,7 +827,7 @@ NPF_GetRegistryOption_String(
 				}
 				else
 				{
-					IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, valueInfoP->Data);)
+					IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, (PWSTR) valueInfoP->Data);)
 
 					g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
 					g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
@@ -1840,7 +1840,7 @@ NPF_IoControl(
 				// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
 				if (Open->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
 				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %p",
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %#lx",
 						*(ULONG*)OidData->Data, Open->pFiltMod->MyPacketFilter);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 

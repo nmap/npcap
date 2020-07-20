@@ -3251,7 +3251,7 @@ NPF_GetPacketFilter(
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
-		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %x, sizeof(PacketFilter) = %x\n", BytesProcessed, sizeof(PacketFilter));)
+		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));)
 		TRACE_EXIT();
 		return 0;
 	}
@@ -3354,7 +3354,7 @@ NPF_SetPacketFilter(
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
-		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %x, sizeof(PacketFilter) = %x\n", BytesProcessed, sizeof(PacketFilter));)
+		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));)
 		Status = NDIS_STATUS_FAILURE;
 	}
 	return Status;
