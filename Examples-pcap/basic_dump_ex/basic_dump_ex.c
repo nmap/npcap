@@ -8,7 +8,7 @@
 
 #include <pcap.h>
 #include <stdio.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()
 {
@@ -43,7 +43,7 @@ int main()
 	const u_char *pkt_data;
 	time_t local_tv_sec;
 
-#ifdef WIN32
+#ifdef _WIN32
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{

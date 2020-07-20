@@ -39,7 +39,7 @@
 #error At the moment the kernel dump feature is not supported in the driver
 /* See npf/Packet.c, NPF_IoControl, case BIOCSMODE, mode & MODE_DUMP */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()
 {
@@ -72,7 +72,7 @@ main(int argc, char **argv) {
 	printf("\t Where: max_size is the maximum size that the dump file will reach (0 means no limit)\n");
 	printf("\t Where: max_packs is the maximum number of packets that will be saved (0 means no limit)\n\n");
 
-#ifdef WIN32
+#ifdef _WIN32
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{

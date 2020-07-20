@@ -48,9 +48,6 @@
  ***************************************************************************/
 #pragma warning(disable: 4005 4201 4324)
 
-#ifndef _WIN64
-	#define WIN32
-#endif
 #define WIN_NT_DRIVER
 
 #define NPF_ALLOC_TAG '1234'

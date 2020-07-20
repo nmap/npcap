@@ -36,7 +36,7 @@
 
 #include <pcap.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()
 {
@@ -73,7 +73,7 @@ void main(int argc, char **argv)
 	u_int npacks = 0;
 	errno_t fopen_error;
 
-#ifdef WIN32
+#ifdef _WIN32
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{

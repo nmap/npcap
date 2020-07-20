@@ -8,7 +8,7 @@
 
 #include <pcap.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()
 {
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 	char errbuf[PCAP_ERRBUF_SIZE];
 	pcap_dumper_t *dumpfile;
 	
-#ifdef WIN32
+#ifdef _WIN32
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{

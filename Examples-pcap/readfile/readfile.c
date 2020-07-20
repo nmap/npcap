@@ -3,7 +3,7 @@
 
 #define LINE_LEN 16
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()
 {
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	pcap_t *fp;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	
-#ifdef WIN32
+#ifdef _WIN32
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{

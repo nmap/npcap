@@ -1102,9 +1102,9 @@ NPF_IoControl(
 	HANDLE					hUserEvent;
 	PKEVENT					pKernelEvent;
 	LOCK_STATE_EX lockState;
-#ifdef _AMD64_
+#ifdef _WIN64
 	VOID* POINTER_32		hUserEvent32Bit;
-#endif //_AMD64_
+#endif //_WIN64
 
 	TRACE_ENTER();
 
@@ -1529,7 +1529,7 @@ NPF_IoControl(
 
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETEVENTHANDLE");
 
-#ifdef _AMD64_
+#ifdef _WIN64
 		if (IoIs32bitProcess(Irp))
 		{
 			//
@@ -1545,7 +1545,7 @@ NPF_IoControl(
 			hUserEvent = hUserEvent32Bit;
 		}
 		else
-#endif //_AMD64_
+#endif //_WIN64
 		{
 			//
 			// validate the input

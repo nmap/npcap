@@ -41,7 +41,7 @@
 
 #include <pcap.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()
 {
@@ -111,7 +111,7 @@ int main()
 	char packet_filter[] = "ip and udp";
 	struct bpf_program fcode;
 	
-#ifdef WIN32
+#ifdef _WIN32
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{

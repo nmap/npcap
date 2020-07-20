@@ -1100,8 +1100,7 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator 
 # instead of the = operator.
 
-PREDEFINED             = WIN32 \
-                         _DEBUG_TO_FILE \
+PREDEFINED             = _DEBUG_TO_FILE \
                          EXPAND_AS_DEFINED \
                          EXPAND_AS_DEFINED \
                          =

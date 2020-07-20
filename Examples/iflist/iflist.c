@@ -35,7 +35,7 @@
 
 #include "pcap.h"
 
-#ifndef WIN32
+#ifndef _WIN32
 	#include <sys/socket.h>
 	#include <netinet/in.h>
 #else
@@ -72,7 +72,7 @@ int main()
   pcap_if_t *d;
   char errbuf[PCAP_ERRBUF_SIZE+1];
   char source[PCAP_ERRBUF_SIZE+1];
-#ifdef WIN32
+#ifdef _WIN32
   /* Load Npcap and its functions. */
   if (!LoadNpcapDlls())
   {
@@ -179,7 +179,7 @@ char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen)
 {
 	socklen_t sockaddrlen;
 
-	#ifdef WIN32
+	#ifdef _WIN32
 	sockaddrlen = sizeof(struct sockaddr_in6);
 	#else
 	sockaddrlen = sizeof(struct sockaddr_storage);

@@ -46,7 +46,7 @@
 
 #define LINE_LEN 16
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()
 {
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 	struct pcap_pkthdr *header;
 	const u_char *pkt_data;
 	
-#ifdef WIN32
+#ifdef _WIN32
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{

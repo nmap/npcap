@@ -44,7 +44,7 @@
 #define TIME_TO_SLEEP_MS 5000 
 #define KERNEL_BUFFER_SIZE_BYTES 16000 
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()
 {
@@ -78,7 +78,7 @@ main()
 	char packet_filter[] = "greater 30000";
 	struct bpf_program fcode;
 	
-#ifdef WIN32
+#ifdef _WIN32
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{

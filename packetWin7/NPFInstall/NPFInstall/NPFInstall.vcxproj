@@ -137,7 +137,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -166,7 +166,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -191,7 +191,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -216,7 +216,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OEM Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>PSAPI_VERSION=1;NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;NPCAP_OEM;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -244,7 +244,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>PSAPI_VERSION=1;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -272,7 +272,7 @@
     </Midl>
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>PSAPI_VERSION=1;NPCAP_OEM;WIN32;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PSAPI_VERSION=1;NPCAP_OEM;NDEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
