@@ -18,31 +18,15 @@
 *.VC.db
 Debug/
 Release/
-Debug No NetMon and AirPcap*/
-Release No NetMon and AirPcap*/
-Debug(*)/
-Release(*)/
 OEM Debug/
 OEM Release/
-OEM Debug No NetMon and AirPcap*/
-OEM Release No NetMon and AirPcap*/
-OEM Debug(*)/
-OEM Release(*)/
-Vista Debug/
-Vista Release/
-Vista Debug(*)/
-Vista Release(*)/
 Win7 Debug/
 Win7 Release/
-Win7 Debug(*)/
 Win7 Release(*)/
 OEM Win7 Debug/
 OEM Win7 Release/
-OEM Win7 Debug(*)/
 OEM Win7 Release(*)/
 Win7 Release SDV/
-Win7DebugAdmin-onlyMode/
-Win7ReleaseAdmin-onlyMode/
 sdv/
 build.err
 build.log
@@ -57,3 +41,14 @@ npcap.res
 /npcap-sdk/
 /dox/prj/
 *.VC.opendb
+.vs/
+Win10 OEM RO Release/
+Win10 OEM Release/
+Win10 Release/
+Win7 OEM RO Release(WinPcap Mode)/
+Win7 OEM RO Release/
+Win7 OEM Release(WinPcap Mode)/
+Win7 OEM Release/
+x64/
+/wpcap/build-win32/
+/wpcap/build-x64/
