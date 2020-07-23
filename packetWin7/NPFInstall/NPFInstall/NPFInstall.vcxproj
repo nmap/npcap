@@ -139,7 +139,6 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>PSAPI_VERSION=1;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -168,7 +167,6 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\..\Dll;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>PSAPI_VERSION=1;_DEBUG;_CONSOLE;_DEBUG_TO_FILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
