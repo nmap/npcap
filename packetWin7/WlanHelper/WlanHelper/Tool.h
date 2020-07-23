@@ -50,6 +50,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <vector>
+#include <string>
 using namespace std;
 
 typedef std::basic_string<TCHAR> tstring;

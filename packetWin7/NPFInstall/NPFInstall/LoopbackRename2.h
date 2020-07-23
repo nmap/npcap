@@ -63,6 +63,7 @@ This code is based on the Windows built-in netsh.exe tool.
 
 #include <windows.h>
 #include <vector>
+#include <string>
 using namespace std;
 
 typedef std::basic_string<TCHAR> tstring;

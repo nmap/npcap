@@ -73,6 +73,7 @@ This is used for updating PATH in registry.
 #endif
 
 #include <vector>
+#include <string>
 using namespace std;
 
 typedef std::basic_string<TCHAR> tstring;

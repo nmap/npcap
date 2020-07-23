@@ -92,6 +92,7 @@
 #include <strsafe.h>
 #include <Shlwapi.h>
 #include <wlanapi.h>
+#include <string>
 
 #include "ProtInstall.h"
 #include "Packet32-Int.h"

@@ -60,6 +60,7 @@ Abstract:
 --*/
 
 #include <vector>
+#include <string>
 using namespace std;
 
 typedef std::basic_string<TCHAR> tstring;

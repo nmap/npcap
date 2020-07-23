@@ -59,6 +59,7 @@ This is used for operating on registry.
 --*/
 
 #include <vector>
+#include <string>
 using namespace std;
 
 #include "..\..\Common\WpcapNames.h"
