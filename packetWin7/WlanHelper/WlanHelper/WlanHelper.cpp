@@ -322,7 +322,7 @@ int MainInteractive()
 
 			_tprintf(_T("%d. %s\n\tName: %s\n\tDescription: %s\n\tState: %s\n\tOperation Mode: %s\n"),
 				i,
-				strGuid,
+				(TCHAR *) strGuid,
 				getAdapterNameFromGuid((TCHAR*) strGuid).c_str(),
 				sInfo[i].strInterfaceDescription,
 				GetInterfaceStateString(sInfo[i].isState),
