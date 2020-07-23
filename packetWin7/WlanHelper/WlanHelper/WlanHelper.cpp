@@ -160,8 +160,6 @@ UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 		{
 			memcpy(&sInfo[i], &pIntfList->InterfaceInfo[i], sizeof(WLAN_INTERFACE_INFO));
 		}
-
-		return pIntfList->dwNumberOfItems;
 	}
 	__finally
 	{
@@ -171,7 +169,7 @@ UINT EnumInterface(HANDLE hClient, WLAN_INTERFACE_INFO sInfo[64])
 			WlanFreeMemory(pIntfList);
 		}
 	}
-	return 0;
+	return i;
 }
 
 // open a WLAN client handle and check version
