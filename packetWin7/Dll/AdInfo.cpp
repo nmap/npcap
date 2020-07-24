@@ -1505,7 +1505,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
 		TmpAdInfo = (PADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
 		if (TmpAdInfo == NULL) 
 		{
-			TRACE_PRINT("PacketAddAdapterDag: GlobalAlloc Failed");
+			TRACE_PRINT("PacketAddAdapterAirpcap: GlobalAlloc Failed");
 			Result = FALSE;
 			break;
 		}
