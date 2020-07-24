@@ -427,13 +427,25 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
 		pMdl = NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next;
 		while (pMdl)
 		{
+			/* Use HighPagePriority because we are about to free this memory.
+			 * If the system is low on resources, failing this will only make it lower on resources,
+			 * leading to runaway out-of-memory condition.
+			 */
 			NdisQueryMdl(pMdl,
 					&pDeleteMe,
 					&ulSize,
-					NormalPagePriority);
+					HighPagePriority);
 			if (pDeleteMe != NULL)
 			{
 				NdisFreeMemory(pDeleteMe, ulSize, 0);
+			}
+			else
+			{
+				// TODO: Safely recover from this condition.
+				// 1. tell NPF_ObjectPoolReturn that something went wrong so we don't leak.
+				// 2. Have NPF_ObjectPoolReturn tell its caller that something went wrong so it can bail.
+				// 3. Introduce a way to safely shut down the driver if we end up in an unrecoverable state.
+				ASSERT(pDeleteMe);
 			}
 			pDeleteMe = pMdl;
 			pMdl = pMdl->Next;
