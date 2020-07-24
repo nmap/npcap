@@ -3,7 +3,7 @@ SET MODE="Release"
 rem SET MODE="Debug"
 
 ::::::::::
-call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
+for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere" -version 16 -property installationPath`) do "%%a\VC\Auxiliary\Build\vcvarsall.bat"
 
 msbuild "%NPCAPDIR%\packetWin7\vs14\npcap.sln" /m /t:Build /p:Configuration="%MODE%" /p:Platform="x86"
 msbuild "%NPCAPDIR%\packetWin7\vs14\npcap.sln" /m /t:Build /p:Configuration="%MODE%" /p:Platform="x64"
