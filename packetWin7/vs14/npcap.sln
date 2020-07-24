@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30320.27
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npf", "..\npf\npf\npf.vcxproj", "{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}"
 EndProject
@@ -19,6 +19,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug No AirPcap|x64 = Debug No AirPcap|x64
 		Debug No AirPcap|x86 = Debug No AirPcap|x86
+		Debug Win10 driver|x64 = Debug Win10 driver|x64
+		Debug Win10 driver|x86 = Debug Win10 driver|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		OEM Release Win10 driver|x64 = OEM Release Win10 driver|x64
@@ -43,6 +45,12 @@ Global
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug No AirPcap|x86.ActiveCfg = Win7 Debug|Win32
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug No AirPcap|x86.Build.0 = Win7 Debug|Win32
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug No AirPcap|x86.Deploy.0 = Win7 Debug|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug Win10 driver|x64.ActiveCfg = Win10 Debug|x64
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug Win10 driver|x64.Build.0 = Win10 Debug|x64
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug Win10 driver|x64.Deploy.0 = Win10 Debug|x64
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug Win10 driver|x86.ActiveCfg = Win10 Debug|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug Win10 driver|x86.Build.0 = Win10 Debug|Win32
+		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug Win10 driver|x86.Deploy.0 = Win10 Debug|Win32
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug|x64.ActiveCfg = Win7 Debug|x64
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug|x64.Build.0 = Win7 Debug|x64
 		{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}.Debug|x64.Deploy.0 = Win7 Debug|x64
@@ -97,6 +105,12 @@ Global
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug No AirPcap|x86.ActiveCfg = Win7 Debug|Win32
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug No AirPcap|x86.Build.0 = Win7 Debug|Win32
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug No AirPcap|x86.Deploy.0 = Win7 Debug|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug Win10 driver|x64.ActiveCfg = Win10 Debug|x64
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug Win10 driver|x64.Build.0 = Win10 Debug|x64
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug Win10 driver|x64.Deploy.0 = Win10 Debug|x64
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug Win10 driver|x86.ActiveCfg = Win10 Debug|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug Win10 driver|x86.Build.0 = Win10 Debug|Win32
+		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug Win10 driver|x86.Deploy.0 = Win10 Debug|Win32
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug|x64.ActiveCfg = Win7 Debug|x64
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug|x64.Build.0 = Win7 Debug|x64
 		{1A6BC1F1-F16A-4653-B787-FAF5A0E50229}.Debug|x64.Deploy.0 = Win7 Debug|x64
@@ -149,6 +163,9 @@ Global
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No AirPcap|x64.Build.0 = Debug No AirPcap|x64
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No AirPcap|x86.ActiveCfg = Debug No AirPcap|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug No AirPcap|x86.Build.0 = Debug No AirPcap|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug Win10 driver|x64.ActiveCfg = Release|x64
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug Win10 driver|x86.ActiveCfg = Release|Win32
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug Win10 driver|x86.Build.0 = Release|Win32
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug|x64.ActiveCfg = Debug|x64
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug|x64.Build.0 = Debug|x64
 		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}.Debug|x86.ActiveCfg = Debug|Win32
@@ -182,6 +199,9 @@ Global
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug No AirPcap|x64.Build.0 = Debug|x64
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug No AirPcap|x86.ActiveCfg = Debug|Win32
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug No AirPcap|x86.Build.0 = Debug|Win32
+		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug Win10 driver|x64.ActiveCfg = Release|x64
+		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug Win10 driver|x86.ActiveCfg = Release|Win32
+		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug Win10 driver|x86.Build.0 = Release|Win32
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug|x64.ActiveCfg = Debug|x64
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug|x64.Build.0 = Debug|x64
 		{917BE5CC-CE5E-4476-A9E7-3B1F96E9FC43}.Debug|x86.ActiveCfg = Debug|Win32
@@ -215,6 +235,9 @@ Global
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug No AirPcap|x64.Build.0 = Debug|x64
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug No AirPcap|x86.ActiveCfg = Debug|Win32
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug No AirPcap|x86.Build.0 = Debug|Win32
+		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug Win10 driver|x64.ActiveCfg = Release|x64
+		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug Win10 driver|x86.ActiveCfg = Release|Win32
+		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug Win10 driver|x86.Build.0 = Release|Win32
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug|x64.ActiveCfg = Debug|x64
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug|x64.Build.0 = Debug|x64
 		{044CB4DC-827D-4134-B14B-DE114E884BB9}.Debug|x86.ActiveCfg = Debug|Win32
@@ -248,6 +271,9 @@ Global
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug No AirPcap|x64.Build.0 = Debug|x64
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug No AirPcap|x86.ActiveCfg = Debug|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug No AirPcap|x86.Build.0 = Debug|Win32
+		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug Win10 driver|x64.ActiveCfg = Release|x64
+		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug Win10 driver|x86.ActiveCfg = Release|Win32
+		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug Win10 driver|x86.Build.0 = Release|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug|x64.ActiveCfg = Debug|x64
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug|x64.Build.0 = Debug|x64
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Debug|x86.ActiveCfg = Debug|Win32
@@ -280,5 +306,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8740DD97-0A53-4514-B1C2-247294161C48}
 	EndGlobalSection
 EndGlobal
