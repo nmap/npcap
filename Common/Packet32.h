@@ -104,10 +104,6 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 #endif /* AIRPCAP_HANDLE__EAE405F5_0171_9592_B3C2_C19EC426AD34__DEFINED_ */
 #endif /* HAVE_AIRPCAP_API */
 
-#ifdef HAVE_DAG_API
-#include <dagc.h>
-#endif /* HAVE_DAG_API */
-
 // Libpcap/wpcap recognizes this macro and knows Npcap Packet API is provided for compilation.
 #define HAVE_NPCAP_PACKET_API
 
@@ -303,19 +299,11 @@ typedef struct _ADAPTER
 	///< ReadEvent will be signaled, also if no packets were captured
 	CHAR Name[ADAPTER_NAME_LENGTH];
 	PWAN_ADAPTER pWanAdapter;
-	UINT Flags;					///< Adapter's flags. Tell if this adapter must be treated in a different way, using the Netmon API or the dagc API.
+	UINT Flags;					///< Adapter's flags. Tell if this adapter must be treated in a different way.
 
 #ifdef HAVE_AIRPCAP_API
 	PAirpcapHandle AirpcapAd;
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-	dagc_t* pDagCard;			///< Pointer to the dagc API adapter descriptor for this adapter
-	PCHAR DagBuffer;			///< Pointer to the buffer with the packets that is received from the DAG card
-	struct timeval DagReadTimeout;	///< Read timeout. The dagc API requires a timeval structure
-	unsigned DagFcsLen;			///< Length of the frame check sequence attached to any packet by the card. Obtained from the registry
-	DWORD DagFastProcess;		///< True if the user requests fast capture processing on this card. Higher level applications can use this value to provide a faster but possibly unprecise capture (for example, libpcap doesn't convert the timestamps).
-#endif // HAVE_DAG_API
 }  ADAPTER, * LPADAPTER;
 
 /*!

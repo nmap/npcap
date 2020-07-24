@@ -127,11 +127,7 @@ map<string, int> g_nbAdapterMonitorModes;							// The states for all the wirele
 #pragma message ("Compiling Packet.dll with support for AirPcap")
 #endif
 
-#ifdef HAVE_DAG_API
-#pragma message ("Compiling Packet.dll with support for DAG cards")
-#endif
-
-#if defined(HAVE_AIRPCAP_API) || defined(HAVE_DAG_API)
+#if defined(HAVE_AIRPCAP_API)
 #define LOAD_OPTIONAL_LIBRARIES
 VOID PacketLoadLibrariesDynamically();
 #endif
@@ -312,7 +308,7 @@ HANDLE g_DynamicLibrariesMutex;
 #endif
 
 #ifdef HAVE_AIRPCAP_API
-// We load dinamically the dag library in order link it only when it's present on the system
+// We dynamically load the Airpcap library in order link it only when it's present on the system
 AirpcapGetLastErrorHandler g_PAirpcapGetLastError;
 AirpcapGetDeviceListHandler g_PAirpcapGetDeviceList;
 AirpcapFreeDeviceListHandler g_PAirpcapFreeDeviceList;
@@ -328,23 +324,6 @@ AirpcapReadHandler g_PAirpcapRead;
 AirpcapGetStatsHandler g_PAirpcapGetStats;
 AirpcapWriteHandler g_PAirpcapWrite;
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-// We load dinamically the dag library in order link it only when it's present on the system
-dagc_open_handler g_p_dagc_open = NULL;
-dagc_close_handler g_p_dagc_close = NULL;
-dagc_getlinktype_handler g_p_dagc_getlinktype = NULL;
-dagc_getlinkspeed_handler g_p_dagc_getlinkspeed = NULL;
-dagc_getfcslen_handler g_p_dagc_getfcslen = NULL;
-dagc_receive_handler g_p_dagc_receive = NULL;
-dagc_wait_handler g_p_dagc_wait = NULL;
-dagc_stats_handler g_p_dagc_stats = NULL;
-dagc_setsnaplen_handler g_p_dagc_setsnaplen = NULL;
-dagc_finddevs_handler g_p_dagc_finddevs = NULL;
-dagc_freedevs_handler g_p_dagc_freedevs = NULL;
-#endif // HAVE_DAG_API
-
-BOOLEAN PacketAddAdapterDag(PCHAR name, PCHAR description, BOOLEAN IsAFile);
 
 //
 // Additions for WinPcap OEM
@@ -1072,11 +1051,7 @@ VOID PacketLoadLibrariesDynamically()
 {
 #ifdef HAVE_AIRPCAP_API
 	HMODULE AirpcapLib;
-#endif // HAVE_DAG_API	
-
-#ifdef HAVE_DAG_API
-	HMODULE DagcLib;
-#endif // HAVE_DAG_API
+#endif // HAVE_AIRPCAP_API	
 
 	TRACE_ENTER();
 
@@ -1144,31 +1119,8 @@ VOID PacketLoadLibrariesDynamically()
 			g_PAirpcapOpen = NULL;
 		}
 	}
-#endif // HAVE_DAG_API
+#endif // HAVE_AIRPCAP_API
 	
-#ifdef HAVE_DAG_API
-	/* We dinamically load the dag library in order link it only when it's present on the system */
-	if((DagcLib =  LoadLibrarySafe(TEXT("dagc.dll"))) == NULL)
-	{
-		// Report the error but go on
-		TRACE_PRINT("dag capture library not found on this system");
-	}
-	else
-	{
-		g_p_dagc_open = (dagc_open_handler) GetProcAddress(DagcLib, "dagc_open");
-		g_p_dagc_close = (dagc_close_handler) GetProcAddress(DagcLib, "dagc_close");
-		g_p_dagc_setsnaplen = (dagc_setsnaplen_handler) GetProcAddress(DagcLib, "dagc_setsnaplen");
-		g_p_dagc_getlinktype = (dagc_getlinktype_handler) GetProcAddress(DagcLib, "dagc_getlinktype");
-		g_p_dagc_getlinkspeed = (dagc_getlinkspeed_handler) GetProcAddress(DagcLib, "dagc_getlinkspeed");
-		g_p_dagc_getfcslen = (dagc_getfcslen_handler) GetProcAddress(DagcLib, "dagc_getfcslen");
-		g_p_dagc_receive = (dagc_receive_handler) GetProcAddress(DagcLib, "dagc_receive");
-		g_p_dagc_wait = (dagc_wait_handler) GetProcAddress(DagcLib, "dagc_wait");
-		g_p_dagc_stats = (dagc_stats_handler) GetProcAddress(DagcLib, "dagc_stats");
-		g_p_dagc_finddevs = (dagc_finddevs_handler) GetProcAddress(DagcLib, "dagc_finddevs");
-		g_p_dagc_freedevs = (dagc_freedevs_handler) GetProcAddress(DagcLib, "dagc_freedevs");
-	}
-#endif /* HAVE_DAG_API */
-
 	//
 	// Done. Release the mutex and return
 	//
@@ -2097,126 +2049,6 @@ static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 #endif // HAVE_AIRPCAP_API
 
 
-/*! 
-  \brief Opens an adapter using the DAG capture API.
-  \param AdapterName A string containing the name of the device to open. 
-  \return If the function succeeds, the return value is the pointer to a properly initialized ADAPTER object,
-   otherwise the return value is NULL.
-
-  \note internal function used by PacketOpenAdapter()
-*/
-#ifdef HAVE_DAG_API
-static LPADAPTER PacketOpenAdapterDAG(LPCSTR AdapterName, BOOLEAN IsAFile)
-{
-	CHAR DagEbuf[DAGC_ERRBUF_SIZE];
-    LPADAPTER lpAdapter;
-	LONG	status;
-	HKEY dagkey;
-	DWORD lptype;
-	DWORD fpc;
-	DWORD lpcbdata = sizeof(fpc);
-	WCHAR keyname[512];
-	PWCHAR tsn;
-
-	TRACE_ENTER();
-
-	
-	lpAdapter = (LPADAPTER) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT,
-		sizeof(ADAPTER));
-	if (lpAdapter == NULL)
-	{
-		TRACE_PRINT("GlobalAlloc failed allocating memory for the ADAPTER structure");
-		TRACE_EXIT();
-		return NULL;
-	}
-
-	if(IsAFile)
-	{
-		// We must add an entry to the adapter description list, otherwise many function will not
-		// be able to work
-		if(!PacketAddAdapterDag(AdapterName, "DAG file", IsAFile))
-		{
-			TRACE_PRINT("Failed adding the Dag file to the list of adapters");
-			TRACE_EXIT();
-			GlobalFreePtr(lpAdapter);
-			return NULL;					
-		}
-
-		// Flag that this is a DAG file
-		lpAdapter->Flags = INFO_FLAG_DAG_FILE;
-	}
-	else
-	{
-		// Flag that this is a DAG card
-		lpAdapter->Flags = INFO_FLAG_DAG_CARD;
-	}
-
-	//
-	// See if the user is asking for fast capture with this device
-	//
-
-	lpAdapter->DagFastProcess = FALSE;
-
-	tsn = (strstr(strlwr((char*)AdapterName), "dag") != NULL)?
-		SChar2WChar(strstr(strlwr((char*)AdapterName), "dag")):
-		L"";
-
-	StringCchPrintfW(keyname, sizeof(keyname)/sizeof(keyname[0]), L"%s\\CardParams\\%ws", 
-		L"SYSTEM\\CurrentControlSet\\Services\\DAG",
-		tsn);
-
-	GlobalFreePtr(tsn);
-
-	do
-	{
-		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, keyname, 0 , KEY_READ, &dagkey);
-		if(status != ERROR_SUCCESS)
-			break;
-		
-		status = RegQueryValueEx(dagkey,
-			L"FastCap",
-			NULL,
-			&lptype,
-			(LPBYTE)&fpc,
-			&lpcbdata);
-		
-		if(status == ERROR_SUCCESS)
-			lpAdapter->DagFastProcess = fpc;
-		
-		RegCloseKey(dagkey);
-	}
-	while(FALSE);
-		  
-
-	TRACE_PRINT("Trying to open the DAG device...");
-	//
-	// Open the card
-	//
-	lpAdapter->pDagCard = g_p_dagc_open(AdapterName,
-	 0, 
-	 DagEbuf);
-	
-	if(lpAdapter->pDagCard == NULL)
-	{
-		TRACE_PRINT("Failed opening the DAG device");
-		TRACE_EXIT();
-		GlobalFreePtr(lpAdapter);
-		return NULL;					
-	}
-		  
-	lpAdapter->DagFcsLen = g_p_dagc_getfcslen(lpAdapter->pDagCard);
-				
-	StringCchCopyA(lpAdapter->Name, ADAPTER_NAME_LENGTH, AdapterName);
-	
-	// XXX we could create the read event here
-	TRACE_PRINT("Successfully opened the DAG device");
-
-	TRACE_EXIT();
-	return lpAdapter;
-}
-#endif // HAVE_DAG_API
-
-
 //---------------------------------------------------------------------------
 // PUBLIC API
 //---------------------------------------------------------------------------
@@ -2445,22 +2277,8 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 
 		if(TAdInfo == NULL)
 		{
-#ifdef HAVE_DAG_API
-			TRACE_PRINT("Adapter not found in our list. Try to open it as a DAG/ERF file...");
-
-			//can be an ERF file?
-			lpAdapter = PacketOpenAdapterDAG(AdapterNameA, TRUE);
-#endif // HAVE_DAG_API
-
-			if (lpAdapter == NULL)
-			{
-				TRACE_PRINT("Failed to open it as a DAG/ERF file, failing with ERROR_BAD_UNIT");
-				dwLastError = ERROR_BAD_UNIT; //this is the best we can do....
-			}
-			else
-			{
-				TRACE_PRINT("Opened the adapter as a DAG/ERF file.");
-			}
+			TRACE_PRINT("Failed to open adapter, failing with ERROR_BAD_UNIT");
+			dwLastError = ERROR_BAD_UNIT; //this is the best we can do....
 
 			break;
 		}
@@ -2497,28 +2315,6 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 			break;
 		}
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-		if(TAdInfo->Flags == INFO_FLAG_DAG_CARD)
-		{
-			TRACE_PRINT("Opening a DAG adapter...");
-			//
-			// This is a Dag card. Open it using the dagc API
-			//								
-			lpAdapter = PacketOpenAdapterDAG(AdapterNameA, FALSE);
-			if (lpAdapter == NULL)
-			{
-				TRACE_PRINT("Failed opening the DAG adapter with PacketOpenAdapterDAG. Failing. (BAD_UNIT)");
-				dwLastError = ERROR_BAD_UNIT;
-			}
-			else
-			{
-				dwLastError = ERROR_SUCCESS;
-			}
-
-			break;
-		}
-#endif // HAVE_DAG_API
 
 		if(TAdInfo->Flags == INFO_FLAG_DONT_EXPORT)
 		{
@@ -2599,22 +2395,6 @@ VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 			return;
 		}
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-	if(lpAdapter->Flags & INFO_FLAG_DAG_FILE ||  lpAdapter->Flags & INFO_FLAG_DAG_CARD)
-	{
-		TRACE_PRINT("Closing a DAG file...");
-		if(lpAdapter->Flags & INFO_FLAG_DAG_FILE & ~INFO_FLAG_DAG_CARD)
-		{
-			// This is a file. We must remove the entry in the adapter description list
-		PacketUpdateAdInfo(lpAdapter->Name);
-		}
-		g_p_dagc_close(lpAdapter->pDagCard);
-	    GlobalFreePtr(lpAdapter);
-		TRACE_EXIT();
-		return;
-	}
-#endif // HAVE_DAG_API
 
 	if (lpAdapter->Flags != INFO_FLAG_NDIS_ADAPTER)
 	{
@@ -2766,18 +2546,6 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
 		return res;
 	}
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-	if((AdapterObject->Flags & INFO_FLAG_DAG_CARD) || (AdapterObject->Flags & INFO_FLAG_DAG_FILE))
-	{
-		g_p_dagc_wait(AdapterObject->pDagCard, &AdapterObject->DagReadTimeout);
-
-		res = (BOOLEAN)(g_p_dagc_receive(AdapterObject->pDagCard, (u_char**)&AdapterObject->DagBuffer, (u_int*)&lpPacket->ulBytesReceived) == 0);
-		
-		TRACE_EXIT();
-		return res;
-	}
-#endif // HAVE_DAG_API
 
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
@@ -3020,15 +2788,6 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
 	}
 #endif // HAVE_AIRPCAP_API
 	
-#ifdef HAVE_DAG_API
-	if(AdapterObject->Flags & INFO_FLAG_DAG_CARD)
-	{
-		// No mintocopy with DAGs
-		TRACE_EXIT();
-		return TRUE;
-	}
-#endif // HAVE_DAG_API
-		
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
 		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSMINTOCOPY,&nbytes,4,NULL,0,&BytesReturned,NULL);
@@ -3362,37 +3121,6 @@ BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject,int timeout)
 	}
 #endif // HAVE_AIRPCAP_API
 
-#ifdef HAVE_DAG_API
-	// Under DAG, we simply store the timeout value and then 
-	if(AdapterObject->Flags & INFO_FLAG_DAG_CARD)
-	{
-		if(timeout == -1)
-		{
-			// tell DAG card to return immediately
-			AdapterObject->DagReadTimeout.tv_sec = 0;
-			AdapterObject->DagReadTimeout.tv_usec = 0;
-		}
-		else
-		{
-			if(timeout == 0)
-			{
-				// tell the DAG card to wait forvever
-				AdapterObject->DagReadTimeout.tv_sec = -1;
-				AdapterObject->DagReadTimeout.tv_usec = -1;
-			}
-			else
-			{
-				// Set the timeout for the DAG card
-				AdapterObject->DagReadTimeout.tv_sec = timeout / 1000;
-				AdapterObject->DagReadTimeout.tv_usec = (timeout * 1000) % 1000000;
-			}
-		}			
-		
-		TRACE_EXIT();
-		return TRUE;
-	}
-#endif // HAVE_DAG_API
-
 	if(AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
 		Result = TRUE;
@@ -3443,15 +3171,6 @@ BOOLEAN PacketSetBuff(LPADAPTER AdapterObject,int dim)
 		return Result;
 	}
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-	if(AdapterObject->Flags == INFO_FLAG_DAG_CARD)
-	{
-		// We can't change DAG buffers
-		TRACE_EXIT();
-		return TRUE;
-	}
-#endif // HAVE_DAG_API
 
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
@@ -3505,15 +3224,6 @@ BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
 		return Result;
 	}
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-	if(AdapterObject->Flags & INFO_FLAG_DAG_CARD)
-	{
-		// Delegate the filtering to higher layers since it's too expensive here
-		TRACE_EXIT();
-		return TRUE;
-	}
-#endif // HAVE_DAG_API
 
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
@@ -3626,12 +3336,7 @@ INT PacketSetSnapLen(LPADAPTER AdapterObject, int snaplen)
 	UNUSED(snaplen);
 	UNUSED(AdapterObject);
 
-#ifdef HAVE_DAG_API
-	if(AdapterObject->Flags & INFO_FLAG_DAG_CARD)
-		Result = g_p_dagc_setsnaplen(AdapterObject->pDagCard, snaplen);
-	else
-#endif // HAVE_DAG_API
-		Result = 0;
+	Result = 0;
 
 	TRACE_EXIT();
 	return Result;
@@ -3681,33 +3386,6 @@ BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
 		return Res;
 	}
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-	if(AdapterObject->Flags & INFO_FLAG_DAG_CARD)
-	{
-		dagc_stats_t DagStats;
-		
-		// Note: DAG cards are currently very limited from the statistics reporting point of view,
-		// so most of the values returned by dagc_stats() are zero at the moment
-		if(g_p_dagc_stats(AdapterObject->pDagCard, &DagStats) == 0)
-		{
-			// XXX: Only copy the dropped packets for now, since the received counter is not supported by
-			// DAGS at the moment
-
-			s->bs_recv = (ULONG)DagStats.received;
-			s->bs_drop = (ULONG)DagStats.dropped;
-
-			TRACE_EXIT();
-			return TRUE;
-		}
-		else
-		{
-			TRACE_EXIT();
-			return FALSE;
-		}
-	}
-
-#endif // HAVE_DAG_API
 
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
@@ -3759,25 +3437,6 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 	struct bpf_stat tmpstat;	// We use a support structure to avoid kernel-level inconsistencies with old or malicious applications
 
 	TRACE_ENTER();
-
-#ifdef HAVE_DAG_API
-	if(AdapterObject->Flags == INFO_FLAG_DAG_CARD)
-	{
-		dagc_stats_t DagStats;
-
-		// Note: DAG cards are currently very limited from the statistics reporting point of view,
-		// so most of the values returned by dagc_stats() are zero at the moment
-		g_p_dagc_stats(AdapterObject->pDagCard, &DagStats);
-		s->bs_recv = (ULONG)DagStats.received;
-		s->bs_drop = (ULONG)DagStats.dropped;
-		s->ps_ifdrop = 0;
-		s->bs_capt = (ULONG)DagStats.captured;
-
-		TRACE_EXIT();
-		return TRUE;
-
-	}
-#endif // HAVE_DAG_API
 
 #ifdef HAVE_AIRPCAP_API
 	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)

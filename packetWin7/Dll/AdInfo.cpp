@@ -137,15 +137,6 @@ extern AirpcapReadHandler g_PAirpcapRead;
 extern AirpcapGetStatsHandler g_PAirpcapGetStats;
 #endif /* HAVE_AIRPCAP_API */
 
-#ifdef HAVE_DAG_API
-extern dagc_open_handler g_p_dagc_open;
-extern dagc_close_handler g_p_dagc_close;
-extern dagc_getlinktype_handler g_p_dagc_getlinktype;
-extern dagc_getlinkspeed_handler g_p_dagc_getlinkspeed;
-extern dagc_finddevs_handler g_p_dagc_finddevs;
-extern dagc_freedevs_handler g_p_dagc_freedevs;
-#endif /* HAVE_DAG_API */
-
 /// Title of error windows
 TCHAR   szWindowTitle[] = TEXT("PACKET.DLL");
 
@@ -1595,7 +1586,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
   \brief Updates the list of the adapters using the airpcap dll.
   \return If the function succeeds, the return value is nonzero.
 
-  This function populates the list of adapter descriptions, looking for DAG cards on the system. 
+  This function populates the list of adapter descriptions, looking for AirPcap cards on the system. 
 */
 static BOOLEAN PacketGetAdaptersAirpcap()
 {
@@ -1627,130 +1618,6 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 }
 #endif // HAVE_AIRPCAP_API
 
-
-#ifdef HAVE_DAG_API
-/*!
-  \brief Add a dag adapter to the adapters info list, gathering information from the dagc API
-  \param name Name of the adapter.
-  \param description description of the adapter.
-  \return If the function succeeds, the return value is nonzero.
-*/
-BOOLEAN PacketAddAdapterDag(PCHAR name, PCHAR description, BOOLEAN IsAFile)
-{
-	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
-	CHAR ebuf[DAGC_ERRBUF_SIZE];
-	PADAPTER_INFO TmpAdInfo;
-	dagc_t *dagfd;
-
-	TRACE_ENTER();
-	
-	//XXX what about checking if the adapter already exists???
-	
-	//
-	// Allocate a descriptor for this adapter
-	//			
-	//here we do not acquire the mutex, since we are not touching the list, yet.
-    TmpAdInfo = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
-	if (TmpAdInfo == NULL) 
-	{
-		TRACE_PRINT("PacketAddAdapterDag: GlobalAlloc Failed allocating memory for the AdInfo structure.");
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	// Copy the device name and description
-	StringCchCopyA(TmpAdInfo->Name, 
-		sizeof(TmpAdInfo->Name), 
-		name);
-
-	StringCchCopyA(TmpAdInfo->Description, 
-		sizeof(TmpAdInfo->Description), 
-		description);
-
-	if(IsAFile)
-		TmpAdInfo->Flags = INFO_FLAG_DAG_FILE;
-	else
-		TmpAdInfo->Flags = INFO_FLAG_DAG_CARD;
-
-	if(g_p_dagc_open)
-		dagfd = g_p_dagc_open(name, 0, ebuf);
-	else
-		dagfd = NULL;
-
-	if(!dagfd)
-	{
-		GlobalFreePtr(TmpAdInfo);
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	TmpAdInfo->LinkLayer.LinkType = g_p_dagc_getlinktype(dagfd);
-
-	switch(g_p_dagc_getlinktype(dagfd)) 
-	{
-	case TYPE_HDLC_POS:
-		TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumCHDLC; // Note: custom linktype, NDIS doesn't provide an equivalent
-		break;
-	case -TYPE_HDLC_POS:
-		TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumPPPSerial; // Note: custom linktype, NDIS doesn't provide an equivalent
-		break;
-	case TYPE_ETH:
-		TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMedium802_3;
-		break;
-	case TYPE_ATM: 
-		TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumAtm;
-		break;
-	default:
-		TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumNull; // Note: custom linktype, NDIS doesn't provide an equivalent
-		break;
-	}			
-
-	TmpAdInfo->LinkLayer.LinkSpeed = (g_p_dagc_getlinkspeed(dagfd) == -1)?
-		100000000:  // Unknown speed, default to 100Mbit
-	g_p_dagc_getlinkspeed(dagfd) * 1000000; 
-
-	g_p_dagc_close(dagfd);
-
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-
-	// Update the AdaptersInfo list
-	TmpAdInfo->Next = g_AdaptersInfoList;
-	g_AdaptersInfoList = TmpAdInfo;
-
-	ReleaseMutex(g_AdaptersInfoMutex);
-
-	TRACE_EXIT();
-	return TRUE;
-}
-
-/*!
-  \brief Updates the list of the adapters using the DAGC API.
-  \return If the function succeeds, the return value is nonzero.
-
-  This function populates the list of adapter descriptions, looking for DAG cards on the system. 
-*/
-BOOLEAN PacketGetAdaptersDag()
-{
-	CHAR ebuf[DAGC_ERRBUF_SIZE];
-	dagc_if_t *devs = NULL, *tmpdevs;
-	UINT i;
-	
-	if(g_p_dagc_finddevs(&devs, ebuf))
-		// No dag cards found on this system
-		return FALSE;
-	else
-	{
-		for(tmpdevs = devs, i=0; tmpdevs != NULL; tmpdevs = tmpdevs->next)
-		{
-			PacketAddAdapterDag(tmpdevs->name, tmpdevs->description, FALSE);
-		}
-	}
-	
-	g_p_dagc_freedevs(devs);
-	
-	return TRUE;
-}
-#endif // HAVE_DAG_API
 
 /*!
 \brief Find the information about an adapter scanning the global ADAPTER_INFO list.
@@ -1893,17 +1760,6 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 		PacketAddAdapterNPF(FAKE_LOOPBACK_ADAPTER_NAME, 0);
 	}
 
-#ifdef HAVE_DAG_API
-	if(g_p_dagc_open != NULL)	
-	{
-		PacketGetAdaptersDag();
-	}
-	else
-	{
-		TRACE_PRINT("Dag extension not available");
-	}
-#endif // HAVE_DAG_API
-
 	TRACE_EXIT();
 	return TRUE;
 }
@@ -1979,17 +1835,6 @@ void PacketPopulateAdaptersInfoList()
 		}
 	}
 #endif // HAVE_AIRPCAP_API
-
-#ifdef HAVE_DAG_API
-	if(g_p_dagc_open != NULL)	
-	{
-		if(!PacketGetAdaptersDag())
-		{
-			// No info about adapters in the registry. 
-			TRACE_PRINT("PacketPopulateAdaptersInfoList: lookup of dag cards failed!");
-		}
-	}
-#endif // HAVE_DAG_API
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 	TRACE_EXIT();
