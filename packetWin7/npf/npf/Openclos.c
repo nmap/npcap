@@ -2392,9 +2392,9 @@ NPF_AttachAdapter(
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
 		if (g_SendToRxAdapterName.Buffer != NULL)
 		{
-			int iAdapterCnt = (g_SendToRxAdapterName.Length / 2 + 1) / ADAPTER_NAME_SIZE_WITH_SEPARATOR;
+			USHORT iAdapterCnt = (g_SendToRxAdapterName.Length / 2 + 1) / ADAPTER_NAME_SIZE_WITH_SEPARATOR;
 			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-				"g_SendToRxAdapterName.Length=%d, iAdapterCnt=%d",
+				"g_SendToRxAdapterName.Length=%u, iAdapterCnt=%u",
 				g_SendToRxAdapterName.Length,
 				iAdapterCnt);
 			for (int i = 0; i < iAdapterCnt; i++)
@@ -2412,9 +2412,9 @@ NPF_AttachAdapter(
 		// Determine whether this is our block-Rx adapter for the open_instance.
 		if (g_BlockRxAdapterName.Buffer != NULL)
 		{
-			int iAdapterCnt = (g_BlockRxAdapterName.Length / 2 + 1) / ADAPTER_NAME_SIZE_WITH_SEPARATOR;
+			USHORT iAdapterCnt = (g_BlockRxAdapterName.Length / 2 + 1) / ADAPTER_NAME_SIZE_WITH_SEPARATOR;
 			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-				"g_BlockRxAdapterName.Length=%d, iAdapterCnt=%d",
+				"g_BlockRxAdapterName.Length=%u, iAdapterCnt=%u",
 				g_BlockRxAdapterName.Length,
 				iAdapterCnt);
 			for (int i = 0; i < iAdapterCnt; i++)

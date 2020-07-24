@@ -771,7 +771,9 @@ NPF_BufferedWrite(
 			}
 
 			// Calculate the time interval to wait before sending the next packet
-			TargetTicks.QuadPart = StartTicks.QuadPart + (LONGLONG)((pWinpcapHdr->ts.tv_sec - BufStartTime.tv_sec) * 1000000 + pWinpcapHdr->ts.tv_usec - BufStartTime.tv_usec) * (TimeFreq.QuadPart) / 1000000;
+			TargetTicks.QuadPart = StartTicks.QuadPart +
+				((LONGLONG)pWinpcapHdr->ts.tv_sec - BufStartTime.tv_sec) * TimeFreq.QuadPart +
+				((LONGLONG)pWinpcapHdr->ts.tv_usec - BufStartTime.tv_usec) * (TimeFreq.QuadPart) / 1000000;
 
 			// Wait until the time interval has elapsed
 			while (CurTicks.QuadPart <= TargetTicks.QuadPart)
