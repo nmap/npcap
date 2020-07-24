@@ -453,9 +453,14 @@ NPF_TapLoopback(
 					 * Otherwise it's unique and we should free it now. */
 					FirstMDLLen = MmGetMdlByteCount(pMdl);
 					if (FirstMDLLen != numBytes) {
-						pTmpBuf = MmGetSystemAddressForMdlSafe(pMdl, NormalPagePriority|MdlMappingNoExecute);
+						pTmpBuf = MmGetSystemAddressForMdlSafe(pMdl, HighPagePriority|MdlMappingNoExecute);
 						if (pTmpBuf != NULL) {
 							NdisFreeMemory(pTmpBuf, FirstMDLLen, 0);
+						}
+						else {
+							// See NPF_FreeNBCopies for TODO item related to this assert and
+							// justification for HighPagePriority above.
+							ASSERT(pTmpBuf);
 						}
 					}
 

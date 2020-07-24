@@ -354,6 +354,12 @@ NPF_Read(
 					&pDataLinkBuffer,
 					&BufferLength,
 					NormalPagePriority);
+			if (pDataLinkBuffer == NULL)
+			{
+				IF_LOUD(DbgPrint("Unable to query MDL; bailing.");)
+				pMdl = NULL;
+				break;
+			}
 
 			CopyLengthForMDL = min(plen, BufferLength);
 

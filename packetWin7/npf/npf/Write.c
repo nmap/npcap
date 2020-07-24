@@ -844,7 +844,7 @@ NPF_FreePackets(
 		while (Currbuff)
 		{
 			pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
-			npBuff = MmGetSystemAddressForMdlSafe(pMdl, LowPagePriority|MdlMappingNoExecute);
+			npBuff = MmGetSystemAddressForMdlSafe(pMdl, HighPagePriority|MdlMappingNoExecute);
 			if (npBuff != NULL) {
 				ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 			}
