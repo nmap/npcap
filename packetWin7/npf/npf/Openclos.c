@@ -443,7 +443,9 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
 		NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = 0;
 		NET_BUFFER_DATA_OFFSET(pNBCopy->pNetBuffer) = 0;
 		NdisFreeNetBuffer(pNBCopy->pNetBuffer);
+		pNBCopy->pNetBuffer = NULL;
 	}
+	pNBCopy->pNBLCopy = NULL;
 }
 
 /* NPF_ObjectPoolReturn Free handler for NBLCopyPool */
@@ -1081,7 +1083,7 @@ NPF_GetDeviceMTU(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(Mtu), '0PWA');
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(Mtu), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1100,7 +1102,7 @@ NPF_GetDeviceMTU(
 	);
 
     Mtu = *(UINT *)pBuffer;
-    ExFreePoolWithTag(pBuffer, '0PWA');
+    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
 	if (BytesProcessed != sizeof(Mtu) || Mtu == 0)
 	{
@@ -1131,7 +1133,7 @@ NPF_GetDataRateMappingTable(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(DOT11_DATA_RATE_MAPPING_TABLE), '0PWA');
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(DOT11_DATA_RATE_MAPPING_TABLE), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1151,14 +1153,14 @@ NPF_GetDataRateMappingTable(
 
 	if (BytesProcessed != sizeof(DOT11_DATA_RATE_MAPPING_TABLE))
 	{
-        ExFreePoolWithTag(pBuffer, '0PWA');
+        ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 		TRACE_EXIT();
 		return STATUS_UNSUCCESSFUL;
 	}
 	else
 	{
 		*pDataRateMappingTable = *(DOT11_DATA_RATE_MAPPING_TABLE *) pBuffer;
-        ExFreePoolWithTag(pBuffer, '0PWA');
+        ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 		TRACE_EXIT();
 		return STATUS_SUCCESS;
 	}
@@ -1215,7 +1217,7 @@ NPF_GetCurrentOperationMode(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentOperationMode), '0PWA');
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentOperationMode), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1234,7 +1236,7 @@ NPF_GetCurrentOperationMode(
 	);
 
     CurrentOperationMode = *(DOT11_CURRENT_OPERATION_MODE *) pBuffer;
-    ExFreePoolWithTag(pBuffer, '0PWA');
+    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
 	if (BytesProcessed != sizeof(CurrentOperationMode))
 	{
@@ -1289,7 +1291,7 @@ NPF_GetCurrentChannel(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentChannel), '0PWA');
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentChannel), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1308,7 +1310,7 @@ NPF_GetCurrentChannel(
 	);
 
     CurrentChannel = *(ULONG *)pBuffer;
-    ExFreePoolWithTag(pBuffer, '0PWA');
+    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
 	if (BytesProcessed != sizeof(CurrentChannel))
 	{
@@ -1360,7 +1362,7 @@ NPF_GetCurrentFrequency(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentFrequency), '0PWA');
+    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentFrequency), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1379,7 +1381,7 @@ NPF_GetCurrentFrequency(
 	);
 
     CurrentFrequency = *(ULONG *)pBuffer;
-    ExFreePoolWithTag(pBuffer, '0PWA');
+    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
 	if (BytesProcessed != sizeof(CurrentFrequency))
 	{
@@ -1700,7 +1702,7 @@ NPF_RemoveFromGroupOpenArray(
 	/* If the packet filter has changed, originate an OID Request to set it to the new value */
 	if (pFiltMod->MyPacketFilter != OldPacketFilter)
 	{
-        pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), '0PWA');
+        pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
         if (pBuffer == NULL)
         {
             IF_LOUD(DbgPrint("Allocate pBuffer failed, can't reset packet filter\n");)
@@ -1721,7 +1723,7 @@ NPF_RemoveFromGroupOpenArray(
 				0,
 				0,
 				&BytesProcessed);
-			ExFreePoolWithTag(pBuffer, '0PWA');
+			ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 			if (BytesProcessed != sizeof(ULONG))
 			{
 				IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");)
@@ -1845,7 +1847,7 @@ NPF_GetFilterModuleByAdapterName(
 #endif
 
 	BaseName.MaximumLength = pAdapterName->MaximumLength;
-	BaseName.Buffer = ExAllocatePoolWithTag(NonPagedPool, BaseName.MaximumLength, 'GFBN');
+	BaseName.Buffer = ExAllocatePoolWithTag(NonPagedPool, BaseName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (BaseName.Buffer == NULL) {
 		IF_LOUD(DbgPrint("NPF_GetFilterModuleByAdapterName: failed to allocate BaseName.Buffer\n");)
 		TRACE_EXIT();
@@ -1887,7 +1889,7 @@ NPF_GetFilterModuleByAdapterName(
 			NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 			NdisReleaseSpinLock(&g_FilterArrayLock);
 			if (!Loopback) {
-				ExFreePoolWithTag(BaseName.Buffer, 'GFBN');
+				ExFreePoolWithTag(BaseName.Buffer, NPF_UNICODE_BUFFER_TAG);
 			}
 			return pFiltMod;
 		}
@@ -1898,7 +1900,7 @@ NPF_GetFilterModuleByAdapterName(
 	}
 	NdisReleaseSpinLock(&g_FilterArrayLock);
 	if (!Loopback) {
-		ExFreePoolWithTag(BaseName.Buffer, 'GFBN');
+		ExFreePoolWithTag(BaseName.Buffer, NPF_UNICODE_BUFFER_TAG);
 	}
 
 	TRACE_EXIT();
@@ -1952,7 +1954,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	TRACE_ENTER();
 
 	// allocate some memory for the open structure
-	Open = ExAllocatePoolWithTag(NonPagedPool, sizeof(OPEN_INSTANCE), '0OWA');
+	Open = ExAllocatePoolWithTag(NonPagedPool, sizeof(OPEN_INSTANCE), NPF_OPEN_TAG);
 
 	if (Open == NULL)
 	{
@@ -2069,7 +2071,7 @@ NPF_CreateFilterModule(
 	BOOLEAN bAllocFailed = FALSE;
 
 	// allocate some memory for the filter module structure
-	pFiltMod = ExAllocatePoolWithTag(NonPagedPool, sizeof(NPCAP_FILTER_MODULE), '0OWA');
+	pFiltMod = ExAllocatePoolWithTag(NonPagedPool, sizeof(NPCAP_FILTER_MODULE), NPF_FILTMOD_TAG);
 
 	if (pFiltMod == NULL)
 	{
@@ -2121,7 +2123,7 @@ NPF_CreateFilterModule(
 		PoolParameters.ProtocolId = NDIS_PROTOCOL_ID_DEFAULT;
 		PoolParameters.fAllocateNetBuffer = TRUE;
 		PoolParameters.ContextSize = sizeof(PACKET_RESERVED);
-		PoolParameters.PoolTag = NPF_ALLOC_TAG;
+		PoolParameters.PoolTag = NPF_PACKET_POOL_TAG;
 		PoolParameters.DataSize = 0;
 
 		pFiltMod->PacketPool = NdisAllocateNetBufferListPool(NdisFilterHandle, &PoolParameters);
@@ -2136,7 +2138,7 @@ NPF_CreateFilterModule(
 		NBPoolParams.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
 		NBPoolParams.Header.Revision = NET_BUFFER_POOL_PARAMETERS_REVISION_1;
 		NBPoolParams.Header.Size = NDIS_SIZEOF_NET_BUFFER_POOL_PARAMETERS_REVISION_1;
-		NBPoolParams.PoolTag = NPF_ALLOC_TAG;
+		NBPoolParams.PoolTag = NPF_TAP_POOL_TAG;
 		NBPoolParams.DataSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
 		pFiltMod->TapNBPool = NdisAllocateNetBufferPool(NdisFilterHandle, &NBPoolParams);
 
@@ -2175,7 +2177,7 @@ NPF_CreateFilterModule(
 	pFiltMod->MaxFrameSize = 1514;
 
 	pFiltMod->AdapterName.MaximumLength = AdapterName->MaximumLength - devicePrefix.Length;
-	pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NonPagedPool, pFiltMod->AdapterName.MaximumLength, 'NPCA');
+	pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NonPagedPool, pFiltMod->AdapterName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	pFiltMod->AdapterName.Length = 0;
 	RtlAppendUnicodeToString(&pFiltMod->AdapterName, AdapterName->Buffer + devicePrefix.Length / sizeof(WCHAR));
 
@@ -2711,7 +2713,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 	{
 		Status = NdisAllocateCloneOidRequest(pFiltMod->AdapterHandle,
 											Request,
-											NPF_ALLOC_TAG,
+											NPF_CLONE_OID_TAG,
 											&ClonedRequest);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
@@ -2723,7 +2725,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 		{
 			// ExAllocatePoolWithTag is permitted to be used at DISPATCH_LEVEL iff allocating from NonPagedPool
 #pragma warning(suppress: 28118)
-			pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), '0PWA');
+			pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), NPF_CLONE_OID_TAG);
 			if (pBuffer == NULL)
 			{
 				IF_LOUD(DbgPrint("Allocate pBuffer failed, cannot modify packet filter.\n");)
@@ -2932,7 +2934,7 @@ Arguments:
             if (OriginalRequest->DATA.SET_INFORMATION.InformationBuffer != Request->DATA.SET_INFORMATION.InformationBuffer)
             {
                 /* We modified the data on clone, e.g. OID_GEN_CURRENT_PACKET_FILTER */
-                ExFreePoolWithTag(Request->DATA.SET_INFORMATION.InformationBuffer, '0PWA');
+                ExFreePoolWithTag(Request->DATA.SET_INFORMATION.InformationBuffer, NPF_CLONE_OID_TAG);
             }
 			break;
 
@@ -3226,7 +3228,7 @@ NPF_GetPacketFilter(
 	ULONG BytesProcessed = 0;
 	PVOID pBuffer = NULL;
 	
-	pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PacketFilter), '0PWA');
+	pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -3247,7 +3249,7 @@ NPF_GetPacketFilter(
 		);
 
     PacketFilter = *(ULONG *)pBuffer;
-    ExFreePoolWithTag(pBuffer, '0PWA');
+    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
@@ -3326,7 +3328,7 @@ NPF_SetPacketFilter(
 
 	pFiltMod->MyPacketFilter = NewPacketFilter;
 
-	pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PacketFilter), '0PWA');
+	pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
 	if (pBuffer == NULL)
 	{
 		IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -3350,7 +3352,7 @@ NPF_SetPacketFilter(
 		&BytesProcessed
 	);
 
-	ExFreePoolWithTag(pBuffer, '0PWA');
+	ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{

@@ -132,7 +132,7 @@ NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN
 	DECLARE_CONST_UNICODE_STRING(filePrefix, L"\\\\?\\");
 	FullFileName.Length = 0;
 	FullFileName.MaximumLength = fileName->Length + filePrefix.Length;
-	FullFileName.Buffer = ExAllocatePoolWithTag(NonPagedPool, FullFileName.MaximumLength * sizeof(WCHAR), '0DWA');
+	FullFileName.Buffer = ExAllocatePoolWithTag(NonPagedPool, FullFileName.MaximumLength * sizeof(WCHAR), NPF_DUMP_TAG);
 	if (FullFileName.Buffer == NULL)
 	{
 		ntStatus = STATUS_INSUFFICIENT_RESOURCES;

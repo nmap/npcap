@@ -65,8 +65,6 @@
 #include "packet.h"
 #include "winerror.h"
 
-#define NPCAP_CALLOUT_DRIVER_TAG (UINT32) 'NPCA'
-
 // 
 // Global variables
 //
@@ -288,7 +286,6 @@ NPF_NetworkInjectionComplete(
 //
 
 
-#define NPF_TAG_LOOPBACK_COPY 'LBPN'
 // Send the loopback packets data to the user-mode code.
 VOID
 NPF_TapLoopback(
@@ -330,7 +327,7 @@ NPF_TapLoopback(
 				numBytes = ETHER_HDR_LEN;
 			}
 			npBuff = (PUCHAR) NdisAllocateMemoryWithTagPriority(
-					pLoopbackFilter->AdapterHandle, numBytes, NPF_TAG_LOOPBACK_COPY, NormalPoolPriority);
+					pLoopbackFilter->AdapterHandle, numBytes, NPF_LOOPBACK_COPY_TAG, NormalPoolPriority);
 			if (npBuff == NULL)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD,
@@ -386,7 +383,7 @@ NPF_TapLoopback(
 						 * data of first MDL */
 						FirstMDLLen = numBytes + OrigLen - Offset;
 						pTmpBuf = NdisAllocateMemoryWithTagPriority(
-								pLoopbackFilter->AdapterHandle, FirstMDLLen, NPF_TAG_LOOPBACK_COPY, NormalPoolPriority);
+								pLoopbackFilter->AdapterHandle, FirstMDLLen, NPF_LOOPBACK_COPY_TAG, NormalPoolPriority);
 						if (pTmpBuf == NULL)
 						{
 							TRACE_MESSAGE(PACKET_DEBUG_LOUD,

@@ -259,7 +259,7 @@ DriverEntry(
 
 	RtlInitUnicodeString(&parametersPath, NULL);
 	parametersPath.MaximumLength=RegistryPath->Length+wcslen(L"\\Parameters")*sizeof(WCHAR)+sizeof(UNICODE_NULL);
-	parametersPath.Buffer=ExAllocatePoolWithTag(PagedPool, parametersPath.MaximumLength, '4PWA');
+	parametersPath.Buffer=ExAllocatePoolWithTag(PagedPool, parametersPath.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (!parametersPath.Buffer) {
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
@@ -381,7 +381,7 @@ DriverEntry(
 	deviceSymLink.Length = 0;
 	deviceSymLink.MaximumLength = (USHORT)(AdapterName.Length - devicePrefix.Length + symbolicLinkPrefix.Length + sizeof(UNICODE_NULL));
 
-	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, '3PWA');
+	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (deviceSymLink.Buffer == NULL)
 	{
 		TRACE_EXIT();
@@ -733,7 +733,7 @@ REGISTRY_QUERY_VALUE_KEY:
 		{
 			// We know how big it needs to be.
 			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
-			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '1PWA');
+			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, NPF_SHORT_TERM_TAG);
 			if (valueInfoP != NULL)
 			{
 				status = ZwQueryValueKey(keyHandle,
@@ -812,7 +812,7 @@ NPF_GetRegistryOption_String(
 		{
 			// We know how big it needs to be.
 			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
-			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, '1PWA');
+			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, NPF_SHORT_TERM_TAG);
 			if (valueInfoP != NULL)
 			{
 				status = ZwQueryValueKey(keyHandle,
@@ -831,7 +831,7 @@ NPF_GetRegistryOption_String(
 
 					g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
 					g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
-					g_OutputString->Buffer = ExAllocatePoolWithTag(NonPagedPool, g_OutputString->MaximumLength, '3PWA');
+					g_OutputString->Buffer = ExAllocatePoolWithTag(NonPagedPool, g_OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
 
 					if (g_OutputString->Buffer)
 						RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
@@ -1310,7 +1310,7 @@ NPF_IoControl(
 				}
 
 			// Allocate the memory to contain the new filter program
-			TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, cnt * sizeof(struct bpf_insn), '4PWA');
+			TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, cnt * sizeof(struct bpf_insn), NPF_BPF_TAG);
 			if (TmpBPFProgram == NULL)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error - No memory for filter");
@@ -1421,7 +1421,7 @@ NPF_IoControl(
 			}
 		
 			// Allocate the buffer that will contain the string
-			DumpNameBuff=ExAllocatePoolWithTag(NonPagedPool, IrpSp->Parameters.DeviceIoControl.InputBufferLength, '5PWA');
+			DumpNameBuff=ExAllocatePoolWithTag(NonPagedPool, IrpSp->Parameters.DeviceIoControl.InputBufferLength, NPF_DUMP_TAG);
 			if(DumpNameBuff==NULL || Open->DumpFileName.Buffer!=NULL){
 				IF_LOUD(DbgPrint("NPF: unable to allocate the dump filename: not enough memory or name already set\n");)
 					EXIT_FAILURE(0);
@@ -1792,7 +1792,7 @@ NPF_IoControl(
 			pRequest->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
 
 			/* NDIS_OID_REQUEST.InformationBuffer must be non-paged */
-			OidBuffer = ExAllocatePoolWithTag(NonPagedPool, OidData->Length, '0PWA');
+			OidBuffer = ExAllocatePoolWithTag(NonPagedPool, OidData->Length, NPF_USER_OID_TAG);
 			if (OidBuffer == NULL)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OidBuffer");
@@ -2027,7 +2027,7 @@ OID_REQUEST_DONE:
 
     if (OidBuffer != NULL)
     {
-        ExFreePoolWithTag(OidBuffer, '0PWA');
+        ExFreePoolWithTag(OidBuffer, NPF_USER_OID_TAG);
     }
 
 

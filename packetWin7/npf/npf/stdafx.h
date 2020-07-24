@@ -50,7 +50,6 @@
 
 #define WIN_NT_DRIVER
 
-#define NPF_ALLOC_TAG '1234'
 #define NPF_REQUEST_ID '5678'
 
 #define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
@@ -63,6 +62,7 @@
 #include <wdmguid.h>
 #include "debug.h"
 #include "macros.h"
+#include "memory_tags.h"
 #define NTSTRSAFE_LIB
 #include <ntstrsafe.h>
 

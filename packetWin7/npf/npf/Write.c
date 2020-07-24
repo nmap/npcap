@@ -619,7 +619,7 @@ NPF_BufferedWrite(
 		/* Copy packet data to non-paged memory, otherwise we induce
 		 * page faults in NIC drivers: http://issues.nmap.org/1398
 		 * Alternately, we could possibly use Direct I/O for the BIOCSENDPACKETS IoCtl? */
-		npBuff = ExAllocatePoolWithTag(NonPagedPool, pWinpcapHdr->caplen, 'WBPN');
+		npBuff = ExAllocatePoolWithTag(NonPagedPool, pWinpcapHdr->caplen, NPF_BUFFERED_WRITE_TAG);
 		if (npBuff == NULL)
 		{
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
@@ -783,7 +783,7 @@ NPF_BufferedWrite(
 	
 	// Cleanup
 	if (npBuff != NULL) {
-		ExFreePoolWithTag(npBuff, 'WBPN');
+		ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 	}
 
 	// Wait the completion of pending sends
@@ -846,7 +846,7 @@ NPF_FreePackets(
 			pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
 			npBuff = MmGetSystemAddressForMdlSafe(pMdl, LowPagePriority|MdlMappingNoExecute);
 			if (npBuff != NULL) {
-				ExFreePoolWithTag(npBuff, 'WBPN');
+				ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 			}
 			NdisFreeMdl(pMdl); //Free MDL
 			Currbuff = NET_BUFFER_NEXT_NB(Currbuff);

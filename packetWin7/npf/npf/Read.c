@@ -980,7 +980,7 @@ NPF_TapExForEachOpen(
 					PUCHAR pBuff = (PUCHAR) NdisAllocateMemoryWithTagPriority(
 						Open->pFiltMod->AdapterHandle,
 						toAlloc,
-						NPF_ALLOC_TAG,
+						NPF_PACKET_DATA_TAG,
 						NormalPoolPriority);
 					if (pBuff == NULL)
 					{
