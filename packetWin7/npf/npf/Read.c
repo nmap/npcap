@@ -316,7 +316,7 @@ NPF_Read(
 #else
 		PVOID pRadiotapHeader = NULL;
 #endif
-		plen = pCapData->BpfHeader.bh_caplen;
+		plen = pCapData->ulCaplen;
 
 		if (NPF_CAP_SIZE(pCapData, pRadiotapHeader) > available - copied)
 		{
@@ -327,7 +327,10 @@ NPF_Read(
 		}
 
 		header = (struct bpf_hdr *) (packp + copied);
-		*header = pCapData->BpfHeader;
+		header->bh_tstamp = pCapData->pNBCopy->pNBLCopy->tstamp;
+		header->bh_caplen = plen;
+		header->bh_datalen = pCapData->pNBCopy->ulPacketSize;
+		header->bh_hdrlen = sizeof(struct bpf_hdr);
 
 		copied += sizeof(struct bpf_hdr);
 
@@ -628,6 +631,13 @@ NPF_TapExForEachOpen(
 				goto TEFEO_done_with_NBs;
 			}
 			pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
+			if (tstamp->tv_sec == 0)
+			{
+				// We only get the timestamp once for all packets in this set of NBLs
+				// since they were all delivered at the same time.
+				GET_TIME(tstamp, &Open->start, Open->TimestampMode);
+			}
+			pNBLCopy->tstamp = *tstamp;
 		}
 		else
 		{
@@ -849,6 +859,7 @@ NPF_TapExForEachOpen(
 				}
 				pNBCopiesPrev->Next = &pNBCopy->CopiesEntry;
 				pNBCopy->pNBLCopy = pNBLCopy;
+				pNBCopy->ulPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 			}
 			else
 			{
@@ -859,20 +870,21 @@ NPF_TapExForEachOpen(
 
 			received++;
 
+			// Get the whole packet length.
+			TotalPacketSize = pNBCopy->ulPacketSize;
+
 			// Lock BPF engine for reading.
 			NdisAcquireRWLockRead(Open->MachineLock, &lockState,
 					AtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
-
-			// Get the whole packet length.
-			TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 
 			fres = bpf_filter((struct bpf_insn *)(Open->bpfprogram),
 					NET_BUFFER_CURRENT_MDL(pNetBuf),
 					NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf),
 					TotalPacketSize);
-			IF_LOUD(DbgPrint("\nCurrent MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_CURRENT_MDL(pNetBuf)), TotalPacketSize, fres);)
 
 			NdisReleaseRWLock(Open->MachineLock, &lockState);
+
+			IF_LOUD(DbgPrint("\nCurrent MDL length = %d, Packet Size = %d, fres = %d\n", MmGetMdlByteCount(NET_BUFFER_CURRENT_MDL(pNetBuf)), TotalPacketSize, fres);)
 
 			if (fres == 0)
 			{
@@ -1033,16 +1045,7 @@ NPF_TapExForEachOpen(
 			NPF_ReferenceObject(pNBCopy);
 			NPF_ReferenceObject(pNBLCopy);
 
-			if (tstamp->tv_sec == 0)
-			{
-				// We only get the timestamp once for all packets in this set of NBLs
-				// since they were all delivered at the same time.
-				GET_TIME(tstamp, &Open->start, Open->TimestampMode);
-			}
-			pCapData->BpfHeader.bh_tstamp = *tstamp;
-			pCapData->BpfHeader.bh_caplen = fres;
-			pCapData->BpfHeader.bh_datalen = TotalPacketSize;
-			pCapData->BpfHeader.bh_hdrlen = sizeof(struct bpf_hdr);
+			pCapData->ulCaplen = fres;
 			// We need to be sure that pCapData is completely
 			// populated before we put it in the queue, since
 			// NPF_Read could pull it out of the queue immediately
