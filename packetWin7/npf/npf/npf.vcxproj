@@ -188,7 +188,7 @@
     <_NT_TARGET_VERSION>0x0601</_NT_TARGET_VERSION>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetVersion)'=='Windows10'">
-    <_NT_TARGET_VERSION>0xA000008</_NT_TARGET_VERSION>
+    <_NT_TARGET_VERSION>0x0A00</_NT_TARGET_VERSION>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
