@@ -437,15 +437,6 @@ typedef struct _OPEN_INSTANCE
 }
 OPEN_INSTANCE, *POPEN_INSTANCE;
 
-typedef enum
-{
-	NPF_WRITER_INVALID_CODE,
-	NPF_WRITER_WRITE,
-	NPF_WRITER_FREE_NB_COPIES,
-	NPF_WRITER_FREE_RADIOTAP,
-	NPF_WRITER_FREE_MEM,
-} NPF_WRITER_FUNCTION_CODE;
-
 /* This value should be sized to hold most packets processed by the driver. If
  * a packet (snaplen) exceeds this size, it will cost an additional buffer+MDL
  * allocation/free. On the other hand, every captured packet will use up at
