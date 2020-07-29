@@ -269,9 +269,14 @@ typedef struct _DEVICE_EXTENSION
 
 	PNPF_OBJ_POOL NBLCopyPool; // Pool of NPF_NBL_COPY objects
 	PNPF_OBJ_POOL NBCopiesPool; // Pool of NPF_NB_COPIES objects
+	SINGLE_LIST_ENTRY NBCopiesCache; // Cache of initialized NPF_NB_COPIES objects
+	KSPIN_LOCK NBCopiesCacheLock;
 #ifdef HAVE_DOT11_SUPPORT
 	PNPF_OBJ_POOL Dot11HeaderPool; // Pool of Radiotap header buffers
 #endif
+	KSEMAPHORE GCSemaphore; // Semaphore to signal garbage collection thread
+	BOOLEAN GCShouldStop; // Flag to kill garbage collection thread
+	PVOID GCThreadObj; // Pointer to the garbage collection thread itself.
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 typedef enum _FILTER_STATE

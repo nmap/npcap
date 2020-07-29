@@ -218,6 +218,59 @@ NPF_GetRegistryOption_String(
 	_Inout_ PNDIS_STRING g_OutputString
 	);
 
+VOID
+NPF_GCThread(_In_ PVOID Context)
+{
+	PDEVICE_EXTENSION pDevExt = Context;
+	PSINGLE_LIST_ENTRY pCopiesEntry = NULL;
+
+	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY );
+
+	for (;;)
+	{
+		// Wait for work to appear
+		KeWaitForSingleObject(&pDevExt->GCSemaphore,
+				Executive,
+				KernelMode,
+				FALSE,
+				NULL);
+		// Check if we're being told to die
+		if (pDevExt->GCShouldStop) {
+			PsTerminateSystemThread( STATUS_SUCCESS );
+		}
+
+		// First clear the copies cache if it's not needed
+		// We check AllOpens constantly so that if a new handle is
+		// opened there will still be some copies in the cache.
+		while (IsListEmpty(&pDevExt->AllOpens))
+		{
+			pCopiesEntry = ExInterlockedPopEntryList(&pDevExt->NBCopiesCache, &pDevExt->NBCopiesCacheLock);
+			if (pCopiesEntry == NULL)
+			{
+				break;
+			}
+			NPF_ObjectPoolReturn(CONTAINING_RECORD(pCopiesEntry, NPF_NB_COPIES, CopiesEntry),
+					NPF_FreeNBCopies, FALSE);
+		}
+
+		// Now shrink the pools if need be.
+		if (pDevExt->NBLCopyPool)
+		{
+			NPF_ShrinkObjectPool(pDevExt->NBLCopyPool);
+		}
+		if (pDevExt->NBCopiesPool)
+		{
+			NPF_ShrinkObjectPool(pDevExt->NBCopiesPool);
+		}
+#ifdef HAVE_DOT11_SUPPORT
+		if (pDevExt->Dot11HeaderPool)
+		{
+			NPF_ShrinkObjectPool(pDevExt->Dot11HeaderPool);
+		}
+#endif
+	}
+}
+
 //-------------------------------------------------------------------
 //
 //  Packet Driver's entry routine.
@@ -493,6 +546,41 @@ DriverEntry(
 		TRACE_EXIT();
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
+
+	devExtP->NBCopiesCache.Next = NULL;
+	KeInitializeSpinLock(&devExtP->NBCopiesCacheLock);
+
+	KeInitializeSemaphore(&devExtP->GCSemaphore, 0, MAXLONG);
+	devExtP->GCShouldStop = FALSE;
+	devExtP->GCThreadObj = NULL;
+
+	Status = PsCreateSystemThread(&threadHandle, THREAD_ALL_ACCESS,
+			NULL, NULL, NULL, NPF_GCThread, devExtP);
+	if (Status != STATUS_SUCCESS)
+	{
+		IF_LOUD(DbgPrint("PsCreateSystemThread: error, Status=%x.\n", Status);)
+		NPF_FreeObjectPool(devExtP->NBCopiesPool);
+		NPF_FreeObjectPool(devExtP->NBLCopyPool);
+		NdisFreeRWLock(devExtP->AllOpensLock);
+		NdisFDeregisterFilterDriver(FilterDriverHandle);
+		IoDeleteSymbolicLink(&deviceSymLink);
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceSymLink.Buffer);
+		devExtP->ExportString = NULL;
+
+		TRACE_EXIT();
+		return Status;
+	}
+
+	// Convert the Thread object handle into a pointer to the Thread object
+	// itself. Then close the handle.
+	ObReferenceObjectByHandle(threadHandle,
+		THREAD_ALL_ACCESS,
+		NULL,
+		KernelMode,
+		&devExtP->GCThreadObj,
+		NULL);
+	ZwClose(threadHandle);
 
 #ifdef HAVE_DOT11_SUPPORT
 	if (g_Dot11SupportMode)
@@ -884,6 +972,8 @@ Return Value:
 	NDIS_STRING SymLink;
 	NDIS_EVENT Event;
 	LOCK_STATE_EX lockState;
+	PSINGLE_LIST_ENTRY Curr = NULL;
+	PSINGLE_LIST_ENTRY Prev = NULL;
 
 	TRACE_ENTER();
 
@@ -953,6 +1043,30 @@ Return Value:
 			}
 		}
 		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
+
+		// Stop the garbage collection thread
+		DeviceExtension->GCShouldStop = TRUE;
+		KeReleaseSemaphore(&DeviceExtension->GCSemaphore,
+				0,  // No priority boost
+				1,  // Increment semaphore by 1
+				TRUE );// WaitForXxx after this call
+		// Wait for the thread to terminate
+		KeWaitForSingleObject(DeviceExtension->GCThreadObj,
+				Executive,
+				KernelMode,
+				FALSE,
+				NULL );
+		ObDereferenceObject(DeviceExtension->GCThreadObj);
+
+		// Clear the cache
+		Prev = &DeviceExtension->NBCopiesCache;
+		Curr = Prev->Next;
+		while (Curr)
+		{
+			Prev = Curr;
+			Curr = Curr->Next;
+			NPF_ObjectPoolReturn(CONTAINING_RECORD(Prev, NPF_NB_COPIES, CopiesEntry), NPF_FreeNBCopies, FALSE);
+		}
 
 		if (DeviceExtension->ExportString)
 		{

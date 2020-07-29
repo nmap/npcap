@@ -489,24 +489,6 @@ VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData, BOOLEAN bAtDispatchLevel)
 	NPF_ObjectPoolReturn(pCapData->pNBCopy, NPF_FreeNBCopies, bAtDispatchLevel);
 }
 
-VOID
-NPF_ShrinkPools(_In_ PDEVICE_EXTENSION pDevExt)
-{
-	if (pDevExt->NBLCopyPool)
-	{
-		NPF_ShrinkObjectPool(pDevExt->NBLCopyPool);
-	}
-	if (pDevExt->NBCopiesPool)
-	{
-		NPF_ShrinkObjectPool(pDevExt->NBCopiesPool);
-	}
-#ifdef HAVE_DOT11_SUPPORT
-	if (pDevExt->Dot11HeaderPool)
-	{
-		NPF_ShrinkObjectPool(pDevExt->Dot11HeaderPool);
-	}
-#endif
-}
 //-------------------------------------------------------------------
 
 VOID
@@ -1554,8 +1536,11 @@ NPF_Cleanup(
 	NPF_ReleaseOpenInstanceResources(Open);
 	NPF_RemoveFromAllOpensList(Open);
 
-	// Shrink object pools if possible
-	NPF_ShrinkPools(Open->DeviceExtension);
+	// Recover memory if possible
+	KeReleaseSemaphore(&Open->DeviceExtension->GCSemaphore,
+			0, // No priority boost
+			1, // Increment semaphore by 1
+			FALSE); // No WaitForXxx after this call
 
 	//	IrpSp->FileObject->FsContext = NULL;
 
