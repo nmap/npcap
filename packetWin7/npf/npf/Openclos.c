@@ -464,18 +464,6 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
 _Use_decl_annotations_
 VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy, BOOLEAN bAtDispatchLevel)
 {
-	PNPF_NB_COPIES pNBCopies = NULL;
-	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
-
-	pNBCopiesEntry = pNBLCopy->NBCopiesHead.Next;
-	while (pNBCopiesEntry != NULL)
-	{
-		pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
-		pNBCopiesEntry = pNBCopiesEntry->Next;
-
-		NPF_ObjectPoolReturn(pNBCopies, NPF_FreeNBCopies, bAtDispatchLevel);
-	}
-
 	if (pNBLCopy->Dot11RadiotapHeader != NULL)
 	{
 		NPF_ObjectPoolReturn(pNBLCopy->Dot11RadiotapHeader, NULL, bAtDispatchLevel);
@@ -2633,7 +2621,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
-	ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused);
+	ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused || pFiltMod->Loopback);
 	/* No need to lock the group since we are paused. */
 	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 	{

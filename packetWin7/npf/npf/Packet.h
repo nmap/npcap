@@ -469,6 +469,7 @@ typedef struct _NPF_NB_COPIES
 	PNET_BUFFER pNetBuffer; // May be NULL, hence why we can't just use NET_BUFFER.Next
 	ULONG ulSize; //Size of all allocated space in the netbuffer.
 	ULONG ulPacketSize; // Size of the original packet
+	ULONG ulRefcount; // How many NPF_CAP_DATA are using this copy
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
 VOID NPF_FreeNBCopies(_In_ PNPF_NB_COPIES pNBCopy, _In_ BOOLEAN bAtDispatchLevel);
