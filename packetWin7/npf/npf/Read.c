@@ -392,7 +392,7 @@ NPF_Read(
 			// refcount it and push it onto the cache stack
 			NPF_ReferenceObject(pCapData->pNBCopy);
 			ExInterlockedPushEntryList(&Open->DeviceExtension->NBCopiesCache,
-					&pCapData->pNBCopy->CopiesEntry,
+					&pCapData->pNBCopy->CacheEntry,
 					&Open->DeviceExtension->NBCopiesCacheLock);
 		}
 		// Return this capture data
@@ -600,16 +600,16 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 		)
 {
 	PDEVICE_EXTENSION pDevExt = pOpen->DeviceExtension;
-	PSINGLE_LIST_ENTRY pCopiesEntry = NULL;
+	PSINGLE_LIST_ENTRY pCacheEntry = NULL;
 	PNPF_NB_COPIES pNBCopy = NULL;
 	PNET_BUFFER pNetBuffer = NULL;
 
 	if (ulSize >= NPF_NBCOPY_INITIAL_DATA_SIZE)
 	{
-		pCopiesEntry = ExInterlockedPopEntryList(&pDevExt->NBCopiesCache, &pDevExt->NBCopiesCacheLock);
+		pCacheEntry = ExInterlockedPopEntryList(&pDevExt->NBCopiesCache, &pDevExt->NBCopiesCacheLock);
 	}
 
-	if (pCopiesEntry == NULL)
+	if (pCacheEntry == NULL)
 	{
 		pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(pDevExt->NBCopiesPool, bAtDispatchLevel);
 		if (pNBCopy == NULL)
@@ -619,10 +619,8 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 	}
 	else
 	{
-		pNBCopy = CONTAINING_RECORD(pCopiesEntry, NPF_NB_COPIES, CopiesEntry);
-		// We use the same list entry object for chaining copies in an NBLCopy,
-		// so we have to ensure Next is NULL for "new" copies.
-		pCopiesEntry->Next = NULL;
+		pNBCopy = CONTAINING_RECORD(pCacheEntry, NPF_NB_COPIES, CacheEntry);
+		ASSERT(pNBCopy->pNetBuffer);
 	}
 
 	pNetBuffer = pNBCopy->pNetBuffer;

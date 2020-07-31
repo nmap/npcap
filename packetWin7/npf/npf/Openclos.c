@@ -401,6 +401,16 @@ NPF_ResetBufferContents(
 	for (Curr = Open->PacketQueue.Flink; Curr != &Open->PacketQueue; Curr = Curr->Flink)
 	{
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
+		// If we are the last one using this NBCopy and it has data buffers,
+		if (0 == InterlockedDecrement(&pCapData->pNBCopy->ulRefcount)
+				&& pCapData->pNBCopy->ulSize > NPF_NBCOPY_INITIAL_DATA_SIZE)
+		{
+			// refcount it and push it onto the cache stack
+			NPF_ReferenceObject(pCapData->pNBCopy);
+			ExInterlockedPushEntryList(&Open->DeviceExtension->NBCopiesCache,
+					&pCapData->pNBCopy->CopiesEntry,
+					&Open->DeviceExtension->NBCopiesCacheLock);
+		}
 		// If AcquireLock, then we are at DISPATCH_LEVEL
 		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData, AcquireLock);
 	}
@@ -421,6 +431,7 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
 
 	UNREFERENCED_PARAMETER(bAtDispatchLevel);
 
+	ASSERT(pNBCopy->ulRefcount == 0);
 	if (pNBCopy->pNetBuffer != NULL)
 	{
 		// Skip the first MDL/buffer (allocated by NdisAllocateNetBufferMdlAndData)

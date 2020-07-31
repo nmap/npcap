@@ -296,6 +296,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc, BOOLEAN b
 		FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 
 		refcount = InterlockedDecrement(&pShelf->ulUsed);
+		ASSERT(refcount < pPool->ulIncrement);
 		if (refcount == 0)
 		{
 			// Empty shelf. Move it to the other list.
