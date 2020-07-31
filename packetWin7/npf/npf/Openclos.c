@@ -408,7 +408,7 @@ NPF_ResetBufferContents(
 			// refcount it and push it onto the cache stack
 			NPF_ReferenceObject(pCapData->pNBCopy);
 			ExInterlockedPushEntryList(&Open->DeviceExtension->NBCopiesCache,
-					&pCapData->pNBCopy->CopiesEntry,
+					&pCapData->pNBCopy->CacheEntry,
 					&Open->DeviceExtension->NBCopiesCacheLock);
 		}
 		// If AcquireLock, then we are at DISPATCH_LEVEL

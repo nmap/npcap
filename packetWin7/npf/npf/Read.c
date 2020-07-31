@@ -621,6 +621,7 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 	{
 		pNBCopy = CONTAINING_RECORD(pCacheEntry, NPF_NB_COPIES, CacheEntry);
 		ASSERT(pNBCopy->pNetBuffer);
+		pCacheEntry->Next = NULL;
 	}
 
 	pNetBuffer = pNBCopy->pNetBuffer;
@@ -640,6 +641,7 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 	NET_BUFFER_DATA_OFFSET(pNetBuffer) = 0;
 	NET_BUFFER_DATA_LENGTH(pNetBuffer) = 0;
 	NdisAdjustNetBufferCurrentMdl(pNetBuffer);
+	pNBCopy->CopiesEntry.Next = NULL;
 	return pNBCopy;
 }
 
@@ -917,6 +919,8 @@ NPF_TapExForEachOpen(
 		pNBCopiesPrev = &pNBLCopy->NBCopiesHead;
 		while (pNetBuf != NULL)
 		{
+			ASSERT(pNBCopiesPrev);
+			pNBCopy = NULL;
 			pNextNetBuf = NET_BUFFER_NEXT_NB(pNetBuf);
 
 			received++;
@@ -1153,10 +1157,13 @@ TEFEO_release_BufferLock:
 			NdisReleaseRWLock(Open->BufferLock, &lockState);
 
 TEFEO_next_NB:
-			if (pNBCopy == NULL && pNBCopiesPrev->Next == NULL)
+			if (pNBCopiesPrev->Next == NULL)
 			{
 				// We bailed early and we still need a placeholder NBCopies here.
-				pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, AtDispatchLevel);
+				if (pNBCopy == NULL)
+				{
+					pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, AtDispatchLevel);
+				}
 				if (pNBCopy == NULL)
 				{
 					//Insufficient resources.

@@ -222,7 +222,7 @@ VOID
 NPF_GCThread(_In_ PVOID Context)
 {
 	PDEVICE_EXTENSION pDevExt = Context;
-	PSINGLE_LIST_ENTRY pCopiesEntry = NULL;
+	PSINGLE_LIST_ENTRY pCacheEntry = NULL;
 
 	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY );
 
@@ -244,12 +244,12 @@ NPF_GCThread(_In_ PVOID Context)
 		// opened there will still be some copies in the cache.
 		while (IsListEmpty(&pDevExt->AllOpens))
 		{
-			pCopiesEntry = ExInterlockedPopEntryList(&pDevExt->NBCopiesCache, &pDevExt->NBCopiesCacheLock);
-			if (pCopiesEntry == NULL)
+			pCacheEntry = ExInterlockedPopEntryList(&pDevExt->NBCopiesCache, &pDevExt->NBCopiesCacheLock);
+			if (pCacheEntry == NULL)
 			{
 				break;
 			}
-			NPF_ObjectPoolReturn(CONTAINING_RECORD(pCopiesEntry, NPF_NB_COPIES, CopiesEntry),
+			NPF_ObjectPoolReturn(CONTAINING_RECORD(pCacheEntry, NPF_NB_COPIES, CacheEntry),
 					NPF_FreeNBCopies, FALSE);
 		}
 
@@ -1065,7 +1065,7 @@ Return Value:
 		{
 			Prev = Curr;
 			Curr = Curr->Next;
-			NPF_ObjectPoolReturn(CONTAINING_RECORD(Prev, NPF_NB_COPIES, CopiesEntry), NPF_FreeNBCopies, FALSE);
+			NPF_ObjectPoolReturn(CONTAINING_RECORD(Prev, NPF_NB_COPIES, CacheEntry), NPF_FreeNBCopies, FALSE);
 		}
 
 		if (DeviceExtension->ExportString)
