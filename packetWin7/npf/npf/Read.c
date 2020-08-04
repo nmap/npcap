@@ -310,14 +310,13 @@ NPF_Read(
 		ASSERT(pCapData->pNBCopy);
 		ASSERT(pCapData->pNBCopy->pNBLCopy);
 		ASSERT(pCapData->pNBCopy->pNetBuffer);
+		ASSERT(pCapData->pNBCopy->ulPacketSize < 0xffffffff);
 
 #ifdef HAVE_DOT11_SUPPORT
 		PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pCapData->pNBCopy->pNBLCopy->Dot11RadiotapHeader;
 #else
 		PVOID pRadiotapHeader = NULL;
 #endif
-		plen = pCapData->ulCaplen;
-
 		if (NPF_CAP_SIZE(pCapData, pRadiotapHeader) > available - copied)
 		{
 			//if the packet does not fit into the user buffer, we've ended copying packets
@@ -325,6 +324,8 @@ NPF_Read(
 			ExInterlockedInsertHeadList(&Open->PacketQueue, pCapDataEntry, &Open->PacketQueueLock);
 			break;
 		}
+
+		plen = pCapData->ulCaplen;
 
 		header = (struct bpf_hdr *) (packp + copied);
 		header->bh_tstamp = pCapData->pNBCopy->pNBLCopy->tstamp;
@@ -647,6 +648,37 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 }
 
 //-------------------------------------------------------------------
+
+_IRQL_requires_(DISPATCH_LEVEL)
+_Ret_maybenull_
+PNPF_CAP_DATA NPF_GetCapData(
+		_In_ PNPF_OBJ_POOL pPool,
+		_Inout_ PNPF_NB_COPIES pNBCopy,
+		_In_ PNPF_NBL_COPY pNBLCopy,
+		_In_range_(1,0xffffffff) UINT uCapLen
+		)
+{
+	ASSERT(pNBLCopy);
+	ASSERT(pNBCopy->pNBLCopy == pNBLCopy);
+	ASSERT(pNBCopy->pNetBuffer);
+	ASSERT(pNBCopy->ulPacketSize < 0xffffffff);
+
+	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(pPool, TRUE);
+	if (pCapData == NULL)
+	{
+		return NULL;
+	}
+
+	// Increment refcounts on relevant structures
+	pCapData->pNBCopy = pNBCopy;
+	InterlockedIncrement(&pNBCopy->ulRefcount);
+	NPF_ReferenceObject(pNBCopy);
+	NPF_ReferenceObject(pNBLCopy);
+
+	pCapData->ulCaplen = uCapLen;
+
+	return pCapData;
+}
 
 _Use_decl_annotations_
 VOID
@@ -1111,7 +1143,7 @@ NPF_TapExForEachOpen(
 			}
 
 			// While BufferLock is held we are at DISPATCH_LEVEL
-			PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(Open->CapturePool, TRUE);
+			PNPF_CAP_DATA pCapData = NPF_GetCapData(Open->CapturePool, pNBCopy, pNBLCopy, fres);
 			if (pCapData == NULL)
 			{
 				// Insufficient memory
@@ -1119,18 +1151,7 @@ NPF_TapExForEachOpen(
 				dropped++;
 				goto TEFEO_release_BufferLock;
 			}
-			// Increment refcounts on relevant structures
-			pCapData->pNBCopy = pNBCopy;
-			InterlockedIncrement(&pNBCopy->ulRefcount);
-			NPF_ReferenceObject(pNBCopy);
-			NPF_ReferenceObject(pNBLCopy);
 
-			pCapData->ulCaplen = fres;
-			// We need to be sure that pCapData is completely
-			// populated before we put it in the queue, since
-			// NPF_Read could pull it out of the queue immediately
-			// afterwards.
-			KeMemoryBarrier();
 			/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
 			ASSERT(pCapData->pNBCopy);
 			ASSERT(pCapData->pNBCopy->pNBLCopy);

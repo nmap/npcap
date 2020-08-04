@@ -197,6 +197,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 	FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 
 	RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
+	ASSERT(pElem->Refcount == 0);
 	pElem->Refcount = 1;
 	return pElem->pObject;
 }
@@ -340,5 +341,10 @@ VOID NPF_ReferenceObject(PVOID pObject)
 {
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 
+	// This function shouldn't be able to be called on something that's not
+	// checked out (refcount already 1)
+	ASSERT(pElem->Refcount > 0);
 	InterlockedIncrement(&pElem->Refcount);
+	// If we get this many, we have an obvious bug.
+	ASSERT(pElem->Refcount < ULONG_MAX);
 }

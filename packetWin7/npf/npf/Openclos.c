@@ -469,6 +469,9 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
 		pNBCopy->pNetBuffer = NULL;
 	}
 	pNBCopy->pNBLCopy = NULL;
+	pNBCopy->ulSize = 0;
+	// signal that this object is uninitialized
+	pNBCopy->ulPacketSize = 0xffffffff;
 }
 
 /* NPF_ObjectPoolReturn Free handler for NBLCopyPool */
