@@ -407,8 +407,9 @@ NPF_Read(
 	if (copied == 0 && Open->OpenStatus == OpenDetached)
 	{
 		// Filter module is detached and there are no more packets in the buffer
+		Status = STATUS_DEVICE_REMOVED;
 		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = STATUS_DEVICE_REMOVED;
+		Irp->IoStatus.Status = Status;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 		TRACE_EXIT();
 		return Status;
