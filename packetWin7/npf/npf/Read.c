@@ -629,7 +629,7 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 
 	if (!pNetBuffer)
 	{
-		pNetBuffer = NdisAllocateNetBufferMdlAndData(pOpen->pFiltMod->TapNBPool);
+		pNetBuffer = NdisAllocateNetBufferMdlAndData(pOpen->DeviceExtension->TapNBPool);
 		if (pNetBuffer == NULL)
 		{
 			NPF_ObjectPoolReturn(pNBCopy, NPF_FreeNBCopies, bAtDispatchLevel);
@@ -1049,7 +1049,7 @@ NPF_TapExForEachOpen(
 
 			if (pNBCopy->pNetBuffer == NULL)
 			{
-				pNBCopy->pNetBuffer = NdisAllocateNetBufferMdlAndData(Open->pFiltMod->TapNBPool);
+				pNBCopy->pNetBuffer = NdisAllocateNetBufferMdlAndData(Open->DeviceExtension->TapNBPool);
 				if (pNBCopy->pNetBuffer == NULL)
 				{
 					// Insufficient memory

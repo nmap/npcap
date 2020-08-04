@@ -284,6 +284,7 @@ DriverEntry(
 {
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars; // The specification for the filter.
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars_WiFi; // The specification for the WiFi filter.
+	NET_BUFFER_POOL_PARAMETERS NBPoolParams;
 	UNICODE_STRING parametersPath;
 	NTSTATUS Status = STATUS_SUCCESS;
 	PDEVICE_OBJECT devObjP;
@@ -514,11 +515,35 @@ DriverEntry(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
+	NdisZeroMemory(&NBPoolParams, sizeof(NET_BUFFER_POOL_PARAMETERS));
+	NBPoolParams.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
+	NBPoolParams.Header.Revision = NET_BUFFER_POOL_PARAMETERS_REVISION_1;
+	NBPoolParams.Header.Size = NDIS_SIZEOF_NET_BUFFER_POOL_PARAMETERS_REVISION_1;
+	NBPoolParams.PoolTag = NPF_TAP_POOL_TAG;
+	NBPoolParams.DataSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
+	devExtP->TapNBPool = NdisAllocateNetBufferPool(FilterDriverHandle, &NBPoolParams);
+
+	if (devExtP->TapNBPool == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate TapNBPool");
+
+		NdisFreeRWLock(devExtP->AllOpensLock);
+		NdisFDeregisterFilterDriver(FilterDriverHandle);
+		IoDeleteSymbolicLink(&deviceSymLink);
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceSymLink.Buffer);
+		devExtP->ExportString = NULL;
+
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
 	devExtP->NBLCopyPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NBL_COPY), 256);
 	if (devExtP->NBLCopyPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
 
+		NdisFreeNetBufferPool(devExtP->TapNBPool);
 		NdisFreeRWLock(devExtP->AllOpensLock);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
 		IoDeleteSymbolicLink(&deviceSymLink);
@@ -536,6 +561,7 @@ DriverEntry(
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
 
 		NPF_FreeObjectPool(devExtP->NBLCopyPool);
+		NdisFreeNetBufferPool(devExtP->TapNBPool);
 		NdisFreeRWLock(devExtP->AllOpensLock);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
 		IoDeleteSymbolicLink(&deviceSymLink);
@@ -561,6 +587,7 @@ DriverEntry(
 		IF_LOUD(DbgPrint("PsCreateSystemThread: error, Status=%x.\n", Status);)
 		NPF_FreeObjectPool(devExtP->NBCopiesPool);
 		NPF_FreeObjectPool(devExtP->NBLCopyPool);
+		NdisFreeNetBufferPool(devExtP->TapNBPool);
 		NdisFreeRWLock(devExtP->AllOpensLock);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
 		IoDeleteSymbolicLink(&deviceSymLink);
@@ -592,6 +619,7 @@ DriverEntry(
 
 			NPF_FreeObjectPool(devExtP->NBCopiesPool);
 			NPF_FreeObjectPool(devExtP->NBLCopyPool);
+			NdisFreeNetBufferPool(devExtP->TapNBPool);
 			NdisFreeRWLock(devExtP->AllOpensLock);
 			NdisFDeregisterFilterDriver(FilterDriverHandle);
 			IoDeleteSymbolicLink(&deviceSymLink);
@@ -1077,6 +1105,11 @@ Return Value:
 			IoDeleteSymbolicLink(&SymLink);
 			ExFreePool(DeviceExtension->ExportString);
 			DeviceExtension->ExportString = NULL;
+		}
+
+		if (DeviceExtension->TapNBPool)
+		{
+			NdisFreeNetBufferPool(DeviceExtension->TapNBPool);
 		}
 
 		if (DeviceExtension->NBLCopyPool)

@@ -1031,12 +1031,6 @@ NPF_ReleaseFilterModuleResources(
 		pFiltMod->PacketPool = NULL;
 	}
 
-	if (pFiltMod->TapNBPool)
-	{
-		NdisFreeNetBufferPool(pFiltMod->TapNBPool);
-		pFiltMod->TapNBPool = NULL;
-	}
-
 	if (pFiltMod->InternalRequestPool)
 	{
 		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
@@ -2063,7 +2057,6 @@ NPF_CreateFilterModule(
 {
 	PNPCAP_FILTER_MODULE pFiltMod;
 	NET_BUFFER_LIST_POOL_PARAMETERS PoolParameters;
-	NET_BUFFER_POOL_PARAMETERS NBPoolParams;
 	BOOLEAN bAllocFailed = FALSE;
 
 	// allocate some memory for the filter module structure
@@ -2130,21 +2123,6 @@ NPF_CreateFilterModule(
 			break;
 		}
 
-		NdisZeroMemory(&NBPoolParams, sizeof(NET_BUFFER_POOL_PARAMETERS));
-		NBPoolParams.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
-		NBPoolParams.Header.Revision = NET_BUFFER_POOL_PARAMETERS_REVISION_1;
-		NBPoolParams.Header.Size = NDIS_SIZEOF_NET_BUFFER_POOL_PARAMETERS_REVISION_1;
-		NBPoolParams.PoolTag = NPF_TAP_POOL_TAG;
-		NBPoolParams.DataSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
-		pFiltMod->TapNBPool = NdisAllocateNetBufferPool(NdisFilterHandle, &NBPoolParams);
-
-		if (pFiltMod->TapNBPool == NULL)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate TapNBPool");
-			bAllocFailed = TRUE;
-			break;
-		}
-
 		pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 8);
 		if (pFiltMod->InternalRequestPool == NULL)
 		{
@@ -2157,8 +2135,6 @@ NPF_CreateFilterModule(
 	if (bAllocFailed) {
 		if (pFiltMod->InternalRequestPool)
 			NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
-		if (pFiltMod->TapNBPool)
-			NdisFreeNetBufferPool(pFiltMod->TapNBPool);
 		if (pFiltMod->PacketPool)
 			NdisFreeNetBufferListPool(pFiltMod->PacketPool);
 		if (pFiltMod->OpenInstancesLock)
