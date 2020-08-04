@@ -423,7 +423,7 @@ NPF_Read(
 //-------------------------------------------------------------------
 VOID
 NPF_TapExForEachOpen(
-	_In_ POPEN_INSTANCE Open,
+	_Inout_ POPEN_INSTANCE Open,
 	_In_ PNET_BUFFER_LIST pNetBufferLists,
 	_Inout_ PSINGLE_LIST_ENTRY NBLCopyHead,
 	_Inout_ struct timeval *tstamp,
@@ -595,6 +595,7 @@ NPF_AlignProtocolField(
 }
 
 // Keep a stack of NPF_NB_COPIES objects with data buffers attached (larger packets).
+_Ret_maybenull_
 PNPF_NB_COPIES NPF_GetNBCopy(
 		_In_ POPEN_INSTANCE pOpen,
 		_In_ ULONG ulSize,

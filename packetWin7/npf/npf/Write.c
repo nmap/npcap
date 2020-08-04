@@ -90,7 +90,7 @@
 */
 VOID
 NPF_FreePackets(
-	_In_ PNET_BUFFER_LIST    NetBufferLists
+	_Inout_ PNET_BUFFER_LIST    NetBufferLists
 	);
 
 /*!

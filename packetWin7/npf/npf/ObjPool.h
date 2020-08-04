@@ -71,7 +71,7 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(
  * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool
  */
 VOID NPF_FreeObjectPool(
-	_In_ PNPF_OBJ_POOL pPool);
+	_Inout_ PNPF_OBJ_POOL pPool);
 
 /* Shrinks an object pool by freeing any empty shelves (slabs) provided there
  * are enough unused slots in the existing partial slabs.
@@ -90,7 +90,7 @@ PVOID NPF_ObjectPoolGet(
 	_In_ BOOLEAN bAtDispatchLevel);
 
 typedef VOID (*PNPF_OBJ_CLEANUP)(
-	_In_ PVOID pObject,
+	_Inout_ PVOID pObject,
 	_In_ BOOLEAN bAtDispatchLevel);
 
 /* Return an object to the pool. Decrements the refcount. If it is 0, the
@@ -101,7 +101,7 @@ typedef VOID (*PNPF_OBJ_CLEANUP)(
  * param bAtDispatchLevel Set TRUE if caller is at DISPATCH_LEVEL spinlock optimization
  */
 VOID NPF_ObjectPoolReturn(
-	_In_ PVOID pObject,
+	_Inout_ PVOID pObject,
 	_In_opt_ PNPF_OBJ_CLEANUP CleanupFunc,
 	_In_ BOOLEAN bAtDispatchLevel);
 

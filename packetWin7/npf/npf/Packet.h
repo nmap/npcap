@@ -460,7 +460,7 @@ typedef struct _NPF_NBL_COPY
 #endif
 } NPF_NBL_COPY, *PNPF_NBL_COPY;
 
-VOID NPF_FreeNBLCopy(_In_ PNPF_NBL_COPY pNBLCopy, _In_ BOOLEAN bAtDispatchLevel);
+VOID NPF_FreeNBLCopy(_Inout_ PNPF_NBL_COPY pNBLCopy, _In_ BOOLEAN bAtDispatchLevel);
 
 typedef struct _NPF_NB_COPIES
 {
@@ -473,7 +473,7 @@ typedef struct _NPF_NB_COPIES
 	ULONG ulRefcount; // How many NPF_CAP_DATA are using this copy
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
-VOID NPF_FreeNBCopies(_In_ PNPF_NB_COPIES pNBCopy, _In_ BOOLEAN bAtDispatchLevel);
+VOID NPF_FreeNBCopies(_Inout_ PNPF_NB_COPIES pNBCopy, _In_ BOOLEAN bAtDispatchLevel);
 
 /* Structure of a captured packet data description */
 typedef struct _NPF_CAP_DATA
@@ -484,7 +484,7 @@ typedef struct _NPF_CAP_DATA
 }
 NPF_CAP_DATA, *PNPF_CAP_DATA;
 
-VOID NPF_FreeCapData(_In_ PNPF_CAP_DATA pCapData, _In_ BOOLEAN bAtDispatchLevel);
+VOID NPF_FreeCapData(_Inout_ PNPF_CAP_DATA pCapData, _In_ BOOLEAN bAtDispatchLevel);
 
 #ifdef HAVE_DOT11_SUPPORT
 #define NPF_CAP_SIZE(_P, _R) (sizeof(struct bpf_hdr) \
@@ -497,7 +497,7 @@ VOID NPF_FreeCapData(_In_ PNPF_CAP_DATA pCapData, _In_ BOOLEAN bAtDispatchLevel)
 
 VOID
 NPF_ResetBufferContents(
-	_In_ POPEN_INSTANCE Open,
+	_Inout_ POPEN_INSTANCE Open,
 	_In_ BOOLEAN AcquireLock
 );
 
@@ -1064,9 +1064,9 @@ NPF_CreateFilterModule(
 	);
 
 VOID
-NPF_ReleaseOpenInstanceResources(_In_ POPEN_INSTANCE pOpen);
+NPF_ReleaseOpenInstanceResources(_Inout_ POPEN_INSTANCE pOpen);
 VOID
-NPF_ReleaseFilterModuleResources(_In_ PNPCAP_FILTER_MODULE pFiltMod);
+NPF_ReleaseFilterModuleResources(_Inout_ PNPCAP_FILTER_MODULE pFiltMod);
 
 
 #ifdef NPCAP_KDUMP
@@ -1135,15 +1135,15 @@ NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
 
 BOOLEAN NPF_IsOpenInstance(_In_ POPEN_INSTANCE pOpen);
 
-BOOLEAN NPF_StartUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
+BOOLEAN NPF_StartUsingBinding(_Inout_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
 
-VOID NPF_StopUsingBinding(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
+VOID NPF_StopUsingBinding(_Inout_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
 
-BOOLEAN NPF_StartUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
+BOOLEAN NPF_StartUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
-VOID NPF_StopUsingOpenInstance(_In_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
+VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
-VOID NPF_CloseOpenInstance(_In_ POPEN_INSTANCE pOpen);
+VOID NPF_CloseOpenInstance(_Inout_ POPEN_INSTANCE pOpen);
 
 NTSTATUS NPF_GetDeviceMTU(_In_ PNPCAP_FILTER_MODULE pFiltMod, _Out_ PUINT  pMtu);
 

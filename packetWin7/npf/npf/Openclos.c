@@ -194,8 +194,8 @@ NPF_InternalRequestComplete(
 */
 void
 NPF_AddToGroupOpenArray(
-	_In_ POPEN_INSTANCE pOpen,
-	_In_ PNPCAP_FILTER_MODULE pFiltMod
+	_Inout_ POPEN_INSTANCE pOpen,
+	_Inout_ PNPCAP_FILTER_MODULE pFiltMod
 	);
 
 /*!
@@ -207,7 +207,7 @@ NPF_AddToGroupOpenArray(
 */
 void
 NPF_RemoveFromFilterModuleArray(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod
+	_Inout_ PNPCAP_FILTER_MODULE pFiltMod
 	);
 
 /*!
@@ -219,7 +219,7 @@ NPF_RemoveFromFilterModuleArray(
 */
 void
 NPF_RemoveFromGroupOpenArray(
-	_In_ POPEN_INSTANCE pOpen
+	_Inout_ POPEN_INSTANCE pOpen
 	);
 
 /*!
