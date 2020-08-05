@@ -612,7 +612,7 @@ DriverEntry(
 #ifdef HAVE_DOT11_SUPPORT
 	if (g_Dot11SupportMode)
 	{
-		devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NB_COPIES), 256);
+		devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(FilterDriverHandle, SIZEOF_RADIOTAP_BUFFER, 256);
 		if (devExtP->Dot11HeaderPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
