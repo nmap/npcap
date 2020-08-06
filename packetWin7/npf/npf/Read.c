@@ -442,6 +442,7 @@ NPF_DoTap(
 	PNPF_NB_COPIES pNBCopies = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
 	NPF_OBJ_POOL_CTX Context;
+	PDEVICE_EXTENSION pDevExt = NULL;
 
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
@@ -460,23 +461,29 @@ NPF_DoTap(
 				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, &tstamp, TRUE);
 			}
 		}
+		pDevExt = TempOpen->DeviceExtension;
 	}
 	/* Release the spin lock no matter what. */
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
-	Context.pContext = NULL;
 	Context.bAtDispatchLevel = AtDispatchLevel;
-	for (Curr = NBLCopiesHead.Next; Curr != NULL; Curr = Curr->Next)
+	Curr = NBLCopiesHead.Next;
+	while (Curr != NULL)
 	{
 		pNBLCopy = CONTAINING_RECORD(Curr, NPF_NBL_COPY, NBLCopyEntry); 
+		Curr = Curr->Next;
+
 		pNBCopiesEntry = pNBLCopy->NBCopiesHead.Next;
 		while (pNBCopiesEntry != NULL)
 		{
 			pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
 			pNBCopiesEntry = pNBCopiesEntry->Next;
 
+			Context.pContext = pDevExt;
 			NPF_ObjectPoolReturn(pNBCopies, &Context);
 		}
+
+		Context.pContext = NULL;
 		NPF_ObjectPoolReturn(pNBLCopy, &Context);
 	}
 
