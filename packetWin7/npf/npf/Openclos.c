@@ -390,6 +390,10 @@ NPF_ResetBufferContents(
 	LOCK_STATE_EX lockState;
 	PLIST_ENTRY Curr;
 	PNPF_CAP_DATA pCapData;
+	NPF_OBJ_POOL_CTX Context;
+	// If AcquireLock, then we are at DISPATCH_LEVEL
+	Context.bAtDispatchLevel = AcquireLock;
+	Context.pContext = Open->DeviceExtension;
 
 	if (AcquireLock)
 		NdisAcquireRWLockWrite(Open->BufferLock, &lockState, 0);
@@ -401,18 +405,7 @@ NPF_ResetBufferContents(
 	for (Curr = Open->PacketQueue.Flink; Curr != &Open->PacketQueue; Curr = Curr->Flink)
 	{
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
-		// If we are the last one using this NBCopy and it has data buffers,
-		if (0 == InterlockedDecrement(&pCapData->pNBCopy->ulRefcount)
-				&& pCapData->pNBCopy->ulSize > NPF_NBCOPY_INITIAL_DATA_SIZE)
-		{
-			// refcount it and push it onto the cache stack
-			NPF_ReferenceObject(pCapData->pNBCopy);
-			ExInterlockedPushEntryList(&Open->DeviceExtension->NBCopiesCache,
-					&pCapData->pNBCopy->CacheEntry,
-					&Open->DeviceExtension->NBCopiesCacheLock);
-		}
-		// If AcquireLock, then we are at DISPATCH_LEVEL
-		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData, AcquireLock);
+		NPF_ObjectPoolReturn(pCapData, &Context);
 	}
 	// Remove links
 	InitializeListHead(&Open->PacketQueue);
@@ -422,18 +415,33 @@ NPF_ResetBufferContents(
 		NdisReleaseRWLock(Open->BufferLock, &lockState);
 }
 
+/* If the context is set, it's the DeviceExtension where we can cache this NBCopy if we want.
+ * If it's NULL, then we don't cache, just free.
+ */
 _Use_decl_annotations_
-VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
+NPF_OBJ_CALLBACK_STATUS NPF_FreeNBCopies(PVOID pObject, PNPF_OBJ_POOL_CTX Context)
 {
+	PNPF_NB_COPIES pNBCopy = (PNPF_NB_COPIES) pObject;
 	PVOID pDeleteMe = NULL;
 	PMDL pMdl = NULL;
 	ULONG ulSize = 0;
+	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION) Context->pContext;
 
-	UNREFERENCED_PARAMETER(bAtDispatchLevel);
+	pNBCopy->pNBLCopy = NULL;
+	// signal that this object is uninitialized
+	pNBCopy->ulPacketSize = 0xffffffff;
 
-	ASSERT(pNBCopy->ulRefcount == 0);
 	if (pNBCopy->pNetBuffer != NULL)
 	{
+		if (pDevExt && pNBCopy->ulSize > NPF_NBCOPY_INITIAL_DATA_SIZE)
+		{
+			// refcount it and push it onto the cache stack
+			NPF_ReferenceObject(pNBCopy);
+			ExInterlockedPushEntryList(&pDevExt->NBCopiesCache,
+					&pNBCopy->CacheEntry,
+					&pDevExt->NBCopiesCacheLock);
+			return NPF_OBJ_STATUS_SAVED;
+		}
 		// Skip the first MDL/buffer (allocated by NdisAllocateNetBufferMdlAndData)
 		pMdl = NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next;
 		while (pMdl)
@@ -452,11 +460,7 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
 			}
 			else
 			{
-				// TODO: Safely recover from this condition.
-				// 1. tell NPF_ObjectPoolReturn that something went wrong so we don't leak.
-				// 2. Have NPF_ObjectPoolReturn tell its caller that something went wrong so it can bail.
-				// 3. Introduce a way to safely shut down the driver if we end up in an unrecoverable state.
-				ASSERT(pDeleteMe);
+				return NPF_OBJ_STATUS_RESOURCES;
 			}
 			pDeleteMe = pMdl;
 			pMdl = pMdl->Next;
@@ -468,27 +472,30 @@ VOID NPF_FreeNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
 		NdisFreeNetBuffer(pNBCopy->pNetBuffer);
 		pNBCopy->pNetBuffer = NULL;
 	}
-	pNBCopy->pNBLCopy = NULL;
 	pNBCopy->ulSize = 0;
-	// signal that this object is uninitialized
-	pNBCopy->ulPacketSize = 0xffffffff;
+
+	return NPF_OBJ_STATUS_SUCCESS;
 }
 
 /* NPF_ObjectPoolReturn Free handler for NBLCopyPool */
 _Use_decl_annotations_
-VOID NPF_FreeNBLCopy(PNPF_NBL_COPY pNBLCopy, BOOLEAN bAtDispatchLevel)
+NPF_OBJ_CALLBACK_STATUS NPF_FreeNBLCopy(PVOID pObject, PNPF_OBJ_POOL_CTX Context)
 {
+	PNPF_NBL_COPY pNBLCopy = (PNPF_NBL_COPY) pObject;
 	if (pNBLCopy->Dot11RadiotapHeader != NULL)
 	{
-		NPF_ObjectPoolReturn(pNBLCopy->Dot11RadiotapHeader, NULL, bAtDispatchLevel);
+		NPF_ObjectPoolReturn(pNBLCopy->Dot11RadiotapHeader, Context);
 	}
+	return NPF_OBJ_STATUS_SUCCESS;
 }
 
 _Use_decl_annotations_
-VOID NPF_FreeCapData(PNPF_CAP_DATA pCapData, BOOLEAN bAtDispatchLevel)
+NPF_OBJ_CALLBACK_STATUS NPF_FreeCapData(PVOID pObject, PNPF_OBJ_POOL_CTX Context)
 {
-	NPF_ObjectPoolReturn(pCapData->pNBCopy->pNBLCopy, NPF_FreeNBLCopy, bAtDispatchLevel);
-	NPF_ObjectPoolReturn(pCapData->pNBCopy, NPF_FreeNBCopies, bAtDispatchLevel);
+	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) pObject;
+	NPF_ObjectPoolReturn(pCapData->pNBCopy->pNBLCopy, Context);
+	NPF_ObjectPoolReturn(pCapData->pNBCopy, Context);
+	return NPF_OBJ_STATUS_SUCCESS;
 }
 
 //-------------------------------------------------------------------
@@ -1968,7 +1975,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 		TRACE_EXIT();
 		return NULL;
 	}
-	Open->CapturePool = NPF_AllocateObjectPool(NdisHandle, sizeof(NPF_CAP_DATA), 1024);
+	Open->CapturePool = NPF_AllocateObjectPool(NdisHandle, sizeof(NPF_CAP_DATA), 1024, NULL, NPF_FreeCapData);
 	if (Open->CapturePool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
@@ -2126,7 +2133,7 @@ NPF_CreateFilterModule(
 			break;
 		}
 
-		pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 8);
+		pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 8, NULL, NULL);
 		if (pFiltMod->InternalRequestPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");

@@ -46,6 +46,8 @@
  * https://github.com/nmap/npcap/blob/master/LICENSE.                      *
  *                                                                         *
  ***************************************************************************/
+#ifndef _NPF_OBJ_POOL_H
+#define _NPF_OBJ_POOL_H
 #include <ntddk.h>
 #include <ndis.h>
 
@@ -55,16 +57,49 @@
  */
 typedef struct _NPF_OBJ_POOL *PNPF_OBJ_POOL;
 
+/* Context for get/return operations
+ */
+typedef struct _NPF_OBJ_POOL_CTX
+{
+	BOOLEAN bAtDispatchLevel; // Set TRUE if caller is at DISPATCH_LEVEL spinlock optimization
+	PVOID pContext; // Pointer to caller-defined context. NULL if not used by InitFunc or CleanupFunc.
+} NPF_OBJ_POOL_CTX, *PNPF_OBJ_POOL_CTX;
+
+typedef _Return_type_success_(return >= 0) INT NPF_OBJ_CALLBACK_STATUS;
+#define NPF_OBJ_STATUS_SUCCESS 0
+/* CleanupFunc may return NPF_OBJ_STATUS_SAVED to indicate it has retained a
+ * reference to the object. It MUST call NPF_ReferenceObject before returning
+ * to ensure the object still has the correct refcount. It will not be returned
+ * to the pool. */
+#define NPF_OBJ_STATUS_SAVED 1
+/* Either callback may return NPF_OBJ_STATUS_RESOURCES to indicate a failure
+ * due to insufficient system resources. */
+#define NPF_OBJ_STATUS_RESOURCES -1
+
+typedef NPF_OBJ_CALLBACK_STATUS (NPF_OBJ_INIT)(
+	_Inout_ PVOID pObject,
+	_In_ PNPF_OBJ_POOL_CTX Context);
+typedef NPF_OBJ_INIT (*PNPF_OBJ_INIT);
+
+typedef NPF_OBJ_CALLBACK_STATUS (NPF_OBJ_CLEANUP)(
+	_Inout_ PVOID pObject,
+	_In_ PNPF_OBJ_POOL_CTX Context);
+typedef NPF_OBJ_CLEANUP (*PNPF_OBJ_CLEANUP);
+
 /* Allocates an object pool.
  * param NdisHandle An NDIS handle like that returned by NdisFRegisterFilterDriver.
  * param ulObjectSize The size of object this pool will create
  * param ulIncrement Objects are allocated in multiples of this parameter
+ * param InitFunc Optional function to perform initialization of the object before getting it. Use NULL to zero the memory instead.
+ * param CleanupFunc Optional function to perform cleanup of the object before returning it (free referenced memory, e.g.). Use NULL if no such function is needed.
  */
 _Ret_maybenull_
 PNPF_OBJ_POOL NPF_AllocateObjectPool(
 	_In_ NDIS_HANDLE NdisHandle,
 	_In_ ULONG ulObjectSize,
-	_In_ USHORT ulIncrement);
+	_In_ USHORT ulIncrement,
+	_In_opt_ PNPF_OBJ_INIT InitFunc,
+	_In_opt_ PNPF_OBJ_CLEANUP CleanupFunc);
 
 /* Frees an object pool and all associated memory.
  * All objects obtained from the pool are invalid.
@@ -82,31 +117,27 @@ VOID NPF_ShrinkObjectPool(
 /* Retrieve an object from the pool. The object is uninitialized and pointed to
  * by the pObject member of the returned element.
  * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool
- * param bAtDispatchLevel Set TRUE if caller is at DISPATCH_LEVEL spinlock optimization
+ * param Context Caller-defined context.
  */
 _Ret_maybenull_
 PVOID NPF_ObjectPoolGet(
 	_In_ PNPF_OBJ_POOL pPool,
-	_In_ BOOLEAN bAtDispatchLevel);
-
-typedef VOID (*PNPF_OBJ_CLEANUP)(
-	_Inout_ PVOID pObject,
-	_In_ BOOLEAN bAtDispatchLevel);
+	_In_ PNPF_OBJ_POOL_CTX Context);
 
 /* Return an object to the pool. Decrements the refcount. If it is 0, the
  * object is returned to the pool. The pool is identified by the location of
  * the object's memory.
  * param pObject A pointer to an object to return
- * param CleanupFunc Optional function to perform cleanup of the object before returning it (free referenced memory, e.g.). Use NULL if no such function is needed.
- * param bAtDispatchLevel Set TRUE if caller is at DISPATCH_LEVEL spinlock optimization
+ * param Context Caller-defined context.
  */
 VOID NPF_ObjectPoolReturn(
 	_Inout_ PVOID pObject,
-	_In_opt_ PNPF_OBJ_CLEANUP CleanupFunc,
-	_In_ BOOLEAN bAtDispatchLevel);
+	_In_ PNPF_OBJ_POOL_CTX Context);
 
 /* Reference an object from a pool. Increments the refcount.
  * param pObject A pointer to an object to reference.
  */
 VOID NPF_ReferenceObject(
 	_In_ PVOID pObject);
+
+#endif // _NPF_OBJ_POOL_H

@@ -223,6 +223,10 @@ NPF_GCThread(_In_ PVOID Context)
 {
 	PDEVICE_EXTENSION pDevExt = Context;
 	PSINGLE_LIST_ENTRY pCacheEntry = NULL;
+	NPF_OBJ_POOL_CTX PoolContext;
+	// NULL context means don't recover/cache in NPF_FreeNBCopies
+	PoolContext.pContext = NULL;
+	PoolContext.bAtDispatchLevel = FALSE;
 
 	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY );
 
@@ -250,7 +254,7 @@ NPF_GCThread(_In_ PVOID Context)
 				break;
 			}
 			NPF_ObjectPoolReturn(CONTAINING_RECORD(pCacheEntry, NPF_NB_COPIES, CacheEntry),
-					NPF_FreeNBCopies, FALSE);
+					&PoolContext);
 		}
 
 		// Now shrink the pools if need be.
@@ -538,7 +542,7 @@ DriverEntry(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	devExtP->NBLCopyPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NBL_COPY), 256);
+	devExtP->NBLCopyPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NBL_COPY), 256, NULL, NPF_FreeNBLCopy);
 	if (devExtP->NBLCopyPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
@@ -555,7 +559,7 @@ DriverEntry(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	devExtP->NBCopiesPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NB_COPIES), 256);
+	devExtP->NBCopiesPool = NPF_AllocateObjectPool(FilterDriverHandle, sizeof(NPF_NB_COPIES), 256, NULL, NPF_FreeNBCopies);
 	if (devExtP->NBCopiesPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
@@ -612,7 +616,7 @@ DriverEntry(
 #ifdef HAVE_DOT11_SUPPORT
 	if (g_Dot11SupportMode)
 	{
-		devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(FilterDriverHandle, SIZEOF_RADIOTAP_BUFFER, 256);
+		devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(FilterDriverHandle, SIZEOF_RADIOTAP_BUFFER, 256, NULL, NULL);
 		if (devExtP->Dot11HeaderPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
@@ -1002,6 +1006,10 @@ Return Value:
 	LOCK_STATE_EX lockState;
 	PSINGLE_LIST_ENTRY Curr = NULL;
 	PSINGLE_LIST_ENTRY Prev = NULL;
+	NPF_OBJ_POOL_CTX Context;
+	// NULL context means don't recover/cache in NPF_FreeNBCopies
+	Context.pContext = NULL;
+	Context.bAtDispatchLevel = FALSE;
 
 	TRACE_ENTER();
 
@@ -1093,7 +1101,7 @@ Return Value:
 		{
 			Prev = Curr;
 			Curr = Curr->Next;
-			NPF_ObjectPoolReturn(CONTAINING_RECORD(Prev, NPF_NB_COPIES, CacheEntry), NPF_FreeNBCopies, FALSE);
+			NPF_ObjectPoolReturn(CONTAINING_RECORD(Prev, NPF_NB_COPIES, CacheEntry), &Context);
 		}
 
 		if (DeviceExtension->ExportString)
@@ -1252,6 +1260,9 @@ NPF_IoControl(
 #ifdef _WIN64
 	VOID* POINTER_32		hUserEvent32Bit;
 #endif //_WIN64
+	NPF_OBJ_POOL_CTX Context;
+	Context.pContext = NULL;
+	Context.bAtDispatchLevel = NPF_IRQL_UNKNOWN;
 
 	TRACE_ENTER();
 
@@ -1827,7 +1838,7 @@ NPF_IoControl(
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
 
 		// Extract a request from the list of free ones
-		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->pFiltMod->InternalRequestPool, NPF_IRQL_UNKNOWN);
+		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->pFiltMod->InternalRequestPool, &Context);
 		if (pRequest == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
@@ -2115,7 +2126,7 @@ NPF_IoControl(
 
 OID_REQUEST_DONE:
 
-		NPF_ObjectPoolReturn(pRequest, NULL, NPF_IRQL_UNKNOWN);
+		NPF_ObjectPoolReturn(pRequest, &Context);
 
 		break;
 

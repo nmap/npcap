@@ -460,7 +460,7 @@ typedef struct _NPF_NBL_COPY
 #endif
 } NPF_NBL_COPY, *PNPF_NBL_COPY;
 
-VOID NPF_FreeNBLCopy(_Inout_ PNPF_NBL_COPY pNBLCopy, _In_ BOOLEAN bAtDispatchLevel);
+NPF_OBJ_CLEANUP NPF_FreeNBLCopy;
 
 typedef struct _NPF_NB_COPIES
 {
@@ -470,10 +470,9 @@ typedef struct _NPF_NB_COPIES
 	PNET_BUFFER pNetBuffer; // May be NULL, hence why we can't just use NET_BUFFER.Next
 	ULONG ulSize; //Size of all allocated space in the netbuffer.
 	ULONG ulPacketSize; // Size of the original packet
-	ULONG ulRefcount; // How many NPF_CAP_DATA are using this copy
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
-VOID NPF_FreeNBCopies(_Inout_ PNPF_NB_COPIES pNBCopy, _In_ BOOLEAN bAtDispatchLevel);
+NPF_OBJ_CLEANUP NPF_FreeNBCopies;
 
 /* Structure of a captured packet data description */
 typedef struct _NPF_CAP_DATA
@@ -484,7 +483,7 @@ typedef struct _NPF_CAP_DATA
 }
 NPF_CAP_DATA, *PNPF_CAP_DATA;
 
-VOID NPF_FreeCapData(_Inout_ PNPF_CAP_DATA pCapData, _In_ BOOLEAN bAtDispatchLevel);
+NPF_OBJ_CLEANUP NPF_FreeCapData;
 
 #ifdef HAVE_DOT11_SUPPORT
 #define NPF_CAP_SIZE(_P, _R) (sizeof(struct bpf_hdr) \

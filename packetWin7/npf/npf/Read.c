@@ -109,6 +109,7 @@ NPF_Read(
 	ULONG					copied, plen, available;
 	LOCK_STATE_EX lockState;
 	NTSTATUS Status = STATUS_SUCCESS;
+	NPF_OBJ_POOL_CTX Context;
 
 	TRACE_ENTER();
 
@@ -287,6 +288,8 @@ NPF_Read(
 		KeClearEvent(Open->ReadEvent);
 
 	// "NdisAcquireRWLockRead always raises the IRQL to IRQL = DISPATCH_LEVEL"
+	Context.bAtDispatchLevel = TRUE;
+	Context.pContext = Open->DeviceExtension;
 	NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);
 
 	while (available > copied && Open->Free < Open->Size)
@@ -386,18 +389,8 @@ NPF_Read(
 		// Increase free space by the amount that it was reduced before
 		InterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
 
-		// If we are the last one using this NBCopy and it has data buffers,
-		if (0 == InterlockedDecrement(&pCapData->pNBCopy->ulRefcount)
-				&& pCapData->pNBCopy->ulSize > NPF_NBCOPY_INITIAL_DATA_SIZE)
-		{
-			// refcount it and push it onto the cache stack
-			NPF_ReferenceObject(pCapData->pNBCopy);
-			ExInterlockedPushEntryList(&Open->DeviceExtension->NBCopiesCache,
-					&pCapData->pNBCopy->CacheEntry,
-					&Open->DeviceExtension->NBCopiesCacheLock);
-		}
 		// Return this capture data
-		NPF_ObjectPoolReturn(pCapData, NPF_FreeCapData, TRUE);
+		NPF_ObjectPoolReturn(pCapData, &Context);
 
 		ASSERT(Open->Free <= Open->Size);
 	}
@@ -448,6 +441,7 @@ NPF_DoTap(
 	NBLCopiesHead.Next = NULL;
 	PNPF_NB_COPIES pNBCopies = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
+	NPF_OBJ_POOL_CTX Context;
 
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
@@ -470,6 +464,8 @@ NPF_DoTap(
 	/* Release the spin lock no matter what. */
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
+	Context.pContext = NULL;
+	Context.bAtDispatchLevel = AtDispatchLevel;
 	for (Curr = NBLCopiesHead.Next; Curr != NULL; Curr = Curr->Next)
 	{
 		pNBLCopy = CONTAINING_RECORD(Curr, NPF_NBL_COPY, NBLCopyEntry); 
@@ -479,9 +475,9 @@ NPF_DoTap(
 			pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
 			pNBCopiesEntry = pNBCopiesEntry->Next;
 
-			NPF_ObjectPoolReturn(pNBCopies, NPF_FreeNBCopies, AtDispatchLevel);
+			NPF_ObjectPoolReturn(pNBCopies, &Context);
 		}
-		NPF_ObjectPoolReturn(pNBLCopy, NPF_FreeNBLCopy, AtDispatchLevel);
+		NPF_ObjectPoolReturn(pNBLCopy, &Context);
 	}
 
 	return;
@@ -606,6 +602,9 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 	PSINGLE_LIST_ENTRY pCacheEntry = NULL;
 	PNPF_NB_COPIES pNBCopy = NULL;
 	PNET_BUFFER pNetBuffer = NULL;
+	NPF_OBJ_POOL_CTX Context;
+	Context.bAtDispatchLevel = bAtDispatchLevel;
+	Context.pContext = NULL;
 
 	if (ulSize >= NPF_NBCOPY_INITIAL_DATA_SIZE)
 	{
@@ -614,7 +613,7 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 
 	if (pCacheEntry == NULL)
 	{
-		pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(pDevExt->NBCopiesPool, bAtDispatchLevel);
+		pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(pDevExt->NBCopiesPool, &Context);
 		if (pNBCopy == NULL)
 		{
 			return NULL;
@@ -634,7 +633,8 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 		pNetBuffer = NdisAllocateNetBufferMdlAndData(pOpen->DeviceExtension->TapNBPool);
 		if (pNetBuffer == NULL)
 		{
-			NPF_ObjectPoolReturn(pNBCopy, NPF_FreeNBCopies, bAtDispatchLevel);
+			Context.pContext = pOpen->DeviceExtension;
+			NPF_ObjectPoolReturn(pNBCopy, &Context);
 			return NULL;
 		}
 		pNBCopy->ulSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
@@ -663,8 +663,11 @@ PNPF_CAP_DATA NPF_GetCapData(
 	ASSERT(pNBCopy->pNBLCopy == pNBLCopy);
 	ASSERT(pNBCopy->pNetBuffer);
 	ASSERT(pNBCopy->ulPacketSize < 0xffffffff);
+	NPF_OBJ_POOL_CTX Context;
+	Context.bAtDispatchLevel = TRUE;
+	Context.pContext = NULL;
 
-	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(pPool, TRUE);
+	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(pPool, &Context);
 	if (pCapData == NULL)
 	{
 		return NULL;
@@ -672,7 +675,6 @@ PNPF_CAP_DATA NPF_GetCapData(
 
 	// Increment refcounts on relevant structures
 	pCapData->pNBCopy = pNBCopy;
-	InterlockedIncrement(&pNBCopy->ulRefcount);
 	NPF_ReferenceObject(pNBCopy);
 	NPF_ReferenceObject(pNBLCopy);
 
@@ -705,6 +707,9 @@ NPF_TapExForEachOpen(
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	PSINGLE_LIST_ENTRY pNBLCopyPrev = NBLCopyHead;
 	PSINGLE_LIST_ENTRY pNBCopiesPrev = NULL;
+	NPF_OBJ_POOL_CTX Context;
+	Context.bAtDispatchLevel = AtDispatchLevel;
+	Context.pContext = NULL;
 	ASSERT(tstamp != NULL);
 	
 	//TRACE_ENTER();
@@ -729,7 +734,7 @@ NPF_TapExForEachOpen(
 		if (pNBLCopyPrev->Next == NULL)
 		{
 			// Add another NBL copy to the chain
-			pNBLCopy = (PNPF_NBL_COPY) NPF_ObjectPoolGet(Open->DeviceExtension->NBLCopyPool, AtDispatchLevel);
+			pNBLCopy = (PNPF_NBL_COPY) NPF_ObjectPoolGet(Open->DeviceExtension->NBLCopyPool, &Context);
 			if (pNBLCopy == NULL)
 			{
 				//Insufficient resources.
@@ -793,7 +798,7 @@ NPF_TapExForEachOpen(
 					goto RadiotapDone;
 				}
 
-				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) NPF_ObjectPoolGet(Open->DeviceExtension->Dot11HeaderPool, AtDispatchLevel);
+				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) NPF_ObjectPoolGet(Open->DeviceExtension->Dot11HeaderPool, &Context);
 				if (pNBLCopy->Dot11RadiotapHeader == NULL)
 				{
 					// Insufficient memory
@@ -1185,7 +1190,7 @@ TEFEO_next_NB:
 				// We bailed early and we still need a placeholder NBCopies here.
 				if (pNBCopy == NULL)
 				{
-					pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, AtDispatchLevel);
+					pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, &Context);
 				}
 				if (pNBCopy == NULL)
 				{

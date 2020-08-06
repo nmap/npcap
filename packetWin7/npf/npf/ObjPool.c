@@ -78,6 +78,8 @@ typedef struct _NPF_OBJ_POOL
 	NDIS_HANDLE NdisHandle;
 	ULONG ulObjectSize;
 	ULONG ulIncrement;
+	PNPF_OBJ_INIT InitFunc;
+	PNPF_OBJ_INIT CleanupFunc;
 } NPF_OBJ_POOL;
 
 #define NPF_OBJECT_POOL_TAG 'TPON'
@@ -118,7 +120,12 @@ NPF_NewObjectShelf(
 }
 
 _Use_decl_annotations_
-PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize, USHORT ulIncrement)
+PNPF_OBJ_POOL NPF_AllocateObjectPool(
+		NDIS_HANDLE NdisHandle,
+		ULONG ulObjectSize,
+		USHORT ulIncrement,
+		PNPF_OBJ_INIT InitFunc,
+		PNPF_OBJ_CLEANUP CleanupFunc)
 {
 	PNPF_OBJ_POOL pPool = NULL;
 
@@ -137,19 +144,26 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(NDIS_HANDLE NdisHandle, ULONG ulObjectSize,
 	pPool->NdisHandle = NdisHandle;
 	pPool->ulObjectSize = ulObjectSize;
 	pPool->ulIncrement = ulIncrement;
+	pPool->InitFunc = InitFunc;
+	pPool->CleanupFunc = CleanupFunc;
 
 	return pPool;
 }
 
 _Use_decl_annotations_
 PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
-		BOOLEAN bAtDispatchLevel)
+		PNPF_OBJ_POOL_CTX Context)
 {
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
 	PSINGLE_LIST_ENTRY pEntry = NULL;
 	PNPF_OBJ_SHELF pShelf = NULL;
+	ASSERT(Context);
+	if (Context == NULL)
+	{
+		return NULL;
+	}
 
-	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
+	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 	// Get the first partial shelf
 	pEntry = pPool->PartialShelfHead.Next;
 
@@ -164,7 +178,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 			// If we couldn't allocate one, bail.
 			if (pShelf == NULL)
 			{
-				FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
+				FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 				return NULL;
 			}
 			pEntry = &pShelf->ShelfEntry;
@@ -180,7 +194,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 	{
 		// Should be impossible since all tracked shelves are partial or empty
 		ASSERT(pEntry != NULL);
-		FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
+		FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 		return NULL;
 	}
 	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, UnusedEntry);
@@ -194,9 +208,16 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 		PopEntryList(&pPool->PartialShelfHead);
 	}
 
-	FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
+	FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 
-	RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
+	if (pPool->InitFunc)
+	{
+		pPool->InitFunc(pElem->pObject, Context);
+	}
+	else
+	{
+		RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
+	}
 	ASSERT(pElem->Refcount == 0);
 	pElem->Refcount = 1;
 	return pElem->pObject;
@@ -278,23 +299,49 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 }
 
 _Use_decl_annotations_
-VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc, BOOLEAN bAtDispatchLevel)
+VOID NPF_ObjectPoolReturn(
+		PVOID pObject,
+		PNPF_OBJ_POOL_CTX Context)
 {
+	NPF_OBJ_CALLBACK_STATUS Status = NPF_OBJ_STATUS_SUCCESS;
 	PNPF_OBJ_SHELF pShelf = NULL;
 	PNPF_OBJ_POOL pPool = NULL;
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 	ULONG refcount = InterlockedDecrement(&pElem->Refcount);
+	NPF_OBJ_POOL_CTX unknown_context;
+	ASSERT(Context);
+	if (Context == NULL)
+	{
+		unknown_context.bAtDispatchLevel = FALSE;
+		unknown_context.pContext = NULL;
+		Context = &unknown_context;
+	}
 	ASSERT(refcount < ULONG_MAX);
 
 	if (refcount == 0)
 	{
-		if (CleanupFunc)
-		{
-			CleanupFunc(pElem->pObject, bAtDispatchLevel);
-		}
 		pShelf = pElem->pShelf;
 		pPool = pShelf->pPool;
-		FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
+		if (pPool->CleanupFunc)
+		{
+			Status = pPool->CleanupFunc(pElem->pObject, Context);
+			switch (Status)
+			{
+				case NPF_OBJ_STATUS_SAVED:
+					// Callback refcounted the object and put it elsewhere.
+					// Can't assert anything because it could be
+					// being returned again somewhere.
+					return;
+				case NPF_OBJ_STATUS_RESOURCES:
+					// TODO: Safely recover from this condition.
+					// 1. Have NPF_ObjectPoolReturn tell its caller that something went wrong so it can bail.
+					// 2. Introduce a way to safely shut down the driver if we end up in an unrecoverable state.
+					ASSERT(NULL);
+				default:
+					break;
+			}
+		}
+		FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 
 		refcount = InterlockedDecrement(&pShelf->ulUsed);
 		ASSERT(refcount < pPool->ulIncrement);
@@ -318,7 +365,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc, BOOLEAN b
 			if (pEntry == NULL)
 			{
 				ASSERT(pEntry != NULL);
-				FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
+				FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 				return;
 			}
 
@@ -332,7 +379,7 @@ VOID NPF_ObjectPoolReturn(PVOID pObject, PNPF_OBJ_CLEANUP CleanupFunc, BOOLEAN b
 
 		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
 
-		FILTER_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
+		FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 	}
 }
 
@@ -341,9 +388,6 @@ VOID NPF_ReferenceObject(PVOID pObject)
 {
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 
-	// This function shouldn't be able to be called on something that's not
-	// checked out (refcount already 1)
-	ASSERT(pElem->Refcount > 0);
 	InterlockedIncrement(&pElem->Refcount);
 	// If we get this many, we have an obvious bug.
 	ASSERT(pElem->Refcount < ULONG_MAX);
