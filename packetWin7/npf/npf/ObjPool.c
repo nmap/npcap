@@ -210,14 +210,21 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 
 	FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 
+	// We zero the memory when we first allocate it, and when an object is returned.
+	// RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
+#if DBG
+	// Let's check that condition and make sure nothing is messing with returned objects
+	// (SLOW! debug only)
+	for (ULONG i=0; i < pPool->ulObjectSize; i++)
+	{
+		ASSERT(((PUCHAR)pElem->pObject)[i] == 0);
+	}
+#endif
 	if (pPool->InitFunc)
 	{
 		pPool->InitFunc(pElem->pObject, Context);
 	}
-	else
-	{
-		RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
-	}
+
 	ASSERT(pElem->Refcount == 0);
 	pElem->Refcount = 1;
 	return pElem->pObject;
@@ -341,6 +348,11 @@ VOID NPF_ObjectPoolReturn(
 					break;
 			}
 		}
+
+		// Zero this now to ensure unused objects are zeroed when retrieved
+		// Doing it this way helps spot bugs by invalidating pointers in the old object
+		RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
+
 		FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 
 		refcount = InterlockedDecrement(&pShelf->ulUsed);

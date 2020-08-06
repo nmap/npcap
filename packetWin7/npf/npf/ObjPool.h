@@ -90,7 +90,7 @@ typedef NPF_OBJ_CLEANUP (*PNPF_OBJ_CLEANUP);
  * param NdisHandle An NDIS handle like that returned by NdisFRegisterFilterDriver.
  * param ulObjectSize The size of object this pool will create
  * param ulIncrement Objects are allocated in multiples of this parameter
- * param InitFunc Optional function to perform initialization of the object before getting it. Use NULL to zero the memory instead.
+ * param InitFunc Optional function to perform initialization of the object before getting it. The pool ensures the object is zeroed prior to this step.
  * param CleanupFunc Optional function to perform cleanup of the object before returning it (free referenced memory, e.g.). Use NULL if no such function is needed.
  */
 _Ret_maybenull_
