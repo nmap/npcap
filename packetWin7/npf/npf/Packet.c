@@ -223,6 +223,7 @@ NPF_GCThread(_In_ PVOID Context)
 {
 	PDEVICE_EXTENSION pDevExt = Context;
 	PSINGLE_LIST_ENTRY pCacheEntry = NULL;
+	PNPF_NB_COPIES pNBCopy = NULL;
 	NPF_OBJ_POOL_CTX PoolContext;
 	// NULL context means don't recover/cache in NPF_FreeNBCopies
 	PoolContext.pContext = NULL;
@@ -253,8 +254,12 @@ NPF_GCThread(_In_ PVOID Context)
 			{
 				break;
 			}
-			NPF_ObjectPoolReturn(CONTAINING_RECORD(pCacheEntry, NPF_NB_COPIES, CacheEntry),
-					&PoolContext);
+			pNBCopy = CONTAINING_RECORD(pCacheEntry, NPF_NB_COPIES, CacheEntry);
+			// Check cache consistency
+			ASSERT(pNBCopy->pNetBuffer);
+			ASSERT(pNBCopy->ulPacketSize == 0xffffffff);
+			ASSERT(pNBCopy->ulSize > NPF_NBCOPY_INITIAL_DATA_SIZE);
+			NPF_ObjectPoolReturn(pNBCopy, &PoolContext);
 		}
 
 		// Now shrink the pools if need be.

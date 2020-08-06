@@ -611,6 +611,8 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 	PNET_BUFFER pNetBuffer = NULL;
 	NPF_OBJ_POOL_CTX Context;
 	Context.bAtDispatchLevel = bAtDispatchLevel;
+	// We only use this to return a NBCopy if we can't allocate pNetBuffer,
+	// so such a NBCopy should not go into the cache.
 	Context.pContext = NULL;
 
 	if (ulSize >= NPF_NBCOPY_INITIAL_DATA_SIZE)
@@ -630,6 +632,8 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 	{
 		pNBCopy = CONTAINING_RECORD(pCacheEntry, NPF_NB_COPIES, CacheEntry);
 		ASSERT(pNBCopy->pNetBuffer);
+		ASSERT(pNBCopy->ulPacketSize == 0xffffffff);
+		ASSERT(pNBCopy->ulSize > NPF_NBCOPY_INITIAL_DATA_SIZE);
 		pCacheEntry->Next = NULL;
 	}
 
@@ -640,7 +644,6 @@ PNPF_NB_COPIES NPF_GetNBCopy(
 		pNetBuffer = NdisAllocateNetBufferMdlAndData(pOpen->DeviceExtension->TapNBPool);
 		if (pNetBuffer == NULL)
 		{
-			Context.pContext = pOpen->DeviceExtension;
 			NPF_ObjectPoolReturn(pNBCopy, &Context);
 			return NULL;
 		}
@@ -749,6 +752,7 @@ NPF_TapExForEachOpen(
 				// and actual NBs won't line up.
 				goto TEFEO_done_with_NBs;
 			}
+			ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
 			pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
 			if (tstamp->tv_sec == 0)
 			{
@@ -1083,6 +1087,7 @@ NPF_TapExForEachOpen(
 					NdisReleaseRWLock(Open->BufferLock, &lockState);
 					goto TEFEO_done_with_NBs;
 				}
+				ASSERT(pNBCopy->CopiesEntry.Next == NULL);
 				pNBCopiesPrev->Next = &pNBCopy->CopiesEntry;
 				pNBCopy->pNBLCopy = pNBLCopy;
 				pNBCopy->ulPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
@@ -1206,6 +1211,7 @@ TEFEO_next_NB:
 					// and actual NBs won't line up.
 					goto TEFEO_done_with_NBs;
 				}
+				ASSERT(pNBCopy->CopiesEntry.Next == NULL);
 				pNBCopiesPrev->Next = &pNBCopy->CopiesEntry;
 				pNBCopy->pNBLCopy = pNBLCopy;
 				pNBCopy->ulPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);

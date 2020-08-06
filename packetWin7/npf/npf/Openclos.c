@@ -428,6 +428,8 @@ NPF_OBJ_CALLBACK_STATUS NPF_FreeNBCopies(PVOID pObject, PNPF_OBJ_POOL_CTX Contex
 	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION) Context->pContext;
 
 	pNBCopy->pNBLCopy = NULL;
+	pNBCopy->CopiesEntry.Next = NULL;
+	pNBCopy->CacheEntry.Next = NULL;
 	// signal that this object is uninitialized
 	pNBCopy->ulPacketSize = 0xffffffff;
 
