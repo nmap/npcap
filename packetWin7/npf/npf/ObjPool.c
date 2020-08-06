@@ -310,6 +310,7 @@ VOID NPF_ObjectPoolReturn(
 		PVOID pObject,
 		PNPF_OBJ_POOL_CTX Context)
 {
+	ASSERT(pObject);
 	NPF_OBJ_CALLBACK_STATUS Status = NPF_OBJ_STATUS_SUCCESS;
 	PNPF_OBJ_SHELF pShelf = NULL;
 	PNPF_OBJ_POOL pPool = NULL;
@@ -398,6 +399,7 @@ VOID NPF_ObjectPoolReturn(
 _Use_decl_annotations_
 VOID NPF_ReferenceObject(PVOID pObject)
 {
+	ASSERT(pObject);
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 
 	InterlockedIncrement(&pElem->Refcount);

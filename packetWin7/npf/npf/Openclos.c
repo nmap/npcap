@@ -402,9 +402,13 @@ NPF_ResetBufferContents(
 	Open->Received = 0;
 
 	// Clear packets from the buffer
-	for (Curr = Open->PacketQueue.Flink; Curr != &Open->PacketQueue; Curr = Curr->Flink)
+	Curr = Open->PacketQueue.Flink;
+	while (Curr != &Open->PacketQueue)
 	{
+		ASSERT(Curr != NULL);
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
+		Curr = Curr->Flink;
+
 		NPF_ObjectPoolReturn(pCapData, &Context);
 	}
 	// Remove links
