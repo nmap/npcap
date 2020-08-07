@@ -1,5 +1,5 @@
 ﻿
-## Npcap 0.9996 [unreleased]
+## Npcap 0.9996 [2020-08-07]
 
 * Fix a runaway memory leak triggered by low-resources condition leading to
   system hangs. Fixes [#213](http://issues.nmap.org/213).
