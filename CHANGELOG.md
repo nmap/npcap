@@ -1,4 +1,29 @@
 ﻿
+## Npcap 0.9996 [unreleased]
+
+* Fix a runaway memory leak triggered by low-resources condition leading to
+  system hangs. Fixes [#213](http://issues.nmap.org/213).
+
+* Fix a BSoD crash in `NPF_Read` in some high-traffic cases. Fixes [#206](http://issues.npcap.org/206).
+
+* Fix a handle leak in Packet.dll when enumerating interfaces. Fixes [#26](http://issues.npcap.org/26).
+
+* Fix an inconsistency between return value and IRP completion status in
+  `NPF_Read` when an adapter is removed. Driver Verifier would cause a bugcheck
+  (BSoD) in this case, and pcap API functions would not detect an error.
+  Fixes [#217](http://issues.nmap.org/217)
+
+* Improved performance by reusing allocated packet data buffers and
+  implementing `DISPATCH_LEVEL` tracking throughout the driver to speed up lock
+  acquisition.
+
+* When upgrading from compatible recent versions (currently Npcap 0.9985 and
+  newer), the installer will unpack a new `Uninstall.exe` and `NPFInstall.exe`
+  prior to removing the existing installation. This resolves issues with the
+  uninstallation process such as were common in Npcap 0.9991 through 0.9994.
+
+* Upgraded build system to VisualStudio 2019 and WDK 10.0.18362.0
+
 ## Npcap 0.9995 [2020-07-10]
 
 * Fix a BSoD crash in `NPF_Read` when NDIS filter module is detached from the
