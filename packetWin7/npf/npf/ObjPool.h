@@ -89,11 +89,13 @@ typedef NPF_OBJ_CLEANUP (*PNPF_OBJ_CLEANUP);
 /* Allocates an object pool.
  * param ulObjectSize The size of object this pool will create
  * param usIncrement Objects are allocated in multiples of at least this many
+ * param Tag Objects will be allocated with this memory tag
  * param InitFunc Optional function to perform initialization of the object before getting it. The pool ensures the object is zeroed prior to this step.
  * param CleanupFunc Optional function to perform cleanup of the object before returning it (free referenced memory, e.g.). Use NULL if no such function is needed.
  */
 _Ret_maybenull_
 PNPF_OBJ_POOL NPF_AllocateObjectPool(
+	_In_ ULONG Tag,
 	_In_ ULONG ulObjectSize,
 	_In_ USHORT usIncrement,
 	_In_opt_ PNPF_OBJ_INIT InitFunc,

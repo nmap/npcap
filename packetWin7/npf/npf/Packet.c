@@ -509,7 +509,7 @@ DriverEntry(
 	}
 
 	// 1000 * 256 = WIN32_DEFAULT_USER_BUFFER_SIZE
-	devExtP->BufferPool = NPF_AllocateObjectPool(sizeof(BUFCHAIN_ELEM), 1000, NULL, NULL);
+	devExtP->BufferPool = NPF_AllocateObjectPool(NPF_PACKET_DATA_TAG, sizeof(BUFCHAIN_ELEM), 1000, NULL, NULL);
 
 	if (devExtP->BufferPool == NULL)
 	{
@@ -526,7 +526,7 @@ DriverEntry(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	devExtP->NBLCopyPool = NPF_AllocateObjectPool(sizeof(NPF_NBL_COPY), 256, NULL, NPF_FreeNBLCopy);
+	devExtP->NBLCopyPool = NPF_AllocateObjectPool(NPF_NBLC_POOL_TAG, sizeof(NPF_NBL_COPY), 256, NULL, NPF_FreeNBLCopy);
 	if (devExtP->NBLCopyPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
@@ -543,7 +543,7 @@ DriverEntry(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	devExtP->NBCopiesPool = NPF_AllocateObjectPool(sizeof(NPF_NB_COPIES), 256, NULL, NPF_FreeNBCopies);
+	devExtP->NBCopiesPool = NPF_AllocateObjectPool(NPF_NBC_POOL_TAG, sizeof(NPF_NB_COPIES), 256, NULL, NPF_FreeNBCopies);
 	if (devExtP->NBCopiesPool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
@@ -597,7 +597,7 @@ DriverEntry(
 #ifdef HAVE_DOT11_SUPPORT
 	if (g_Dot11SupportMode)
 	{
-		devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(SIZEOF_RADIOTAP_BUFFER, 256, NULL, NULL);
+		devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(NPF_DOT11_POOL_TAG, SIZEOF_RADIOTAP_BUFFER, 256, NULL, NULL);
 		if (devExtP->Dot11HeaderPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");

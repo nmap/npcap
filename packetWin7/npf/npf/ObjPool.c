@@ -75,7 +75,7 @@ typedef struct _NPF_OBJ_POOL
 	SINGLE_LIST_ENTRY EmptyShelfHead;
 	SINGLE_LIST_ENTRY PartialShelfHead;
 	NDIS_SPIN_LOCK ShelfLock;
-	NDIS_HANDLE NdisHandle;
+	ULONG Tag;
 	ULONG ulObjectSize;
 	ULONG ulIncrement;
 	PNPF_OBJ_INIT InitFunc;
@@ -99,7 +99,7 @@ NPF_NewObjectShelf(
 
 	pShelf = (PNPF_OBJ_SHELF) ExAllocatePoolWithTag(NonPagedPool,
 			NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
-			NPF_OBJECT_POOL_TAG);
+			pPool->Tag);
 	if (pShelf == NULL)
 	{
 		return NULL;
@@ -120,6 +120,7 @@ NPF_NewObjectShelf(
 
 _Use_decl_annotations_
 PNPF_OBJ_POOL NPF_AllocateObjectPool(
+		ULONG Tag,
 		ULONG ulObjectSize,
 		USHORT usIncrement,
 		PNPF_OBJ_INIT InitFunc,
@@ -138,6 +139,7 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(
 
 	NdisAllocateSpinLock(&pPool->ShelfLock);
 
+	pPool->Tag = Tag;
 	pPool->ulObjectSize = ulObjectSize;
 	pPool->ulIncrement = usIncrement;
 	pPool->InitFunc = InitFunc;

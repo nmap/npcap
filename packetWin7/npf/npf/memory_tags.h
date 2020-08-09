@@ -62,20 +62,28 @@
 #define NPF_INTERNAL_OID_TAG 'IopN'
 // Cloned OID requests
 #define NPF_CLONE_OID_TAG 'CopN'
+// NPCAP_FILTER_MODULE::InternalRequestPool
+#define NPF_REQ_POOL_TAG 'PRpN'
 // OPEN_INSTANCE
 #define NPF_OPEN_TAG 'POpN'
 // NPCAP_FILTER_MODULE
 #define NPF_FILTMOD_TAG 'MFpN'
-// Packet data > NPF_NBCOPY_INITIAL_DATA_SIZE
+// DEVICE_EXTENSION::BufferPool
 #define NPF_PACKET_DATA_TAG 'DPpN'
+// DEVICE_EXTENSION::NBLCopyPool
+#define NPF_NBLC_POOL_TAG 'LNpN'
+// DEVICE_EXTENSION::NBCopiesPool
+#define NPF_NBC_POOL_TAG 'BNpN'
+// DEVICE_EXTENSION::Dot11HeaderPool
+#define NPF_DOT11_POOL_TAG '11pN'
+// OPEN_INSTANCE::CapturePool
+#define NPF_CAP_POOL_TAG 'DCpN'
 // NPF_BufferedWrite packet data
 #define NPF_BUFFERED_WRITE_TAG 'WBpN'
 // Loopback capture packet copy
 #define NPF_LOOPBACK_COPY_TAG 'LBpN'
 // NPCAP_FILTER_MODULE::PacketPool
 #define NPF_PACKET_POOL_TAG 'PPpN'
-// NPCAP_FILTER_MODULE::TapNBPool
-#define NPF_TAP_POOL_TAG 'PTpN'
 // Kernel dump mode
 #ifdef NPCAP_KDUMP
 #define NPF_DUMP_TAG 'DcpN'
