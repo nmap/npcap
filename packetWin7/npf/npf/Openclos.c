@@ -1935,7 +1935,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 		TRACE_EXIT();
 		return NULL;
 	}
-	Open->CapturePool = NPF_AllocateObjectPool(NdisHandle, sizeof(NPF_CAP_DATA), 1024, NULL, NPF_FreeCapData);
+	Open->CapturePool = NPF_AllocateObjectPool(sizeof(NPF_CAP_DATA), 1024, NULL, NPF_FreeCapData);
 	if (Open->CapturePool == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
@@ -2093,7 +2093,7 @@ NPF_CreateFilterModule(
 			break;
 		}
 
-		pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NdisFilterHandle, sizeof(INTERNAL_REQUEST), 8, NULL, NULL);
+		pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(sizeof(INTERNAL_REQUEST), 8, NULL, NULL);
 		if (pFiltMod->InternalRequestPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");

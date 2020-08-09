@@ -85,7 +85,7 @@ typedef struct _NPF_OBJ_POOL
 #define NPF_OBJECT_POOL_TAG 'TPON'
 
 #define NPF_OBJ_ELEM_ALLOC_SIZE(POOL) (sizeof(NPF_OBJ_POOL_ELEM) + (POOL)->ulObjectSize)
-#define NPF_OBJ_SHELF_ALLOC_SIZE(POOL) ( sizeof(NPF_OBJ_SHELF) + NPF_OBJ_ELEM_ALLOC_SIZE(POOL) * (POOL)->ulIncrement)
+#define NPF_OBJ_SHELF_ALLOC_SIZE(POOL) ROUND_TO_PAGES( sizeof(NPF_OBJ_SHELF) + NPF_OBJ_ELEM_ALLOC_SIZE(POOL) * (POOL)->ulIncrement)
 #define NPF_OBJ_ELEM_MAX_IDX(POOL) (NPF_OBJ_SHELF_ALLOC_SIZE(pPool) - sizeof(NPF_OBJ_SHELF))
 
 _Ret_maybenull_
@@ -97,10 +97,9 @@ NPF_NewObjectShelf(
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
 	ULONG i;
 
-       	pShelf = (PNPF_OBJ_SHELF) NdisAllocateMemoryWithTagPriority(pPool->NdisHandle,
+	pShelf = (PNPF_OBJ_SHELF) ExAllocatePoolWithTag(NonPagedPool,
 			NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
-		       	NPF_OBJECT_POOL_TAG,
-			NormalPoolPriority);
+			NPF_OBJECT_POOL_TAG);
 	if (pShelf == NULL)
 	{
 		return NULL;
@@ -121,18 +120,16 @@ NPF_NewObjectShelf(
 
 _Use_decl_annotations_
 PNPF_OBJ_POOL NPF_AllocateObjectPool(
-		NDIS_HANDLE NdisHandle,
 		ULONG ulObjectSize,
-		USHORT ulIncrement,
+		USHORT usIncrement,
 		PNPF_OBJ_INIT InitFunc,
 		PNPF_OBJ_CLEANUP CleanupFunc)
 {
 	PNPF_OBJ_POOL pPool = NULL;
 
-	pPool = NdisAllocateMemoryWithTagPriority(NdisHandle,
+	pPool = (PNPF_OBJ_POOL) ExAllocatePoolWithTag(NonPagedPool,
 			sizeof(NPF_OBJ_POOL),
-		       	NPF_OBJECT_POOL_TAG,
-			NormalPoolPriority);
+			NPF_OBJECT_POOL_TAG);
 	if (pPool == NULL)
 	{
 		return NULL;
@@ -141,11 +138,16 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(
 
 	NdisAllocateSpinLock(&pPool->ShelfLock);
 
-	pPool->NdisHandle = NdisHandle;
 	pPool->ulObjectSize = ulObjectSize;
-	pPool->ulIncrement = ulIncrement;
+	pPool->ulIncrement = usIncrement;
 	pPool->InitFunc = InitFunc;
 	pPool->CleanupFunc = CleanupFunc;
+
+	// Now round up ulIncrement to the max that will fit in some pages
+	ULONG max_idx = NPF_OBJ_ELEM_MAX_IDX(pPool);
+	pPool->ulIncrement = max_idx / NPF_OBJ_ELEM_ALLOC_SIZE(pPool);
+	// This should not have changed the max_idx
+	ASSERT(max_idx == NPF_OBJ_ELEM_MAX_IDX(pPool));
 
 	return pPool;
 }

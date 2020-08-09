@@ -87,17 +87,15 @@ typedef NPF_OBJ_CALLBACK_STATUS (NPF_OBJ_CLEANUP)(
 typedef NPF_OBJ_CLEANUP (*PNPF_OBJ_CLEANUP);
 
 /* Allocates an object pool.
- * param NdisHandle An NDIS handle like that returned by NdisFRegisterFilterDriver.
  * param ulObjectSize The size of object this pool will create
- * param ulIncrement Objects are allocated in multiples of this parameter
+ * param usIncrement Objects are allocated in multiples of at least this many
  * param InitFunc Optional function to perform initialization of the object before getting it. The pool ensures the object is zeroed prior to this step.
  * param CleanupFunc Optional function to perform cleanup of the object before returning it (free referenced memory, e.g.). Use NULL if no such function is needed.
  */
 _Ret_maybenull_
 PNPF_OBJ_POOL NPF_AllocateObjectPool(
-	_In_ NDIS_HANDLE NdisHandle,
 	_In_ ULONG ulObjectSize,
-	_In_ USHORT ulIncrement,
+	_In_ USHORT usIncrement,
 	_In_opt_ PNPF_OBJ_INIT InitFunc,
 	_In_opt_ PNPF_OBJ_CLEANUP CleanupFunc);
 
