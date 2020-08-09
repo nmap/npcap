@@ -1136,7 +1136,6 @@ NPF_TapExForEachOpen(
 					//Insufficient resources.
 					// We can't continue traversing or the NBCopies
 					// and actual NBs won't line up.
-					dropped++;
 					NdisReleaseRWLock(Open->BufferLock, &lockState);
 					goto TEFEO_done_with_NBs;
 				}
@@ -1231,9 +1230,11 @@ TEFEO_next_NB:
 TEFEO_done_with_NBs:
 	// If we bailed out and didn't finish traversing,
 	// count remaining packets as received.
+	// They are also counted as dropped because of failure to allocate resources
 	for(; pNetBufList != NULL; pNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList)) {
 		for (; pNetBuf != NULL; pNetBuf = NET_BUFFER_NEXT_NB(pNetBuf)) {
 			received++;
+			dropped++;
 		}
 	}
 
