@@ -267,11 +267,9 @@ typedef struct _DEVICE_EXTENSION
 	NDIS_HANDLE FilterDriverHandle;
 	PDEVICE_OBJECT pDevObj; // pointer to the DEVICE_OBJECT for this device
 
-	NDIS_HANDLE TapNBPool; // Pool of NET_BUFFERs to hold capture data temporarily.
+	PNPF_OBJ_POOL BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
 	PNPF_OBJ_POOL NBLCopyPool; // Pool of NPF_NBL_COPY objects
 	PNPF_OBJ_POOL NBCopiesPool; // Pool of NPF_NB_COPIES objects
-	SINGLE_LIST_ENTRY NBCopiesCache; // Cache of initialized NPF_NB_COPIES objects
-	KSPIN_LOCK NBCopiesCacheLock;
 #ifdef HAVE_DOT11_SUPPORT
 	PNPF_OBJ_POOL Dot11HeaderPool; // Pool of Radiotap header buffers
 #endif
@@ -443,12 +441,12 @@ typedef struct _OPEN_INSTANCE
 OPEN_INSTANCE, *POPEN_INSTANCE;
 
 /* This value should be sized to hold most packets processed by the driver. If
- * a packet (snaplen) exceeds this size, it will cost an additional buffer+MDL
+ * a packet (snaplen) exceeds this size, it will cost an additional BUFCHAIN_ELEM
  * allocation/free. On the other hand, every captured packet will use up at
  * least this much space in memory, so keep it small. Nmap uses 256 snaplen, so
  * we'll try that.
  */
-#define NPF_NBCOPY_INITIAL_DATA_SIZE 256
+#define NPF_BUFCHAIN_SIZE 256
 
 typedef struct _NPF_NBL_COPY
 {
@@ -462,13 +460,25 @@ typedef struct _NPF_NBL_COPY
 
 NPF_OBJ_CLEANUP NPF_FreeNBLCopy;
 
+/* Fixed-size buffers for holding packet data. Fixed size makes math easier and
+ * lets us use ObjPool */
+typedef struct _BUFCHAIN_ELEM *PBUFCHAIN_ELEM;
+typedef struct _BUFCHAIN_ELEM
+{
+	PBUFCHAIN_ELEM Next;
+	UCHAR Buffer [NPF_BUFCHAIN_SIZE];
+} BUFCHAIN_ELEM;
+
+/* This is like a lower-overhead version of NET_BUFFER based on BUFCHAIN_ELEM instead of MDL */
 typedef struct _NPF_NB_COPIES
 {
 	SINGLE_LIST_ENTRY CopiesEntry;
-	SINGLE_LIST_ENTRY CacheEntry;
 	PNPF_NBL_COPY pNBLCopy;
-	PNET_BUFFER pNetBuffer; // May be NULL, hence why we can't just use NET_BUFFER.Next
-	ULONG ulSize; //Size of all allocated space in the netbuffer.
+	PBUFCHAIN_ELEM pFirstElem; // Bufchain of packet data
+	PBUFCHAIN_ELEM pLastElem; // Last elem in the chain
+	PMDL pSrcCurrMdl; // MDL where we left off copying from the source NET_BUFFER
+	ULONG ulCurrMdlOffset; // Position in that MDL.
+	ULONG ulSize; //Size of all used space in the bufchain.
 	ULONG ulPacketSize; // Size of the original packet
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 

@@ -419,66 +419,20 @@ NPF_ResetBufferContents(
 		NdisReleaseRWLock(Open->BufferLock, &lockState);
 }
 
-/* If the context is set, it's the DeviceExtension where we can cache this NBCopy if we want.
- * If it's NULL, then we don't cache, just free.
- */
 _Use_decl_annotations_
 NPF_OBJ_CALLBACK_STATUS NPF_FreeNBCopies(PVOID pObject, PNPF_OBJ_POOL_CTX Context)
 {
 	PNPF_NB_COPIES pNBCopy = (PNPF_NB_COPIES) pObject;
-	PVOID pDeleteMe = NULL;
-	PMDL pMdl = NULL;
-	ULONG ulSize = 0;
-	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION) Context->pContext;
+	PBUFCHAIN_ELEM pDeleteMe = NULL;
+	PBUFCHAIN_ELEM pElem = pNBCopy->pFirstElem;
 
-	pNBCopy->pNBLCopy = NULL;
-	pNBCopy->CopiesEntry.Next = NULL;
-	pNBCopy->CacheEntry.Next = NULL;
-	// signal that this object is uninitialized
-	pNBCopy->ulPacketSize = 0xffffffff;
-
-	if (pNBCopy->pNetBuffer != NULL)
+	while (pNBCopy->pFirstElem != NULL)
 	{
-		if (pDevExt && pNBCopy->ulSize > NPF_NBCOPY_INITIAL_DATA_SIZE)
-		{
-			// refcount it and push it onto the cache stack
-			NPF_ReferenceObject(pNBCopy);
-			ExInterlockedPushEntryList(&pDevExt->NBCopiesCache,
-					&pNBCopy->CacheEntry,
-					&pDevExt->NBCopiesCacheLock);
-			return NPF_OBJ_STATUS_SAVED;
-		}
-		// Skip the first MDL/buffer (allocated by NdisAllocateNetBufferMdlAndData)
-		pMdl = NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next;
-		while (pMdl)
-		{
-			/* Use HighPagePriority because we are about to free this memory.
-			 * If the system is low on resources, failing this will only make it lower on resources,
-			 * leading to runaway out-of-memory condition.
-			 */
-			NdisQueryMdl(pMdl,
-					&pDeleteMe,
-					&ulSize,
-					HighPagePriority);
-			if (pDeleteMe != NULL)
-			{
-				NdisFreeMemory(pDeleteMe, ulSize, 0);
-			}
-			else
-			{
-				return NPF_OBJ_STATUS_RESOURCES;
-			}
-			pDeleteMe = pMdl;
-			pMdl = pMdl->Next;
-			NdisFreeMdl((PMDL)pDeleteMe);
-		}
-		NET_BUFFER_FIRST_MDL(pNBCopy->pNetBuffer)->Next = NULL;
-		NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = 0;
-		NET_BUFFER_DATA_OFFSET(pNBCopy->pNetBuffer) = 0;
-		NdisFreeNetBuffer(pNBCopy->pNetBuffer);
-		pNBCopy->pNetBuffer = NULL;
+		pDeleteMe = pNBCopy->pFirstElem;
+		pNBCopy->pFirstElem = pDeleteMe->Next;
+		NPF_ObjectPoolReturn(pDeleteMe, Context);
 	}
-	pNBCopy->ulSize = 0;
+	ASSERT(pNBCopy->pLastElem == pDeleteMe);
 
 	return NPF_OBJ_STATUS_SUCCESS;
 }

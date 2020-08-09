@@ -92,6 +92,39 @@
 extern ULONG	g_VlanSupportMode;
 extern ULONG	g_DltNullMode;
 
+_Must_inspect_result_
+_Success_(return == ulDesiredLen)
+ULONG
+NPF_CopyFromNBCopyToBuffer(
+		_In_ PNPF_NB_COPIES pNBCopy,
+		_Out_writes_(ulDesiredLen) PUCHAR pDstBuf,
+		_In_ ULONG ulDesiredLen
+		)
+{
+	PBUFCHAIN_ELEM pElem = pNBCopy->pFirstElem;
+	ULONG out = 0;
+	ULONG ulCopyLen = 0;
+
+	ASSERT(pNBCopy);
+	ASSERT(pElem);
+	ASSERT(ulDesiredLen <= pNBCopy->ulSize);
+	while (pElem && out < ulDesiredLen)
+	{
+		ulCopyLen = min(ulDesiredLen - out, NPF_BUFCHAIN_SIZE);
+		ASSERT(ulCopyLen + out <= ulDesiredLen);
+		RtlCopyMemory(pDstBuf + out, pElem->Buffer, ulCopyLen);
+		out += ulCopyLen;
+		if (ulCopyLen == NPF_BUFCHAIN_SIZE)
+		{
+			pElem = pElem->Next;
+		}
+	}
+
+	// Really no reason we should ever fail to get out what we put into it.
+	ASSERT(out == ulDesiredLen);
+	return out;
+}
+
 //-------------------------------------------------------------------
 
 _Use_decl_annotations_
@@ -312,7 +345,7 @@ NPF_Read(
 		/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
 		ASSERT(pCapData->pNBCopy);
 		ASSERT(pCapData->pNBCopy->pNBLCopy);
-		ASSERT(pCapData->pNBCopy->pNetBuffer);
+		ASSERT(pCapData->pNBCopy->pFirstElem);
 		ASSERT(pCapData->pNBCopy->ulPacketSize < 0xffffffff);
 
 #ifdef HAVE_DOT11_SUPPORT
@@ -332,7 +365,7 @@ NPF_Read(
 
 		header = (struct bpf_hdr *) (packp + copied);
 		header->bh_tstamp = pCapData->pNBCopy->pNBLCopy->tstamp;
-		header->bh_caplen = plen;
+		header->bh_caplen = 0;
 		header->bh_datalen = pCapData->pNBCopy->ulPacketSize;
 		header->bh_hdrlen = sizeof(struct bpf_hdr);
 
@@ -347,52 +380,21 @@ NPF_Read(
 		}
 #endif
 
-		PNET_BUFFER pNetBuf = pCapData->pNBCopy->pNetBuffer;
-		// NetBuffers that we create for copy don't use offsets and
-		// begin right at the beginning of FirstMdl
-		PMDL pMdl = NET_BUFFER_FIRST_MDL(pNetBuf);
-		while (pMdl != NULL && plen > 0)
-		{
-			UINT CopyLengthForMDL = 0;
-			PUCHAR pDataLinkBuffer = NULL;
-			ULONG BufferLength = 0;
-			NdisQueryMdl(
-					pMdl,
-					&pDataLinkBuffer,
-					&BufferLength,
-					NormalPagePriority);
-			if (pDataLinkBuffer == NULL)
-			{
-				IF_LOUD(DbgPrint("Unable to query MDL; bailing.");)
-				pMdl = NULL;
-				break;
-			}
-
-			CopyLengthForMDL = min(plen, BufferLength);
-
-			RtlCopyMemory(packp + copied, pDataLinkBuffer, CopyLengthForMDL);
-			copied += CopyLengthForMDL;
-			plen -= CopyLengthForMDL;
-
-			NdisGetNextMdl(pMdl, &pMdl);
+		ULONG ulCopied = NPF_CopyFromNBCopyToBuffer(pCapData->pNBCopy, packp + copied, plen);
+		if (ulCopied < plen) {
+			IF_LOUD(DbgPrint("NetBuffer missing %lu bytes", plen - ulCopied);)
 		}
-
-		if (pMdl == NULL && plen > 0) {
-			IF_LOUD(DbgPrint("NetBuffer missing %lu bytes", plen);)
-			header->bh_caplen -= plen;
-		}
+		header->bh_caplen = ulCopied;
 
 		// Fix up alignment
-		copied -= header->bh_caplen;
-		copied += Packet_WORDALIGN(header->bh_caplen);
+		copied += Packet_WORDALIGN(ulCopied);
 
 		// Increase free space by the amount that it was reduced before
 		InterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
+		ASSERT(Open->Free <= Open->Size);
 
 		// Return this capture data
 		NPF_ObjectPoolReturn(pCapData, &Context);
-
-		ASSERT(Open->Free <= Open->Size);
 	}
 
 	NdisReleaseRWLock(Open->BufferLock, &lockState);
@@ -597,67 +599,6 @@ NPF_AlignProtocolField(
 	*pCur = *pCur - *pCur % Alignment;
 }
 
-// Keep a stack of NPF_NB_COPIES objects with data buffers attached (larger packets).
-_Ret_maybenull_
-PNPF_NB_COPIES NPF_GetNBCopy(
-		_In_ POPEN_INSTANCE pOpen,
-		_In_ ULONG ulSize,
-		_In_ BOOLEAN bAtDispatchLevel
-		)
-{
-	PDEVICE_EXTENSION pDevExt = pOpen->DeviceExtension;
-	PSINGLE_LIST_ENTRY pCacheEntry = NULL;
-	PNPF_NB_COPIES pNBCopy = NULL;
-	PNET_BUFFER pNetBuffer = NULL;
-	NPF_OBJ_POOL_CTX Context;
-	Context.bAtDispatchLevel = bAtDispatchLevel;
-	// We only use this to return a NBCopy if we can't allocate pNetBuffer,
-	// so such a NBCopy should not go into the cache.
-	Context.pContext = NULL;
-
-	if (ulSize >= NPF_NBCOPY_INITIAL_DATA_SIZE)
-	{
-		pCacheEntry = ExInterlockedPopEntryList(&pDevExt->NBCopiesCache, &pDevExt->NBCopiesCacheLock);
-	}
-
-	if (pCacheEntry == NULL)
-	{
-		pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(pDevExt->NBCopiesPool, &Context);
-		if (pNBCopy == NULL)
-		{
-			return NULL;
-		}
-	}
-	else
-	{
-		pNBCopy = CONTAINING_RECORD(pCacheEntry, NPF_NB_COPIES, CacheEntry);
-		ASSERT(pNBCopy->pNetBuffer);
-		ASSERT(pNBCopy->ulPacketSize == 0xffffffff);
-		ASSERT(pNBCopy->ulSize > NPF_NBCOPY_INITIAL_DATA_SIZE);
-		pCacheEntry->Next = NULL;
-	}
-
-	pNetBuffer = pNBCopy->pNetBuffer;
-
-	if (!pNetBuffer)
-	{
-		pNetBuffer = NdisAllocateNetBufferMdlAndData(pOpen->DeviceExtension->TapNBPool);
-		if (pNetBuffer == NULL)
-		{
-			NPF_ObjectPoolReturn(pNBCopy, &Context);
-			return NULL;
-		}
-		pNBCopy->ulSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
-		pNBCopy->pNetBuffer = pNetBuffer;
-	}
-
-	NET_BUFFER_DATA_OFFSET(pNetBuffer) = 0;
-	NET_BUFFER_DATA_LENGTH(pNetBuffer) = 0;
-	NdisAdjustNetBufferCurrentMdl(pNetBuffer);
-	pNBCopy->CopiesEntry.Next = NULL;
-	return pNBCopy;
-}
-
 //-------------------------------------------------------------------
 
 _IRQL_requires_(DISPATCH_LEVEL)
@@ -671,7 +612,7 @@ PNPF_CAP_DATA NPF_GetCapData(
 {
 	ASSERT(pNBLCopy);
 	ASSERT(pNBCopy->pNBLCopy == pNBLCopy);
-	ASSERT(pNBCopy->pNetBuffer);
+	ASSERT(pNBCopy->pFirstElem);
 	ASSERT(pNBCopy->ulPacketSize < 0xffffffff);
 	NPF_OBJ_POOL_CTX Context;
 	Context.bAtDispatchLevel = TRUE;
@@ -691,6 +632,117 @@ PNPF_CAP_DATA NPF_GetCapData(
 	pCapData->ulCaplen = uCapLen;
 
 	return pCapData;
+}
+
+_Must_inspect_result_
+_Success_(return != 0)
+BOOLEAN
+NPF_CopyFromNetBufferToNBCopy(
+		_Inout_ PNPF_NB_COPIES pNBCopy,
+		_In_ ULONG ulDesiredLen,
+		_In_ PNPF_OBJ_POOL BufchainPool,
+		_In_ PNPF_OBJ_POOL_CTX pContext
+		)
+{
+	PUCHAR pSrcBuf = NULL;
+	ULONG ulSrcBufLen = 0;
+	ULONG ulCopyLenForMdl = 0;
+	ULONG ulCopyLen = 0;
+
+	PMDL pMdl = pNBCopy->pSrcCurrMdl;
+	ULONG ulMdlOffset = pNBCopy->ulCurrMdlOffset;
+
+	PBUFCHAIN_ELEM pElem = pNBCopy->pLastElem;
+	ULONG ulBufIdx = pNBCopy->ulSize % NPF_BUFCHAIN_SIZE;
+
+	// pNBCopy must be set up correctly
+	ASSERT(pMdl);
+
+	// If there's enough data here already, we're done.
+	if (ulDesiredLen <= pNBCopy->ulSize)
+	{
+		return TRUE;
+	}
+
+	if (pElem == NULL)
+	{
+		// If pLastElem is null, there had better be no elems at all.
+		ASSERT(pNBCopy->pFirstElem == NULL);
+		pElem = (PBUFCHAIN_ELEM) NPF_ObjectPoolGet(BufchainPool, pContext);
+		if (pElem == NULL)
+		{
+			IF_LOUD(DbgPrint("Failed to allocate Bufchain Elem");)
+			return FALSE;
+		}
+		ulBufIdx = 0;
+		pNBCopy->pFirstElem = pElem;
+		pNBCopy->pLastElem = pElem;
+	}
+	else if (ulBufIdx == 0)
+	{
+		// We don't leave empty elems at the end of the chain,
+		// so this must mean the last elem is actually full.
+		ulBufIdx = NPF_BUFCHAIN_SIZE;
+	}
+
+	// pLastElem must be the last in the chain.
+	ASSERT(pElem->Next == NULL);
+
+	while (pNBCopy->ulSize < ulDesiredLen)
+	{
+		if (pMdl == NULL)
+		{
+			// Something went terribly wrong
+			ASSERT(pMdl != NULL);
+			IF_LOUD(DbgPrint("MDL chain too short; bailing.");)
+			return FALSE;
+		}
+
+		if (pSrcBuf == NULL)
+		{
+			NdisQueryMdl(pMdl, &pSrcBuf, &ulSrcBufLen, NormalPagePriority);
+			if (pSrcBuf == NULL)
+			{
+				IF_LOUD(DbgPrint("Unable to query MDL; bailing.");)
+				return FALSE;
+			}
+		}
+
+		// How much of what we want can we get from this MDL?
+		ulCopyLenForMdl = min(ulDesiredLen - pNBCopy->ulSize, ulSrcBufLen - ulMdlOffset);
+
+		while (ulCopyLenForMdl > 0)
+		{
+			ASSERT(ulBufIdx <= NPF_BUFCHAIN_SIZE);
+			// If the offset is past the end of the buffer, we need a new buffer.
+			if (ulBufIdx == NPF_BUFCHAIN_SIZE)
+			{
+				pElem->Next = (PBUFCHAIN_ELEM) NPF_ObjectPoolGet(BufchainPool, pContext);
+				if (pElem->Next == NULL)
+				{
+					IF_LOUD(DbgPrint("Failed to allocate Bufchain Elem");)
+					return FALSE;
+				}
+				pElem = pElem->Next;
+				ulBufIdx = 0;
+				pNBCopy->pLastElem = pElem;
+			}
+			// How much of what we want from this MDL will fit in this elem?
+			ulCopyLen = min(ulCopyLenForMdl, NPF_BUFCHAIN_SIZE - ulBufIdx);
+			RtlCopyMemory(pElem->Buffer + ulBufIdx, pSrcBuf + ulMdlOffset, ulCopyLen);
+			pNBCopy->ulSize += ulCopyLen;
+			ulBufIdx += ulCopyLen;
+			ulCopyLenForMdl -= ulCopyLen;
+		}
+
+		pSrcBuf = NULL;
+		ulSrcBufLen = 0;
+		// Offset only matters for first MDL we copy from
+		ulMdlOffset = 0;
+	}
+
+	ASSERT(pNBCopy->ulSize == ulDesiredLen);
+	return (pNBCopy->ulSize == ulDesiredLen);
 }
 
 _Use_decl_annotations_
@@ -1048,6 +1100,7 @@ NPF_TapExForEachOpen(
 			// Lock "buffer" whenever checking Size/Free
 			NdisAcquireRWLockRead(Open->BufferLock, &lockState,
 					AtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
+			Context.bAtDispatchLevel = TRUE;
 			if (Open->Size == 0)
 			{
 				dropped++;
@@ -1077,7 +1130,7 @@ NPF_TapExForEachOpen(
 			{
 				// Add another copy to the chain
 				// While BufferLock is held we are at DISPATCH_LEVEL
-				pNBCopy = NPF_GetNBCopy(Open, fres, TRUE);
+				pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, &Context);
 				if (pNBCopy == NULL)
 				{
 					//Insufficient resources.
@@ -1097,67 +1150,18 @@ NPF_TapExForEachOpen(
 				pNBCopy = CONTAINING_RECORD(pNBCopiesPrev->Next, NPF_NB_COPIES, CopiesEntry);
 			}
 
-			if (pNBCopy->pNetBuffer == NULL)
+			if (pNBCopy->pSrcCurrMdl == NULL)
 			{
-				pNBCopy->pNetBuffer = NdisAllocateNetBufferMdlAndData(Open->DeviceExtension->TapNBPool);
-				if (pNBCopy->pNetBuffer == NULL)
-				{
-					// Insufficient memory
-					dropped++;
-					goto TEFEO_release_BufferLock;
-				}
-				pNBCopy->ulSize = NPF_NBCOPY_INITIAL_DATA_SIZE;
-				NET_BUFFER_DATA_OFFSET(pNBCopy->pNetBuffer) = 0;
-				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = 0;
-				NdisAdjustNetBufferCurrentMdl(pNBCopy->pNetBuffer);
+				pNBCopy->pSrcCurrMdl = NET_BUFFER_CURRENT_MDL(pNetBuf);
+				pNBCopy->ulCurrMdlOffset = NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf);
 			}
-			ULONG OldLength = NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer);
 
-			// If this instance wants more data than was copied previously,
-			if (fres > OldLength)
+			// Make sure we have copied enough data
+			if (!NPF_CopyFromNetBufferToNBCopy(pNBCopy, fres, Open->DeviceExtension->BufferPool, &Context))
 			{
-				PMDL pMdl = NULL;
-				// Check if there's enough space for the data requested
-				if (fres > pNBCopy->ulSize) {
-					// Allocate some more space.
-					// Round up to our data size increment, but:
-					// no more than TotalPacketSize, AND
-					// no less than what is requested.
-					ULONG toAlloc = min(TotalPacketSize, max(NPF_NBCOPY_INITIAL_DATA_SIZE, fres - pNBCopy->ulSize));
-					PUCHAR pBuff = (PUCHAR) NdisAllocateMemoryWithTagPriority(
-						Open->pFiltMod->AdapterHandle,
-						toAlloc,
-						NPF_PACKET_DATA_TAG,
-						NormalPoolPriority);
-					if (pBuff == NULL)
-					{
-						dropped++;
-						goto TEFEO_release_BufferLock;
-					}
-					// Find the end of the MDL chain,
-					for (pMdl = NET_BUFFER_CURRENT_MDL(pNBCopy->pNetBuffer);
-							pMdl->Next != NULL; pMdl = pMdl->Next);
-
-					// and tag on another MDL to describe the new buffer.
-					pMdl->Next = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuff, toAlloc);
-					if (pMdl->Next == NULL)
-					{
-						NdisFreeMemory(pBuff, toAlloc, 0);
-						dropped++;
-						goto TEFEO_release_BufferLock;
-					}
-					pNBCopy->ulSize += toAlloc;
-				}
-				// Now the NB has enough space.
-				ULONG BytesCopied = 0;
-				NdisCopyFromNetBufferToNetBuffer(
-						pNBCopy->pNetBuffer,
-						OldLength,
-						fres - OldLength,
-						pNetBuf,
-						OldLength,
-						&BytesCopied);
-				NET_BUFFER_DATA_LENGTH(pNBCopy->pNetBuffer) = fres;
+				// Out of resources
+				dropped++;
+				goto TEFEO_release_BufferLock;
 			}
 
 			// While BufferLock is held we are at DISPATCH_LEVEL
@@ -1173,7 +1177,7 @@ NPF_TapExForEachOpen(
 			/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
 			ASSERT(pCapData->pNBCopy);
 			ASSERT(pCapData->pNBCopy->pNBLCopy);
-			ASSERT(pCapData->pNBCopy->pNetBuffer);
+			ASSERT(pCapData->pNBCopy->pFirstElem);
 			ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
 
 			InterlockedExchangeAdd(&Open->Free, -(LONG)NPF_CAP_SIZE(pCapData, pRadiotapHeader));
@@ -1194,6 +1198,7 @@ NPF_TapExForEachOpen(
 			}
 
 TEFEO_release_BufferLock:
+			Context.bAtDispatchLevel = AtDispatchLevel;
 			NdisReleaseRWLock(Open->BufferLock, &lockState);
 
 TEFEO_next_NB:
