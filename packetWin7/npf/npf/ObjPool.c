@@ -243,22 +243,20 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 
 	while ((pShelfEntry = PopEntryList(&pPool->PartialShelfHead)) != NULL)
 	{
-		NdisFreeMemory(
+		ExFreePoolWithTag(
 				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
-				NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
-				0);
+				pPool->Tag);
 	}
 	while ((pShelfEntry = PopEntryList(&pPool->EmptyShelfHead)) != NULL)
 	{
-		NdisFreeMemory(
+		ExFreePoolWithTag(
 				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
-				NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
-				0);
+				pPool->Tag);
 	}
 	FILTER_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 
 	NdisFreeSpinLock(&pPool->ShelfLock);
-	NdisFreeMemory(pPool, sizeof(NPF_OBJ_POOL), 0);
+	ExFreePoolWithTag(pPool, NPF_OBJECT_POOL_TAG);
 }
 
 _Use_decl_annotations_
@@ -300,10 +298,9 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 			// Shouldn't happen because of the loop condition, but Code Analysis complains.
 			break;
 		}
-		NdisFreeMemory(
+		ExFreePoolWithTag(
 				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
-				NPF_OBJ_SHELF_ALLOC_SIZE(pPool),
-				0);
+				pPool->Tag);
 	}
 
 	FILTER_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
