@@ -46,7 +46,6 @@
  * https://github.com/nmap/npcap/blob/master/LICENSE.                      *
  *                                                                         *
  ***************************************************************************/
-#include "Packet.h"
 #include "ObjPool.h"
 #include <limits.h>
 
@@ -88,6 +87,7 @@ typedef struct _NPF_OBJ_POOL
 #define NPF_OBJ_SHELF_ALLOC_SIZE(POOL) ROUND_TO_PAGES( sizeof(NPF_OBJ_SHELF) + NPF_OBJ_ELEM_ALLOC_SIZE(POOL) * (POOL)->ulIncrement)
 #define NPF_OBJ_ELEM_MAX_IDX(POOL) (NPF_OBJ_SHELF_ALLOC_SIZE(pPool) - sizeof(NPF_OBJ_SHELF))
 
+#define OBJPOOL_IRQL_UNKNOWN FALSE
 #define OBJPOOL_DECLARE_LOCK KLOCK_QUEUE_HANDLE ObjPoolKlockQueue;
 #define OBJPOOL_ACQUIRE_LOCK(_pLock, DispatchLevel) if (DispatchLevel) { \
 	KeAcquireInStackQueuedSpinLockAtDpcLevel(_pLock, &ObjPoolKlockQueue); \
@@ -253,7 +253,7 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 	OBJPOOL_DECLARE_LOCK;
 	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
 
-	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
+	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, OBJPOOL_IRQL_UNKNOWN);
 
 	while ((pShelfEntry = PopEntryList(&pPool->PartialShelfHead)) != NULL)
 	{
@@ -267,7 +267,7 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
 				pPool->Tag);
 	}
-	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
+	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, OBJPOOL_IRQL_UNKNOWN);
 
 	ExFreePoolWithTag(pPool, NPF_OBJECT_POOL_TAG);
 }
@@ -287,7 +287,7 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 		return;
 	}
 
-	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
+	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, OBJPOOL_IRQL_UNKNOWN);
 
 	for (pShelfEntry = pPool->PartialShelfHead.Next; pShelfEntry != NULL; pShelfEntry = pShelfEntry->Next)
 	{
@@ -317,7 +317,7 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 				pPool->Tag);
 	}
 
-	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
+	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, OBJPOOL_IRQL_UNKNOWN);
 }
 
 _Use_decl_annotations_
