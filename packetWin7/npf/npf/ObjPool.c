@@ -74,7 +74,7 @@ typedef struct _NPF_OBJ_POOL
 {
 	SINGLE_LIST_ENTRY EmptyShelfHead;
 	SINGLE_LIST_ENTRY PartialShelfHead;
-	NDIS_SPIN_LOCK ShelfLock;
+	KSPIN_LOCK ShelfLock;
 	ULONG Tag;
 	ULONG ulObjectSize;
 	ULONG ulIncrement;
@@ -87,6 +87,18 @@ typedef struct _NPF_OBJ_POOL
 #define NPF_OBJ_ELEM_ALLOC_SIZE(POOL) (sizeof(NPF_OBJ_POOL_ELEM) + (POOL)->ulObjectSize)
 #define NPF_OBJ_SHELF_ALLOC_SIZE(POOL) ROUND_TO_PAGES( sizeof(NPF_OBJ_SHELF) + NPF_OBJ_ELEM_ALLOC_SIZE(POOL) * (POOL)->ulIncrement)
 #define NPF_OBJ_ELEM_MAX_IDX(POOL) (NPF_OBJ_SHELF_ALLOC_SIZE(pPool) - sizeof(NPF_OBJ_SHELF))
+
+#define OBJPOOL_DECLARE_LOCK KLOCK_QUEUE_HANDLE ObjPoolKlockQueue;
+#define OBJPOOL_ACQUIRE_LOCK(_pLock, DispatchLevel) if (DispatchLevel) { \
+	KeAcquireInStackQueuedSpinLockAtDpcLevel(_pLock, &ObjPoolKlockQueue); \
+} else { \
+	KeAcquireInStackQueuedSpinLock(_pLock, &ObjPoolKlockQueue); \
+}
+#define OBJPOOL_RELEASE_LOCK(_pLock, DispatchLevel) if (DispatchLevel) { \
+	KeReleaseInStackQueuedSpinLockFromDpcLevel(&ObjPoolKlockQueue); \
+} else { \
+	KeReleaseInStackQueuedSpinLock(&ObjPoolKlockQueue); \
+}
 
 _Ret_maybenull_
 PNPF_OBJ_SHELF
@@ -137,7 +149,7 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(
 	}
 	RtlZeroMemory(pPool, sizeof(NPF_OBJ_POOL));
 
-	NdisAllocateSpinLock(&pPool->ShelfLock);
+	KeInitializeSpinLock(&pPool->ShelfLock);
 
 	pPool->Tag = Tag;
 	pPool->ulObjectSize = ulObjectSize;
@@ -158,6 +170,7 @@ _Use_decl_annotations_
 PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 		PNPF_OBJ_POOL_CTX Context)
 {
+	OBJPOOL_DECLARE_LOCK;
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
 	PSINGLE_LIST_ENTRY pEntry = NULL;
 	PNPF_OBJ_SHELF pShelf = NULL;
@@ -167,7 +180,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 		return NULL;
 	}
 
-	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 	// Get the first partial shelf
 	pEntry = pPool->PartialShelfHead.Next;
 
@@ -182,7 +195,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 			// If we couldn't allocate one, bail.
 			if (pShelf == NULL)
 			{
-				FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+				OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 				return NULL;
 			}
 			pEntry = &pShelf->ShelfEntry;
@@ -198,7 +211,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 	{
 		// Should be impossible since all tracked shelves are partial or empty
 		ASSERT(pEntry != NULL);
-		FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+		OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 		return NULL;
 	}
 	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, UnusedEntry);
@@ -212,7 +225,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 		PopEntryList(&pPool->PartialShelfHead);
 	}
 
-	FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 
 	// We zero the memory when we first allocate it, and when an object is returned.
 	// RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
@@ -237,9 +250,10 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 _Use_decl_annotations_
 VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 {
+	OBJPOOL_DECLARE_LOCK;
 	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
 
-	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
+	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 
 	while ((pShelfEntry = PopEntryList(&pPool->PartialShelfHead)) != NULL)
 	{
@@ -253,15 +267,15 @@ VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
 				pPool->Tag);
 	}
-	FILTER_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
+	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 
-	NdisFreeSpinLock(&pPool->ShelfLock);
 	ExFreePoolWithTag(pPool, NPF_OBJECT_POOL_TAG);
 }
 
 _Use_decl_annotations_
 VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 {
+	OBJPOOL_DECLARE_LOCK;
 	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
 	PSINGLE_LIST_ENTRY pEmptyNext = NULL;
 	ULONG TotalUnused = 0;
@@ -273,7 +287,7 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 		return;
 	}
 
-	FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
+	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 
 	for (pShelfEntry = pPool->PartialShelfHead.Next; pShelfEntry != NULL; pShelfEntry = pShelfEntry->Next)
 	{
@@ -303,7 +317,7 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 				pPool->Tag);
 	}
 
-	FILTER_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
+	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, NPF_IRQL_UNKNOWN);
 }
 
 _Use_decl_annotations_
@@ -312,6 +326,7 @@ VOID NPF_ObjectPoolReturn(
 		PNPF_OBJ_POOL_CTX Context)
 {
 	ASSERT(pObject);
+	OBJPOOL_DECLARE_LOCK;
 	NPF_OBJ_CALLBACK_STATUS Status = NPF_OBJ_STATUS_SUCCESS;
 	PNPF_OBJ_SHELF pShelf = NULL;
 	PNPF_OBJ_POOL pPool = NULL;
@@ -355,7 +370,7 @@ VOID NPF_ObjectPoolReturn(
 		// Doing it this way helps spot bugs by invalidating pointers in the old object
 		RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
 
-		FILTER_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+		OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 
 		refcount = InterlockedDecrement(&pShelf->ulUsed);
 		ASSERT(refcount < pPool->ulIncrement);
@@ -379,7 +394,7 @@ VOID NPF_ObjectPoolReturn(
 			if (pEntry == NULL)
 			{
 				ASSERT(pEntry != NULL);
-				FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+				OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 				return;
 			}
 
@@ -393,7 +408,7 @@ VOID NPF_ObjectPoolReturn(
 
 		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
 
-		FILTER_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+		OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 	}
 }
 
