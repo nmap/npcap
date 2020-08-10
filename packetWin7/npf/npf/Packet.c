@@ -221,6 +221,16 @@ NPF_GetRegistryOption_String(
 VOID
 NPF_GCThread(_In_ PVOID Context)
 {
+#define GCTHREAD_WAIT_OBJECTS 2
+#if GCTHREAD_WAIT_OBJECTS > THREAD_WAIT_OBJECTS
+#error Too many objects; allocate KWAIT_BLOCK array from NonPagedPool
+#endif
+	PVOID WaitObjects[GCTHREAD_WAIT_OBJECTS];
+	ULONG WaitCount = 0;
+	UNICODE_STRING LowNonPagedPoolName = RTL_CONSTANT_STRING(L"\\KernelObjects\\LowNonPagedPoolCondition");
+	HANDLE LowNonPagedPoolHandle = NULL;
+	ULONG LowNonPagedPoolIndex = GCTHREAD_WAIT_OBJECTS; // invalid index; set it later
+	NTSTATUS WaitStatus = STATUS_SUCCESS;
 	PDEVICE_EXTENSION pDevExt = Context;
 	PNPF_NB_COPIES pNBCopy = NULL;
 	NPF_OBJ_POOL_CTX PoolContext;
@@ -228,19 +238,54 @@ NPF_GCThread(_In_ PVOID Context)
 	PoolContext.pContext = NULL;
 	PoolContext.bAtDispatchLevel = FALSE;
 
+	// Set up the wait array
+	WaitObjects[WaitCount++] = &pDevExt->GCSemaphore;
+
+	LowNonPagedPoolIndex = WaitCount++;
+	WaitObjects[LowNonPagedPoolIndex] = IoCreateNotificationEvent(&LowNonPagedPoolName, &LowNonPagedPoolHandle);
+	if (WaitObjects[LowNonPagedPoolIndex] == NULL)
+	{
+		// Weird. If this ever happens, let's make sure we investigate it.
+		ASSERT(WaitObjects[LowNonPagedPoolIndex] != NULL);
+		LowNonPagedPoolHandle = NULL;
+		LowNonPagedPoolIndex = GCTHREAD_WAIT_OBJECTS;
+		WaitCount--;
+	}
+	else
+	{
+		// Notification events are set to signaled when created,
+		// but we want to wait until it's actually signaled.
+		KeClearEvent(WaitObjects[LowNonPagedPoolIndex]);
+	}
+
 	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY );
 
 	for (;;)
 	{
+		ASSERT(WaitCount <= GCTHREAD_WAIT_OBJECTS);
 		// Wait for work to appear
-		KeWaitForSingleObject(&pDevExt->GCSemaphore,
+		WaitStatus = KeWaitForMultipleObjects(
+				WaitCount,
+				WaitObjects,
+				WaitAny,
 				Executive,
 				KernelMode,
 				FALSE,
+				NULL,
 				NULL);
+		if (WaitStatus == STATUS_WAIT_0 + LowNonPagedPoolIndex)
+		{
+			KeClearEvent(WaitObjects[LowNonPagedPoolIndex]);
+		}
+
 		// Check if we're being told to die
 		if (pDevExt->GCShouldStop) {
+			if (LowNonPagedPoolHandle != NULL)
+			{
+				ZwClose(LowNonPagedPoolHandle);
+			}
 			PsTerminateSystemThread( STATUS_SUCCESS );
+			return;
 		}
 
 		// Now shrink the pools if need be.
