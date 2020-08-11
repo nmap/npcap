@@ -1531,7 +1531,9 @@ NPF_AddToFilterModuleArray(
 {
 	TRACE_ENTER();
 
-	NdisInterlockedPushEntryList(&g_arrFiltMod, &(pFiltMod->FilterModulesEntry), &g_FilterArrayLock);
+	NdisAcquireSpinLock(&g_FilterArrayLock);
+	PushEntryList(&g_arrFiltMod, &pFiltMod->FilterModulesEntry);
+	NdisReleaseSpinLock(&g_FilterArrayLock);
 
 	TRACE_EXIT();
 }
