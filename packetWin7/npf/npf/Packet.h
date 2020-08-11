@@ -270,6 +270,7 @@ typedef struct _DEVICE_EXTENSION
 	PNPF_OBJ_POOL BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
 	PNPF_OBJ_POOL NBLCopyPool; // Pool of NPF_NBL_COPY objects
 	PNPF_OBJ_POOL NBCopiesPool; // Pool of NPF_NB_COPIES objects
+	PNPF_OBJ_POOL InternalRequestPool; // Pool of INTERNAL_REQUEST structures that wrap every single OID request.
 #ifdef HAVE_DOT11_SUPPORT
 	PNPF_OBJ_POOL Dot11HeaderPool; // Pool of Radiotap header buffers
 #endif
@@ -345,7 +346,6 @@ typedef struct _NPCAP_FILTER_MODULE
 
 	NDIS_HANDLE				AdapterHandle;	///< NDIS idetifier of the adapter used by this instance.
 	NDIS_HANDLE				PacketPool;		///< Pool of NDIS_PACKET structures used to transfer the packets from and to the NIC driver.
-	PNPF_OBJ_POOL InternalRequestPool; // Pool of INTERNAL_REQUEST structures that wrap every single OID request.
 	UINT					MaxFrameSize;	///< Maximum frame size that the underlying MAC acceptes. Used to perform a check on the
 											///< size of the frames sent with NPF_Write() or NPF_BufferedWrite().
 	ULONG					AdapterHandleUsageCounter;

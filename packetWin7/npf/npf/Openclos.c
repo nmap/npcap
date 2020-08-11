@@ -1001,12 +1001,6 @@ NPF_ReleaseFilterModuleResources(
 		pFiltMod->PacketPool = NULL;
 	}
 
-	if (pFiltMod->InternalRequestPool)
-	{
-		NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
-		pFiltMod->InternalRequestPool = NULL;
-	}
-
 	// Release the adapter name
 	if (pFiltMod->AdapterName.Buffer)
 	{
@@ -2094,19 +2088,9 @@ NPF_CreateFilterModule(
 			bAllocFailed = TRUE;
 			break;
 		}
-
-		pFiltMod->InternalRequestPool = NPF_AllocateObjectPool(NPF_REQ_POOL_TAG, sizeof(INTERNAL_REQUEST), 8, NULL, NULL);
-		if (pFiltMod->InternalRequestPool == NULL)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
-			bAllocFailed = TRUE;
-			break;
-		}
 	} while (0);
 
 	if (bAllocFailed) {
-		if (pFiltMod->InternalRequestPool)
-			NPF_FreeObjectPool(pFiltMod->InternalRequestPool);
 		if (pFiltMod->PacketPool)
 			NdisFreeNetBufferListPool(pFiltMod->PacketPool);
 		if (pFiltMod->OpenInstancesLock)

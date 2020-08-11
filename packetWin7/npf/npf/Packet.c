@@ -310,6 +310,7 @@ NPF_GCThread(_In_ PVOID Context)
 		GC_SHRINK_POOL(pDevExt->BufferPool);
 		GC_SHRINK_POOL(pDevExt->NBLCopyPool);
 		GC_SHRINK_POOL(pDevExt->NBCopiesPool);
+		GC_SHRINK_POOL(pDevExt->InternalRequestPool);
 #ifdef HAVE_DOT11_SUPPORT
 		GC_SHRINK_POOL(pDevExt->Dot11HeaderPool);
 #endif
@@ -581,6 +582,13 @@ DriverEntry(
 			break;
 		}
 
+		devExtP->InternalRequestPool = NPF_AllocateObjectPool(NPF_REQ_POOL_TAG, sizeof(INTERNAL_REQUEST), 8, NULL, NULL);
+		if (devExtP->InternalRequestPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
+			break;
+		}
+
 #ifdef HAVE_DOT11_SUPPORT
 		if (g_Dot11SupportMode)
 		{
@@ -629,6 +637,8 @@ DriverEntry(
 		if (devExtP->Dot11HeaderPool)
 			NPF_FreeObjectPool(devExtP->Dot11HeaderPool);
 #endif
+		if (devExtP->InternalRequestPool)
+			NPF_FreeObjectPool(devExtP->InternalRequestPool);
 		if (devExtP->NBCopiesPool)
 			NPF_FreeObjectPool(devExtP->NBCopiesPool);
 		if (devExtP->NBLCopyPool)
@@ -1121,6 +1131,11 @@ Return Value:
 		if (DeviceExtension->NBCopiesPool)
 		{
 			NPF_FreeObjectPool(DeviceExtension->NBCopiesPool);
+		}
+
+		if (DeviceExtension->InternalRequestPool)
+		{
+			NPF_FreeObjectPool(DeviceExtension->InternalRequestPool);
 		}
 
 #ifdef HAVE_DOT11_SUPPORT
@@ -1831,7 +1846,7 @@ NPF_IoControl(
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
 
 		// Extract a request from the list of free ones
-		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->pFiltMod->InternalRequestPool, &Context);
+		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->DeviceExtension->InternalRequestPool, &Context);
 		if (pRequest == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");

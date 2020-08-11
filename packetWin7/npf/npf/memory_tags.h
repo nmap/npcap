@@ -62,7 +62,7 @@
 #define NPF_INTERNAL_OID_TAG 'IopN'
 // Cloned OID requests
 #define NPF_CLONE_OID_TAG 'CopN'
-// NPCAP_FILTER_MODULE::InternalRequestPool
+// DEVICE_EXTENSION::InternalRequestPool
 #define NPF_REQ_POOL_TAG 'PRpN'
 // OPEN_INSTANCE
 #define NPF_OPEN_TAG 'POpN'
