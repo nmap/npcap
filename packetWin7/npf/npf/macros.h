@@ -49,12 +49,6 @@
 #ifndef __MACRO
 #define __MACRO
 
-#define NPF_CANCEL_ID_LOW_MASK	 (((ULONG_PTR)-1) >> 8)
-
-#define NPF_GET_NEXT_CANCEL_ID()  												 \
-	(PVOID)(Globals.PartialCancelId |   										\
-	((NdisInterlockedIncrement((PLONG)&Globals.LocalCancelId)) & NPROT_CANCEL_ID_LOW_MASK))
-
 #pragma pack(push)
 #pragma pack (1)
 
