@@ -534,6 +534,11 @@ DriverEntry(
 	{
 		NdisFreeSpinLock(&g_FilterArrayLock);
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter with NDIS, Status = %x", Status);
+		IoDeleteSymbolicLink(&deviceSymLink);
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceSymLink.Buffer);
+		devExtP->ExportString = NULL;
+
 		TRACE_EXIT();
 		return Status;
 	}
@@ -542,136 +547,102 @@ DriverEntry(
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %p", Status, FilterDriverHandle);
 	}
 
-	devExtP->FilterDriverHandle = FilterDriverHandle;
-	InitializeListHead(&devExtP->AllOpens);
-	devExtP->AllOpensLock = NdisAllocateRWLock(FilterDriverHandle);
-	if (devExtP->AllOpensLock == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate AllOpensLock");
+	// Initialize DEVICE_EXTENSION
+	do {
+		Status = STATUS_INSUFFICIENT_RESOURCES; // Status for any of the below failures
+		devExtP->FilterDriverHandle = FilterDriverHandle;
+		InitializeListHead(&devExtP->AllOpens);
+		devExtP->AllOpensLock = NdisAllocateRWLock(FilterDriverHandle);
+		if (devExtP->AllOpensLock == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate AllOpensLock");
+			break;
+		}
 
-		NdisFDeregisterFilterDriver(FilterDriverHandle);
-		IoDeleteSymbolicLink(&deviceSymLink);
-		IoDeleteDevice(devObjP);
-		ExFreePool(deviceSymLink.Buffer);
-		devExtP->ExportString = NULL;
+		// 1000 * 256 = WIN32_DEFAULT_USER_BUFFER_SIZE
+		devExtP->BufferPool = NPF_AllocateObjectPool(NPF_PACKET_DATA_TAG, sizeof(BUFCHAIN_ELEM), 1000, NULL, NULL);
+		if (devExtP->BufferPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferPool");
+			break;
+		}
 
-		TRACE_EXIT();
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
+		devExtP->NBLCopyPool = NPF_AllocateObjectPool(NPF_NBLC_POOL_TAG, sizeof(NPF_NBL_COPY), 256, NULL, NPF_FreeNBLCopy);
+		if (devExtP->NBLCopyPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
+			break;
+		}
 
-	// 1000 * 256 = WIN32_DEFAULT_USER_BUFFER_SIZE
-	devExtP->BufferPool = NPF_AllocateObjectPool(NPF_PACKET_DATA_TAG, sizeof(BUFCHAIN_ELEM), 1000, NULL, NULL);
-
-	if (devExtP->BufferPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferPool");
-
-		NdisFreeRWLock(devExtP->AllOpensLock);
-		NdisFDeregisterFilterDriver(FilterDriverHandle);
-		IoDeleteSymbolicLink(&deviceSymLink);
-		IoDeleteDevice(devObjP);
-		ExFreePool(deviceSymLink.Buffer);
-		devExtP->ExportString = NULL;
-
-		TRACE_EXIT();
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	devExtP->NBLCopyPool = NPF_AllocateObjectPool(NPF_NBLC_POOL_TAG, sizeof(NPF_NBL_COPY), 256, NULL, NPF_FreeNBLCopy);
-	if (devExtP->NBLCopyPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
-
-		NPF_FreeObjectPool(devExtP->BufferPool);
-		NdisFreeRWLock(devExtP->AllOpensLock);
-		NdisFDeregisterFilterDriver(FilterDriverHandle);
-		IoDeleteSymbolicLink(&deviceSymLink);
-		IoDeleteDevice(devObjP);
-		ExFreePool(deviceSymLink.Buffer);
-		devExtP->ExportString = NULL;
-
-		TRACE_EXIT();
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	devExtP->NBCopiesPool = NPF_AllocateObjectPool(NPF_NBC_POOL_TAG, sizeof(NPF_NB_COPIES), 256, NULL, NPF_FreeNBCopies);
-	if (devExtP->NBCopiesPool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
-
-		NPF_FreeObjectPool(devExtP->NBLCopyPool);
-		NPF_FreeObjectPool(devExtP->BufferPool);
-		NdisFreeRWLock(devExtP->AllOpensLock);
-		NdisFDeregisterFilterDriver(FilterDriverHandle);
-		IoDeleteSymbolicLink(&deviceSymLink);
-		IoDeleteDevice(devObjP);
-		ExFreePool(deviceSymLink.Buffer);
-		devExtP->ExportString = NULL;
-
-		TRACE_EXIT();
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	KeInitializeSemaphore(&devExtP->GCSemaphore, 0, MAXLONG);
-	devExtP->GCShouldStop = FALSE;
-	devExtP->GCThreadObj = NULL;
-
-	Status = PsCreateSystemThread(&threadHandle, THREAD_ALL_ACCESS,
-			NULL, NULL, NULL, NPF_GCThread, devExtP);
-	if (Status != STATUS_SUCCESS)
-	{
-		IF_LOUD(DbgPrint("PsCreateSystemThread: error, Status=%x.\n", Status);)
-		NPF_FreeObjectPool(devExtP->NBCopiesPool);
-		NPF_FreeObjectPool(devExtP->NBLCopyPool);
-		NPF_FreeObjectPool(devExtP->BufferPool);
-		NdisFreeRWLock(devExtP->AllOpensLock);
-		NdisFDeregisterFilterDriver(FilterDriverHandle);
-		IoDeleteSymbolicLink(&deviceSymLink);
-		IoDeleteDevice(devObjP);
-		ExFreePool(deviceSymLink.Buffer);
-		devExtP->ExportString = NULL;
-
-		TRACE_EXIT();
-		return Status;
-	}
-
-	// Convert the Thread object handle into a pointer to the Thread object
-	// itself. Then close the handle.
-	ObReferenceObjectByHandle(threadHandle,
-		THREAD_ALL_ACCESS,
-		NULL,
-		KernelMode,
-		&devExtP->GCThreadObj,
-		NULL);
-	ZwClose(threadHandle);
+		devExtP->NBCopiesPool = NPF_AllocateObjectPool(NPF_NBC_POOL_TAG, sizeof(NPF_NB_COPIES), 256, NULL, NPF_FreeNBCopies);
+		if (devExtP->NBCopiesPool == NULL)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
+			break;
+		}
 
 #ifdef HAVE_DOT11_SUPPORT
-	if (g_Dot11SupportMode)
-	{
-		devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(NPF_DOT11_POOL_TAG, SIZEOF_RADIOTAP_BUFFER, 256, NULL, NULL);
-		if (devExtP->Dot11HeaderPool == NULL)
+		if (g_Dot11SupportMode)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
-
-			NPF_FreeObjectPool(devExtP->NBCopiesPool);
-			NPF_FreeObjectPool(devExtP->NBLCopyPool);
-			NPF_FreeObjectPool(devExtP->BufferPool);
-			NdisFreeRWLock(devExtP->AllOpensLock);
-			NdisFDeregisterFilterDriver(FilterDriverHandle);
-			IoDeleteSymbolicLink(&deviceSymLink);
-			IoDeleteDevice(devObjP);
-			ExFreePool(deviceSymLink.Buffer);
-			devExtP->ExportString = NULL;
-
-			TRACE_EXIT();
-			return STATUS_INSUFFICIENT_RESOURCES;
+			devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(NPF_DOT11_POOL_TAG, SIZEOF_RADIOTAP_BUFFER, 256, NULL, NULL);
+			if (devExtP->Dot11HeaderPool == NULL)
+			{
+				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
+				break;
+			}
 		}
-	}
-	else
-	{
-		devExtP->Dot11HeaderPool = NULL;
-	}
+		else
+		{
+			devExtP->Dot11HeaderPool = NULL;
+		}
 #endif
+
+		// Have to create thread last because otherwise we'd have to kill the thread if anything failed.
+		KeInitializeSemaphore(&devExtP->GCSemaphore, 0, MAXLONG);
+		devExtP->GCShouldStop = FALSE;
+		devExtP->GCThreadObj = NULL;
+
+		Status = PsCreateSystemThread(&threadHandle, THREAD_ALL_ACCESS,
+				NULL, NULL, NULL, NPF_GCThread, devExtP);
+		if (Status != STATUS_SUCCESS)
+		{
+			IF_LOUD(DbgPrint("PsCreateSystemThread: error, Status=%x.\n", Status);)
+			break;
+		}
+
+		// Convert the Thread object handle into a pointer to the Thread object
+		// itself. Then close the handle.
+		ObReferenceObjectByHandle(threadHandle,
+			THREAD_ALL_ACCESS,
+			NULL,
+			KernelMode,
+			&devExtP->GCThreadObj,
+			NULL);
+		ZwClose(threadHandle);
+
+		Status = STATUS_SUCCESS;
+	} while (0);
+
+	if (!NTSUCCESS(Status))
+	{
+#ifdef HAVE_DOT11_SUPPORT
+		if (devExtP->Dot11HeaderPool)
+			NPF_FreeObjectPool(devExtP->Dot11HeaderPool);
+#endif
+		if (devExtP->NBCopiesPool)
+			NPF_FreeObjectPool(devExtP->NBCopiesPool);
+		if (devExtP->NBLCopyPool)
+			NPF_FreeObjectPool(devExtP->NBLCopyPool);
+		if (devExtP->BufferPool)
+			NPF_FreeObjectPool(devExtP->BufferPool);
+		if (devExtP->AllOpensLock)
+			NdisFreeRWLock(devExtP->AllOpensLock);
+		NdisFDeregisterFilterDriver(FilterDriverHandle);
+		IoDeleteSymbolicLink(&deviceSymLink);
+		IoDeleteDevice(devObjP);
+		ExFreePool(deviceSymLink.Buffer);
+		devExtP->ExportString = NULL;
+	}
 
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
