@@ -234,6 +234,9 @@ NPF_GCThread(_In_ PVOID Context)
 	PDEVICE_EXTENSION pDevExt = Context;
 	PNPF_NB_COPIES pNBCopy = NULL;
 	NPF_OBJ_POOL_CTX PoolContext;
+	PLIST_ENTRY CurrEntry;
+	LOCK_STATE_EX lockState;
+
 	// NULL context means don't recover/cache in NPF_FreeNBCopies
 	PoolContext.pContext = NULL;
 	PoolContext.bAtDispatchLevel = FALSE;
@@ -260,6 +263,8 @@ NPF_GCThread(_In_ PVOID Context)
 
 	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY );
 
+#define GC_SHRINK_POOL(_Pool) if (_Pool) { NPF_ShrinkObjectPool(_Pool); }
+
 	for (;;)
 	{
 		ASSERT(WaitCount <= GCTHREAD_WAIT_OBJECTS);
@@ -276,6 +281,19 @@ NPF_GCThread(_In_ PVOID Context)
 		if (WaitStatus == STATUS_WAIT_0 + LowNonPagedPoolIndex)
 		{
 			KeClearEvent(WaitObjects[LowNonPagedPoolIndex]);
+
+			// Low on memory, so shrink all the capture pools if possible
+
+			NdisAcquireRWLockRead(pDevExt->AllOpensLock, &lockState, 0);
+
+			for (CurrEntry = pDevExt->AllOpens.Flink;
+					CurrEntry != &pDevExt->AllOpens;
+					CurrEntry = CurrEntry->Flink)
+			{
+				POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
+				GC_SHRINK_POOL(pOpen->CapturePool);
+			}
+			NdisReleaseRWLock(pDevExt->AllOpensLock, &lockState);
 		}
 
 		// Check if we're being told to die
@@ -289,23 +307,11 @@ NPF_GCThread(_In_ PVOID Context)
 		}
 
 		// Now shrink the pools if need be.
-		if (pDevExt->BufferPool)
-		{
-			NPF_ShrinkObjectPool(pDevExt->BufferPool);
-		}
-		if (pDevExt->NBLCopyPool)
-		{
-			NPF_ShrinkObjectPool(pDevExt->NBLCopyPool);
-		}
-		if (pDevExt->NBCopiesPool)
-		{
-			NPF_ShrinkObjectPool(pDevExt->NBCopiesPool);
-		}
+		GC_SHRINK_POOL(pDevExt->BufferPool);
+		GC_SHRINK_POOL(pDevExt->NBLCopyPool);
+		GC_SHRINK_POOL(pDevExt->NBCopiesPool);
 #ifdef HAVE_DOT11_SUPPORT
-		if (pDevExt->Dot11HeaderPool)
-		{
-			NPF_ShrinkObjectPool(pDevExt->Dot11HeaderPool);
-		}
+		GC_SHRINK_POOL(pDevExt->Dot11HeaderPool);
 #endif
 	}
 }
