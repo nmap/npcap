@@ -631,7 +631,7 @@ DriverEntry(
 		Status = STATUS_SUCCESS;
 	} while (0);
 
-	if (!NTSUCCESS(Status))
+	if (!NT_SUCCESS(Status))
 	{
 #ifdef HAVE_DOT11_SUPPORT
 		if (devExtP->Dot11HeaderPool)

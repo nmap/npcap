@@ -390,7 +390,7 @@ NPF_Read(
 		copied += Packet_WORDALIGN(ulCopied);
 
 		// Increase free space by the amount that it was reduced before
-		InterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
+		NpfInterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
 		ASSERT(Open->Free <= Open->Size);
 
 		// Return this capture data
@@ -1179,8 +1179,8 @@ NPF_TapExForEachOpen(
 			ASSERT(pCapData->pNBCopy->pFirstElem);
 			ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
 
-			InterlockedExchangeAdd(&Open->Free, -(LONG)NPF_CAP_SIZE(pCapData, pRadiotapHeader));
-			InterlockedIncrement(&Open->Accepted);
+			NpfInterlockedExchangeAdd(&Open->Free, -(LONG)NPF_CAP_SIZE(pCapData, pRadiotapHeader));
+			NpfInterlockedIncrement(&Open->Accepted);
 			if (Open->Size - Open->Free >= Open->MinToCopy)
 			{
 #ifdef NPCAP_KDUMP
@@ -1238,8 +1238,8 @@ TEFEO_done_with_NBs:
 		}
 	}
 
-	InterlockedExchangeAdd(&Open->Dropped, dropped);
-	InterlockedExchangeAdd(&Open->Received, received);
+	NpfInterlockedExchangeAdd(&Open->Dropped, dropped);
+	NpfInterlockedExchangeAdd(&Open->Received, received);
 	NPF_StopUsingOpenInstance(Open, OpenRunning, AtDispatchLevel);
 	//TRACE_EXIT();
 }

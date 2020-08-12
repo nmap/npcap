@@ -754,7 +754,7 @@ NPF_StartUsingOpenInstance(
 			if (pOpen->pFiltMod->Loopback)
 			{
 				// Keep track of how many active loopback captures there are
-				InterlockedIncrement(&g_NumLoopbackInstances);
+				NpfInterlockedIncrement(&g_NumLoopbackInstances);
 			}
 #endif
 
@@ -844,7 +844,7 @@ NPF_DecrementLoopbackInstances(
 		_Inout_ PNPCAP_FILTER_MODULE pFiltMod)
 {
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	if (InterlockedDecrement(&g_NumLoopbackInstances) == 0)
+	if (NpfInterlockedDecrement(&g_NumLoopbackInstances) == 0)
 	{
 		pFiltMod->OpsState = OpsDisabling;
 		NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);

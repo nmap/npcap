@@ -310,7 +310,7 @@ NPF_Write(
 
 			ASSERT(Open->pFiltMod != NULL);
 
-			InterlockedIncrement(&Open->TransmitPendingPackets);
+			NpfInterlockedIncrement(&Open->TransmitPendingPackets);
 
 			NdisResetEvent(&Open->NdisWriteCompleteEvent);
 
@@ -689,7 +689,7 @@ NPF_BufferedWrite(
 		ASSERT(Open->pFiltMod != NULL);
 
 		// Increment the number of pending sends
-		InterlockedIncrement(&Open->Multiple_Write_Counter);
+		NpfInterlockedIncrement(&Open->Multiple_Write_Counter);
 
 		//receive the packets before sending them
 		// TODO: Should we check for loopback like we do in NPF_Write?
@@ -977,7 +977,7 @@ NPF_SendCompleteExForEachOpen(
 	if (FreeBufAfterWrite)
 	{
 		// Increment the number of pending sends
-		InterlockedDecrement(&Open->Multiple_Write_Counter);
+		NpfInterlockedDecrement(&Open->Multiple_Write_Counter);
 
 		NdisSetEvent(&Open->WriteEvent);
 
@@ -989,7 +989,7 @@ NPF_SendCompleteExForEachOpen(
 		// Packet sent by NPF_Write()
 		//
 
-		ULONG stillPendingPackets = InterlockedDecrement(&Open->TransmitPendingPackets);
+		ULONG stillPendingPackets = NpfInterlockedDecrement(&Open->TransmitPendingPackets);
 
 		//
 		// if the number of packets submitted to NdisSend and not acknoledged is less than half the
