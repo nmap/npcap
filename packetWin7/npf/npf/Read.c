@@ -414,6 +414,7 @@ NPF_Read(
 }
 
 //-------------------------------------------------------------------
+_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID
 NPF_TapExForEachOpen(
 	_Inout_ POPEN_INSTANCE Open,

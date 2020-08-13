@@ -929,6 +929,7 @@ DRIVER_DISPATCH NPF_CloseAdapter;
   optimized.
 */
 VOID
+_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 NPF_DoTap(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ PNET_BUFFER_LIST NetBufferLists,
@@ -1153,12 +1154,16 @@ NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
 
 BOOLEAN NPF_IsOpenInstance(_In_ POPEN_INSTANCE pOpen);
 
+_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 BOOLEAN NPF_StartUsingBinding(_Inout_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
 
+_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID NPF_StopUsingBinding(_Inout_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
 
+_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 BOOLEAN NPF_StartUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
+_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
 VOID NPF_CloseOpenInstance(_Inout_ POPEN_INSTANCE pOpen);
