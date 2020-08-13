@@ -54,7 +54,7 @@
 #pragma pack(4)
 typedef struct _NPF_OBJ_SHELF
 {
-	SINGLE_LIST_ENTRY ShelfEntry;
+	LIST_ENTRY ShelfEntry;
 	PNPF_OBJ_POOL pPool;
 	ULONG ulUsed;
 	SINGLE_LIST_ENTRY UnusedHead;
@@ -74,8 +74,8 @@ typedef struct _NPF_OBJ_POOL_ELEM
 
 typedef struct _NPF_OBJ_POOL
 {
-	SINGLE_LIST_ENTRY EmptyShelfHead;
-	SINGLE_LIST_ENTRY PartialShelfHead;
+	LIST_ENTRY EmptyShelfHead;
+	LIST_ENTRY PartialShelfHead;
 	KSPIN_LOCK ShelfLock;
 	ULONG Tag;
 	ULONG ulObjectSize;
@@ -158,6 +158,8 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(
 	RtlZeroMemory(pPool, sizeof(NPF_OBJ_POOL));
 
 	KeInitializeSpinLock(&pPool->ShelfLock);
+	InitializeListHead(&pPool->PartialShelfHead);
+	InitializeListHead(&pPool->EmptyShelfHead);
 
 	pPool->Tag = Tag;
 	pPool->ulObjectSize = ulObjectSize;
@@ -180,8 +182,10 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 {
 	OBJPOOL_DECLARE_LOCK;
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
+	PLIST_ENTRY pShelfEntry = NULL;
 	PSINGLE_LIST_ENTRY pEntry = NULL;
 	PNPF_OBJ_SHELF pShelf = NULL;
+	ULONG ulUsed = 0;
 	ASSERT(Context);
 	if (Context == NULL)
 	{
@@ -190,14 +194,14 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 
 	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 	// Get the first partial shelf
-	pEntry = pPool->PartialShelfHead.Next;
+	pShelfEntry = RemoveHeadList(&pPool->PartialShelfHead);
 
 	// If there are no partial shelves, get an empty one
-	if (pEntry == NULL)
+	if (pShelfEntry == &pPool->PartialShelfHead)
 	{
-		pEntry = PopEntryList(&pPool->EmptyShelfHead);
+		pShelfEntry = RemoveHeadList(&pPool->EmptyShelfHead);
 		// If there are no empty shelves, allocate a new one
-		if (pEntry == NULL)
+		if (pShelfEntry == &pPool->EmptyShelfHead)
 		{
 			pShelf = NPF_NewObjectShelf(pPool);
 			// If we couldn't allocate one, bail.
@@ -206,34 +210,43 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 				OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 				return NULL;
 			}
-			pEntry = &pShelf->ShelfEntry;
+			pShelfEntry = &pShelf->ShelfEntry;
 		}
-		// Now pEntry is an empty shelf. Move it to partials.
-		PushEntryList(&pPool->PartialShelfHead, pEntry);
 	}
+	// By now, pEntry points to a shelf with at least 1 object available
 
-	pShelf = CONTAINING_RECORD(pEntry, NPF_OBJ_SHELF, ShelfEntry);
-	InterlockedIncrement(&pShelf->ulUsed);
+	pShelf = CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry);
+
+	ulUsed = ++pShelf->ulUsed;
+	ASSERT(ulUsed > 0 && ulUsed <= pPool->ulIncrement);
+
 	pEntry = PopEntryList(&pShelf->UnusedHead);
 	if (pEntry == NULL)
 	{
 		// Should be impossible since all tracked shelves are partial or empty
 		ASSERT(pEntry != NULL);
+		// Should we decrement the used counter?
+		// Hard to say, this is an impossible condition.
 		OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 		return NULL;
 	}
-	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, UnusedEntry);
 
-	// If there aren't any more unused slots on this shelf, unlink it
-	if (pShelf->UnusedHead.Next == NULL)
+	// This shelf is not empty. If there are any objects left, put it into partials
+	if (ulUsed < pPool->ulIncrement)
 	{
-		// We always use the first partial shelf on the stack, so pop it off.
-		// No need to keep track of it; Return operation will re-link
-		// it into partials.
-		PopEntryList(&pPool->PartialShelfHead);
+		InsertTailList(&pPool->PartialShelfHead, &pShelf->ShelfEntry);
+	}
+	else
+	{
+		// This is a "full" shelf. We let it leak, trusting the return process will link it back in.
+		// Let's be sure of it...
+		pShelf->ShelfEntry.Flink = MM_BAD_POINTER;
+		pShelf->ShelfEntry.Blink = MM_BAD_POINTER;
 	}
 
 	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+
+	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, UnusedEntry);
 
 	// We zero the memory when we first allocate it, and when an object is returned.
 	// RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
@@ -259,21 +272,24 @@ _Use_decl_annotations_
 VOID NPF_FreeObjectPool(PNPF_OBJ_POOL pPool)
 {
 	OBJPOOL_DECLARE_LOCK;
-	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
+	PLIST_ENTRY pShelfEntry = NULL;
+	PNPF_OBJ_SHELF pDeleteMe = NULL;
 
 	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, OBJPOOL_IRQL_UNKNOWN);
 
-	while ((pShelfEntry = PopEntryList(&pPool->PartialShelfHead)) != NULL)
+	pShelfEntry = pPool->PartialShelfHead.Flink;
+	while (pShelfEntry != &pPool->PartialShelfHead)
 	{
-		ExFreePoolWithTag(
-				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
-				pPool->Tag);
+		pDeleteMe = CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry);
+		pShelfEntry = pShelfEntry->Flink;
+		ExFreePoolWithTag(pDeleteMe, pPool->Tag);
 	}
-	while ((pShelfEntry = PopEntryList(&pPool->EmptyShelfHead)) != NULL)
+	pShelfEntry = pPool->EmptyShelfHead.Flink;
+	while (pShelfEntry != &pPool->EmptyShelfHead)
 	{
-		ExFreePoolWithTag(
-				CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry),
-				pPool->Tag);
+		pDeleteMe = CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry);
+		pShelfEntry = pShelfEntry->Flink;
+		ExFreePoolWithTag(pDeleteMe, pPool->Tag);
 	}
 	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, OBJPOOL_IRQL_UNKNOWN);
 
@@ -284,12 +300,12 @@ _Use_decl_annotations_
 VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 {
 	OBJPOOL_DECLARE_LOCK;
-	PSINGLE_LIST_ENTRY pShelfEntry = NULL;
-	PSINGLE_LIST_ENTRY pEmptyNext = NULL;
+	PLIST_ENTRY pShelfEntry = NULL;
+	PLIST_ENTRY pEmptyNext = NULL;
 	ULONG TotalUnused = 0;
 	BOOLEAN bKeepOne = TRUE;
 
-	if (pPool->EmptyShelfHead.Next == NULL)
+	if (IsListEmpty(&pPool->EmptyShelfHead))
 	{
 		// No empty shelves to free
 		return;
@@ -297,7 +313,7 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 
 	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, OBJPOOL_IRQL_UNKNOWN);
 
-	for (pShelfEntry = pPool->PartialShelfHead.Next; pShelfEntry != NULL; pShelfEntry = pShelfEntry->Next)
+	for (pShelfEntry = pPool->PartialShelfHead.Flink; pShelfEntry != &pPool->PartialShelfHead; pShelfEntry = pShelfEntry->Flink)
 	{
 		TotalUnused += pPool->ulIncrement - CONTAINING_RECORD(pShelfEntry, NPF_OBJ_SHELF, ShelfEntry)->ulUsed;
 		if (TotalUnused >= pPool->ulIncrement)
@@ -309,15 +325,15 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 	}
 
 	// While there are empty shelves available
-	while (pPool->EmptyShelfHead.Next != NULL
-			// and we either don't need to keep one or there's one more after this one,
-			&& (!bKeepOne || pPool->EmptyShelfHead.Next->Next != NULL))
+	while (!IsListEmpty(&pPool->EmptyShelfHead))
 	{
-		// Pop one off and free it.
-		pShelfEntry = PopEntryList(&pPool->EmptyShelfHead);
-		ASSERT(pShelfEntry);
-		if (!pShelfEntry) {
-			// Shouldn't happen because of the loop condition, but Code Analysis complains.
+		// Pop one off
+		pShelfEntry = RemoveHeadList(&pPool->EmptyShelfHead);
+		// If we need to keep one and this was the last one,
+		if (bKeepOne && IsListEmpty(&pPool->EmptyShelfHead))
+		{
+			// Put it back and quit
+			InsertHeadList(&pPool->EmptyShelfHead, pShelfEntry);
 			break;
 		}
 		ExFreePoolWithTag(
@@ -380,42 +396,24 @@ VOID NPF_ObjectPoolReturn(
 
 		OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 
-		refcount = InterlockedDecrement(&pShelf->ulUsed);
+		refcount = --pShelf->ulUsed;
 		ASSERT(refcount < pPool->ulIncrement);
+
+		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
+
 		if (refcount == 0)
 		{
 			// Empty shelf. Move it to the other list.
-			PSINGLE_LIST_ENTRY pEntry = pPool->PartialShelfHead.Next;
-			PSINGLE_LIST_ENTRY pPrev = &pPool->PartialShelfHead;
-			while (pEntry)
-			{
-				if (pEntry == &pShelf->ShelfEntry)
-				{
-					// Found it. Unlink and stop looking.
-					pPrev->Next = pEntry->Next;
-					pEntry->Next = NULL;
-					break;
-				}
-				pPrev = pEntry;
-				pEntry = pPrev->Next;
-			}
-			if (pEntry == NULL)
-			{
-				ASSERT(pEntry != NULL);
-				OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
-				return;
-			}
-
-			PushEntryList(&pPool->EmptyShelfHead, &pShelf->ShelfEntry);
+			RemoveEntryList(&pShelf->ShelfEntry);
+			InsertTailList(&pPool->EmptyShelfHead, &pShelf->ShelfEntry);
 		}
 		else if (refcount == pPool->ulIncrement - 1)
 		{
 			// This shelf was full and now it's partial. Link it in.
-			PushEntryList(&pPool->PartialShelfHead, &pShelf->ShelfEntry);
+			ASSERT(pShelf->ShelfEntry.Flink == MM_BAD_POINTER);
+			ASSERT(pShelf->ShelfEntry.Blink == MM_BAD_POINTER);
+			InsertTailList(&pPool->PartialShelfHead, &pShelf->ShelfEntry);
 		}
-
-		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
-
 		OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
 	}
 }
