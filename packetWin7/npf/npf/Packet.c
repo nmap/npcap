@@ -560,29 +560,35 @@ DriverEntry(
 			break;
 		}
 
+#if DBG
+		/* Exercise the object pool by using the smallest possible shelf size */
+#define SHELFSIZE(n) 1
+#else
+#define SHELFSIZE(n) n
+#endif
 		// 1000 * 256 = WIN32_DEFAULT_USER_BUFFER_SIZE
-		devExtP->BufferPool = NPF_AllocateObjectPool(NPF_PACKET_DATA_TAG, sizeof(BUFCHAIN_ELEM), 1000, NULL, NULL);
+		devExtP->BufferPool = NPF_AllocateObjectPool(NPF_PACKET_DATA_TAG, sizeof(BUFCHAIN_ELEM), SHELFSIZE(1000), NULL, NULL);
 		if (devExtP->BufferPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferPool");
 			break;
 		}
 
-		devExtP->NBLCopyPool = NPF_AllocateObjectPool(NPF_NBLC_POOL_TAG, sizeof(NPF_NBL_COPY), 256, NULL, NPF_FreeNBLCopy);
+		devExtP->NBLCopyPool = NPF_AllocateObjectPool(NPF_NBLC_POOL_TAG, sizeof(NPF_NBL_COPY), SHELFSIZE(256), NULL, NPF_FreeNBLCopy);
 		if (devExtP->NBLCopyPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
 			break;
 		}
 
-		devExtP->NBCopiesPool = NPF_AllocateObjectPool(NPF_NBC_POOL_TAG, sizeof(NPF_NB_COPIES), 256, NULL, NPF_FreeNBCopies);
+		devExtP->NBCopiesPool = NPF_AllocateObjectPool(NPF_NBC_POOL_TAG, sizeof(NPF_NB_COPIES), SHELFSIZE(256), NULL, NPF_FreeNBCopies);
 		if (devExtP->NBCopiesPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
 			break;
 		}
 
-		devExtP->InternalRequestPool = NPF_AllocateObjectPool(NPF_REQ_POOL_TAG, sizeof(INTERNAL_REQUEST), 8, NULL, NULL);
+		devExtP->InternalRequestPool = NPF_AllocateObjectPool(NPF_REQ_POOL_TAG, sizeof(INTERNAL_REQUEST), SHELFSIZE(8), NULL, NULL);
 		if (devExtP->InternalRequestPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
@@ -592,7 +598,7 @@ DriverEntry(
 #ifdef HAVE_DOT11_SUPPORT
 		if (g_Dot11SupportMode)
 		{
-			devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(NPF_DOT11_POOL_TAG, SIZEOF_RADIOTAP_BUFFER, 256, NULL, NULL);
+			devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(NPF_DOT11_POOL_TAG, SIZEOF_RADIOTAP_BUFFER, SHELFSIZE(256), NULL, NULL);
 			if (devExtP->Dot11HeaderPool == NULL)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
