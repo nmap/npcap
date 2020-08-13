@@ -80,8 +80,6 @@ typedef struct _NPF_OBJ_POOL
 	ULONG Tag;
 	ULONG ulObjectSize;
 	ULONG ulIncrement;
-	PNPF_OBJ_INIT InitFunc;
-	PNPF_OBJ_INIT CleanupFunc;
 } NPF_OBJ_POOL;
 
 #pragma pack(pop)
@@ -142,9 +140,7 @@ _Use_decl_annotations_
 PNPF_OBJ_POOL NPF_AllocateObjectPool(
 		ULONG Tag,
 		ULONG ulObjectSize,
-		USHORT usIncrement,
-		PNPF_OBJ_INIT InitFunc,
-		PNPF_OBJ_CLEANUP CleanupFunc)
+		USHORT usIncrement)
 {
 	PNPF_OBJ_POOL pPool = NULL;
 
@@ -164,8 +160,6 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(
 	pPool->Tag = Tag;
 	pPool->ulObjectSize = ulObjectSize;
 	pPool->ulIncrement = usIncrement;
-	pPool->InitFunc = InitFunc;
-	pPool->CleanupFunc = CleanupFunc;
 
 	// Now round up ulIncrement to the max that will fit in some pages
 	ULONG max_idx = NPF_OBJ_ELEM_MAX_IDX(pPool);
@@ -178,7 +172,7 @@ PNPF_OBJ_POOL NPF_AllocateObjectPool(
 
 _Use_decl_annotations_
 PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
-		PNPF_OBJ_POOL_CTX Context)
+		BOOLEAN bAtDispatchLevel)
 {
 	OBJPOOL_DECLARE_LOCK;
 	PNPF_OBJ_POOL_ELEM pElem = NULL;
@@ -186,13 +180,8 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 	PSINGLE_LIST_ENTRY pEntry = NULL;
 	PNPF_OBJ_SHELF pShelf = NULL;
 	ULONG ulUsed = 0;
-	ASSERT(Context);
-	if (Context == NULL)
-	{
-		return NULL;
-	}
 
-	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+	OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 	// Get the first partial shelf
 	pShelfEntry = RemoveHeadList(&pPool->PartialShelfHead);
 
@@ -207,7 +196,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 			// If we couldn't allocate one, bail.
 			if (pShelf == NULL)
 			{
-				OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+				OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 				return NULL;
 			}
 			pShelfEntry = &pShelf->ShelfEntry;
@@ -227,7 +216,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 		ASSERT(pEntry != NULL);
 		// Should we decrement the used counter?
 		// Hard to say, this is an impossible condition.
-		OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+		OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 		return NULL;
 	}
 
@@ -244,7 +233,7 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 		pShelf->ShelfEntry.Blink = MM_BAD_POINTER;
 	}
 
-	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+	OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 
 	pElem = CONTAINING_RECORD(pEntry, NPF_OBJ_POOL_ELEM, UnusedEntry);
 
@@ -258,10 +247,6 @@ PVOID NPF_ObjectPoolGet(PNPF_OBJ_POOL pPool,
 		ASSERT(((PUCHAR)pElem->pObject)[i] == 0);
 	}
 #endif
-	if (pPool->InitFunc)
-	{
-		pPool->InitFunc(pElem->pObject, Context);
-	}
 
 	ASSERT(pElem->Refcount == 0);
 	pElem->Refcount = 1;
@@ -345,56 +330,28 @@ VOID NPF_ShrinkObjectPool(PNPF_OBJ_POOL pPool)
 }
 
 _Use_decl_annotations_
-VOID NPF_ObjectPoolReturn(
+BOOLEAN NPF_ObjectPoolReturn(
 		PVOID pObject,
-		PNPF_OBJ_POOL_CTX Context)
+		BOOLEAN bAtDispatchLevel)
 {
 	ASSERT(pObject);
 	OBJPOOL_DECLARE_LOCK;
-	NPF_OBJ_CALLBACK_STATUS Status = NPF_OBJ_STATUS_SUCCESS;
 	PNPF_OBJ_SHELF pShelf = NULL;
 	PNPF_OBJ_POOL pPool = NULL;
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
 	ULONG refcount = NpfInterlockedDecrement(&pElem->Refcount);
-	NPF_OBJ_POOL_CTX unknown_context;
-	ASSERT(Context);
-	if (Context == NULL)
-	{
-		unknown_context.bAtDispatchLevel = FALSE;
-		unknown_context.pContext = NULL;
-		Context = &unknown_context;
-	}
 	ASSERT(refcount < ULONG_MAX);
 
 	if (refcount == 0)
 	{
 		pShelf = pElem->pShelf;
 		pPool = pShelf->pPool;
-		if (pPool->CleanupFunc)
-		{
-			Status = pPool->CleanupFunc(pElem->pObject, Context);
-			switch (Status)
-			{
-				case NPF_OBJ_STATUS_SAVED:
-					// Callback refcounted the object and put it elsewhere.
-					// Can't assert anything because it could be
-					// being returned again somewhere.
-					return;
-				case NPF_OBJ_STATUS_RESOURCES:
-					// TODO: Safely recover from this condition.
-					// 1. Have NPF_ObjectPoolReturn tell its caller that something went wrong so it can bail.
-					// 2. Introduce a way to safely shut down the driver if we end up in an unrecoverable state.
-					ASSERT(NULL);
-				default:
-					break;
-			}
-		}
 
 		// Zero this now to ensure unused objects are zeroed when retrieved
 		// Doing it this way helps spot bugs by invalidating pointers in the old object
 		RtlZeroMemory(pElem->pObject, pPool->ulObjectSize);
 
-		OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+		OBJPOOL_ACQUIRE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
 
 		refcount = --pShelf->ulUsed;
 		ASSERT(refcount < pPool->ulIncrement);
@@ -414,8 +371,10 @@ VOID NPF_ObjectPoolReturn(
 			ASSERT(pShelf->ShelfEntry.Blink == MM_BAD_POINTER);
 			InsertTailList(&pPool->PartialShelfHead, &pShelf->ShelfEntry);
 		}
-		OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, Context->bAtDispatchLevel);
+		OBJPOOL_RELEASE_LOCK(&pPool->ShelfLock, bAtDispatchLevel);
+		return TRUE;
 	}
+	return FALSE;
 }
 
 _Use_decl_annotations_

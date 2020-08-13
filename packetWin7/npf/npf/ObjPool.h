@@ -57,35 +57,6 @@
  */
 typedef struct _NPF_OBJ_POOL *PNPF_OBJ_POOL;
 
-/* Context for get/return operations
- */
-typedef struct _NPF_OBJ_POOL_CTX
-{
-	BOOLEAN bAtDispatchLevel; // Set TRUE if caller is at DISPATCH_LEVEL spinlock optimization
-	PVOID pContext; // Pointer to caller-defined context. NULL if not used by InitFunc or CleanupFunc.
-} NPF_OBJ_POOL_CTX, *PNPF_OBJ_POOL_CTX;
-
-typedef _Return_type_success_(return >= 0) INT NPF_OBJ_CALLBACK_STATUS;
-#define NPF_OBJ_STATUS_SUCCESS 0
-/* CleanupFunc may return NPF_OBJ_STATUS_SAVED to indicate it has retained a
- * reference to the object. It MUST call NPF_ReferenceObject before returning
- * to ensure the object still has the correct refcount. It will not be returned
- * to the pool. */
-#define NPF_OBJ_STATUS_SAVED 1
-/* Either callback may return NPF_OBJ_STATUS_RESOURCES to indicate a failure
- * due to insufficient system resources. */
-#define NPF_OBJ_STATUS_RESOURCES -1
-
-typedef NPF_OBJ_CALLBACK_STATUS (NPF_OBJ_INIT)(
-	_Inout_ PVOID pObject,
-	_In_ PNPF_OBJ_POOL_CTX Context);
-typedef NPF_OBJ_INIT (*PNPF_OBJ_INIT);
-
-typedef NPF_OBJ_CALLBACK_STATUS (NPF_OBJ_CLEANUP)(
-	_Inout_ PVOID pObject,
-	_In_ PNPF_OBJ_POOL_CTX Context);
-typedef NPF_OBJ_CLEANUP (*PNPF_OBJ_CLEANUP);
-
 /* Allocates an object pool.
  * param ulObjectSize The size of object this pool will create
  * param usIncrement Objects are allocated in multiples of at least this many
@@ -97,9 +68,7 @@ _Ret_maybenull_
 PNPF_OBJ_POOL NPF_AllocateObjectPool(
 	_In_ ULONG Tag,
 	_In_ ULONG ulObjectSize,
-	_In_ USHORT usIncrement,
-	_In_opt_ PNPF_OBJ_INIT InitFunc,
-	_In_opt_ PNPF_OBJ_CLEANUP CleanupFunc);
+	_In_ USHORT usIncrement);
 
 /* Frees an object pool and all associated memory.
  * All objects obtained from the pool are invalid.
@@ -117,22 +86,25 @@ VOID NPF_ShrinkObjectPool(
 /* Retrieve an object from the pool. The object is uninitialized and pointed to
  * by the pObject member of the returned element.
  * param pPool A pointer to the pool obtained via NPF_AllocateObjectPool
- * param Context Caller-defined context.
+ * param bAtDispatchLevel TRUE if at DISPATCH_LEVEL
  */
 _Ret_maybenull_
+_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 PVOID NPF_ObjectPoolGet(
 	_In_ PNPF_OBJ_POOL pPool,
-	_In_ PNPF_OBJ_POOL_CTX Context);
+	_In_ BOOLEAN bAtDispatchLevel);
 
 /* Return an object to the pool. Decrements the refcount. If it is 0, the
  * object is returned to the pool. The pool is identified by the location of
  * the object's memory.
  * param pObject A pointer to an object to return
- * param Context Caller-defined context.
+ * param bAtDispatchLevel TRUE if at DISPATCH_LEVEL
+ * return TRUE if the refcount reached 0 and the object was returned
  */
-VOID NPF_ObjectPoolReturn(
-	_Inout_ PVOID pObject,
-	_In_ PNPF_OBJ_POOL_CTX Context);
+_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
+BOOLEAN NPF_ObjectPoolReturn(
+	_In_ _Frees_ptr_ PVOID pObject,
+	_In_ BOOLEAN bAtDispatchLevel);
 
 /* Reference an object from a pool. Increments the refcount.
  * param pObject A pointer to an object to reference.

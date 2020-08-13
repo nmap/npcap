@@ -458,8 +458,6 @@ typedef struct _NPF_NBL_COPY
 #endif
 } NPF_NBL_COPY, *PNPF_NBL_COPY;
 
-NPF_OBJ_CLEANUP NPF_FreeNBLCopy;
-
 /* Fixed-size buffers for holding packet data. Fixed size makes math easier and
  * lets us use ObjPool */
 typedef struct _BUFCHAIN_ELEM *PBUFCHAIN_ELEM;
@@ -482,8 +480,6 @@ typedef struct _NPF_NB_COPIES
 	ULONG ulPacketSize; // Size of the original packet
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
-NPF_OBJ_CLEANUP NPF_FreeNBCopies;
-
 /* Structure of a captured packet data description */
 typedef struct _NPF_CAP_DATA
 {
@@ -492,8 +488,6 @@ typedef struct _NPF_CAP_DATA
 	ULONG ulCaplen;
 }
 NPF_CAP_DATA, *PNPF_CAP_DATA;
-
-NPF_OBJ_CLEANUP NPF_FreeCapData;
 
 #ifdef HAVE_DOT11_SUPPORT
 #define NPF_CAP_SIZE(_P, _R) (sizeof(struct bpf_hdr) \
@@ -509,6 +503,21 @@ NPF_ResetBufferContents(
 	_Inout_ POPEN_INSTANCE Open,
 	_In_ BOOLEAN AcquireLock
 );
+
+_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
+VOID NPF_ReturnNBCopies(
+	_In_ _Frees_ptr_ PNPF_NB_COPIES pNBCopy,
+	_In_ BOOLEAN bAtDispatchLevel);
+
+_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
+VOID NPF_ReturnNBLCopy(
+	_In_ _Frees_ptr_ PNPF_NBL_COPY pNBLCopy,
+	_In_ BOOLEAN bAtDispatchLevel);
+
+_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
+VOID NPF_ReturnCapData(
+	_In_ _Frees_ptr_ PNPF_CAP_DATA pCapData,
+	_In_ BOOLEAN bAtDispatchLevel);
 
 /*!
 \brief Context information for originated sent packets

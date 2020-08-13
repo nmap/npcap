@@ -233,13 +233,8 @@ NPF_GCThread(_In_ PVOID Context)
 	NTSTATUS WaitStatus = STATUS_SUCCESS;
 	PDEVICE_EXTENSION pDevExt = Context;
 	PNPF_NB_COPIES pNBCopy = NULL;
-	NPF_OBJ_POOL_CTX PoolContext;
 	PLIST_ENTRY CurrEntry;
 	LOCK_STATE_EX lockState;
-
-	// NULL context means don't recover/cache in NPF_FreeNBCopies
-	PoolContext.pContext = NULL;
-	PoolContext.bAtDispatchLevel = FALSE;
 
 	// Set up the wait array
 	WaitObjects[WaitCount++] = &pDevExt->GCSemaphore;
@@ -567,28 +562,28 @@ DriverEntry(
 #define SHELFSIZE(n) n
 #endif
 		// 1000 * 256 = WIN32_DEFAULT_USER_BUFFER_SIZE
-		devExtP->BufferPool = NPF_AllocateObjectPool(NPF_PACKET_DATA_TAG, sizeof(BUFCHAIN_ELEM), SHELFSIZE(1000), NULL, NULL);
+		devExtP->BufferPool = NPF_AllocateObjectPool(NPF_PACKET_DATA_TAG, sizeof(BUFCHAIN_ELEM), SHELFSIZE(1000));
 		if (devExtP->BufferPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferPool");
 			break;
 		}
 
-		devExtP->NBLCopyPool = NPF_AllocateObjectPool(NPF_NBLC_POOL_TAG, sizeof(NPF_NBL_COPY), SHELFSIZE(256), NULL, NPF_FreeNBLCopy);
+		devExtP->NBLCopyPool = NPF_AllocateObjectPool(NPF_NBLC_POOL_TAG, sizeof(NPF_NBL_COPY), SHELFSIZE(256));
 		if (devExtP->NBLCopyPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
 			break;
 		}
 
-		devExtP->NBCopiesPool = NPF_AllocateObjectPool(NPF_NBC_POOL_TAG, sizeof(NPF_NB_COPIES), SHELFSIZE(256), NULL, NPF_FreeNBCopies);
+		devExtP->NBCopiesPool = NPF_AllocateObjectPool(NPF_NBC_POOL_TAG, sizeof(NPF_NB_COPIES), SHELFSIZE(256));
 		if (devExtP->NBCopiesPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
 			break;
 		}
 
-		devExtP->InternalRequestPool = NPF_AllocateObjectPool(NPF_REQ_POOL_TAG, sizeof(INTERNAL_REQUEST), SHELFSIZE(8), NULL, NULL);
+		devExtP->InternalRequestPool = NPF_AllocateObjectPool(NPF_REQ_POOL_TAG, sizeof(INTERNAL_REQUEST), SHELFSIZE(8));
 		if (devExtP->InternalRequestPool == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
@@ -598,7 +593,7 @@ DriverEntry(
 #ifdef HAVE_DOT11_SUPPORT
 		if (g_Dot11SupportMode)
 		{
-			devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(NPF_DOT11_POOL_TAG, SIZEOF_RADIOTAP_BUFFER, SHELFSIZE(256), NULL, NULL);
+			devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(NPF_DOT11_POOL_TAG, SIZEOF_RADIOTAP_BUFFER, SHELFSIZE(256));
 			if (devExtP->Dot11HeaderPool == NULL)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
@@ -1025,10 +1020,6 @@ Return Value:
 	LOCK_STATE_EX lockState;
 	PSINGLE_LIST_ENTRY Curr = NULL;
 	PSINGLE_LIST_ENTRY Prev = NULL;
-	NPF_OBJ_POOL_CTX Context;
-	// NULL context means don't recover/cache in NPF_FreeNBCopies
-	Context.pContext = NULL;
-	Context.bAtDispatchLevel = FALSE;
 
 	TRACE_ENTER();
 
@@ -1274,9 +1265,6 @@ NPF_IoControl(
 #ifdef _WIN64
 	VOID* POINTER_32		hUserEvent32Bit;
 #endif //_WIN64
-	NPF_OBJ_POOL_CTX Context;
-	Context.pContext = NULL;
-	Context.bAtDispatchLevel = NPF_IRQL_UNKNOWN;
 
 	TRACE_ENTER();
 
@@ -1852,7 +1840,7 @@ NPF_IoControl(
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
 
 		// Extract a request from the list of free ones
-		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->DeviceExtension->InternalRequestPool, &Context);
+		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->DeviceExtension->InternalRequestPool, NPF_IRQL_UNKNOWN);
 		if (pRequest == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
@@ -2140,7 +2128,7 @@ NPF_IoControl(
 
 OID_REQUEST_DONE:
 
-		NPF_ObjectPoolReturn(pRequest, &Context);
+		NPF_ObjectPoolReturn(pRequest, NPF_IRQL_UNKNOWN);
 
 		break;
 

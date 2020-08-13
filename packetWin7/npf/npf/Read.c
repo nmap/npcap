@@ -142,7 +142,6 @@ NPF_Read(
 	ULONG					copied, plen, available;
 	LOCK_STATE_EX lockState;
 	NTSTATUS Status = STATUS_SUCCESS;
-	NPF_OBJ_POOL_CTX Context;
 
 	TRACE_ENTER();
 
@@ -321,8 +320,6 @@ NPF_Read(
 		KeClearEvent(Open->ReadEvent);
 
 	// "NdisAcquireRWLockRead always raises the IRQL to IRQL = DISPATCH_LEVEL"
-	Context.bAtDispatchLevel = TRUE;
-	Context.pContext = Open->DeviceExtension;
 	NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);
 
 	while (available > copied && Open->Free < Open->Size)
@@ -395,7 +392,7 @@ NPF_Read(
 		ASSERT(Open->Free <= Open->Size);
 
 		// Return this capture data
-		NPF_ObjectPoolReturn(pCapData, &Context);
+		NPF_ReturnCapData(pCapData, TRUE);
 	}
 
 	NdisReleaseRWLock(Open->BufferLock, &lockState);
@@ -444,7 +441,6 @@ NPF_DoTap(
 	NBLCopiesHead.Next = NULL;
 	PNPF_NB_COPIES pNBCopies = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
-	NPF_OBJ_POOL_CTX Context;
 	PDEVICE_EXTENSION pDevExt = NULL;
 
 	/* Lock the group */
@@ -469,7 +465,6 @@ NPF_DoTap(
 	/* Release the spin lock no matter what. */
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
-	Context.bAtDispatchLevel = AtDispatchLevel;
 	Curr = NBLCopiesHead.Next;
 	while (Curr != NULL)
 	{
@@ -482,12 +477,10 @@ NPF_DoTap(
 			pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
 			pNBCopiesEntry = pNBCopiesEntry->Next;
 
-			Context.pContext = pDevExt;
-			NPF_ObjectPoolReturn(pNBCopies, &Context);
+			NPF_ReturnNBCopies(pNBCopies, AtDispatchLevel);
 		}
 
-		Context.pContext = NULL;
-		NPF_ObjectPoolReturn(pNBLCopy, &Context);
+		NPF_ReturnNBLCopy(pNBLCopy, AtDispatchLevel);
 	}
 
 	return;
@@ -615,11 +608,8 @@ PNPF_CAP_DATA NPF_GetCapData(
 	ASSERT(pNBCopy->pNBLCopy == pNBLCopy);
 	ASSERT(pNBCopy->pFirstElem);
 	ASSERT(pNBCopy->ulPacketSize < 0xffffffff);
-	NPF_OBJ_POOL_CTX Context;
-	Context.bAtDispatchLevel = TRUE;
-	Context.pContext = NULL;
 
-	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(pPool, &Context);
+	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(pPool, TRUE);
 	if (pCapData == NULL)
 	{
 		return NULL;
@@ -637,12 +627,13 @@ PNPF_CAP_DATA NPF_GetCapData(
 
 _Must_inspect_result_
 _Success_(return != 0)
+_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 BOOLEAN
 NPF_CopyFromNetBufferToNBCopy(
 		_Inout_ PNPF_NB_COPIES pNBCopy,
 		_In_ ULONG ulDesiredLen,
 		_In_ PNPF_OBJ_POOL BufchainPool,
-		_In_ PNPF_OBJ_POOL_CTX pContext
+		_In_ BOOLEAN bAtDispatchLevel
 		)
 {
 	PUCHAR pSrcBuf = NULL;
@@ -669,7 +660,7 @@ NPF_CopyFromNetBufferToNBCopy(
 	{
 		// If pLastElem is null, there had better be no elems at all.
 		ASSERT(pNBCopy->pFirstElem == NULL);
-		pElem = (PBUFCHAIN_ELEM) NPF_ObjectPoolGet(BufchainPool, pContext);
+		pElem = (PBUFCHAIN_ELEM) NPF_ObjectPoolGet(BufchainPool, bAtDispatchLevel);
 		if (pElem == NULL)
 		{
 			IF_LOUD(DbgPrint("Failed to allocate Bufchain Elem");)
@@ -718,7 +709,7 @@ NPF_CopyFromNetBufferToNBCopy(
 			// If the offset is past the end of the buffer, we need a new buffer.
 			if (ulBufIdx == NPF_BUFCHAIN_SIZE)
 			{
-				pElem->Next = (PBUFCHAIN_ELEM) NPF_ObjectPoolGet(BufchainPool, pContext);
+				pElem->Next = (PBUFCHAIN_ELEM) NPF_ObjectPoolGet(BufchainPool, bAtDispatchLevel);
 				if (pElem->Next == NULL)
 				{
 					IF_LOUD(DbgPrint("Failed to allocate Bufchain Elem");)
@@ -770,9 +761,6 @@ NPF_TapExForEachOpen(
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	PSINGLE_LIST_ENTRY pNBLCopyPrev = NBLCopyHead;
 	PSINGLE_LIST_ENTRY pNBCopiesPrev = NULL;
-	NPF_OBJ_POOL_CTX Context;
-	Context.bAtDispatchLevel = AtDispatchLevel;
-	Context.pContext = NULL;
 	ASSERT(tstamp != NULL);
 	
 	//TRACE_ENTER();
@@ -797,7 +785,7 @@ NPF_TapExForEachOpen(
 		if (pNBLCopyPrev->Next == NULL)
 		{
 			// Add another NBL copy to the chain
-			pNBLCopy = (PNPF_NBL_COPY) NPF_ObjectPoolGet(Open->DeviceExtension->NBLCopyPool, &Context);
+			pNBLCopy = (PNPF_NBL_COPY) NPF_ObjectPoolGet(Open->DeviceExtension->NBLCopyPool, AtDispatchLevel);
 			if (pNBLCopy == NULL)
 			{
 				//Insufficient resources.
@@ -862,7 +850,7 @@ NPF_TapExForEachOpen(
 					goto RadiotapDone;
 				}
 
-				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) NPF_ObjectPoolGet(Open->DeviceExtension->Dot11HeaderPool, &Context);
+				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) NPF_ObjectPoolGet(Open->DeviceExtension->Dot11HeaderPool, AtDispatchLevel);
 				if (pNBLCopy->Dot11RadiotapHeader == NULL)
 				{
 					// Insufficient memory
@@ -1101,7 +1089,6 @@ NPF_TapExForEachOpen(
 			// Lock "buffer" whenever checking Size/Free
 			NdisAcquireRWLockRead(Open->BufferLock, &lockState,
 					AtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
-			Context.bAtDispatchLevel = TRUE;
 			if (Open->Size == 0)
 			{
 				dropped++;
@@ -1131,7 +1118,7 @@ NPF_TapExForEachOpen(
 			{
 				// Add another copy to the chain
 				// While BufferLock is held we are at DISPATCH_LEVEL
-				pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, &Context);
+				pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, TRUE);
 				if (pNBCopy == NULL)
 				{
 					//Insufficient resources.
@@ -1157,7 +1144,7 @@ NPF_TapExForEachOpen(
 			}
 
 			// Make sure we have copied enough data
-			if (!NPF_CopyFromNetBufferToNBCopy(pNBCopy, fres, Open->DeviceExtension->BufferPool, &Context))
+			if (!NPF_CopyFromNetBufferToNBCopy(pNBCopy, fres, Open->DeviceExtension->BufferPool, TRUE))
 			{
 				// Out of resources
 				dropped++;
@@ -1198,7 +1185,6 @@ NPF_TapExForEachOpen(
 			}
 
 TEFEO_release_BufferLock:
-			Context.bAtDispatchLevel = AtDispatchLevel;
 			NdisReleaseRWLock(Open->BufferLock, &lockState);
 
 TEFEO_next_NB:
@@ -1207,7 +1193,7 @@ TEFEO_next_NB:
 				// We bailed early and we still need a placeholder NBCopies here.
 				if (pNBCopy == NULL)
 				{
-					pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, &Context);
+					pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, AtDispatchLevel);
 				}
 				if (pNBCopy == NULL)
 				{
