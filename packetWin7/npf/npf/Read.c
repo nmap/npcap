@@ -338,6 +338,7 @@ NPF_Read(
 			* it's an actual accounting bug, we'd get infite loop hangs. I'd rather break and see Read calls
 			* returning no or few packets and eventually unexplained packet drops.
 			*/
+			ASSERT(pCapDataEntry);
 			break;
 		}
 		PNPF_CAP_DATA pCapData = CONTAINING_RECORD(pCapDataEntry, NPF_CAP_DATA, PacketQueueEntry);
