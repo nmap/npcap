@@ -48,7 +48,10 @@
  ***************************************************************************/
 #include "ObjPool.h"
 #include <limits.h>
+#include "macros.h"
 
+#pragma pack(push)
+#pragma pack(4)
 typedef struct _NPF_OBJ_SHELF
 {
 	SINGLE_LIST_ENTRY ShelfEntry;
@@ -81,11 +84,16 @@ typedef struct _NPF_OBJ_POOL
 	PNPF_OBJ_INIT CleanupFunc;
 } NPF_OBJ_POOL;
 
+#pragma pack(pop)
+
 #define NPF_OBJECT_POOL_TAG 'TPON'
 
-#define NPF_OBJ_ELEM_ALLOC_SIZE(POOL) (sizeof(NPF_OBJ_POOL_ELEM) + (POOL)->ulObjectSize)
-#define NPF_OBJ_SHELF_ALLOC_SIZE(POOL) ROUND_TO_PAGES( sizeof(NPF_OBJ_SHELF) + NPF_OBJ_ELEM_ALLOC_SIZE(POOL) * (POOL)->ulIncrement)
-#define NPF_OBJ_ELEM_MAX_IDX(POOL) (NPF_OBJ_SHELF_ALLOC_SIZE(pPool) - sizeof(NPF_OBJ_SHELF))
+/* Ensure everything aligns to 32-bit boundaries for Interlocked functions */
+#define NPF_SIZEOF_OBJ_SHELF ALIGN_UP_BY(sizeof(NPF_OBJ_SHELF), 4)
+#define NPF_SIZEOF_OBJ_ELEM ALIGN_UP_BY(sizeof(NPF_OBJ_POOL_ELEM), 4)
+#define NPF_OBJ_ELEM_ALLOC_SIZE(POOL) ALIGN_UP_BY(NPF_SIZEOF_OBJ_ELEM + (POOL)->ulObjectSize, 4)
+#define NPF_OBJ_SHELF_ALLOC_SIZE(POOL) ROUND_TO_PAGES( NPF_SIZEOF_OBJ_SHELF + NPF_OBJ_ELEM_ALLOC_SIZE(POOL) * (POOL)->ulIncrement)
+#define NPF_OBJ_ELEM_MAX_IDX(POOL) (NPF_OBJ_SHELF_ALLOC_SIZE(pPool) - NPF_SIZEOF_OBJ_SHELF)
 
 #define OBJPOOL_IRQL_UNKNOWN FALSE
 #define OBJPOOL_DECLARE_LOCK KLOCK_QUEUE_HANDLE ObjPoolKlockQueue;
@@ -122,7 +130,7 @@ NPF_NewObjectShelf(
 	// Buffer starts after the shelf itself
 	for (i=0; i < pPool->ulIncrement; i++)
 	{
-		pElem = (PNPF_OBJ_POOL_ELEM) (pShelf->pBuffer + i * NPF_OBJ_ELEM_ALLOC_SIZE(pPool));
+		pElem = (PNPF_OBJ_POOL_ELEM) ((PUCHAR)ALIGN_UP_POINTER_BY(pShelf->pBuffer, 4) + i * NPF_OBJ_ELEM_ALLOC_SIZE(pPool));
 		pElem->pShelf= pShelf;
 		PushEntryList(&pShelf->UnusedHead, &pElem->UnusedEntry);
 	}
@@ -331,7 +339,7 @@ VOID NPF_ObjectPoolReturn(
 	PNPF_OBJ_SHELF pShelf = NULL;
 	PNPF_OBJ_POOL pPool = NULL;
 	PNPF_OBJ_POOL_ELEM pElem = CONTAINING_RECORD(pObject, NPF_OBJ_POOL_ELEM, pObject);
-	ULONG refcount = InterlockedDecrement(&pElem->Refcount);
+	ULONG refcount = NpfInterlockedDecrement(&pElem->Refcount);
 	NPF_OBJ_POOL_CTX unknown_context;
 	ASSERT(Context);
 	if (Context == NULL)
