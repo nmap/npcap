@@ -730,6 +730,7 @@ NPF_CopyFromNetBufferToNBCopy(
 			// How much of what we want from this MDL will fit in this elem?
 			ulCopyLen = min(ulCopyLenForMdl, NPF_BUFCHAIN_SIZE - ulBufIdx);
 			RtlCopyMemory(pElem->Buffer + ulBufIdx, pSrcBuf + ulMdlOffset, ulCopyLen);
+			ulMdlOffset += ulCopyLen;
 			pNBCopy->ulSize += ulCopyLen;
 			ulBufIdx += ulCopyLen;
 			ulCopyLenForMdl -= ulCopyLen;
@@ -737,8 +738,8 @@ NPF_CopyFromNetBufferToNBCopy(
 
 		pSrcBuf = NULL;
 		ulSrcBufLen = 0;
-		// Offset only matters for first MDL we copy from
 		ulMdlOffset = 0;
+		pMdl = pMdl->Next;
 	}
 
 	ASSERT(pNBCopy->ulSize == ulDesiredLen);
