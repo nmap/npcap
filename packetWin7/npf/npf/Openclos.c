@@ -456,9 +456,9 @@ VOID NPF_ReturnCapData(PNPF_CAP_DATA pCapData, BOOLEAN bAtDispatchLevel)
 	if (NPF_ObjectPoolReturn(pCapData, bAtDispatchLevel))
 	{
 		if (pNBLCopy)
-			NPF_ObjectPoolReturn(pNBLCopy, bAtDispatchLevel);
+			NPF_ReturnNBLCopy(pNBLCopy, bAtDispatchLevel);
 		if (pNBCopy)
-			NPF_ObjectPoolReturn(pNBCopy, bAtDispatchLevel);
+			NPF_ReturnNBCopies(pNBCopy, bAtDispatchLevel);
 	}
 }
 
