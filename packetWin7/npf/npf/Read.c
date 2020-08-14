@@ -222,6 +222,7 @@ NPF_Read(
 				EXIT_FAILURE(0);
 			}
 
+#ifdef NPCAP_KDUMP
 			if (Open->mode & MODE_DUMP)
 			{
 				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 24)
@@ -234,6 +235,7 @@ NPF_Read(
 				}
 			}
 			else
+#endif
 			{
 				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 16)
 				{
