@@ -85,6 +85,9 @@
 #include "packet.h"
 #include "win_bpf.h"
 #include "time_calls.h"
+#if DBG
+#include <limits.h> // MAX_LONG
+#endif
 
  //
  // Global variables
@@ -351,7 +354,8 @@ NPF_Read(
 #else
 		PVOID pRadiotapHeader = NULL;
 #endif
-		if (NPF_CAP_SIZE(pCapData, pRadiotapHeader) > available - copied)
+		ULONG ulCapSize = NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader);
+		if (ulCapSize > available - copied)
 		{
 			//if the packet does not fit into the user buffer, we've ended copying packets
 			// Put this packet back.
@@ -387,12 +391,13 @@ NPF_Read(
 		// Fix up alignment
 		copied += Packet_WORDALIGN(ulCopied);
 
-		// Increase free space by the amount that it was reduced before
-		NpfInterlockedExchangeAdd(&Open->Free, NPF_CAP_SIZE(pCapData, pRadiotapHeader));
-		ASSERT(Open->Free <= Open->Size);
-
 		// Return this capture data
+		// MUST be done BEFORE incrementing free space, otherwise we risk runaway allocations while this is stalled.
 		NPF_ReturnCapData(pCapData, TRUE);
+
+		// Increase free space by the amount that it was reduced before
+		NpfInterlockedExchangeAdd(&Open->Free, ulCapSize);
+		ASSERT(Open->Free <= Open->Size);
 	}
 
 	NdisReleaseRWLock(Open->BufferLock, &lockState);
@@ -1097,12 +1102,14 @@ NPF_TapExForEachOpen(
 				goto TEFEO_release_BufferLock;
 			}
 
-			if (fres + sizeof(struct bpf_hdr)
+			ULONG ulCapSize = NPF_CAP_SIZE(fres)
 #ifdef HAVE_DOT11_SUPPORT
 					+ (pRadiotapHeader != NULL ? pRadiotapHeader->it_len : 0)
 #endif
-					> Open->Free)
+					;
+			if (ulCapSize > Open->Free)
 			{
+				ASSERT(ulCapSize < LONG_MAX);
 				dropped++;
 				IF_LOUD(DbgPrint("Dropped++, fres = %d, Open->Free = %d\n", fres, Open->Free);)
 				// May as well tell the application, even if MinToCopy is not met,
@@ -1112,6 +1119,9 @@ NPF_TapExForEachOpen(
 
 				goto TEFEO_release_BufferLock;
 			}
+
+			// Declare we're using up this much space; if something goes wrong, we'll reverse it.
+			NpfInterlockedExchangeAdd(&Open->Free, -(LONG)ulCapSize);
 
 			// Packet accepted and must be written to buffer.
 			// Make a copy of the data so we can return the original quickly,
@@ -1167,8 +1177,9 @@ NPF_TapExForEachOpen(
 			ASSERT(pCapData->pNBCopy->pNBLCopy);
 			ASSERT(pCapData->pNBCopy->pFirstElem);
 			ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
+			// We successfully put this into the queue
+			ulCapSize = 0;
 
-			NpfInterlockedExchangeAdd(&Open->Free, -(LONG)NPF_CAP_SIZE(pCapData, pRadiotapHeader));
 			NpfInterlockedIncrement(&Open->Accepted);
 			if (Open->Size - Open->Free >= Open->MinToCopy)
 			{
@@ -1186,6 +1197,11 @@ NPF_TapExForEachOpen(
 			}
 
 TEFEO_release_BufferLock:
+			if (ulCapSize > 0)
+			{
+				// something went wrong and we didn't enqueue this, so reverse it.
+				NpfInterlockedExchangeAdd(&Open->Free, (LONG)ulCapSize);
+			}
 			NdisReleaseRWLock(Open->BufferLock, &lockState);
 
 TEFEO_next_NB:

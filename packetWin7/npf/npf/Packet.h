@@ -489,13 +489,14 @@ typedef struct _NPF_CAP_DATA
 }
 NPF_CAP_DATA, *PNPF_CAP_DATA;
 
+#define NPF_CAP_SIZE(_CapLen) (sizeof(struct bpf_hdr) + _CapLen)
+
 #ifdef HAVE_DOT11_SUPPORT
-#define NPF_CAP_SIZE(_P, _R) (sizeof(struct bpf_hdr) \
-		+ (_P)->ulCaplen \
+#define NPF_CAP_OBJ_SIZE(_P, _R) NPF_CAP_SIZE( \
+		(_P)->ulCaplen \
 		+ (_R != NULL ? _R->it_len : 0))
 #else
-#define NPF_CAP_SIZE(_P, _N) (sizeof(struct bpf_hdr) \
-		+ (_P)->ulCaplen)
+#define NPF_CAP_OBJ_SIZE(_P, _N) NPF_CAP_SIZE((_P)->ulCaplen)
 #endif
 
 VOID
