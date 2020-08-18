@@ -690,6 +690,9 @@ NPF_CopyFromNetBufferToNBCopy(
 			return FALSE;
 		}
 
+		// Record our current place in the NB
+		pNBCopy->pSrcCurrMdl;
+
 		if (pSrcBuf == NULL)
 		{
 			NdisQueryMdl(pMdl, &pSrcBuf, &ulSrcBufLen, NormalPagePriority);
@@ -727,6 +730,9 @@ NPF_CopyFromNetBufferToNBCopy(
 			pNBCopy->ulSize += ulCopyLen;
 			ulBufIdx += ulCopyLen;
 			ulCopyLenForMdl -= ulCopyLen;
+
+			// Record our current place in the MDL
+			pNBCopy->ulCurrMdlOffset = ulMdlOffset;
 		}
 
 		pSrcBuf = NULL;
