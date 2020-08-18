@@ -596,7 +596,6 @@ NPF_AlignProtocolField(
 
 //-------------------------------------------------------------------
 
-_IRQL_requires_(DISPATCH_LEVEL)
 _Ret_maybenull_
 PNPF_CAP_DATA NPF_GetCapData(
 		_Inout_ PLOOKASIDE_LIST_EX pPool,
@@ -629,13 +628,11 @@ PNPF_CAP_DATA NPF_GetCapData(
 
 _Must_inspect_result_
 _Success_(return != 0)
-_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 BOOLEAN
 NPF_CopyFromNetBufferToNBCopy(
 		_Inout_ PNPF_NB_COPIES pNBCopy,
 		_In_ ULONG ulDesiredLen,
-		_Inout_ PLOOKASIDE_LIST_EX BufchainPool,
-		_In_ BOOLEAN bAtDispatchLevel
+		_Inout_ PLOOKASIDE_LIST_EX BufchainPool
 		)
 {
 	PUCHAR pSrcBuf = NULL;
@@ -1161,14 +1158,13 @@ NPF_TapExForEachOpen(
 			}
 
 			// Make sure we have copied enough data
-			if (!NPF_CopyFromNetBufferToNBCopy(pNBCopy, fres, &Open->DeviceExtension->BufferPool, TRUE))
+			if (!NPF_CopyFromNetBufferToNBCopy(pNBCopy, fres, &Open->DeviceExtension->BufferPool))
 			{
 				// Out of resources
 				dropped++;
 				goto TEFEO_release_BufferLock;
 			}
 
-			// While BufferLock is held we are at DISPATCH_LEVEL
 			PNPF_CAP_DATA pCapData = NPF_GetCapData(&Open->DeviceExtension->CapturePool, pNBCopy, pNBLCopy, fres);
 			if (pCapData == NULL)
 			{
