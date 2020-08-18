@@ -1024,6 +1024,7 @@ NPF_TapExForEachOpen(
 			ASSERT(pNBCopiesPrev);
 			pNBCopy = NULL;
 			pNextNetBuf = NET_BUFFER_NEXT_NB(pNetBuf);
+			ULONG ulCapSize = 0;
 
 			received++;
 
@@ -1107,7 +1108,7 @@ NPF_TapExForEachOpen(
 				goto TEFEO_release_BufferLock;
 			}
 
-			ULONG ulCapSize = NPF_CAP_SIZE(fres)
+			ulCapSize = NPF_CAP_SIZE(fres)
 #ifdef HAVE_DOT11_SUPPORT
 					+ (pRadiotapHeader != NULL ? pRadiotapHeader->it_len : 0)
 #endif
