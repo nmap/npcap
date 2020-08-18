@@ -324,23 +324,16 @@ NPF_Read(
 	if (Open->ReadEvent != NULL)
 		KeClearEvent(Open->ReadEvent);
 
-	// "NdisAcquireRWLockRead always raises the IRQL to IRQL = DISPATCH_LEVEL"
+	// Lock this so we don't increment Free during a buffer reset
 	NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);
 
-	while (available > copied && Open->Free < Open->Size)
+	while (available > copied)
 	{
 		//there are some packets in the buffer
 		PLIST_ENTRY pCapDataEntry = ExInterlockedRemoveHeadList(&Open->PacketQueue, &Open->PacketQueueLock);
 		if (pCapDataEntry == NULL)
 		{
-			/* No packets in queue. Maybe someone else is calling NPF_Read?
-			* This was reported as a crash (null ptr deref) 2 lines down, but I can't see a reason for it
-			* unless compiler is reordering calls such that Open->Free is decremented before the packet is
-			* put in the queue down in TEFEO.  We could continue here to try to get more packets, but if
-			* it's an actual accounting bug, we'd get infite loop hangs. I'd rather break and see Read calls
-			* returning no or few packets and eventually unexplained packet drops.
-			*/
-			ASSERT(pCapDataEntry);
+			// Done (empty buffer)
 			break;
 		}
 		PNPF_CAP_DATA pCapData = CONTAINING_RECORD(pCapDataEntry, NPF_CAP_DATA, PacketQueueEntry);
@@ -1126,6 +1119,8 @@ NPF_TapExForEachOpen(
 				if (Open->ReadEvent != NULL)
 					KeSetEvent(Open->ReadEvent, 0, FALSE);
 
+				// Reset this to 0 because we didn't subtract it from Free yet
+				ulCapSize = 0;
 				goto TEFEO_release_BufferLock;
 			}
 
