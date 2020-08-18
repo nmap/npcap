@@ -218,100 +218,6 @@ NPF_GetRegistryOption_String(
 	_Inout_ PNDIS_STRING g_OutputString
 	);
 
-VOID
-NPF_GCThread(_In_ PVOID Context)
-{
-#define GCTHREAD_WAIT_OBJECTS 2
-#if GCTHREAD_WAIT_OBJECTS > THREAD_WAIT_OBJECTS
-#error Too many objects; allocate KWAIT_BLOCK array from NonPagedPool
-#endif
-	PVOID WaitObjects[GCTHREAD_WAIT_OBJECTS];
-	ULONG WaitCount = 0;
-	UNICODE_STRING LowNonPagedPoolName = RTL_CONSTANT_STRING(L"\\KernelObjects\\LowNonPagedPoolCondition");
-	HANDLE LowNonPagedPoolHandle = NULL;
-	ULONG LowNonPagedPoolIndex = GCTHREAD_WAIT_OBJECTS; // invalid index; set it later
-	NTSTATUS WaitStatus = STATUS_SUCCESS;
-	PDEVICE_EXTENSION pDevExt = Context;
-	PNPF_NB_COPIES pNBCopy = NULL;
-	PLIST_ENTRY CurrEntry;
-	LOCK_STATE_EX lockState;
-
-	// Set up the wait array
-	WaitObjects[WaitCount++] = &pDevExt->GCSemaphore;
-
-	LowNonPagedPoolIndex = WaitCount++;
-	WaitObjects[LowNonPagedPoolIndex] = IoCreateNotificationEvent(&LowNonPagedPoolName, &LowNonPagedPoolHandle);
-	if (WaitObjects[LowNonPagedPoolIndex] == NULL)
-	{
-		// Weird. If this ever happens, let's make sure we investigate it.
-		ASSERT(WaitObjects[LowNonPagedPoolIndex] != NULL);
-		LowNonPagedPoolHandle = NULL;
-		LowNonPagedPoolIndex = GCTHREAD_WAIT_OBJECTS;
-		WaitCount--;
-	}
-	else
-	{
-		// Notification events are set to signaled when created,
-		// but we want to wait until it's actually signaled.
-		KeClearEvent(WaitObjects[LowNonPagedPoolIndex]);
-	}
-
-	KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY );
-
-#define GC_SHRINK_POOL(_Pool) if (_Pool) { NPF_ShrinkObjectPool(_Pool); }
-
-	for (;;)
-	{
-		ASSERT(WaitCount <= GCTHREAD_WAIT_OBJECTS);
-		// Wait for work to appear
-		WaitStatus = KeWaitForMultipleObjects(
-				WaitCount,
-				WaitObjects,
-				WaitAny,
-				Executive,
-				KernelMode,
-				FALSE,
-				NULL,
-				NULL);
-		if (WaitStatus == STATUS_WAIT_0 + LowNonPagedPoolIndex)
-		{
-			KeClearEvent(WaitObjects[LowNonPagedPoolIndex]);
-
-			// Low on memory, so shrink all the capture pools if possible
-
-			NdisAcquireRWLockRead(pDevExt->AllOpensLock, &lockState, 0);
-
-			for (CurrEntry = pDevExt->AllOpens.Flink;
-					CurrEntry != &pDevExt->AllOpens;
-					CurrEntry = CurrEntry->Flink)
-			{
-				POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
-				GC_SHRINK_POOL(pOpen->CapturePool);
-			}
-			NdisReleaseRWLock(pDevExt->AllOpensLock, &lockState);
-		}
-
-		// Check if we're being told to die
-		if (pDevExt->GCShouldStop) {
-			if (LowNonPagedPoolHandle != NULL)
-			{
-				ZwClose(LowNonPagedPoolHandle);
-			}
-			PsTerminateSystemThread( STATUS_SUCCESS );
-			return;
-		}
-
-		// Now shrink the pools if need be.
-		GC_SHRINK_POOL(pDevExt->BufferPool);
-		GC_SHRINK_POOL(pDevExt->NBLCopyPool);
-		GC_SHRINK_POOL(pDevExt->NBCopiesPool);
-		GC_SHRINK_POOL(pDevExt->InternalRequestPool);
-#ifdef HAVE_DOT11_SUPPORT
-		GC_SHRINK_POOL(pDevExt->Dot11HeaderPool);
-#endif
-	}
-}
-
 //-------------------------------------------------------------------
 //
 //  Packet Driver's entry routine.
@@ -555,79 +461,58 @@ DriverEntry(
 			break;
 		}
 
-#if DBG
-		/* Exercise the object pool by using the smallest possible shelf size */
-#define SHELFSIZE(n) 1
-#else
-#define SHELFSIZE(n) n
-#endif
-		// 1000 * 256 = WIN32_DEFAULT_USER_BUFFER_SIZE
-		devExtP->BufferPool = NPF_AllocateObjectPool(NPF_PACKET_DATA_TAG, sizeof(BUFCHAIN_ELEM), SHELFSIZE(1000));
-		if (devExtP->BufferPool == NULL)
+		Status = ExInitializeLookasideListEx(&devExtP->BufferPool, NULL, NULL, NonPagedPool, 0, sizeof(BUFCHAIN_ELEM), NPF_PACKET_DATA_TAG, 0);
+		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferPool");
 			break;
 		}
+		devExtP->bBufferPoolInit = 1;
 
-		devExtP->NBLCopyPool = NPF_AllocateObjectPool(NPF_NBLC_POOL_TAG, sizeof(NPF_NBL_COPY), SHELFSIZE(256));
-		if (devExtP->NBLCopyPool == NULL)
+		Status = ExInitializeLookasideListEx(&devExtP->NBLCopyPool, NULL, NULL, NonPagedPool, 0, sizeof(NPF_NBL_COPY), NPF_NBLC_POOL_TAG, 0);
+		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
 			break;
 		}
+		devExtP->bNBLCopyPoolInit = 1;
 
-		devExtP->NBCopiesPool = NPF_AllocateObjectPool(NPF_NBC_POOL_TAG, sizeof(NPF_NB_COPIES), SHELFSIZE(256));
-		if (devExtP->NBCopiesPool == NULL)
+		Status = ExInitializeLookasideListEx(&devExtP->NBCopiesPool, NULL, NULL, NonPagedPool, 0, sizeof(NPF_NB_COPIES), NPF_NBC_POOL_TAG, 0);
+		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
 			break;
 		}
+		devExtP->bNBCopiesPoolInit = 1;
 
-		devExtP->InternalRequestPool = NPF_AllocateObjectPool(NPF_REQ_POOL_TAG, sizeof(INTERNAL_REQUEST), SHELFSIZE(8));
-		if (devExtP->InternalRequestPool == NULL)
+		Status = ExInitializeLookasideListEx(&devExtP->InternalRequestPool, NULL, NULL, NonPagedPool, 0, sizeof(INTERNAL_REQUEST), NPF_REQ_POOL_TAG, 0);
+		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
 			break;
 		}
+		devExtP->bInternalRequestPoolInit = 1;
+
+		Status = ExInitializeLookasideListEx(&devExtP->CapturePool, NULL, NULL, NonPagedPool, 0, sizeof(NPF_CAP_DATA), NPF_CAP_POOL_TAG, 0);
+		if (Status != STATUS_SUCCESS)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
+			break;
+		}
+		devExtP->bCapturePoolInit = 1;
 
 #ifdef HAVE_DOT11_SUPPORT
 		if (g_Dot11SupportMode)
 		{
-			devExtP->Dot11HeaderPool = NPF_AllocateObjectPool(NPF_DOT11_POOL_TAG, SIZEOF_RADIOTAP_BUFFER, SHELFSIZE(256));
-			if (devExtP->Dot11HeaderPool == NULL)
+			Status = ExInitializeLookasideListEx(&devExtP->Dot11HeaderPool, NULL, NULL, NonPagedPool, 0, SIZEOF_RADIOTAP_BUFFER, NPF_DOT11_POOL_TAG, 0);
+			if (Status != STATUS_SUCCESS)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
 				break;
 			}
-		}
-		else
-		{
-			devExtP->Dot11HeaderPool = NULL;
+			devExtP->bDot11HeaderPoolInit = 1;
 		}
 #endif
-
-		// Have to create thread last because otherwise we'd have to kill the thread if anything failed.
-		KeInitializeSemaphore(&devExtP->GCSemaphore, 0, MAXLONG);
-		devExtP->GCShouldStop = FALSE;
-		devExtP->GCThreadObj = NULL;
-
-		Status = PsCreateSystemThread(&threadHandle, THREAD_ALL_ACCESS,
-				NULL, NULL, NULL, NPF_GCThread, devExtP);
-		if (Status != STATUS_SUCCESS)
-		{
-			IF_LOUD(DbgPrint("PsCreateSystemThread: error, Status=%x.\n", Status);)
-			break;
-		}
-
-		// Convert the Thread object handle into a pointer to the Thread object
-		// itself. Then close the handle.
-		ObReferenceObjectByHandle(threadHandle,
-			THREAD_ALL_ACCESS,
-			NULL,
-			KernelMode,
-			&devExtP->GCThreadObj,
-			NULL);
-		ZwClose(threadHandle);
 
 		Status = STATUS_SUCCESS;
 	} while (0);
@@ -635,17 +520,19 @@ DriverEntry(
 	if (!NT_SUCCESS(Status))
 	{
 #ifdef HAVE_DOT11_SUPPORT
-		if (devExtP->Dot11HeaderPool)
-			NPF_FreeObjectPool(devExtP->Dot11HeaderPool);
+		if (devExtP->bDot11HeaderPoolInit)
+			ExDeleteLookasideListEx(&devExtP->Dot11HeaderPool);
 #endif
-		if (devExtP->InternalRequestPool)
-			NPF_FreeObjectPool(devExtP->InternalRequestPool);
-		if (devExtP->NBCopiesPool)
-			NPF_FreeObjectPool(devExtP->NBCopiesPool);
-		if (devExtP->NBLCopyPool)
-			NPF_FreeObjectPool(devExtP->NBLCopyPool);
-		if (devExtP->BufferPool)
-			NPF_FreeObjectPool(devExtP->BufferPool);
+		if (devExtP->bCapturePoolInit)
+			ExDeleteLookasideListEx(&devExtP->CapturePool);
+		if (devExtP->bInternalRequestPoolInit)
+			ExDeleteLookasideListEx(&devExtP->InternalRequestPool);
+		if (devExtP->bNBCopiesPoolInit)
+			ExDeleteLookasideListEx(&devExtP->NBCopiesPool);
+		if (devExtP->bNBLCopyPoolInit)
+			ExDeleteLookasideListEx(&devExtP->NBLCopyPool);
+		if (devExtP->bBufferPoolInit)
+			ExDeleteLookasideListEx(&devExtP->BufferPool);
 		if (devExtP->AllOpensLock)
 			NdisFreeRWLock(devExtP->AllOpensLock);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
@@ -1090,20 +977,6 @@ Return Value:
 		}
 		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
 
-		// Stop the garbage collection thread
-		DeviceExtension->GCShouldStop = TRUE;
-		KeReleaseSemaphore(&DeviceExtension->GCSemaphore,
-				0,  // No priority boost
-				1,  // Increment semaphore by 1
-				TRUE );// WaitForXxx after this call
-		// Wait for the thread to terminate
-		KeWaitForSingleObject(DeviceExtension->GCThreadObj,
-				Executive,
-				KernelMode,
-				FALSE,
-				NULL );
-		ObDereferenceObject(DeviceExtension->GCThreadObj);
-
 		if (DeviceExtension->ExportString)
 		{
 			RtlInitUnicodeString(&SymLink, DeviceExtension->ExportString);
@@ -1115,31 +988,14 @@ Return Value:
 			DeviceExtension->ExportString = NULL;
 		}
 
-		if (DeviceExtension->BufferPool)
-		{
-			NPF_FreeObjectPool(DeviceExtension->BufferPool);
-		}
-
-		if (DeviceExtension->NBLCopyPool)
-		{
-			NPF_FreeObjectPool(DeviceExtension->NBLCopyPool);
-		}
-
-		if (DeviceExtension->NBCopiesPool)
-		{
-			NPF_FreeObjectPool(DeviceExtension->NBCopiesPool);
-		}
-
-		if (DeviceExtension->InternalRequestPool)
-		{
-			NPF_FreeObjectPool(DeviceExtension->InternalRequestPool);
-		}
-
+		ExDeleteLookasideListEx(&DeviceExtension->BufferPool);
+		ExDeleteLookasideListEx(&DeviceExtension->NBLCopyPool);
+		ExDeleteLookasideListEx(&DeviceExtension->NBCopiesPool);
+		ExDeleteLookasideListEx(&DeviceExtension->InternalRequestPool);
+		ExDeleteLookasideListEx(&DeviceExtension->CapturePool);
 #ifdef HAVE_DOT11_SUPPORT
-		if (DeviceExtension->Dot11HeaderPool)
-		{
-			NPF_FreeObjectPool(DeviceExtension->Dot11HeaderPool);
-		}
+		if (DeviceExtension->bDot11HeaderPoolInit)
+			ExDeleteLookasideListEx(&DeviceExtension->Dot11HeaderPool);
 #endif
 
 		NdisFreeRWLock(DeviceExtension->AllOpensLock);
@@ -1840,13 +1696,14 @@ NPF_IoControl(
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
 
 		// Extract a request from the list of free ones
-		pRequest = (PINTERNAL_REQUEST) NPF_ObjectPoolGet(Open->DeviceExtension->InternalRequestPool, NPF_IRQL_UNKNOWN);
+		pRequest = (PINTERNAL_REQUEST) ExAllocateFromLookasideListEx(&Open->DeviceExtension->InternalRequestPool);
 		if (pRequest == NULL)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
 			SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
 			break;
 		}
+		RtlZeroMemory(pRequest, sizeof(PINTERNAL_REQUEST));
 
 		//
 		//  See if it is an Ndis request
@@ -2128,7 +1985,7 @@ NPF_IoControl(
 
 OID_REQUEST_DONE:
 
-		NPF_ObjectPoolReturn(pRequest, NPF_IRQL_UNKNOWN);
+		ExFreeToLookasideListEx(&Open->DeviceExtension->InternalRequestPool, pRequest);
 
 		break;
 

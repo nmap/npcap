@@ -203,8 +203,6 @@ struct packet_file_header
 			+ 12 /* VHT */
 #endif
 
-#include "ObjPool.h"
-
 /*!
   \brief Header associated to a packet in the driver's buffer when the driver is in dump mode.
   Similar to the bpf_hdr structure, but simpler.
@@ -267,16 +265,20 @@ typedef struct _DEVICE_EXTENSION
 	NDIS_HANDLE FilterDriverHandle;
 	PDEVICE_OBJECT pDevObj; // pointer to the DEVICE_OBJECT for this device
 
-	PNPF_OBJ_POOL BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
-	PNPF_OBJ_POOL NBLCopyPool; // Pool of NPF_NBL_COPY objects
-	PNPF_OBJ_POOL NBCopiesPool; // Pool of NPF_NB_COPIES objects
-	PNPF_OBJ_POOL InternalRequestPool; // Pool of INTERNAL_REQUEST structures that wrap every single OID request.
+	LOOKASIDE_LIST_EX BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
+	LOOKASIDE_LIST_EX NBLCopyPool; // Pool of NPF_NBL_COPY objects
+	LOOKASIDE_LIST_EX NBCopiesPool; // Pool of NPF_NB_COPIES objects
+	LOOKASIDE_LIST_EX InternalRequestPool; // Pool of INTERNAL_REQUEST structures that wrap every single OID request.
+	LOOKASIDE_LIST_EX CapturePool; // Pool of NPF_CAP_DATA objects
 #ifdef HAVE_DOT11_SUPPORT
-	PNPF_OBJ_POOL Dot11HeaderPool; // Pool of Radiotap header buffers
+	LOOKASIDE_LIST_EX Dot11HeaderPool; // Pool of Radiotap header buffers
 #endif
-	KSEMAPHORE GCSemaphore; // Semaphore to signal garbage collection thread
-	BOOLEAN GCShouldStop; // Flag to kill garbage collection thread
-	PVOID GCThreadObj; // Pointer to the garbage collection thread itself.
+	UCHAR bBufferPoolInit:1;
+	UCHAR bNBLCopyPoolInit:1;
+	UCHAR bNBCopiesPoolInit:1;
+	UCHAR bInternalRequestPoolInit:1;
+	UCHAR bCapturePoolInit:1;
+	UCHAR bDot11HeaderPoolInit:1;
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 typedef enum _FILTER_STATE
@@ -411,7 +413,6 @@ typedef struct _OPEN_INSTANCE
 	PNDIS_RW_LOCK_EX MachineLock; ///< Lock that protects the BPF filter while in use.
 
 	/* Buffer */
-	PNPF_OBJ_POOL CapturePool; // Pool of NPF_CAP_DATA objects
 	PNDIS_RW_LOCK_EX BufferLock; // Lock for modifying the buffer size/configuration
 	LIST_ENTRY PacketQueue; // Head of packet buffer queue
 	KSPIN_LOCK PacketQueueLock; // Lock controlling buffer queue
@@ -456,10 +457,11 @@ typedef struct _NPF_NBL_COPY
 #ifdef HAVE_DOT11_SUPPORT
 	PUCHAR Dot11RadiotapHeader;
 #endif
+	ULONG refcount;
 } NPF_NBL_COPY, *PNPF_NBL_COPY;
 
 /* Fixed-size buffers for holding packet data. Fixed size makes math easier and
- * lets us use ObjPool */
+ * lets us use lookaside lists */
 typedef struct _BUFCHAIN_ELEM *PBUFCHAIN_ELEM;
 typedef struct _BUFCHAIN_ELEM
 {
@@ -478,6 +480,7 @@ typedef struct _NPF_NB_COPIES
 	ULONG ulCurrMdlOffset; // Position in that MDL.
 	ULONG ulSize; //Size of all used space in the bufchain.
 	ULONG ulPacketSize; // Size of the original packet
+	ULONG refcount;
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
 /* Structure of a captured packet data description */
@@ -505,20 +508,17 @@ NPF_ResetBufferContents(
 	_In_ BOOLEAN AcquireLock
 );
 
-_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID NPF_ReturnNBCopies(
 	_In_ _Frees_ptr_ PNPF_NB_COPIES pNBCopy,
-	_In_ BOOLEAN bAtDispatchLevel);
+	_In_ PDEVICE_EXTENSION pDevExt);
 
-_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID NPF_ReturnNBLCopy(
 	_In_ _Frees_ptr_ PNPF_NBL_COPY pNBLCopy,
-	_In_ BOOLEAN bAtDispatchLevel);
+	_In_ PDEVICE_EXTENSION pDevExt);
 
-_When_(bAtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID NPF_ReturnCapData(
 	_In_ _Frees_ptr_ PNPF_CAP_DATA pCapData,
-	_In_ BOOLEAN bAtDispatchLevel);
+	_In_ PDEVICE_EXTENSION pDevExt);
 
 /*!
 \brief Context information for originated sent packets

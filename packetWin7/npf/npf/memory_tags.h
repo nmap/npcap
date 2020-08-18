@@ -76,7 +76,7 @@
 #define NPF_NBC_POOL_TAG 'BNpN'
 // DEVICE_EXTENSION::Dot11HeaderPool
 #define NPF_DOT11_POOL_TAG '11pN'
-// OPEN_INSTANCE::CapturePool
+// DEVICE_EXTENSION::CapturePool
 #define NPF_CAP_POOL_TAG 'DCpN'
 // NPF_BufferedWrite packet data
 #define NPF_BUFFERED_WRITE_TAG 'WBpN'

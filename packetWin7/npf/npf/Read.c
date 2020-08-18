@@ -395,7 +395,7 @@ NPF_Read(
 
 		// Return this capture data
 		// MUST be done BEFORE incrementing free space, otherwise we risk runaway allocations while this is stalled.
-		NPF_ReturnCapData(pCapData, TRUE);
+		NPF_ReturnCapData(pCapData, Open->DeviceExtension);
 
 		// Increase free space by the amount that it was reduced before
 		NpfInterlockedExchangeAdd(&Open->Free, ulCapSize);
@@ -485,10 +485,10 @@ NPF_DoTap(
 			pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
 			pNBCopiesEntry = pNBCopiesEntry->Next;
 
-			NPF_ReturnNBCopies(pNBCopies, AtDispatchLevel);
+			NPF_ReturnNBCopies(pNBCopies, pDevExt);
 		}
 
-		NPF_ReturnNBLCopy(pNBLCopy, AtDispatchLevel);
+		NPF_ReturnNBLCopy(pNBLCopy, pDevExt);
 	}
 
 	return;
@@ -606,7 +606,7 @@ NPF_AlignProtocolField(
 _IRQL_requires_(DISPATCH_LEVEL)
 _Ret_maybenull_
 PNPF_CAP_DATA NPF_GetCapData(
-		_In_ PNPF_OBJ_POOL pPool,
+		_Inout_ PLOOKASIDE_LIST_EX pPool,
 		_Inout_ PNPF_NB_COPIES pNBCopy,
 		_In_ PNPF_NBL_COPY pNBLCopy,
 		_In_range_(1,0xffffffff) UINT uCapLen
@@ -617,16 +617,17 @@ PNPF_CAP_DATA NPF_GetCapData(
 	ASSERT(pNBCopy->pFirstElem);
 	ASSERT(pNBCopy->ulPacketSize < 0xffffffff);
 
-	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) NPF_ObjectPoolGet(pPool, TRUE);
+	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) ExAllocateFromLookasideListEx(pPool);
 	if (pCapData == NULL)
 	{
 		return NULL;
 	}
+	RtlZeroMemory(pCapData, sizeof(NPF_CAP_DATA));
 
 	// Increment refcounts on relevant structures
 	pCapData->pNBCopy = pNBCopy;
-	NPF_ReferenceObject(pNBCopy);
-	NPF_ReferenceObject(pNBLCopy);
+	InterlockedIncrement(&pNBCopy->refcount);
+	InterlockedIncrement(&pNBLCopy->refcount);
 
 	pCapData->ulCaplen = uCapLen;
 
@@ -640,7 +641,7 @@ BOOLEAN
 NPF_CopyFromNetBufferToNBCopy(
 		_Inout_ PNPF_NB_COPIES pNBCopy,
 		_In_ ULONG ulDesiredLen,
-		_In_ PNPF_OBJ_POOL BufchainPool,
+		_Inout_ PLOOKASIDE_LIST_EX BufchainPool,
 		_In_ BOOLEAN bAtDispatchLevel
 		)
 {
@@ -668,12 +669,13 @@ NPF_CopyFromNetBufferToNBCopy(
 	{
 		// If pLastElem is null, there had better be no elems at all.
 		ASSERT(pNBCopy->pFirstElem == NULL);
-		pElem = (PBUFCHAIN_ELEM) NPF_ObjectPoolGet(BufchainPool, bAtDispatchLevel);
+		pElem = (PBUFCHAIN_ELEM) ExAllocateFromLookasideListEx(BufchainPool);
 		if (pElem == NULL)
 		{
 			IF_LOUD(DbgPrint("Failed to allocate Bufchain Elem");)
 			return FALSE;
 		}
+		RtlZeroMemory(pElem, sizeof(BUFCHAIN_ELEM));
 		ulBufIdx = 0;
 		pNBCopy->pFirstElem = pElem;
 		pNBCopy->pLastElem = pElem;
@@ -717,12 +719,13 @@ NPF_CopyFromNetBufferToNBCopy(
 			// If the offset is past the end of the buffer, we need a new buffer.
 			if (ulBufIdx == NPF_BUFCHAIN_SIZE)
 			{
-				pElem->Next = (PBUFCHAIN_ELEM) NPF_ObjectPoolGet(BufchainPool, bAtDispatchLevel);
+				pElem->Next = (PBUFCHAIN_ELEM) ExAllocateFromLookasideListEx(BufchainPool);
 				if (pElem->Next == NULL)
 				{
 					IF_LOUD(DbgPrint("Failed to allocate Bufchain Elem");)
 					return FALSE;
 				}
+				RtlZeroMemory(pElem->Next, sizeof(BUFCHAIN_ELEM));
 				pElem = pElem->Next;
 				ulBufIdx = 0;
 				pNBCopy->pLastElem = pElem;
@@ -794,7 +797,7 @@ NPF_TapExForEachOpen(
 		if (pNBLCopyPrev->Next == NULL)
 		{
 			// Add another NBL copy to the chain
-			pNBLCopy = (PNPF_NBL_COPY) NPF_ObjectPoolGet(Open->DeviceExtension->NBLCopyPool, AtDispatchLevel);
+			pNBLCopy = (PNPF_NBL_COPY) ExAllocateFromLookasideListEx(&Open->DeviceExtension->NBLCopyPool);
 			if (pNBLCopy == NULL)
 			{
 				//Insufficient resources.
@@ -802,6 +805,8 @@ NPF_TapExForEachOpen(
 				// and actual NBs won't line up.
 				goto TEFEO_done_with_NBs;
 			}
+			RtlZeroMemory(pNBLCopy, sizeof(NPF_NBL_COPY));
+			pNBLCopy->refcount = 1;
 			ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
 			pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
 			if (tstamp->tv_sec == 0)
@@ -859,13 +864,14 @@ NPF_TapExForEachOpen(
 					goto RadiotapDone;
 				}
 
-				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) NPF_ObjectPoolGet(Open->DeviceExtension->Dot11HeaderPool, AtDispatchLevel);
+				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) ExAllocateFromLookasideListEx(&Open->DeviceExtension->Dot11HeaderPool);
 				if (pNBLCopy->Dot11RadiotapHeader == NULL)
 				{
 					// Insufficient memory
 					// TODO: Count this as a drop?
 					goto RadiotapDone;
 				}
+				RtlZeroMemory(pNBLCopy->Dot11RadiotapHeader, SIZEOF_RADIOTAP_BUFFER);
 				pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pNBLCopy->Dot11RadiotapHeader;
 
 				// The radiotap header is also placed in the buffer.
@@ -1132,7 +1138,7 @@ NPF_TapExForEachOpen(
 			{
 				// Add another copy to the chain
 				// While BufferLock is held we are at DISPATCH_LEVEL
-				pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, TRUE);
+				pNBCopy = (PNPF_NB_COPIES) ExAllocateFromLookasideListEx(&Open->DeviceExtension->NBCopiesPool);
 				if (pNBCopy == NULL)
 				{
 					//Insufficient resources.
@@ -1141,6 +1147,8 @@ NPF_TapExForEachOpen(
 					NdisReleaseRWLock(Open->BufferLock, &lockState);
 					goto TEFEO_done_with_NBs;
 				}
+				RtlZeroMemory(pNBCopy, sizeof(NPF_NB_COPIES));
+				pNBCopy->refcount = 1;
 				ASSERT(pNBCopy->CopiesEntry.Next == NULL);
 				pNBCopiesPrev->Next = &pNBCopy->CopiesEntry;
 				pNBCopy->pNBLCopy = pNBLCopy;
@@ -1158,7 +1166,7 @@ NPF_TapExForEachOpen(
 			}
 
 			// Make sure we have copied enough data
-			if (!NPF_CopyFromNetBufferToNBCopy(pNBCopy, fres, Open->DeviceExtension->BufferPool, TRUE))
+			if (!NPF_CopyFromNetBufferToNBCopy(pNBCopy, fres, &Open->DeviceExtension->BufferPool, TRUE))
 			{
 				// Out of resources
 				dropped++;
@@ -1166,7 +1174,7 @@ NPF_TapExForEachOpen(
 			}
 
 			// While BufferLock is held we are at DISPATCH_LEVEL
-			PNPF_CAP_DATA pCapData = NPF_GetCapData(Open->CapturePool, pNBCopy, pNBLCopy, fres);
+			PNPF_CAP_DATA pCapData = NPF_GetCapData(&Open->DeviceExtension->CapturePool, pNBCopy, pNBLCopy, fres);
 			if (pCapData == NULL)
 			{
 				// Insufficient memory
@@ -1213,7 +1221,12 @@ TEFEO_next_NB:
 				// We bailed early and we still need a placeholder NBCopies here.
 				if (pNBCopy == NULL)
 				{
-					pNBCopy = (PNPF_NB_COPIES) NPF_ObjectPoolGet(Open->DeviceExtension->NBCopiesPool, AtDispatchLevel);
+					pNBCopy = (PNPF_NB_COPIES) ExAllocateFromLookasideListEx(&Open->DeviceExtension->NBCopiesPool);
+					if (pNBCopy != NULL)
+					{
+						RtlZeroMemory(pNBCopy, sizeof(NPF_NB_COPIES));
+						pNBCopy->refcount = 1;
+					}
 				}
 				if (pNBCopy == NULL)
 				{

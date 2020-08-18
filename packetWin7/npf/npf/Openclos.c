@@ -405,8 +405,7 @@ NPF_ResetBufferContents(
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
 		Curr = Curr->Flink;
 
-		// If AcquireLock, then we are at DISPATCH_LEVEL
-		NPF_ReturnCapData(pCapData, AcquireLock);
+		NPF_ReturnCapData(pCapData, Open->DeviceExtension);
 	}
 	// Remove links
 	InitializeListHead(&Open->PacketQueue);
@@ -417,48 +416,57 @@ NPF_ResetBufferContents(
 }
 
 _Use_decl_annotations_
-VOID NPF_ReturnNBCopies(PNPF_NB_COPIES pNBCopy, BOOLEAN bAtDispatchLevel)
+VOID NPF_ReturnNBCopies(PNPF_NB_COPIES pNBCopy, PDEVICE_EXTENSION pDevExt)
 {
 	PBUFCHAIN_ELEM pDeleteMe = NULL;
 	PBUFCHAIN_ELEM pElem = pNBCopy->pFirstElem;
 #if DBG
 	PBUFCHAIN_ELEM pLastElem = pNBCopy->pLastElem;
 #endif
+	ULONG refcount = InterlockedDecrement(&pNBCopy->refcount);
 
-	if (NPF_ObjectPoolReturn(pNBCopy, bAtDispatchLevel))
+	if (refcount == 0)
 	{
+		ExFreeToLookasideListEx(&pDevExt->NBCopiesPool, pNBCopy);
 		while (pElem != NULL)
 		{
 			pDeleteMe = pElem;
 			pElem = pElem->Next;
 			// Either there's another after this or this is the last one
 			ASSERT(pElem || pLastElem == pDeleteMe);
-			NPF_ObjectPoolReturn(pDeleteMe, bAtDispatchLevel);
+			ExFreeToLookasideListEx(&pDevExt->BufferPool, pDeleteMe);
 		}
 	}
 }
 
 _Use_decl_annotations_
-VOID NPF_ReturnNBLCopy(PNPF_NBL_COPY pNBLCopy, BOOLEAN bAtDispatchLevel)
+VOID NPF_ReturnNBLCopy(PNPF_NBL_COPY pNBLCopy, PDEVICE_EXTENSION pDevExt)
 {
 	PUCHAR pDot11RadiotapHeader = pNBLCopy->Dot11RadiotapHeader;
-	if (NPF_ObjectPoolReturn(pNBLCopy, bAtDispatchLevel) && pDot11RadiotapHeader != NULL)
+	ULONG refcount = InterlockedDecrement(&pNBLCopy->refcount);
+	if (refcount == 0)
 	{
-		NPF_ObjectPoolReturn(pDot11RadiotapHeader, bAtDispatchLevel);
+		ExFreeToLookasideListEx(&pDevExt->NBLCopyPool, pNBLCopy);
+		if (pDot11RadiotapHeader != NULL)
+		{
+			ExFreeToLookasideListEx(&pDevExt->Dot11HeaderPool, pDot11RadiotapHeader);
+		}
 	}
 }
 
 _Use_decl_annotations_
-VOID NPF_ReturnCapData(PNPF_CAP_DATA pCapData, BOOLEAN bAtDispatchLevel)
+VOID NPF_ReturnCapData(PNPF_CAP_DATA pCapData, PDEVICE_EXTENSION pDevExt)
 {
 	PNPF_NB_COPIES pNBCopy = pCapData->pNBCopy;
 	PNPF_NBL_COPY pNBLCopy = (pNBCopy ? pNBCopy->pNBLCopy : NULL);
-	if (NPF_ObjectPoolReturn(pCapData, bAtDispatchLevel))
+	ExFreeToLookasideListEx(&pDevExt->CapturePool, pCapData);
+	if (pNBLCopy)
 	{
-		if (pNBLCopy)
-			NPF_ReturnNBLCopy(pNBLCopy, bAtDispatchLevel);
-		if (pNBCopy)
-			NPF_ReturnNBCopies(pNBCopy, bAtDispatchLevel);
+		NPF_ReturnNBLCopy(pNBLCopy, pDevExt);
+	}
+	if (pNBCopy)
+	{
+		NPF_ReturnNBCopies(pNBCopy, pDevExt);
 	}
 }
 
@@ -959,12 +967,6 @@ NPF_ReleaseOpenInstanceResources(
 	{
 		NPF_ResetBufferContents(pOpen, FALSE);
 	}
-	if (pOpen->CapturePool)
-	{
-		NPF_FreeObjectPool(pOpen->CapturePool);
-		pOpen->CapturePool = NULL;
-	}
-
 
 	NdisFreeRWLock(pOpen->BufferLock);
 	NdisFreeRWLock(pOpen->MachineLock);
@@ -1497,14 +1499,6 @@ NPF_Cleanup(
 	NPF_ReleaseOpenInstanceResources(Open);
 	NPF_RemoveFromAllOpensList(Open);
 
-	// Recover memory if possible
-	KeReleaseSemaphore(&Open->DeviceExtension->GCSemaphore,
-			0, // No priority boost
-			1, // Increment semaphore by 1
-			FALSE); // No WaitForXxx after this call
-
-	//	IrpSp->FileObject->FsContext = NULL;
-
 	Status = STATUS_SUCCESS;
 
 	//
@@ -1935,15 +1929,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 		TRACE_EXIT();
 		return NULL;
 	}
-	Open->CapturePool = NPF_AllocateObjectPool(NPF_CAP_POOL_TAG, sizeof(NPF_CAP_DATA), 1024);
-	if (Open->CapturePool == NULL)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
-		NdisFreeRWLock(Open->BufferLock);
-		ExFreePool(Open);
-		TRACE_EXIT();
-		return NULL;
-	}
 
 	InitializeListHead(&Open->PacketQueue);
 	KeInitializeSpinLock(&Open->PacketQueueLock);
@@ -1963,7 +1948,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	if (Open->MachineLock == NULL)
 	{
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate MachineLock");
-		NPF_FreeObjectPool(Open->CapturePool);
 		NdisFreeRWLock(Open->BufferLock);
 		ExFreePool(Open);
 		TRACE_EXIT();
