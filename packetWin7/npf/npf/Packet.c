@@ -1208,7 +1208,7 @@ NPF_IoControl(
 		
 		pStats[3] = Open->Accepted;
 		pStats[0] = Open->Received;
-		pStats[1] = Open->Dropped;
+		pStats[1] = Open->Dropped + Open->ResourceDropped;
 		pStats[2] = 0;		// Not yet supported
 
 		SET_RESULT_SUCCESS(StatsLength);

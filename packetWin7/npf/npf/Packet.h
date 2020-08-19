@@ -416,7 +416,8 @@ typedef struct _OPEN_INSTANCE
 	PNDIS_RW_LOCK_EX BufferLock; // Lock for modifying the buffer size/configuration
 	LIST_ENTRY PacketQueue; // Head of packet buffer queue
 	KSPIN_LOCK PacketQueueLock; // Lock controlling buffer queue
-	ULONG Free; // Bytes of buffer free for writing
+	LONG Free; // Bytes of buffer free for writing
+	LONG Size; ///< Size of the kernel buffer
 
 	/* Stats */
 	ULONG Accepted; /// A packet is accepted if it passes the filter and
@@ -425,10 +426,10 @@ typedef struct _OPEN_INSTANCE
 	ULONG Received; /// number of packet received by the network adapter
                         //  since the beginning of the capture session.
 	ULONG Dropped; /// A packet is dropped if there is no more space to
-		       //  store it in the circular buffer or if there is
+		       //  store it in the circular buffer.
+	ULONG ResourceDropped; /// A packet is resource-dropped if there is
 		       //  insufficient memory to allocate a copy.
 
-	ULONG Size; ///< Size of the kernel buffer
 	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
 	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
 	ULONG PendingIrps[OpenClosed];
