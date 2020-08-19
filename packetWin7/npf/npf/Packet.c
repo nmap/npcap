@@ -1027,12 +1027,15 @@ Return Value:
 	NdisAcquireSpinLock(&g_FilterArrayLock);
 	while (g_arrFiltMod.Next != NULL) {
 		PNPCAP_FILTER_MODULE pFiltMod = CONTAINING_RECORD(g_arrFiltMod.Next, NPCAP_FILTER_MODULE, FilterModulesEntry);
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (pFiltMod->Loopback) {
 			// NDIS doesn't manage this, so we "detach" it ourselves.
 			NdisReleaseSpinLock(&g_FilterArrayLock);
 			NPF_DetachAdapter(pFiltMod);
 		}
-		else {
+		else
+#endif
+		{
 			// Wait for NDIS to release it
 			NdisReleaseSpinLock(&g_FilterArrayLock);
 			NdisWaitEvent(&Event, 1);

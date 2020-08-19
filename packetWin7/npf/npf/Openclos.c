@@ -1601,7 +1601,7 @@ NPF_RemoveFromGroupOpenArray(
 	ULONG OldPacketFilter;
 	ULONG BytesProcessed;
 	PVOID pBuffer = NULL;
-	BOOL found = FALSE;
+	BOOLEAN found = FALSE;
 	LOCK_STATE_EX lockState;
 
 	TRACE_ENTER();
@@ -1863,6 +1863,7 @@ NPF_GetFilterModuleByAdapterName(
 
 //-------------------------------------------------------------------
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 _Use_decl_annotations_
 PNPCAP_FILTER_MODULE
 NPF_GetLoopbackFilterModule()
@@ -1896,7 +1897,7 @@ NPF_GetLoopbackFilterModule()
 	TRACE_EXIT();
 	return NULL;
 }
-
+#endif
 //-------------------------------------------------------------------
 
 _Use_decl_annotations_
@@ -3202,11 +3203,13 @@ NPF_SetPacketFilter(
 	
 	ASSERT(pFiltMod != NULL);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (pFiltMod->Loopback) {
 		// We don't really support OID requests on our fake loopback
 		// adapter, but we can pretend.
 		return NDIS_STATUS_SUCCESS;
 	}
+#endif
 
 	// Not modifying list, read-lock
 	NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState, 0);
