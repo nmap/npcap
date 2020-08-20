@@ -1115,8 +1115,8 @@ NPF_TapExForEachOpen(
 				}
 			}
 #endif
-			// Special case: zero-length buffer can be checked without locking buffer
-			if (Open->Size == 0)
+			// Special case: zero-length buffer or negative free space can be checked without locking buffer
+			if (Open->Size <= 0 || Open->Free <= 0)
 			{
 				dropped++;
 				//return NDIS_STATUS_NOT_ACCEPTED;
