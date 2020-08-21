@@ -1101,12 +1101,22 @@ NPF_TapExForEachOpen(
 			}
 #endif
 			// Special case: zero-length buffer or negative free space can be checked without locking buffer
-			if (Open->Size <= 0 || Open->Free <= 0)
+			if (Open->Size <= 0)
 			{
 				dropped++;
-				//return NDIS_STATUS_NOT_ACCEPTED;
 				goto TEFEO_next_NB;
 			}
+
+			// Special case: negative free space can be checked without locking buffer
+			if (Open->Free <= 0)
+			{
+				dropped++;
+				// Wake the application
+				if (Open->ReadEvent != NULL)
+					KeSetEvent(Open->ReadEvent, 0, FALSE);
+				goto TEFEO_next_NB;
+			}
+
 
 			LONG lCapSize = NPF_CAP_SIZE(fres)
 #ifdef HAVE_DOT11_SUPPORT
