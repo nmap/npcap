@@ -104,12 +104,10 @@ NPF_CopyFromNBCopyToBuffer(
 		_In_ ULONG ulDesiredLen
 		)
 {
-	PBUFCHAIN_ELEM pElem = pNBCopy->pFirstElem;
+	PBUFCHAIN_ELEM pElem = &pNBCopy->FirstElem;
 	ULONG out = 0;
 	ULONG ulCopyLen = 0;
 
-	ASSERT(pNBCopy);
-	ASSERT(pElem);
 	ASSERT(ulDesiredLen <= pNBCopy->ulSize);
 	while (pElem && out < ulDesiredLen)
 	{
@@ -341,7 +339,6 @@ NPF_Read(
 		/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
 		ASSERT(pCapData->pNBCopy);
 		ASSERT(pCapData->pNBCopy->pNBLCopy);
-		ASSERT(pCapData->pNBCopy->pFirstElem);
 		ASSERT(pCapData->pNBCopy->ulPacketSize < 0xffffffff);
 
 #ifdef HAVE_DOT11_SUPPORT
@@ -440,6 +437,7 @@ NPF_DoTap(
 	SINGLE_LIST_ENTRY NBLCopiesHead;
 	struct timeval tstamp = {0, 0};
 	NBLCopiesHead.Next = NULL;
+	PNPF_SRC_NB pSrcNB = NULL;
 	PNPF_NB_COPIES pNBCopies = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
 	PDEVICE_EXTENSION pDevExt = NULL;
@@ -475,10 +473,14 @@ NPF_DoTap(
 		pNBCopiesEntry = pNBLCopy->NBCopiesHead.Next;
 		while (pNBCopiesEntry != NULL)
 		{
-			pNBCopies = CONTAINING_RECORD(pNBCopiesEntry, NPF_NB_COPIES, CopiesEntry);
+			pSrcNB = CONTAINING_RECORD(pNBCopiesEntry, NPF_SRC_NB, CopiesEntry);
 			pNBCopiesEntry = pNBCopiesEntry->Next;
 
-			NPF_ReturnNBCopies(pNBCopies, pDevExt);
+			if (pSrcNB->pNBCopy)
+			{
+				NPF_ReturnNBCopies(pSrcNB->pNBCopy, pDevExt);
+			}
+			ExFreeToLookasideListEx(&pDevExt->SrcNBPool, pSrcNB);
 		}
 
 		NPF_ReturnNBLCopy(pNBLCopy, pDevExt);
@@ -606,7 +608,6 @@ PNPF_CAP_DATA NPF_GetCapData(
 {
 	ASSERT(pNBLCopy);
 	ASSERT(pNBCopy->pNBLCopy == pNBLCopy);
-	ASSERT(pNBCopy->pFirstElem);
 	ASSERT(pNBCopy->ulPacketSize < 0xffffffff);
 
 	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) ExAllocateFromLookasideListEx(pPool);
@@ -630,7 +631,7 @@ _Must_inspect_result_
 _Success_(return != 0)
 BOOLEAN
 NPF_CopyFromNetBufferToNBCopy(
-		_Inout_ PNPF_NB_COPIES pNBCopy,
+		_Inout_ PNPF_SRC_NB pSrcNB,
 		_In_ ULONG ulDesiredLen,
 		_Inout_ PLOOKASIDE_LIST_EX BufchainPool
 		)
@@ -640,14 +641,16 @@ NPF_CopyFromNetBufferToNBCopy(
 	ULONG ulCopyLenForMdl = 0;
 	ULONG ulCopyLen = 0;
 
-	PMDL pMdl = pNBCopy->pSrcCurrMdl;
-	ULONG ulMdlOffset = pNBCopy->ulCurrMdlOffset;
+	PNPF_NB_COPIES pNBCopy = pSrcNB->pNBCopy;
+	PMDL pMdl = pSrcNB->pSrcCurrMdl;
+	ULONG ulMdlOffset = pSrcNB->ulCurrMdlOffset;
 
-	PBUFCHAIN_ELEM pElem = pNBCopy->pLastElem;
+	PBUFCHAIN_ELEM pElem = pSrcNB->pLastElem;
 	ULONG ulBufIdx = pNBCopy->ulSize % NPF_BUFCHAIN_SIZE;
 
 	// pNBCopy must be set up correctly
 	ASSERT(pMdl);
+	ASSERT(pElem != NULL);
 
 	// If there's enough data here already, we're done.
 	if (ulDesiredLen <= pNBCopy->ulSize)
@@ -655,22 +658,7 @@ NPF_CopyFromNetBufferToNBCopy(
 		return TRUE;
 	}
 
-	if (pElem == NULL)
-	{
-		// If pLastElem is null, there had better be no elems at all.
-		ASSERT(pNBCopy->pFirstElem == NULL);
-		pElem = (PBUFCHAIN_ELEM) ExAllocateFromLookasideListEx(BufchainPool);
-		if (pElem == NULL)
-		{
-			IF_LOUD(DbgPrint("Failed to allocate Bufchain Elem");)
-			return FALSE;
-		}
-		RtlZeroMemory(pElem, sizeof(BUFCHAIN_ELEM));
-		ulBufIdx = 0;
-		pNBCopy->pFirstElem = pElem;
-		pNBCopy->pLastElem = pElem;
-	}
-	else if (ulBufIdx == 0)
+	if (pElem != &pNBCopy->FirstElem && ulBufIdx == 0)
 	{
 		// We don't leave empty elems at the end of the chain,
 		// so this must mean the last elem is actually full.
@@ -691,7 +679,7 @@ NPF_CopyFromNetBufferToNBCopy(
 		}
 
 		// Record our current place in the NB
-		pNBCopy->pSrcCurrMdl;
+		pSrcNB->pSrcCurrMdl = pMdl;
 
 		if (pSrcBuf == NULL)
 		{
@@ -721,7 +709,7 @@ NPF_CopyFromNetBufferToNBCopy(
 				RtlZeroMemory(pElem->Next, sizeof(BUFCHAIN_ELEM));
 				pElem = pElem->Next;
 				ulBufIdx = 0;
-				pNBCopy->pLastElem = pElem;
+				pSrcNB->pLastElem = pElem;
 			}
 			// How much of what we want from this MDL will fit in this elem?
 			ulCopyLen = min(ulCopyLenForMdl, NPF_BUFCHAIN_SIZE - ulBufIdx);
@@ -732,7 +720,7 @@ NPF_CopyFromNetBufferToNBCopy(
 			ulCopyLenForMdl -= ulCopyLen;
 
 			// Record our current place in the MDL
-			pNBCopy->ulCurrMdlOffset = ulMdlOffset;
+			pSrcNB->ulCurrMdlOffset = ulMdlOffset;
 		}
 
 		pSrcBuf = NULL;
@@ -762,10 +750,10 @@ NPF_TapExForEachOpen(
 	PNET_BUFFER pNetBuf = NULL;
 	LOCK_STATE_EX lockState;
 
-	PNPF_NB_COPIES pNBCopy = NULL;
+	PNPF_SRC_NB pSrcNB = NULL;
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	PSINGLE_LIST_ENTRY pNBLCopyPrev = NULL;
-	PSINGLE_LIST_ENTRY pNBCopiesPrev = NULL;
+	PSINGLE_LIST_ENTRY pSrcNBPrev = NULL;
 	ASSERT(tstamp != NULL);
 	
 	//TRACE_ENTER();
@@ -1013,7 +1001,7 @@ NPF_TapExForEachOpen(
 #endif
 		} // end of informational headers
 
-		pNBCopiesPrev = &pNBLCopy->NBCopiesHead;
+		pSrcNBPrev = &pNBLCopy->NBCopiesHead;
 		pNetBuf = pNetBufList->FirstNetBuffer;
 		while (pNetBuf != NULL)
 		{
@@ -1022,29 +1010,26 @@ NPF_TapExForEachOpen(
 			// Get the whole packet length.
 			ULONG TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 
-			ASSERT(pNBCopiesPrev);
-			if (pNBCopiesPrev->Next == NULL)
+			ASSERT(pSrcNBPrev);
+			if (pSrcNBPrev->Next == NULL)
 			{
 				// Add another copy to the chain
-				pNBCopy = (PNPF_NB_COPIES) ExAllocateFromLookasideListEx(&Open->DeviceExtension->NBCopiesPool);
-				if (pNBCopy == NULL)
+				pSrcNB = (PNPF_SRC_NB) ExAllocateFromLookasideListEx(&Open->DeviceExtension->SrcNBPool);
+				if (pSrcNB == NULL)
 				{
 					//Insufficient resources.
 					// We can't continue traversing or the NBCopies
 					// and actual NBs won't line up.
 					goto TEFEO_done_with_NBs;
 				}
-				RtlZeroMemory(pNBCopy, sizeof(NPF_NB_COPIES));
-				pNBCopy->refcount = 1;
-				pNBCopiesPrev->Next = &pNBCopy->CopiesEntry;
-				pNBCopy->pNBLCopy = pNBLCopy;
-				pNBCopy->pSrcCurrMdl = NET_BUFFER_CURRENT_MDL(pNetBuf);
-				pNBCopy->ulCurrMdlOffset = NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf);
-				pNBCopy->ulPacketSize = TotalPacketSize;
+				RtlZeroMemory(pSrcNB, sizeof(NPF_SRC_NB));
+				pSrcNBPrev->Next = &pSrcNB->CopiesEntry;
+				pSrcNB->pSrcCurrMdl = NET_BUFFER_CURRENT_MDL(pNetBuf);
+				pSrcNB->ulCurrMdlOffset = NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf);
 			}
 			else
 			{
-				pNBCopy = CONTAINING_RECORD(pNBCopiesPrev->Next, NPF_NB_COPIES, CopiesEntry);
+				pSrcNB = CONTAINING_RECORD(pSrcNBPrev->Next, NPF_SRC_NB, CopiesEntry);
 			}
 
 
@@ -1153,15 +1138,31 @@ NPF_TapExForEachOpen(
 			}
 
 			// Packet accepted and must be written to buffer.
+			if (pSrcNB->pNBCopy == NULL)
+			{
+				pSrcNB->pNBCopy = (PNPF_NB_COPIES) ExAllocateFromLookasideListEx(&Open->DeviceExtension->NBCopiesPool);
+				if (pSrcNB->pNBCopy == NULL)
+				{
+					// Out of resources
+					resdropped++;
+					goto TEFEO_release_BufferLock;
+				}
+				RtlZeroMemory(pSrcNB->pNBCopy, sizeof(NPF_NB_COPIES));
+				pSrcNB->pNBCopy->pNBLCopy = pNBLCopy;
+				pSrcNB->pNBCopy->ulPacketSize = TotalPacketSize;
+				pSrcNB->pNBCopy->refcount = 1;
+				pSrcNB->pLastElem = &pSrcNB->pNBCopy->FirstElem;
+			}
+
 			// Make a copy of the data so we can return the original quickly,
-			if (!NPF_CopyFromNetBufferToNBCopy(pNBCopy, fres, &Open->DeviceExtension->BufferPool))
+			if (!NPF_CopyFromNetBufferToNBCopy(pSrcNB, fres, &Open->DeviceExtension->BufferPool))
 			{
 				// Out of resources
 				resdropped++;
 				goto TEFEO_release_BufferLock;
 			}
 
-			PNPF_CAP_DATA pCapData = NPF_GetCapData(&Open->DeviceExtension->CapturePool, pNBCopy, pNBLCopy, fres);
+			PNPF_CAP_DATA pCapData = NPF_GetCapData(&Open->DeviceExtension->CapturePool, pSrcNB->pNBCopy, pNBLCopy, fres);
 			if (pCapData == NULL)
 			{
 				// Insufficient memory
@@ -1173,7 +1174,6 @@ NPF_TapExForEachOpen(
 			/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
 			ASSERT(pCapData->pNBCopy);
 			ASSERT(pCapData->pNBCopy->pNBLCopy);
-			ASSERT(pCapData->pNBCopy->pFirstElem);
 			ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
 			// We successfully put this into the queue
 			lCapSize = 0;
@@ -1203,7 +1203,7 @@ TEFEO_release_BufferLock:
 			NdisReleaseRWLock(Open->BufferLock, &lockState);
 
 TEFEO_next_NB:
-			pNBCopiesPrev = pNBCopiesPrev->Next;
+			pSrcNBPrev = pSrcNBPrev->Next;
 			pNetBuf = NET_BUFFER_NEXT_NB(pNetBuf);
 		} // while (pNetBuf != NULL)
 

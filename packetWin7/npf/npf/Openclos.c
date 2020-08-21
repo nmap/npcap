@@ -419,10 +419,8 @@ _Use_decl_annotations_
 VOID NPF_ReturnNBCopies(PNPF_NB_COPIES pNBCopy, PDEVICE_EXTENSION pDevExt)
 {
 	PBUFCHAIN_ELEM pDeleteMe = NULL;
-	PBUFCHAIN_ELEM pElem = pNBCopy->pFirstElem;
-#if DBG
-	PBUFCHAIN_ELEM pLastElem = pNBCopy->pLastElem;
-#endif
+	// FirstElem is not separately allocated
+	PBUFCHAIN_ELEM pElem = pNBCopy->FirstElem.Next;
 	ULONG refcount = InterlockedDecrement(&pNBCopy->refcount);
 
 	if (refcount == 0)
@@ -432,8 +430,6 @@ VOID NPF_ReturnNBCopies(PNPF_NB_COPIES pNBCopy, PDEVICE_EXTENSION pDevExt)
 		{
 			pDeleteMe = pElem;
 			pElem = pElem->Next;
-			// Either there's another after this or this is the last one
-			ASSERT(pElem || pLastElem == pDeleteMe);
 			ExFreeToLookasideListEx(&pDevExt->BufferPool, pDeleteMe);
 		}
 	}
