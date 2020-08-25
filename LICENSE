@@ -2,7 +2,7 @@
 NPCAP COPYRIGHT / END USER LICENSE AGREEMENT
 
 Npcap is a Windows packet sniffing driver and library and is copyright
-(c) 2013-2019 by Insecure.Com LLC ("The Nmap Project").  All rights
+(c) 2013-2020 by Insecure.Com LLC ("The Nmap Project").  All rights
 reserved.
 
 Even though Npcap source code is publicly available for review, it is
@@ -227,5 +227,3 @@ users and redistributors must comply with the relevant Npcap license
 (either the free/demo license or a commercial Npcap OEM license they
 may have purchased) as well as the minimal requirements of this 3rd
 party open source software.
-
-
