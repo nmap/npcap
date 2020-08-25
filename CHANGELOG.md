@@ -1,4 +1,15 @@
 ﻿
+## Npcap 0.9997 [2020-08-25]
+
+* Fix an integer underflow in the amount of free buffer space available leading
+  to excessive memory consumption. Fixes [#223](http://issues.npcap.org/223).
+
+* Significantly reduced per-packet memory overhead for packets in the kernel capture buffer.
+
+* Replaced object pool/slab allocator with Windows lookaside lists, improving
+  performance by avoiding spinlocks and allowing the system to adjust memory
+  consumption.
+
 ## Npcap 0.9996 [2020-08-07]
 
 * Fix a runaway memory leak triggered by low-resources condition leading to
