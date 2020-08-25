@@ -353,7 +353,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					_tprintf(_T("Unknown error! %x\n"), err);
 				}
 				_tprintf(_T("Npcap LWF driver has failed to be installed.\n"));
-				nStatus = -1;
+				nStatus = err ? err : -1;
 				goto _EXIT;
 			}
 		}
@@ -384,7 +384,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					_tprintf(_T("Unknown error! %x\n"), err);
 				}
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be installed.\n"));
-				nStatus = -1;
+				nStatus = err ? err : -1;
 				goto _EXIT;
 			}
 		}
@@ -400,8 +400,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
 				_tprintf(_T("Npcap LWF driver has failed to be uninstalled.\n"));
-				nStatus = -1;
+				nStatus = err ? err : -1;
 				goto _EXIT;
 			}
 		}
@@ -417,8 +418,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be uninstalled.\n"));
-				nStatus = -1;
+				nStatus = err ? err : 1;
 				goto _EXIT;
 			}
 		}
@@ -434,8 +436,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				nStatus = err ? err : 1;
 				_tprintf(_T("The bindings of Npcap driver have failed to be restarted.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
@@ -451,8 +454,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				nStatus = err ? err : 1;
 				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have failed to be restarted.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
@@ -499,8 +503,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				nStatus = err ? err : 1;
 				_tprintf(_T("Npcap Loopback adapter has failed to be installed.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
@@ -515,8 +520,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				nStatus = err ? err : 1;
 				_tprintf(_T("Npcap Loopback adapter has failed to be uninstalled.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
@@ -531,8 +537,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				nStatus = err ? err : 1;
 				_tprintf(_T("Npcap WFP callout driver has failed to be installed.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
@@ -547,8 +554,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				nStatus = err ? err : 1;
 				_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
@@ -643,8 +651,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			else
 			{
+				DWORD err = GetLastError();
+				nStatus = err ? err : 1;
 				_tprintf(_T("Npcap driver cache in Driver Store has failed to be cleaned up.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
