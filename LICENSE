@@ -200,7 +200,7 @@ are not permitted by applicable laws, these express or implied
 restrictions shall remain in force and effect to the maximum extent
 permitted by such applicable laws.
 
-WINPCAP & LIBPCAP ATTRIBUTION
+THIRD PARTY SOFTWARE ATTRIBUTION
 
 Some of the Npcap code is originally from WinPcap software
 (http://www.winpcap.org/). See
@@ -209,7 +209,14 @@ for further information and attribution related to that.
 
 Npcap also includes and depends on the Libpcap packet capturing
 library, which is under a 3-clause BSD license allowing free
-redistribution and use in other software. The Libpcap license can be
+redistribution and use in other software. The Libpcap license
+including attribution and warranty disclaimer statements can be
 found at:
 https://github.com/nmap/npcap/blob/master/Libpcap-License.txt
 
+Finally Npcap includes code from David Young in the
+ieee80211_radiotap.h header file. This code is also under a 3-clause
+BSD license allowing free redistribution and use in other software.
+The copyright, attribution, and warranty disclaimer statements can be
+found in the file itself (search for "David Young") at:
+https://github.com/nmap/npcap/blob/master/packetWin7/npf/npf/ieee80211_radiotap.h
