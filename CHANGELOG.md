@@ -13,7 +13,7 @@
 ## Npcap 0.9996 [2020-08-07]
 
 * Fix a runaway memory leak triggered by low-resources condition leading to
-  system hangs. Fixes [#213](http://issues.nmap.org/213).
+  system hangs. Fixes [#213](http://issues.npcap.org/213).
 
 * Fix a BSoD crash in `NPF_Read` in some high-traffic cases. Fixes [#206](http://issues.npcap.org/206).
 
@@ -22,7 +22,7 @@
 * Fix an inconsistency between return value and IRP completion status in
   `NPF_Read` when an adapter is removed. Driver Verifier would cause a bugcheck
   (BSoD) in this case, and pcap API functions would not detect an error.
-  Fixes [#217](http://issues.nmap.org/217)
+  Fixes [#217](http://issues.npcap.org/217)
 
 * Improved performance by reusing allocated packet data buffers and
   implementing `DISPATCH_LEVEL` tracking throughout the driver to speed up lock
