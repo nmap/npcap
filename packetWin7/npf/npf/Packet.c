@@ -485,6 +485,14 @@ DriverEntry(
 		}
 		devExtP->bNBCopiesPoolInit = 1;
 
+		Status = ExInitializeLookasideListEx(&devExtP->SrcNBPool, NULL, NULL, NonPagedPool, 0, sizeof(NPF_SRC_NB), NPF_SRCNB_POOL_TAG, 0);
+		if (Status != STATUS_SUCCESS)
+		{
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate SrcNBPool");
+			break;
+		}
+		devExtP->bSrcNBPoolInit = 1;
+
 		Status = ExInitializeLookasideListEx(&devExtP->InternalRequestPool, NULL, NULL, NonPagedPool, 0, sizeof(INTERNAL_REQUEST), NPF_REQ_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
@@ -531,6 +539,8 @@ DriverEntry(
 			ExDeleteLookasideListEx(&devExtP->NBCopiesPool);
 		if (devExtP->bNBLCopyPoolInit)
 			ExDeleteLookasideListEx(&devExtP->NBLCopyPool);
+		if (devExtP->bSrcNBPoolInit)
+			ExDeleteLookasideListEx(&devExtP->SrcNBPool);
 		if (devExtP->bBufferPoolInit)
 			ExDeleteLookasideListEx(&devExtP->BufferPool);
 		if (devExtP->AllOpensLock)
@@ -991,6 +1001,7 @@ Return Value:
 		ExDeleteLookasideListEx(&DeviceExtension->BufferPool);
 		ExDeleteLookasideListEx(&DeviceExtension->NBLCopyPool);
 		ExDeleteLookasideListEx(&DeviceExtension->NBCopiesPool);
+		ExDeleteLookasideListEx(&DeviceExtension->SrcNBPool);
 		ExDeleteLookasideListEx(&DeviceExtension->InternalRequestPool);
 		ExDeleteLookasideListEx(&DeviceExtension->CapturePool);
 #ifdef HAVE_DOT11_SUPPORT

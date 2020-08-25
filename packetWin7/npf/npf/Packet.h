@@ -266,8 +266,9 @@ typedef struct _DEVICE_EXTENSION
 	PDEVICE_OBJECT pDevObj; // pointer to the DEVICE_OBJECT for this device
 
 	LOOKASIDE_LIST_EX BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
-	LOOKASIDE_LIST_EX NBLCopyPool; // Pool of NPF_NBL_COPY objects
+	LOOKASIDE_LIST_EX NBLCopyPool; // Pool of NPF_NBL_COPY, NPF_NB_COPIES, NPF_SRC_NB objects
 	LOOKASIDE_LIST_EX NBCopiesPool; // Pool of NPF_NB_COPIES objects
+	LOOKASIDE_LIST_EX SrcNBPool; // Pool of NPF_SRC_NB objects
 	LOOKASIDE_LIST_EX InternalRequestPool; // Pool of INTERNAL_REQUEST structures that wrap every single OID request.
 	LOOKASIDE_LIST_EX CapturePool; // Pool of NPF_CAP_DATA objects
 #ifdef HAVE_DOT11_SUPPORT
@@ -276,6 +277,7 @@ typedef struct _DEVICE_EXTENSION
 	UCHAR bBufferPoolInit:1;
 	UCHAR bNBLCopyPoolInit:1;
 	UCHAR bNBCopiesPoolInit:1;
+	UCHAR bSrcNBPoolInit:1;
 	UCHAR bInternalRequestPoolInit:1;
 	UCHAR bCapturePoolInit:1;
 	UCHAR bDot11HeaderPoolInit:1;
@@ -473,16 +475,29 @@ typedef struct _BUFCHAIN_ELEM
 /* This is like a lower-overhead version of NET_BUFFER based on BUFCHAIN_ELEM instead of MDL */
 typedef struct _NPF_NB_COPIES
 {
-	SINGLE_LIST_ENTRY CopiesEntry;
 	PNPF_NBL_COPY pNBLCopy;
-	PBUFCHAIN_ELEM pFirstElem; // Bufchain of packet data
-	PBUFCHAIN_ELEM pLastElem; // Last elem in the chain
-	PMDL pSrcCurrMdl; // MDL where we left off copying from the source NET_BUFFER
-	ULONG ulCurrMdlOffset; // Position in that MDL.
 	ULONG ulSize; //Size of all used space in the bufchain.
 	ULONG ulPacketSize; // Size of the original packet
 	ULONG refcount;
+	BUFCHAIN_ELEM FirstElem; // Bufchain of packet data
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
+
+typedef struct _NPF_SRC_NB
+{
+	SINGLE_LIST_ENTRY CopiesEntry;
+	PNPF_NB_COPIES pNBCopy;
+	PBUFCHAIN_ELEM pLastElem; // Last elem in the chain
+	PMDL pSrcCurrMdl; // MDL where we left off copying from the source NET_BUFFER
+	ULONG ulCurrMdlOffset; // Position in that MDL.
+} NPF_SRC_NB, *PNPF_SRC_NB;
+
+// so we can use the same lookaside list for all these things
+typedef union _NPF_NB_STORAGE
+{
+	NPF_NBL_COPY NBLCopy;
+	NPF_SRC_NB SrcNB;
+	NPF_NB_COPIES NBCopy;
+} NPF_NB_STORAGE, *PNPF_NB_STORAGE;
 
 /* Structure of a captured packet data description */
 typedef struct _NPF_CAP_DATA
