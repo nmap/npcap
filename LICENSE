@@ -202,21 +202,30 @@ permitted by such applicable laws.
 
 THIRD PARTY SOFTWARE ATTRIBUTION
 
-Some of the Npcap code is originally from WinPcap software
-(http://www.winpcap.org/). See
-https://github.com/nmap/npcap/blob/master/WinPcap-License-And-Acknowledgements.txt
-for further information and attribution related to that.
+Npcap uses several 3rd party open source software libraries:
 
-Npcap also includes and depends on the Libpcap packet capturing
-library, which is under a 3-clause BSD license allowing free
-redistribution and use in other software. The Libpcap license
-including attribution and warranty disclaimer statements can be
-found at:
-https://github.com/nmap/npcap/blob/master/Libpcap-License.txt
+* The libpcap portable packet capturing library from https://tcpdump.org
+* The Winpcap packet capturing library. It has been abandoned, but is
+  currently still available from https://www.winpcap.org/.
+* The ieee80211_radiotap.h header file from David Young
 
-Finally Npcap includes code from David Young in the
-ieee80211_radiotap.h header file. This code is also under a 3-clause
-BSD license allowing free redistribution and use in other software.
-The copyright, attribution, and warranty disclaimer statements can be
-found in the file itself (search for "David Young") at:
-https://github.com/nmap/npcap/blob/master/packetWin7/npf/npf/ieee80211_radiotap.h
+All of these are open source with BSD-style licenses that allow for
+unlimited use and royalty-free redistribution within other software
+(including commercial/proprietary software). Some include a warranty
+disclaimer (relating to the original authors) and require a small
+amount of acknowledgment text be added somewhere in the documentation
+of any software which includes them (including indirect inclusion
+through Npcap).
+
+The required acknowledgement text as well as full license text and
+source details for these libraries is available from:
+https://npcap.org/src/docs/Npcap-Third-Party-Open-Source.pdf .
+
+Since Insecure.Com LLC is not the author of this 3rd party code, we
+can not waive or modify it’s software copyright or license.  Npcap
+users and redistributors must comply with the relevant Npcap license
+(either the free/demo license or a commercial Npcap OEM license they
+may have purchased) as well as the minimal requirements of this 3rd
+party open source software.
+
+
