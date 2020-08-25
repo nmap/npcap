@@ -1,9 +1,18 @@
 Since Npcap is based on WinPcap (which is based on code from various other contributors), we're including this
 WinPcap-License-And-Acknowledgement.txt which is straight from the WinPcap project. It explains the copyright and
 credits for WinPcap, but keep in mind that the Npcap copyright is different. See the LICENSE file in this directory
-for the Npcap license.
+for the Npcap license. More details about 3rd party source code used by Npcap is available from:
+https://npcap.org/src/docs/Npcap-Third-Party-Open-Source.pdf
 
-[From https://www.winpcap.org/misc/copyright.htm 2016/03/11]
+Please note that the clauses below which require advertising to display acknowledgements DO NOT apply to Npcap because:
+* UC Berkeley has officially removed and revoked the clause requiring attribution in advertising as documented by them here:
+https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf
+
+* The code from Kungliga Tekniska Högskolan is no longer in Npcap and so their copyright rules below don't apply to Npcap.
+
+* The code from Yen Yen Lim and North Dakota State University is no longer in Npcap and so their copyright rules below don't apply to Npcap.
+
+The license text below was taken from https://www.winpcap.org/misc/copyright.htm on March 11, 2016:
 
 Copyright (c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy).
 Copyright (c) 2005 - 2010 CACE Technologies, Davis (California).

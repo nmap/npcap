@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <office:document xmlns:officeooo="http://openoffice.org/2009/office" xmlns:css3t="http://www.w3.org/TR/css3-text/" xmlns:grddl="http://www.w3.org/2003/g/data-view#" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:rpt="http://openoffice.org/2005/report" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:ooo="http://openoffice.org/2004/office" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:formx="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0" xmlns:calcext="urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0" xmlns:drawooo="http://openoffice.org/2010/draw" xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0" xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:ooow="http://openoffice.org/2004/writer" xmlns:oooc="http://openoffice.org/2004/calc" xmlns:tableooo="http://openoffice.org/2009/table" xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:xforms="http://www.w3.org/2002/xforms" office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.text">
- <office:meta><dc:title>Nmap Technology License Agreement</dc:title><meta:initial-creator>Insecure.Com LLC</meta:initial-creator><meta:creation-date>2016-08-17T21:15:00</meta:creation-date><dc:date>2020-08-24T16:29:36.537891109</dc:date><meta:print-date>2016-08-17T21:19:00</meta:print-date><meta:editing-cycles>23</meta:editing-cycles><meta:editing-duration>PT22H35M18S</meta:editing-duration><meta:generator>LibreOffice/6.4.4.2$Linux_X86_64 LibreOffice_project/40$Build-2</meta:generator><meta:document-statistic meta:table-count="0" meta:image-count="0" meta:object-count="0" meta:page-count="2" meta:paragraph-count="24" meta:word-count="570" meta:character-count="4124" meta:non-whitespace-character-count="3557"/><meta:user-defined meta:name="MarkCheckBox">FALSE</meta:user-defined><meta:user-defined meta:name="iTrailerType">0</meta:user-defined><meta:user-defined meta:name="zzmpFixedCurScheme">RealEstate4</meta:user-defined><meta:user-defined meta:name="zzmpFixedCurrentTOCScheme">RealEstate4</meta:user-defined><meta:user-defined meta:name="zzmpFixedDOC_ID" meta:value-type="string">IR1:481112.1</meta:user-defined><meta:template xlink:type="simple" xlink:actuate="onRequest" xlink:title="Normal" xlink:href=""/></office:meta>
+ <office:meta><dc:title>Nmap Technology License Agreement</dc:title><meta:initial-creator>Insecure.Com LLC</meta:initial-creator><meta:creation-date>2016-08-17T21:15:00</meta:creation-date><dc:date>2020-08-25T11:46:52.181210434</dc:date><meta:print-date>2016-08-17T21:19:00</meta:print-date><meta:editing-cycles>27</meta:editing-cycles><meta:editing-duration>PT22H55M55S</meta:editing-duration><meta:generator>LibreOffice/6.4.5.2$Linux_X86_64 LibreOffice_project/40$Build-2</meta:generator><meta:document-statistic meta:table-count="0" meta:image-count="0" meta:object-count="0" meta:page-count="2" meta:paragraph-count="24" meta:word-count="636" meta:character-count="4537" meta:non-whitespace-character-count="3904"/><meta:user-defined meta:name="MarkCheckBox">FALSE</meta:user-defined><meta:user-defined meta:name="iTrailerType">0</meta:user-defined><meta:user-defined meta:name="zzmpFixedCurScheme">RealEstate4</meta:user-defined><meta:user-defined meta:name="zzmpFixedCurrentTOCScheme">RealEstate4</meta:user-defined><meta:user-defined meta:name="zzmpFixedDOC_ID" meta:value-type="string">IR1:481112.1</meta:user-defined><meta:template xlink:type="simple" xlink:actuate="onRequest" xlink:title="Normal" xlink:href=""/></office:meta>
  <office:settings>
   <config:config-item-set config:name="ooo:view-settings">
-   <config:config-item config:name="ViewAreaTop" config:type="long">148</config:config-item>
+   <config:config-item config:name="ViewAreaTop" config:type="long">22352</config:config-item>
    <config:config-item config:name="ViewAreaLeft" config:type="long">0</config:config-item>
    <config:config-item config:name="ViewAreaWidth" config:type="long">22608</config:config-item>
    <config:config-item config:name="ViewAreaHeight" config:type="long">17951</config:config-item>
@@ -13,12 +13,12 @@
    <config:config-item-map-indexed config:name="Views">
     <config:config-item-map-entry>
      <config:config-item config:name="ViewId" config:type="string">view2</config:config-item>
-     <config:config-item config:name="ViewLeft" config:type="long">9312</config:config-item>
-     <config:config-item config:name="ViewTop" config:type="long">7495</config:config-item>
+     <config:config-item config:name="ViewLeft" config:type="long">8271</config:config-item>
+     <config:config-item config:name="ViewTop" config:type="long">31293</config:config-item>
      <config:config-item config:name="VisibleLeft" config:type="long">0</config:config-item>
-     <config:config-item config:name="VisibleTop" config:type="long">148</config:config-item>
+     <config:config-item config:name="VisibleTop" config:type="long">22352</config:config-item>
      <config:config-item config:name="VisibleRight" config:type="long">22606</config:config-item>
-     <config:config-item config:name="VisibleBottom" config:type="long">18098</config:config-item>
+     <config:config-item config:name="VisibleBottom" config:type="long">40301</config:config-item>
      <config:config-item config:name="ZoomType" config:type="short">3</config:config-item>
      <config:config-item config:name="ViewLayoutColumns" config:type="short">0</config:config-item>
      <config:config-item config:name="ViewLayoutBookMode" config:type="boolean">false</config:config-item>
@@ -88,7 +88,7 @@
    </config:config-item-map-indexed>
    <config:config-item config:name="PrinterSetup" config:type="base64Binary"/>
    <config:config-item config:name="AddParaTableSpacingAtStart" config:type="boolean">true</config:config-item>
-   <config:config-item config:name="Rsid" config:type="int">3411898</config:config-item>
+   <config:config-item config:name="Rsid" config:type="int">3678368</config:config-item>
    <config:config-item config:name="EmbeddedDatabaseName" config:type="string"/>
    <config:config-item config:name="FieldAutoUpdate" config:type="boolean">true</config:config-item>
    <config:config-item config:name="OutlineLevelYieldsNumbering" config:type="boolean">false</config:config-item>
@@ -160,7 +160,7 @@
  <office:styles>
   <style:default-style style:family="graphic">
    <style:graphic-properties svg:stroke-color="#3465a4" draw:fill-color="#729fcf" fo:wrap-option="no-wrap" draw:shadow-offset-x="0.1181in" draw:shadow-offset-y="0.1181in" draw:start-line-spacing-horizontal="0.1114in" draw:start-line-spacing-vertical="0.1114in" draw:end-line-spacing-horizontal="0.1114in" draw:end-line-spacing-vertical="0.1114in" style:flow-with-text="false"/>
-   <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:writing-mode="lr-tb" style:font-independent-line-spacing="false">
+   <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:font-independent-line-spacing="false">
     <style:tab-stops/>
    </style:paragraph-properties>
    <style:text-properties style:use-window-font-color="true" style:font-name="Liberation Serif" fo:font-size="12pt" fo:language="en" fo:country="US" style:letter-kerning="true" style:font-name-asian="Source Han Sans CN Regular" style:font-size-asian="10.5pt" style:language-asian="zh" style:country-asian="CN" style:font-name-complex="Lohit Devanagari" style:font-size-complex="12pt" style:language-complex="hi" style:country-complex="IN"/>
@@ -623,6 +623,9 @@
   </style:style>
   <style:style style:name="Bullet_20_Symbols" style:display-name="Bullet Symbols" style:family="text">
    <style:text-properties style:font-name="OpenSymbol" fo:font-family="OpenSymbol" style:font-charset="x-symbol" style:font-name-asian="OpenSymbol" style:font-family-asian="OpenSymbol" style:font-charset-asian="x-symbol" style:font-name-complex="OpenSymbol" style:font-family-complex="OpenSymbol" style:font-charset-complex="x-symbol"/>
+  </style:style>
+  <style:style style:name="Visited_20_Internet_20_Link" style:display-name="Visited Internet Link" style:family="text">
+   <style:text-properties fo:color="#800000" fo:language="zxx" fo:country="none" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" style:language-asian="zxx" style:country-asian="none" style:language-complex="zxx" style:country-complex="none"/>
   </style:style>
   <style:style style:name="Frame" style:family="graphic">
    <style:graphic-properties text:anchor-type="paragraph" svg:x="0in" svg:y="0in" style:wrap="parallel" style:number-wrapped-paragraphs="no-limit" style:wrap-contour="false" style:vertical-pos="top" style:vertical-rel="paragraph-content" style:horizontal-pos="center" style:horizontal-rel="paragraph-content"/>
@@ -2203,335 +2206,331 @@
   </style:style>
   <style:style style:name="P17" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties style:font-size-complex="11pt"/>
+   <style:text-properties officeooo:paragraph-rsid="002d1300"/>
   </style:style>
   <style:style style:name="P18" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="000d70d9" style:font-size-complex="11pt"/>
+   <style:text-properties officeooo:paragraph-rsid="001134d8"/>
   </style:style>
   <style:style style:name="P19" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="000b8c4d" style:font-size-complex="11pt"/>
+   <style:text-properties officeooo:paragraph-rsid="003384b4"/>
   </style:style>
   <style:style style:name="P20" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="001ca3d7" style:font-size-complex="11pt"/>
+   <style:text-properties style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="P21" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
+   <style:text-properties officeooo:paragraph-rsid="000d70d9" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="P22" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:paragraph-rsid="001a7237" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
+   <style:text-properties officeooo:paragraph-rsid="000b8c4d" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="P23" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:paragraph-rsid="001ef9dc" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
+   <style:text-properties officeooo:paragraph-rsid="001ca3d7" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="P24" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
-  </style:style>
-  <style:style style:name="P25" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P26" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="000d70d9" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P27" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="000fcd59" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P28" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="0012b1ae" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P29" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001494de" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P30" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001a7237" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P31" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001ca3d7" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P32" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001ef9dc" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P33" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001fe856" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P34" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P35" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="002379af" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P36" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P37" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="000e0e68" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P38" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="000fcd59" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P39" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001134d8" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P40" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="0012b1ae" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P41" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001494de" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P42" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="0015ec5e" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P43" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001a7237" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P44" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001adc62" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P45" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001ca3d7" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P46" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001df67e" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P47" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001ef9dc" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P48" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001fe856" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P49" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P50" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="002379af" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P51" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P52" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="001f2d0b" officeooo:paragraph-rsid="001f2d0b" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P53" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="002379af" officeooo:paragraph-rsid="002379af" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P54" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="002379af" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P55" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt" style:font-size-complex="11pt"/>
-  </style:style>
-  <style:style style:name="P56" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt"/>
-  </style:style>
-  <style:style style:name="P57" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="10pt" fo:font-weight="bold" style:font-size-asian="10pt" style:font-weight-asian="bold"/>
-  </style:style>
-  <style:style style:name="P58" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="10pt" fo:font-weight="bold" officeooo:paragraph-rsid="001ca3d7" style:font-size-asian="10pt" style:font-weight-asian="bold"/>
-  </style:style>
-  <style:style style:name="P59" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:rsid="000b8c4d" officeooo:paragraph-rsid="000b8c4d"/>
-  </style:style>
-  <style:style style:name="P60" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001f2d0b" officeooo:paragraph-rsid="001f2d0b" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P61" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001f2d0b" officeooo:paragraph-rsid="001fe856" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P62" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001f2d0b" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P63" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="000fcd59" officeooo:paragraph-rsid="001ef9dc" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P64" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" officeooo:paragraph-rsid="001f2d0b" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P65" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P66" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P67" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P68" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="001fe856" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P69" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P70" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="0021c7da" fo:background-color="#ffff00" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P71" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="00254af3" fo:background-color="#ffff00" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P72" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:paragraph-rsid="001a7237" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
-  </style:style>
-  <style:style style:name="P73" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="001b8a51" officeooo:paragraph-rsid="001b8a51" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P74" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001b8a51" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P75" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001ca3d7" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P76" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001b8a51" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P77" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="001ca3d7" officeooo:paragraph-rsid="001ca3d7" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P78" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="0026a1a5" officeooo:paragraph-rsid="0026a1a5" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P79" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" officeooo:paragraph-rsid="001b8a51" style:font-size-asian="11pt" style:font-size-complex="11pt"/>
-  </style:style>
-  <style:style style:name="P80" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-size="11pt" fo:font-weight="normal" officeooo:rsid="000fcd59" officeooo:paragraph-rsid="001a7237" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
-  </style:style>
-  <style:style style:name="P81" style:family="paragraph" style:parent-style-name="Standard" style:master-page-name="">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2" style:page-number="auto"/>
-  </style:style>
-  <style:style style:name="P82" style:family="paragraph" style:parent-style-name="Standard" style:master-page-name="">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2" style:page-number="auto"/>
-   <style:text-properties fo:font-size="16pt" fo:font-weight="bold" style:font-size-asian="16pt" style:font-weight-asian="bold" style:font-size-complex="16pt"/>
-  </style:style>
-  <style:style style:name="P83" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-left="0.3752in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
-  </style:style>
-  <style:style style:name="P84" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-left="0.3752in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
-   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt"/>
-  </style:style>
-  <style:style style:name="P85" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-left="0.3752in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
-   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt" style:font-size-complex="11pt"/>
-  </style:style>
-  <style:style style:name="P86" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-left="0.4374in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
-   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt"/>
-  </style:style>
-  <style:style style:name="P87" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-left="0.3799in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
-  </style:style>
-  <style:style style:name="P88" style:family="paragraph" style:parent-style-name="Standard" style:master-page-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2" style:page-number="auto"/>
-  </style:style>
-  <style:style style:name="P89" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="000d70d9"/>
-  </style:style>
-  <style:style style:name="P90" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="002d1300"/>
-  </style:style>
-  <style:style style:name="P91" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="001134d8"/>
-  </style:style>
-  <style:style style:name="P92" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="0012a553"/>
-  </style:style>
-  <style:style style:name="P93" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="000fcd59"/>
-  </style:style>
-  <style:style style:name="P94" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties officeooo:paragraph-rsid="003384b4"/>
-  </style:style>
-  <style:style style:name="P95" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
    <style:text-properties officeooo:paragraph-rsid="002d1300" style:font-size-complex="11pt"/>
   </style:style>
-  <style:style style:name="P96" style:family="paragraph" style:parent-style-name="Standard">
+  <style:style style:name="P25" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
    <style:text-properties officeooo:rsid="002e509a" officeooo:paragraph-rsid="002e509a" style:font-size-complex="11pt"/>
   </style:style>
-  <style:style style:name="P97" style:family="paragraph" style:parent-style-name="Standard">
+  <style:style style:name="P26" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="003384b4" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-weight="bold" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
   </style:style>
-  <style:style style:name="P98" style:family="paragraph" style:parent-style-name="Standard">
+  <style:style style:name="P27" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:paragraph-rsid="001a7237" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
+  </style:style>
+  <style:style style:name="P28" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:paragraph-rsid="001ef9dc" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
+  </style:style>
+  <style:style style:name="P29" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
+  </style:style>
+  <style:style style:name="P30" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P31" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
    <style:text-properties fo:font-weight="bold" officeooo:paragraph-rsid="003384b4" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
-  <style:style style:name="P99" style:family="paragraph" style:parent-style-name="Standard">
+  <style:style style:name="P32" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="000d70d9" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P33" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="000fcd59" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P34" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="0012b1ae" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P35" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001494de" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P36" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001a7237" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P37" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001ca3d7" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P38" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001ef9dc" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P39" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001fe856" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P40" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P41" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="002379af" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P42" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P43" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="000e0e68" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P44" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="000fcd59" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P45" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001134d8" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P46" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="0012b1ae" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P47" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001494de" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P48" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="0015ec5e" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P49" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001a7237" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P50" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001adc62" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P51" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001ca3d7" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P52" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001df67e" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P53" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001ef9dc" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P54" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001fe856" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P55" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P56" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="002379af" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P57" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P58" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="003384b4" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P59" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="001f2d0b" officeooo:paragraph-rsid="001f2d0b" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P60" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="002379af" officeooo:paragraph-rsid="002379af" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P61" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="bold" officeooo:rsid="002379af" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P62" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt" style:font-size-complex="11pt"/>
+  </style:style>
+  <style:style style:name="P63" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt"/>
+  </style:style>
+  <style:style style:name="P64" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="10pt" fo:font-weight="bold" style:font-size-asian="10pt" style:font-weight-asian="bold"/>
+  </style:style>
+  <style:style style:name="P65" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="10pt" fo:font-weight="bold" officeooo:paragraph-rsid="001ca3d7" style:font-size-asian="10pt" style:font-weight-asian="bold"/>
+  </style:style>
+  <style:style style:name="P66" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties officeooo:rsid="000b8c4d" officeooo:paragraph-rsid="000b8c4d"/>
+  </style:style>
+  <style:style style:name="P67" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001f2d0b" officeooo:paragraph-rsid="001f2d0b" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P68" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001f2d0b" officeooo:paragraph-rsid="001fe856" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P69" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001f2d0b" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P70" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="000fcd59" officeooo:paragraph-rsid="001ef9dc" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P71" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" officeooo:paragraph-rsid="001f2d0b" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P72" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P73" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P74" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="0021c7da" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P75" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="001fe856" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P76" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="00254af3" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P77" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="0021c7da" fo:background-color="#ffff00" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P78" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" officeooo:paragraph-rsid="00254af3" fo:background-color="#ffff00" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P79" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:paragraph-rsid="001a7237" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt"/>
+  </style:style>
+  <style:style style:name="P80" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="001b8a51" officeooo:paragraph-rsid="001b8a51" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P81" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001b8a51" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P82" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="000e0e68" officeooo:paragraph-rsid="001ca3d7" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P83" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="000d70d9" officeooo:paragraph-rsid="001b8a51" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P84" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="001ca3d7" officeooo:paragraph-rsid="001ca3d7" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P85" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" fo:font-weight="bold" officeooo:rsid="0026a1a5" officeooo:paragraph-rsid="0026a1a5" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+  </style:style>
+  <style:style style:name="P86" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" officeooo:paragraph-rsid="001b8a51" style:font-size-asian="11pt" style:font-size-complex="11pt"/>
+  </style:style>
+  <style:style style:name="P87" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-size="11pt" fo:font-weight="normal" officeooo:rsid="000fcd59" officeooo:paragraph-rsid="001a7237" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P88" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
    <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="003384b4" officeooo:paragraph-rsid="003384b4" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="bold"/>
   </style:style>
-  <style:style style:name="P100" style:family="paragraph" style:parent-style-name="Standard">
+  <style:style style:name="P89" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="start" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
    <style:text-properties officeooo:paragraph-rsid="003384b4"/>
+  </style:style>
+  <style:style style:name="P90" style:family="paragraph" style:parent-style-name="Standard" style:master-page-name="">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2" style:page-number="auto"/>
+  </style:style>
+  <style:style style:name="P91" style:family="paragraph" style:parent-style-name="Standard" style:master-page-name="">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2" style:page-number="auto"/>
+   <style:text-properties fo:font-size="16pt" fo:font-weight="bold" style:font-size-asian="16pt" style:font-weight-asian="bold" style:font-size-complex="16pt"/>
+  </style:style>
+  <style:style style:name="P92" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-left="0.3752in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
+  </style:style>
+  <style:style style:name="P93" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-left="0.3752in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
+   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt"/>
+  </style:style>
+  <style:style style:name="P94" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-left="0.3752in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
+   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt" style:font-size-complex="11pt"/>
+  </style:style>
+  <style:style style:name="P95" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-left="0.4374in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
+   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt"/>
+  </style:style>
+  <style:style style:name="P96" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-left="0.3799in" fo:margin-right="0in" fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2" fo:text-indent="0in" style:auto-text-indent="false"/>
+  </style:style>
+  <style:style style:name="P97" style:family="paragraph" style:parent-style-name="Standard" style:master-page-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2" style:page-number="auto"/>
+  </style:style>
+  <style:style style:name="P98" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" officeooo:paragraph-rsid="0012a553" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="P99" style:family="paragraph" style:parent-style-name="Standard">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false" fo:orphans="2" fo:widows="2"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" officeooo:paragraph-rsid="003384b4" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T1" style:family="text">
    <style:text-properties fo:font-size="9.5pt" style:font-size-asian="9.5pt"/>
@@ -2654,238 +2653,250 @@
    <style:text-properties officeooo:rsid="00340fba" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T41" style:family="text">
-   <style:text-properties style:text-position="super 58%"/>
+   <style:text-properties officeooo:rsid="00360a95" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T42" style:family="text">
-   <style:text-properties style:text-position="super 58%" style:font-size-complex="11pt"/>
+   <style:text-properties style:text-position="super 58%"/>
   </style:style>
   <style:style style:name="T43" style:family="text">
-   <style:text-properties style:text-position="super 58%" officeooo:rsid="0009caff" style:font-size-complex="11pt"/>
+   <style:text-properties style:text-position="super 58%" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T44" style:family="text">
-   <style:text-properties style:text-position="super 58%" officeooo:rsid="000b8c4d" style:font-size-complex="11pt"/>
+   <style:text-properties style:text-position="super 58%" officeooo:rsid="0009caff" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T45" style:family="text">
-   <style:text-properties style:text-position="super 58%" officeooo:rsid="000d70d9"/>
+   <style:text-properties style:text-position="super 58%" officeooo:rsid="000b8c4d" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T46" style:family="text">
-   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt"/>
+   <style:text-properties style:text-position="super 58%" officeooo:rsid="00360a95" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T47" style:family="text">
-   <style:text-properties fo:font-size="10pt" fo:font-weight="bold" style:font-size-asian="10pt" style:font-weight-asian="bold"/>
+   <style:text-properties style:text-position="super 58%" officeooo:rsid="000d70d9"/>
   </style:style>
   <style:style style:name="T48" style:family="text">
-   <style:text-properties officeooo:rsid="000d70d9"/>
+   <style:text-properties fo:font-size="10pt" style:font-size-asian="10pt"/>
   </style:style>
   <style:style style:name="T49" style:family="text">
-   <style:text-properties fo:font-weight="normal" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-size="10pt" fo:font-weight="bold" style:font-size-asian="10pt" style:font-weight-asian="bold"/>
   </style:style>
   <style:style style:name="T50" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties officeooo:rsid="000d70d9"/>
   </style:style>
   <style:style style:name="T51" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001adc62" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T52" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001b8a51" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T53" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001ca3d7" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001adc62" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T54" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001ef9dc" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001b8a51" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T55" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="000d70d9" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001ca3d7" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T56" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001ef9dc" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T57" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0020b884" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="000d70d9" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T58" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="002379af" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T59" style:family="text">
-   <style:text-properties fo:font-weight="normal" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0020b884" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T60" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="000e2c41" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="002379af" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T61" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T62" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001134d8" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="000e2c41" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T63" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0012a553" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T64" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0012b1ae" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001134d8" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T65" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001494de" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0012a553" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T66" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0019ace4" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0012b1ae" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T67" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001a7237" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001494de" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T68" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0017bf5a" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0019ace4" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T69" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001adc62" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001a7237" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T70" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001df67e" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0017bf5a" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T71" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001ef9dc" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001adc62" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T72" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001df67e" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T73" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0020b884" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001ef9dc" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T74" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="001fe856" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T75" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="002379af" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0020b884" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T76" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="00254af3" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="0021c7da" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T77" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="00284580" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="002379af" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T78" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="002971e6" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="00254af3" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T79" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="000d70d9" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="00284580" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T80" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="002fd5f9" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="002971e6" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T81" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="003177a9" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="000d70d9" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T82" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="00323001" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="002fd5f9" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T83" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="000e0e68" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="003177a9" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T84" style:family="text">
-   <style:text-properties fo:font-weight="normal" officeooo:rsid="003384b4" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="00323001" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T85" style:family="text">
-   <style:text-properties officeooo:rsid="000fcd59"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="000e0e68" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T86" style:family="text">
-   <style:text-properties officeooo:rsid="000d70d9" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="003384b4" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T87" style:family="text">
-   <style:text-properties officeooo:rsid="000e0e68" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-weight="normal" officeooo:rsid="003651fc" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T88" style:family="text">
-   <style:text-properties officeooo:rsid="000fcd59" style:font-weight-complex="bold"/>
+   <style:text-properties officeooo:rsid="000fcd59"/>
   </style:style>
   <style:style style:name="T89" style:family="text">
-   <style:text-properties officeooo:rsid="001494de"/>
+   <style:text-properties officeooo:rsid="000d70d9" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T90" style:family="text">
-   <style:text-properties officeooo:rsid="001b8a51"/>
+   <style:text-properties officeooo:rsid="000e0e68" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T91" style:family="text">
-   <style:text-properties officeooo:rsid="001ef9dc"/>
+   <style:text-properties officeooo:rsid="000fcd59" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T92" style:family="text">
-   <style:text-properties officeooo:rsid="002379af"/>
+   <style:text-properties officeooo:rsid="001494de"/>
   </style:style>
   <style:style style:name="T93" style:family="text">
-   <style:text-properties officeooo:rsid="00254af3"/>
+   <style:text-properties officeooo:rsid="001b8a51"/>
   </style:style>
   <style:style style:name="T94" style:family="text">
-   <style:text-properties officeooo:rsid="000e0e68"/>
+   <style:text-properties officeooo:rsid="001ef9dc"/>
   </style:style>
   <style:style style:name="T95" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="16pt" fo:language="en" fo:country="US" fo:font-weight="bold" officeooo:rsid="002b38ff" style:font-name-asian="Times New Roman" style:font-size-asian="16pt" style:font-weight-asian="bold" style:font-name-complex="Times New Roman" style:font-size-complex="16pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties officeooo:rsid="002379af"/>
   </style:style>
   <style:style style:name="T96" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="bold" officeooo:rsid="002d1300" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="bold"/>
+   <style:text-properties officeooo:rsid="00254af3"/>
   </style:style>
   <style:style style:name="T97" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="002fd5f9" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties officeooo:rsid="000e0e68"/>
   </style:style>
   <style:style style:name="T98" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="003384b4" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="16pt" fo:language="en" fo:country="US" fo:font-weight="bold" officeooo:rsid="002b38ff" style:font-name-asian="Times New Roman" style:font-size-asian="16pt" style:font-weight-asian="bold" style:font-name-complex="Times New Roman" style:font-size-complex="16pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T99" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="002fd5f9" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="bold" officeooo:rsid="002d1300" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T100" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="002fd5f9" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T101" style:family="text">
-   <style:text-properties officeooo:rsid="002e727b"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="003384b4" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T102" style:family="text">
-   <style:text-properties officeooo:rsid="002fd5f9"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="002fd5f9" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T103" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T104" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties officeooo:rsid="002e727b"/>
   </style:style>
   <style:style style:name="T105" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="002fd5f9"/>
+   <style:text-properties officeooo:rsid="002fd5f9"/>
   </style:style>
   <style:style style:name="T106" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="000fcd59" style:font-size-complex="11pt"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T107" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="000fcd59"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T108" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000d70d9" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="002fd5f9"/>
   </style:style>
   <style:style style:name="T109" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000e0e68" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="000fcd59" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T110" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="000fcd59"/>
   </style:style>
   <style:style style:name="T111" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000d70d9" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000d70d9" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T112" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000e0e68" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000e0e68" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T113" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T114" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000d70d9" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T115" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#0366d6" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="apple-system" fo:font-size="10.5pt" fo:letter-spacing="normal" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="#ffffff" loext:char-shading-value="0" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000e0e68" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T116" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T117" style:family="text">
-   <style:text-properties officeooo:rsid="00340fba"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T118" style:family="text">
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#0366d6" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="apple-system" fo:font-size="10.5pt" fo:letter-spacing="normal" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="#ffffff" loext:char-shading-value="0" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="T119" style:family="text">
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+  </style:style>
+  <style:style style:name="T120" style:family="text">
+   <style:text-properties officeooo:rsid="00340fba"/>
+  </style:style>
+  <style:style style:name="T121" style:family="text">
    <style:text-properties fo:font-size="11pt" style:font-size-asian="9.60000038146973pt"/>
+  </style:style>
+  <style:style style:name="T122" style:family="text">
+   <style:text-properties officeooo:rsid="0034fbfe"/>
   </style:style>
   <style:style style:name="fr1" style:family="graphic" style:parent-style-name="Frame">
    <style:graphic-properties style:wrap="dynamic" style:number-wrapped-paragraphs="1" style:vertical-pos="from-top" style:vertical-rel="paragraph" style:horizontal-pos="center" style:horizontal-rel="page-content" fo:background-color="#ffffff" style:background-transparency="100%" draw:fill="solid" draw:fill-color="#ffffff" draw:opacity="0%" style:writing-mode="lr-tb" draw:wrap-influence-on-position="once-successive" loext:allow-overlap="true"/>
@@ -2932,37 +2943,37 @@
     <text:sequence-decl text:display-outline-level="0" text:name="Drawing"/>
     <text:sequence-decl text:display-outline-level="0" text:name="Figure"/>
    </text:sequence-decls>
-   <text:p text:style-name="P88"><text:span text:style-name="T13">Third-party open source software and libraries used by N</text:span><text:span text:style-name="T95">pcap</text:span></text:p>
-   <text:p text:style-name="P17"/>
-   <text:p text:style-name="P90"><text:span text:style-name="T14">The N</text:span><text:span text:style-name="T32">pcap packet capturing/sending library </text:span><text:span text:style-name="T14">uses </text:span><text:span text:style-name="T34">several </text:span><text:span text:style-name="T14">3</text:span><text:span text:style-name="T42">rd</text:span><text:span text:style-name="T14"> party open source software libraries. </text:span><text:span text:style-name="T16">All are open source with BSD-style licenses that allow </text:span><text:span text:style-name="T39">for </text:span><text:span text:style-name="T16">royalty-free redistribution within other software (including commercial/proprietary software). </text:span><text:span text:style-name="T32">Some </text:span><text:span text:style-name="T33">include a warranty disclaimer (relating to the original authors) and require a small amount of acknowledgment text be added to the documentation of any software which includes them </text:span><text:span text:style-name="T34">(including indirectly through Npcap)</text:span><text:span text:style-name="T17">. <text:s/></text:span><text:span text:style-name="T34">An example of such text is in the “</text:span><text:span text:style-name="T40">THIRD PARTY SOFTWARE </text:span><text:span text:style-name="T34">ATTRIBUTION” section of the </text:span><text:a xlink:type="simple" xlink:href="https://github.com/nmap/npcap/blob/master/LICENSE" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T34">Npcap free/demo license</text:span></text:a><text:span text:style-name="T34">.</text:span><text:span text:style-name="T17"> </text:span></text:p>
-   <text:p text:style-name="P95"/>
-   <text:p text:style-name="P96">Please note that all Npcap support, warranties and indemnification that we (Insecure.Com LLC) offer include these 3<text:span text:style-name="T41">rd</text:span> party libraries along with all other Npcap code. <text:s/>The warranty disclaimers in their license text just mean that the original library authors and maintainers aren’t responsible for that support.</text:p>
-   <text:p text:style-name="P95"/>
-   <text:p text:style-name="P5"><text:span text:style-name="T20">This document covers </text:span><text:span text:style-name="T96">Npcap version 0.9997</text:span><text:span text:style-name="T79">. Licensees or potential licensees who want this information for a different Nmap release should contact </text:span><text:a xlink:type="simple" xlink:href="mailto:sales@nmap.com" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T79">sales@nmap.com</text:span></text:a><text:span text:style-name="T79">.</text:span></text:p>
-   <text:p text:style-name="P19"/>
-   <text:p text:style-name="P24">Lib<text:span text:style-name="T101">p</text:span>cap Raw Packet Capture Library</text:p>
-   <text:p text:style-name="P21"/>
-   <text:p text:style-name="P5"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T20">: </text:span><text:span text:style-name="T14">Lib</text:span><text:span text:style-name="T35">p</text:span><text:span text:style-name="T14">cap is </text:span><text:span text:style-name="T36">a popular</text:span><text:span text:style-name="T35"> </text:span><text:span text:style-name="T38">reference implementation of the pcap </text:span><text:span text:style-name="T35">packet capturing API. <text:s/></text:span><text:span text:style-name="T38">It is</text:span><text:span text:style-name="T37"> </text:span><text:span text:style-name="T36">produced by The Tcpdump Group </text:span><text:span text:style-name="T38">and</text:span><text:span text:style-name="T37"> supports Linux and Mac OS X systems (among others). <text:s/></text:span><text:span text:style-name="T36">Npcap implements this API </text:span><text:span text:style-name="T37">for Microsoft </text:span><text:span text:style-name="T36">Windows by combining the high-level </text:span><text:span text:style-name="T37">open source</text:span><text:span text:style-name="T36"> libpcap </text:span><text:span text:style-name="T37">API code </text:span><text:span text:style-name="T36">with our own custom Windows driver </text:span><text:span text:style-name="T97">that implements the</text:span><text:span text:style-name="T36"> low-level network operations. <text:s/></text:span><text:span text:style-name="T37">Our wpcap.dll library </text:span><text:span text:style-name="T38">file </text:span><text:span text:style-name="T37">is mostly Libpcap code.</text:span><text:span text:style-name="T36"> <text:s/></text:span><text:span text:style-name="T37">We occasionally make our own fixes and changes to the libpcap code, but we have a great relationship with The Tcpdump Group and try to submit all of our changes to them for incorporation in future libpcap releases.</text:span></text:p>
-   <text:p text:style-name="P37"><text:span text:style-name="T14">Software URL</text:span><text:span text:style-name="T59">: </text:span><text:a xlink:type="simple" xlink:href="http://www.tcpdump.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T59">http://www.tcpdump.org/</text:span></text:a></text:p>
-   <text:p text:style-name="P5"><text:span text:style-name="T5">Version used</text:span><text:span text:style-name="T79">: </text:span><text:span text:style-name="T99">1.91</text:span></text:p>
-   <text:p text:style-name="P37"><text:span text:style-name="T14">License Summary</text:span><text:span text:style-name="T59">: </text:span><text:span text:style-name="T61">Modified</text:span><text:span text:style-name="T60"> BSD license </text:span><text:span text:style-name="T61">(3-clause) </text:span><text:span text:style-name="T81">– allows free redistribution as long as you </text:span><text:span text:style-name="T82">include a short attribution statement and warranty disclaimer somewhere in your documentation.</text:span></text:p>
-   <text:p text:style-name="P6"><text:span text:style-name="T5">License </text:span><text:span text:style-name="T6">Tex</text:span><text:span text:style-name="T7">t Location</text:span><text:span text:style-name="T61">: </text:span><text:a xlink:type="simple" xlink:href="https://github.com/nmap/npcap/blob/master/Libpcap-License.txt" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T80">Libpcap-License.txt</text:span></text:a></text:p>
-   <text:p text:style-name="P56"/>
-   <text:p text:style-name="P24"><text:span text:style-name="T102">WinPcap</text:span> Windows Packet Library</text:p>
-   <text:p text:style-name="P17"/>
+   <text:p text:style-name="P97"><text:span text:style-name="T13">Third-party open source software and libraries used by N</text:span><text:span text:style-name="T98">pcap</text:span></text:p>
+   <text:p text:style-name="P20"/>
+   <text:p text:style-name="P17"><text:span text:style-name="T14">The N</text:span><text:span text:style-name="T32">pcap packet capturing/sending library </text:span><text:span text:style-name="T14">uses </text:span><text:span text:style-name="T34">several </text:span><text:span text:style-name="T14">3</text:span><text:span text:style-name="T43">rd</text:span><text:span text:style-name="T14"> party open source software libraries. </text:span><text:span text:style-name="T16">All are open source with BSD-style licenses that allow </text:span><text:span text:style-name="T39">for </text:span><text:span text:style-name="T41">unlimited use and </text:span><text:span text:style-name="T16">royalty-free redistribution within other software (including commercial/proprietary software). </text:span><text:span text:style-name="T32">Some </text:span><text:span text:style-name="T33">include a warranty disclaimer (relating to the original authors) and require a small amount of acknowledgment text be added to the documentation of any software which includes them </text:span><text:span text:style-name="T34">(including indirectly through Npcap)</text:span><text:span text:style-name="T17">. <text:s/></text:span><text:span text:style-name="T34">An example of such text is in the “</text:span><text:span text:style-name="T40">THIRD PARTY SOFTWARE </text:span><text:span text:style-name="T34">ATTRIBUTION” section of the </text:span><text:a xlink:type="simple" xlink:href="https://github.com/nmap/npcap/blob/master/LICENSE" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T34">Npcap free/demo license</text:span></text:a><text:span text:style-name="T34">.</text:span><text:span text:style-name="T17"> </text:span><text:span text:style-name="T41">Since Insecure.Com LLC is not the author of this 3</text:span><text:span text:style-name="T46">rd</text:span><text:span text:style-name="T41"> party code, we can not waive or modify it’s software copyright or license. <text:s/>Npcap users and redistributors must comply with the relevant Npcap license (either the free/demo license or a commercial Npcap OEM license they may have purchased) as well as the fairly minimal requirements of this 3</text:span><text:span text:style-name="T46">rd</text:span><text:span text:style-name="T41"> party open source software.</text:span></text:p>
+   <text:p text:style-name="P24"/>
+   <text:p text:style-name="P25">Please note that all Npcap support, warranties and indemnification that we (Insecure.Com LLC) offer include these 3<text:span text:style-name="T42">rd</text:span> party libraries along with all other Npcap code. <text:s/>The warranty disclaimers in their license text just mean that the original library authors and maintainers aren’t responsible for that support.</text:p>
+   <text:p text:style-name="P24"/>
+   <text:p text:style-name="P5"><text:span text:style-name="T20">This document covers </text:span><text:span text:style-name="T99">Npcap version 0.9997</text:span><text:span text:style-name="T81">. Licensees or potential licensees who want this information for a different Nmap release should contact </text:span><text:a xlink:type="simple" xlink:href="mailto:sales@nmap.com" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T81">sales@nmap.com</text:span></text:a><text:span text:style-name="T81">.</text:span></text:p>
+   <text:p text:style-name="P22"/>
+   <text:p text:style-name="P29">Lib<text:span text:style-name="T104">p</text:span>cap <text:span text:style-name="T122">Portable </text:span>Packet Captur<text:span text:style-name="T122">ing</text:span> Library</text:p>
+   <text:p text:style-name="P26"/>
+   <text:p text:style-name="P5"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T20">: </text:span><text:span text:style-name="T14">Lib</text:span><text:span text:style-name="T35">p</text:span><text:span text:style-name="T14">cap is </text:span><text:span text:style-name="T36">a popular</text:span><text:span text:style-name="T35"> </text:span><text:span text:style-name="T38">reference implementation of the pcap </text:span><text:span text:style-name="T35">packet capturing API. <text:s/></text:span><text:span text:style-name="T38">It is</text:span><text:span text:style-name="T37"> </text:span><text:span text:style-name="T36">produced by The Tcpdump Group </text:span><text:span text:style-name="T38">and</text:span><text:span text:style-name="T37"> supports Linux and Mac OS X systems (among others). <text:s/></text:span><text:span text:style-name="T36">Npcap implements this API </text:span><text:span text:style-name="T37">for Microsoft </text:span><text:span text:style-name="T36">Windows by combining the high-level </text:span><text:span text:style-name="T37">open source</text:span><text:span text:style-name="T36"> libpcap </text:span><text:span text:style-name="T37">API code </text:span><text:span text:style-name="T36">with our own custom Windows driver </text:span><text:span text:style-name="T100">that implements the</text:span><text:span text:style-name="T36"> low-level network operations. <text:s/></text:span><text:span text:style-name="T37">Our wpcap.dll library </text:span><text:span text:style-name="T38">file </text:span><text:span text:style-name="T37">is mostly Libpcap code.</text:span><text:span text:style-name="T36"> <text:s/></text:span><text:span text:style-name="T37">We occasionally make our own fixes and changes to the libpcap code, but we have a great relationship with The Tcpdump Group and try to submit all of our changes to them for incorporation in future libpcap releases.</text:span></text:p>
+   <text:p text:style-name="P43"><text:span text:style-name="T14">Software URL</text:span><text:span text:style-name="T61">: </text:span><text:a xlink:type="simple" xlink:href="http://www.tcpdump.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T61">http://www.tcpdump.org/</text:span></text:a></text:p>
+   <text:p text:style-name="P5"><text:span text:style-name="T5">Version used</text:span><text:span text:style-name="T81">: </text:span><text:span text:style-name="T102">1.91</text:span></text:p>
+   <text:p text:style-name="P43"><text:span text:style-name="T14">License Summary</text:span><text:span text:style-name="T61">: </text:span><text:span text:style-name="T63">Modified</text:span><text:span text:style-name="T62"> BSD license </text:span><text:span text:style-name="T63">(3-clause) </text:span><text:span text:style-name="T83">– allows free redistribution as long as you </text:span><text:span text:style-name="T84">include a short attribution statement and warranty disclaimer somewhere in your documentation.</text:span></text:p>
+   <text:p text:style-name="P6"><text:span text:style-name="T5">License </text:span><text:span text:style-name="T6">Tex</text:span><text:span text:style-name="T7">t Location</text:span><text:span text:style-name="T63">: </text:span><text:a xlink:type="simple" xlink:href="https://npcap.org/src/Libpcap-License.txt" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T87">https://npcap.org/src/Libpcap-License.txt</text:span></text:a><text:span text:style-name="T87"> </text:span></text:p>
+   <text:p text:style-name="P63"/>
+   <text:p text:style-name="P29"><text:span text:style-name="T105">Win</text:span><text:span text:style-name="T122">pc</text:span><text:span text:style-name="T105">ap</text:span> Windows Packet <text:span text:style-name="T122">Capturing </text:span>Library</text:p>
+   <text:p text:style-name="P20"/>
    <text:p text:style-name="P6"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T20">: </text:span><text:span text:style-name="T37">Winpcap is an earlier (now abandoned) </text:span><text:span text:style-name="T38">open source </text:span><text:span text:style-name="T37">implementation of the </text:span><text:span text:style-name="T38">p</text:span><text:span text:style-name="T37">cap API </text:span><text:span text:style-name="T38">for Windows. <text:s/>The last Winpcap release was made in March 2013. <text:s text:c="3"/></text:span><text:span text:style-name="T37"><text:s/></text:span><text:span text:style-name="T38">We created </text:span><text:span text:style-name="T29">Np</text:span><text:span text:style-name="T20">cap </text:span><text:span text:style-name="T38">by starting with that abandoned code and updating it to support modern Windows NDIS API’s and fixing well-known bugs and security issues. <text:s/>While Npcap has diverged substantially over the years, it still contains a substantial amount of original Winpcap code, so the Winpcap license must be followed. <text:s/></text:span><text:span text:style-name="T20">is used by Nmap on Windows for raw packet reading during host discovery, port scanning, and OS detection. It is a derivative of LibPcap, so that license </text:span><text:span text:style-name="T21">(see Lib</text:span><text:span text:style-name="T37">p</text:span><text:span text:style-name="T21">cap section)</text:span><text:span text:style-name="T20"> must be followed as well. It is </text:span><text:span text:style-name="T22">only needed and used on Windows.</text:span></text:p>
-   <text:p text:style-name="P91"><text:span text:style-name="T6">Software URL</text:span><text:span text:style-name="T83">: </text:span><text:a xlink:type="simple" xlink:href="https://www.winpcap.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T59">https://www.winpcap.org/</text:span></text:a></text:p>
-   <text:p text:style-name="P27"><text:span text:style-name="T14">Version used</text:span><text:span text:style-name="T59">: </text:span><text:span text:style-name="T82">4.1.3</text:span></text:p>
-   <text:p text:style-name="P6"><text:span text:style-name="T6">License Summary</text:span><text:span text:style-name="T83">: </text:span><text:span text:style-name="T82">Modified BSD license (3-clause) – allows free redistribution as long as you include attribution statement and warranty disclaimer somewhere in your documentation. The fourth clause, which </text:span><text:span text:style-name="T84">relates to attribution in advertising materials has been officially removed and revoked by the University of California, Berkeley: </text:span><text:a xlink:type="simple" xlink:href="https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T84">https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf</text:span></text:a></text:p>
-   <text:p text:style-name="P7"><text:soft-page-break/><text:span text:style-name="T5">License </text:span><text:span text:style-name="T6">Tex</text:span><text:span text:style-name="T7">t Location</text:span><text:span text:style-name="T61">: </text:span><text:a xlink:type="simple" xlink:href="https://github.com/nmap/npcap/blob/master/WinPcap-License-And-Acknowledgements.txt" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://github.com/nmap/npcap/blob/master/WinPcap-License-And-Acknowledgements.txt</text:a><text:span text:style-name="T103"> </text:span></text:p>
-   <text:p text:style-name="P7"><text:span text:style-name="T103"/></text:p>
-   <text:p text:style-name="P99"><text:span text:style-name="T117">The </text:span><text:span text:style-name="T118">ieee80211_radiotap.h</text:span> Heder File</text:p>
-   <text:p text:style-name="P98"><text:span text:style-name="T106"/></text:p>
-   <text:p text:style-name="P94"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T20">: </text:span><text:span text:style-name="T98">This is just a short header file defining data structures for the IEEE 802.11 radio capture header</text:span></text:p>
-   <text:p text:style-name="P94"><text:span text:style-name="T6">Software URL</text:span><text:span text:style-name="T83">: </text:span><text:a xlink:type="simple" xlink:href="http://web.mit.edu/~mkgray/afs/bar/afs/sipb.mit.edu/project/freebsd/head/contrib/wpa/src/utils/radiotap.h" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T115">http://web.mit.edu/~mkgray/afs/bar/afs/sipb.mit.edu/project/freebsd/head/contrib/wpa/src/utils/radiotap.h</text:span></text:a></text:p>
-   <text:p text:style-name="P94"><text:span text:style-name="T5">Version used</text:span><text:span text:style-name="T79">: </text:span><text:span text:style-name="T100">There is not a specific version number, but it says “</text:span><text:span text:style-name="T116">Copyright (c) 2003, 2004 David Young”</text:span></text:p>
-   <text:p text:style-name="P97"><text:span text:style-name="T14">License Summary</text:span><text:span text:style-name="T59">: </text:span><text:span text:style-name="T61">Modified</text:span><text:span text:style-name="T60"> BSD license </text:span><text:span text:style-name="T61">(3-clause) </text:span><text:span text:style-name="T81">– allows free redistribution as long as you </text:span><text:span text:style-name="T82">include a short attribution statement and warranty disclaimer somewhere in your documentation.</text:span></text:p>
-   <text:p text:style-name="P100"><text:span text:style-name="T111">License </text:span><text:span text:style-name="T112">Tex</text:span><text:span text:style-name="T113">t Location</text:span><text:span text:style-name="T103">: </text:span><text:span text:style-name="T104">It is a comment starting with “Copyright (c) 2003, 2004 David Young” in </text:span><text:a xlink:type="simple" xlink:href="https://github.com/nmap/npcap/blob/master/packetWin7/npf/npf/ieee80211_radiotap.h" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">the ieee80211_radiotap.h file itself</text:a><text:span text:style-name="T104">.</text:span></text:p>
+   <text:p text:style-name="P18"><text:span text:style-name="T6">Software URL</text:span><text:span text:style-name="T85">: </text:span><text:a xlink:type="simple" xlink:href="https://www.winpcap.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T61">https://www.winpcap.org/</text:span></text:a></text:p>
+   <text:p text:style-name="P33"><text:span text:style-name="T14">Version used</text:span><text:span text:style-name="T61">: </text:span><text:span text:style-name="T84">4.1.3</text:span></text:p>
+   <text:p text:style-name="P6"><text:soft-page-break/><text:span text:style-name="T6">License Summary</text:span><text:span text:style-name="T85">: </text:span><text:span text:style-name="T84">Modified BSD license (3-clause) – allows free redistribution as long as you include attribution statement and warranty disclaimer somewhere in your documentation. The fourth clause, which </text:span><text:span text:style-name="T86">relates to attribution in advertising materials has been officially removed and revoked by the University of California, Berkeley: </text:span><text:a xlink:type="simple" xlink:href="https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T86">https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf</text:span></text:a></text:p>
+   <text:p text:style-name="P7"><text:span text:style-name="T5">License </text:span><text:span text:style-name="T6">Tex</text:span><text:span text:style-name="T7">t Location</text:span><text:span text:style-name="T63">: </text:span><text:a xlink:type="simple" xlink:href="https://npcap.org/src/WinPcap-License-And-Acknowledgements.txt" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T87">https://npcap.org/src/WinPcap-License-And-Acknowledgements.txt</text:span></text:a></text:p>
+   <text:p text:style-name="P98"/>
+   <text:p text:style-name="P88"><text:span text:style-name="T120">The </text:span><text:span text:style-name="T121">ieee80211_radiotap.h</text:span> He<text:span text:style-name="T122">a</text:span>der File</text:p>
+   <text:p text:style-name="P99"/>
+   <text:p text:style-name="P19"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T20">: </text:span><text:span text:style-name="T101">This is just a short header file defining data structures for the IEEE 802.11 radio capture header</text:span></text:p>
+   <text:p text:style-name="P19"><text:span text:style-name="T6">Software URL</text:span><text:span text:style-name="T85">: </text:span><text:a xlink:type="simple" xlink:href="http://web.mit.edu/~mkgray/afs/bar/afs/sipb.mit.edu/project/freebsd/head/contrib/wpa/src/utils/radiotap.h" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T118">http://web.mit.edu/~mkgray/afs/bar/afs/sipb.mit.edu/project/freebsd/head/contrib/wpa/src/utils/radiotap.h</text:span></text:a></text:p>
+   <text:p text:style-name="P19"><text:span text:style-name="T5">Version used</text:span><text:span text:style-name="T81">: </text:span><text:span text:style-name="T103">There is not a specific version number, but it says “</text:span><text:span text:style-name="T119">Copyright (c) 2003, 2004 David Young”</text:span></text:p>
+   <text:p text:style-name="P58"><text:span text:style-name="T14">License Summary</text:span><text:span text:style-name="T61">: </text:span><text:span text:style-name="T63">Modified</text:span><text:span text:style-name="T62"> BSD license </text:span><text:span text:style-name="T63">(3-clause) </text:span><text:span text:style-name="T83">– allows free redistribution as long as you </text:span><text:span text:style-name="T84">include a short attribution statement and warranty disclaimer somewhere in your documentation.</text:span></text:p>
+   <text:p text:style-name="P89"><text:span text:style-name="T114">License </text:span><text:span text:style-name="T115">Tex</text:span><text:span text:style-name="T116">t Location</text:span><text:span text:style-name="T106">: </text:span><text:span text:style-name="T107">It is a comment starting with “Copyright (c) 2003, 2004 David Young” in </text:span><text:a xlink:type="simple" xlink:href="https://github.com/nmap/npcap/blob/master/packetWin7/npf/npf/ieee80211_radiotap.h" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">the ieee80211_radiotap.h file itself</text:a><text:span text:style-name="T107">.</text:span></text:p>
   </office:text>
  </office:body>
 </office:document>
