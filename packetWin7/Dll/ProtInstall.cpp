@@ -204,32 +204,6 @@ DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize)
 	return (DWORD)_tcslen(lpFilename);
 }
 
-DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize)
-{
-	// Get Path to This Module
-	DWORD nResult;
-	TCHAR szDrive[_MAX_DRIVE];
-	TCHAR szDir[_MAX_DIR];
-
-	TRACE_ENTER();
-
-	nResult = GetModuleFileName(NULL, lpFilename, nSize);
-
-	if (nResult == 0)
-	{
-		return 0;
-	}
-
-	_tsplitpath_s(lpFilename, szDrive, _MAX_DRIVE, szDir, _MAX_DIR, NULL, 0, NULL, 0);
-
-	_tmakepath_s(lpFilename, nSize, szDrive, szDir, NDISLWF_SERVICE_INF_FILE, _T(".sys"));
-	TRACE_PRINT1("lpFilename = %s", lpFilename);
-
-	TRACE_EXIT();
-
-	return (DWORD)_tcslen(lpFilename);
-}
-
 //
 // Function:  InstallSpecifiedComponent
 //

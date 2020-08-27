@@ -137,6 +137,5 @@ VOID ErrMsg(HRESULT hr, LPCTSTR  lpFmt, ...);
 
 DWORD GetServiceInfFilePath(LPTSTR lpFilename, DWORD nSize);
 DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize);
-DWORD GetServiceSysFilePath(LPTSTR lpFilename, DWORD nSize);
 
 #endif // _PROTINSTALL_H_

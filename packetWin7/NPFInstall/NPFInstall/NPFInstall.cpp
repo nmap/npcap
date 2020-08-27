@@ -65,11 +65,6 @@
 
 extern BOOLEAN bWiFiService;
 
-BOOL PacketInstallDriver60();
-BOOL PacketStopDriver60();
-BOOL PacketInstallDriver40();
-BOOL PacketStopDriver40();
-
 #define STR_COMMAND_USAGE \
 _T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.org )\n") \
 _T("Usage: NPFInstall [Options]\n") \
@@ -83,8 +78,6 @@ _T("  -iw\t\t\t: Install the WFP callout driver\n") \
 _T("  -uw\t\t\t: Uninstall the WFP callout driver\n") \
 _T("  -il\t\t\t: Install \"Npcap loopback adapter\"\n") \
 _T("  -ul\t\t\t: Uninstall \"Npcap loopback adapter\"\n") \
-_T("  -ii\t\t\t: Install the legacy driver (for XP)\n") \
-_T("  -uu\t\t\t: Uninstall the legacy driver (for XP)\n") \
 _T("  -r\t\t\t: Restart all bindings\n") \
 _T("  -r2\t\t\t: Restart all bindings (with Wi-Fi support)\n") \
 _T("  -d\t\t\t: Detect whether the driver service is pending to stop\n") \
@@ -179,96 +172,6 @@ stop_cleanup:
 	return bResult;
 }
 
-BOOL PacketInstallDriver60()
-{
-	TRACE_ENTER();
-	BOOL result = FALSE;
-
-	result = (BOOL) InstallDriver();
-
-	TRACE_EXIT();
-	return result;
-}
-
-BOOL PacketStopDriver60()
-{
-	TRACE_ENTER();
-	BOOL result;
-
-	result = (BOOL) UninstallDriver();
-
-	TRACE_EXIT();
-	return result;
-}
-
-BOOL PacketInstallDriver40()
-{
-	TRACE_ENTER();
-
-	PacketStopDriver40();
-
-	SC_HANDLE schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-	if (schSCManager == NULL)
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	TCHAR szFileFullPath[_MAX_PATH];
-	DWORD nResult = GetServiceSysFilePath(szFileFullPath, MAX_PATH);
-	if (nResult == 0)
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	SC_HANDLE schService = CreateService(schSCManager, _T(NPF_DRIVER_NAME_SMALL), NPF_SERVICE_DESC_TCHAR,
-		SERVICE_ALL_ACCESS,
-		SERVICE_KERNEL_DRIVER,
-		SERVICE_DEMAND_START,
-		SERVICE_ERROR_NORMAL,
-		szFileFullPath,
-		NULL, NULL, NULL, NULL, NULL);
-	if (schService == NULL)
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	CloseServiceHandle(schSCManager);
-	CloseServiceHandle(schService);
-
-	TRACE_EXIT();
-	return TRUE;
-}
-
-BOOL PacketStopDriver40()
-{
-	TRACE_ENTER();
-
-	SC_HANDLE schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-	if (schSCManager == NULL)
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	SC_HANDLE schService = OpenService(schSCManager, _T(NPF_DRIVER_NAME_SMALL), SERVICE_ALL_ACCESS | DELETE);
-	if (schService == NULL)
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	DeleteService(schService);
-
-	CloseServiceHandle(schSCManager);
-	CloseServiceHandle(schService); 
-
-	TRACE_EXIT();
-	return TRUE;
-}
-
 BOOL PacketRenableBindings()
 {
 	BOOL result;
@@ -331,7 +234,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			BOOL first_try = TRUE;
 		tryagain_i:
 			bWiFiService = FALSE;
-			bSuccess = PacketInstallDriver60();
+			bSuccess = InstallDriver();
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap LWF driver has been successfully installed!\n"));
@@ -362,7 +265,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			BOOL first_try = TRUE;
 		tryagain_i2:
 			bWiFiService = TRUE;
-			bSuccess = PacketInstallDriver60();
+			bSuccess = InstallDriver();
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has been successfully installed!\n"));
@@ -391,7 +294,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		else if (strArgs[1] == _T("-u"))
 		{
 			bWiFiService = FALSE;
-			bSuccess = PacketStopDriver60();
+			bSuccess = UninstallDriver();
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap LWF driver has been successfully uninstalled!\n"));
@@ -409,7 +312,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		else if (strArgs[1] == _T("-u2"))
 		{
 			bWiFiService = TRUE;
-			bSuccess = PacketStopDriver60();
+			bSuccess = UninstallDriver();
 			if (bSuccess)
 			{
 				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has been successfully uninstalled!\n"));
@@ -457,38 +360,6 @@ int _tmain(int argc, _TCHAR* argv[])
 				DWORD err = GetLastError();
 				nStatus = err ? err : 1;
 				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have failed to be restarted.\n"));
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-ii"))
-		{
-			bSuccess = PacketInstallDriver40();
-			if (bSuccess)
-			{
-				_tprintf(_T("NPF legacy driver has been successfully installed!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("NPF legacy driver has failed to be installed.\n"));
-				nStatus = -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-uu"))
-		{
-			bSuccess = PacketStopDriver40();
-			if (bSuccess)
-			{
-				_tprintf(_T("NPF legacy driver has been successfully uninstalled!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("NPF legacy driver has failed to be uninstalled.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
