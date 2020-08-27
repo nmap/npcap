@@ -1506,7 +1506,7 @@ BOOLEAN PacketInstallDriver()
 //	if (QueryWinPcapRegistryStringA(NPF_DRIVER_COMPLETE_PATH_REG_KEY, driverLocation, &len, NPF_DRIVER_COMPLETE_PATH) == FALSE && len == 0)
 //		return FALSE;
 	
-	scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	
 	if(scmHandle == NULL)
 		return FALSE;
@@ -1723,7 +1723,7 @@ BOOL PacketStartService()
 	CHAR	NpfServiceLocation[MAX_WINPCAP_KEY_CHARS] = SERVICES_REG_KEY NPF_DRIVER_NAME;
 
 
-	scmHandle = OpenSCManager(NULL, NULL, GENERIC_READ);
+	scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
 
 	if (scmHandle == NULL)
 	{
@@ -2129,7 +2129,7 @@ BOOL PacketStopDriver()
 //	if (QueryWinPcapRegistryStringA(NPF_DRIVER_NAME_REG_KEY, NpfDriverName, &RegQueryLen, NPF_DRIVER_NAME) == FALSE && RegQueryLen == 0)
 //		return FALSE;
 
-	scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
 	
 	if(scmHandle != NULL){
 		
@@ -2137,7 +2137,7 @@ BOOL PacketStopDriver()
 		
 		schService = OpenServiceA (scmHandle,
 			NpfDriverName,
-			SERVICE_ALL_ACCESS
+			SERVICE_STOP
 			);
 		
 		if (schService != NULL)

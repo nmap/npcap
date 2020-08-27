@@ -115,7 +115,7 @@ BOOL PacketIsServiceStopPending()
 	SC_HANDLE schSCManager = OpenSCManager(
 		NULL,                    // local computer
 		NULL,                    // ServicesActive database
-		SC_MANAGER_ALL_ACCESS);  // full access rights
+		SC_MANAGER_CONNECT);  // minimal access rights
 
 	if (NULL == schSCManager)
 	{
@@ -129,9 +129,7 @@ BOOL PacketIsServiceStopPending()
 	SC_HANDLE schService = OpenService(
 		schSCManager,         // SCM database
 		_T(NPF_DRIVER_NAME_SMALL),            // name of service
-		SERVICE_STOP |
-		SERVICE_QUERY_STATUS |
-		SERVICE_ENUMERATE_DEPENDENTS);
+		SERVICE_QUERY_STATUS);
 
 	if (schService == NULL)
 	{
