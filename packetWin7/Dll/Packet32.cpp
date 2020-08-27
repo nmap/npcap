@@ -109,8 +109,6 @@ using namespace std;
 #define SLEEP_TIME 50
 
 
-BOOL bUseNPF60							=	FALSE;					// Whether to use the new NDIS 6 driver.
-
 HANDLE g_hNpcapHelperPipe				=	INVALID_HANDLE_VALUE;	// Handle for NpcapHelper named pipe.
 HANDLE g_hDllHandle						=	NULL;					// The handle to this DLL.
 
@@ -939,12 +937,6 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 
 	UNUSED(lpReserved);
 
-#ifdef NDIS6X
-	bUseNPF60 = TRUE;
-#else
-	bUseNPF60 = FALSE;
-#endif
-
     switch(Reason)
     {
 	case DLL_PROCESS_ATTACH:
@@ -1463,108 +1455,6 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 	return TRUE;
 }
 
-#ifdef NPCAP_PACKET_INSTALL_SERVICE
-/*! 
-  \brief Installs the NPF device driver.
-  \return If the function succeeds, the return value is nonzero.
-
-  This function installs the driver's service in the system using the CreateService function.
-*/
-
-BOOLEAN PacketInstallDriver()
-{
-	BOOLEAN result = FALSE;
-	ULONG err = 0;
-	SC_HANDLE svcHandle;
-	SC_HANDLE scmHandle;
-//  
-//	Old registry based WinPcap names
-//
-//	CHAR driverName[MAX_WINPCAP_KEY_CHARS];
-//	CHAR driverDesc[MAX_WINPCAP_KEY_CHARS];
-//	CHAR driverLocation[MAX_WINPCAP_KEY_CHARS;
-//	UINT len;
-
-	CHAR driverName[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_NAME;
-	CHAR driverDesc[MAX_WINPCAP_KEY_CHARS] = NPF_SERVICE_DESC;
-	CHAR driverLocation[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_PATH;
-
- 	TRACE_ENTER();
-
-//  
-//	Old registry based WinPcap names
-//
-//	len = sizeof(driverName)/sizeof(driverName[0]);
-//	if (QueryWinPcapRegistryStringA(NPF_DRIVER_NAME_REG_KEY, driverName, &len, NPF_DRIVER_NAME) == FALSE && len == 0)
-//		return FALSE;
-//
-//	len = sizeof(driverDesc)/sizeof(driverDesc[0]);
-//	if (QueryWinPcapRegistryStringA(NPF_SERVICE_DESC_REG_KEY, driverDesc, &len, NPF_SERVICE_DESC) == FALSE && len == 0)
-//		return FALSE;
-//
-//	len = sizeof(driverLocation)/sizeof(driverLocation[0]);
-//	if (QueryWinPcapRegistryStringA(NPF_DRIVER_COMPLETE_PATH_REG_KEY, driverLocation, &len, NPF_DRIVER_COMPLETE_PATH) == FALSE && len == 0)
-//		return FALSE;
-	
-	scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
-	
-	if(scmHandle == NULL)
-		return FALSE;
-
-	svcHandle = CreateServiceA(scmHandle, 
-		driverName,
-		driverDesc,
-		SERVICE_ALL_ACCESS,
-		SERVICE_KERNEL_DRIVER,
-		SERVICE_DEMAND_START,
-		SERVICE_ERROR_NORMAL,
-		driverLocation,
-		NULL, NULL, NULL, NULL, NULL);
-	if (svcHandle == NULL) 
-	{
-		err = GetLastError();
-		if (err == ERROR_SERVICE_EXISTS) 
-		{
-			TRACE_PRINT("Service npf.sys already exists");
-			//npf.sys already existed
-			err = 0;
-			result = TRUE;
-		}
-	}
-	else 
-	{
-		TRACE_PRINT("Created service for npf.sys");
-		//Created service for npf.sys
-		result = TRUE;
-	}
-
-	if (svcHandle != NULL)
-		CloseServiceHandle(svcHandle);
-
-	if(result == FALSE)
-	{
-		TRACE_PRINT1("PacketInstallDriver failed, Error=%u",err);
-	}
-
-	CloseServiceHandle(scmHandle);
-	SetLastError(err);
-	TRACE_EXIT();
-	return result;
-	
-}
-
-BOOLEAN PacketInstallDriver60()
-{
-	BOOLEAN result = FALSE;
-	TRACE_ENTER();
-
-	result = (BOOLEAN) InstallDriver();
-
-	TRACE_EXIT();
-	return result;
-}
-#endif /* NPCAP_PACKET_INSTALL_SERVICE */
-
 /*! 
   \brief Dumps a registry key to disk in text format. Uses regedit.
   \param KeyName Name of the ket to dump. All its subkeys will be saved recursively.
@@ -1746,14 +1636,7 @@ BOOL PacketStartService()
 			Result = FALSE;
 #ifdef NPCAP_PACKET_INSTALL_SERVICE
 			TRACE_PRINT("NPF registry key not present, trying to install the driver.");
-			if (bUseNPF60)
-			{
-				Result = PacketInstallDriver60();
-			}
-			else
-			{
-				Result = PacketInstallDriver();
-			}
+			Result = InstallDriver();
 #endif
 		}
 		else
@@ -1831,7 +1714,7 @@ BOOL PacketStartService()
 		else
 		{
 			error = GetLastError();
-			TRACE_PRINT1("PacketInstallDriver failed! Error=%8.8x", error);
+			TRACE_PRINT1("InstallDriver failed! Error=%8.8x", error);
 			Result = FALSE;
 		}
 	}
