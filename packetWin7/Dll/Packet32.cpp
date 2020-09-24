@@ -3198,7 +3198,7 @@ BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
 
 /*!
   \brief Retrieve the list of supported timestamp modes on an adapter
-  \param pModes User allocated array that will be filled with the available timestamp modes. First element is the length of the array minus 1.
+  \param pModes User allocated array that will be filled with the available timestamp modes. First element is the length of the array.
   \return If the function succeeds, the return value is nonzero. If the return value is zero, pModes[0] contains 
           the number of ULONGs that are needed to contain the timestamp mode list.
 	  */
