@@ -38,4 +38,5 @@ EXPORTS
 		PacketIsDumpEnded
 		PacketSetLoopbackBehavior
 		PacketSetTimestampMode
+		PacketGetTimestampModes
 		PacketGetAirPcapHandle

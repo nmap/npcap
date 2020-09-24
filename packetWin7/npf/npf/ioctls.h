@@ -262,6 +262,8 @@
   This IOCTL sets the timestamp mode (DWORD) to one of the supported modes from time_calls.h
 */ 
 #define BIOCSTIMESTAMPMODE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa12, METHOD_BUFFERED, FILE_READ_DATA)
+// Get a list of supported timestamp modes. Output is an array of ULONG. First element is the number of modes supported.
+#define BIOCGTIMESTAMPMODES CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa13, METHOD_BUFFERED, FILE_READ_DATA)
 /** 
  *  @}
  */

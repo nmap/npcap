@@ -2022,6 +2022,37 @@ OID_REQUEST_DONE:
 		SET_RESULT_SUCCESS(0);
 		break;
 
+	case BIOCGTIMESTAMPMODES:
+		// Need to at least deliver the number of modes
+		FAIL_IF_OUTPUT_SMALL(sizeof(ULONG));
+
+		dim = IrpSp->Parameters.DeviceIoControl.OutputBufferLength / sizeof(ULONG);
+		cnt = 0;
+		pUL = (PULONG)Irp->AssociatedIrp.SystemBuffer;
+		Status = STATUS_SUCCESS;
+
+#define NEXT_MODE(_M) if (dim > ++cnt) { \
+			pUL[cnt] = _M; \
+		} else { \
+			Status = STATUS_BUFFER_OVERFLOW; \
+		}
+		NEXT_MODE(TIMESTAMPMODE_SINGLE_SYNCHRONIZATION);
+		NEXT_MODE(TIMESTAMPMODE_QUERYSYSTEMTIME);
+		// Only report the _PRECISE version if it's different than QST
+		if (g_ptrQuerySystemTime ==
+#ifdef KeQuerySystemTime
+				&KeQuerySystemTimeWrapper
+#else
+				&KeQuerySystemTime
+#endif
+		   )
+		{
+			NEXT_MODE(TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE);
+		}
+		Information = sizeof(ULONG) * (cnt+1);
+		Status = (cnt < dim) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
+		break;
+
 	case BIOCGETPIDS:
 		// Need to at least deliver the number of PIDS
 		FAIL_IF_OUTPUT_SMALL(sizeof(ULONG));

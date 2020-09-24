@@ -374,6 +374,7 @@ extern "C"
 	BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program* fp);
 	BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavior);
 	BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode);
+	BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG modes, PULONG BufferSize);
 	INT PacketSetSnapLen(LPADAPTER AdapterObject, int snaplen);
 	BOOLEAN PacketGetStats(LPADAPTER AdapterObject, struct bpf_stat* s);
 	BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject, struct bpf_stat* s);

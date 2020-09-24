@@ -3197,6 +3197,39 @@ BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
 }
 
 /*!
+  \brief Retrieve the list of supported timestamp modes on an adapter
+  \param pModes User allocated array that will be filled with the available timestamp modes. First element is the length of the array minus 1.
+  \return If the function succeeds, the return value is nonzero. If the return value is zero, pModes[0] contains 
+          the number of ULONGs that are needed to contain the timestamp mode list.
+	  */
+BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes, PULONG pNumModes)
+{
+	BOOLEAN result = FALSE;
+	DWORD BytesReturned = 0;
+	TRACE_ENTER();
+
+	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
+	{
+		*pNumModes = 0;
+		TRACE_PRINT("PacketGetTimestampMode: not allowed on non-NPF adapters");
+		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return FALSE;
+	}
+
+	result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,
+			BIOCGTIMESTAMPMODES,
+			NULL,
+			0,
+			pModes,
+			pModes[0] * sizeof(ULONG),
+			&BytesReturned,
+			NULL);
+	TRACE_EXIT();
+	return result;
+}
+
+/*!
   \brief Sets the snap len on the adapters that allow it.
   \param AdapterObject Pointer to an _ADAPTER structure.
   \param snaplen Desired snap len for this capture.
