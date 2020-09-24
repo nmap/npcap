@@ -3202,7 +3202,7 @@ BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
   \return If the function succeeds, the return value is nonzero. If the return value is zero, pModes[0] contains 
           the number of ULONGs that are needed to contain the timestamp mode list.
 	  */
-BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes, PULONG pNumModes)
+BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes)
 {
 	BOOLEAN result = FALSE;
 	DWORD BytesReturned = 0;
@@ -3210,7 +3210,7 @@ BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes, PULONG p
 
 	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
 	{
-		*pNumModes = 0;
+		*pModes = 0;
 		TRACE_PRINT("PacketGetTimestampMode: not allowed on non-NPF adapters");
 		TRACE_EXIT();
 		SetLastError(ERROR_NOT_SUPPORTED);
