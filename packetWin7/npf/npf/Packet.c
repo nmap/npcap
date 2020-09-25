@@ -650,9 +650,9 @@ NPF_registerLWF(
 
 	pFChars->MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION;
 	pFChars->MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
+	// WINPCAP_MAJOR is 5 for Npcap
 	pFChars->MajorDriverVersion = WINPCAP_MINOR;
-	/* TODO: Stop using minor version numbers greater than 255 */
-	pFChars->MinorDriverVersion = WINPCAP_REV % MAXUCHAR;
+	pFChars->MinorDriverVersion = WINPCAP_REV;
 	pFChars->Flags = 0;
 
 	// Use different names for the WiFi driver.

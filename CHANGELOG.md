@@ -4,6 +4,11 @@
 * After more than 7 years of development and 170 previous public releases, the
   Nmap Project is delighted to release Npcap version 1.00!
 
+* New Packet.dll function `PacketGetTimestampModes()` to retrieve supported
+  packet timestamping modes. These do not currently vary by adapter, but
+  `TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE` is not supported on Windows 7, for
+  example. Fixes [#174](http://issues.npcap.org/174).
+
 ## Npcap 0.9997 [2020-08-25]
 
 * Fix an integer underflow in the amount of free buffer space available leading
