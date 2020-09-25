@@ -1,4 +1,9 @@
 ﻿
+## Npcap 1.00 [2020-09-25]
+
+* After more than 7 years of development and 170 previous public releases, the
+  Nmap Project is delighted to release Npcap version 1.00!
+
 ## Npcap 0.9997 [2020-08-25]
 
 * Fix an integer underflow in the amount of free buffer space available leading
