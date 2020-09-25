@@ -977,3 +977,378 @@
 
 * Fixed the bug that `PacketGetNetType()` doesn't return the correct `DLT_NULL`
   value on Nmap.
+
+## Npcap 0.09-r9 []
+
+## Npcap 0.09-r8 []
+
+## Npcap 0.09-r7 []
+
+## Npcap 0.09-r6 []
+
+## Npcap 0.09-r5 []
+
+## Npcap 0.09-r4 []
+
+## Npcap 0.09-r3 []
+
+## Npcap 0.09-r2 []
+
+## Npcap 0.09-r13 []
+
+## Npcap 0.09-r12 []
+
+## Npcap 0.09-r11 []
+
+## Npcap 0.09-r10 []
+
+## Npcap 0.09 []
+
+## Npcap 0.08-r9 []
+
+## Npcap 0.08-r8 []
+
+## Npcap 0.08-r7 []
+
+## Npcap 0.08-r6 []
+
+## Npcap 0.08-r5 []
+
+## Npcap 0.08-r4 []
+
+## Npcap 0.08-r3 []
+
+## Npcap 0.08-r2 []
+
+## Npcap 0.08-r10 []
+
+## Npcap 0.08 []
+
+## Npcap 0.07-r9 []
+
+## Npcap 0.07-r8 []
+
+## Npcap 0.07-r7 []
+
+## Npcap 0.07-r6 []
+
+## Npcap 0.07-r5 []
+
+## Npcap 0.07-r4 []
+
+## Npcap 0.07-r3 []
+
+## Npcap 0.07-r2 []
+
+## Npcap 0.07-r17 []
+
+## Npcap 0.07-r16 []
+
+## Npcap 0.07-r15 []
+
+## Npcap 0.07-r14 []
+
+## Npcap 0.07-r13 []
+
+## Npcap 0.07-r12 []
+
+## Npcap 0.07-r11 []
+
+## Npcap 0.07-r10 []
+
+## Npcap 0.07 []
+
+## Npcap 0.06-r19 []
+
+## Npcap 0.06-r18 []
+
+## Npcap 0.06-r17 []
+
+## Npcap 0.06-r16 []
+
+## Npcap 0.06-r15 []
+
+## Npcap 0.06-r14 []
+
+## Npcap 0.06-r13 []
+
+## Npcap 0.06-r12 []
+
+## Npcap 0.06-r11 []
+
+## Npcap 0.06-r10 []
+
+## Npcap 0.06-r9 []
+
+## Npcap 0.06-r8 []
+
+## Npcap 0.06-r7 []
+
+## Npcap 0.06-r6 []
+
+## Npcap 0.06-r5 []
+
+## Npcap 0.06-r4 [2016-03-04]
+
+* The uninstallation window won't close itself now.
+
+* Fixed the problem that the uninstallation process won't end in the Task Manager.
+
+* System restore point will not be created in the uninstallation phase.
+
+* Improved the text display of the installer.
+
+## Npcap 0.06-r3 [2016-03-03]
+
+* Improved the creating system restore point support. Now Npcap installer will
+  create a Windows system restore point named Before Npcap %VERSION% installs
+  before actual installation process and create a point named Before Npcap
+  %VERSION% uninstalls before uninstallation.
+
+## Npcap 0.06-r2 [2016-03-01]
+
+* Made the loopback feature optional in the installer. This option is checked
+  by default.
+
+* Improved the creating system restore point logic by removing nested
+  creation. A modified SysRestore plug-in is used:
+  https://github.com/hsluoyz/SysRestore
+
+## Npcap 0.06 [2016-02-29]
+
+* Fixed the bug reported by yyjdelete that Npcap causes BSoD if the user tries to disable the adapter while sending packets.
+
+## Npcap 0.05-r16 [2016-02-29]
+
+* Added creating system restore point support. Now the installer has added an
+  option called Create a system restore point before installing Npcap. It this
+  option is checked, Npcap installer will create a Windows system restore
+  point named Before installing Npcap before actual installation
+  process. Returning back to this point will roll back all changes made by
+  Npcap. Note: this option is NOT checked by default.
+
+## Npcap 0.05-r15 [2016-02-28]
+
+* Added debug symbols support. Now Npcap will release new versions shipping
+  with the corresponding debug symbols. These PDB files will help debugging
+  BSoDs and user-mode crashes of Npcap binaries.  See
+  https://github.com/nmap/npcap/releases/tag/v0.05-r15.
+
+## Npcap 0.05-r14 [2016-02-25]
+
+* Fixed the driver signing error in Win7. We used the legacy SHA1 code signing
+  cert to sign the Npcap driver in Win7, so no need for Win7 users to install
+  KB3033929 patch any more.
+
+* This version Npcap is supposed to have fixed all signing errors, so it will
+  successfully install on all the platforms: Vista, Win7, Win8, Win8.1 and
+  Win10 without any prerequisites.
+
+## Npcap 0.05-r13 [2016-02-20]
+
+* Fixed a driver signing error in Vista. See
+  https://github.com/nmap/npcap/releases/tag/v0.05-r13.
+
+## Npcap 0.05-r12 [2016-02-16]
+
+* Signed the installer with better signing method
+
+## Npcap 0.05-r11 [2016-02-16]
+
+* Npcap 0.05 r11: Added firewall (Block-Rx) support. See
+  https://github.com/nmap/npcap/releases/tag/v0.05-r11.
+
+## Npcap 0.05-r10 [2016-02-04]
+
+* Added different Timestamp modes support like original WinPcap.  See https://github.com/nmap/npcap/releases/tag/v0.05-r10
+
+## Npcap 0.05-r9 [2016-02-04]
+
+* Updated wpcap.dll from VS2005 to VS2013 and Packet.dll, NPFInstall.exe and
+  NPcapHelper.exe from VS2010 to VS2013.
+
+* Additionally, I rolled back the driver signing improvement in 0.05
+  r8. Because it will show a Program Compatibility Assistant window said a
+  well signed driver is needed. However, it's not true because npcap driver
+  runs well by testing net start npf. To avoid this false message, I rolled
+  back to the original signing commands.
+
+## Npcap 0.05-r8 [2016-02-01]
+
+* Now Npcap driver will be signed in both SHA1 and SHA256 digest algorithms
+  and with timestamp. This improvement will help the driver installation on
+  Vista and Win7. This is an issue reported by Graham Bloice (see graham's
+  answer in
+  https://ask.wireshark.org/questions/46689/failed-to-create-npcap-service).
+
+## Npcap 0.05-r7 [2016-01-28]
+
+* Now send-to-Rx adapters can be multiple. The string specified in registry's SendToRx value should be semicolon-separated.
+
+An example for one send-to-Rx adapter:
+'\Device\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}
+
+An example for two send-to-Rx adapters:
+'\Device\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF};\Device\{F5A00000-E19A-4D17-B6D9-A23FE1852573}
+
+## Npcap 0.05-r6 [2016-01-27]
+
+* Now Npcap can have a send-to-Rx adapter. The send-to-Rx adapter will inject
+  all its packets to "Receive Path" (Rx) instead of normal "Send Path"
+  (Tx). So that instead of sending traffic to the network, the adapter will
+  pretend to receive the injected traffic from the network in this way.
+
+* Currently only one send-to-Rx adapter is supported by specifying SendToRx
+  value in Npcap driver service's registry key (need to restart the driver to
+  take effect).
+
+* Npcap driver service's registry key is usually in:
+  HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npf. In this key. You
+  need to manually create a REG_SZ value named SendToRx, the value is the name
+  of the adapter you want to be send-to-Rx adapter. The name is usually like
+  format of \Device\{F5A00000-E19A-4D17-B6D9-A23FE1852573}. You can query this
+  value using Nmap's nmap --iflist command, you will get a similar value like
+  \Device\NPF_{F5A00000-E19A-4D17-B6D9-A23FE1852573}, but they are NOT THE
+  SAME. You need to remove the NPF_ in this string and copy it to registry's
+  SendToRx value. Then reboot the driver by net stop npf and net start npf.
+
+## Npcap 0.05-r5 [2016-01-11]
+
+* Fixed the bug reported by Nuno Antonio Dias Ferreira that Npcap fails to
+  retrieve the adapter list using NPF registry way.
+
+## Npcap 0.05-r4 [2015-12-17]
+
+* Fixed the bug reported by Tenzin Rigden that Npcap installer fails to
+  install correct files in /S silent mode.
+
+## Npcap 0.05-r3 [2015-11-25]
+
+* Added Npcap's support for Vista, Npcap now will prepare separate binaries
+  for Vista.
+
+## Npcap 0.05-r2 [2015-11-05]
+
+* Fixed the bug reported by Amos Sheldon that Npcap causes BSoD:
+  ATTEMPTED_EXECUTE_OF_NOEXECUTE_MEMORY when using Wireshark on Win8, 10 x86.
+
+## Npcap 0.05 [2015-09-11]
+
+* Added the "DON'T LOOPBACK" feature, if software set
+  PacketSetLoopbackBehavior() by disable, self-sent packets will not be
+  received again.
+
+* Built the installer using NSIS with strlen_8192, so system "PATH" will be
+  updated normally in most cases (PATH is less than 8192).
+
+* Added 128 CPU core support for Npcap, or Npcap will cause BSoD when running
+  on 128-core system.
+
+* Improved the appearance and text of the installer.
+
+## Npcap 0.04-r9 [2015-08-31]
+
+* Fixed the bug that Npcap can't capture real loopback traffic after system is
+  resumed from standby.
+
+## Npcap 0.04-r8 [2015-08-25]
+
+* Now PCAP_IF_LOOPBACK flag in pcap_if_t struct will be set for "Npcap
+  Loopback Adapter" both for DLT_NULL mode and Fake Ethernet mode.
+
+## Npcap 0.04-r7 [2015-08-24]
+
+* PCAP_IF_LOOPBACK flag in pcap_if_t struct will be set for "Npcap Loopback
+  Adapter" now, only for DLT_NULL mode
+
+* Fixed the bug that DLT_NULL mode can't be disabled in the driver.
+
+## Npcap 0.04-r6 [2015-08-23]
+
+* Packet.dll will return NdisMediumNull for "Npcap Loopback Adapter" now.
+
+## Npcap 0.04-r5 [2015-08-21]
+
+* Finished the DLT_NULL protocol support. But there's a problem that Wireshark
+  didn't parse the loopback packets right, need fix.
+
+## Npcap 0.04-r4 [2015-08-21]
+
+* Npcap driver will return 65550 as "Maximum Packet Size" instead of default
+  1514 for "Npcap Loopback Adapter", which refers to Linux implementation.
+
+## Npcap 0.04-r3 [2015-08-18]
+
+* Fixed the bug reported by Pascal Quantin that WSK code fails to init if it
+  is run without Administrator right, the effect is Npcap loopback adapter
+  can't be opened.
+
+## Npcap 0.04-r2 [2015-08-16]
+
+* Modified wpcap.dll version to 0.04, and improved the error trace message for
+  Winsock Kernel socket operations.
+
+## Npcap 0.04 [2015-08-15]
+
+* Fixed the SYSTEM_SERVICE_EXCEPTION BSoD caused by NdisFOidRequest call, this
+  may help to fix the BAD_POOL_CALLER BSoD (I said "may" because this BSoD
+  can't be reproduced).
+
+* Modified Nmap and Nping to be able to send loopback packets on Windows OS,
+  here's a bug, Nmap still can't see reply packets. But the request and reply
+  packets can be seen in Wireshark.
+
+## Npcap 0.03-r6 [2015-08-06]
+
+* Changed to static linked.
+
+## Npcap 0.03-r5 [2015-08-06]
+
+* Npcap can send loopback packets now!
+
+## Npcap 0.03-r4 [2015-08-05]
+
+* WSKTest can send IPv4 and IPv6 loopback packets based on Ethernet header
+  now.
+
+* Added IPv6 send support for WSKTest.
+
+* WSKTest can send a self-constructed ICMPv4 request packet now
+
+* Fixed the INF file lacking section issue in WSKTest.
+
+* Updated WSKTest from VS 2013 to VS 2015.
+
+## Npcap 0.03-r3 [2015-08-03]
+
+## Npcap 0.03-r2 [2015-07-30]
+
+* Improved WSK send code, update code format
+
+## Npcap 0.03 [2015-07-27]
+
+## Npcap 0.02-r4 [2015-07-26]
+
+## Npcap 0.02-r3 [2015-07-24]
+
+## Npcap 0.02-r2 [2015-07-22]
+
+* Fixed the bug that "Npcap Loopback Adaprer" renaming fails in Win10 non-English editions.
+
+## Npcap 0.02 [2015-07-22]
+
+* Solve the "system error 2" issue
+
+## Npcap 0.01-r2 [2015-07-19]
+
+## Npcap 0.01 [2015-06-23]
+
+* Add option to restrict Npcap usage to Windows users with admin rights rather
+  than all users.
+
+## Npcap Birthday (First Public Code Checkin)! [2013-06-24]
+
+* Npcap's birthday! While Gordon "Fyodor" Lyon and Yang Luo had been working
+  on the idea for a couple of months, June 24, 2013 was the date that Yang
+  checked in the first actual code with the Npcap name!
+
