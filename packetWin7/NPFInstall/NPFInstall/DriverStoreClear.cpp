@@ -101,8 +101,16 @@ vector<tstring> getInfNamesFromPnpUtilOutput(tstring strOutput)
 	while ((iStart = strOutput.find(_T(':'), iStart + 1)) != tstring::npos)
 	{
 		iStart = strOutput.find_first_not_of(_T(" \t\r\n"), iStart + 1);
+		if (iStart == tstring::npos) {
+			// No more lines
+			break;
+		}
 		iEnd = strOutput.find_first_of(_T("\r\n"), iStart + 1);
-		tstring strText = strOutput.substr(iStart, iEnd - iStart);
+		tstring strText = strOutput.substr(iStart,
+				// No EOL found? take the whole thing.
+				iEnd != tstring::npos
+				? iEnd - iStart
+				: tstring::npos);
 
 		if (iTime == 0)
 		{
