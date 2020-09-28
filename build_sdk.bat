@@ -1,5 +1,7 @@
 @echo off
-set SDKFILENAME=npcap-sdk-1.05.zip
+for /F tokens^=3^,4^ delims^=^"^	^  %%A in (version.h) do if "%%A" == "NPCAP_SDK_VERSION" set SDK_VER=%%B
+if "%SDK_VER%" == "" goto :fail
+set SDKFILENAME=npcap-sdk-%SDK_VER%.zip
 
 if "%2"== "" ( rd /s/q ./npcap-sdk 2>nul >nul) else ( rd /s /q "%2" 2>nul >nul)
 
