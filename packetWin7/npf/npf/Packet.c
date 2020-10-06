@@ -2031,6 +2031,7 @@ OID_REQUEST_DONE:
 		pUL = (PULONG)Irp->AssociatedIrp.SystemBuffer;
 		Status = STATUS_SUCCESS;
 
+		// Count each mode supported, and if they fit in the buffer, store them.
 #define NEXT_MODE(_M) if (dim > ++cnt) { \
 			pUL[cnt] = _M; \
 		} else { \
@@ -2049,8 +2050,12 @@ OID_REQUEST_DONE:
 		{
 			NEXT_MODE(TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE);
 		}
-		Information = sizeof(ULONG) * (cnt+1);
-		Status = (cnt < dim) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
+		// First element is number of modes supported
+		*pUL = cnt;
+		// We didn't write more than dim ULONGs,
+		// nor more than the number of modes plus one to store the count
+		Information = sizeof(ULONG) * min(dim, cnt + 1);
+		// Status is set in NEXT_MODE()
 		break;
 
 	case BIOCGETPIDS:
@@ -2077,7 +2082,7 @@ OID_REQUEST_DONE:
 		NdisReleaseRWLock(Open->DeviceExtension->AllOpensLock, &lockState);
 
 		*pUL = cnt;
-		Information = sizeof(ULONG) * (cnt+1);
+		Information = sizeof(ULONG) * min(dim, cnt + 1);
 		Status = (cnt < dim) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
 		break;
 
