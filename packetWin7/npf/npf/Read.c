@@ -325,7 +325,8 @@ NPF_Read(
 	// Lock this so we don't increment Free during a buffer reset
 	NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);
 
-	while (available > copied)
+	// Ensure we have enough space left for at least a bpf_hdr
+	while (available > copied + NPF_CAP_SIZE(0))
 	{
 		//there are some packets in the buffer
 		PLIST_ENTRY pCapDataEntry = ExInterlockedRemoveHeadList(&Open->PacketQueue, &Open->PacketQueueLock);
