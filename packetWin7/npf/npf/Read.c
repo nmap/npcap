@@ -350,12 +350,22 @@ NPF_Read(
 		if (ulCapSize > available - copied)
 		{
 			//if the packet does not fit into the user buffer, we've ended copying packets
-			// Put this packet back.
-			ExInterlockedInsertHeadList(&Open->PacketQueue, pCapDataEntry, &Open->PacketQueueLock);
-			break;
+			if (copied == 0)
+			{
+				// This packet is too large for the entire buffer. Truncate it.
+				plen = available - (ulCapSize - pCapData->ulCapLen);
+			}
+			else
+			{
+				// Put this packet back.
+				ExInterlockedInsertHeadList(&Open->PacketQueue, pCapDataEntry, &Open->PacketQueueLock);
+				break;
+			}
 		}
-
-		plen = pCapData->ulCaplen;
+		else
+		{
+			plen = pCapData->ulCaplen;
+		}
 
 		header = (struct bpf_hdr *) (packp + copied);
 		header->bh_tstamp = pCapData->pNBCopy->pNBLCopy->tstamp;
