@@ -92,8 +92,7 @@ o The Nmap Security Scanner, as distributed from https://nmap.org
 o The Wireshark network protocol analyzer, as distributed from
   https://www.wireshark.org/
   
-o Microsoft Defender for Identity software,
-  as distributed from
+o Microsoft Defender for Identity, as distributed from
   https://www.microsoft.com/en-us/microsoft-365/security/identity-defender
 
 Users wishing to redistribute Npcap or exceed the usage limits imposed
