@@ -669,7 +669,7 @@ NPF_CopyFromNetBufferToNBCopy(
 		return TRUE;
 	}
 
-	if (pElem != &pNBCopy->FirstElem && ulBufIdx == 0)
+	if (pNBCopy->ulSize > 0 && ulBufIdx == 0)
 	{
 		// We don't leave empty elems at the end of the chain,
 		// so this must mean the last elem is actually full.
