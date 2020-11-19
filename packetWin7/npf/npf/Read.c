@@ -354,7 +354,7 @@ NPF_Read(
 			if (copied == 0)
 			{
 				// This packet is too large for the entire buffer. Truncate it.
-				plen = available - (ulCapSize - pCapData->ulCapLen);
+				plen = available - (ulCapSize - pCapData->ulCaplen);
 			}
 			else
 			{
