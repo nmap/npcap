@@ -1195,6 +1195,16 @@ NPF_TapExForEachOpen(
 			/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
 			ASSERT(pCapData->pNBCopy);
 			ASSERT(pCapData->pNBCopy->pNBLCopy);
+			/* This should never happen, but has happened due to
+			 * bugs in NPF_CopyFromNetBufferToNBCopy. Handle the
+			 * consequences here, but bail if we're debugging
+			 * because this is a big deal. */
+			if (NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader) != lCapSize)
+			{
+				ASSERT(0);
+				// Add the difference back, otherwise we never recover it.
+				NpfInterlockedExchangeAdd(&Open->Free, lCapSize - NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader));
+			}
 			ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
 			// We successfully put this into the queue
 			lCapSize = 0;
