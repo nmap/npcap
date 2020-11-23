@@ -9,6 +9,10 @@
   `TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE` is not supported on Windows 7, for
   example. Fixes [#174](http://issues.npcap.org/174).
 
+* Npcap driver is now only signed with SHA256 signatures on platforms other
+  than Windows 7, which may resolve signature validation issues on some
+  systems. The Windows 7 driver is signed with SHA-1 signatures only.
+
 ## Npcap 0.9997 [2020-08-25]
 
 * Fix an integer underflow in the amount of free buffer space available leading
