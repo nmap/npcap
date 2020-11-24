@@ -327,7 +327,7 @@ NPF_StopUsingBinding(
 	PNPCAP_FILTER_MODULE pFiltMod, BOOLEAN AtDispatchLevel
 	)
 {
-	ASSERT(pFiltMod != NULL);
+	NT_ASSERT(pFiltMod != NULL);
 	//
 	//  There is no risk in calling this function from abobe passive level
 	//  (i.e. DISPATCH, in this driver) as we acquire a spinlock and decrement a
@@ -337,7 +337,7 @@ NPF_StopUsingBinding(
 
 	FILTER_ACQUIRE_LOCK(&pFiltMod->AdapterHandleLock, AtDispatchLevel);
 
-	ASSERT(pFiltMod->AdapterHandleUsageCounter > 0);
+	NT_ASSERT(pFiltMod->AdapterHandleUsageCounter > 0);
 
 	pFiltMod->AdapterHandleUsageCounter--;
 
@@ -345,7 +345,7 @@ NPF_StopUsingBinding(
 }
 
 //-------------------------------------------------------------------
-
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
 NPF_CloseBinding(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod
@@ -354,8 +354,7 @@ NPF_CloseBinding(
 	NDIS_EVENT Event;
 	NDIS_STATUS Status;
 
-	ASSERT(pFiltMod != NULL);
-	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
+	NT_ASSERT(pFiltMod != NULL);
 
 	NdisInitializeEvent(&Event);
 	NdisResetEvent(&Event);
@@ -401,7 +400,7 @@ NPF_ResetBufferContents(
 	Curr = Open->PacketQueue.Flink;
 	while (Curr != &Open->PacketQueue)
 	{
-		ASSERT(Curr != NULL);
+		NT_ASSERT(Curr != NULL);
 		pCapData = CONTAINING_RECORD(Curr, NPF_CAP_DATA, PacketQueueEntry);
 		Curr = Curr->Flink;
 
@@ -803,7 +802,7 @@ NPF_StopUsingOpenInstance(
 	)
 {
 	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-	ASSERT(pOpen->PendingIrps[MaxState] > 0);
+	NT_ASSERT(pOpen->PendingIrps[MaxState] > 0);
 	pOpen->PendingIrps[MaxState]--;
 	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 
@@ -924,8 +923,7 @@ NPF_ReleaseOpenInstanceResources(
 
 	TRACE_ENTER();
 
-	ASSERT(pOpen != NULL);
-	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
+	NT_ASSERT(pOpen != NULL);
 
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open= %p", pOpen);
 
@@ -994,8 +992,7 @@ NPF_ReleaseFilterModuleResources(
 {
 	TRACE_ENTER();
 
-	ASSERT(pFiltMod != NULL);
-	ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
+	NT_ASSERT(pFiltMod != NULL);
 
 	if (pFiltMod->PacketPool) // Release the packet buffer pool
 	{
@@ -1029,8 +1026,8 @@ NPF_GetDeviceMTU(
 	)
 {
 	TRACE_ENTER();
-	ASSERT(pFiltMod != NULL);
-	ASSERT(pMtu != NULL);
+	NT_ASSERT(pFiltMod != NULL);
+	NT_ASSERT(pMtu != NULL);
 
 	UINT Mtu = 0;
 	ULONG BytesProcessed = 0;
@@ -1075,13 +1072,13 @@ NPF_GetDeviceMTU(
 _Use_decl_annotations_
 NTSTATUS
 NPF_GetDataRateMappingTable(
-	IN PNPCAP_FILTER_MODULE pFiltMod,
-	OUT PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable
+	PNPCAP_FILTER_MODULE pFiltMod,
+	PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable
 )
 {
 	TRACE_ENTER();
-	ASSERT(pFiltMod != NULL);
-	ASSERT(pDataRateMappingTable != NULL);
+	NT_ASSERT(pFiltMod != NULL);
+	NT_ASSERT(pDataRateMappingTable != NULL);
 
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
@@ -1163,8 +1160,8 @@ NPF_GetCurrentOperationMode(
 )
 {
 	TRACE_ENTER();
-	ASSERT(pFiltMod != NULL);
-	ASSERT(pCurrentOperationMode != NULL);
+	NT_ASSERT(pFiltMod != NULL);
+	NT_ASSERT(pCurrentOperationMode != NULL);
 
 	DOT11_CURRENT_OPERATION_MODE CurrentOperationMode = { 0 };
 	ULONG BytesProcessed = 0;
@@ -1237,8 +1234,8 @@ NPF_GetCurrentChannel(
 )
 {
 	TRACE_ENTER();
-	ASSERT(pFiltMod != NULL);
-	ASSERT(pCurrentChannel != NULL);
+	NT_ASSERT(pFiltMod != NULL);
+	NT_ASSERT(pCurrentChannel != NULL);
 
 	ULONG CurrentChannel = 0;
 	ULONG BytesProcessed = 0;
@@ -1308,8 +1305,8 @@ NPF_GetCurrentFrequency(
 )
 {
 	TRACE_ENTER();
-	ASSERT(pFiltMod != NULL);
-	ASSERT(pCurrentFrequency != NULL);
+	NT_ASSERT(pFiltMod != NULL);
+	NT_ASSERT(pCurrentFrequency != NULL);
 
 	ULONG CurrentFrequency = 0;
 	ULONG BytesProcessed = 0;
@@ -1437,7 +1434,7 @@ NPF_Cleanup(
 
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
 
-	ASSERT(Open != NULL);
+	NT_ASSERT(Open != NULL);
 
 	NPF_RemoveFromGroupOpenArray(Open); //Remove the Open from the filter module's list
 
@@ -1561,7 +1558,7 @@ NPF_RemoveFromFilterModuleArray(
 	PSINGLE_LIST_ENTRY Curr = NULL;
 
 	TRACE_ENTER();
-	ASSERT(pFiltMod != NULL);
+	NT_ASSERT(pFiltMod != NULL);
 
 	NdisAcquireSpinLock(&g_FilterArrayLock);
 
@@ -2145,8 +2142,7 @@ Return Value:
 {
 	TRACE_ENTER();
 
-	ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
-	if (FilterDriverContext != (NDIS_HANDLE)FilterDriverObject)
+	if (!NT_VERIFY(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject))
 	{
 		IF_LOUD(DbgPrint("NPF_RegisterOptions: driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);)
 		return NDIS_STATUS_INVALID_PARAMETER;
@@ -2219,8 +2215,7 @@ NPF_AttachAdapter(
 
 	do
 	{
-		ASSERT(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject);
-		if (FilterDriverContext != (NDIS_HANDLE)FilterDriverObject)
+		if (!NT_VERIFY(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject))
 		{
 			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
 			break;
@@ -2435,7 +2430,7 @@ NPF_Pause(
 	NdisResetEvent(&Event);
 
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	ASSERT(pFiltMod->AdapterBindingStatus == FilterRunning);
+	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterRunning);
 	pFiltMod->AdapterBindingStatus = FilterPausing;
 	
 	while (pFiltMod->AdapterHandleUsageCounter > 0)
@@ -2480,7 +2475,7 @@ NPF_Restart(
 	}
 
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused);
+	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused);
 	pFiltMod->AdapterBindingStatus = FilterRestarting;
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
@@ -2549,7 +2544,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
-	ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused || pFiltMod->Loopback);
+	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused || pFiltMod->Loopback);
 	/* No need to lock the group since we are paused. */
 	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 	{
@@ -2823,7 +2818,7 @@ Arguments:
 
 	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, NPF_IRQL_UNKNOWN);
 
-	ASSERT(pFiltMod->PendingOidRequest == Request);
+	NT_ASSERT(pFiltMod->PendingOidRequest == Request);
 	pFiltMod->PendingOidRequest = NULL;
 
 	FILTER_RELEASE_LOCK(&pFiltMod->OIDLock, NPF_IRQL_UNKNOWN);
@@ -3197,7 +3192,7 @@ NPF_SetPacketFilter(
 	PNPCAP_FILTER_MODULE pFiltMod = pOpen->pFiltMod;
 	LOCK_STATE_EX lockState;
 	
-	ASSERT(pFiltMod != NULL);
+	NT_ASSERT(pFiltMod != NULL);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (pFiltMod->Loopback) {

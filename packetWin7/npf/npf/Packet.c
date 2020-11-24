@@ -1866,7 +1866,7 @@ NPF_IoControl(
 
 			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
 			{
-				ASSERT(Open->pFiltMod != NULL);
+				NT_ASSERT(Open->pFiltMod != NULL);
 
 				// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
 				if (Open->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)

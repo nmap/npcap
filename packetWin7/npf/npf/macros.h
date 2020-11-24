@@ -112,7 +112,7 @@ typedef struct _DLT_NULL_HEADER
 /* Interlocked API requires destination to be aligned to 32-bit boundaries.
  * These functions just assert that to catch errors */
 #define INTERLOCKED_ALIGNMENT_BYTES 4
-#define ASSERT_INTERLOCKED_ALIGNED(_ptr) ASSERT(((ULONG_PTR)_ptr) % INTERLOCKED_ALIGNMENT_BYTES == 0)
+#define ASSERT_INTERLOCKED_ALIGNED(_ptr) NT_ASSERT(((ULONG_PTR)_ptr) % INTERLOCKED_ALIGNMENT_BYTES == 0)
 inline LONG
 NpfInterlockedIncrement (
 		_Inout_ _Interlocked_operand_ LONG volatile *Addend

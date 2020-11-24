@@ -308,7 +308,7 @@ NPF_Write(
 
 			// Attach the writes buffer to the packet
 
-			ASSERT(Open->pFiltMod != NULL);
+			NT_ASSERT(Open->pFiltMod != NULL);
 
 			NpfInterlockedIncrement(&Open->TransmitPendingPackets);
 
@@ -686,7 +686,7 @@ NPF_BufferedWrite(
 
 		TmpMdl->Next = NULL;
 
-		ASSERT(Open->pFiltMod != NULL);
+		NT_ASSERT(Open->pFiltMod != NULL);
 
 		// Increment the number of pending sends
 		NpfInterlockedIncrement(&Open->Multiple_Write_Counter);

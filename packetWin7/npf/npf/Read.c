@@ -108,21 +108,22 @@ NPF_CopyFromNBCopyToBuffer(
 	ULONG out = 0;
 	ULONG ulCopyLen = 0;
 
-	ASSERT(ulDesiredLen <= pNBCopy->ulSize);
+	NT_ASSERT(ulDesiredLen <= pNBCopy->ulSize);
 	while (pElem && out < ulDesiredLen)
 	{
 		ulCopyLen = min(ulDesiredLen - out, NPF_BUFCHAIN_SIZE);
-		ASSERT(ulCopyLen + out <= ulDesiredLen);
+		if (!NT_VERIFY(ulCopyLen + out <= ulDesiredLen))
+		{
+			// This can never happen, but Code Analysis thinks otherwise.
+			break;
+		}
 		RtlCopyMemory(pDstBuf + out, pElem->Buffer, ulCopyLen);
 		out += ulCopyLen;
-		if (ulCopyLen == NPF_BUFCHAIN_SIZE)
-		{
-			pElem = pElem->Next;
-		}
+		pElem = pElem->Next;
 	}
 
 	// Really no reason we should ever fail to get out what we put into it.
-	ASSERT(out == ulDesiredLen);
+	NT_ASSERT(out == ulDesiredLen);
 	return out;
 }
 
@@ -338,9 +339,9 @@ NPF_Read(
 		PNPF_CAP_DATA pCapData = CONTAINING_RECORD(pCapDataEntry, NPF_CAP_DATA, PacketQueueEntry);
 
 		/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
-		ASSERT(pCapData->pNBCopy);
-		ASSERT(pCapData->pNBCopy->pNBLCopy);
-		ASSERT(pCapData->pNBCopy->ulPacketSize < 0xffffffff);
+		NT_ASSERT(pCapData->pNBCopy);
+		NT_ASSERT(pCapData->pNBCopy->pNBLCopy);
+		NT_ASSERT(pCapData->pNBCopy->ulPacketSize < 0xffffffff);
 
 #ifdef HAVE_DOT11_SUPPORT
 		PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pCapData->pNBCopy->pNBLCopy->Dot11RadiotapHeader;
@@ -400,7 +401,7 @@ NPF_Read(
 
 		// Increase free space by the amount that it was reduced before
 		NpfInterlockedExchangeAdd(&Open->Free, ulCapSize);
-		ASSERT(Open->Free <= Open->Size);
+		NT_ASSERT(Open->Free <= Open->Size);
 	}
 
 	NdisReleaseRWLock(Open->BufferLock, &lockState);
@@ -617,9 +618,9 @@ PNPF_CAP_DATA NPF_GetCapData(
 		_In_range_(1,0xffffffff) UINT uCapLen
 		)
 {
-	ASSERT(pNBLCopy);
-	ASSERT(pNBCopy->pNBLCopy == pNBLCopy);
-	ASSERT(pNBCopy->ulPacketSize < 0xffffffff);
+	NT_ASSERT(pNBLCopy);
+	NT_ASSERT(pNBCopy->pNBLCopy == pNBLCopy);
+	NT_ASSERT(pNBCopy->ulPacketSize < 0xffffffff);
 
 	PNPF_CAP_DATA pCapData = (PNPF_CAP_DATA) ExAllocateFromLookasideListEx(pPool);
 	if (pCapData == NULL)
@@ -660,8 +661,8 @@ NPF_CopyFromNetBufferToNBCopy(
 	ULONG ulBufIdx = pNBCopy->ulSize % NPF_BUFCHAIN_SIZE;
 
 	// pNBCopy must be set up correctly
-	ASSERT(pMdl);
-	ASSERT(pElem != NULL);
+	NT_ASSERT(pMdl);
+	NT_ASSERT(pElem != NULL);
 
 	// If there's enough data here already, we're done.
 	if (ulDesiredLen <= pNBCopy->ulSize)
@@ -677,14 +678,13 @@ NPF_CopyFromNetBufferToNBCopy(
 	}
 
 	// pLastElem must be the last in the chain.
-	ASSERT(pElem->Next == NULL);
+	NT_ASSERT(pElem->Next == NULL);
 
 	while (pNBCopy->ulSize < ulDesiredLen)
 	{
-		if (pMdl == NULL)
+		if (!NT_VERIFY(pMdl != NULL))
 		{
 			// Something went terribly wrong
-			ASSERT(pMdl != NULL);
 			IF_LOUD(DbgPrint("MDL chain too short; bailing.");)
 			return FALSE;
 		}
@@ -707,7 +707,7 @@ NPF_CopyFromNetBufferToNBCopy(
 
 		while (ulCopyLenForMdl > 0)
 		{
-			ASSERT(ulBufIdx <= NPF_BUFCHAIN_SIZE);
+			NT_ASSERT(ulBufIdx <= NPF_BUFCHAIN_SIZE);
 			// If the offset is past the end of the buffer, we need a new buffer.
 			if (ulBufIdx == NPF_BUFCHAIN_SIZE)
 			{
@@ -740,8 +740,7 @@ NPF_CopyFromNetBufferToNBCopy(
 		pMdl = pMdl->Next;
 	}
 
-	ASSERT(pNBCopy->ulSize == ulDesiredLen);
-	return (pNBCopy->ulSize == ulDesiredLen);
+	return NT_VERIFY(pNBCopy->ulSize == ulDesiredLen);
 }
 
 _Use_decl_annotations_
@@ -765,7 +764,7 @@ NPF_TapExForEachOpen(
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	PSINGLE_LIST_ENTRY pNBLCopyPrev = NULL;
 	PSINGLE_LIST_ENTRY pSrcNBPrev = NULL;
-	ASSERT(tstamp != NULL);
+	NT_ASSERT(tstamp != NULL);
 	
 	//TRACE_ENTER();
 
@@ -787,7 +786,7 @@ NPF_TapExForEachOpen(
 		PVOID pRadiotapHeader = NULL;
 #endif
 
-		ASSERT(pNBLCopyPrev);
+		NT_ASSERT(pNBLCopyPrev);
 		if (pNBLCopyPrev->Next == NULL)
 		{
 			// Add another NBL copy to the chain
@@ -801,7 +800,7 @@ NPF_TapExForEachOpen(
 			}
 			RtlZeroMemory(pNBLCopy, sizeof(NPF_NBL_COPY));
 			pNBLCopy->refcount = 1;
-			ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
+			NT_ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
 			pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
 			if (tstamp->tv_sec == 0)
 			{
@@ -1021,7 +1020,7 @@ NPF_TapExForEachOpen(
 			// Get the whole packet length.
 			ULONG TotalPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 
-			ASSERT(pSrcNBPrev);
+			NT_ASSERT(pSrcNBPrev);
 			if (pSrcNBPrev->Next == NULL)
 			{
 				// Add another copy to the chain
@@ -1134,7 +1133,7 @@ NPF_TapExForEachOpen(
 					+ (pRadiotapHeader != NULL ? pRadiotapHeader->it_len : 0)
 #endif
 					;
-			ASSERT(lCapSize > 0);
+			NT_ASSERT(lCapSize > 0);
 			if (lCapSize < 0)
 			{
 				// Overflow; this is an impossibly large packet
@@ -1193,15 +1192,14 @@ NPF_TapExForEachOpen(
 			}
 
 			/* Any NPF_CAP_DATA in the queue must be initialized and point to valid data. */
-			ASSERT(pCapData->pNBCopy);
-			ASSERT(pCapData->pNBCopy->pNBLCopy);
+			NT_ASSERT(pCapData->pNBCopy);
+			NT_ASSERT(pCapData->pNBCopy->pNBLCopy);
 			/* This should never happen, but has happened due to
 			 * bugs in NPF_CopyFromNetBufferToNBCopy. Handle the
 			 * consequences here, but bail if we're debugging
 			 * because this is a big deal. */
-			if (NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader) != lCapSize)
+			if (!NT_VERIFY(NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader) == lCapSize))
 			{
-				ASSERT(0);
 				// Add the difference back, otherwise we never recover it.
 				NpfInterlockedExchangeAdd(&Open->Free, lCapSize - NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader));
 			}

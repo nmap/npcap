@@ -450,7 +450,7 @@ CompletionRoutine(
 	_In_ PKEVENT CompletionEvent
 	)
 {
-	ASSERT(CompletionEvent);
+	NT_ASSERT(CompletionEvent);
 
 	UNREFERENCED_PARAMETER(Irp);
 	UNREFERENCED_PARAMETER(DeviceObject);
@@ -469,8 +469,8 @@ InitWskData(
 	_Inout_ PKEVENT CompletionEvent
 	)
 {
-	ASSERT(pIrp);
-	ASSERT(CompletionEvent);
+	NT_ASSERT(pIrp);
+	NT_ASSERT(CompletionEvent);
 
 	TRACE_ENTER();
 
@@ -566,8 +566,8 @@ InitWskBuffer_NBL(
 
 	TRACE_ENTER();
 
-	ASSERT(NetBufferList);
-	ASSERT(WskBuffer);
+	NT_ASSERT(NetBufferList);
+	NT_ASSERT(WskBuffer);
 
 	WskBuffer->Offset = BufferOffset;
 	WskBuffer->Length = NetBufferList->FirstNetBuffer->DataLength - BufferOffset;
@@ -605,7 +605,7 @@ FreeWskBuffer_NBL(
 	_Inout_ PWSK_BUF WskBuffer
 	)
 {
-	ASSERT(WskBuffer);
+	NT_ASSERT(WskBuffer);
 
 	TRACE_ENTER();
 

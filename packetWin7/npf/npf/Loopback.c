@@ -454,14 +454,12 @@ NPF_TapLoopback(
 					FirstMDLLen = MmGetMdlByteCount(pMdl);
 					if (FirstMDLLen != numBytes) {
 						pTmpBuf = MmGetSystemAddressForMdlSafe(pMdl, HighPagePriority|MdlMappingNoExecute);
-						if (pTmpBuf != NULL) {
+						// See NPF_FreeNBCopies for TODO item related to this assert and
+						// justification for HighPagePriority above.
+						if (NT_VERIFY(pTmpBuf != NULL)) {
 							NdisFreeMemory(pTmpBuf, FirstMDLLen, 0);
 						}
-						else {
-							// See NPF_FreeNBCopies for TODO item related to this assert and
-							// justification for HighPagePriority above.
-							ASSERT(pTmpBuf);
-						}
+						// else? No good way to recover, we've leaked the memory.
 					}
 
 					/* Regardless, free the MDL */

@@ -1099,8 +1099,11 @@ NPF_CreateFilterModule(
 	_In_ UINT SelectedIndex
 	);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
 NPF_ReleaseOpenInstanceResources(_Inout_ POPEN_INSTANCE pOpen);
+
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
 NPF_ReleaseFilterModuleResources(_Inout_ PNPCAP_FILTER_MODULE pFiltMod);
 
