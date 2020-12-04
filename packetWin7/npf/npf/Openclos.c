@@ -1774,13 +1774,18 @@ NPF_GetFilterModuleByAdapterName(
 	WCHAR *pName = NULL;
 	TRACE_ENTER();
 
+	if (pAdapterName->Buffer == NULL || pAdapterName->Length == 0) {
+		return NULL;
+	}
+
+	// strip off leading backslashes
+	while (shrink_by < pAdapterName->Length && pAdapterName->Buffer[shrink_by] == L'\\') {
+		shrink_by++;
+	}
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// If this is *not* the legacy loopback name, we'll have to set up BaseName to be the real name of the buffer.
-	if (g_LoopbackAdapterName.Buffer != NULL) {
-		// strip off leading backslashes
-		while (shrink_by < pAdapterName->Length && pAdapterName->Buffer[shrink_by] == L'\\') {
-			shrink_by++;
-		}
+	if (g_LoopbackAdapterName.Buffer != NULL && (g_LoopbackAdapterName.Length - devicePrefix.Length / 2) == (pAdapterName->Length - shrink_by / 2)) {
 		if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, pAdapterName->Buffer + shrink_by,
 					pAdapterName->Length - shrink_by / 2) == pAdapterName->Length - shrink_by / 2)
 		{
@@ -1799,11 +1804,6 @@ NPF_GetFilterModuleByAdapterName(
 		IF_LOUD(DbgPrint("NPF_GetFilterModuleByAdapterName: failed to allocate BaseName.Buffer\n");)
 		TRACE_EXIT();
 		return NULL;
-	}
-
-	// strip off leading backslashes
-	while (shrink_by < pAdapterName->Length && pAdapterName->Buffer[shrink_by] == L'\\') {
-		shrink_by++;
 	}
 
 	// Check for WIFI_ prefix and strip it
