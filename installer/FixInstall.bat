@@ -41,19 +41,19 @@ if %Dot11Support% == 0x1 (
 rem Remove and reinstall loopback adapters
 if not %LoopbackAdapter% == "" (
 "%NPCAP_DIR%\NPFInstall.exe" -ul
-)
+rem )
 rem TODO Remove any leftover adapters in any case
-netsh interface show interface | find "Npcap Loopback Adapter"
-if NOT ERRORLEVEL 1 (
-	echo Some Npcap Loopback Adapter was not removed. Remove it manually:
-	echo 1. In the Device Manager, open 'Network adapters'
-	echo 2. Right-click any 'Npcap Loopback Adapter' and choose 'Uninstall device'
-	echo 3. Repeat until all Npcap Loopback Adapters are removed
-	start devmgmt.msc
-	pause
-)
-
-if not %LoopbackAdapter% == "" (
+rem netsh interface show interface | find "Npcap Loopback Adapter"
+rem if NOT ERRORLEVEL 1 (
+rem 	echo Some Npcap Loopback Adapter was not removed. Remove it manually:
+rem 	echo 1. In the Device Manager, open 'Network adapters'
+rem 	echo 2. Right-click any 'Npcap Loopback Adapter' and choose 'Uninstall device'
+rem 	echo 3. Repeat until all Npcap Loopback Adapters are removed
+rem 	start devmgmt.msc
+rem 	pause
+rem )
+rem
+rem if not %LoopbackAdapter% == "" (
 "%NPCAP_DIR%\NPFInstall.exe" -il
 )
 
