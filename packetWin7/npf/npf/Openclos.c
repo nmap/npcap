@@ -1767,7 +1767,7 @@ NPF_GetFilterModuleByAdapterName(
 	PSINGLE_LIST_ENTRY Curr = NULL;
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
 	size_t i = 0;
-	size_t shrink_by = 0;
+	USHORT shrink_by = 0;
 	BOOLEAN Dot11 = FALSE;
 	BOOLEAN Loopback = FALSE;
 	NDIS_STRING BaseName = NDIS_STRING_CONST("Loopback");
@@ -1779,7 +1779,7 @@ NPF_GetFilterModuleByAdapterName(
 	}
 
 	// strip off leading backslashes
-	while (shrink_by < pAdapterName->Length && pAdapterName->Buffer[shrink_by] == L'\\') {
+	while ((shrink_by * sizeof(WCHAR)) < pAdapterName->Length && pAdapterName->Buffer[shrink_by] == L'\\') {
 		shrink_by++;
 	}
 
@@ -1787,12 +1787,10 @@ NPF_GetFilterModuleByAdapterName(
 	// If this is *not* the legacy loopback name, we'll have to set up BaseName to be the real name of the buffer.
 	if (g_LoopbackAdapterName.Buffer != NULL && (g_LoopbackAdapterName.Length - devicePrefix.Length / 2) == (pAdapterName->Length - shrink_by / 2)) {
 		if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, pAdapterName->Buffer + shrink_by,
-					pAdapterName->Length - shrink_by / 2) == pAdapterName->Length - shrink_by / 2)
+					(SIZE_T)pAdapterName->Length - shrink_by / 2) == (SIZE_T)pAdapterName->Length - shrink_by / 2)
 		{
 			Loopback = TRUE;
 		}
-		// Restore shrink_by in case this wasn't a match.
-		shrink_by = 0;
 	}
 
 	if (!Loopback) {
@@ -1813,7 +1811,7 @@ NPF_GetFilterModuleByAdapterName(
 	}
 
 	// Do the strip
-	for (i=shrink_by; i < pAdapterName->Length/sizeof(WCHAR) && (i - shrink_by)*sizeof(WCHAR) < BaseName.MaximumLength; i++) {
+	for (i=shrink_by; i * sizeof(WCHAR) < pAdapterName->Length && (i - shrink_by)*sizeof(WCHAR) < BaseName.MaximumLength; i++) {
 		BaseName.Buffer[i - shrink_by] = pAdapterName->Buffer[i];
 	}
 	BaseName.Length = pAdapterName->Length - shrink_by*sizeof(WCHAR);
