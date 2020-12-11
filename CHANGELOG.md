@@ -1,4 +1,23 @@
 ﻿
+## Npcap 1.10 [2020-12-11]
+
+* Fixed an issue where our upgrade uninstaller would trigger the
+  [#1924](https://issues.nmap.org/1924) BSoD crash when upgrading from Npcap 0.9988 or older to
+  version 0.9996 or greater. Fixes [#268](http://issues.npcap.org/268).
+
+* Improved handling of large packets when a very small user buffer size is specified, which could
+  lead to stalled captures and dropped packets.
+
+* Fix a packet corruption issue when one capture handle sets a snaplen of exactly 256 bytes and
+  another sets a snaplen of greater than 256 bytes and the packet size exceeds 256 bytes.
+
+* Fix accounting of free space in the kernel buffer so that bugs like the previous one do not cause
+  space to be permanently lost, leading to dropped packets. Instead, use assertions to catch this
+  condition in testing with the debug build.
+
+* Check that the npcap driver service is configured for `SYSTEM_START` in the `npcapwatchdog`
+  scheduled task and correct it if necessary. Windows feature updates can modify this value.
+
 ## Npcap 1.00 [2020-09-25]
 
 * After more than 7 years of development and 170 previous public releases, the
