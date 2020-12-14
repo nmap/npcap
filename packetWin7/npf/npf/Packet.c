@@ -2040,7 +2040,7 @@ OID_REQUEST_DONE:
 		NEXT_MODE(TIMESTAMPMODE_SINGLE_SYNCHRONIZATION);
 		NEXT_MODE(TIMESTAMPMODE_QUERYSYSTEMTIME);
 		// Only report the _PRECISE version if it's different than QST
-		if (g_ptrQuerySystemTime ==
+		if (g_ptrQuerySystemTime !=
 #ifdef KeQuerySystemTime
 				&KeQuerySystemTimeWrapper
 #else
