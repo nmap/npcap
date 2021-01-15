@@ -261,7 +261,10 @@ set<ULONG> getNpcapPIDs()
 	}
 	TRACE_ENTER();
 
-	HANDLE hFile = CreateFile(L"\\\\.\\Global\\NPCAP", GENERIC_WRITE|GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+	// Npcap 0.9995 and later will support this with just '\\.\Global\NPCAP' name,
+	// but that crashes Npcap 0.9985 and earlier due to #1924.
+	// Loopback adapter ought to be safe and present since 0.9983
+	HANDLE hFile = CreateFile(L"\\\\.\\Global\\NPCAP\\Loopback", GENERIC_WRITE|GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
 	if (hFile != NULL && hFile != INVALID_HANDLE_VALUE)
 	{
 		TRACE_PRINT("Npcap handle opened");
