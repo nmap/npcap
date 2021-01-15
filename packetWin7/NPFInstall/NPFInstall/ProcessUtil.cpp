@@ -170,7 +170,10 @@ BOOL checkModulePathName(tstring strModulePathName)
 	else
 	{
 		tstring strModuleName = strModulePathName.substr(iStart + 1, tstring::npos);
-		if (strModuleName == _T("wpcap.dll") || strModuleName == _T("packet.dll"))
+		// Uninstaller renames X.dll to X.dll.del to avoid race condition
+		if (strModuleName == _T("wpcap.dll") || strModuleName == _T("packet.dll")
+			|| strModuleName == _T("wpcap.dll.del")
+			|| strModuleName == _T("packet.dll.del"))
 		{
 			return TRUE;
 		}
