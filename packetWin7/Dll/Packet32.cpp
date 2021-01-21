@@ -2579,15 +2579,18 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
-		// Obtain starting timestamp of the buffer
-		BufStartTime.tv_sec = ((struct timeval*)(PacketBuff))->tv_sec;
-		BufStartTime.tv_usec = ((struct timeval*)(PacketBuff))->tv_usec;
+		if (Sync)
+		{
+			// Obtain starting timestamp of the buffer
+			BufStartTime.tv_sec = ((struct timeval*)(PacketBuff))->tv_sec;
+			BufStartTime.tv_usec = ((struct timeval*)(PacketBuff))->tv_usec;
 
-		// Retrieve the reference time counters
-		QueryPerformanceCounter(&StartTicks);
-		QueryPerformanceFrequency(&TimeFreq);
+			// Retrieve the reference time counters
+			QueryPerformanceCounter(&StartTicks);
+			QueryPerformanceFrequency(&TimeFreq);
 
-		CurTicks.QuadPart = StartTicks.QuadPart;
+			CurTicks.QuadPart = StartTicks.QuadPart;
+		}
 
 		do{
 			// Send the data to the driver
@@ -2611,16 +2614,19 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 			if(TotBytesTransfered >= Size)
 				break;
 
-			// calculate the time interval to wait before sending the next packet
-			TargetTicks.QuadPart = StartTicks.QuadPart +
-			(LONGLONG)
-			((((struct timeval*)((PCHAR)PacketBuff + TotBytesTransfered))->tv_sec - BufStartTime.tv_sec) * 1000000 +
-			(((struct timeval*)((PCHAR)PacketBuff + TotBytesTransfered))->tv_usec - BufStartTime.tv_usec)) *
-			(TimeFreq.QuadPart) / 1000000;
-			
-			// Wait until the time interval has elapsed
-			while( CurTicks.QuadPart <= TargetTicks.QuadPart )
-				QueryPerformanceCounter(&CurTicks);
+			if (Sync)
+			{
+				// calculate the time interval to wait before sending the next packet
+				TargetTicks.QuadPart = StartTicks.QuadPart +
+					((LONGLONG)((struct timeval*)((PCHAR)PacketBuff + TotBytesTransfered))->tv_sec - BufStartTime.tv_sec) * TimeFreq.QuadPart +
+					 ((LONGLONG)((struct timeval*)((PCHAR)PacketBuff + TotBytesTransfered))->tv_usec - BufStartTime.tv_usec) *
+					(TimeFreq.QuadPart) / 1000000;
+
+				// Wait until the time interval has elapsed
+				// TODO: if it's very long, do a sleep instead?
+				while( CurTicks.QuadPart <= TargetTicks.QuadPart )
+					QueryPerformanceCounter(&CurTicks);
+			}
 
 		}
 		while(TRUE);
