@@ -1028,11 +1028,12 @@ DRIVER_DISPATCH NPF_Write;
   If Sync is false, the timestamps are ignored and the packets are sent as fat as possible.
 */
 INT
+_IRQL_requires_(PASSIVE_LEVEL)
 NPF_BufferedWrite(
 	_In_ PIRP Irp,
 	_In_reads_(UserBuffSize) PCHAR UserBuff,
 	_In_ ULONG UserBuffSize,
-	_In_ BOOLEAN sync
+	_In_ BOOLEAN Sync
 	);
 
 /*!

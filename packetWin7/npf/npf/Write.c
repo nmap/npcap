@@ -507,6 +507,7 @@ NPF_BufferedWrite(
 	//	PCHAR				EndOfUserBuff = UserBuff + UserBuffSize;
 	INT						result;
 	PVOID npBuff = NULL;
+	NDIS_EVENT Event;
 
 	TRACE_ENTER();
 
@@ -560,6 +561,13 @@ NPF_BufferedWrite(
 
 	// Save the current time stamp counter
 	CurTicks = KeQueryPerformanceCounter(&TimeFreq);
+
+	if (Sync)
+	{
+		// Initialize event used for synchronization
+		NdisInitializeEvent(&Event);
+		NdisResetEvent(&Event);
+	}
 
 	//
 	// Main loop: send the buffer to the wire
@@ -776,8 +784,19 @@ NPF_BufferedWrite(
 				((LONGLONG)pWinpcapHdr->ts.tv_usec - BufStartTime.tv_usec) * (TimeFreq.QuadPart) / 1000000;
 
 			// Wait until the time interval has elapsed
-			while (CurTicks.QuadPart <= TargetTicks.QuadPart)
+			while (CurTicks.QuadPart < TargetTicks.QuadPart)
+			{
+				// whole milliseconds remaining.
+				// Explicit cast ok since condition above ensures this will be at most 1000ms.
+				i = (UINT)(((TargetTicks.QuadPart - CurTicks.QuadPart) * 1000) / TimeFreq.QuadPart);
+				if (i >= 1)
+				{
+					// Sleep with millisecond resolution.
+					NdisWaitEvent(&Event, i);
+				}
+				// else perform a busy wait.
 				CurTicks = KeQueryPerformanceCounter(NULL);
+			}
 		}
 	}
 	
