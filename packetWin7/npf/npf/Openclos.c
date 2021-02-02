@@ -1616,6 +1616,7 @@ NPF_RemoveFromGroupOpenArray(
 	pFiltMod->MyPacketFilter = 0;
 #ifdef HAVE_DOT11_SUPPORT
 	// Reset the raw wifi filter in case this was the last instance
+	OldPacketFilter |= pFiltMod->Dot11PacketFilter;
 	pFiltMod->Dot11PacketFilter = 0;
 #endif
 
@@ -1647,7 +1648,11 @@ NPF_RemoveFromGroupOpenArray(
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
 	/* If the packet filter has changed, originate an OID Request to set it to the new value */
-	if (pFiltMod->MyPacketFilter != OldPacketFilter)
+	if ((pFiltMod->MyPacketFilter
+#ifdef HAVE_DOT11_SUPPORT
+			| pFiltMod->Dot11PacketFilter
+#endif
+		) != OldPacketFilter)
 	{
         pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
         if (pBuffer == NULL)
