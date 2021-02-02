@@ -2609,12 +2609,11 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 
 	TRACE_ENTER();
 
-	// Special case: if they're trying to set a packet filter that is a
-	// subset of our existing one, then we don't pass it down but just
-	// return success.
+	// Special case: if their new packet filter doesn't change the lower one
+	// then we don't pass it down but just return success.
 	if (Request->RequestType == NdisRequestSetInformation
 			&& Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER
-			&& (*(PULONG) Request->DATA.SET_INFORMATION.InformationBuffer & ~(pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter)) == 0)
+			&& (*(PULONG) Request->DATA.SET_INFORMATION.InformationBuffer | pFiltMod->MyPacketFilter) == (pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter))
 	{
 		pFiltMod->HigherPacketFilter = *(PULONG) Request->DATA.SET_INFORMATION.InformationBuffer;
 		Request->DATA.SET_INFORMATION.BytesRead = sizeof(ULONG);
@@ -3230,7 +3229,7 @@ NPF_SetPacketFilter(
 #endif
 	// If the new packet filter is the same as the old one...
 	if (NewPacketFilter == pFiltMod->MyPacketFilter
-		// ...or it wouldn't change the upper one
+		// ...or it wouldn't add to the upper one
 		|| (NewPacketFilter & (~pFiltMod->HigherPacketFilter)) == 0)
        	{
 		pFiltMod->MyPacketFilter = NewPacketFilter;
