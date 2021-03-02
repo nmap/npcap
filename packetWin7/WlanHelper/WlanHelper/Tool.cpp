@@ -56,7 +56,7 @@
 
 #include "../../../Common/WpcapNames.h"
 // "\\Device\\NPF_{%s}" or "\\Device\\NPCAP_{%s}"
-#define NPF_DRIVER_FORMAT_STR	"\\Device\\" NPF_DRIVER_NAME "_WIFI_{%s}"
+#define NPF_DRIVER_FORMAT_STR	"\\Device\\" NPF_DEVICE_NAMES_PREFIX_WIFI "{%s}"
 
 vector<tstring> g_strAdapterNames;
 vector<tstring> g_strAdapterGUIDs;
