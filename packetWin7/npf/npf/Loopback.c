@@ -64,6 +64,8 @@
 #include "Loopback.h"
 #include "packet.h"
 #include "winerror.h"
+#include "..\..\..\Common\WpcapNames.h"
+#include "..\..\..\version.h"
 
 // 
 // Global variables
@@ -81,6 +83,15 @@ DEFINE_GUID(
 	0x90ce,
 	0x41a3,
 	0x80, 0x22, 0xc3, 0xe0, 0x78, 0xb8, 0xf7, 0xa2
+);
+
+// af617412-ce10-4058-8996-abc79fd805ff
+DEFINE_GUID(
+	NPF_FWPM_PROVIDER_GUID,
+	0xaf617412,
+	0xce10,
+	0x4058,
+	0x89, 0x96, 0xab, 0xc7, 0x9f, 0xd8, 0x05, 0xff
 );
 
 // 2D605B3E-C244-4364-86E8-BD81E6C91B6E
@@ -912,6 +923,7 @@ NPF_AddFilter(
 	filter.action.calloutKey = *calloutKey;
 	filter.filterCondition = filterConditions;
 	filter.subLayerKey = NPF_SUBLAYER;
+	filter.providerKey = (GUID *)&NPF_FWPM_PROVIDER_GUID;
 	filter.rawContext = 0;
 	conditionIndex = 0;
 
@@ -1044,6 +1056,7 @@ FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
 	displayData.description = L"Npcap inbound/outbound network traffic";
 
 	mCallout.calloutKey = *calloutKey;
+	mCallout.providerKey = (GUID *)&NPF_FWPM_PROVIDER_GUID;
 	mCallout.displayData = displayData;
 	mCallout.applicableLayer = *layerKey;
 
@@ -1134,8 +1147,10 @@ Callouts and filters will be removed during DriverUnload.
 	BOOLEAN inTransaction = FALSE;
 
 	FWPM_SESSION session = { 0 };
+	FWPM_PROVIDER provider = { 0 };
 
 	session.flags = FWPM_SESSION_FLAG_DYNAMIC;
+	session.displayData.name = L"Npcap RegisterCallouts session";
 
 	status = FwpmEngineOpen(
 		NULL,
@@ -1159,11 +1174,27 @@ Callouts and filters will be removed during DriverUnload.
 	}
 	inTransaction = TRUE;
 
+#define _WIDE(X) _WIDE2(X)
+#define _WIDE2(X) L ## X
+#define NPCAP_COMPANY_NAME_W _WIDE(WINPCAP_COMPANY_NAME)
+#define NPCAP_PRODUCT_NAME_W _WIDE(WINPCAP_PRODUCT_NAME)
+	RtlZeroMemory(&provider, sizeof(FWPM_PROVIDER));
+	provider.providerKey = NPF_FWPM_PROVIDER_GUID;
+	provider.displayData.name = NPCAP_COMPANY_NAME_W;
+	provider.displayData.description = NPCAP_PRODUCT_NAME_W;
+	provider.serviceName = NPF_DRIVER_NAME_SMALL_WIDECHAR;
+	status = FwpmProviderAdd(g_WFPEngineHandle, &provider, NULL);
+	if (status != NO_ERROR)
+	{
+		goto Exit;
+	}
+
 	RtlZeroMemory(&NPFSubLayer, sizeof(FWPM_SUBLAYER));
 
 	NPFSubLayer.subLayerKey = NPF_SUBLAYER;
 	NPFSubLayer.displayData.name = L"Npcap Loopback Sub-Layer";
 	NPFSubLayer.displayData.description = L"Sub-Layer for use by Npcap Loopback callouts";
+	NPFSubLayer.providerKey = (GUID *)&NPF_FWPM_PROVIDER_GUID;
 	NPFSubLayer.flags = 0;
 	NPFSubLayer.weight = 0; // must be less than the weight of 
 	// FWPM_SUBLAYER_UNIVERSAL to be
