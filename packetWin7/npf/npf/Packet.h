@@ -174,7 +174,7 @@ struct packet_file_header
 #define NdisMediumPpi						-6		///< Custom linktype: NDIS doesn't provide an equivalent
 
 // The length of the adapter name
-#define ADAPTER_NAME_SIZE					(sizeof("\\Device\\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}") - 1)
+#define ADAPTER_NAME_SIZE					((USHORT)(sizeof("\\Device\\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}") - 1))
 
 // The GUID for the filters
 #define				FILTER_UNIQUE_NAME			L"{7daf2ac8-e9f6-4765-a842-f1f5d2501341}"
