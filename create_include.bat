@@ -18,10 +18,6 @@ for /F "usebackq tokens=2* delims==" %%i in (`C:\cygwin\bin\make.exe -p -q -f Ma
 
 for %%i in (%PUBHDR:/=\%) do copy /v /Y "%WINPCAPSOURCEDIR%\wpcap\libpcap\%%i" "%WPDPACKDESTDIR%\Include\%%i"
 
-rem Extra headers not included in PUBHDR:
-copy /v /Y "%WINPCAPSOURCEDIR%\wpcap\libpcap\pcap-stdinc.h" "%WPDPACKDESTDIR%\Include\"
-copy /v /Y "%WINPCAPSOURCEDIR%\wpcap\libpcap\remote-ext.h" "%WPDPACKDESTDIR%\Include\"
-
 
 xcopy /v /Y %WINPCAPSOURCEDIR%\Common\Packet32.h			 	%WPDPACKDESTDIR%\Include\	>nul
 
