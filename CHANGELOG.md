@@ -1,4 +1,35 @@
 ﻿
+## Npcap 1.20 [2021-03-10]
+
+* Upgrade wpcap.dll to libpcap 1.10. This change enables software to use
+  `pcap_set_tstamp_type()` to set the packet capture time source and precision
+  per capture handle. The currently-supported types (see
+  [`pcap-tstamp`](https://nmap.org/npcap/guide/wpcap/pcap-tstamp.html)) are:
+  * `PCAP_TSTAMP_HOST_HIPREC_UNSYNCED` - default, maps to `TIMESTAMPMODE_SINGLE_SYNCHRONIZATION`
+  * `PCAP_TSTAMP_HOST_LOWPREC` - maps to `TIMESTAMPMODE_QUERYSYSTEMTIME`
+  * `PCAP_TSTAMP_HOST_HIPREC` - maps to `TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE`
+
+* Fix an issue preventing `WlanHelper.exe` from changing WiFi parameters for
+  adapters which caused the error message "makeOIDRequest::My_PacketOpenAdapter
+  error". Fixes [#122](http://issues.npcap.org/122) and several other reports
+  of the same issue.
+
+* Fixed an issue that prevented NDIS protocol drivers from reducing the
+  hardware packet filter, even if the removed bits/filters were only set by
+  that protocol driver initially. This may fix [#106](http://issues.nmap.org/106).
+
+* Fixed an issue with `pcap_sendqueue_transmit()` that caused it to busy-wait
+  in an attempt to synchronize packet sends with pcap timestamps, even when the
+  program did not request synchronization. Fixes [#113](http://issues.nmap.org/113).
+
+* The installer will now safely remove and replace broken installations due to
+  [#268](http://issues.nmap.org/268).
+
+* Upgraded installer to NSIS 3, which improves compatibility with modern Windows versions.
+
+* Added application manifests to several installer tools and removed Windows
+  Vista from the manifests of others, improving compatibility.
+
 ## Npcap 1.10 [2020-12-11]
 
 * Fixed an issue where our upgrade uninstaller would trigger the
