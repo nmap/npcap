@@ -16,14 +16,14 @@
 
 * Fixed an issue that prevented NDIS protocol drivers from reducing the
   hardware packet filter, even if the removed bits/filters were only set by
-  that protocol driver initially. This may fix [#106](http://issues.nmap.org/106).
+  that protocol driver initially. This may fix [#106](http://issues.npcap.org/106).
 
 * Fixed an issue with `pcap_sendqueue_transmit()` that caused it to busy-wait
   in an attempt to synchronize packet sends with pcap timestamps, even when the
-  program did not request synchronization. Fixes [#113](http://issues.nmap.org/113).
+  program did not request synchronization. Fixes [#113](http://issues.npcap.org/113).
 
 * The installer will now safely remove and replace broken installations due to
-  [#268](http://issues.nmap.org/268).
+  [#268](http://issues.npcap.org/268).
 
 * Upgraded installer to NSIS 3, which improves compatibility with modern Windows versions.
 
