@@ -56,7 +56,7 @@
 
 #include "../../../Common/WpcapNames.h"
 // "\\Device\\NPF_{%s}" or "\\Device\\NPCAP_{%s}"
-#define NPF_DRIVER_FORMAT_STR	"\\Device\\" NPF_DEVICE_NAMES_PREFIX_WIFI "{%s}"
+#define NPF_DRIVER_FORMAT_STR	"\\Device\\" NPF_DEVICE_NAMES_PREFIX "{%s}"
 
 vector<tstring> g_strAdapterNames;
 vector<tstring> g_strAdapterGUIDs;
@@ -556,7 +556,8 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 	LPADAPTER pAdapter = My_PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest::My_PacketOpenAdapter error (to use this function, you need to check the \"Support raw 802.11 traffic\" option when installing Npcap)\n"));
+		_tprintf(_T("Error: makeOIDRequest::My_PacketOpenAdapter(%S) error %#x\n(to use this function, you need to check the \"Support raw 802.11 traffic\" option when installing Npcap)\n"),
+			strAdapterName, GetLastError());
 		Status = FALSE;
 		goto makeOIDRequest_Exit2;
 	}
