@@ -1810,8 +1810,8 @@ NPF_GetFilterModuleByAdapterName(
 	}
 
 	// Check for WIFI_ prefix and strip it
-	if (PUNICODE_CONTAINS(pAdapterName, NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI, shrink_by * sizeof(WCHAR))) {
-		shrink_by += sizeof(NPF_DEVICE_NAMES_PREFIX_WIDECHAR)/sizeof(WCHAR) - 1;
+	if (PUNICODE_CONTAINS(pAdapterName, NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI, shrink_by * sizeof(WCHAR))) {
+		shrink_by += sizeof(NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI)/sizeof(WCHAR) - 1;
 		Dot11 = TRUE;
 	}
 
