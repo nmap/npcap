@@ -108,7 +108,6 @@
 #include <WpcapNames.h>
 
 
-static BOOLEAN PacketAddFakeNdisWanAdapter();
 extern BOOLEAN g_bLoopbackSupport;
 
 static BOOLEAN IsIPv4Enabled(LPCSTR AdapterNameA);
@@ -240,11 +239,6 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 	PNPF_IF_ADDRESS_ITEM pHead = NULL;
 	PNPF_IF_ADDRESS_ITEM pTail = NULL;
 	PNPF_IF_ADDRESS_ITEM pItem;
-//  
-//	Old registry based WinPcap names
-//
-//	UINT	RegQueryLen;
-//	WCHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS];
 	WCHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DEVICE_NAMES_PREFIX_WIDECHAR;
 	
 	TRACE_ENTER();
@@ -264,16 +258,6 @@ static BOOLEAN PacketGetAddressesFromRegistry(LPCSTR AdapterNameA, PNPF_IF_ADDRE
 	else
 		IfNameW++;
 
-//  
-//	Old registry based WinPcap names
-//
-//	RegQueryLen = sizeof(npfDeviceNamesPrefix)/sizeof(npfDeviceNamesPrefix[0]);
-//	
-//	if (QueryWinPcapRegistryStringW(TEXT(NPF_DEVICES_PREFIX_REG_KEY), npfDeviceNamesPrefix, &RegQueryLen, NPF_DEVICE_NAMES_PREFIX_WIDECHAR) == FALSE && RegQueryLen == 0)
-//		return FALSE;
-//	
-//	if (wcsncmp(ifname, npfDeviceNamesPrefix, RegQueryLen) == 0)
-//		ifname += RegQueryLen;
 
 	if (wcsncmp(IfNameW, npfDeviceNamesPrefix, wcslen(npfDeviceNamesPrefix)) == 0)
 				IfNameW += wcslen(npfDeviceNamesPrefix);
@@ -674,11 +658,6 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 	PIP_ADAPTER_UNICAST_ADDRESS UnicastAddr;
 	struct sockaddr_storage *Addr;
 	INT	AddrLen;
-//  
-//	Old registry based WinPcap names
-//
-//	UINT	RegQueryLen;
-//	CHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS];
 	CHAR	npfDeviceNamesPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
 
 	TRACE_ENTER();
@@ -729,15 +708,6 @@ static BOOLEAN PacketAddIP6Addresses(PADAPTER_INFO AdInfo)
 	//
 	for(TmpAddr = AdBuffer; TmpAddr != NULL; TmpAddr = TmpAddr->Next)
 	{
-//  
-//	Old registry based WinPcap names
-//
-//		RegQueryLen = sizeof(npfDeviceNamesPrefix)/sizeof(npfDeviceNamesPrefix[0]);
-//		
-//		if (QueryWinPcapRegistryStringA(NPF_DRIVER_COMPLETE_DEVICE_PREFIX_REG_KEY, npfDeviceNamesPrefix, &RegQueryLen, NPF_DRIVER_COMPLETE_DEVICE_PREFIX) == FALSE && RegQueryLen == 0)
-//			continue;
-//			
-//		OrName = AdInfo->Name + RegQueryLen - 1;
 
 		OrName = AdInfo->Name + strlen(npfDeviceNamesPrefix);
 
@@ -834,31 +804,10 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 	struct sockaddr_in *TmpAddr;
 	CHAR TName[256];
 	LPADAPTER adapter;
-//  
-//	Old registry based WinPcap names
-//
-//	UINT	RegQueryLen;
-//	CHAR	npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS];
 	CHAR	npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
 
 	TRACE_ENTER();
 
-// Create the NPF device name from the original device name
-
-//  
-//	Old registry based WinPcap names
-//
-//	RegQueryLen = sizeof(npfCompleteDriverPrefix)/sizeof(npfCompleteDriverPrefix[0]);
-//	
-//	if (QueryWinPcapRegistryStringA(NPF_DRIVER_COMPLETE_DEVICE_PREFIX_REG_KEY, npfCompleteDriverPrefix, &RegQueryLen, NPF_DRIVER_COMPLETE_DEVICE_PREFIX) == FALSE && RegQueryLen == 0)
-//		return FALSE;
-//
-//	// Create the NPF device name from the original device name
-//	_snprintf(TName,
-//		sizeof(TName) - 1 - RegQueryLen - 1, 
-//		"%s%s",
-//		npfCompleteDriverPrefix, 
-//		IphAd->AdapterName);
 
 	// Create the NPF device name from the original device name
 	StringCchPrintfA(TName,
@@ -989,13 +938,6 @@ static BOOLEAN PacketAddAdapterIPH(PIP_ADAPTER_INFO IphAd)
 	// Now Add IPv6 Addresses
 	PacketAddIP6Addresses(TmpAdInfo);
 	
-	if(IphAd->Type == IF_TYPE_PPP || IphAd->Type == IF_TYPE_SLIP)
-	{
-		TRACE_PRINT("Flagging the adapter as NDISWAN.");
-		// NdisWan adapter
-		TmpAdInfo->Flags = INFO_FLAG_NDISWAN_ADAPTER;
-	}
-
 	// Set the NdisMediumNull value for "Npcap Loopback Adapter".
 	if (strcmp(g_LoopbackAdapterNameForDLTNull, TmpAdInfo->Name) == 0)
 	{
@@ -1280,8 +1222,7 @@ static BOOLEAN PacketAddAdapterNPF(PCHAR AdName, UINT flags)
 			TRACE_PRINT("No IPv6 addresses added with IPHelper API");
 		}
 		
-		TmpAdInfo->Flags = INFO_FLAG_NDIS_ADAPTER;	// NdisWan adapters are not exported by the NPF driver,
-													// therefore it's impossible to see them here
+		TmpAdInfo->Flags = INFO_FLAG_NDIS_ADAPTER;
 		
 		// Free storage
 		PacketCloseAdapter(adapter);
@@ -1323,26 +1264,12 @@ static BOOLEAN PacketGetAdaptersNPF()
 	CHAR		TAName[256];
 	TCHAR		AdapName[256];
 	UINT		FireWireFlag;
-//  
-//	Old registry based WinPcap names
-//
-//	CHAR		npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS];
-//	UINT		RegQueryLen;
 
 	CHAR		npfCompleteDriverPrefix[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_COMPLETE_DEVICE_PREFIX;
 	CHAR		DeviceGuidName[256];
 
 	TRACE_ENTER();
 	
-//  
-//	Old registry based WinPcap names
-//
-//	// Get device prefixes from the registry
-//	RegQueryLen = sizeof(npfCompleteDriverPrefix)/sizeof(npfCompleteDriverPrefix[0]);
-//	
-//	if (QueryWinPcapRegistryStringA(NPF_DRIVER_COMPLETE_DEVICE_PREFIX_REG_KEY, npfCompleteDriverPrefix, &RegQueryLen, NPF_DRIVER_COMPLETE_DEVICE_PREFIX) == FALSE && RegQueryLen == 0)
-//		return FALSE;
-
 	Status=RegOpenKeyEx(HKEY_LOCAL_MACHINE,
 		TEXT("SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}"),
 		0,
@@ -1672,17 +1599,6 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	PADAPTER_INFO TAdInfo, PrevAdInfo;
 
-//  
-//	Old registry based WinPcap names
-//
-//	UINT	RegQueryLen;
-//	CHAR	FakeNdisWanAdapterName[MAX_WINPCAP_KEY_CHARS];
-//
-//	// retrieve the name for the fake ndis wan adapter
-//	RegQueryLen = sizeof(FakeNdisWanAdapterName)/sizeof(FakeNdisWanAdapterName[0]);
-//	if (QueryWinPcapRegistryStringA(NPF_FAKE_NDISWAN_ADAPTER_NAME_REG_KEY, FakeNdisWanAdapterName, &RegQueryLen, FAKE_NDISWAN_ADAPTER_NAME) == FALSE && RegQueryLen == 0)
-//		return FALSE;
-	
 	TRACE_ENTER();
 
 	TRACE_PRINT1("Updating adapter info for adapter %hs", AdapterName);

@@ -1603,12 +1603,6 @@ BOOL PacketStartService()
 		return TRUE;
 	}
 
-	//  
-	//	Old registry based WinPcap names
-	//
-	//	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS];
-	//	UINT	RegQueryLen;
-
 	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_NAME;
 	CHAR	NpfServiceLocation[MAX_WINPCAP_KEY_CHARS] = SERVICES_REG_KEY NPF_DRIVER_NAME;
 
@@ -1993,24 +1987,9 @@ BOOL PacketStopDriver()
     SERVICE_STATUS  serviceStatus;
 	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_NAME;
 
-//  
-//	Old registry based WinPcap names
-//
-//	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS];
-//	UINT	RegQueryLen;
-
  	TRACE_ENTER();
  
  	ret = FALSE;
-
-//  
-//	Old registry based WinPcap names
-//
-//	// Create the NPF device name from the original device name
-//	RegQueryLen = sizeof(NpfDriverName)/sizeof(NpfDriverName[0]);
-//	
-//	if (QueryWinPcapRegistryStringA(NPF_DRIVER_NAME_REG_KEY, NpfDriverName, &RegQueryLen, NPF_DRIVER_NAME) == FALSE && RegQueryLen == 0)
-//		return FALSE;
 
 	scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
 	
