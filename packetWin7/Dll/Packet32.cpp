@@ -3529,6 +3529,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	ULONG	SizeDesc;
 	ULONG	OffDescriptions;
 	PCHAR pStrTranslated = NULL;
+	DWORD dwError = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -3552,6 +3553,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	TRACE_PRINT("Populating the adapter list...");
 
 	PacketPopulateAdaptersInfoList();
+	dwError = GetLastError();
 
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 
@@ -3561,8 +3563,9 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 		*BufferSize = 0;
 
 		TRACE_PRINT("No adapters found in the system. Failing.");
-		
-		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		if (dwError == ERROR_SUCCESS)
+			dwError = ERROR_NO_MORE_ITEMS;
+		SetLastError(dwError);
  	
  		TRACE_EXIT();
 		return FALSE;		// No adapters to return
@@ -3587,7 +3590,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	{
 		ReleaseMutex(g_AdaptersInfoMutex);
 
- 		TRACE_PRINT1("PacketGetAdapterNames: input buffer too small, we need %u bytes", *BufferSize);
+		TRACE_PRINT2("PacketGetAdapterNames: input buffer too small (%u) need %u bytes", *BufferSize, SizeNeeded + 2);
  
 		*BufferSize = SizeNeeded + 2;  // Report the required size
 
