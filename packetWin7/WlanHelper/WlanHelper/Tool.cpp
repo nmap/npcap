@@ -565,10 +565,10 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 	
 	ULONG IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + ulDataSize - 1);
 	PPACKET_OID_DATA OidData;
-	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
+	OidData = (PPACKET_OID_DATA)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, IoCtlBufferLength);
 	if (OidData == NULL)
 	{
-		_tprintf(_T("Error: makeOIDRequest::GlobalAllocPtr error\n"));
+		_tprintf(_T("Error: makeOIDRequest::HeapAlloc error\n"));
 		Status = FALSE;
 		goto makeOIDRequest_Exit1;
 	}
@@ -627,7 +627,7 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 		}
 	}
 
-	GlobalFreePtr(OidData);
+	HeapFree(GetProcessHeap(), 0, OidData);
 makeOIDRequest_Exit1:
 	My_PacketCloseAdapter(pAdapter);
 makeOIDRequest_Exit2:

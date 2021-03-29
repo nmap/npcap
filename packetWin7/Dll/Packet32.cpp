@@ -162,11 +162,6 @@ char PacketDriverVersion[64];
 //
 char PacketDriverName[64];
 
-//
-// WinPcap global registry key
-//
-//WCHAR g_WinPcapKeyBuffer[MAX_WINPCAP_KEY_CHARS];
-//HKEY g_WinpcapKey = NULL;
 
 //
 // Global adapters list related variables
@@ -816,14 +811,14 @@ PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR destina
 		return NULL;
 
 	size = 2 * buf_size + strlen(destination) + 1;
-	newbuf = (PCHAR) calloc(1, size);
+	newbuf = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	if (newbuf == NULL)
 		return NULL;
 
-	retbuf = (PCHAR) calloc(1, size);
+	retbuf = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	if (retbuf == NULL)
 	{
-		free (newbuf);
+		HeapFree(GetProcessHeap(), 0, newbuf);
 		return NULL;
 	}
 
@@ -848,7 +843,7 @@ PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR destina
 		sk = memstr(newbuf, size, source);
 	}
 
-	free(retbuf);
+	HeapFree(GetProcessHeap(), 0, retbuf);
 	return newbuf;
 }
 
@@ -866,14 +861,14 @@ static PCHAR NpcapReplaceString(LPCSTR string, LPCSTR source, LPCSTR destination
 		return NULL;
 
 	size = 2 * strlen(string) + strlen(destination) + 1;
-	newstr = (PCHAR) calloc(1, size);
+	newstr = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	if (newstr == NULL)
 		return NULL;
 
-	retstr = (PCHAR) calloc(1, size);
+	retstr = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	if (retstr == NULL)
 	{
-		free (newstr);
+		HeapFree(GetProcessHeap(), 0, newstr);
 		return NULL;
 	}
 
@@ -901,7 +896,7 @@ static PCHAR NpcapReplaceString(LPCSTR string, LPCSTR source, LPCSTR destination
 		break;
 	}
 
-	free(retstr);
+	HeapFree(GetProcessHeap(), 0, retstr);
 	return newstr;
 }
 
@@ -943,7 +938,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 
 		TRACE_PRINT("************Packet32: DllMain************");
 
-#ifdef _DEBUG_TO_FILE
+#ifdef _DEBUG_TO_FILEx
 		PacketDumpRegistryKey("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\" NPF_DRIVER_NAME,"npf.reg");
 		
 		// dump a bunch of registry keys useful for debug to file
@@ -1000,11 +995,11 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 			while(pCursor != NULL)
 			{
 				pNext = pCursor->Next;
-				GlobalFreePtr(pCursor);
+				HeapFree(GetProcessHeap(), 0, pCursor);
 				pCursor = pNext;
 			}
 
-			GlobalFreePtr(g_AdaptersInfoList);
+			HeapFree(GetProcessHeap(), 0, g_AdaptersInfoList);
 			
 			g_AdaptersInfoList = NewAdInfo;
 		}
@@ -1323,9 +1318,9 @@ BOOLEAN QueryWinPcapRegistryStringW(WCHAR *SubKeyName,
 static PWCHAR SChar2WChar(PCHAR string)
 {
 	PWCHAR TmpStr;
-	TmpStr = (WCHAR*) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, (DWORD)(strlen(string)+2)*sizeof(WCHAR));
-
-	MultiByteToWideChar(CP_ACP, 0, string, -1, TmpStr, (DWORD)(strlen(string)+2));
+	TmpStr = (WCHAR*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (DWORD)(strlen(string)+2)*sizeof(WCHAR));
+	if (TmpStr != NULL)
+		MultiByteToWideChar(CP_ACP, 0, string, -1, TmpStr, (DWORD)(strlen(string)+2));
 
 	return TmpStr;
 }
@@ -1338,18 +1333,10 @@ static PWCHAR SChar2WChar(PCHAR string)
 static PCHAR WChar2SChar(PWCHAR string)
 {
 	PCHAR TmpStr;
-	TmpStr = (CHAR*) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, (DWORD)(wcslen(string)+2));
+	TmpStr = (CHAR*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (DWORD)(wcslen(string)+2));
 
-	// Conver to ASCII
-	WideCharToMultiByte(
-		CP_ACP,
-		0,
-		string,
-		-1,
-		TmpStr,
-		(DWORD)(wcslen(string)+2),          // size of buffer
-		NULL,
-		NULL);
+	if (TmpStr != NULL)
+		WideCharToMultiByte(CP_ACP, 0, string, -1, TmpStr, (DWORD)(wcslen(string)+2), NULL, NULL);
 
 	return TmpStr;
 }
@@ -1368,26 +1355,17 @@ static PCHAR WChar2SChar(PWCHAR string)
 BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 {
     BOOLEAN    Status;
-    ULONG      IoCtlBufferLength=(sizeof(PACKET_OID_DATA)+sizeof(ULONG)-1);
-    PPACKET_OID_DATA  OidData;
+	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1] = { 0 };
+    PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 
 	TRACE_ENTER();
-
-	OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
-    if (OidData == NULL) {
-        TRACE_PRINT("PacketSetMaxLookaheadsize failed");
-        Status = FALSE;
-    }
-	else
-	{
-		//set the size of the lookahead buffer to the maximum available by the the NIC driver
-		OidData->Oid=OID_GEN_MAXIMUM_LOOKAHEAD;
-		OidData->Length=sizeof(ULONG);
-		Status=PacketRequest(AdapterObject,FALSE,OidData);
-		OidData->Oid=OID_GEN_CURRENT_LOOKAHEAD;
-		Status=PacketRequest(AdapterObject,TRUE,OidData);
-		GlobalFreePtr(OidData);
-	}
+	
+	//set the size of the lookahead buffer to the maximum available by the the NIC driver
+	OidData->Oid=OID_GEN_MAXIMUM_LOOKAHEAD;
+	OidData->Length=sizeof(ULONG);
+	Status=PacketRequest(AdapterObject,FALSE,OidData);
+	OidData->Oid=OID_GEN_CURRENT_LOOKAHEAD;
+	Status=PacketRequest(AdapterObject,TRUE,OidData);	
 
 	TRACE_EXIT();
 	return Status;
@@ -1513,7 +1491,7 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
     dwVerInfoSize = GetFileVersionInfoSize(FileName, &dwVerHnd);
     if (dwVerInfoSize) 
 	{
-        lpstrVffInfo = (LPTSTR) GlobalAllocPtr(GMEM_MOVEABLE, dwVerInfoSize);
+        lpstrVffInfo = (LPTSTR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwVerInfoSize);
 		if (lpstrVffInfo == NULL)
 		{
 			TRACE_PRINT("PacketGetFileVersion: failed to allocate memory");
@@ -1524,7 +1502,7 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 		if(!GetFileVersionInfo(FileName, dwVerHnd, dwVerInfoSize, lpstrVffInfo)) 
 		{
 			TRACE_PRINT("PacketGetFileVersion: failed to call GetFileVersionInfo");
-            GlobalFreePtr(lpstrVffInfo);
+			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
 			TRACE_EXIT();
 			return FALSE;
 		}
@@ -1533,7 +1511,7 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 		if(!VerQueryValue(lpstrVffInfo,	TEXT("\\VarFileInfo\\Translation"),	(LPVOID*)&lpTranslate, &cbTranslate))
 		{
 			TRACE_PRINT("PacketGetFileVersion: failed to call VerQueryValue");
-            GlobalFreePtr(lpstrVffInfo);
+			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
 			TRACE_EXIT();
 			return FALSE;
 		}
@@ -1549,7 +1527,7 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 		if(!VerQueryValue(lpstrVffInfo, SubBlock, &lpBuffer, &dwBytes))
 		{
 			TRACE_PRINT("PacketGetFileVersion: failed to call VerQueryValue");
-            GlobalFreePtr(lpstrVffInfo);
+			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
 			TRACE_EXIT();
 			return FALSE;
 		}
@@ -1560,16 +1538,16 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 		if(strlen(TmpStr) >= VersionBuffLen)
 		{
 			TRACE_PRINT("PacketGetFileVersion: Input buffer too small");
-            GlobalFreePtr(lpstrVffInfo);
-            GlobalFreePtr(TmpStr);
+			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
+			HeapFree(GetProcessHeap(), 0, TmpStr);
 			TRACE_EXIT();
 			return FALSE;
 		}
 
 		StringCchCopyA(VersionBuff, VersionBuffLen, TmpStr);
 
-        GlobalFreePtr(lpstrVffInfo);
-        GlobalFreePtr(TmpStr);
+		HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
+		HeapFree(GetProcessHeap(), 0, TmpStr);
 		
 	  } 
 	else 
@@ -1754,10 +1732,10 @@ LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 	}
 
 
-	lpAdapter=(LPADAPTER)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER));
+	lpAdapter=(LPADAPTER)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER));
 	if (lpAdapter==NULL)
 	{
-		TRACE_PRINT("PacketOpenAdapterNPF: GlobalAlloc Failed to allocate the ADAPTER structure");
+		TRACE_PRINT("PacketOpenAdapterNPF: HeapAlloc Failed to allocate the ADAPTER structure");
 		error=GetLastError();
 		//set the error to the one on which we failed
 		TRACE_EXIT();
@@ -1810,7 +1788,7 @@ LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 			if (pSymbolicLinkA) {
 				lpAdapter->hFile = CreateFileA(pSymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
 						0, NULL, OPEN_EXISTING, 0, 0);
-				free(pSymbolicLinkA);
+				HeapFree(GetProcessHeap(), 0, pSymbolicLinkA);
 			}
 
 			// If the monitor mode device fails to be opened, we then try the standard one.
@@ -1833,7 +1811,7 @@ LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 			error=GetLastError();
 			TRACE_PRINT("PacketOpenAdapterNPF: Unable to open the read event");
 			CloseHandle(lpAdapter->hFile);
-			GlobalFreePtr(lpAdapter);
+			HeapFree(GetProcessHeap(), 0, lpAdapter);
 			//set the error to the one on which we failed
 		    
 			TRACE_PRINT1("PacketOpenAdapterNPF: PacketSetReadEvt failed, LastError=%8.8x",error);
@@ -1860,7 +1838,7 @@ LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 	}
 
 	error=GetLastError();
-	GlobalFreePtr(lpAdapter);
+	HeapFree(GetProcessHeap(), 0, lpAdapter);
 	//set the error to the one on which we failed
     TRACE_PRINT1("PacketOpenAdapterNPF: CreateFile failed, LastError= %8.8x",error);
 	TRACE_EXIT();
@@ -1893,8 +1871,7 @@ static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 		return NULL;
 	}
 	
-	lpAdapter = (LPADAPTER) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT,
-		sizeof(ADAPTER));
+	lpAdapter = (LPADAPTER) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER));
 	if (lpAdapter == NULL)
 	{
 		TRACE_EXIT();
@@ -1913,7 +1890,7 @@ static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 	
 	if(lpAdapter->AirpcapAd == NULL)
 	{
-		GlobalFreePtr(lpAdapter);
+		HeapFree(GetProcessHeap(), 0, lpAdapter);
 		TRACE_EXIT();
 		return NULL;					
 	}
@@ -2090,7 +2067,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 		//
 		size_t bufferSize = wcslen((PWCHAR)AdapterNameWA) + 1;
 		
-		AdapterNameA = (PCHAR) GlobalAllocPtr(GPTR, bufferSize);
+		AdapterNameA = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
 
 		if (AdapterNameA == NULL)
 		{
@@ -2107,7 +2084,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	if (TranslatedAdapterNameA)
 	{
         if (bFreeAdapterNameA) {
-            GlobalFree(AdapterNameA);
+			HeapFree(GetProcessHeap(), 0, AdapterNameA);
             bFreeAdapterNameA = FALSE;
         }
 		AdapterNameA = TranslatedAdapterNameA;
@@ -2209,7 +2186,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 
-	if (bFreeAdapterNameA) GlobalFree(AdapterNameA);
+	if (bFreeAdapterNameA) HeapFree(GetProcessHeap(), 0, AdapterNameA);
 
 
 	if (dwLastError != ERROR_SUCCESS)
@@ -2217,7 +2194,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 		TRACE_EXIT();
 		SetLastError(dwLastError);
 		if (TranslatedAdapterNameA)
-			free(TranslatedAdapterNameA);
+			HeapFree(GetProcessHeap(), 0, TranslatedAdapterNameA);
 
 		return NULL;
 	}
@@ -2225,7 +2202,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	{
 		TRACE_EXIT();
 		if (TranslatedAdapterNameA)
-			free(TranslatedAdapterNameA);
+			HeapFree(GetProcessHeap(), 0, TranslatedAdapterNameA);
 
 		return lpAdapter;
 	}
@@ -2252,7 +2229,7 @@ VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 	if(lpAdapter->Flags == INFO_FLAG_AIRPCAP_CARD)
 		{
 			g_PAirpcapClose(lpAdapter->AirpcapAd);
-			GlobalFreePtr(lpAdapter);
+			HeapFree(GetProcessHeap(), 0, lpAdapter);
 			TRACE_EXIT();
 			return;
 		}
@@ -2267,7 +2244,7 @@ VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 		SetEvent(lpAdapter->ReadEvent);
 	    CloseHandle(lpAdapter->ReadEvent);
 		CloseHandle(lpAdapter->hFile);
-		GlobalFreePtr(lpAdapter);
+		HeapFree(GetProcessHeap(), 0, lpAdapter);
 	}
 
 	TRACE_EXIT();
@@ -2291,10 +2268,10 @@ LPPACKET PacketAllocatePacket(void)
 
 	TRACE_ENTER();
     
-	lpPacket=(LPPACKET)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT,sizeof(PACKET));
+	lpPacket=(LPPACKET)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PACKET));
     if (lpPacket==NULL)
     {
-        TRACE_PRINT("PacketAllocatePacket: GlobalAlloc Failed");
+        TRACE_PRINT("PacketAllocatePacket: HeapAlloc Failed");
     }
 
 	TRACE_EXIT();
@@ -2313,7 +2290,7 @@ VOID PacketFreePacket(LPPACKET lpPacket)
 
 {
 	TRACE_ENTER();
-    GlobalFreePtr(lpPacket);
+	HeapFree(GetProcessHeap(), 0, lpPacket);
 	TRACE_EXIT();
 }
 
@@ -2795,7 +2772,7 @@ BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void *name, int len)
 	// Try to catch malformed strings
 	if (len > 2048)
 	{
-		if (((PUCHAR) name)[1] != 0 && len > 1) GlobalFreePtr(FileName);
+		if (((PUCHAR) name)[1] != 0 && len > 1) HeapFree(GetProcessHeap(), 0, FileName);
 
 		TRACE_EXIT();
 		return FALSE;
@@ -2803,7 +2780,7 @@ BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void *name, int len)
 
     res = (BOOLEAN) DeviceIoControl(AdapterObject->hFile, BIOCSETDUMPFILENAME, NameWithPath, len, NULL, 0, &BytesReturned, NULL);
 	if (((PUCHAR) name)[1]!=0 && len > 1)
-		GlobalFreePtr(FileName);
+		HeapFree(GetProcessHeap(), 0, FileName);
 
 	TRACE_EXIT();
 	return res;
@@ -3462,8 +3439,8 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 {
     BOOLEAN    Status;
-    ULONG      IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1);
-    PPACKET_OID_DATA  OidData;
+	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1] = { 0 };
+    PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA) IoCtlBuffer;
 	
 	TRACE_ENTER();
 
@@ -3477,18 +3454,10 @@ BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
-		OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
-		if (OidData == NULL)
-		{
-	        TRACE_PRINT("PacketSetHwFilter: GlobalAlloc Failed");
-			TRACE_EXIT();
-	        return FALSE;
-		}
 		OidData->Oid = OID_GEN_CURRENT_PACKET_FILTER;
 		OidData->Length = sizeof(ULONG);
 	    *((PULONG) OidData->Data) = Filter;
 		Status = PacketRequest(AdapterObject, TRUE, OidData);
-		GlobalFreePtr(OidData);
 	}
 	else
 	{
@@ -3635,7 +3604,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	if (pStrTranslated)
 	{
 		memcpy_s(((PCHAR)pStr), *BufferSize, pStrTranslated, *BufferSize);
-		free(pStrTranslated);
+		HeapFree(GetProcessHeap(), 0, pStrTranslated);
 	}
 
 	ReleaseMutex(g_AdaptersInfoMutex);
@@ -3692,10 +3661,10 @@ BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntrie
 	{
 		TRACE_PRINT("PacketGetNetInfoEx. Failed updating the adapter list. Failing.");
 		if(FreeBuff)
-			GlobalFreePtr(Tname);
+			HeapFree(GetProcessHeap(), 0, Tname);
 
 		if (TranslatedAdapterName)
-			free(TranslatedAdapterName);
+			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 		
 		TRACE_EXIT();
 		return FALSE;
@@ -3742,10 +3711,10 @@ BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntrie
 	ReleaseMutex(g_AdaptersInfoMutex);
 	
 	if(FreeBuff)
-		GlobalFreePtr(Tname);
+		HeapFree(GetProcessHeap(), 0, Tname);
 
 	if (TranslatedAdapterName)
-		free(TranslatedAdapterName);
+		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 
 	TRACE_EXIT();
 	return Res;
@@ -3839,48 +3808,6 @@ BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName)
 	TRACE_EXIT();
 	return ret;
 }
-
-/*!
-This code needs to send OID request, which requires the adapter to be opened first,
-but usually this function is called before opening, so we don't use it for now.
-*/
-// BOOLEAN PacketIsMonitorModeSupported(LPADAPTER AdapterObject)
-// {
-// 	BOOLEAN    Status;
-// 	ULONG      IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1);
-// 	PPACKET_OID_DATA  OidData;
-// 	DOT11_OPERATION_MODE_CAPABILITY ModeCapability;
-// 
-// 	TRACE_ENTER();
-// 
-// 	OidData = GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
-// 	if (OidData == NULL) {
-// 		TRACE_PRINT("PacketIsMonitorModeSupported failed");
-// 		TRACE_EXIT();
-// 		return FALSE;
-// 	}
-// 	//get the mode capability
-// 	OidData->Oid = OID_DOT11_OPERATION_MODE_CAPABILITY;
-// 	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
-// 	Status = PacketRequest(AdapterObject, FALSE, OidData);
-// 	if (Status == TRUE)
-// 	{
-// 		ModeCapability = *((DOT11_OPERATION_MODE_CAPABILITY*)OidData->Data);
-// 		if ((ModeCapability.uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
-// 		{
-// 			Status = TRUE;
-// 		}
-// 		else
-// 		{
-// 			Status = FALSE;
-// 		}
-// 	}
-// 
-// 	GlobalFreePtr(OidData);
-// 
-// 	TRACE_EXIT();
-// 	return Status;
-// }
 
 // MAKEINTRESOURCE() returns an LPSTR, but GetProcAddress()
 // expects LPSTR even in UNICODE, so using MAKEINTRESOURCEA()...
@@ -4039,8 +3966,8 @@ int PacketIsMonitorModeSupported(PCHAR AdapterName)
 {
 	LPADAPTER pAdapter;
 	BOOLEAN    Status;
-	ULONG      IoCtlBufferLength = (sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1);
-	PPACKET_OID_DATA  OidData;
+	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1] = { 0 };
+	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_OPERATION_MODE_CAPABILITY pOperationModeCapability;
 	int mode;
 
@@ -4054,12 +3981,6 @@ int PacketIsMonitorModeSupported(PCHAR AdapterName)
 		return -1;
 	}
 
-	OidData = (PPACKET_OID_DATA)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
-	if (OidData == NULL) {
-		TRACE_PRINT("PacketIsMonitorModeSupported failed, GlobalAllocPtr error");
-		TRACE_EXIT();
-		return -1;
-	}
 	//get the link-layer type
 	OidData->Oid = OID_DOT11_OPERATION_MODE_CAPABILITY;
 	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
@@ -4082,7 +4003,6 @@ int PacketIsMonitorModeSupported(PCHAR AdapterName)
 		mode = -1;
 	}
 
-	GlobalFreePtr(OidData);
 	PacketCloseAdapter(pAdapter);
 
 	TRACE_PRINT2("PacketIsMonitorModeSupported: AdapterName = %hs, mode = %d", AdapterName, mode);
@@ -4115,7 +4035,7 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 
 	if (myGUIDFromString(TranslatedAdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
 	{
-		free(TranslatedAdapterName);
+		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 		TRACE_PRINT("PacketSetMonitorMode failed, myGUIDFromString error");
 		TRACE_EXIT();
 		return -1;
@@ -4131,13 +4051,13 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 		// Monitor mode is not supported.
 		if (dwResult == ERROR_INVALID_PARAMETER)
 		{
-			free(TranslatedAdapterName);
+			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 			TRACE_EXIT();
 			return 0;
 		}
 		else
 		{
-			free(TranslatedAdapterName);
+			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 			TRACE_EXIT();
 			return -1;
 		}
@@ -4147,7 +4067,7 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 		// Update the adapter's monitor mode in the global map.
 		g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
 
-		free(TranslatedAdapterName);
+		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 		TRACE_EXIT();
 		return 1;
 	}
@@ -4178,7 +4098,7 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 
 	if (myGUIDFromString(TranslatedAdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
 	{
-		free(TranslatedAdapterName);
+		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 		TRACE_PRINT("PacketGetMonitorMode failed, myGUIDFromString error");
 		TRACE_EXIT();
 		return -1;
@@ -4188,7 +4108,7 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 	DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &ChoiceGUID);
 	if (dwResult != ERROR_SUCCESS)
 	{
-		free(TranslatedAdapterName);
+		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 		TRACE_PRINT("PacketGetMonitorMode failed, GetInterface error");
 		TRACE_EXIT();
 		return -1;
@@ -4201,7 +4121,7 @@ int PacketGetMonitorMode(PCHAR AdapterName)
 		// Update the adapter's monitor mode in the global map.
 		g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
 
-		free(TranslatedAdapterName);
+		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 		TRACE_EXIT();
 		return mode;
 	}

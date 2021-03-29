@@ -154,28 +154,18 @@ extern AirpcapGetStatsHandler g_PAirpcapGetStats;
 static BOOLEAN PacketGetLinkLayerFromRegistry(LPADAPTER AdapterObject, NetType *type)
 {
 	BOOLEAN    Status;
-	ULONG      IoCtlBufferLength=(sizeof(PACKET_OID_DATA)+sizeof(NDIS_LINK_SPEED)-1);
-	PPACKET_OID_DATA  OidData;
+	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA)+sizeof(ULONG)-1] = {0};
+	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA) IoCtlBuffer;
 
 	TRACE_ENTER();
 
-	OidData = (PPACKET_OID_DATA) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, IoCtlBufferLength);
-	if (OidData == NULL) {
-		TRACE_PRINT("PacketGetLinkLayerFromRegistry failed");
-		TRACE_EXIT();
-		return FALSE;
-	}
 	//get the link-layer type
 	OidData->Oid = OID_GEN_MEDIA_IN_USE;
 	OidData->Length = sizeof (ULONG);
 	Status = PacketRequest(AdapterObject,FALSE,OidData);
 	type->LinkType=*((UINT*)OidData->Data);
 
-	GlobalFreePtr (OidData);
-
-	TRACE_PRINT2("Media:%.010d\tSpeed=%0.10I64u",
-		type->LinkType,
-		type->LinkSpeed);
+	TRACE_PRINT1("Media:%.010d", type->LinkType);
 
 	TRACE_EXIT();
 	return Status;
@@ -250,10 +240,10 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	// In the adapter list
 	//
 	
-	TmpAdInfo = (PADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
+	TmpAdInfo = (PADAPTER_INFO) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER_INFO));
 	if (TmpAdInfo == NULL) 
 	{
-		TRACE_PRINT("AddAdapter: GlobalAlloc Failed allocating the buffer for the AdInfo to be added to the global list. Returning.");
+		TRACE_PRINT("AddAdapter: HeapAlloc Failed allocating the buffer for the AdInfo to be added to the global list. Returning.");
 		PacketCloseAdapter(adapter);
 		ReleaseMutex(g_AdaptersInfoMutex);
 		TRACE_EXIT();
@@ -281,7 +271,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	if (Status == FALSE)
 	{
 		TRACE_PRINT("PacketAddAdapterNPF: PacketGetLinkLayerFromRegistry failed. Returning.");
-		GlobalFreePtr(TmpAdInfo);
+		HeapFree(GetProcessHeap(), 0, TmpAdInfo);
 		ReleaseMutex(g_AdaptersInfoMutex);
 		TRACE_EXIT();
 		return FALSE;
@@ -310,10 +300,10 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	while (pAddr != NULL)
 	{
 		ULONG ul = 0;
-		PNPF_IF_ADDRESS_ITEM pItem = (PNPF_IF_ADDRESS_ITEM)GlobalAllocPtr(GPTR, sizeof(NPF_IF_ADDRESS_ITEM));
+		PNPF_IF_ADDRESS_ITEM pItem = (PNPF_IF_ADDRESS_ITEM)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(NPF_IF_ADDRESS_ITEM));
 		if (pItem == NULL)
 		{
-			TRACE_PRINT("PacketAddAdapterNPF: GlobalAllocPtr failed for NPF_IF_ADDRESS_ITEM");
+			TRACE_PRINT("PacketAddAdapterNPF: HeapAlloc failed for NPF_IF_ADDRESS_ITEM");
 			break;
 		}
 
@@ -399,10 +389,10 @@ static BOOLEAN PacketAddLoopbackAdapter()
 		ReleaseMutex(g_AdaptersInfoMutex);
 		return FALSE;
 	}
-	TmpAdInfo = (PADAPTER_INFO)GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
+	TmpAdInfo = (PADAPTER_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER_INFO));
 	if (TmpAdInfo == NULL)
 	{
-		TRACE_PRINT("AddAdapter: GlobalAlloc Failed");
+		TRACE_PRINT("AddAdapter: HeapAlloc Failed");
 		PacketCloseAdapter(adapter);
 		ReleaseMutex(g_AdaptersInfoMutex);
 		return FALSE;
@@ -560,10 +550,10 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
 		// Allocate a descriptor for this adapter
 		//			
 		//here we do not acquire the mutex, since we are not touching the list, yet.
-		TmpAdInfo = (PADAPTER_INFO) GlobalAllocPtr(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(ADAPTER_INFO));
+		TmpAdInfo = (PADAPTER_INFO) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER_INFO));
 		if (TmpAdInfo == NULL) 
 		{
-			TRACE_PRINT("PacketAddAdapterAirpcap: GlobalAlloc Failed");
+			TRACE_PRINT("PacketAddAdapterAirpcap: HeapAlloc Failed");
 			Result = FALSE;
 			break;
 		}
@@ -590,7 +580,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
 		
 		if(!AirpcapAdapter)
 		{
-			GlobalFreePtr(TmpAdInfo);
+			HeapFree(GetProcessHeap(), 0, TmpAdInfo);
 			Result = FALSE;
 			break;
 		}
@@ -599,7 +589,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
 		if(!GllRes)
 		{
 			g_PAirpcapClose(AirpcapAdapter);
-			GlobalFreePtr(TmpAdInfo);
+			HeapFree(GetProcessHeap(), 0, TmpAdInfo);
 			Result = FALSE;
 			break;
 		}
@@ -770,12 +760,12 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 				{
 					pNext = pItem->Next;
 
-					GlobalFreePtr(pItem);
+					HeapFree(GetProcessHeap(), 0, pItem);
 					pItem = pNext;
 				}
 			}
 			
-			GlobalFreePtr(TAdInfo);
+			HeapFree(GetProcessHeap(), 0, TAdInfo);
 
 			break;
 		}
@@ -915,10 +905,10 @@ void PacketPopulateAdaptersInfoList()
 			while(pCursor != NULL)
 			{
 				pItem = pCursor->Next;
-				GlobalFreePtr(pCursor);
+				HeapFree(GetProcessHeap(), 0, pCursor);
 				pCursor = pItem;
 			}
-			GlobalFreePtr(Mem2);
+			HeapFree(GetProcessHeap(), 0, Mem2);
 		}
 		
 		g_AdaptersInfoList = NULL;
