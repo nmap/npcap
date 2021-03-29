@@ -779,7 +779,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 	if (strcmp(AdapterName, FAKE_LOOPBACK_ADAPTER_NAME) == 0) {
-		found = PacketAddLoopbackAdapter();
+		found = (g_bLoopbackSupport && PacketAddLoopbackAdapter());
 		TRACE_EXIT();
 		return found;
 	}
