@@ -454,13 +454,15 @@ static BOOLEAN PacketGetAdaptersNPF()
 		if (RetVal == ERROR_BUFFER_OVERFLOW)
 		{
 			TRACE_PRINT1("PacketGetAdaptersNPF: GetAdaptersAddresses Too small buffer (need %u)", BufLen);
-			AdBuffer = (PIP_ADAPTER_ADDRESSES)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, AdBuffer, BufLen);
-			if (AdBuffer == NULL)
+			TmpAddr = (PIP_ADAPTER_ADDRESSES)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, AdBuffer, BufLen);
+			if (TmpAddr == NULL)
 			{
 				TRACE_PRINT("PacketGetAdaptersNPF: HeapReAlloc Failed");
+				HeapFree(GetProcessHeap(), 0, AdBuffer);
 				TRACE_EXIT();
 				return FALSE;
 			}
+			AdBuffer = TmpAddr;
 		}
 		else
 		{
@@ -811,13 +813,15 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 		if (RetVal == ERROR_BUFFER_OVERFLOW)
 		{
 			TRACE_PRINT("PacketUpdateAdInfo: GetAdaptersAddresses Too small buffer");
-			AdBuffer = (PIP_ADAPTER_ADDRESSES)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, AdBuffer, BufLen);
-			if (AdBuffer == NULL)
+			TmpAddr = (PIP_ADAPTER_ADDRESSES)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, AdBuffer, BufLen);
+			if (TmpAddr == NULL)
 			{
 				TRACE_PRINT("PacketUpdateAdInfo: HeapReAlloc Failed");
+				HeapFree(GetProcessHeap(), 0, AdBuffer);
 				TRACE_EXIT();
 				return FALSE;
 			}
+			AdBuffer = TmpAddr;
 		}
 		else
 		{
