@@ -135,6 +135,8 @@ write_report ("*************************************************")
 
 get_props_safe 'HKLM:\SYSTEM\CurrentControlSet\Control\Network\{4d36e974-e325-11ce-bfc1-08002be10318}\*'
 
+Get-NetAdapterBinding -ComponentID "INSECURE_NPCAP*"
+
 #########################################################
 write_report ("`n")
 "*************************************************"
@@ -143,6 +145,7 @@ write_report ("*************************************************")
 
 # write_report ("C:\Program Files\Npcap:")
 dir $install_path
+Get-AuthenticodeSignature ($install_path + '\npcap.*'),($install_path + '\*.exe') | select -property Path, Status, StatusMessage, @{Name="Thumbprint"; Expression={$_.SignerCertificate | select -expandproperty Thumbprint}}
 
 # write_report ("C:\Windows\System32:")
 dir ($env:WinDir + "\System32\") NpcapHelper.exe
