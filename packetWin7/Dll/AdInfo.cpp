@@ -208,7 +208,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	
 	for(TAdInfo = g_AdaptersInfoList; TAdInfo != NULL; TAdInfo = TAdInfo->Next)
 	{
-		if(strcmp(AdName, TAdInfo->Name) == 0)
+		if(_stricmp(AdName, TAdInfo->Name) == 0)
 		{
 			TRACE_PRINT("PacketAddAdapterNPF: Adapter already present in the list");
 			ReleaseMutex(g_AdaptersInfoMutex);
@@ -370,7 +370,7 @@ static BOOLEAN PacketAddLoopbackAdapter()
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 	for (TmpAdInfo = g_AdaptersInfoList; TmpAdInfo != NULL; TmpAdInfo = TmpAdInfo->Next)
 	{
-		if (strcmp(FAKE_LOOPBACK_ADAPTER_NAME, TmpAdInfo->Name) == 0)
+		if (_stricmp(FAKE_LOOPBACK_ADAPTER_NAME, TmpAdInfo->Name) == 0)
 		{
 			TRACE_PRINT("PacketGetAdaptersNPF: Loopback already present in the list");
 			ReleaseMutex(g_AdaptersInfoMutex);
@@ -534,7 +534,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
 		{
 			if (TmpAdInfo->Flags == INFO_FLAG_AIRPCAP_CARD)
 			{
-				if (strcmp(TmpAdInfo->Name, name) == 0)
+				if (_stricmp(TmpAdInfo->Name, name) == 0)
 					break;
 			}
 		}
@@ -691,7 +691,7 @@ PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName)
 	
 	while(TAdInfo != NULL)
 	{
-		if(strcmp(TAdInfo->Name, AdapterName) == 0) 
+		if(_stricmp(TAdInfo->Name, AdapterName) == 0) 
 		{
 			TRACE_PRINT1("Found AdInfo for adapter %hs", AdapterName);
 			break;
@@ -741,7 +741,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	//
 	while(TAdInfo != NULL)
 	{
-		if(strcmp(TAdInfo->Name, AdapterName) == 0)
+		if(_stricmp(TAdInfo->Name, AdapterName) == 0)
 		{
 			if(TAdInfo == g_AdaptersInfoList)
 			{
@@ -778,7 +778,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	}
 
 	ReleaseMutex(g_AdaptersInfoMutex);
-	if (strcmp(AdapterName, FAKE_LOOPBACK_ADAPTER_NAME) == 0) {
+	if (_stricmp(AdapterName, FAKE_LOOPBACK_ADAPTER_NAME) == 0) {
 		found = (g_bLoopbackSupport && PacketAddLoopbackAdapter());
 		TRACE_EXIT();
 		return found;
@@ -849,7 +849,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	for (TmpAddr=AdBuffer; TmpAddr != NULL; TmpAddr = TmpAddr->Next)
 	{
 		// If the adapter matches, add it to the list.
-		if(strcmp(TmpAddr->AdapterName, AdapterGuid) == 0)
+		if(_stricmp(TmpAddr->AdapterName, AdapterGuid) == 0)
 		{
 			PacketAddAdapterNPF(TmpAddr);
 			found = TRUE;
