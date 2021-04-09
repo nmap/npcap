@@ -1778,27 +1778,8 @@ LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 	else
 	{
 		// Try if it is possible to open the adapter immediately
-		PCHAR pSymbolicLinkA = NULL;
-		// Check whether it is a WLAN adapter in monitor mode.
-		if (g_nbAdapterMonitorModes[AdapterNameA] != 0)
-		{
-			pSymbolicLinkA = NpcapTranslateAdapterName_Standard2Wifi(SymbolicLinkA);
-			if (pSymbolicLinkA) {
-				lpAdapter->hFile = CreateFileA(pSymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
-						0, NULL, OPEN_EXISTING, 0, 0);
-				HeapFree(GetProcessHeap(), 0, pSymbolicLinkA);
-			}
-
-			// If the monitor mode device fails to be opened, we then try the standard one.
-			if (!lpAdapter->hFile || lpAdapter->hFile == INVALID_HANDLE_VALUE)
-				lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
+		lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
 				0, NULL, OPEN_EXISTING, 0, 0);
-		}
-		else
-		{
-			lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
-				0, NULL, OPEN_EXISTING, 0, 0);
-		}
 		TRACE_PRINT2("SymbolicLinkA = %hs, lpAdapter->hFile = %08x", SymbolicLinkA, lpAdapter->hFile);
 	}
 	
@@ -2029,6 +2010,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
     LPADAPTER lpAdapter = NULL;
 	PCHAR AdapterNameA = NULL;
 	PCHAR TranslatedAdapterNameA = NULL;
+	PCHAR WifiAdapterNameA = NULL;
 	BOOL bFreeAdapterNameA;
 	PADAPTER_INFO TAdInfo;
 	
@@ -2173,11 +2155,32 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 			break;
 		}
 
-		TRACE_PRINT("Normal NPF adapter, trying to open it...");
-		lpAdapter = PacketOpenAdapterNPF(AdapterNameA);
+		if (g_nbAdapterMonitorModes[AdapterNameA] != 0)
+		{
+			TRACE_PRINT("Try to open in monitor mode");
+			WifiAdapterNameA = NpcapTranslateAdapterName_Standard2Wifi(AdapterNameA);
+			if (WifiAdapterNameA != NULL)
+			{
+				lpAdapter = PacketOpenAdapterNPF(WifiAdapterNameA);
+				if (lpAdapter == NULL)
+				{
+					dwLastError = GetLastError();
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
 		if (lpAdapter == NULL)
 		{
-			dwLastError = GetLastError();
+			// monitor mode failed or not available.
+			TRACE_PRINT("Normal NPF adapter, trying to open it...");
+			lpAdapter = PacketOpenAdapterNPF(AdapterNameA);
+			if (lpAdapter == NULL)
+			{
+				dwLastError = GetLastError();
+			}
 		}
 
 	}while(FALSE);
@@ -2185,6 +2188,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 	ReleaseMutex(g_AdaptersInfoMutex);
 
 	if (bFreeAdapterNameA) HeapFree(GetProcessHeap(), 0, AdapterNameA);
+	if (WifiAdapterNameA) HeapFree(GetProcessHeap(), 0, WifiAdapterNameA);
 
 
 	if (dwLastError != ERROR_SUCCESS)
