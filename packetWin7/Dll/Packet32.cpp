@@ -3799,11 +3799,11 @@ BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName)
 		ret = FALSE;
 	}
 	// Compare to NPF_Loopback
-	else if (strcmp(AdapterName + sizeof(DEVICE_PREFIX) - 1, NPCAP_LOOPBACK_ADAPTER_BUILTIN) == 0 ||
+	else if (_stricmp(AdapterName + sizeof(DEVICE_PREFIX) - 1, NPCAP_LOOPBACK_ADAPTER_BUILTIN) == 0 ||
 			// or compare to value in Registry, if it's found and long enough.
 			(strlen(g_strLoopbackAdapterName) > sizeof(DEVICE_PREFIX) &&
 			 strlen(AdapterName) > sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) &&
-			 strcmp(g_strLoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
+			 _stricmp(g_strLoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
 				 AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1) == 0)
 	   )
 	{
