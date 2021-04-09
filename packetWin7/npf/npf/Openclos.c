@@ -128,6 +128,7 @@ a NPF_AttachAdapter(), it is stored in the HigherPacketFilter, the combination
 of HigherPacketFilter and MyPacketFilter will be the final packet filter
 the low-level adapter sees.
 */
+_IRQL_requires_(PASSIVE_LEVEL)
 NDIS_STATUS
 NPF_SetPacketFilter(
 	_In_ NDIS_HANDLE FilterModuleContext,
@@ -623,7 +624,7 @@ NPF_OpenAdapter(
 }
 
 //-------------------------------------------------------------------
-
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ PDEVICE_OBJECT pDevObj)
 {
 	NTSTATUS Status = STATUS_PENDING;
@@ -747,34 +748,40 @@ NPF_StartUsingOpenInstance(
 	if (MaxState == OpenRunning && pOpen->OpenStatus == OpenAttached)
 	{
 		// NPF_EnableOps must be called at PASSIVE_LEVEL. Release the lock first.
-		FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-		returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen->pFiltMod, pOpen->DeviceExtension->pDevObj));
-		FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-
-		if (returnStatus)
-		{
-			// Get the absolute value of the system boot time.
-			// This is used for timestamp conversion.
-			TIME_SYNCHRONIZE(&pOpen->start);
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			if (pOpen->pFiltMod->Loopback)
-			{
-				// Keep track of how many active loopback captures there are
-				NpfInterlockedIncrement(&g_NumLoopbackInstances);
-			}
-#endif
-
+		NT_ASSERT(!AtDispatchLevel);
+		if (AtDispatchLevel) {
+			// This is really bad! We should never be able to get here.
+			returnStatus = FALSE;
+		}
+		else {
+			FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+			returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen->pFiltMod, pOpen->DeviceExtension->pDevObj));
 #ifdef HAVE_DOT11_SUPPORT
-			if (pOpen->pFiltMod->Dot11)
+			if (returnStatus && pOpen->pFiltMod->Dot11)
 			{
-				/* Update packet filter for raw wifi */
+				/* Update packet filter for raw wifi (must be PASSIVE_LEVEL) */
 				NPF_SetPacketFilter(pOpen, 0);
 			}
 #endif
+			FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 
-			pOpen->OpenStatus = OpenRunning;
-			pOpen->PendingIrps[OpenRunning]++;
+			if (returnStatus)
+			{
+				// Get the absolute value of the system boot time.
+				// This is used for timestamp conversion.
+				TIME_SYNCHRONIZE(&pOpen->start);
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+				if (pOpen->pFiltMod->Loopback)
+				{
+					// Keep track of how many active loopback captures there are
+					NpfInterlockedIncrement(&g_NumLoopbackInstances);
+				}
+#endif
+
+				pOpen->OpenStatus = OpenRunning;
+				pOpen->PendingIrps[OpenRunning]++;
+			}
 		}
 	}
 	else if (pOpen->OpenStatus > MaxState)

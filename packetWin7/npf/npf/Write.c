@@ -460,6 +460,7 @@ NPF_Write(
   This function is used by NPF_BufferedWrite to wait the completion of
   all the sends before returning the control to the user.
 */
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
 NPF_WaitEndOfBufferedWrite(
 	_In_ POPEN_INSTANCE Open
