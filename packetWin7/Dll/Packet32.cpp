@@ -91,8 +91,8 @@
 #include <tchar.h>
 #include <strsafe.h>
 #include <Shlwapi.h>
-#include <wlanapi.h>
 #include <string>
+#include <ntddndis.h>
 
 #include "ProtInstall.h"
 #include "Packet32-Int.h"
@@ -168,129 +168,6 @@ char PacketDriverName[64];
 //
 extern PADAPTER_INFO g_AdaptersInfoList;
 extern HANDLE g_AdaptersInfoMutex;
-
-HINSTANCE hinstLib = NULL;
-typedef DWORD
-(WINAPI *MY_WLANOPENHANDLE)(
-_In_ DWORD dwClientVersion,
-_Reserved_ PVOID pReserved,
-_Out_ PDWORD pdwNegotiatedVersion,
-_Out_ PHANDLE phClientHandle
-);
-
-typedef DWORD
-(WINAPI *MY_WLANCLOSEHANDLE)(
-_In_ HANDLE hClientHandle,
-_Reserved_ PVOID pReserved
-);
-
-typedef DWORD
-(WINAPI *MY_WLANENUMINTERFACES)(
-_In_ HANDLE hClientHandle,
-_Reserved_ PVOID pReserved,
-_Outptr_ PWLAN_INTERFACE_INFO_LIST *ppInterfaceList
-);
-
-typedef VOID
-(WINAPI *MY_WLANFREEMEMORY)(
-_In_ PVOID pMemory
-);
-
-typedef DWORD
-(WINAPI *MY_WLANSETINTERFACE)(
-_In_ HANDLE hClientHandle,
-_In_ CONST GUID *pInterfaceGuid,
-_In_ WLAN_INTF_OPCODE OpCode,
-_In_ DWORD dwDataSize,
-_In_reads_bytes_(dwDataSize) CONST PVOID pData,
-_Reserved_ PVOID pReserved
-);
-
-typedef DWORD
-(WINAPI *My_WLANQUERYINTERFACE)(
-_In_ HANDLE hClientHandle,
-_In_ CONST GUID *pInterfaceGuid,
-_In_ WLAN_INTF_OPCODE OpCode,
-_Reserved_ PVOID pReserved,
-_Out_ PDWORD pdwDataSize,
-_Outptr_result_bytebuffer_(*pdwDataSize) PVOID *ppData,
-_Out_opt_ PWLAN_OPCODE_VALUE_TYPE pWlanOpcodeValueType
-);
-
-typedef DWORD
-(WINAPI *My_WLANGETINTERFACECAPABILITY)(
-_In_ HANDLE hClientHandle,
-_In_ const GUID  *pInterfaceGuid,
-_Reserved_ PVOID pReserved,
-_Out_ PWLAN_INTERFACE_CAPABILITY *ppCapability
-);
-
-MY_WLANOPENHANDLE My_WlanOpenHandle = NULL;
-MY_WLANCLOSEHANDLE My_WlanCloseHandle = NULL;
-MY_WLANENUMINTERFACES My_WlanEnumInterfaces = NULL;
-MY_WLANFREEMEMORY My_WlanFreeMemory = NULL;
-MY_WLANSETINTERFACE My_WlanSetInterface = NULL;
-My_WLANQUERYINTERFACE My_WlanQueryInterface = NULL;
-My_WLANGETINTERFACECAPABILITY My_WlanGetInterfaceCapability = NULL;
-
-BOOL initWlanFunctions()
-{
-	BOOL bRet;
-
-	TRACE_ENTER();
-
-	// If these functions are already available, we don't import them again.
-	if (My_WlanOpenHandle != NULL &&
-		My_WlanCloseHandle != NULL &&
-		My_WlanEnumInterfaces != NULL &&
-		My_WlanFreeMemory != NULL &&
-		My_WlanSetInterface != NULL &&
-		My_WlanQueryInterface != NULL &&
-		My_WlanGetInterfaceCapability != NULL)
-	{
-		return TRUE;
-	}
-
-	// Get a handle to the packet DLL module.
-	hinstLib = LoadLibrary(TEXT("wlanapi.dll"));
-
-	// If the handle is valid, try to get the function address.  
-	if (hinstLib != NULL)
-	{
-		My_WlanOpenHandle = (MY_WLANOPENHANDLE)GetProcAddress(hinstLib, "WlanOpenHandle");
-		My_WlanCloseHandle = (MY_WLANCLOSEHANDLE)GetProcAddress(hinstLib, "WlanCloseHandle");
-		My_WlanEnumInterfaces = (MY_WLANENUMINTERFACES)GetProcAddress(hinstLib, "WlanEnumInterfaces");
-		My_WlanFreeMemory = (MY_WLANFREEMEMORY)GetProcAddress(hinstLib, "WlanFreeMemory");
-		My_WlanSetInterface = (MY_WLANSETINTERFACE)GetProcAddress(hinstLib, "WlanSetInterface");
-		My_WlanQueryInterface = (My_WLANQUERYINTERFACE)GetProcAddress(hinstLib, "WlanQueryInterface");
-		My_WlanGetInterfaceCapability = (My_WLANGETINTERFACECAPABILITY)GetProcAddress(hinstLib, "WlanGetInterfaceCapability");
-		// If the function address is valid, call the function.  
-
-		if (My_WlanOpenHandle != NULL &&
-			My_WlanCloseHandle != NULL &&
-			My_WlanEnumInterfaces != NULL &&
-			My_WlanFreeMemory != NULL &&
-			My_WlanSetInterface != NULL &&
-			My_WlanQueryInterface != NULL &&
-			My_WlanGetInterfaceCapability != NULL)
-		{
-			bRet = TRUE;
-		}
-		else
-		{
-			TRACE_PRINT1("GetProcAddress: error, errCode = 0x%08x.", GetLastError());
-			bRet = FALSE;
-		}
-	}
-	else
-	{
-		TRACE_PRINT1("LoadLibrary: error, errCode = 0x%08x.", GetLastError());
-		bRet = FALSE;
-	}
-
-	TRACE_EXIT();
-	return bRet;
-}
 
 #ifdef LOAD_OPTIONAL_LIBRARIES
 //
@@ -3864,112 +3741,6 @@ BOOL myGUIDFromString(LPCSTR psz, LPGUID pguid)
 	return bRet;
 }
 
-#define WLAN_CLIENT_VERSION_VISTA 2
-
-DWORD SetInterface(WLAN_INTF_OPCODE opcode, PVOID pData, GUID* InterfaceGuid)
-{
-	TRACE_ENTER();
-
-	DWORD dwResult = 0;
-	HANDLE hClient = NULL;
-	DWORD dwCurVersion = 0;
-
-	if (!initWlanFunctions())
-	{
-		TRACE_PRINT("SetInterface failed, initWlanFunctions error");
-		TRACE_EXIT();
-		return ERROR_INVALID_FUNCTION;
-	}
-
-	// Open Handle for the set operation
-	dwResult = My_WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
-	if (dwResult != ERROR_SUCCESS)
-	{
-		TRACE_PRINT1("SetInterface failed, My_WlanOpenHandle error, errCode = %x", dwResult);
-		TRACE_EXIT();
-		return dwResult;
-	}
-	dwResult = My_WlanSetInterface(hClient, InterfaceGuid, opcode, sizeof(ULONG), pData, NULL);
-	if (dwResult != ERROR_SUCCESS)
-	{
-		TRACE_PRINT1("SetInterface failed, My_WlanSetInterface error, errCode = %x", dwResult);
-	}
-	My_WlanCloseHandle(hClient, NULL);
-
-	TRACE_EXIT();
-	return dwResult;
-}
-
-DWORD GetInterface(WLAN_INTF_OPCODE opcode, PVOID* ppData, GUID* InterfaceGuid)
-{
-	TRACE_ENTER();
-
-	DWORD dwResult = 0;
-	HANDLE hClient = NULL;
-	DWORD dwCurVersion = 0;
-	DWORD outsize = 0;
-	WLAN_OPCODE_VALUE_TYPE opCode = wlan_opcode_value_type_invalid;
-
-	if (!initWlanFunctions())
-	{
-		TRACE_PRINT("SetInterface failed, initWlanFunctions error");
-		TRACE_EXIT();
-		return ERROR_INVALID_FUNCTION;
-	}
-
-	// Open Handle for the set operation
-	dwResult = My_WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
-	if (dwResult != ERROR_SUCCESS)
-	{
-		TRACE_PRINT1("GetInterface failed, My_WlanOpenHandle error, errCode = %x", dwResult);
-		TRACE_EXIT();
-		return dwResult;
-	}
-	dwResult = My_WlanQueryInterface(hClient, InterfaceGuid, opcode, NULL, &outsize, ppData, &opCode);
-	if (dwResult != ERROR_SUCCESS)
-	{
-		TRACE_PRINT1("GetInterface failed, My_WlanQueryInterface error, errCode = %x", dwResult);
-	}
-	My_WlanCloseHandle(hClient, NULL);
-
-	TRACE_EXIT();
-	return dwResult;
-}
-
-DWORD GetInterfaceCapability(PWLAN_INTERFACE_CAPABILITY *ppWlanInterfaceCapability, GUID* InterfaceGuid)
-{
-	TRACE_ENTER();
-
-	DWORD dwResult = 0;
-	HANDLE hClient = NULL;
-	DWORD dwCurVersion = 0;
-
-	if (!initWlanFunctions())
-	{
-		TRACE_PRINT("SetInterface failed, initWlanFunctions error");
-		TRACE_EXIT();
-		return ERROR_INVALID_FUNCTION;
-	}
-
-	// Open Handle for the set operation
-	dwResult = My_WlanOpenHandle(WLAN_CLIENT_VERSION_VISTA, NULL, &dwCurVersion, &hClient);
-	if (dwResult != ERROR_SUCCESS)
-	{
-		TRACE_PRINT1("GetInterfaceCapability failed, My_WlanOpenHandle error, errCode = %x", dwResult);
-		TRACE_EXIT();
-		return dwResult;
-	}
-	dwResult = My_WlanGetInterfaceCapability(hClient, InterfaceGuid, NULL, ppWlanInterfaceCapability);
-	if (dwResult != ERROR_SUCCESS)
-	{
-		TRACE_PRINT1("GetInterfaceCapability failed, My_WlanGetInterfaceCapability error, errCode = %x", dwResult);
-	}
-	My_WlanCloseHandle(hClient, NULL);
-
-	TRACE_EXIT();
-	return dwResult;
-}
-
 /*!
 \brief Returns whether a wireless adapter supports monitor mode.
 \param AdapterObject The adapter on which information is needed.
@@ -4048,58 +3819,80 @@ int PacketIsMonitorModeSupported(PCHAR AdapterName)
 */
 int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 {
-	GUID ChoiceGUID;
+	int rval = 0;
+	DWORD dwResult = ERROR_INVALID_DATA;
+	BOOLEAN Status;
 	PCHAR TranslatedAdapterName;
+	PCHAR WifiAdapterName;
+	LPADAPTER lpAdapter = NULL;
+	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1] = { 0 };
+	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
+	PDOT11_CURRENT_OPERATION_MODE pOpMode = (PDOT11_CURRENT_OPERATION_MODE)OidData->Data;
 
 	TRACE_ENTER();
 
-	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
-	if (!TranslatedAdapterName)
+	WifiAdapterName = NpcapTranslateAdapterName_Standard2Wifi(AdapterName);
+	if (!WifiAdapterName)
 	{
-		TRACE_PRINT("PacketSetMonitorMode failed, NpcapTranslateAdapterName_Npf2Npcap error");
+		TRACE_PRINT("PacketSetMonitorMode failed, NpcapTranslateAdapterName_Standard2Wifi error");
 		TRACE_EXIT();
+		SetLastError(dwResult);
 		return -1;
 	}
 
-	if (myGUIDFromString(TranslatedAdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
+	lpAdapter = PacketOpenAdapterNPF(WifiAdapterName);
+	if (lpAdapter == NULL)
 	{
-		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-		TRACE_PRINT("PacketSetMonitorMode failed, myGUIDFromString error");
+		dwResult = GetLastError();
+		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+		TRACE_PRINT("PacketSetMonitorMode failed, PacketOpenAdapterNPF error");
 		TRACE_EXIT();
+		SetLastError(dwResult);
 		return -1;
 	}
 
 	ULONG ulOperationMode = mode ? DOT11_OPERATION_MODE_NETWORK_MONITOR : DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
+	OidData->Oid = OID_DOT11_CURRENT_OPERATION_MODE;
+	OidData->Length = sizeof(DOT11_CURRENT_OPERATION_MODE);
+	pOpMode->uCurrentOpMode = ulOperationMode;
+	Status = PacketRequest(lpAdapter, TRUE, OidData);
 
-	DWORD dwResult = SetInterface(wlan_intf_opcode_current_operation_mode, (PVOID)&ulOperationMode, &ChoiceGUID);
-	if (dwResult != ERROR_SUCCESS)
+	if (!Status)
 	{
-		TRACE_PRINT("PacketSetMonitorMode failed, SetInterface error");
+		dwResult = GetLastError();
+		TRACE_PRINT("PacketSetMonitorMode failed, PacketRequest error");
 		TRACE_EXIT();
-		// Monitor mode is not supported.
-		if (dwResult == ERROR_INVALID_PARAMETER)
+#define NDIS_STATUS_INVALID_DATA                ((NDIS_STATUS)0xC0010015L)
+#define NDIS_STATUS_INVALID_OID                 ((NDIS_STATUS)0xC0010017L)
+		if (dwResult != NDIS_STATUS_INVALID_DATA && dwResult != NDIS_STATUS_INVALID_OID)
 		{
-			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
+			HeapFree(GetProcessHeap(), 0, WifiAdapterName);
 			TRACE_EXIT();
-			return 0;
+			SetLastError(dwResult);
+			return -1;
 		}
 		else
 		{
-			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-			TRACE_EXIT();
-			return -1;
+			// Monitor mode is not supported.
+			rval = 0;
 		}
 	}
 	else
 	{
+		rval = 1;
 		// Update the adapter's monitor mode in the global map.
-		g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
-
-		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-		TRACE_EXIT();
-		return 1;
+		TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
+		if (TranslatedAdapterName)
+		{
+			g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
+			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
+		}
 	}
+
+
+	HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+	TRACE_EXIT();
+	return rval;
 }
 
 /*!
@@ -4111,49 +3904,63 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 int PacketGetMonitorMode(PCHAR AdapterName)
 {
 	int mode;
-	GUID ChoiceGUID;
+	LPADAPTER pAdapter;
+	BOOLEAN    Status;
+	DWORD dwResult = ERROR_INVALID_DATA;
+	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1] = { 0 };
+	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
+	PDOT11_CURRENT_OPERATION_MODE pOperationMode = (PDOT11_CURRENT_OPERATION_MODE)OidData->Data;
 	PCHAR TranslatedAdapterName;
+	PCHAR WifiAdapterName;
 
 	TRACE_ENTER();
 
-	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+	WifiAdapterName = NpcapTranslateAdapterName_Standard2Wifi(AdapterName);
+	if (!WifiAdapterName)
+	{
+		TRACE_PRINT("PacketGetMonitorMode failed, NpcapTranslateAdapterName_Standard2Wifi error");
+		TRACE_EXIT();
+		SetLastError(dwResult);
+		return -1;
+	}
+
+	pAdapter = PacketOpenAdapterNPF(WifiAdapterName);
+	if (pAdapter == NULL)
+	{
+		dwResult = GetLastError();
+		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+		TRACE_PRINT("PacketSetMonitorMode failed, PacketOpenAdapterNPF error");
+		TRACE_EXIT();
+		SetLastError(dwResult);
+		return -1;
+	}
+
+	OidData->Oid = OID_DOT11_CURRENT_OPERATION_MODE;
+	OidData->Length = sizeof(DOT11_CURRENT_OPERATION_MODE);
+	Status = PacketRequest(pAdapter, FALSE, OidData);
+
+	if (!Status)
+	{
+		dwResult = GetLastError();
+		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+		TRACE_PRINT("PacketGetMonitorMode failed, PacketRequest error");
+		TRACE_EXIT();
+		SetLastError(dwResult);
+		return -1;
+	}
+	mode = (pOperationMode->uCurrentOpMode == DOT11_OPERATION_MODE_NETWORK_MONITOR) ? 1 : 0;
+
 	TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
-	if (!TranslatedAdapterName)
+	if (TranslatedAdapterName)
 	{
-		TRACE_PRINT("PacketSetMonitorMode failed, NpcapTranslateAdapterName_Npf2Npcap error");
-		TRACE_EXIT();
-		return -1;
-	}
-
-	if (myGUIDFromString(TranslatedAdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1, &ChoiceGUID) != TRUE)
-	{
-		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-		TRACE_PRINT("PacketGetMonitorMode failed, myGUIDFromString error");
-		TRACE_EXIT();
-		return -1;
-	}
-
-	PULONG pOperationMode;
-	DWORD dwResult = GetInterface(wlan_intf_opcode_current_operation_mode, (PVOID*)&pOperationMode, &ChoiceGUID);
-	if (dwResult != ERROR_SUCCESS)
-	{
-		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-		TRACE_PRINT("PacketGetMonitorMode failed, GetInterface error");
-		TRACE_EXIT();
-		return -1;
-	}
-	else
-	{
-		mode = (*pOperationMode == DOT11_OPERATION_MODE_NETWORK_MONITOR) ? 1 : 0;
-		My_WlanFreeMemory(pOperationMode);
-
 		// Update the adapter's monitor mode in the global map.
 		g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
-
 		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-		TRACE_EXIT();
-		return mode;
 	}
+
+	HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+	TRACE_EXIT();
+	return mode;
 }
 
 /*!
