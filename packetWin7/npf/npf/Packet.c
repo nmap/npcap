@@ -248,7 +248,6 @@ DriverEntry(
 	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 	
 	UNICODE_STRING AdapterName;
-	HANDLE threadHandle;
 
 	NDIS_STRING strKeQuerySystemTimePrecise;
 
@@ -911,7 +910,6 @@ Return Value:
 	PDEVICE_OBJECT DeviceObject;
 	PDEVICE_OBJECT OldDeviceObject;
 	PDEVICE_EXTENSION DeviceExtension;
-	NDIS_STATUS Status;
 	NDIS_STRING SymLink;
 	NDIS_EVENT Event;
 	LOCK_STATE_EX lockState;
@@ -1104,13 +1102,11 @@ NPF_IoControl(
 	ULONG					Information = 0;
 	PLIST_ENTRY				CurrEntry;
 	PULONG pUL;
-	UINT					i;
 	PUCHAR					tpointer = NULL; //assign NULL to suppress error C4703: potentially uninitialized local pointer variable
 	ULONG					dim, timeout;
 	struct bpf_insn*		NewBpfProgram;
 	PPACKET_OID_DATA		OidData;
 	PVOID OidBuffer = NULL;
-	int*					StatsBuf;
 	ULONG					mode;
 #ifdef NPCAP_KDUMP
 	PWSTR					DumpNameBuff;
@@ -1118,12 +1114,9 @@ NPF_IoControl(
 	PUCHAR					TmpBPFProgram;
 	INT						WriteRes;
 	BOOLEAN					SyncWrite = FALSE;
-	struct bpf_insn*		initprogram;
 	ULONG					insns;
 	ULONG					cnt;
 	BOOLEAN					IsExtendedFilter = FALSE;
-	ULONG					StringLength;
-	ULONG					NeededBytes;
 	PUINT					pStats;
 	ULONG					StatsLength;
 	PULONG					pCombinedPacketFilter;

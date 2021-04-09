@@ -353,7 +353,6 @@ NPF_CloseBinding(
 	)
 {
 	NDIS_EVENT Event;
-	NDIS_STATUS Status;
 
 	NT_ASSERT(pFiltMod != NULL);
 
@@ -926,7 +925,6 @@ NPF_ReleaseOpenInstanceResources(
 	POPEN_INSTANCE pOpen
 	)
 {
-	UINT i;
 
 	TRACE_ENTER();
 
@@ -1912,7 +1910,6 @@ POPEN_INSTANCE
 NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 {
 	POPEN_INSTANCE Open;
-	UINT i;
 	TRACE_ENTER();
 
 	// allocate some memory for the open structure
@@ -2223,7 +2220,6 @@ NPF_AttachAdapter(
 	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
 	BOOLEAN					bFalse = FALSE;
 	BOOLEAN					bDot11;
-	HANDLE threadHandle;
 
 	TRACE_ENTER();
 
@@ -2431,8 +2427,6 @@ NPF_Pause(
 	)
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE)FilterModuleContext;
-	PSINGLE_LIST_ENTRY Curr;
-	POPEN_INSTANCE pOpen;
 	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
 	NDIS_EVENT Event;
 	BOOLEAN PendingWrites = FALSE;
@@ -3302,7 +3296,7 @@ NDIS_STATUS NPF_DoInternalRequest(
 	TRACE_ENTER();
 
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
-	INTERNAL_REQUEST            FilterRequest;
+	INTERNAL_REQUEST            FilterRequest = { 0 };
 	PNDIS_OID_REQUEST           NdisRequest = &FilterRequest.Request;
 	NDIS_STATUS                 Status = NDIS_STATUS_FAILURE;
 
