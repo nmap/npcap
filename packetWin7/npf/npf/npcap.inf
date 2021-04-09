@@ -73,7 +73,7 @@ HKR, Ndi,FilterType,0x00010001,2
 
 
 HKR, Ndi\Interfaces,UpperRange, , noupper
-HKR, Ndi\Interfaces,LowerRange, , "ndis5,ndis4"
+HKR, Ndi\Interfaces,LowerRange, , nolower
 
 
 ; TODO: Ensure that the list of media types below is correct.  Typically,
@@ -121,7 +121,7 @@ HKR, Ndi,FilterType,0x00010001,2
 
 
 HKR, Ndi\Interfaces,UpperRange, , noupper
-HKR, Ndi\Interfaces,LowerRange, , "ndis5,ndis4"
+HKR, Ndi\Interfaces,LowerRange, , nolower
 
 
 ; TODO: Ensure that the list of media types below is correct.  Typically,
