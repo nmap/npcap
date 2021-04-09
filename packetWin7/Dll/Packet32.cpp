@@ -3737,13 +3737,24 @@ BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntrie
 BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 {
 	PADAPTER_INFO TAdInfo;
+	CHAR AdName[ADAPTER_NAME_LENGTH] = { 0 };
+	char* tag = NULL;
 	BOOLEAN ret;
 
 	TRACE_ENTER();
-
+	// Look up the adapter by its canonical name, meaning no WIFI_ tag.
+	strcpy_s(AdName, ADAPTER_NAME_LENGTH, AdapterObject->Name);
+	tag = strstr(AdName, NPF_DEVICE_NAMES_TAG_WIFI);
+	if (tag) {
+		tag--;
+		do {
+			tag++;
+			*tag = *(tag + sizeof(NPF_DEVICE_NAMES_TAG_WIFI) - 1);
+		} while (*tag != '\0');
+	}
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 	// Find the PADAPTER_INFO structure associated with this adapter 
-	TAdInfo = PacketFindAdInfo(AdapterObject->Name);
+	TAdInfo = PacketFindAdInfo(AdName);
 
 	if(TAdInfo != NULL)
 	{
@@ -3761,7 +3772,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	ReleaseMutex(g_AdaptersInfoMutex);
 
 	// Check whether it is a WLAN adapter in monitor mode.
-	if (type->LinkType == NdisMedium802_3 && g_nbAdapterMonitorModes[AdapterObject->Name] != 0)
+	if (type->LinkType == NdisMedium802_3 && g_nbAdapterMonitorModes[AdName] != 0)
 	{
 		type->LinkType = (UINT)NdisMediumRadio80211;
 	}
