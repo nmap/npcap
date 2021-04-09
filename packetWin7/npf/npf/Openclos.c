@@ -1757,12 +1757,13 @@ NPF_EqualAdapterName(
 }
 
 //-------------------------------------------------------------------
-
+/* Length of a WCHAR string literal minus the terminating null */
+#define CONST_WCHAR_BYTES(_A) (sizeof(_A) - sizeof(WCHAR))
 /* Ensure string "a" is long enough to contain "b" after the offset.
  * Length does not include the null terminator, so account for that with sizeof(WCHAR).
  * Then compare memory. Length is length in bytes, but buffer is a PWCHAR.
  */
-#define PUNICODE_CONTAINS(a, b, byteoffset) (a->Length >= byteoffset + sizeof(b) - sizeof(WCHAR) && sizeof(b) == RtlCompareMemory(a->Buffer + byteoffset/sizeof(WCHAR), b, sizeof(b)))
+#define PUNICODE_CONTAINS(a, b, byteoffset) ((a->Length >= byteoffset + CONST_WCHAR_BYTES(b)) && CONST_WCHAR_BYTES(b) == RtlCompareMemory(a->Buffer + byteoffset/sizeof(WCHAR), b, CONST_WCHAR_BYTES(b)))
 _Use_decl_annotations_
 PNPCAP_FILTER_MODULE
 NPF_GetFilterModuleByAdapterName(
@@ -1772,7 +1773,9 @@ NPF_GetFilterModuleByAdapterName(
 	PSINGLE_LIST_ENTRY Curr = NULL;
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
 	size_t i = 0;
-	USHORT shrink_by = 0;
+	USHORT cchShrink = 0;
+#define BYTES(_cch) ((_cch) * sizeof(WCHAR))
+#define CCH(_bytes) ((_bytes) / sizeof(WCHAR))
 	BOOLEAN Dot11 = FALSE;
 	BOOLEAN Loopback = FALSE;
 	NDIS_STRING BaseName = NDIS_STRING_CONST("Loopback");
@@ -1784,18 +1787,19 @@ NPF_GetFilterModuleByAdapterName(
 	}
 
 	// strip off leading backslashes
-	while ((shrink_by * sizeof(WCHAR)) < pAdapterName->Length && pAdapterName->Buffer[shrink_by] == L'\\') {
-		shrink_by++;
+	while (BYTES(cchShrink) < pAdapterName->Length && pAdapterName->Buffer[cchShrink] == L'\\') {
+		cchShrink++;
 	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// If this is *not* the legacy loopback name, we'll have to set up BaseName to be the real name of the buffer.
-	if (g_LoopbackAdapterName.Buffer != NULL && (g_LoopbackAdapterName.Length - devicePrefix.Length / 2) == (pAdapterName->Length - shrink_by / 2)) {
-		if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, pAdapterName->Buffer + shrink_by,
-					(SIZE_T)pAdapterName->Length - shrink_by / 2) == (SIZE_T)pAdapterName->Length - shrink_by / 2)
-		{
-			Loopback = TRUE;
-		}
+	if (g_LoopbackAdapterName.Buffer != NULL // Legacy loopback name exists
+		&& (g_LoopbackAdapterName.Length - devicePrefix.Length) == (pAdapterName->Length - BYTES(cchShrink)) // Length matches
+		&& RtlCompareMemory(g_LoopbackAdapterName.Buffer + CCH(devicePrefix.Length), pAdapterName->Buffer + cchShrink,
+					(SIZE_T)pAdapterName->Length - BYTES(cchShrink) == (SIZE_T)pAdapterName->Length - BYTES(cchShrink))
+		)
+	{
+		Loopback = TRUE;
 	}
 
 	if (!Loopback) {
@@ -1810,16 +1814,16 @@ NPF_GetFilterModuleByAdapterName(
 	}
 
 	// Check for WIFI_ prefix and strip it
-	if (PUNICODE_CONTAINS(pAdapterName, NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI, shrink_by * sizeof(WCHAR))) {
-		shrink_by += sizeof(NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI)/sizeof(WCHAR) - 1;
+	if (PUNICODE_CONTAINS(pAdapterName, NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI, BYTES(cchShrink))) {
+		cchShrink += CCH(CONST_WCHAR_BYTES(NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI));
 		Dot11 = TRUE;
 	}
 
 	// Do the strip
-	for (i=shrink_by; i * sizeof(WCHAR) < pAdapterName->Length && (i - shrink_by)*sizeof(WCHAR) < BaseName.MaximumLength; i++) {
-		BaseName.Buffer[i - shrink_by] = pAdapterName->Buffer[i];
+	for (i=cchShrink; i < CCH(pAdapterName->Length) && (i - cchShrink) < CCH(BaseName.MaximumLength); i++) {
+		BaseName.Buffer[i - cchShrink] = pAdapterName->Buffer[i];
 	}
-	BaseName.Length = pAdapterName->Length - shrink_by*sizeof(WCHAR);
+	BaseName.Length = pAdapterName->Length - BYTES(cchShrink);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	} //end if !Loopback
