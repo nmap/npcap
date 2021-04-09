@@ -382,6 +382,7 @@ NPF_Read(
 		{
 			RtlCopyMemory(packp + copied, pRadiotapHeader, pRadiotapHeader->it_len);
 			header->bh_caplen += pRadiotapHeader->it_len;
+			header->bh_datalen += pRadiotapHeader->it_len;
 			copied += pRadiotapHeader->it_len;
 		}
 #endif
@@ -390,10 +391,11 @@ NPF_Read(
 		if (ulCopied < plen) {
 			IF_LOUD(DbgPrint("NetBuffer missing %lu bytes", plen - ulCopied);)
 		}
-		header->bh_caplen = ulCopied;
+		header->bh_caplen += ulCopied;
 
 		// Fix up alignment
-		copied += Packet_WORDALIGN(ulCopied);
+		copied += ulCopied;
+		copied = Packet_WORDALIGN(copied);
 
 		// Return this capture data
 		// MUST be done BEFORE incrementing free space, otherwise we risk runaway allocations while this is stalled.
