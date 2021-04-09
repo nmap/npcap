@@ -257,7 +257,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	//the memory for TmpAdInfo was zeroed upon allocation
 
 	// Copy the description
-	Status = WideCharToMultiByte(CP_ACP, 0, pAdapterAddr->Description, wcslen(pAdapterAddr->Description), TmpAdInfo->Description, ADAPTER_DESC_LENGTH, NULL, NULL);
+	Status = WideCharToMultiByte(CP_ACP, 0, pAdapterAddr->Description, (int)wcslen(pAdapterAddr->Description), TmpAdInfo->Description, ADAPTER_DESC_LENGTH, NULL, NULL);
 	// Conversion error? ensure it's terminated and ignore.
 	if (Status == 0) TmpAdInfo->Description[ADAPTER_DESC_LENGTH] = '\0';
 
