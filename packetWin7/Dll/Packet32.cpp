@@ -847,70 +847,68 @@ PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR destina
 	return newbuf;
 }
 
-// For [string], substitute all [source] strings with [destination], return the new string (need to free), if not found, return NULL.
-static PCHAR NpcapReplaceString(LPCSTR string, LPCSTR source, LPCSTR destination)
+static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix, const size_t prefix_len)
 {
-	PCHAR tmp;
-	PCHAR newstr;
-	PCHAR retstr;
-	LPCCH sk;
-	size_t size;
+	PCHAR outstr = NULL;
+	size_t outstr_len = 0;
+	const char *src = NULL;
+	TRACE_PRINT2("NpcapFormatAdapterName('%hs', '%hs')", AdapterName, prefix);
 
-	sk = strstr(string, source);
-	if (sk == NULL)
-		return NULL;
-
-	size = 2 * strlen(string) + strlen(destination) + 1;
-	newstr = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	if (newstr == NULL)
-		return NULL;
-
-	retstr = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	if (retstr == NULL)
-	{
-		HeapFree(GetProcessHeap(), 0, newstr);
+	src = strstr(AdapterName, "NP");
+	if (src) {
+		src += 2; // NP
+		if (!strncmp(src, "F_", 2)) // NPF_
+		{
+			src += 2;
+		}
+		else if (!strncmp(src, "CAP", 3)) //NPCAP
+		{
+			src += 3;
+			if (*src == '_' || *src == '\\') // NPCAP_ or NPCAP\ are ok
+			{
+				src++;
+			}
+			else {
+				src = NULL;
+			}
+		}
+		else {
+			src = NULL;
+		}
+	}
+	if (!src) {
+		TRACE_PRINT("'NPF_' or 'NPCAP_' not found");
 		return NULL;
 	}
 
-	sprintf_s(newstr, size - 1, "%s", string);
-	sk = strstr(newstr, source);
-
-	while (sk != NULL)
-	{
-		size_t pos = 0;
-		memcpy(retstr + pos, newstr, sk - newstr);
-		pos += sk - newstr;
-		sk += strlen(source);
-		memcpy(retstr + pos, destination, strlen(destination));
-		pos += strlen(destination);
-		memcpy(retstr + pos, sk, strlen(sk));
-
-		tmp = newstr;
-		newstr = retstr;
-		retstr = tmp;
-
-		memset(retstr, 0, size);
-		sk = strstr(newstr, source);
-
-		// We just need to replace only one substring, so we break here.
-		break;
+	outstr_len = prefix_len + strlen(src) + 1; //null-terminated
+	outstr = (PCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, outstr_len);
+	if (!outstr) {
+		TRACE_PRINT("HeapAlloc failed");
+		return NULL;
 	}
 
-	HeapFree(GetProcessHeap(), 0, retstr);
-	return newstr;
+	strcpy_s(outstr, outstr_len, prefix);
+
+	for (size_t i = 0, j = prefix_len; j < outstr_len - 1; i++, j++)
+	{
+		if (src[i] == '\0') {
+			break;
+		}
+		else {
+			outstr[j] = (CHAR)toupper(src[i]);
+		}
+	}
+	return outstr;
 }
 
-static PCHAR NpcapTranslateAdapterName_Standard2Wifi(LPCSTR AdapterName)
-{
-	TRACE_ENTER();
-	TRACE_EXIT();
-	return NpcapReplaceString(AdapterName, "{", NPF_DEVICE_NAMES_TAG_WIFI "{");
+#define NPF_DECLARE_FORMAT_NAME(_Fn, _Prefix) static PCHAR NpcapTranslateAdapterName_##_Fn(LPCSTR AdapterName) \
+{ \
+	return NpcapFormatAdapterName(AdapterName, _Prefix, sizeof(_Prefix) - 1); \
 }
 
-static PCHAR NpcapTranslateAdapterName_Npf2Npcap(LPCSTR AdapterName)
-{
-	return NpcapReplaceString(AdapterName, "NPF_", NPF_DEVICE_NAMES_PREFIX);
-}
+NPF_DECLARE_FORMAT_NAME(Standard2Wifi, NPF_DRIVER_COMPLETE_DEVICE_PREFIX NPF_DEVICE_NAMES_TAG_WIFI)
+NPF_DECLARE_FORMAT_NAME(Npf2Npcap, NPF_DRIVER_COMPLETE_DEVICE_PREFIX)
 
 static PCHAR NpcapTranslateMemory_Npcap2Npf(LPCSTR pStr, int iBufSize)
 {
