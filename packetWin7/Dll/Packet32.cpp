@@ -3983,23 +3983,37 @@ int PacketIsMonitorModeSupported(PCHAR AdapterName)
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_OPERATION_MODE_CAPABILITY pOperationModeCapability;
 	int mode;
+	PCHAR WifiAdapterName;
+	DWORD dwResult = ERROR_INVALID_DATA;
 
 	TRACE_ENTER();
 
-	pAdapter = PacketOpenAdapter(AdapterName);
-	if (!pAdapter)
+	WifiAdapterName = NpcapTranslateAdapterName_Standard2Wifi(AdapterName);
+	if (!WifiAdapterName)
 	{
-		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketOpenAdapter error");
+		TRACE_PRINT("PacketIsMonitorModeSupported failed, NpcapTranslateAdapterName_Standard2Wifi error");
 		TRACE_EXIT();
+		SetLastError(dwResult);
 		return -1;
 	}
 
-	//get the link-layer type
+	pAdapter = PacketOpenAdapterNPF(WifiAdapterName);
+	if (!pAdapter)
+	{
+		dwResult = GetLastError();
+		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketOpenAdapter error");
+		TRACE_EXIT();
+		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+		SetLastError(dwResult);
+		return -1;
+	}
+
 	OidData->Oid = OID_DOT11_OPERATION_MODE_CAPABILITY;
 	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
 	Status = PacketRequest(pAdapter, FALSE, OidData);
-	if (Status == TRUE)
+	if (Status)
 	{
+		dwResult = ERROR_SUCCESS;
 		pOperationModeCapability = (PDOT11_OPERATION_MODE_CAPABILITY) OidData->Data;
 		if ((pOperationModeCapability->uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
 		{
@@ -4012,6 +4026,7 @@ int PacketIsMonitorModeSupported(PCHAR AdapterName)
 	}
 	else
 	{
+		dwResult = GetLastError();
 		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketRequest error");
 		mode = -1;
 	}
@@ -4021,6 +4036,7 @@ int PacketIsMonitorModeSupported(PCHAR AdapterName)
 	TRACE_PRINT2("PacketIsMonitorModeSupported: AdapterName = %hs, mode = %d", AdapterName, mode);
 
 	TRACE_EXIT();
+	SetLastError(dwResult);
 	return mode;
 }
 
