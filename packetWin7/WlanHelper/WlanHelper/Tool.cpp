@@ -482,9 +482,11 @@ HINSTANCE hinstLib = NULL;
 typedef LPADAPTER (*MY_PACKETOPENADAPTER) (PCHAR AdapterName);
 typedef BOOLEAN(*MY_PACKETREQUEST) (LPADAPTER  AdapterObject, BOOLEAN Set, PPACKET_OID_DATA  OidData);
 typedef VOID(*MY_PACKETCLOSEADAPTER) (LPADAPTER lpAdapter);
+typedef int(*MY_PACKETGETMONITORMODE) (PCHAR AdapterName);
 MY_PACKETOPENADAPTER My_PacketOpenAdapter = NULL;
 MY_PACKETREQUEST My_PacketRequest = NULL;
 MY_PACKETCLOSEADAPTER My_PacketCloseAdapter = NULL;
+MY_PACKETGETMONITORMODE My_PacketGetMonitorMode = NULL;
 
 BOOL initPacketFunctions()
 {
@@ -499,9 +501,10 @@ BOOL initPacketFunctions()
 		My_PacketOpenAdapter = (MY_PACKETOPENADAPTER)GetProcAddress(hinstLib, "PacketOpenAdapter");
 		My_PacketRequest = (MY_PACKETREQUEST)GetProcAddress(hinstLib, "PacketRequest");
 		My_PacketCloseAdapter = (MY_PACKETCLOSEADAPTER)GetProcAddress(hinstLib, "PacketCloseAdapter");
+		My_PacketGetMonitorMode = (MY_PACKETGETMONITORMODE)GetProcAddress(hinstLib, "PacketGetMonitorMode");
 		// If the function address is valid, call the function.  
 
-		if (My_PacketOpenAdapter != NULL && My_PacketRequest != NULL && My_PacketCloseAdapter != NULL)
+		if (My_PacketOpenAdapter != NULL && My_PacketRequest != NULL && My_PacketCloseAdapter != NULL && My_PacketGetMonitorMode != NULL)
 		{
 			bRet = TRUE;
 		}
@@ -529,6 +532,7 @@ void freePacketFunctions()
 		My_PacketOpenAdapter = NULL;
 		My_PacketRequest = NULL;
 		My_PacketCloseAdapter = NULL;
+		My_PacketGetMonitorMode = NULL;
 	}
 }
 
@@ -552,6 +556,8 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 
 	char strAdapterName[256];
 	sprintf_s(strAdapterName, 256, NPF_DRIVER_FORMAT_STR, tstring2string(strAdapterGUID).c_str());
+	// Need to call PacketGetMonitorMode otherwise adapter can't be opened via WiFi.
+	My_PacketGetMonitorMode(strAdapterName);
 
 	LPADAPTER pAdapter = My_PacketOpenAdapter(strAdapterName);
 	if (pAdapter == NULL)
