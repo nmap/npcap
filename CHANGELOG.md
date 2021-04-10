@@ -1,4 +1,24 @@
 ﻿
+## Npcap 1.30 [2021-04-08]
+
+* Restore raw WiFi frame capture support, which had been broken in a few ways
+  since Npcap 0.9983. Additional improvements enable `PacketSetMonitorMode()`
+  for non-admin-privileged processes, allowing Wireshark to correctly enable
+  monitor mode via checkbox without requiring WlanHelper.exe.
+
+* Fixed WlanHelper.exe to correctly set modes and channels for adapters, if run
+  with Administrator privileges. Fixes [#122](http://issues.npcap.org/122).
+
+* Improved speed of `pcap_findalldevs()` by using fewer calls to
+  `GetAdaptersAddresses()` and avoiding direct Registry inspection. The new
+  method may result in more adapters being available for capture than
+  previously reported. See [#169](http://issues.npcap.org/169).
+
+* Updated Packet.dll to use modern `HeapAlloc()` allocation, faster than the
+  legacy `GlobalAlloc()` inherited from WinPcap.
+
+* Improve error reporting from `PacketGetAdapterNames()` and related functions.
+
 ## Npcap 1.20 [2021-03-10]
 
 * Upgrade wpcap.dll to libpcap 1.10. This change enables software to use
