@@ -1801,7 +1801,7 @@ NPF_GetFilterModuleByAdapterName(
 	if (g_LoopbackAdapterName.Buffer != NULL // Legacy loopback name exists
 		&& (g_LoopbackAdapterName.Length - devicePrefix.Length) == (pAdapterName->Length - BYTES(cchShrink)) // Length matches
 		&& RtlCompareMemory(g_LoopbackAdapterName.Buffer + CCH(devicePrefix.Length), pAdapterName->Buffer + cchShrink,
-					(SIZE_T)pAdapterName->Length - BYTES(cchShrink) == (SIZE_T)pAdapterName->Length - BYTES(cchShrink))
+					pAdapterName->Length - BYTES(cchShrink)) == pAdapterName->Length - BYTES(cchShrink)
 		)
 	{
 		Loopback = TRUE;
