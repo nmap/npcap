@@ -1,5 +1,5 @@
 ﻿
-## Npcap 1.30 [2021-04-08]
+## Npcap 1.30 [2021-04-09]
 
 * Restore raw WiFi frame capture support, which had been broken in a few ways
   since Npcap 0.9983. Additional improvements enable `PacketSetMonitorMode()`
