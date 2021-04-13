@@ -1710,8 +1710,8 @@ NPF_RemoveFromGroupOpenArray(
 */
 BOOLEAN
 NPF_EqualAdapterName(
-	_In_ PNDIS_STRING s1,
-	_In_ PNDIS_STRING s2
+	_In_ PCNDIS_STRING s1,
+	_In_ PCNDIS_STRING s2
 	)
 {
 	int i;
@@ -1782,8 +1782,8 @@ NPF_GetFilterModuleByAdapterName(
 #define BYTES(_cch) ((_cch) * sizeof(WCHAR))
 #define CCH(_bytes) ((_bytes) / sizeof(WCHAR))
 	BOOLEAN Dot11 = FALSE;
-	BOOLEAN Loopback = FALSE;
-	NDIS_STRING BaseName = NDIS_STRING_CONST("Loopback");
+	BOOLEAN Found = FALSE;
+	NDIS_STRING BaseName = {0};
 	WCHAR *pName = NULL;
 	TRACE_ENTER();
 
@@ -1796,21 +1796,9 @@ NPF_GetFilterModuleByAdapterName(
 		cchShrink++;
 	}
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// If this is *not* the legacy loopback name, we'll have to set up BaseName to be the real name of the buffer.
-	if (g_LoopbackAdapterName.Buffer != NULL // Legacy loopback name exists
-		&& (g_LoopbackAdapterName.Length - devicePrefix.Length) == (pAdapterName->Length - BYTES(cchShrink)) // Length matches
-		&& RtlCompareMemory(g_LoopbackAdapterName.Buffer + CCH(devicePrefix.Length), pAdapterName->Buffer + cchShrink,
-					pAdapterName->Length - BYTES(cchShrink)) == pAdapterName->Length - BYTES(cchShrink)
-		)
-	{
-		Loopback = TRUE;
-	}
 
-	if (!Loopback) {
-#endif
-
-	BaseName.MaximumLength = pAdapterName->MaximumLength;
+	// Make sure we can hold at least as long a name as requested.
+	BaseName.MaximumLength = max(sizeof(L"Loopback"), pAdapterName->MaximumLength);
 	BaseName.Buffer = ExAllocatePoolWithTag(NonPagedPool, BaseName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (BaseName.Buffer == NULL) {
 		IF_LOUD(DbgPrint("NPF_GetFilterModuleByAdapterName: failed to allocate BaseName.Buffer\n");)
@@ -1818,11 +1806,13 @@ NPF_GetFilterModuleByAdapterName(
 		return NULL;
 	}
 
+#ifdef HAVE_DOT11_SUPPORT
 	// Check for WIFI_ prefix and strip it
 	if (PUNICODE_CONTAINS(pAdapterName, NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI, BYTES(cchShrink))) {
 		cchShrink += CCH(CONST_WCHAR_BYTES(NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI));
 		Dot11 = TRUE;
 	}
+#endif
 
 	// Do the strip
 	for (i=cchShrink; i < CCH(pAdapterName->Length) && (i - cchShrink) < CCH(BaseName.MaximumLength); i++) {
@@ -1831,9 +1821,17 @@ NPF_GetFilterModuleByAdapterName(
 	BaseName.Length = pAdapterName->Length - BYTES(cchShrink);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	} //end if !Loopback
+	if (!Dot11 // WIFI and Loopback are not compatible
+		&& g_LoopbackAdapterName.Buffer != NULL // Legacy loopback name is set
+	       	&& NPF_EqualAdapterName(&g_LoopbackAdapterName, &BaseName)) // This is a request for legacy loopback
+	{
+		// Replace the name with the fake loopback adapter name
+		RtlCopyMemory(BaseName.Buffer, L"Loopback", sizeof(L"Loopback"));
+		BaseName.Length = CONST_WCHAR_BYTES(L"Loopback");
+	}
 #endif
 
+	// Now go looking for the appropriate module
 	NdisAcquireSpinLock(&g_FilterArrayLock);
 	for (Curr = g_arrFiltMod.Next; Curr != NULL; Curr = Curr->Next)
 	{
@@ -1843,27 +1841,23 @@ NPF_GetFilterModuleByAdapterName(
 			continue;
 		}
 
-		if (pFiltMod->Dot11 == Dot11 && NPF_EqualAdapterName(&pFiltMod->AdapterName, &BaseName))
+		Found = (pFiltMod->Dot11 == Dot11 && NPF_EqualAdapterName(&pFiltMod->AdapterName, &BaseName));
+
+		NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
+		if (Found)
 		{
-			NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
-			NdisReleaseSpinLock(&g_FilterArrayLock);
-			if (!Loopback) {
-				ExFreePoolWithTag(BaseName.Buffer, NPF_UNICODE_BUFFER_TAG);
-			}
-			return pFiltMod;
-		}
-		else
-		{
-			NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
+			break;
 		}
 	}
 	NdisReleaseSpinLock(&g_FilterArrayLock);
-	if (!Loopback) {
-		ExFreePoolWithTag(BaseName.Buffer, NPF_UNICODE_BUFFER_TAG);
+	ExFreePoolWithTag(BaseName.Buffer, NPF_UNICODE_BUFFER_TAG);
+	if (!Found)
+	{
+		pFiltMod = NULL;
 	}
 
 	TRACE_EXIT();
-	return NULL;
+	return pFiltMod;
 }
 
 //-------------------------------------------------------------------
@@ -2284,17 +2278,13 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is the legacy loopback adapter
-		if (g_LoopbackAdapterName.Buffer != NULL)
+		if (g_LoopbackAdapterName.Buffer != NULL && NPF_EqualAdapterName(&g_LoopbackAdapterName, AttachParameters->BaseMiniportName))
 		{
-			if (RtlCompareMemory(g_LoopbackAdapterName.Buffer + devicePrefix.Length / 2, AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
-				AttachParameters->BaseMiniportName->Length - devicePrefix.Length) == AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
-			{
-				// This request is for the legacy loopback adapter listed in the Registry.
-				// Since we now have a fake filter module for this, deny the binding.
-				// We'll intercept open requests for this name elsewhere and redirect to the fake one.
-				returnStatus = NDIS_STATUS_NOT_SUPPORTED;
-				break;
-			}
+			// This request is for the legacy loopback adapter listed in the Registry.
+			// Since we now have a fake filter module for this, deny the binding.
+			// We'll intercept open requests for this name elsewhere and redirect to the fake one.
+			returnStatus = NDIS_STATUS_NOT_SUPPORTED;
+			break;
 		}
 #endif
 

@@ -301,6 +301,17 @@ DriverEntry(
 				g_LoopbackAdapterName.Length = 0;
 				g_LoopbackAdapterName.MaximumLength = 0;
 			}
+			else
+			{
+				// We don't actually want the "\\Devices\\" prefix.
+				for (size_t i=0, j=devicePrefix.Length; j < g_LoopbackAdapterName.Length; i++, j++)
+				{
+					g_LoopbackAdapterName.Buffer[i] = g_LoopbackAdapterName.Buffer[j];
+					if (g_LoopbackAdapterName.Buffer[i] == L'\0')
+						break;
+				}
+				g_LoopbackAdapterName.Length -= devicePrefix.Length;
+			}
 		}
 #endif
 #ifdef HAVE_RX_SUPPORT
