@@ -90,7 +90,6 @@
 #include <Packet32.h>
 #include <tchar.h>
 #include <strsafe.h>
-#include <Shlwapi.h>
 #include <string>
 #include <ntddndis.h>
 
@@ -3697,48 +3696,6 @@ BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName)
 
 	TRACE_EXIT();
 	return ret;
-}
-
-// MAKEINTRESOURCE() returns an LPSTR, but GetProcAddress()
-// expects LPSTR even in UNICODE, so using MAKEINTRESOURCEA()...
-#ifdef UNICODE
-#define MAKEINTRESOURCEA_T(a, u) MAKEINTRESOURCEA(a)
-#else
-#define MAKEINTRESOURCEA_T(a, u) MAKEINTRESOURCEA(a)
-#endif
-
-BOOL myGUIDFromString(LPCSTR psz, LPGUID pguid)
-{
-	TRACE_ENTER();
-
-	BOOL bRet = FALSE;
-
-	typedef BOOL(WINAPI *LPFN_GUIDFromString)(LPCSTR, LPGUID);
-	LPFN_GUIDFromString pGUIDFromString = NULL;
-
-	HINSTANCE hInst = LoadLibrary(TEXT("shell32.dll"));
-	if (hInst)
-	{
-		pGUIDFromString = (LPFN_GUIDFromString)GetProcAddress(hInst, MAKEINTRESOURCEA_T(703, 704));
-		if (pGUIDFromString)
-			bRet = pGUIDFromString(psz, pguid);
-		FreeLibrary(hInst);
-	}
-
-	if (!pGUIDFromString)
-	{
-		hInst = LoadLibrary(TEXT("Shlwapi.dll"));
-		if (hInst)
-		{
-			pGUIDFromString = (LPFN_GUIDFromString)GetProcAddress(hInst, MAKEINTRESOURCEA_T(269, 270));
-			if (pGUIDFromString)
-				bRet = pGUIDFromString(psz, pguid);
-			FreeLibrary(hInst);
-		}
-	}
-
-	TRACE_EXIT();
-	return bRet;
 }
 
 /*!
