@@ -90,6 +90,7 @@
 #include <Packet32.h>
 #include <tchar.h>
 #include <strsafe.h>
+#include <shlwapi.h>
 #include <string>
 #include <ntddndis.h>
 
