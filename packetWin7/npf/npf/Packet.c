@@ -200,6 +200,7 @@ NPF_registerLWF(
 
   If the registry key doesn't exist, we view the result as 0.
 */
+_IRQL_requires_(PASSIVE_LEVEL)
 ULONG
 NPF_GetRegistryOption_Integer(
 	_In_ PUNICODE_STRING RegistryPath,
@@ -211,6 +212,7 @@ NPF_GetRegistryOption_Integer(
 
   If NPF_GetLoopbackAdapterName() fails, g_LoopbackAdapterName will be NULL.
 */
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
 NPF_GetRegistryOption_String(
 	_In_ PUNICODE_STRING RegistryPath,

@@ -112,6 +112,7 @@ extern NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module li
   of HigherPacketFilter and MyPacketFilter will be the final packet filter
   the low-level adapter sees.
 */
+_IRQL_requires_(PASSIVE_LEVEL)
 ULONG
 NPF_GetPacketFilter(
 	_In_ NDIS_HANDLE FilterModuleContext
@@ -218,6 +219,7 @@ NPF_RemoveFromFilterModuleArray(
   This function is used by NPF_Cleanup() and NPF_CleanupForUnclosed()
   to remove an open context from the group open array of a filter module.
 */
+_IRQL_requires_(PASSIVE_LEVEL)
 void
 NPF_RemoveFromGroupOpenArray(
 	_Inout_ POPEN_INSTANCE pOpen
@@ -248,29 +250,36 @@ NPF_CreateOpenObject(
 	);
 
 #ifdef HAVE_DOT11_SUPPORT
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetDataRateMappingTable(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_Out_ PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable
 	);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetCurrentOperationMode(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_Out_ PDOT11_CURRENT_OPERATION_MODE pCurrentOperationMode);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 ULONG NPF_GetCurrentOperationMode_Wrapper(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetCurrentChannel(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_Out_ PULONG pCurrentChannel);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 ULONG NPF_GetCurrentChannel_Wrapper(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetCurrentFrequency(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_Out_ PULONG pCurrentFrequency);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 ULONG NPF_GetCurrentFrequency_Wrapper(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod);
 #endif
@@ -852,6 +861,7 @@ NPF_CloseOpenInstance(
 //-------------------------------------------------------------------
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
 NPF_DecrementLoopbackInstances(
 		_Inout_ PNPCAP_FILTER_MODULE pFiltMod)
@@ -874,6 +884,7 @@ NPF_DecrementLoopbackInstances(
 }
 #endif
 
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
 NPF_DetachOpenInstance(
 	_Inout_ POPEN_INSTANCE pOpen
@@ -964,7 +975,8 @@ NPF_ReleaseOpenInstanceResources(
 	//
 	if (pOpen->Size > 0)
 	{
-		NPF_ResetBufferContents(pOpen, FALSE);
+		// *should* be no need to acquire this lock, but better safe than sorry?
+		NPF_ResetBufferContents(pOpen, TRUE);
 	}
 
 	NdisFreeRWLock(pOpen->BufferLock);

@@ -518,6 +518,7 @@ NPF_CAP_DATA, *PNPF_CAP_DATA;
 #define NPF_CAP_OBJ_SIZE(_P, _N) NPF_CAP_SIZE((_P)->ulCaplen)
 #endif
 
+_When_(AcquireLock == FALSE, _Requires_lock_held_(Open->BufferLock))
 VOID
 NPF_ResetBufferContents(
 	_Inout_ POPEN_INSTANCE Open,
@@ -884,6 +885,7 @@ DRIVER_INITIALIZE DriverEntry;
   adapter with a call to NdisOpenAdapter.
 */
 _Dispatch_type_(IRP_MJ_CREATE)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 DRIVER_DISPATCH NPF_OpenAdapter;
 // NTSTATUS
 // NPF_OpenAdapter(
@@ -904,6 +906,7 @@ DRIVER_DISPATCH NPF_OpenAdapter;
   instance and closing the files.
 */
 _Dispatch_type_(IRP_MJ_CLEANUP)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 DRIVER_DISPATCH NPF_Cleanup;
 // NTSTATUS
 // NPF_Cleanup(
@@ -924,6 +927,7 @@ DRIVER_DISPATCH NPF_Cleanup;
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
 _Dispatch_type_(IRP_MJ_CLOSE)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 DRIVER_DISPATCH NPF_CloseAdapter;
 // NTSTATUS
 // NPF_CloseAdapter(
@@ -1055,6 +1059,7 @@ NPF_BufferedWrite(
   timeout kept in OPEN_INSTANCE::TimeOut expires.
 */
 _Dispatch_type_(IRP_MJ_READ)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 DRIVER_DISPATCH NPF_Read;
 // NTSTATUS
 // NPF_Read(
@@ -1191,6 +1196,7 @@ VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE Max
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID NPF_CloseOpenInstance(_Inout_ POPEN_INSTANCE pOpen);
 
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetDeviceMTU(_In_ PNPCAP_FILTER_MODULE pFiltMod, _Out_ PUINT  pMtu);
 
 #ifdef HAVE_DOT11_SUPPORT
