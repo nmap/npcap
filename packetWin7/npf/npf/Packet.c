@@ -218,6 +218,43 @@ NPF_GetRegistryOption_String(
 	_Inout_ PNDIS_STRING g_OutputString
 	);
 
+_IRQL_requires_(PASSIVE_LEVEL)
+static VOID
+NPF_GetRegistryOption_AdapterName(
+	_In_ PUNICODE_STRING pRegistryPath,
+	_In_ PUNICODE_STRING pRegValueName,
+	_Inout_ PNDIS_STRING pOutputString
+	)
+{
+	NPF_GetRegistryOption_String(pRegistryPath, pRegValueName, pOutputString);
+	if (pOutputString->Buffer == NULL)
+	{
+		// Not found, that's fine.
+		pOutputString->Length = 0;
+		pOutputString->MaximumLength = 0;
+		return;
+	}
+	else if (pOutputString->Length != ADAPTER_NAME_SIZE * 2)
+	{
+		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "pOutputString is invalid, pOutputString->Length = %lu, ADAPTER_NAME_SIZE * 2 = %zu\n",
+				pOutputString->Length, ADAPTER_NAME_SIZE * 2);
+		ExFreePool(pOutputString->Buffer);
+		pOutputString->Buffer = NULL;
+		pOutputString->Length = 0;
+		pOutputString->MaximumLength = 0;
+	}
+	else
+	{
+		// We don't actually want the "\\Devices\\" prefix.
+		for (size_t i=0, j=devicePrefix.Length; j < pOutputString->Length; i++, j++)
+		{
+			pOutputString->Buffer[i] = pOutputString->Buffer[j];
+			if (pOutputString->Buffer[i] == L'\0')
+				break;
+		}
+		pOutputString->Length -= devicePrefix.Length;
+	}
+}
 //-------------------------------------------------------------------
 //
 //  Packet Driver's entry routine.
@@ -291,32 +328,12 @@ DriverEntry(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		g_LoopbackSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_LoopbackSupportRegValueName);
 		if (g_LoopbackSupportMode) {
-			NPF_GetRegistryOption_String(&parametersPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
-			if (g_LoopbackAdapterName.Buffer != NULL && g_LoopbackAdapterName.Length != ADAPTER_NAME_SIZE * 2)
-			{
-				TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "g_LoopbackAdapterName is invalid, g_LoopbackAdapterName.Length = %lu, ADAPTER_NAME_SIZE * 2 = %zu\n",
-						g_LoopbackAdapterName.Length, ADAPTER_NAME_SIZE * 2);
-				ExFreePool(g_LoopbackAdapterName.Buffer);
-				g_LoopbackAdapterName.Buffer = NULL;
-				g_LoopbackAdapterName.Length = 0;
-				g_LoopbackAdapterName.MaximumLength = 0;
-			}
-			else
-			{
-				// We don't actually want the "\\Devices\\" prefix.
-				for (size_t i=0, j=devicePrefix.Length; j < g_LoopbackAdapterName.Length; i++, j++)
-				{
-					g_LoopbackAdapterName.Buffer[i] = g_LoopbackAdapterName.Buffer[j];
-					if (g_LoopbackAdapterName.Buffer[i] == L'\0')
-						break;
-				}
-				g_LoopbackAdapterName.Length -= devicePrefix.Length;
-			}
+			NPF_GetRegistryOption_AdapterName(&parametersPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
 		}
 #endif
 #ifdef HAVE_RX_SUPPORT
-		NPF_GetRegistryOption_String(&parametersPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
-		NPF_GetRegistryOption_String(&parametersPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
+		NPF_GetRegistryOption_AdapterName(&parametersPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
+		NPF_GetRegistryOption_AdapterName(&parametersPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
 #endif
 	}
 	if (parametersPath.Buffer) ExFreePool(parametersPath.Buffer);

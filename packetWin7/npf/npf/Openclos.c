@@ -1718,6 +1718,10 @@ NPF_EqualAdapterName(
 	BOOLEAN bResult = TRUE;
 	// TRACE_ENTER();
 
+	if (s1->Buffer == NULL || s2->Buffer == NULL) {
+		IF_LOUD(DbgPrint("NPF_EqualAdapterName: null buffer\n");)
+		return FALSE;
+	}
 	if (s1->Length != s2->Length)
 	{
 		IF_LOUD(DbgPrint("NPF_EqualAdapterName: length not the same\n");)
@@ -1822,7 +1826,6 @@ NPF_GetFilterModuleByAdapterName(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (!Dot11 // WIFI and Loopback are not compatible
-		&& g_LoopbackAdapterName.Buffer != NULL // Legacy loopback name is set
 	       	&& NPF_EqualAdapterName(&g_LoopbackAdapterName, &BaseName)) // This is a request for legacy loopback
 	{
 		// Replace the name with the fake loopback adapter name
@@ -2278,7 +2281,7 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is the legacy loopback adapter
-		if (g_LoopbackAdapterName.Buffer != NULL && NPF_EqualAdapterName(&g_LoopbackAdapterName, AttachParameters->BaseMiniportName))
+		if (NPF_EqualAdapterName(&g_LoopbackAdapterName, AttachParameters->BaseMiniportName))
 		{
 			// This request is for the legacy loopback adapter listed in the Registry.
 			// Since we now have a fake filter module for this, deny the binding.
@@ -2300,44 +2303,14 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
-		if (g_SendToRxAdapterName.Buffer != NULL)
+		if (NPF_EqualAdapterName(&g_SendToRxAdapterName, AttachParameters->BaseMiniportName))
 		{
-			USHORT iAdapterCnt = (g_SendToRxAdapterName.Length / 2 + 1) / ADAPTER_NAME_SIZE_WITH_SEPARATOR;
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-				"g_SendToRxAdapterName.Length=%u, iAdapterCnt=%u",
-				g_SendToRxAdapterName.Length,
-				iAdapterCnt);
-			for (int i = 0; i < iAdapterCnt; i++)
-			{
-				if (RtlCompareMemory(g_SendToRxAdapterName.Buffer + devicePrefix.Length / 2 + ADAPTER_NAME_SIZE_WITH_SEPARATOR * i,
-					AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
-					AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
-					== AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
-				{
-					pFiltMod->SendToRxPath = TRUE;
-					break;
-				}
-			}
+			pFiltMod->SendToRxPath = TRUE;
 		}
 		// Determine whether this is our block-Rx adapter for the open_instance.
-		if (g_BlockRxAdapterName.Buffer != NULL)
+		if (NPF_EqualAdapterName(&g_BlockRxAdapterName, AttachParameters->BaseMiniportName))
 		{
-			USHORT iAdapterCnt = (g_BlockRxAdapterName.Length / 2 + 1) / ADAPTER_NAME_SIZE_WITH_SEPARATOR;
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
-				"g_BlockRxAdapterName.Length=%u, iAdapterCnt=%u",
-				g_BlockRxAdapterName.Length,
-				iAdapterCnt);
-			for (int i = 0; i < iAdapterCnt; i++)
-			{
-				if (RtlCompareMemory(g_BlockRxAdapterName.Buffer + devicePrefix.Length / 2 + ADAPTER_NAME_SIZE_WITH_SEPARATOR * i,
-					AttachParameters->BaseMiniportName->Buffer + devicePrefix.Length / 2,
-					AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
-					== AttachParameters->BaseMiniportName->Length - devicePrefix.Length)
-				{
-					pFiltMod->BlockRxPath = TRUE;
-					break;
-				}
-			}
+			pFiltMod->BlockRxPath = TRUE;
 		}
 #endif
 
