@@ -123,8 +123,6 @@ NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRxAdapters");
 
 #endif
 
-NDIS_STRING g_NPF_Prefix;
-NDIS_STRING g_NPF_Prefix_WIFI;
 NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
 NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
 
@@ -359,11 +357,6 @@ DriverEntry(
 // 		}
 // 	}
 // 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_Dot11SupportMode (based on RegistryPath) = %d\n", g_Dot11SupportMode);
-
-	NdisInitUnicodeString(&g_NPF_Prefix, NPF_DEVICE_NAMES_PREFIX_WIDECHAR);
-
-	if (g_Dot11SupportMode)
-		NdisInitUnicodeString(&g_NPF_Prefix_WIFI, NPF_DEVICE_NAMES_PREFIX_WIDECHAR_WIFI);
 
 	//
 	// Initialize system-time function pointer.
@@ -1087,9 +1080,6 @@ Return Value:
 	NdisFreeSpinLock(&g_FilterArrayLock);
 
 	TRACE_EXIT();
-
-	// Free the device names string that was allocated in the DriverEntry
-	// NdisFreeString(g_NPF_Prefix);
 }
 
 #define SET_RESULT_SUCCESS(__a__) do{\
