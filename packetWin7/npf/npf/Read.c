@@ -132,8 +132,8 @@ NPF_CopyFromNBCopyToBuffer(
 _Use_decl_annotations_
 NTSTATUS
 NPF_Read(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
+	PDEVICE_OBJECT DeviceObject,
+	PIRP Irp
 	)
 {
 	POPEN_INSTANCE			Open;
@@ -602,8 +602,8 @@ NPF_TapEx(
 
 VOID
 NPF_AlignProtocolField(
-	IN UINT Alignment,
-	IN PUINT pCur
+	_In_ UINT Alignment,
+	_Inout_ PUINT pCur
 )
 {
 	*pCur = (*pCur + Alignment - 1);

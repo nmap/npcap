@@ -745,7 +745,10 @@ NPF_StartUsingOpenInstance(
 	POPEN_INSTANCE pOpen, OPEN_STATE MaxState, BOOLEAN AtDispatchLevel)
 {
 	BOOLEAN returnStatus;
-
+	if (!NT_VERIFY(MaxState <= OpenClosed))
+	{
+		return FALSE;
+	}
 	if (MaxState <= OpenAttached && !NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel))
 	{
 		// Not attached, but need to be.

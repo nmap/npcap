@@ -597,7 +597,7 @@ NPF_NetworkClassifyOutbound(
 
 	TRACE_ENTER();
 
-	if (!NPF_ShouldProcess(inFixedValues, inMetaValues, &bIPv4))
+	if (pNetBufferList == NULL || !NPF_ShouldProcess(inFixedValues, inMetaValues, &bIPv4))
 	{
 		return;
 	}

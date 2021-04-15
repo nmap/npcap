@@ -93,6 +93,7 @@
 #define __PACKET_INCLUDE______
 
 #include "win_bpf.h"
+#include <wdm.h>
 
 /* If DISPATCH_LEVEL can be determined, use that in the FILTER_*_LOCK macros
  * Otherwise, use NPF_IRQL_UNKNOWN so we can find and update them as we add more tracking
@@ -1188,7 +1189,7 @@ VOID NPF_StopUsingBinding(_Inout_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN At
 
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 _When_(pOpen->OpenStatus > OpenRunning, _IRQL_requires_(PASSIVE_LEVEL))
-BOOLEAN NPF_StartUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
+BOOLEAN NPF_StartUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
