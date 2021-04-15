@@ -441,22 +441,28 @@ WSKSendPacketInternal_NBL(
 	return status;
 }
 
-static
+IO_COMPLETION_ROUTINE CompletionRoutine;
+
+_Use_decl_annotations_
 NTSTATUS
-NTAPI
 CompletionRoutine(
-	_In_ PDEVICE_OBJECT DeviceObject,
-	_In_ PIRP Irp,
-	_In_ PKEVENT CompletionEvent
+	PDEVICE_OBJECT DeviceObject,
+	PIRP Irp,
+	PVOID Context
 	)
 {
 	NT_ASSERT(CompletionEvent);
+	PKEVENT CompletionEvent = (PKEVENT)Context;
 
 	UNREFERENCED_PARAMETER(Irp);
 	UNREFERENCED_PARAMETER(DeviceObject);
 
 	TRACE_ENTER();
-
+	if (CompletionEvent == NULL)
+	{
+		TRACE_EXIT();
+		return STATUS_INVALID_PARAMETER;
+	}
 	KeSetEvent(CompletionEvent, IO_NO_INCREMENT, FALSE);
 	TRACE_EXIT();
 	return STATUS_MORE_PROCESSING_REQUIRED;
