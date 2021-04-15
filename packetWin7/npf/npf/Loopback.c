@@ -1170,6 +1170,9 @@ Callouts and filters will be removed during DriverUnload.
 	status = FwpmTransactionBegin(g_WFPEngineHandle, 0);
 	if (status != NO_ERROR)
 	{
+		// FwpmTransactionBegin annotations assume transaction is always started, even if there's a failure.
+		// We have to explicitly tell the engine that it isn't necessary to release/abort the transaction.
+		_Analysis_assume_lock_not_held_(g_WFPEngineHandle);
 		goto Exit;
 	}
 	inTransaction = TRUE;
@@ -1268,7 +1271,6 @@ Callouts and filters will be removed during DriverUnload.
 	inTransaction = FALSE;
 
 Exit:
-
 	if (!NT_SUCCESS(status))
 	{
 		IF_LOUD(DbgPrint("NPF_RegisterCallouts: failed to register callouts\n");)
