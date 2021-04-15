@@ -81,12 +81,6 @@
 
 #define UNICODE 1
 
-#pragma warning (disable : 4127)  //conditional expression is constant. Used for do{}while(FALSE) loops.
-
-#if (MSC_VER < 1300)
-#pragma warning (disable : 4710) // inline function not expanded. used for strsafe functions
-#endif
-
 #include <Packet32.h>
 #include <tchar.h>
 #include <strsafe.h>
@@ -221,8 +215,8 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 {
   TRACE_ENTER();
 
-  TCHAR path[MAX_PATH] = { 0 };
-  TCHAR fullFileName[MAX_PATH];
+  TCHAR path[MAX_PATH+1] = { 0 };
+  TCHAR fullFileName[MAX_PATH+1];
   UINT res;
   HMODULE hModule = NULL;
   do
@@ -246,7 +240,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 		break;
 	}
 
-	if (res + 1 + _tcslen(lpFileName) + 1 < MAX_PATH)
+	if (_tcslen(lpFileName) + 1 + res + 1 < MAX_PATH)
 	{
 		memcpy(fullFileName, path, res * sizeof(TCHAR));
 		fullFileName[res] = _T('\\');
@@ -370,7 +364,7 @@ HANDLE NpcapConnect(const char *pipeName)
 HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 {
 	LPCSTR lpvMessage = sMsg;
-	char  chBuf[BUFSIZE];
+	char  chBuf[BUFSIZE] = { 0 };
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
 	HANDLE hPipe = g_hNpcapHelperPipe;
@@ -446,7 +440,7 @@ HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 	if (cbRead != 0)
 	{
 		HANDLE hd;
-		sscanf_s(chBuf, "%p,%lu", &hd, pdwError);
+		_snscanf_s(chBuf, cbRead, "%p,%lu", &hd, pdwError);
 		TRACE_PRINT1("Received Driver Handle: %0p\n", hd);
 		TRACE_EXIT();
 		return hd;
@@ -687,7 +681,7 @@ PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR destina
 	if (sk == NULL)
 		return NULL;
 
-	size = 2 * buf_size + strlen(destination) + 1;
+	size = 2 * static_cast<size_t>(buf_size) + strlen(destination) + 1;
 	newbuf = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	if (newbuf == NULL)
 		return NULL;
@@ -1364,6 +1358,7 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 	// Now lets dive in and pull out the version information:
 	
     dwVerInfoSize = GetFileVersionInfoSize(FileName, &dwVerHnd);
+	dwVerHnd = 0;
     if (dwVerInfoSize) 
 	{
         lpstrVffInfo = (LPTSTR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwVerInfoSize);
@@ -1666,7 +1661,8 @@ LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterNameA)
 		if(PacketSetReadEvt(lpAdapter)==FALSE){
 			error=GetLastError();
 			TRACE_PRINT("PacketOpenAdapterNPF: Unable to open the read event");
-			CloseHandle(lpAdapter->hFile);
+			if (lpAdapter->hFile != NULL)
+				CloseHandle(lpAdapter->hFile);
 			HeapFree(GetProcessHeap(), 0, lpAdapter);
 			//set the error to the one on which we failed
 		    
