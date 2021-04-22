@@ -1,4 +1,16 @@
 ﻿
+## Npcap 1.31 [2021-04-21]
+
+* Fix a bug with the non-default legacy loopback capture support that caused
+  all requests to open a capture handle to open the loopback capture instead.
+  It is recommended to not select "Legacy loopback support" at installation
+  unless you know your application relies on it. Fixes [#302](http://issues.npcap.org/302).
+
+* For Windows 10 and Server 2016 and later, restore the ability to capture
+  traffic on VMware VMnet interfaces such as the host-only and NAT virtual
+  networks. This will be restored for other supported Windows versions in a
+  later release. Fixes [#304](http://issues.npcap.org/304).
+
 ## Npcap 1.30 [2021-04-09]
 
 * Restore raw WiFi frame capture support, which had been broken in a few ways
