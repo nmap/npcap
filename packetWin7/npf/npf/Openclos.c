@@ -2189,22 +2189,6 @@ static NDIS_STATUS NPF_ValidateParameters(
     // is the default for this sample; see the INF file), failing to attach
     // here will leave the network adapter in an unusable state.
     //
-    // Your setup/install code should not bind the filter to unsupported
-    // media types.
-    if ((MiniportMediaType != NdisMedium802_3)
-            && (MiniportMediaType != NdisMediumNative802_11)
-            && (MiniportMediaType != NdisMediumWan) //we don't care this kind of miniports
-            && (MiniportMediaType != NdisMediumWirelessWan) //we don't care this kind of miniports
-            && (MiniportMediaType != NdisMediumFddi)
-            && (MiniportMediaType != NdisMediumArcnet878_2)
-            && (MiniportMediaType != NdisMediumAtm)
-            && (MiniportMediaType != NdisMedium802_5))
-    {
-		IF_LOUD(DbgPrint("Unsupported media type: MiniportMediaType = %d.\n", MiniportMediaType);)
-
-		return NDIS_STATUS_INVALID_PARAMETER;
-    }
-
 	// The WiFi filter will only bind to the 802.11 wireless adapters.
 	if (g_Dot11SupportMode && bDot11)
 	{
