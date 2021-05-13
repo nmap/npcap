@@ -13,13 +13,13 @@ DriverVer=05/15/2015,14.48.38.905
 
 
 [Manufacturer]
-%Insecure%=Insecure,NTx86,NTia64,NTamd64
+%Insecure%=Insecure,NTx86,NTARM64,NTamd64
 
 [Insecure.NTx86]
 %NPF_Desc_Standard%=FilterStandard, INSECURE_NPCAP
 %NPF_Desc_WiFi%=FilterWiFi, INSECURE_NPCAP_WIFI
 
-[Insecure.NTia64]
+[Insecure.NTARM64]
 %NPF_Desc_Standard%=FilterStandard, INSECURE_NPCAP
 %NPF_Desc_WiFi%=FilterWiFi, INSECURE_NPCAP_WIFI
 

@@ -18,11 +18,13 @@ echo Creating \Lib folder
 mkdir %WPDPACKDESTDIR% 		>nul 2>nul
 mkdir %WPDPACKDESTDIR%\Lib 	>nul 2>nul
 mkdir %WPDPACKDESTDIR%\Lib\x64	>nul 2>nul
+mkdir %WPDPACKDESTDIR%\Lib\ARM64	>nul 2>nul
 
 xcopy /v /Y "%WPCAPBUILDDIR32%\Release\wpcap.lib" %WPDPACKDESTDIR%\Lib\ || goto :fail
 xcopy /v /Y "%WPCAPBUILDDIR64%\Release\wpcap.lib" %WPDPACKDESTDIR%\Lib\x64 || goto :fail
 xcopy /v /Y "%PACKETBUILDDIR%\Release\packet.lib" %WPDPACKDESTDIR%\Lib\ || goto :fail
 xcopy /v /Y "%PACKETBUILDDIR%\x64\Release\packet.lib" %WPDPACKDESTDIR%\Lib\x64 || goto :fail
+xcopy /v /Y "%PACKETBUILDDIR%\ARM64\Release No AirPcap\packet.lib" %WPDPACKDESTDIR%\Lib\ARM64 || goto :fail
 
 echo Folder \Lib created successfully
 
