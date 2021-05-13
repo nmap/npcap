@@ -174,18 +174,21 @@ struct packet_file_header
 #define NdisMediumRadio80211				-5		///< Custom linktype: NDIS doesn't provide an equivalent
 #define NdisMediumPpi						-6		///< Custom linktype: NDIS doesn't provide an equivalent
 
-// The length of the adapter name
-#define ADAPTER_NAME_SIZE					((USHORT)(sizeof("\\Device\\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF}") - 1))
-
+#define CCH2BYTES(_cch) ((_cch) * sizeof(WCHAR))
+#define BYTES2CCH(_bytes) ((_bytes) / sizeof(WCHAR))
+/* Length of a string literal minus the terminating null */
+#define CONST_WCHAR_BYTES(_A) (sizeof(_A) - sizeof(WCHAR))
+#define CONST_WCHAR_CCH(_A) BYTES2CCH(CONST_WCHAR_BYTES(_A))
 // The GUID for the filters
 #define				FILTER_UNIQUE_NAME			L"{7daf2ac8-e9f6-4765-a842-f1f5d2501341}"
 #define				FILTER_UNIQUE_NAME_WIFI		L"{7daf2ac8-e9f6-4765-a842-f1f5d2501351}"
 
-#define SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME		(ADAPTER_NAME_SIZE - (sizeof("\\Device\\") - 1) + 1 + (sizeof(FILTER_UNIQUE_NAME) - 2) / sizeof(WCHAR) - 3)
+#define DEVICE_PATH_PREFIX L"\\Device\\"
+#define DEVICE_PATH_BYTES CONST_WCHAR_BYTES(DEVICE_PATH_PREFIX)
+#define DEVICE_PATH_CCH CONST_WCHAR_CCH(DEVICE_PATH_PREFIX)
 
-// The length of the adapter name with the separator ";"
-// An example is: \Device\{754FC84C-EFBC-4443-B479-2EFAE01DC7BF};
-#define ADAPTER_NAME_SIZE_WITH_SEPARATOR	(ADAPTER_NAME_SIZE + 1)
+// total length - 3 ("XX}") - 1 (0-based index)
+#define SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME (CONST_WCHAR_CCH(FILTER_UNIQUE_NAME) - 3 - 1)
 
 // Maximum pool size allowed in bytes (defence against bad BIOCSETBUFFERSIZE calls)
 #define NPF_MAX_BUFFER_SIZE 0x40000000L

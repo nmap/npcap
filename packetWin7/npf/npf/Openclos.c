@@ -90,7 +90,6 @@
 extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING g_SendToRxAdapterName;
 extern NDIS_STRING g_BlockRxAdapterName;
-extern NDIS_STRING devicePrefix;
 extern ULONG g_Dot11SupportMode;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -1717,19 +1716,22 @@ NPF_RemoveFromGroupOpenArray(
   \brief Compare two NDIS strings.
   \param s1 The first string.
   \param s2 The second string.
-  \return  1 if s1 > s2
-		   0 if s1 = s2
-		  -1 if s1 < s2
+  \param cchOffset *Character* offset into s2 where comparison should begin. NOT BYTE OFFSET.
+  \return  TRUE if s1 contains s2 at Offset, FALSE otherwise
 
   This function is used to help decide whether two adapter names are the same.
+  Tolerates differences in null-termination of either string.
 */
 BOOLEAN
 NPF_EqualAdapterName(
 	_In_ PCNDIS_STRING s1,
-	_In_ PCNDIS_STRING s2
+	_In_ PCNDIS_STRING s2,
+	_In_ USHORT cchOffset
 	)
 {
-	int i;
+	USHORT i;
+	USHORT compare_len;
+	WCHAR wc1, wc2;
 	BOOLEAN bResult = TRUE;
 	// TRACE_ENTER();
 
@@ -1737,38 +1739,49 @@ NPF_EqualAdapterName(
 		IF_LOUD(DbgPrint("NPF_EqualAdapterName: null buffer\n");)
 		return FALSE;
 	}
-	if (s1->Length != s2->Length)
+
+	compare_len = BYTES2CCH(s1->Length);
+	// If it's null-terminated, don't compare null terminator since s2 might not be null-terminated.
+	if (s1->Buffer[compare_len - 1] == UNICODE_NULL)
 	{
-		IF_LOUD(DbgPrint("NPF_EqualAdapterName: length not the same\n");)
-		// IF_LOUD(DbgPrint("NPF_EqualAdapterName: length not the same, s1->Length = %d, s2->Length = %d\n", s1->Length, s2->Length);)
-		// TRACE_EXIT();
+		compare_len -= 1;
+	}
+
+	if (BYTES2CCH(s2->Length) - compare_len < cchOffset)
+	{
+		IF_LOUD(DbgPrint("NPF_EqualAdapterName: length too short\n");)
 		return FALSE;
 	}
 
-	for (i = 0; i < s2->Length / 2; i ++)
+	for (i = 0; bResult && i < compare_len; i++)
 	{
-		if (L'A' <= s1->Buffer[i] && s1->Buffer[i] <= L'Z')
+		wc1 = s1->Buffer[i];
+		wc2 = s2->Buffer[cchOffset + i];
+		switch(wc1 - wc2)
 		{
-			if (s2->Buffer[i] - s1->Buffer[i] != 0 && s2->Buffer[i] - s1->Buffer[i] != L'a' - L'A')
-			{
+			case 0:
+				// Equal, same case
+				break;
+			case L'a' - L'A':
+				// same iff wc1 is lower
+				bResult = wc1 >= L'a' && wc1 <= L'z';
+				break;
+			case L'A' - L'a':
+				// same iff wc1 is caps
+				bResult = wc1 >= L'A' && wc1 <= L'Z';
+				break;
+			default:
 				bResult = FALSE;
 				break;
-			}
-		}
-		else if (L'a' <= s1->Buffer[i] && s1->Buffer[i] <= L'z')
-		{
-			if (s2->Buffer[i] - s1->Buffer[i] != 0 && s2->Buffer[i] - s1->Buffer[i] != L'A' - L'a')
-			{
-				bResult = FALSE;
-				break;
-			}
-		}
-		else if (s2->Buffer[i] - s1->Buffer[i] != 0)
-		{
-			bResult = FALSE;
-			break;
 		}
 	}
+
+	// Now check that we didn't only find a prefix of s2
+	bResult = bResult && ( // Matches up to compare_len AND
+		BYTES2CCH(s2->Length) - compare_len == cchOffset // that's all there is
+		|| s2->Buffer[cchOffset + compare_len] == UNICODE_NULL // OR s2 is null-terminated
+		|| s2->Buffer[cchOffset + compare_len] == L';' // OR s2 is a list and the next one starts here
+		);
 
 	// Print unicode strings using %ws will cause page fault blue screen with IRQL = DISPATCH_LEVEL, so we disable the string print for now.
 	// IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);)
@@ -1780,14 +1793,40 @@ NPF_EqualAdapterName(
 	return bResult;
 }
 
+/* Returns true if AdName is in the semicolon-separated list AdSet */
+BOOLEAN
+NPF_ContainsAdapterName(
+	_In_ PCNDIS_STRING AdSet,
+	_In_ PCNDIS_STRING AdName
+	)
+{
+	USHORT i = 0;
+
+	if (AdSet->Buffer == NULL || AdName->Buffer == NULL) {
+		IF_LOUD(DbgPrint("NPF_ContainsAdapterName: null buffer\n");)
+		return FALSE;
+	}
+	while (i < BYTES2CCH(AdSet->Length))
+	{
+		if (NPF_EqualAdapterName(AdName, AdSet, i))
+		{
+			return TRUE;
+		}
+		while (i < BYTES2CCH(AdSet->Length) && AdSet->Buffer[i] != L';')
+		{
+			i++;
+		}
+		i++;
+	}
+	return FALSE;
+}
+
 //-------------------------------------------------------------------
-/* Length of a WCHAR string literal minus the terminating null */
-#define CONST_WCHAR_BYTES(_A) (sizeof(_A) - sizeof(WCHAR))
 /* Ensure string "a" is long enough to contain "b" after the offset.
  * Length does not include the null terminator, so account for that with sizeof(WCHAR).
  * Then compare memory. Length is length in bytes, but buffer is a PWCHAR.
  */
-#define PUNICODE_CONTAINS(a, b, byteoffset) ((a->Length >= byteoffset + CONST_WCHAR_BYTES(b)) && CONST_WCHAR_BYTES(b) == RtlCompareMemory(a->Buffer + byteoffset/sizeof(WCHAR), b, CONST_WCHAR_BYTES(b)))
+#define PUNICODE_CONTAINS(a, b, byteoffset) ((a->Length >= byteoffset + CONST_WCHAR_BYTES(b)) && CONST_WCHAR_BYTES(b) == RtlCompareMemory(a->Buffer + BYTES2CCH(byteoffset), b, CONST_WCHAR_BYTES(b)))
 _Use_decl_annotations_
 PNPCAP_FILTER_MODULE
 NPF_GetFilterModuleByAdapterName(
@@ -1798,8 +1837,6 @@ NPF_GetFilterModuleByAdapterName(
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
 	size_t i = 0;
 	USHORT cchShrink = 0;
-#define BYTES(_cch) ((_cch) * sizeof(WCHAR))
-#define CCH(_bytes) ((_bytes) / sizeof(WCHAR))
 	BOOLEAN Dot11 = FALSE;
 	BOOLEAN Found = FALSE;
 	NDIS_STRING BaseName = {0};
@@ -1811,7 +1848,7 @@ NPF_GetFilterModuleByAdapterName(
 	}
 
 	// strip off leading backslashes
-	while (BYTES(cchShrink) < pAdapterName->Length && pAdapterName->Buffer[cchShrink] == L'\\') {
+	while (CCH2BYTES(cchShrink) < pAdapterName->Length && pAdapterName->Buffer[cchShrink] == L'\\') {
 		cchShrink++;
 	}
 
@@ -1827,21 +1864,21 @@ NPF_GetFilterModuleByAdapterName(
 
 #ifdef HAVE_DOT11_SUPPORT
 	// Check for WIFI_ prefix and strip it
-	if (PUNICODE_CONTAINS(pAdapterName, NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI, BYTES(cchShrink))) {
-		cchShrink += CCH(CONST_WCHAR_BYTES(NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI));
+	if (PUNICODE_CONTAINS(pAdapterName, NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI, CCH2BYTES(cchShrink))) {
+		cchShrink += CONST_WCHAR_CCH(NPF_DEVICE_NAMES_TAG_WIDECHAR_WIFI);
 		Dot11 = TRUE;
 	}
 #endif
 
 	// Do the strip
-	for (i=cchShrink; i < CCH(pAdapterName->Length) && (i - cchShrink) < CCH(BaseName.MaximumLength); i++) {
+	for (i=cchShrink; i < BYTES2CCH(pAdapterName->Length) && (i - cchShrink) < BYTES2CCH(BaseName.MaximumLength); i++) {
 		BaseName.Buffer[i - cchShrink] = pAdapterName->Buffer[i];
 	}
-	BaseName.Length = pAdapterName->Length - BYTES(cchShrink);
+	BaseName.Length = pAdapterName->Length - CCH2BYTES(cchShrink);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (!Dot11 // WIFI and Loopback are not compatible
-	       	&& NPF_EqualAdapterName(&g_LoopbackAdapterName, &BaseName)) // This is a request for legacy loopback
+		&& NPF_EqualAdapterName(&g_LoopbackAdapterName, &BaseName, 0)) // This is a request for legacy loopback
 	{
 		// Replace the name with the fake loopback adapter name
 		RtlCopyMemory(BaseName.Buffer, L"Loopback", sizeof(L"Loopback"));
@@ -1859,7 +1896,7 @@ NPF_GetFilterModuleByAdapterName(
 			continue;
 		}
 
-		Found = (pFiltMod->Dot11 == Dot11 && NPF_EqualAdapterName(&pFiltMod->AdapterName, &BaseName));
+		Found = (pFiltMod->Dot11 == Dot11 && NPF_EqualAdapterName(&pFiltMod->AdapterName, &BaseName, 0));
 
 		NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 		if (Found)
@@ -2109,10 +2146,10 @@ NPF_CreateFilterModule(
 	// or for Loopback when creating the fake module.
 	pFiltMod->MaxFrameSize = 1514;
 
-	pFiltMod->AdapterName.MaximumLength = AdapterName->MaximumLength - devicePrefix.Length;
+	pFiltMod->AdapterName.MaximumLength = AdapterName->MaximumLength - DEVICE_PATH_BYTES;
 	pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NonPagedPool, pFiltMod->AdapterName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	pFiltMod->AdapterName.Length = 0;
-	RtlAppendUnicodeToString(&pFiltMod->AdapterName, AdapterName->Buffer + devicePrefix.Length / sizeof(WCHAR));
+	RtlAppendUnicodeToString(&pFiltMod->AdapterName, AdapterName->Buffer + DEVICE_PATH_CCH);
 
 	//
 	//allocate the spinlock for the OID requests
@@ -2280,7 +2317,7 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is the legacy loopback adapter
-		if (NPF_EqualAdapterName(&g_LoopbackAdapterName, AttachParameters->BaseMiniportName))
+		if (NPF_EqualAdapterName(&g_LoopbackAdapterName, AttachParameters->BaseMiniportName, 0))
 		{
 			// This request is for the legacy loopback adapter listed in the Registry.
 			// Since we now have a fake filter module for this, deny the binding.
@@ -2302,12 +2339,12 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
-		if (NPF_EqualAdapterName(&g_SendToRxAdapterName, AttachParameters->BaseMiniportName))
+		if (NPF_ContainsAdapterName(&g_SendToRxAdapterName, AttachParameters->BaseMiniportName))
 		{
 			pFiltMod->SendToRxPath = TRUE;
 		}
 		// Determine whether this is our block-Rx adapter for the open_instance.
-		if (NPF_EqualAdapterName(&g_BlockRxAdapterName, AttachParameters->BaseMiniportName))
+		if (NPF_ContainsAdapterName(&g_BlockRxAdapterName, AttachParameters->BaseMiniportName))
 		{
 			pFiltMod->BlockRxPath = TRUE;
 		}

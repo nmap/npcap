@@ -123,7 +123,6 @@ NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRxAdapters");
 
 #endif
 
-NDIS_STRING devicePrefix = NDIS_STRING_CONST("\\Device\\");
 NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
 
 NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
@@ -218,6 +217,7 @@ NPF_GetRegistryOption_String(
 	_Inout_ PNDIS_STRING g_OutputString
 	);
 
+// This will get a list of adapter names, strip out any \Device\ prefix.
 _IRQL_requires_(PASSIVE_LEVEL)
 static VOID
 NPF_GetRegistryOption_AdapterName(
@@ -226,6 +226,7 @@ NPF_GetRegistryOption_AdapterName(
 	_Inout_ PNDIS_STRING pOutputString
 	)
 {
+	size_t i=0, j=0;
 	NPF_GetRegistryOption_String(pRegistryPath, pRegValueName, pOutputString);
 	if (pOutputString->Buffer == NULL)
 	{
@@ -234,26 +235,20 @@ NPF_GetRegistryOption_AdapterName(
 		pOutputString->MaximumLength = 0;
 		return;
 	}
-	else if (pOutputString->Length != ADAPTER_NAME_SIZE * 2)
+	// We don't actually want the "\\Device\\" prefix.
+	j = DEVICE_PATH_CCH;
+	while (j < BYTES2CCH(pOutputString->Length))
 	{
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "pOutputString is invalid, pOutputString->Length = %lu, ADAPTER_NAME_SIZE * 2 = %zu\n",
-				pOutputString->Length, ADAPTER_NAME_SIZE * 2);
-		ExFreePool(pOutputString->Buffer);
-		pOutputString->Buffer = NULL;
-		pOutputString->Length = 0;
-		pOutputString->MaximumLength = 0;
-	}
-	else
-	{
-		// We don't actually want the "\\Devices\\" prefix.
-		for (size_t i=0, j=devicePrefix.Length; j < pOutputString->Length; i++, j++)
-		{
-			pOutputString->Buffer[i] = pOutputString->Buffer[j];
-			if (pOutputString->Buffer[i] == L'\0')
-				break;
+		pOutputString->Buffer[i] = pOutputString->Buffer[j];
+		if(pOutputString->Buffer[i] == L';') {
+			// Separator found, need to jump over another prefix
+			j += DEVICE_PATH_CCH;
 		}
-		pOutputString->Length -= devicePrefix.Length;
+		i++;
+		j++;
 	}
+	// Fix up the length to the number of bytes we actually copied.
+	pOutputString->Length = CCH2BYTES(i);
 }
 //-------------------------------------------------------------------
 //
@@ -399,9 +394,9 @@ DriverEntry(
 
 	// Create the "NPCAP" device itself:
 	// TODO: handle wifi. suffix to file name?
-	RtlInitUnicodeString(&AdapterName, L"\\Device\\" NPF_DRIVER_NAME_WIDECHAR);
+	RtlInitUnicodeString(&AdapterName, DEVICE_PATH_PREFIX NPF_DRIVER_NAME_WIDECHAR);
 	deviceSymLink.Length = 0;
-	deviceSymLink.MaximumLength = AdapterName.Length - devicePrefix.Length + symbolicLinkPrefix.Length + (USHORT)sizeof(UNICODE_NULL);
+	deviceSymLink.MaximumLength = AdapterName.Length - DEVICE_PATH_BYTES + symbolicLinkPrefix.Length + (USHORT)sizeof(UNICODE_NULL);
 
 	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (deviceSymLink.Buffer == NULL)
@@ -410,7 +405,7 @@ DriverEntry(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	RtlAppendUnicodeStringToString(&deviceSymLink, &symbolicLinkPrefix);
-	RtlAppendUnicodeToString(&deviceSymLink, AdapterName.Buffer + devicePrefix.Length / sizeof(WCHAR));
+	RtlAppendUnicodeToString(&deviceSymLink, AdapterName.Buffer + DEVICE_PATH_CCH);
 
 	Status = IoCreateDeviceSecure(DriverObject, sizeof(DEVICE_EXTENSION), &AdapterName, FILE_DEVICE_UNKNOWN,
 			FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID)&guidClassNPF, &devObjP);
