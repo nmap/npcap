@@ -161,7 +161,7 @@ NPF_IsPacketSelfSent(
 	NTSTATUS			status = STATUS_SUCCESS;
 	NET_BUFFER*			pNetBuffer = 0;
 	PVOID				pContiguousData = NULL;
-	UCHAR				pPacketData[IPV6_HDR_LEN];
+	UCHAR				pPacketData[IPV6_HDR_LEN] = { 0 };
 	UCHAR				uProto;
 
 	TRACE_ENTER();
@@ -217,7 +217,7 @@ NPF_IsICMPProtocolUnreachablePacket(
 	NTSTATUS			status = STATUS_SUCCESS;
 	NET_BUFFER*			pNetBuffer = 0;
 	PVOID				pContiguousData = NULL;
-	UCHAR				pPacketData[IP_HDR_LEN + ICMP_HDR_LEN];
+	UCHAR				pPacketData[IP_HDR_LEN + ICMP_HDR_LEN] = { 0 };
 	PIP_HEADER			pIPHeader;
 	PICMP4_HEADER		pICMPHeader;
 
