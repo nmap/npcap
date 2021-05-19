@@ -187,8 +187,9 @@ struct packet_file_header
 #define DEVICE_PATH_BYTES CONST_WCHAR_BYTES(DEVICE_PATH_PREFIX)
 #define DEVICE_PATH_CCH CONST_WCHAR_CCH(DEVICE_PATH_PREFIX)
 
-// total length - 3 ("XX}") - 1 (0-based index)
-#define SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME (CONST_WCHAR_CCH(FILTER_UNIQUE_NAME) - 3 - 1)
+// format: {ADAPTER_GUID}-{FILTER_GUID}
+// guid * 2 + 1 ("-") - 3 ("XX}")
+#define SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME (2*CONST_WCHAR_CCH(FILTER_UNIQUE_NAME) + 1 - 3)
 
 // Maximum pool size allowed in bytes (defence against bad BIOCSETBUFFERSIZE calls)
 #define NPF_MAX_BUFFER_SIZE 0x40000000L
