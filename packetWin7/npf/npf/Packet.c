@@ -129,12 +129,14 @@ NDIS_STRING g_DltNullRegValueName = NDIS_STRING_CONST("DltNull");
 NDIS_STRING g_Dot11SupportRegValueName = NDIS_STRING_CONST("Dot11Support");
 NDIS_STRING g_VlanSupportRegValueName = NDIS_STRING_CONST("VlanSupport");
 NDIS_STRING g_TimestampRegValueName = NDIS_STRING_CONST("TimestampMode");
+NDIS_STRING g_TestModeRegValueName = NDIS_STRING_CONST("TestMode");
 
 ULONG g_AdminOnlyMode = 0;
 ULONG g_DltNullMode = 0;
 ULONG g_Dot11SupportMode = 0;
 ULONG g_VlanSupportMode = 0;
 ULONG g_TimestampMode = DEFAULT_TIMESTAMPMODE;
+ULONG g_TestMode = 0;
 
 //
 // Global variables
@@ -142,6 +144,7 @@ ULONG g_TimestampMode = DEFAULT_TIMESTAMPMODE;
 NDIS_HANDLE         FilterDriverHandle = NULL;			// NDIS handle for filter driver
 NDIS_HANDLE         FilterDriverHandle_WiFi = NULL;		// NDIS handle for WiFi filter driver
 NDIS_HANDLE         FilterDriverObject;					// Driver object for filter driver
+extern HANDLE g_WFPEngineHandle;
 
 PQUERYSYSTEMTIME g_ptrQuerySystemTime = NULL;
 
@@ -318,6 +321,9 @@ DriverEntry(
 		if (!NPF_TimestampModeSupported(g_TimestampMode)) {
 			g_TimestampMode = DEFAULT_TIMESTAMPMODE;
 		}
+		// Get the TestMode option, if TestMode!=0, WFP callbacks will be registered regardless of whether any open instance needs it.
+		// This is for WHQL testing.
+		g_TestMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_TestModeRegValueName);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		g_LoopbackSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_LoopbackSupportRegValueName);
@@ -538,6 +544,32 @@ DriverEntry(
 		}
 #endif
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		// Test mode: register callouts and injection handles regardless
+		// In test mode, failures here are fatal.
+		if (g_TestMode) {
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init injection handles and register callouts");
+			// Use Windows Filtering Platform (WFP) to capture loopback packets
+			Status = NPF_InitInjectionHandles();
+			if (!NT_VERIFY(NT_SUCCESS(Status)))
+			{
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_InitInjectionHandles failed, Status = %x", Status);
+				break;
+			}
+
+			Status = NPF_RegisterCallouts(devObjP);
+			if (!NT_VERIFY(NT_SUCCESS(Status)))
+			{
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_RegisterCallouts failed, Status = %x", Status);
+				if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+				{
+					NPF_UnregisterCallouts();
+				}
+				break;
+			}
+		}
+#endif
+
 		Status = STATUS_SUCCESS;
 	} while (0);
 
@@ -562,10 +594,14 @@ DriverEntry(
 		if (devExtP->AllOpensLock)
 			NdisFreeRWLock(devExtP->AllOpensLock);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
+		NdisFreeSpinLock(&g_FilterArrayLock);
 		IoDeleteSymbolicLink(&deviceSymLink);
 		IoDeleteDevice(devObjP);
 		ExFreePool(deviceSymLink.Buffer);
 		devExtP->ExportString = NULL;
+
+		TRACE_EXIT();
+		return Status;
 	}
 
 
@@ -586,6 +622,7 @@ DriverEntry(
 			// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
 			NPF_AddToFilterModuleArray(pFiltMod);
 		} while (0);
+
 	}
 #endif
 

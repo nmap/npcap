@@ -90,6 +90,7 @@ extern NDIS_STRING g_LoopbackAdapterName;
 extern NDIS_STRING g_SendToRxAdapterName;
 extern NDIS_STRING g_BlockRxAdapterName;
 extern ULONG g_Dot11SupportMode;
+extern ULONG g_TestMode;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	extern HANDLE g_WFPEngineHandle;
@@ -874,8 +875,11 @@ NPF_DecrementLoopbackInstances(
 		NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
 		// No more loopback handles open. Release WFP resources
-		NPF_UnregisterCallouts();
-		NPF_FreeInjectionHandles();
+		if (!g_TestMode)
+		{
+			NPF_UnregisterCallouts();
+			NPF_FreeInjectionHandles();
+		}
 
 		// Set OpsState so we re-enable these if necessary
 		NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
