@@ -969,8 +969,6 @@ Return Value:
 	BOOLEAN				FreeBufAfterWrite;
 	PNET_BUFFER_LIST    pNetBufList;
 	PNET_BUFFER_LIST    pNextNetBufList;
-	PNET_BUFFER         Currbuff;
-	PMDL                pMdl;
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 
 	TRACE_ENTER();
@@ -996,7 +994,10 @@ Return Value:
 			NPF_FreePackets(pNetBufList);
 
 			/* Lock the group */
-			NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState, 0);
+			NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState, 
+				NDIS_TEST_SEND_COMPLETE_AT_DISPATCH_LEVEL(SendCompleteFlags)
+			       	? NDIS_RWL_AT_DISPATCH_LEVEL
+			       	: 0);
 
 			for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 			{
