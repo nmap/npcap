@@ -893,11 +893,10 @@ Callouts and filters will be removed during DriverUnload.
 #define _WIDE(X) _WIDE2(X)
 #define _WIDE2(X) L ## X
 #define NPCAP_COMPANY_NAME_W _WIDE(WINPCAP_COMPANY_NAME)
-#define NPCAP_PRODUCT_NAME_W _WIDE(WINPCAP_PRODUCT_NAME)
 	RtlZeroMemory(&provider, sizeof(FWPM_PROVIDER));
 	provider.providerKey = NPF_FWPM_PROVIDER_GUID;
 	provider.displayData.name = NPCAP_COMPANY_NAME_W;
-	provider.displayData.description = NPCAP_PRODUCT_NAME_W;
+	provider.displayData.description = NPF_DRIVER_NAME_NORMAL_WIDECHAR;
 	provider.serviceName = NPF_DRIVER_NAME_SMALL_WIDECHAR;
 	status = FwpmProviderAdd(g_WFPEngineHandle, &provider, NULL);
 	if (status != NO_ERROR)
