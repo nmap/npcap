@@ -57,7 +57,6 @@
 #include <ntifs.h>
 #include <ntddk.h>
 #include <ndis.h>
-#include <wmistr.h>
 #include <wdmsec.h>
 #include <wdmguid.h>
 #include "debug.h"
