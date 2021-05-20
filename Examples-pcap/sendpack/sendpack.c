@@ -58,25 +58,33 @@ int main(int argc, char **argv)
 		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by Npcap\n", argv[1]);
 		return 2;
 	}
-
-	/* Supposing to be on ethernet, set mac destination to 1:1:1:1:1:1 */
-	packet[0]=1;
-	packet[1]=1;
-	packet[2]=1;
-	packet[3]=1;
-	packet[4]=1;
-	packet[5]=1;
 	
-	/* set mac source to 2:2:2:2:2:2 */
-	packet[6]=2;
-	packet[7]=2;
-	packet[8]=2;
-	packet[9]=2;
-	packet[10]=2;
-	packet[11]=2;
+	i = 0;
+	switch(pcap_datalink(fp))
+	{
+		case DLT_NULL:
+			// Pretend IPv4
+			packet[i++] = 2;
+			packet[i++] = 0;
+			packet[i++] = 0;
+			packet[i++] = 0;
+			break;
+		case DLT_EN10MB:
+			/* Supposing to be on ethernet, set mac destination to 1:1:1:1:1:1 */
+			while (i < 6)
+				packet[i++]=1;
+
+			/* set mac source to 2:2:2:2:2:2 */
+			while (i < 12)
+				packet[i++]=2;
+			break;
+		default:
+			fprintf(stderr, "\nError, unknown data-link type %u\n", pcap_datalink(fp));
+			return 4;
+	}
 	
 	/* Fill the rest of the packet */
-	for(i=12;i<100;i++)
+	for(;i<100;i++)
 	{
 		packet[i]= (u_char)i;
 	}
