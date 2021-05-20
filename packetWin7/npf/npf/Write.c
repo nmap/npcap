@@ -82,8 +82,13 @@
 
 #include "stdafx.h"
 
-#include "Lo_send.h"
 #include "packet.h"
+#include <fwpsk.h>
+
+extern ULONG g_DltNullMode;
+extern HANDLE g_InjectionHandle_IPv4;
+extern HANDLE g_InjectionHandle_IPv6;
+
 
 /*!
   \brief Function to free the Net Buffer Lists initiated by ourself.
@@ -116,13 +121,47 @@ NPF_SendCompleteExForEachOpen(
   Alternative to NdisFSendNetBufferLists, use the same NBL parameter, but it calls Winsock Kernel to send packet instead
   of NDIS functions.
 */
-VOID
+NTSTATUS
 NPF_LoopbackSendNetBufferLists(
 	_In_ NDIS_HANDLE FilterModuleContext,
 	_In_ PNET_BUFFER_LIST NetBufferList
 	);
+
 #endif
 
+NTSTATUS
+NPF_AllocateNBL(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PMDL pMdl,
+	_In_ SIZE_T uDataLen,
+	_Outptr_result_nullonfailure_ PNET_BUFFER_LIST *ppNBL
+       )
+{
+	NTSTATUS Status = STATUS_SUCCESS;
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (pFiltMod->Loopback)
+	{
+		Status = FwpsAllocateNetBufferAndNetBufferList(pFiltMod->PacketPool,
+			sizeof(PACKET_RESERVED),
+			0,
+			pMdl,
+			0,
+			uDataLen,
+			ppNBL);
+	}
+	else
+#endif
+	{
+		*ppNBL = NdisAllocateNetBufferAndNetBufferList(pFiltMod->PacketPool,
+			sizeof(PACKET_RESERVED),
+			0,
+			pMdl,
+			0,
+			uDataLen);
+		Status = *ppNBL ? STATUS_SUCCESS : STATUS_INSUFFICIENT_RESOURCES;
+	}
+	return Status;
+}
 //-------------------------------------------------------------------
 
 _Use_decl_annotations_
@@ -290,14 +329,12 @@ NPF_Write(
 		/* Unlike NPF_BufferedWrite, we can directly allocate NBLs
 		 * using the MDL in the IRP because the device was created with
 		 * DO_DIRECT_IO. */
-		pNetBufferList = NdisAllocateNetBufferAndNetBufferList(Open->pFiltMod->PacketPool,
-			sizeof(PACKET_RESERVED),
-			0,
-			Irp->MdlAddress,
-			0,
-			Irp->MdlAddress->ByteCount);
+		Status = NPF_AllocateNBL(Open->pFiltMod,
+				Irp->MdlAddress,
+				Irp->MdlAddress->ByteCount,
+				&pNetBufferList);
 
-		if (pNetBufferList != NULL)
+		if (NT_SUCCESS(Status) && NT_VERIFY(pNetBufferList != NULL))
 		{
 			//
 			// packet is available, prepare it and send it with NdisSend.
@@ -316,15 +353,8 @@ NPF_Write(
 
 			//receive the packets before sending them
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			// Do not capture the send traffic we send, if this is our loopback adapter.
-			if (Open->pFiltMod->Loopback == FALSE)
-			{
-#endif
-				NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			}
-#endif
+			// Used to avoid capturing loopback injected traffic here because it's captured later, but now I do it here and avoid capturing it later.
+			NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
 
 			pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 			RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
@@ -376,8 +406,15 @@ NPF_Write(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 			if (Open->pFiltMod->Loopback == TRUE)
 			{
-				NPF_LoopbackSendNetBufferLists(Open->pFiltMod,
+				Status = NPF_LoopbackSendNetBufferLists(Open->pFiltMod,
 					pNetBufferList);
+				if (!NT_SUCCESS(Status))
+				{
+					// Couldn't send this one. Don't wait for it!
+					NpfInterlockedDecrement(&Open->TransmitPendingPackets);
+					NPF_FreePackets(pNetBufferList);
+					break;
+				}
 			}
 			else
 #endif
@@ -428,7 +465,11 @@ NPF_Write(
 	}
 	else
 #endif
+	if (NT_SUCCESS(Status))
+	{
+		// TODO: Don't wait forever? Some sort of error would be good.
 		NdisWaitEvent(&Open->NdisWriteCompleteEvent, 0);
+	}
 
 	//
 	// no more writes are in progress
@@ -494,10 +535,8 @@ NPF_BufferedWrite(
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
 	PNET_BUFFER_LIST		pNetBufferList = NULL;
-	PNET_BUFFER				pNetBuffer;
 	ULONG					SendFlags = 0;
 	UINT					i;
-	NDIS_STATUS				Status;
 	LARGE_INTEGER			StartTicks, CurTicks, TargetTicks;
 	LARGE_INTEGER			TimeFreq;
 	struct timeval			BufStartTime;
@@ -509,6 +548,7 @@ NPF_BufferedWrite(
 	INT						result;
 	PVOID npBuff = NULL;
 	NDIS_EVENT Event;
+	NTSTATUS Status = STATUS_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -654,15 +694,11 @@ NPF_BufferedWrite(
 		Pos += pWinpcapHdr->caplen;
 
 		// Allocate a packet from our free list
-		pNetBufferList = NdisAllocateNetBufferAndNetBufferList(
-			Open->pFiltMod->PacketPool,
-			sizeof(PACKET_RESERVED),
-			0,
-			TmpMdl,
-			0,
-			pWinpcapHdr->caplen);
-
-		if (pNetBufferList == NULL)
+		Status = NPF_AllocateNBL(Open->pFiltMod,
+				TmpMdl,
+				pWinpcapHdr->caplen,
+				&pNetBufferList);
+		if (!NT_SUCCESS(Status))
 		{
 			//  No more free packets
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: no more free packets, returning.\n");)
@@ -672,23 +708,21 @@ NPF_BufferedWrite(
 			NdisWaitEvent(&Open->WriteEvent, 1000);  
 
 			// Try again to allocate a packet
-			pNetBufferList = NdisAllocateNetBufferAndNetBufferList(
-				Open->pFiltMod->PacketPool,
-				sizeof(PACKET_RESERVED),
-				0,
-				TmpMdl,
-				0,
-				pWinpcapHdr->caplen);
+			Status = NPF_AllocateNBL(Open->pFiltMod,
+					TmpMdl,
+					pWinpcapHdr->caplen,
+					&pNetBufferList);
 
-			if (pNetBufferList == NULL)
+			if (!NT_SUCCESS(Status))
 			{
 				// Second failure, report an error
 				NdisFreeMdl(TmpMdl);
 
-				result = -STATUS_INSUFFICIENT_RESOURCES;
+				result = -Status;
 				break;
 			}
 		}
+		NT_ASSERT(pNetBufferList != NULL);
 
 		// The packet has a buffer that needs to be freed after every single write
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
@@ -701,7 +735,6 @@ NPF_BufferedWrite(
 		NpfInterlockedIncrement(&Open->Multiple_Write_Counter);
 
 		//receive the packets before sending them
-		// TODO: Should we check for loopback like we do in NPF_Write?
 		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
 
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
@@ -713,8 +746,15 @@ NPF_BufferedWrite(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
-			NPF_LoopbackSendNetBufferLists(Open->pFiltMod,
+			Status = NPF_LoopbackSendNetBufferLists(Open->pFiltMod,
 				pNetBufferList);
+			if (!NT_SUCCESS(Status))
+			{
+				NpfInterlockedDecrement(&Open->Multiple_Write_Counter);
+				NPF_FreePackets(pNetBufferList);
+				result = -Status;
+				break;
+			}
 		}
 		else
 #endif
@@ -845,6 +885,7 @@ NPF_FreePackets(
 {
 	BOOLEAN				FreeBufAfterWrite;
 	PNET_BUFFER_LIST    pNetBufList = NetBufferLists;
+	POPEN_INSTANCE pOpen = NULL;
 	PNET_BUFFER         Currbuff;
 	PMDL                pMdl;
 	PVOID npBuff;
@@ -852,6 +893,7 @@ NPF_FreePackets(
 /*	TRACE_ENTER();*/
 
 	FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
+	pOpen = RESERVED(pNetBufList)->ChildOpen;
 
 	if (FreeBufAfterWrite)
 	{
@@ -871,15 +913,16 @@ NPF_FreePackets(
 			NdisFreeMdl(pMdl); //Free MDL
 			Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
 		}
-		NdisFreeNetBufferList(pNetBufList); //Free NBL
+	}
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (pOpen && pOpen->pFiltMod && pOpen->pFiltMod->Loopback)
+	{
+		FwpsFreeNetBufferList(pNetBufList);
 	}
 	else
+#endif
 	{
-		//
-		// Packet sent by NPF_Write()
-		//
-
-		//Free the NBL allocate by myself
 		NdisFreeNetBufferList(pNetBufList); //Free NBL
 	}
 
@@ -1042,22 +1085,118 @@ NPF_SendCompleteExForEachOpen(
 
 //-------------------------------------------------------------------
 
+_IRQL_requires_min_(PASSIVE_LEVEL)
+_IRQL_requires_max_(DISPATCH_LEVEL)
+_IRQL_requires_same_
+void NTAPI NPF_NetworkInjectionComplete(
+	_In_ VOID* pContext,
+	_Inout_ NET_BUFFER_LIST* pNetBufferList,
+	_In_ BOOLEAN dispatchLevel
+	)
+{
+	TRACE_ENTER();
+
+	if (pNetBufferList->Status != STATUS_SUCCESS)
+	{
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			"NPF_NetworkInjectionComplete: pNetBufferList->Status [status: %#x]\n",
+			pNetBufferList->Status);
+	}
+
+	// Don't need to Retreat the data offset since the completion/free functions ignore CurrentMdl
+	// Call complete function manually just like NDIS callback.
+	NPF_SendCompleteEx(pContext, pNetBufferList, dispatchLevel ? NDIS_SEND_COMPLETE_FLAGS_DISPATCH_LEVEL : 0);
+
+	TRACE_EXIT();
+	return;
+}
+
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 _Use_decl_annotations_
-VOID
+NTSTATUS
 NPF_LoopbackSendNetBufferLists(
 	NDIS_HANDLE FilterModuleContext,
 	PNET_BUFFER_LIST NetBufferList
 	)
 {
+	ULONG bytesAdvanced = 0;
+	ULONG BuffSize = 0;
+	PETHER_HEADER pEthernetHdr = NULL;
+	PDLT_NULL_HEADER pDltNullHdr;
+	HANDLE hInjectionHandle = INVALID_HANDLE_VALUE;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+
 	TRACE_ENTER();
 
-	// Use Winsock Kernel to send this NBL.
-	NPF_WSKSendPacket_NBL(NetBufferList);
+	NdisQueryMdl(
+		NET_BUFFER_CURRENT_MDL(NET_BUFFER_LIST_FIRST_NB(NetBufferList)),
+		&pEthernetHdr,
+		&BuffSize,
+		NormalPagePriority);
 
-	// Call complete function manually just like NDIS callback.
-	NPF_SendCompleteEx(FilterModuleContext, NetBufferList, 0);
+	if (pEthernetHdr == NULL)
+	{
+		// allocation failed
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Failed to query MDL\n");
+		TRACE_EXIT();
+		return status;
+	}
+
+	if (g_DltNullMode)
+	{
+		pDltNullHdr = (PDLT_NULL_HEADER) pEthernetHdr;
+		bytesAdvanced = DLT_NULL_HDR_LEN;
+		switch(pDltNullHdr->null_type)
+		{
+			case DLTNULLTYPE_IP:
+				hInjectionHandle = g_InjectionHandle_IPv4;
+				break;
+			case DLTNULLTYPE_IPV6:
+				hInjectionHandle = g_InjectionHandle_IPv6;
+				break;
+			default:
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Invalid DLTNULLTYPE %d\n", pDltNullHdr->null_type);
+				status = STATUS_PROTOCOL_NOT_SUPPORTED;
+				break;
+		}
+	}
+	else
+	{
+		bytesAdvanced = ETHER_HDR_LEN;
+		switch(RtlUshortByteSwap(pEthernetHdr->ether_type))
+		{
+			case ETHERTYPE_IP:
+				hInjectionHandle = g_InjectionHandle_IPv4;
+				break;
+			case ETHERTYPE_IPV6:
+				hInjectionHandle = g_InjectionHandle_IPv6;
+				break;
+			default:
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Invalid ETHERTYPE %d\n", RtlUshortByteSwap(pEthernetHdr->ether_type));
+				status = STATUS_PROTOCOL_NOT_SUPPORTED;
+				break;
+		}
+	}
+
+	if (hInjectionHandle == INVALID_HANDLE_VALUE)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: invalid injection handle");
+		TRACE_EXIT();
+		return status;
+	}
+
+	NdisAdvanceNetBufferListDataStart(NetBufferList, bytesAdvanced, FALSE, NULL);
+
+	status = FwpsInjectNetworkSendAsync(hInjectionHandle,
+			NULL,
+			0,
+			UNSPECIFIED_COMPARTMENT_ID,
+			NetBufferList,
+			NPF_NetworkInjectionComplete,
+			FilterModuleContext);
 
 	TRACE_EXIT();
+	return status;
 }
 #endif

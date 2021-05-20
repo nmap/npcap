@@ -84,7 +84,6 @@
 
 #include "packet.h"
 #include "Loopback.h"
-#include "Lo_send.h"
 #include "..\..\..\Common\WpcapNames.h"
 
 extern NDIS_STRING g_LoopbackAdapterName;
@@ -708,7 +707,7 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ PDEVICE_OBJECT p
 			if (g_WFPEngineHandle == INVALID_HANDLE_VALUE)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init injection handles and register callouts");
-				// Use Windows Filtering Platform (WFP) to capture loopback packets, also help WSK take care of loopback packet sending.
+				// Use Windows Filtering Platform (WFP) to capture loopback packets
 				Status = NPF_InitInjectionHandles();
 				if (!NT_SUCCESS(Status))
 				{

@@ -83,7 +83,6 @@
 #include "stdafx.h"
 
 #include "Loopback.h"
-#include "Lo_send.h"
 #include "packet.h"
 #include "win_bpf.h"
 #include "ioctls.h"
@@ -573,32 +572,12 @@ DriverEntry(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (g_LoopbackSupportMode) {
 		do {
-#ifndef NPCAP_READ_ONLY
-			// Use Winsock Kernel (WSK) to send loopback packets.
-			Status = NPF_WSKStartup();
-			if (!NT_SUCCESS(Status))
-			{
-				break;
-			}
-
-			Status = NPF_WSKInitSockets();
-			if (!NT_SUCCESS(Status))
-			{
-				NPF_WSKCleanup();
-				break;
-			}
-#endif
-
 			// Create the fake "filter module" for loopback capture
 			// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
 			NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
 			PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(FilterDriverHandle, &LoopbackDeviceName, NdisMediumLoopback);
 			if (pFiltMod == NULL)
 			{
-#ifndef NPCAP_READ_ONLY
-				NPF_WSKFreeSockets();
-				NPF_WSKCleanup();
-#endif
 				break;
 			}
 			pFiltMod->Loopback = TRUE;
@@ -946,12 +925,6 @@ Return Value:
 		ExFreePool(g_LoopbackAdapterName.Buffer);
 		g_LoopbackAdapterName.Buffer = NULL;
 	}
-
-#ifndef NPCAP_READ_ONLY
-	// Release WSK resources.
-	NPF_WSKFreeSockets();
-	NPF_WSKCleanup();
-#endif
 
 	// Release WFP resources
 	NPF_UnregisterCallouts();
