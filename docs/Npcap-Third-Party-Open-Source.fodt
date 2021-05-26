@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <office:document xmlns:officeooo="http://openoffice.org/2009/office" xmlns:css3t="http://www.w3.org/TR/css3-text/" xmlns:grddl="http://www.w3.org/2003/g/data-view#" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:rpt="http://openoffice.org/2005/report" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:ooo="http://openoffice.org/2004/office" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:formx="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0" xmlns:calcext="urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0" xmlns:drawooo="http://openoffice.org/2010/draw" xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0" xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:ooow="http://openoffice.org/2004/writer" xmlns:oooc="http://openoffice.org/2004/calc" xmlns:tableooo="http://openoffice.org/2009/table" xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:xforms="http://www.w3.org/2002/xforms" office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.text">
- <office:meta><dc:title>Nmap Technology License Agreement</dc:title><meta:initial-creator>Insecure.Com LLC</meta:initial-creator><meta:creation-date>2016-08-17T21:15:00</meta:creation-date><dc:date>2021-03-22T11:56:15.724111696</dc:date><meta:print-date>2016-08-17T21:19:00</meta:print-date><meta:editing-cycles>31</meta:editing-cycles><meta:editing-duration>PT23H5M21S</meta:editing-duration><meta:generator>LibreOffice/6.4.6.2$Linux_X86_64 LibreOffice_project/40$Build-2</meta:generator><meta:document-statistic meta:table-count="0" meta:image-count="0" meta:object-count="0" meta:page-count="5" meta:paragraph-count="87" meta:word-count="2442" meta:character-count="16475" meta:non-whitespace-character-count="14097"/><meta:user-defined meta:name="MarkCheckBox">FALSE</meta:user-defined><meta:user-defined meta:name="iTrailerType">0</meta:user-defined><meta:user-defined meta:name="zzmpFixedCurScheme">RealEstate4</meta:user-defined><meta:user-defined meta:name="zzmpFixedCurrentTOCScheme">RealEstate4</meta:user-defined><meta:user-defined meta:name="zzmpFixedDOC_ID" meta:value-type="string">IR1:481112.1</meta:user-defined><meta:template xlink:type="simple" xlink:actuate="onRequest" xlink:title="Normal" xlink:href=""/></office:meta>
+ <office:meta><dc:title>Nmap Technology License Agreement</dc:title><meta:initial-creator>Insecure.Com LLC</meta:initial-creator><meta:creation-date>2016-08-17T21:15:00</meta:creation-date><dc:date>2021-05-26T13:48:34.184915067</dc:date><meta:print-date>2016-08-17T21:19:00</meta:print-date><meta:editing-cycles>32</meta:editing-cycles><meta:editing-duration>PT23H6M27S</meta:editing-duration><meta:generator>LibreOffice/6.4.7.2$Linux_X86_64 LibreOffice_project/40$Build-2</meta:generator><meta:document-statistic meta:table-count="0" meta:image-count="0" meta:object-count="0" meta:page-count="5" meta:paragraph-count="87" meta:word-count="2442" meta:character-count="16475" meta:non-whitespace-character-count="14097"/><meta:user-defined meta:name="MarkCheckBox">FALSE</meta:user-defined><meta:user-defined meta:name="iTrailerType">0</meta:user-defined><meta:user-defined meta:name="zzmpFixedCurScheme">RealEstate4</meta:user-defined><meta:user-defined meta:name="zzmpFixedCurrentTOCScheme">RealEstate4</meta:user-defined><meta:user-defined meta:name="zzmpFixedDOC_ID" meta:value-type="string">IR1:481112.1</meta:user-defined><meta:template xlink:type="simple" xlink:actuate="onRequest" xlink:title="Normal" xlink:href=""/></office:meta>
  <office:settings>
   <config:config-item-set config:name="ooo:view-settings">
-   <config:config-item config:name="ViewAreaTop" config:type="long">93394</config:config-item>
+   <config:config-item config:name="ViewAreaTop" config:type="long">1344</config:config-item>
    <config:config-item config:name="ViewAreaLeft" config:type="long">0</config:config-item>
-   <config:config-item config:name="ViewAreaWidth" config:type="long">22652</config:config-item>
-   <config:config-item config:name="ViewAreaHeight" config:type="long">16845</config:config-item>
+   <config:config-item config:name="ViewAreaWidth" config:type="long">22680</config:config-item>
+   <config:config-item config:name="ViewAreaHeight" config:type="long">36497</config:config-item>
    <config:config-item config:name="ShowRedlineChanges" config:type="boolean">true</config:config-item>
    <config:config-item config:name="InBrowseMode" config:type="boolean">false</config:config-item>
    <config:config-item-map-indexed config:name="Views">
     <config:config-item-map-entry>
      <config:config-item config:name="ViewId" config:type="string">view2</config:config-item>
-     <config:config-item config:name="ViewLeft" config:type="long">7934</config:config-item>
-     <config:config-item config:name="ViewTop" config:type="long">98409</config:config-item>
+     <config:config-item config:name="ViewLeft" config:type="long">9260</config:config-item>
+     <config:config-item config:name="ViewTop" config:type="long">10830</config:config-item>
      <config:config-item config:name="VisibleLeft" config:type="long">0</config:config-item>
-     <config:config-item config:name="VisibleTop" config:type="long">93394</config:config-item>
-     <config:config-item config:name="VisibleRight" config:type="long">22650</config:config-item>
-     <config:config-item config:name="VisibleBottom" config:type="long">110238</config:config-item>
+     <config:config-item config:name="VisibleTop" config:type="long">1344</config:config-item>
+     <config:config-item config:name="VisibleRight" config:type="long">22678</config:config-item>
+     <config:config-item config:name="VisibleBottom" config:type="long">37839</config:config-item>
      <config:config-item config:name="ZoomType" config:type="short">3</config:config-item>
      <config:config-item config:name="ViewLayoutColumns" config:type="short">0</config:config-item>
      <config:config-item config:name="ViewLayoutBookMode" config:type="boolean">false</config:config-item>
-     <config:config-item config:name="ZoomFactor" config:type="short">273</config:config-item>
+     <config:config-item config:name="ZoomFactor" config:type="short">126</config:config-item>
      <config:config-item config:name="IsSelectedFrame" config:type="boolean">false</config:config-item>
      <config:config-item config:name="AnchoredTextOverflowLegacy" config:type="boolean">false</config:config-item>
     </config:config-item-map-entry>
@@ -55,6 +55,7 @@
    <config:config-item config:name="EmbedFonts" config:type="boolean">false</config:config-item>
    <config:config-item config:name="ClippedPictures" config:type="boolean">true</config:config-item>
    <config:config-item config:name="FloattableNomargins" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="UnbreakableNumberings" config:type="boolean">true</config:config-item>
    <config:config-item config:name="HeaderSpacingBelowLastPara" config:type="boolean">false</config:config-item>
    <config:config-item config:name="AllowPrintJobCancel" config:type="boolean">true</config:config-item>
    <config:config-item config:name="UseOldPrinterMetrics" config:type="boolean">false</config:config-item>
@@ -78,6 +79,8 @@
    <config:config-item config:name="UseFormerTextWrapping" config:type="boolean">false</config:config-item>
    <config:config-item config:name="AddExternalLeading" config:type="boolean">true</config:config-item>
    <config:config-item config:name="AddParaTableSpacing" config:type="boolean">true</config:config-item>
+   <config:config-item config:name="StylesNoDefault" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="ChartAutoUpdate" config:type="boolean">true</config:config-item>
    <config:config-item-map-indexed config:name="ForbiddenCharacters">
     <config:config-item-map-entry>
      <config:config-item config:name="Language" config:type="string">ja</config:config-item>
@@ -89,7 +92,7 @@
    </config:config-item-map-indexed>
    <config:config-item config:name="PrinterSetup" config:type="base64Binary"/>
    <config:config-item config:name="AddParaTableSpacingAtStart" config:type="boolean">true</config:config-item>
-   <config:config-item config:name="Rsid" config:type="int">4477848</config:config-item>
+   <config:config-item config:name="Rsid" config:type="int">4519503</config:config-item>
    <config:config-item config:name="EmbeddedDatabaseName" config:type="string"/>
    <config:config-item config:name="FieldAutoUpdate" config:type="boolean">true</config:config-item>
    <config:config-item config:name="OutlineLevelYieldsNumbering" config:type="boolean">false</config:config-item>
@@ -99,6 +102,7 @@
    <config:config-item config:name="SaveGlobalDocumentLinks" config:type="boolean">false</config:config-item>
    <config:config-item config:name="PrinterPaperFromSetup" config:type="boolean">false</config:config-item>
    <config:config-item config:name="UseFormerLineSpacing" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="AddParaLineSpacingToTableCells" config:type="boolean">false</config:config-item>
    <config:config-item config:name="UseFormerObjectPositioning" config:type="boolean">false</config:config-item>
    <config:config-item config:name="PrintGraphics" config:type="boolean">true</config:config-item>
    <config:config-item config:name="SurroundTextWrapSmall" config:type="boolean">true</config:config-item>
@@ -123,15 +127,13 @@
    <config:config-item config:name="RsidRoot" config:type="int">365532</config:config-item>
    <config:config-item config:name="PrintHiddenText" config:type="boolean">false</config:config-item>
    <config:config-item config:name="ProtectForm" config:type="boolean">false</config:config-item>
+   <config:config-item config:name="MsWordCompMinLineHeightByFly" config:type="boolean">false</config:config-item>
    <config:config-item config:name="BackgroundParaOverDrawings" config:type="boolean">false</config:config-item>
    <config:config-item config:name="SaveVersionOnClose" config:type="boolean">false</config:config-item>
    <config:config-item config:name="MathBaselineAlignment" config:type="boolean">true</config:config-item>
    <config:config-item config:name="SmallCapsPercentage66" config:type="boolean">false</config:config-item>
    <config:config-item config:name="CollapseEmptyCellPara" config:type="boolean">true</config:config-item>
    <config:config-item config:name="TabOverflow" config:type="boolean">true</config:config-item>
-   <config:config-item config:name="UnbreakableNumberings" config:type="boolean">true</config:config-item>
-   <config:config-item config:name="ChartAutoUpdate" config:type="boolean">true</config:config-item>
-   <config:config-item config:name="StylesNoDefault" config:type="boolean">false</config:config-item>
   </config:config-item-set>
  </office:settings>
  <office:scripts>
@@ -163,7 +165,7 @@
  <office:styles>
   <style:default-style style:family="graphic">
    <style:graphic-properties svg:stroke-color="#3465a4" draw:fill-color="#729fcf" fo:wrap-option="no-wrap" draw:shadow-offset-x="0.1181in" draw:shadow-offset-y="0.1181in" draw:start-line-spacing-horizontal="0.1114in" draw:start-line-spacing-vertical="0.1114in" draw:end-line-spacing-horizontal="0.1114in" draw:end-line-spacing-vertical="0.1114in" style:flow-with-text="false"/>
-   <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:font-independent-line-spacing="false">
+   <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:writing-mode="lr-tb" style:font-independent-line-spacing="false">
     <style:tab-stops/>
    </style:paragraph-properties>
    <style:text-properties style:use-window-font-color="true" style:font-name="Liberation Serif" fo:font-size="12pt" fo:language="en" fo:country="US" style:letter-kerning="true" style:font-name-asian="Source Han Sans CN Regular" style:font-size-asian="10.5pt" style:language-asian="zh" style:country-asian="CN" style:font-name-complex="Lohit Devanagari" style:font-size-complex="12pt" style:language-complex="hi" style:country-complex="IN"/>
@@ -2972,126 +2974,129 @@
    <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="bold" officeooo:rsid="00445398" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T108" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="002fd5f9" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="bold" officeooo:rsid="0044f64f" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="bold" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T109" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="003384b4" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="002fd5f9" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T110" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="002fd5f9" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="003384b4" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T111" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="002fd5f9" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T112" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="00445398" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T113" style:family="text">
-   <style:text-properties officeooo:rsid="002e727b"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" fo:font-weight="normal" officeooo:rsid="00445398" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T114" style:family="text">
-   <style:text-properties officeooo:rsid="002fd5f9"/>
+   <style:text-properties officeooo:rsid="002e727b"/>
   </style:style>
   <style:style style:name="T115" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties officeooo:rsid="002fd5f9"/>
   </style:style>
   <style:style style:name="T116" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T117" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003b4b42" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T118" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003d32ee" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003b4b42" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T119" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="002fd5f9"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003d32ee" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T120" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" style:font-size-complex="11pt"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="002fd5f9"/>
   </style:style>
   <style:style style:name="T121" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="000fcd59" style:font-size-complex="11pt"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T122" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="000fcd59"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="000fcd59" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T123" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000d70d9" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" officeooo:rsid="000fcd59"/>
   </style:style>
   <style:style style:name="T124" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000e0e68" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000d70d9" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T125" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000e0e68" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T126" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T127" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000d70d9" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T128" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000e0e68" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000d70d9" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T129" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000e0e68" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T130" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="bold" officeooo:rsid="000fcd59" style:font-weight-asian="bold" style:font-size-complex="11pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T131" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="9pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T132" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T133" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003b4b42" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T134" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003d32ee" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003b4b42" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T135" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="11pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003d32ee" style:font-weight-asian="normal" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T136" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="11pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003b4b42" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="11pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="000fcd59" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T137" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="11pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003d32ee" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="11pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003b4b42" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T138" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="11pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="11pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="003d32ee" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T139" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#0366d6" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="apple-system" fo:font-size="10.5pt" fo:letter-spacing="normal" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="#ffffff" loext:char-shading-value="0" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#24292e" style:font-name="SFMono-Regular" fo:font-size="11pt" fo:letter-spacing="normal" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T140" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#0366d6" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="apple-system" fo:font-size="10.5pt" fo:letter-spacing="normal" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="#ffffff" loext:char-shading-value="0" style:font-weight-asian="normal" style:font-size-complex="11pt" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T141" style:family="text">
-   <style:text-properties officeooo:rsid="00340fba"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="00340fba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-weight-asian="normal" style:font-name-complex="Times New Roman" style:font-size-complex="11pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="normal"/>
   </style:style>
   <style:style style:name="T142" style:family="text">
-   <style:text-properties fo:font-size="11pt" style:font-size-asian="9.60000038146973pt"/>
+   <style:text-properties officeooo:rsid="00340fba"/>
   </style:style>
   <style:style style:name="T143" style:family="text">
-   <style:text-properties fo:font-size="11pt" style:font-size-asian="11pt" style:font-size-complex="11pt"/>
+   <style:text-properties fo:font-size="11pt" style:font-size-asian="9.60000038146973pt"/>
   </style:style>
   <style:style style:name="T144" style:family="text">
-   <style:text-properties officeooo:rsid="0034fbfe"/>
+   <style:text-properties fo:font-size="11pt" style:font-size-asian="11pt" style:font-size-complex="11pt"/>
   </style:style>
   <style:style style:name="T145" style:family="text">
-   <style:text-properties officeooo:rsid="003f07d9"/>
+   <style:text-properties officeooo:rsid="0034fbfe"/>
   </style:style>
   <style:style style:name="T146" style:family="text">
-   <style:text-properties officeooo:rsid="0041256e"/>
+   <style:text-properties officeooo:rsid="003f07d9"/>
   </style:style>
   <style:style style:name="T147" style:family="text">
-   <style:text-properties officeooo:rsid="00426479"/>
+   <style:text-properties officeooo:rsid="0041256e"/>
   </style:style>
   <style:style style:name="T148" style:family="text">
+   <style:text-properties officeooo:rsid="00426479"/>
+  </style:style>
+  <style:style style:name="T149" style:family="text">
    <style:text-properties officeooo:rsid="00445398"/>
   </style:style>
   <style:style style:name="fr1" style:family="graphic" style:parent-style-name="Frame">
@@ -3195,15 +3200,15 @@
    <text:p text:style-name="P21"/>
    <text:p text:style-name="P17"><text:span text:style-name="T15">The N</text:span><text:span text:style-name="T33">pcap packet capturing/sending library </text:span><text:span text:style-name="T15">uses </text:span><text:span text:style-name="T35">several </text:span><text:span text:style-name="T15">3</text:span><text:span text:style-name="T46">rd</text:span><text:span text:style-name="T15"> party open source software libraries. </text:span><text:span text:style-name="T17">All are open source with BSD-style licenses that allow </text:span><text:span text:style-name="T40">for </text:span><text:span text:style-name="T42">unlimited use and </text:span><text:span text:style-name="T17">royalty-free redistribution within other software (including commercial/proprietary software). </text:span><text:span text:style-name="T33">Some </text:span><text:span text:style-name="T34">include a warranty disclaimer (relating to the original authors) and require a small amount of acknowledgment text be added to the documentation of any software which includes them </text:span><text:span text:style-name="T35">(including indirectly through Npcap)</text:span><text:span text:style-name="T18">. <text:s/></text:span><text:span text:style-name="T35">An example of such text is in the </text:span><text:span text:style-name="T44">copyright statements</text:span><text:span text:style-name="T35"> section </text:span><text:span text:style-name="T44">at the end of this document</text:span><text:span text:style-name="T35">.</text:span><text:span text:style-name="T18"> </text:span><text:span text:style-name="T42">Since Insecure.Com LLC is not the author of this 3</text:span><text:span text:style-name="T49">rd</text:span><text:span text:style-name="T42"> party code, we can not waive or modify it’s software copyright or license. <text:s/>Npcap users and redistributors must comply with the relevant Npcap license (either the free/demo license or a commercial Npcap OEM license they may have purchased) as well as the fairly minimal requirements of this 3</text:span><text:span text:style-name="T49">rd</text:span><text:span text:style-name="T42"> party open source software.</text:span></text:p>
    <text:p text:style-name="P25"/>
-   <text:p text:style-name="P26">Please note that all Npcap support, warranties and indemnification that we (Insecure.Com LLC) offer <text:span text:style-name="T145">to commercial customers </text:span>include these 3<text:span text:style-name="T45">rd</text:span> party libraries along with all other Npcap code. <text:s/>The warranty disclaimers in their license text just mean that the original library authors and maintainers aren’t responsible for that support.</text:p>
+   <text:p text:style-name="P26">Please note that all Npcap support, warranties and indemnification that we (Insecure.Com LLC) offer <text:span text:style-name="T146">to commercial customers </text:span>include these 3<text:span text:style-name="T45">rd</text:span> party libraries along with all other Npcap code. <text:s/>The warranty disclaimers in their license text just mean that the original library authors and maintainers aren’t responsible for that support.</text:p>
    <text:p text:style-name="P25"/>
-   <text:p text:style-name="P5"><text:span text:style-name="T21">This document covers </text:span><text:span text:style-name="T106">Npcap version </text:span><text:span text:style-name="T107">1.20</text:span><text:span text:style-name="T85">. Licensees or potential licensees who want this information for a different Nmap release should contact </text:span><text:a xlink:type="simple" xlink:href="mailto:sales@nmap.com" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T85">sales@nmap.com</text:span></text:a><text:span text:style-name="T85">.</text:span></text:p>
+   <text:p text:style-name="P5"><text:span text:style-name="T21">This document covers </text:span><text:span text:style-name="T106">Npcap version </text:span><text:span text:style-name="T107">1.</text:span><text:span text:style-name="T108">31</text:span><text:span text:style-name="T85">. Licensees or potential licensees who want this information for a different Nmap release should contact </text:span><text:a xlink:type="simple" xlink:href="mailto:sales@nmap.com" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T85">sales@nmap.com</text:span></text:a><text:span text:style-name="T85">.</text:span></text:p>
    <text:p text:style-name="P23"/>
-   <text:p text:style-name="P113">Lib<text:span text:style-name="T113">p</text:span>cap <text:span text:style-name="T144">Portable </text:span>Packet Captur<text:span text:style-name="T144">ing</text:span> Library</text:p>
+   <text:p text:style-name="P113">Lib<text:span text:style-name="T114">p</text:span>cap <text:span text:style-name="T145">Portable </text:span>Packet Captur<text:span text:style-name="T145">ing</text:span> Library</text:p>
    <text:p text:style-name="P27"/>
-   <text:p text:style-name="P5"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T21">: </text:span><text:span text:style-name="T15">Lib</text:span><text:span text:style-name="T36">p</text:span><text:span text:style-name="T15">cap is </text:span><text:span text:style-name="T37">a popular</text:span><text:span text:style-name="T36"> </text:span><text:span text:style-name="T39">reference implementation of the pcap </text:span><text:span text:style-name="T36">packet capturing API. <text:s/></text:span><text:span text:style-name="T39">It is</text:span><text:span text:style-name="T38"> </text:span><text:span text:style-name="T37">produced by The Tcpdump Group </text:span><text:span text:style-name="T39">and</text:span><text:span text:style-name="T38"> supports Linux and Mac OS X systems (among others). <text:s/></text:span><text:span text:style-name="T37">Npcap implements this API </text:span><text:span text:style-name="T38">for Microsoft </text:span><text:span text:style-name="T37">Windows by combining the high-level </text:span><text:span text:style-name="T38">open source</text:span><text:span text:style-name="T37"> libpcap </text:span><text:span text:style-name="T38">API code </text:span><text:span text:style-name="T37">with our own custom Windows driver </text:span><text:span text:style-name="T108">that implements the</text:span><text:span text:style-name="T37"> low-level network operations. <text:s/></text:span><text:span text:style-name="T38">Our wpcap.dll library </text:span><text:span text:style-name="T39">file </text:span><text:span text:style-name="T38">is mostly Libpcap code.</text:span><text:span text:style-name="T37"> <text:s/></text:span><text:span text:style-name="T38">We occasionally make our own fixes and changes to the libpcap code, but we have a great relationship with The Tcpdump Group and try to submit all of our changes to them for incorporation in future libpcap releases.</text:span></text:p>
+   <text:p text:style-name="P5"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T21">: </text:span><text:span text:style-name="T15">Lib</text:span><text:span text:style-name="T36">p</text:span><text:span text:style-name="T15">cap is </text:span><text:span text:style-name="T37">a popular</text:span><text:span text:style-name="T36"> </text:span><text:span text:style-name="T39">reference implementation of the pcap </text:span><text:span text:style-name="T36">packet capturing API. <text:s/></text:span><text:span text:style-name="T39">It is</text:span><text:span text:style-name="T38"> </text:span><text:span text:style-name="T37">produced by The Tcpdump Group </text:span><text:span text:style-name="T39">and</text:span><text:span text:style-name="T38"> supports Linux and Mac OS X systems (among others). <text:s/></text:span><text:span text:style-name="T37">Npcap implements this API </text:span><text:span text:style-name="T38">for Microsoft </text:span><text:span text:style-name="T37">Windows by combining the high-level </text:span><text:span text:style-name="T38">open source</text:span><text:span text:style-name="T37"> libpcap </text:span><text:span text:style-name="T38">API code </text:span><text:span text:style-name="T37">with our own custom Windows driver </text:span><text:span text:style-name="T109">that implements the</text:span><text:span text:style-name="T37"> low-level network operations. <text:s/></text:span><text:span text:style-name="T38">Our wpcap.dll library </text:span><text:span text:style-name="T39">file </text:span><text:span text:style-name="T38">is mostly Libpcap code.</text:span><text:span text:style-name="T37"> <text:s/></text:span><text:span text:style-name="T38">We occasionally make our own fixes and changes to the libpcap code, but we have a great relationship with The Tcpdump Group and try to submit all of our changes to them for incorporation in future libpcap releases.</text:span></text:p>
    <text:p text:style-name="P44"><text:span text:style-name="T15">Software URL</text:span><text:span text:style-name="T65">: </text:span><text:a xlink:type="simple" xlink:href="http://www.tcpdump.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T65">http://www.tcpdump.org/</text:span></text:a></text:p>
-   <text:p text:style-name="P5"><text:span text:style-name="T5">Version used</text:span><text:span text:style-name="T85">: </text:span><text:span text:style-name="T110">1.</text:span><text:span text:style-name="T112">10</text:span></text:p>
+   <text:p text:style-name="P5"><text:span text:style-name="T5">Version used</text:span><text:span text:style-name="T85">: </text:span><text:span text:style-name="T111">1.</text:span><text:span text:style-name="T113">10</text:span></text:p>
    <text:p text:style-name="P44"><text:span text:style-name="T15">License Summary</text:span><text:span text:style-name="T65">: </text:span><text:span text:style-name="T67">Modified</text:span><text:span text:style-name="T66"> BSD license </text:span><text:span text:style-name="T67">(3-clause) </text:span><text:span text:style-name="T87">– allows free redistribution as long as you </text:span><text:span text:style-name="T88">include a short attribution statement and warranty disclaimer somewhere in your documentation.</text:span></text:p>
    <text:p text:style-name="P20"><text:span text:style-name="T5">License </text:span><text:span text:style-name="T6">Tex</text:span><text:span text:style-name="T7">t:</text:span></text:p>
    <text:p text:style-name="P20"><text:span text:style-name="T94">Libpcap is Copyright (c) by The TCPdump group and its contributors. </text:span><text:span text:style-name="T67">T</text:span><text:span text:style-name="T93">his </text:span><text:span text:style-name="T94">license text </text:span><text:span text:style-name="T93">was taken from </text:span><text:a xlink:type="simple" xlink:href="https://github.com/the-tcpdump-group/libpcap/blob/master/LICENSE" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T15">https://github.com/the-tcpdump-group/libpcap/blob/master/LICENSE</text:span></text:a><text:span text:style-name="T93"> on August 25, 2020:</text:span></text:p>
@@ -3219,7 +3224,7 @@
    <text:p text:style-name="P110"><text:soft-page-break/>THIS SOFTWARE IS PROVIDED ``AS IS&apos;&apos; AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</text:p>
    <text:p text:style-name="P82"/>
    <text:p text:style-name="P65"/>
-   <text:p text:style-name="P113"><text:span text:style-name="T114">Win</text:span><text:span text:style-name="T144">pc</text:span><text:span text:style-name="T114">ap</text:span> Windows Packet <text:span text:style-name="T144">Capturing </text:span>Library</text:p>
+   <text:p text:style-name="P113"><text:span text:style-name="T115">Win</text:span><text:span text:style-name="T145">pc</text:span><text:span text:style-name="T115">ap</text:span> Windows Packet <text:span text:style-name="T145">Capturing </text:span>Library</text:p>
    <text:p text:style-name="P21"/>
    <text:p text:style-name="P6"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T21">: </text:span><text:span text:style-name="T38">Winpcap is an earlier (now abandoned) </text:span><text:span text:style-name="T39">open source </text:span><text:span text:style-name="T38">implementation of the </text:span><text:span text:style-name="T39">p</text:span><text:span text:style-name="T38">cap API </text:span><text:span text:style-name="T39">for Windows. <text:s/>The last Winpcap release was made in March 2013. <text:s text:c="3"/></text:span><text:span text:style-name="T38"><text:s/></text:span><text:span text:style-name="T39">We created </text:span><text:span text:style-name="T30">Np</text:span><text:span text:style-name="T21">cap </text:span><text:span text:style-name="T39">by starting with that abandoned code and updating it to support modern Windows NDIS API’s and fixing well-known bugs and security issues. <text:s/>While Npcap has diverged substantially over the years, it still contains a substantial amount of original Winpcap code, so the Winpcap license must be followed. <text:s/></text:span><text:span text:style-name="T21">is used by Nmap on Windows for raw packet reading during host discovery, port scanning, and OS detection. It is a derivative of LibPcap, so that license </text:span><text:span text:style-name="T22">(see Lib</text:span><text:span text:style-name="T38">p</text:span><text:span text:style-name="T22">cap section)</text:span><text:span text:style-name="T21"> must be followed as well. It is </text:span><text:span text:style-name="T23">only needed and used on Windows.</text:span></text:p>
    <text:p text:style-name="P18"><text:span text:style-name="T6">Software URL</text:span><text:span text:style-name="T89">: </text:span><text:a xlink:type="simple" xlink:href="https://www.winpcap.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T65">https://www.winpcap.org/</text:span></text:a></text:p>
@@ -3227,7 +3232,7 @@
    <text:p text:style-name="P6"><text:span text:style-name="T6">License Summary</text:span><text:span text:style-name="T89">: </text:span><text:span text:style-name="T88">Modified BSD license (3-clause) – allows free redistribution as long as you include attribution statement and warranty disclaimer somewhere in your documentation. The fourth clause, which </text:span><text:span text:style-name="T90">relates to attribution in advertising materials has been officially removed and revoked by the University of California, Berkeley: </text:span><text:a xlink:type="simple" xlink:href="https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T90">https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf</text:span></text:a></text:p>
    <text:p text:style-name="P20"><text:span text:style-name="T5">License </text:span><text:span text:style-name="T6">Tex</text:span><text:span text:style-name="T7">t:</text:span></text:p>
    <text:p text:style-name="P70"><text:span text:style-name="T22">T</text:span><text:span text:style-name="T15">his was taken from </text:span><text:a xlink:type="simple" xlink:href="https://www.winpcap.org/misc/copyright.htm" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T15">https://www.winpcap.org/misc/copyright.htm</text:span></text:a><text:span text:style-name="T15"> on March 11, 2016 and we made the following updates:</text:span></text:p>
-   <text:list xml:id="list4170626420" text:style-name="L1">
+   <text:list xml:id="list2601538272" text:style-name="L1">
     <text:list-item>
      <text:p text:style-name="P122"><text:span text:style-name="T15">Removed the “advertising clause” from University of California, </text:span><text:span text:style-name="T43">Berkeley copyright statement because they have officiall removed and revoked that as documented here: </text:span><text:a xlink:type="simple" xlink:href="https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T40">https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf</text:span></text:a></text:p>
     </text:list-item>
@@ -3280,21 +3285,21 @@
    <text:p text:style-name="P112">THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS&apos;&apos; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</text:p>
    <text:p text:style-name="P112"/>
    <text:p text:style-name="P97"/>
-   <text:p text:style-name="P106"><text:span text:style-name="T141">The </text:span>ieee80211_radiotap.h He<text:span text:style-name="T144">a</text:span>der File</text:p>
+   <text:p text:style-name="P106"><text:span text:style-name="T142">The </text:span>ieee80211_radiotap.h He<text:span text:style-name="T145">a</text:span>der File</text:p>
    <text:p text:style-name="P102"/>
-   <text:p text:style-name="P19"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T21">: </text:span><text:span text:style-name="T109">This is just a short header file defining data structures for the IEEE 802.11 radio capture header</text:span></text:p>
-   <text:p text:style-name="P19"><text:span text:style-name="T6">Software URL</text:span><text:span text:style-name="T89">: </text:span><text:a xlink:type="simple" xlink:href="http://web.mit.edu/~mkgray/afs/bar/afs/sipb.mit.edu/project/freebsd/head/contrib/wpa/src/utils/radiotap.h" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T139">http://web.mit.edu/~mkgray/afs/bar/afs/sipb.mit.edu/project/freebsd/head/contrib/wpa/src/utils/radiotap.h</text:span></text:a></text:p>
-   <text:p text:style-name="P19"><text:span text:style-name="T5">Version used</text:span><text:span text:style-name="T85">: </text:span><text:span text:style-name="T111">There is not a specific version number, but it says “</text:span><text:span text:style-name="T140">Copyright (c) 2003, 2004 David Young”</text:span></text:p>
+   <text:p text:style-name="P19"><text:span text:style-name="T5">Description</text:span><text:span text:style-name="T21">: </text:span><text:span text:style-name="T110">This is just a short header file defining data structures for the IEEE 802.11 radio capture header</text:span></text:p>
+   <text:p text:style-name="P19"><text:span text:style-name="T6">Software URL</text:span><text:span text:style-name="T89">: </text:span><text:a xlink:type="simple" xlink:href="http://web.mit.edu/~mkgray/afs/bar/afs/sipb.mit.edu/project/freebsd/head/contrib/wpa/src/utils/radiotap.h" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T140">http://web.mit.edu/~mkgray/afs/bar/afs/sipb.mit.edu/project/freebsd/head/contrib/wpa/src/utils/radiotap.h</text:span></text:a></text:p>
+   <text:p text:style-name="P19"><text:span text:style-name="T5">Version used</text:span><text:span text:style-name="T85">: </text:span><text:span text:style-name="T112">There is not a specific version number, but it says “</text:span><text:span text:style-name="T141">Copyright (c) 2003, 2004 David Young”</text:span></text:p>
    <text:p text:style-name="P59"><text:span text:style-name="T15">License Summary</text:span><text:span text:style-name="T65">: </text:span><text:span text:style-name="T67">Modified</text:span><text:span text:style-name="T66"> BSD license </text:span><text:span text:style-name="T67">(3-clause) </text:span><text:span text:style-name="T87">– allows free redistribution as long as you </text:span><text:span text:style-name="T88">include a short attribution statement and warranty disclaimer somewhere in your documentation.</text:span></text:p>
-   <text:p text:style-name="P109"><text:span text:style-name="T127">License </text:span><text:span text:style-name="T128">Tex</text:span><text:span text:style-name="T129">t:</text:span></text:p>
+   <text:p text:style-name="P109"><text:span text:style-name="T128">License </text:span><text:span text:style-name="T129">Tex</text:span><text:span text:style-name="T130">t:</text:span></text:p>
    <text:p text:style-name="P103"/>
-   <text:p text:style-name="P109"><text:span text:style-name="T135">T</text:span><text:span text:style-name="T136">his is from </text:span><text:span text:style-name="T137">a comment near the top of</text:span><text:span text:style-name="T136"> </text:span><text:a xlink:type="simple" xlink:href="https://github.com/nmap/npcap/blob/master/packetWin7/npf/npf/ieee80211_radiotap.h" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T143">the ieee80211_radiotap.h file itself</text:span></text:a><text:span text:style-name="T138">:</text:span></text:p>
+   <text:p text:style-name="P109"><text:span text:style-name="T136">T</text:span><text:span text:style-name="T137">his is from </text:span><text:span text:style-name="T138">a comment near the top of</text:span><text:span text:style-name="T137"> </text:span><text:a xlink:type="simple" xlink:href="https://github.com/nmap/npcap/blob/master/packetWin7/npf/npf/ieee80211_radiotap.h" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T144">the ieee80211_radiotap.h file itself</text:span></text:a><text:span text:style-name="T139">:</text:span></text:p>
    <text:p text:style-name="P98"/>
    <text:p text:style-name="P99"/>
    <text:p text:style-name="P99">Copyright (c) 2003, 2004 David Young. <text:s/>All rights reserved.</text:p>
    <text:p text:style-name="P99"/>
    <text:p text:style-name="P99">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
-   <text:p text:style-name="P99"><text:soft-page-break/>1. Redistributions of source code must retain the above copyright <text:span text:style-name="T146">n</text:span>otice, this list of conditions and the following disclaimer.</text:p>
+   <text:p text:style-name="P99"><text:soft-page-break/>1. Redistributions of source code must retain the above copyright <text:span text:style-name="T147">n</text:span>otice, this list of conditions and the following disclaimer.</text:p>
    <text:p text:style-name="P99">2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</text:p>
    <text:p text:style-name="P99">3. The name of David Young may not be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
    <text:p text:style-name="P99"/>
@@ -3302,12 +3307,12 @@
    <text:p text:style-name="P99"/>
    <text:p text:style-name="P107">Copyright Statements and Acknowledgement/Disclaimer Text</text:p>
    <text:p text:style-name="P105"/>
-   <text:p text:style-name="P104">Here is the complete copyright/acknowledgement/disclaimer text as required by the various open source licenses (see above). <text:s/>We’re including this both to fulfill the license agreements ourselves, and as a template that companies distributing Npcap (which is only allowed with <text:span text:style-name="T148">the redistribution</text:span> license <text:span text:style-name="T148">described at </text:span><text:a xlink:type="simple" xlink:href="https://nmap.org/npcap/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T148">https://nmap.org/npcap/oem/redist.html</text:span></text:a><text:span text:style-name="T148">) </text:span>can use in their own documentation as well.</text:p>
+   <text:p text:style-name="P104">Here is the complete copyright/acknowledgement/disclaimer text as required by the various open source licenses (see above). <text:s/>We’re including this both to fulfill the license agreements ourselves, and as a template that companies distributing Npcap (which is only allowed with <text:span text:style-name="T149">the redistribution</text:span> license <text:span text:style-name="T149">described at </text:span><text:a xlink:type="simple" xlink:href="https://nmap.org/npcap/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T149">https://nmap.org/npcap/oem/redist.html</text:span></text:a><text:span text:style-name="T149">) </text:span>can use in their own documentation as well.</text:p>
    <text:p text:style-name="P104"/>
-   <text:p text:style-name="P101">Npcap is Copyright (c) 2013-202<text:span text:style-name="T148">1</text:span> Insecure.Com LLC. All rights reserved. See <text:a xlink:type="simple" xlink:href="https://npcap.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.org</text:a> for details. </text:p>
+   <text:p text:style-name="P101">Npcap is Copyright (c) 2013-202<text:span text:style-name="T149">1</text:span> Insecure.Com LLC. All rights reserved. See <text:a xlink:type="simple" xlink:href="https://npcap.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.org</text:a> for details. </text:p>
    <text:p text:style-name="P101"/>
-   <text:p text:style-name="P100">Portions <text:span text:style-name="T147">of Npcap are Copyright </text:span>(c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy).</text:p>
-   <text:p text:style-name="P100">Portions <text:span text:style-name="T147">of Npcap are Copyright </text:span>(c) 2005 - 2010 CACE Technologies, Davis (California).</text:p>
+   <text:p text:style-name="P100">Portions <text:span text:style-name="T148">of Npcap are Copyright </text:span>(c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy).</text:p>
+   <text:p text:style-name="P100">Portions <text:span text:style-name="T148">of Npcap are Copyright </text:span>(c) 2005 - 2010 CACE Technologies, Davis (California).</text:p>
    <text:p text:style-name="P100">All rights reserved.</text:p>
    <text:p text:style-name="P100"/>
    <text:p text:style-name="P100">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
@@ -3320,7 +3325,7 @@
    <text:p text:style-name="P100"/>
    <text:p text:style-name="P100">This product includes software developed by the University of California, Lawrence Berkeley Laboratory and its contributors.</text:p>
    <text:p text:style-name="P100"/>
-   <text:p text:style-name="P100"><text:soft-page-break/>Portions <text:span text:style-name="T147">of Npcap are </text:span>Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997 The Regents of the University of California. All rights reserved.</text:p>
+   <text:p text:style-name="P100"><text:soft-page-break/>Portions <text:span text:style-name="T148">of Npcap are </text:span>Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997 The Regents of the University of California. All rights reserved.</text:p>
    <text:p text:style-name="P100"/>
    <text:p text:style-name="P100">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
    <text:p text:style-name="P100">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
@@ -3328,7 +3333,7 @@
    <text:p text:style-name="P100">3. Neither the name of the University nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
    <text:p text:style-name="P100">THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS&apos;&apos; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</text:p>
    <text:p text:style-name="P100"/>
-   <text:p text:style-name="P100">Portions <text:span text:style-name="T147">of Npcap are </text:span>Copyright (c) 2003, 2004 David Young. <text:s/>All rights reserved.</text:p>
+   <text:p text:style-name="P100">Portions <text:span text:style-name="T148">of Npcap are </text:span>Copyright (c) 2003, 2004 David Young. <text:s/>All rights reserved.</text:p>
    <text:p text:style-name="P100"/>
    <text:p text:style-name="P100">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
    <text:p text:style-name="P100">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
