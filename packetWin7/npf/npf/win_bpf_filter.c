@@ -132,7 +132,7 @@
 
 u_int32 xword(PMDL p, u_int32 k, int *err)
 {
-	size_t len, len0;
+	u_int32 len, len0;
 	u_char *CurBuf, *NextBuf;
 	PMDL p0;
 
@@ -163,7 +163,7 @@ u_int32 xword(PMDL p, u_int32 k, int *err)
 
 u_int32 xhalf(PMDL p, u_int32 k, int *err)
 {
-	size_t len, len0;
+	u_int32 len, len0;
 	u_char *CurBuf, *NextBuf;
 	PMDL p0;
 
@@ -187,7 +187,7 @@ u_int32 xhalf(PMDL p, u_int32 k, int *err)
 
 u_int32 xbyte(PMDL p, u_int32 k, int *err)
 {
-	size_t len;
+	u_int32 len;
 	u_char *CurBuf;
 
 	*err = 1;

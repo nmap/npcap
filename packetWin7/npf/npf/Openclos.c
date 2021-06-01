@@ -428,7 +428,7 @@ VOID NPF_ReturnNBCopies(PNPF_NB_COPIES pNBCopy, PDEVICE_EXTENSION pDevExt)
 	PBUFCHAIN_ELEM pDeleteMe = NULL;
 	// FirstElem is not separately allocated
 	PBUFCHAIN_ELEM pElem = pNBCopy->FirstElem.Next;
-	ULONG refcount = InterlockedDecrement(&pNBCopy->refcount);
+	ULONG refcount = NpfInterlockedDecrement(&(LONG)pNBCopy->refcount);
 
 	if (refcount == 0)
 	{
@@ -446,7 +446,7 @@ _Use_decl_annotations_
 VOID NPF_ReturnNBLCopy(PNPF_NBL_COPY pNBLCopy, PDEVICE_EXTENSION pDevExt)
 {
 	PUCHAR pDot11RadiotapHeader = pNBLCopy->Dot11RadiotapHeader;
-	ULONG refcount = InterlockedDecrement(&pNBLCopy->refcount);
+	ULONG refcount = NpfInterlockedDecrement(&(LONG)pNBLCopy->refcount);
 	if (refcount == 0)
 	{
 		ExFreeToLookasideListEx(&pDevExt->NBLCopyPool, pNBLCopy);
@@ -785,7 +785,7 @@ NPF_StartUsingOpenInstance(
 				if (pOpen->pFiltMod->Loopback)
 				{
 					// Keep track of how many active loopback captures there are
-					NpfInterlockedIncrement(&g_NumLoopbackInstances);
+					NpfInterlockedIncrement(&(LONG)g_NumLoopbackInstances);
 				}
 #endif
 
@@ -869,7 +869,7 @@ NPF_DecrementLoopbackInstances(
 		_Inout_ PNPCAP_FILTER_MODULE pFiltMod)
 {
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	if (NpfInterlockedDecrement(&g_NumLoopbackInstances) == 0)
+	if (NpfInterlockedDecrement(&(LONG)g_NumLoopbackInstances) == 0)
 	{
 		pFiltMod->OpsState = OpsDisabling;
 		NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
@@ -1399,6 +1399,7 @@ NPF_CloseAdapter(
 {
 	POPEN_INSTANCE pOpen;
 	PIO_STACK_LOCATION IrpSp;
+	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
@@ -1440,7 +1441,7 @@ NPF_Cleanup(
 	POPEN_INSTANCE Open;
 	NDIS_STATUS Status;
 	PIO_STACK_LOCATION IrpSp;
-
+	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
@@ -1843,7 +1844,6 @@ NPF_GetFilterModuleByAdapterName(
 	BOOLEAN Dot11 = FALSE;
 	BOOLEAN Found = FALSE;
 	NDIS_STRING BaseName = {0};
-	WCHAR *pName = NULL;
 	TRACE_ENTER();
 
 	if (pAdapterName->Buffer == NULL || pAdapterName->Length == 0) {
@@ -2069,6 +2069,7 @@ NPF_CreateFilterModule(
 	PNPCAP_FILTER_MODULE pFiltMod;
 	NET_BUFFER_LIST_POOL_PARAMETERS PoolParameters;
 	BOOLEAN bAllocFailed = FALSE;
+	UNREFERENCED_PARAMETER(SelectedIndex);
 
 	// allocate some memory for the filter module structure
 	pFiltMod = ExAllocatePoolWithTag(NonPagedPool, sizeof(NPCAP_FILTER_MODULE), NPF_FILTMOD_TAG);
@@ -2203,6 +2204,7 @@ Return Value:
 
 --*/
 {
+	UNREFERENCED_PARAMETER(NdisFilterHandle);
 	TRACE_ENTER();
 
 	if (!NT_VERIFY(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject))
@@ -2431,7 +2433,6 @@ NPF_Pause(
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE)FilterModuleContext;
 	NDIS_STATUS             Status = NDIS_STATUS_SUCCESS;
 	NDIS_EVENT Event;
-	BOOLEAN PendingWrites = FALSE;
 
 	UNREFERENCED_PARAMETER(PauseParameters);
 	TRACE_ENTER();

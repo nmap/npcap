@@ -146,8 +146,6 @@ NDIS_HANDLE         FilterDriverHandle_WiFi = NULL;		// NDIS handle for WiFi fil
 NDIS_HANDLE         FilterDriverObject;					// Driver object for filter driver
 extern HANDLE g_WFPEngineHandle;
 
-PQUERYSYSTEMTIME g_ptrQuerySystemTime = NULL;
-
 #ifdef KeQuerySystemTime
 // On Win x64, KeQuerySystemTime is defined as a macro,
 // this function wraps the macro execution.
@@ -158,6 +156,9 @@ KeQuerySystemTimeWrapper(
 {
 	KeQuerySystemTime(CurrentTime);
 }
+PQUERYSYSTEMTIME g_ptrQuerySystemTime = &KeQuerySystemTimeWrapper;
+#else
+PQUERYSYSTEMTIME g_ptrQuerySystemTime = &KeQuerySystemTime;
 #endif
 
 #ifdef NPCAP_READ_ONLY
@@ -172,6 +173,7 @@ NTSTATUS NPF_Deny(
 		IN PIRP Irp
 		)
 {
+	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 	Irp->IoStatus.Information = 0;
 	Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
@@ -228,7 +230,7 @@ NPF_GetRegistryOption_AdapterName(
 	_Inout_ PNDIS_STRING pOutputString
 	)
 {
-	size_t i=0, j=0;
+	USHORT i=0, j=0;
 	NPF_GetRegistryOption_String(pRegistryPath, pRegValueName, pOutputString);
 	if (pOutputString->Buffer == NULL)
 	{
@@ -291,7 +293,7 @@ DriverEntry(
 	FilterDriverObject = DriverObject;
 
 	RtlInitUnicodeString(&parametersPath, NULL);
-	parametersPath.MaximumLength=RegistryPath->Length+wcslen(L"\\Parameters")*sizeof(WCHAR)+sizeof(UNICODE_NULL);
+	parametersPath.MaximumLength=RegistryPath->Length+sizeof(L"\\Parameters");
 	parametersPath.Buffer=ExAllocatePoolWithTag(PagedPool, parametersPath.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (!parametersPath.Buffer) {
 		return STATUS_INSUFFICIENT_RESOURCES;
@@ -947,8 +949,6 @@ Return Value:
 	NDIS_STRING SymLink;
 	NDIS_EVENT Event;
 	LOCK_STATE_EX lockState;
-	PSINGLE_LIST_ENTRY Curr = NULL;
-	PSINGLE_LIST_ENTRY Prev = NULL;
 
 	TRACE_ENTER();
 
@@ -1127,7 +1127,6 @@ NPF_IoControl(
 	ULONG					Information = 0;
 	PLIST_ENTRY				CurrEntry;
 	PULONG pUL;
-	PUCHAR					tpointer = NULL; //assign NULL to suppress error C4703: potentially uninitialized local pointer variable
 	ULONG					dim, timeout;
 	struct bpf_insn*		NewBpfProgram;
 	PPACKET_OID_DATA		OidData;
@@ -1141,7 +1140,6 @@ NPF_IoControl(
 	BOOLEAN					SyncWrite = FALSE;
 	ULONG					insns;
 	ULONG					cnt;
-	BOOLEAN					IsExtendedFilter = FALSE;
 	PUINT					pStats;
 	ULONG					StatsLength;
 	PULONG					pCombinedPacketFilter;
@@ -1154,6 +1152,7 @@ NPF_IoControl(
 	VOID* POINTER_32		hUserEvent32Bit;
 #endif //_WIN64
 
+	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
@@ -1283,7 +1282,7 @@ NPF_IoControl(
 		NdisReleaseSpinLock(&Open->WriteLock);
 
 		WriteRes = NPF_BufferedWrite(Irp,
-			(PUCHAR) Irp->AssociatedIrp.SystemBuffer,
+			(PCHAR) Irp->AssociatedIrp.SystemBuffer,
 			IrpSp->Parameters.DeviceIoControl.InputBufferLength,
 			SyncWrite);
 
@@ -1394,20 +1393,16 @@ NPF_IoControl(
 
 		mode = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
 
-		///////kernel dump does not work at the moment//////////////////////////////////////////
-		if (mode & MODE_DUMP)
+		// Verify no unsupported mode is set
+		if (mode == 0 || mode & ~(MODE_CAPT | MODE_MON | MODE_STAT | MODE_DUMP))
 		{
 			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-			break;
 		}
-		///////kernel dump does not work at the moment//////////////////////////////////////////
-
-		if (mode == MODE_CAPT)
+		else if (mode == MODE_CAPT)
 		{
 			Open->mode = MODE_CAPT;
 
 			SET_RESULT_SUCCESS(0);
-			break;
 		}
 		else if (mode == MODE_MON)
 		{
@@ -1417,8 +1412,6 @@ NPF_IoControl(
 			//
 
 			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-
-			break;
 		}
 		else
 		{
@@ -1436,16 +1429,15 @@ NPF_IoControl(
 
 			if (mode & MODE_DUMP)
 			{
-				Open->mode |= MODE_DUMP;
+				//////kernel dump does not work at the moment//////////////////////////////////////////
+				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
+				break;
+				// Open->mode |= MODE_DUMP;
 				// Open->MinToCopy=(Open->BufSize<2000000)?Open->BufSize/2:1000000;
 			}
 
 			SET_RESULT_SUCCESS(0);
-			break;
 		}
-
-		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-
 		break;
 
 	case BIOCSETDUMPFILENAME:
@@ -1653,7 +1645,7 @@ NPF_IoControl(
 			break;
 		} 
 		// If there's no change, we're done!
-		if (dim == Open->Size) {
+		if ((LONG)dim == Open->Size) {
 			SET_RESULT_SUCCESS(0);
 			break;
 		}
@@ -1823,7 +1815,7 @@ NPF_IoControl(
 				else
 				{
 					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
-					*((PUINT)OidData->Data) = NdisMediumRadio80211;
+					*((PUINT)OidData->Data) = (UINT)NdisMediumRadio80211;
 					OidData->Length = sizeof(UINT);
 					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 				}

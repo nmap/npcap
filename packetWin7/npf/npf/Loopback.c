@@ -234,7 +234,7 @@ NPF_TapLoopback(
 						NET_BUFFER_CURRENT_MDL_OFFSET(pFakeNetBuffer) = Offset - numBytes;
 					NET_BUFFER_DATA_LENGTH(pFakeNetBuffer) = numBytes + NET_BUFFER_DATA_LENGTH(pNetBuffer);
 					// We didn't allocate a MDL, so make sure we don't free it.
-					(PMDL)(NET_BUFFER_PROTOCOL_RESERVED(pFakeNetBuffer)[0]) = NULL;
+					NET_BUFFER_PROTOCOL_RESERVED(pFakeNetBuffer)[0] = NULL;
 				}
 				else {
 					if (Offset > 0) {
@@ -286,7 +286,7 @@ NPF_TapLoopback(
 					NET_BUFFER_CURRENT_MDL(pFakeNetBuffer) = pMdl;
 					NET_BUFFER_CURRENT_MDL_OFFSET(pFakeNetBuffer) = 0;
 					// We use the ProtocolReserved field to indicate that the MDL needs to be freed.
-					(PMDL)(NET_BUFFER_PROTOCOL_RESERVED(pFakeNetBuffer)[0]) = pMdl;
+					NET_BUFFER_PROTOCOL_RESERVED(pFakeNetBuffer)[0] = pMdl;
 				}
 				/* Move down the chain! */
 				pNetBuffer = pNetBuffer->Next;
@@ -361,6 +361,7 @@ BOOL NPF_ShouldProcess(
 		_Out_ PBOOLEAN pbIPv4
 		)
 {
+	UNREFERENCED_PARAMETER(inMetaValues);
 	UINT32 layerFlags = 0;
 
 	// Get the packet protocol (IPv4 or IPv6)

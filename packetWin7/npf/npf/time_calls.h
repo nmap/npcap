@@ -139,7 +139,7 @@ __inline void TIME_SYNCHRONIZE(
 	LARGE_INTEGER TimeFreq, PTime;
 
 	// get the absolute value of the system boot time.   
-
+	NT_ASSERT(g_ptrQuerySystemTime != NULL);
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
 	g_ptrQuerySystemTime(&SystemTime);
 

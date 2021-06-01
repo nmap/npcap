@@ -179,6 +179,7 @@ NPF_Write(
 	ULONG				numSentPackets;
 	NTSTATUS Status = STATUS_SUCCESS;
 
+	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
@@ -347,7 +348,7 @@ NPF_Write(
 
 			NT_ASSERT(Open->pFiltMod != NULL);
 
-			NpfInterlockedIncrement(&Open->TransmitPendingPackets);
+			NpfInterlockedIncrement(&(LONG)Open->TransmitPendingPackets);
 
 			NdisResetEvent(&Open->NdisWriteCompleteEvent);
 
@@ -411,7 +412,7 @@ NPF_Write(
 				if (!NT_SUCCESS(Status))
 				{
 					// Couldn't send this one. Don't wait for it!
-					NpfInterlockedDecrement(&Open->TransmitPendingPackets);
+					NpfInterlockedDecrement(&(LONG)Open->TransmitPendingPackets);
 					NPF_FreePackets(pNetBufferList);
 					break;
 				}
@@ -537,9 +538,9 @@ NPF_BufferedWrite(
 	PNET_BUFFER_LIST		pNetBufferList = NULL;
 	ULONG					SendFlags = 0;
 	UINT					i;
-	LARGE_INTEGER			StartTicks, CurTicks, TargetTicks;
+	LARGE_INTEGER			StartTicks = { 0 }, CurTicks, TargetTicks;
 	LARGE_INTEGER			TimeFreq;
-	struct timeval			BufStartTime;
+	struct timeval			BufStartTime = { 0 };
 	struct sf_pkthdr*		pWinpcapHdr;
 	PMDL					TmpMdl;
 	ULONG					Pos = 0;
@@ -732,7 +733,7 @@ NPF_BufferedWrite(
 		NT_ASSERT(Open->pFiltMod != NULL);
 
 		// Increment the number of pending sends
-		NpfInterlockedIncrement(&Open->Multiple_Write_Counter);
+		NpfInterlockedIncrement(&(LONG)Open->Multiple_Write_Counter);
 
 		//receive the packets before sending them
 		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
@@ -750,7 +751,7 @@ NPF_BufferedWrite(
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
-				NpfInterlockedDecrement(&Open->Multiple_Write_Counter);
+				NpfInterlockedDecrement(&(LONG)Open->Multiple_Write_Counter);
 				NPF_FreePackets(pNetBufferList);
 				result = -Status;
 				break;
@@ -1041,7 +1042,7 @@ NPF_SendCompleteExForEachOpen(
 	if (FreeBufAfterWrite)
 	{
 		// Increment the number of pending sends
-		NpfInterlockedDecrement(&Open->Multiple_Write_Counter);
+		NpfInterlockedDecrement(&(LONG)Open->Multiple_Write_Counter);
 
 		NdisSetEvent(&Open->WriteEvent);
 
@@ -1053,7 +1054,7 @@ NPF_SendCompleteExForEachOpen(
 		// Packet sent by NPF_Write()
 		//
 
-		ULONG stillPendingPackets = NpfInterlockedDecrement(&Open->TransmitPendingPackets);
+		ULONG stillPendingPackets = NpfInterlockedDecrement(&(LONG)Open->TransmitPendingPackets);
 
 		//
 		// if the number of packets submitted to NdisSend and not acknoledged is less than half the

@@ -145,6 +145,7 @@ NPF_Read(
 	LOCK_STATE_EX lockState;
 	NTSTATUS Status = STATUS_SUCCESS;
 
+	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
@@ -452,7 +453,6 @@ NPF_DoTap(
 	struct timeval tstamp = {0, 0};
 	NBLCopiesHead.Next = NULL;
 	PNPF_SRC_NB pSrcNB = NULL;
-	PNPF_NB_COPIES pNBCopies = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
 	PDEVICE_EXTENSION pDevExt = NULL;
 
@@ -633,8 +633,8 @@ PNPF_CAP_DATA NPF_GetCapData(
 
 	// Increment refcounts on relevant structures
 	pCapData->pNBCopy = pNBCopy;
-	InterlockedIncrement(&pNBCopy->refcount);
-	InterlockedIncrement(&pNBLCopy->refcount);
+	NpfInterlockedIncrement(&(LONG)pNBCopy->refcount);
+	NpfInterlockedIncrement(&(LONG)pNBLCopy->refcount);
 
 	pCapData->ulCaplen = uCapLen;
 
@@ -1253,10 +1253,10 @@ TEFEO_done_with_NBs:
 		}
 	}
 
-	NpfInterlockedExchangeAdd(&Open->ResourceDropped, resdropped);
-	NpfInterlockedExchangeAdd(&Open->Dropped, dropped);
-	NpfInterlockedExchangeAdd(&Open->Received, received);
-	NpfInterlockedExchangeAdd(&Open->Accepted, accepted);
+	NpfInterlockedExchangeAdd(&(LONG)Open->ResourceDropped, resdropped);
+	NpfInterlockedExchangeAdd(&(LONG)Open->Dropped, dropped);
+	NpfInterlockedExchangeAdd(&(LONG)Open->Received, received);
+	NpfInterlockedExchangeAdd(&(LONG)Open->Accepted, accepted);
 
 	NPF_StopUsingOpenInstance(Open, OpenRunning, AtDispatchLevel);
 	//TRACE_EXIT();
