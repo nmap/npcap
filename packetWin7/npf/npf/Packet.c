@@ -405,7 +405,7 @@ DriverEntry(
 	deviceSymLink.Length = 0;
 	deviceSymLink.MaximumLength = AdapterName.Length - DEVICE_PATH_BYTES + symbolicLinkPrefix.Length + (USHORT)sizeof(UNICODE_NULL);
 
-	deviceSymLink.Buffer = ExAllocatePoolWithTag(NonPagedPool, deviceSymLink.MaximumLength, NPF_UNICODE_BUFFER_TAG);
+	deviceSymLink.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, deviceSymLink.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (deviceSymLink.Buffer == NULL)
 	{
 		TRACE_EXIT();
@@ -485,7 +485,7 @@ DriverEntry(
 			break;
 		}
 
-		Status = ExInitializeLookasideListEx(&devExtP->BufferPool, NULL, NULL, NonPagedPool, 0, sizeof(BUFCHAIN_ELEM), NPF_PACKET_DATA_TAG, 0);
+		Status = ExInitializeLookasideListEx(&devExtP->BufferPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(BUFCHAIN_ELEM), NPF_PACKET_DATA_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferPool");
@@ -493,7 +493,7 @@ DriverEntry(
 		}
 		devExtP->bBufferPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->NBLCopyPool, NULL, NULL, NonPagedPool, 0, sizeof(NPF_NBL_COPY), NPF_NBLC_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&devExtP->NBLCopyPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NBL_COPY), NPF_NBLC_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
@@ -501,7 +501,7 @@ DriverEntry(
 		}
 		devExtP->bNBLCopyPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->NBCopiesPool, NULL, NULL, NonPagedPool, 0, sizeof(NPF_NB_COPIES), NPF_NBC_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&devExtP->NBCopiesPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NB_COPIES), NPF_NBC_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
@@ -509,7 +509,7 @@ DriverEntry(
 		}
 		devExtP->bNBCopiesPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->SrcNBPool, NULL, NULL, NonPagedPool, 0, sizeof(NPF_SRC_NB), NPF_SRCNB_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&devExtP->SrcNBPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_SRC_NB), NPF_SRCNB_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate SrcNBPool");
@@ -517,7 +517,7 @@ DriverEntry(
 		}
 		devExtP->bSrcNBPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->InternalRequestPool, NULL, NULL, NonPagedPool, 0, sizeof(INTERNAL_REQUEST), NPF_REQ_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&devExtP->InternalRequestPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(INTERNAL_REQUEST), NPF_REQ_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
@@ -525,7 +525,7 @@ DriverEntry(
 		}
 		devExtP->bInternalRequestPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->CapturePool, NULL, NULL, NonPagedPool, 0, sizeof(NPF_CAP_DATA), NPF_CAP_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&devExtP->CapturePool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_CAP_DATA), NPF_CAP_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
@@ -536,7 +536,7 @@ DriverEntry(
 #ifdef HAVE_DOT11_SUPPORT
 		if (g_Dot11SupportMode)
 		{
-			Status = ExInitializeLookasideListEx(&devExtP->Dot11HeaderPool, NULL, NULL, NonPagedPool, 0, SIZEOF_RADIOTAP_BUFFER, NPF_DOT11_POOL_TAG, 0);
+			Status = ExInitializeLookasideListEx(&devExtP->Dot11HeaderPool, NULL, NULL, NPF_NONPAGED, 0, SIZEOF_RADIOTAP_BUFFER, NPF_DOT11_POOL_TAG, 0);
 			if (Status != STATUS_SUCCESS)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
@@ -877,7 +877,7 @@ NPF_GetRegistryOption_String(
 
 			g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
 			g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
-			g_OutputString->Buffer = ExAllocatePoolWithTag(NonPagedPool, g_OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
+			g_OutputString->Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, g_OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
 
 			if (g_OutputString->Buffer)
 			{
@@ -1339,7 +1339,7 @@ NPF_IoControl(
 				}
 
 			// Allocate the memory to contain the new filter program
-			TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, cnt * sizeof(struct bpf_insn), NPF_BPF_TAG);
+			TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NPF_NONPAGED, cnt * sizeof(struct bpf_insn), NPF_BPF_TAG);
 			if (TmpBPFProgram == NULL)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error - No memory for filter");
@@ -1443,7 +1443,7 @@ NPF_IoControl(
 			}
 		
 			// Allocate the buffer that will contain the string
-			DumpNameBuff=ExAllocatePoolWithTag(NonPagedPool, IrpSp->Parameters.DeviceIoControl.InputBufferLength, NPF_DUMP_TAG);
+			DumpNameBuff=ExAllocatePoolWithTag(NPF_NONPAGED, IrpSp->Parameters.DeviceIoControl.InputBufferLength, NPF_DUMP_TAG);
 			if(DumpNameBuff==NULL || Open->DumpFileName.Buffer!=NULL){
 				IF_LOUD(DbgPrint("NPF: unable to allocate the dump filename: not enough memory or name already set\n");)
 					EXIT_FAILURE(0);
@@ -1815,7 +1815,7 @@ NPF_IoControl(
 			pRequest->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
 
 			/* NDIS_OID_REQUEST.InformationBuffer must be non-paged */
-			OidBuffer = ExAllocatePoolWithTag(NonPagedPool, OidData->Length, NPF_USER_OID_TAG);
+			OidBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, OidData->Length, NPF_USER_OID_TAG);
 			if (OidBuffer == NULL)
 			{
 				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OidBuffer");

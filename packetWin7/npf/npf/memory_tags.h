@@ -49,6 +49,14 @@
 #ifndef __NPCAP_MEMORY_TAGS_H
 #define __NPCAP_MEMORY_TAGS_H
 
+
+// Npcap doesn't need executable allocations
+#if(NTDDI_VERSION >= NTDDI_WIN8)
+#define NPF_NONPAGED NonPagedPoolNx
+#else
+#define NPF_NONPAGED NonPagedPool
+#endif
+
 // UNICODE_STRING::Buffer
 #define NPF_UNICODE_BUFFER_TAG 'BUpN'
 // Things that are freed within the same function they are allocated in.

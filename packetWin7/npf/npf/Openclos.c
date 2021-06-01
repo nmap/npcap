@@ -1058,7 +1058,7 @@ NPF_GetDeviceMTU(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(Mtu), NPF_INTERNAL_OID_TAG);
+    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(Mtu), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1108,7 +1108,7 @@ NPF_GetDataRateMappingTable(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(DOT11_DATA_RATE_MAPPING_TABLE), NPF_INTERNAL_OID_TAG);
+    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(DOT11_DATA_RATE_MAPPING_TABLE), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1192,7 +1192,7 @@ NPF_GetCurrentOperationMode(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentOperationMode), NPF_INTERNAL_OID_TAG);
+    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentOperationMode), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1266,7 +1266,7 @@ NPF_GetCurrentChannel(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentChannel), NPF_INTERNAL_OID_TAG);
+    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentChannel), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1337,7 +1337,7 @@ NPF_GetCurrentFrequency(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(CurrentFrequency), NPF_INTERNAL_OID_TAG);
+    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentFrequency), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -1680,7 +1680,7 @@ NPF_RemoveFromGroupOpenArray(
 #endif
 		) != OldPacketFilter)
 	{
-        pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
+        pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
         if (pBuffer == NULL)
         {
             IF_LOUD(DbgPrint("Allocate pBuffer failed, can't reset packet filter\n");)
@@ -1861,7 +1861,7 @@ NPF_GetFilterModuleByAdapterName(
 
 	// Make sure we can hold at least as long a name as requested.
 	BaseName.MaximumLength = max(sizeof(L"Loopback"), pAdapterName->MaximumLength);
-	BaseName.Buffer = ExAllocatePoolWithTag(NonPagedPool, BaseName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
+	BaseName.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, BaseName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (BaseName.Buffer == NULL) {
 		IF_LOUD(DbgPrint("NPF_GetFilterModuleByAdapterName: failed to allocate BaseName.Buffer\n");)
 		TRACE_EXIT();
@@ -1968,7 +1968,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	TRACE_ENTER();
 
 	// allocate some memory for the open structure
-	Open = ExAllocatePoolWithTag(NonPagedPool, sizeof(OPEN_INSTANCE), NPF_OPEN_TAG);
+	Open = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(OPEN_INSTANCE), NPF_OPEN_TAG);
 
 	if (Open == NULL)
 	{
@@ -2075,7 +2075,7 @@ NPF_CreateFilterModule(
 	UNREFERENCED_PARAMETER(SelectedIndex);
 
 	// allocate some memory for the filter module structure
-	pFiltMod = ExAllocatePoolWithTag(NonPagedPool, sizeof(NPCAP_FILTER_MODULE), NPF_FILTMOD_TAG);
+	pFiltMod = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(NPCAP_FILTER_MODULE), NPF_FILTMOD_TAG);
 
 	if (pFiltMod == NULL)
 	{
@@ -2154,7 +2154,7 @@ NPF_CreateFilterModule(
 	pFiltMod->MaxFrameSize = 1514;
 
 	pFiltMod->AdapterName.MaximumLength = AdapterName->MaximumLength - DEVICE_PATH_BYTES;
-	pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NonPagedPool, pFiltMod->AdapterName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
+	pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, pFiltMod->AdapterName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	pFiltMod->AdapterName.Length = 0;
 	RtlAppendUnicodeToString(&pFiltMod->AdapterName, AdapterName->Buffer + DEVICE_PATH_CCH);
 
@@ -2644,9 +2644,9 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 
 		if (Request->RequestType == NdisRequestSetInformation && Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER)
 		{
-			// ExAllocatePoolWithTag is permitted to be used at DISPATCH_LEVEL iff allocating from NonPagedPool
+			// ExAllocatePoolWithTag is permitted to be used at DISPATCH_LEVEL iff allocating from NPF_NONPAGED
 #pragma warning(suppress: 28118)
-			pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG), NPF_CLONE_OID_TAG);
+			pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_CLONE_OID_TAG);
 			if (pBuffer == NULL)
 			{
 				IF_LOUD(DbgPrint("Allocate pBuffer failed, cannot modify packet filter.\n");)
@@ -3149,7 +3149,7 @@ NPF_GetPacketFilter(
 	ULONG BytesProcessed = 0;
 	PVOID pBuffer = NULL;
 	
-	pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
+	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
@@ -3251,7 +3251,7 @@ NPF_SetPacketFilter(
 
 	pFiltMod->MyPacketFilter = NewPacketFilter;
 
-	pBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
+	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
 	if (pBuffer == NULL)
 	{
 		IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)

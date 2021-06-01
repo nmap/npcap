@@ -669,7 +669,7 @@ NPF_BufferedWrite(
 		/* Copy packet data to non-paged memory, otherwise we induce
 		 * page faults in NIC drivers: http://issues.nmap.org/1398
 		 * Alternately, we could possibly use Direct I/O for the BIOCSENDPACKETS IoCtl? */
-		npBuff = ExAllocatePoolWithTag(NonPagedPool, pWinpcapHdr->caplen, NPF_BUFFERED_WRITE_TAG);
+		npBuff = ExAllocatePoolWithTag(NPF_NONPAGED, pWinpcapHdr->caplen, NPF_BUFFERED_WRITE_TAG);
 		if (npBuff == NULL)
 		{
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
