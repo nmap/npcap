@@ -692,8 +692,6 @@ NPF_BufferedWrite(
 			break;
 		}
 
-		MmBuildMdlForNonPagedPool(TmpMdl);
-
 		Pos += pWinpcapHdr->caplen;
 
 		// Allocate a packet from our free list
