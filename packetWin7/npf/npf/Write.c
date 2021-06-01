@@ -686,6 +686,8 @@ NPF_BufferedWrite(
 			// Unable to map the memory: packet lost
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate the MDL.\n");)
 
+			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+
 			result = -STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
@@ -702,8 +704,7 @@ NPF_BufferedWrite(
 		if (!NT_SUCCESS(Status))
 		{
 			//  No more free packets
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: no more free packets, returning.\n");)
-
+			
 			NdisResetEvent(&Open->WriteEvent);
 
 			NdisWaitEvent(&Open->WriteEvent, 1000);  
@@ -717,7 +718,10 @@ NPF_BufferedWrite(
 			if (!NT_SUCCESS(Status))
 			{
 				// Second failure, report an error
+				IF_LOUD(DbgPrint("NPF_BufferedWrite: no more free packets, returning.\n");)
+
 				NdisFreeMdl(TmpMdl);
+				ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 
 				result = -Status;
 				break;
