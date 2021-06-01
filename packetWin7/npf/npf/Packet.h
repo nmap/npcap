@@ -543,6 +543,14 @@ VOID NPF_ReturnCapData(
 	_In_ PDEVICE_EXTENSION pDevExt);
 
 /*!
+  \brief Function to free the Net Buffer Lists initiated by ourself.
+*/
+VOID
+NPF_FreePackets(
+	_Inout_ PNET_BUFFER_LIST    NetBufferLists
+	);
+
+/*!
 \brief Context information for originated sent packets
 */
 typedef struct _PACKET_RESERVED

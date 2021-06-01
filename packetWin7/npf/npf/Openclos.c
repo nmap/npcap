@@ -3063,9 +3063,17 @@ Arguments:
 
 /*	TRACE_ENTER();*/
 
-	// Return the received NBLs.  If you removed any NBLs from the chain, make
-	// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
-	NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
+	if (NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
+	{
+		// This is one of ours; free it.
+		NPF_FreePackets(NetBufferLists);
+	}
+	else
+	{
+		// Return the received NBLs.  If you removed any NBLs from the chain, make
+		// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
+		NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
+	}
 
 /*	TRACE_EXIT();*/
 }

@@ -91,14 +91,6 @@ extern HANDLE g_InjectionHandle_IPv6;
 
 
 /*!
-  \brief Function to free the Net Buffer Lists initiated by ourself.
-*/
-VOID
-NPF_FreePackets(
-	_Inout_ PNET_BUFFER_LIST    NetBufferLists
-	);
-
-/*!
   \brief Ends a send operation.
   \param pFiltMod Pointer to filter module context structure
   \param FreeBufAfterWrite Whether the buffer should be freed.
@@ -429,7 +421,7 @@ NPF_Write(
 						pNetBufferList,
 						NDIS_DEFAULT_PORT_NUMBER,
 						1,
-						NDIS_RECEIVE_FLAGS_RESOURCES);
+						0); // If NDIS_RECEIVE_FLAGS_RESOURCES, would need to free pNetBufferList after this.
 				}
 				else
 #endif
@@ -459,14 +451,14 @@ NPF_Write(
 	// (if any of the NdisSend requests returned STATUS_PENDING)
 	//
 	
+	if (
 #ifdef HAVE_RX_SUPPORT
-	if (Open->pFiltMod->SendToRxPath && pNetBufferList)
-	{
-		NPF_FreePackets(pNetBufferList);
-	}
-	else
+		// SendToRxPath receive indications do not block or set an event when they are done.
+		// Maybe they should, or maybe Send indications should not.
+		// Either way, need to avoid waiting for something that won't happen.
+		!Open->pFiltMod->SendToRxPath &&
 #endif
-	if (NT_SUCCESS(Status))
+		NT_SUCCESS(Status))
 	{
 		// TODO: Don't wait forever? Some sort of error would be good.
 		NdisWaitEvent(&Open->NdisWriteCompleteEvent, 0);
@@ -771,7 +763,7 @@ NPF_BufferedWrite(
 					pNetBufferList,
 					NDIS_DEFAULT_PORT_NUMBER,
 					1,
-					NDIS_RECEIVE_FLAGS_RESOURCES);
+					0); // If NDIS_RECEIVE_FLAGS_RESOURCES, would need to free pNetBufferList after this.
 			}
 			else
 #endif
@@ -843,19 +835,13 @@ NPF_BufferedWrite(
 			}
 		}
 	}
-	
-	// Cleanup
-	if (npBuff != NULL) {
-		ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
-	}
 
 	// Wait the completion of pending sends
 #ifdef HAVE_RX_SUPPORT
-	if (Open->pFiltMod->SendToRxPath && pNetBufferList)
-	{
-		NPF_FreePackets(pNetBufferList);
-	}
-	else
+	// SendToRxPath receive indications do not block or set an event when they are done.
+	// Maybe they should, or maybe Send indications should not.
+	// Either way, need to avoid waiting for something that won't happen.
+	if (!Open->pFiltMod->SendToRxPath)
 #endif
 		NPF_WaitEndOfBufferedWrite(Open);
 
