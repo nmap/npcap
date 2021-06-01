@@ -840,8 +840,8 @@ NPF_GetRegistryOption_Integer(
 	{
 		if (valueInfoP->Type == REG_DWORD && valueInfoP->DataLength == 4)
 		{
-			returnValue = *((DWORD *) valueInfoP->Data);
-			IF_LOUD(DbgPrint("\"%ws\" Key = %08X\n", RegValueName->Buffer, *((DWORD *)valueInfoP->Data));)
+			returnValue = *((ULONG *) valueInfoP->Data);
+			IF_LOUD(DbgPrint("\"%ws\" Key = %08X\n", RegValueName->Buffer, *((ULONG *)valueInfoP->Data));)
 		}
 		else
 		{
@@ -1046,8 +1046,8 @@ Return Value:
 	// NdisFDeregisterFilterDriver ought to have called FilterDetach, but something is leaking. Let's force a wait:
 	NdisAcquireSpinLock(&g_FilterArrayLock);
 	while (g_arrFiltMod.Next != NULL) {
-		PNPCAP_FILTER_MODULE pFiltMod = CONTAINING_RECORD(g_arrFiltMod.Next, NPCAP_FILTER_MODULE, FilterModulesEntry);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		PNPCAP_FILTER_MODULE pFiltMod = CONTAINING_RECORD(g_arrFiltMod.Next, NPCAP_FILTER_MODULE, FilterModulesEntry);
 		if (pFiltMod->Loopback) {
 			// NDIS doesn't manage this, so we "detach" it ourselves.
 			NdisReleaseSpinLock(&g_FilterArrayLock);
@@ -1126,7 +1126,6 @@ NPF_IoControl(
 	PUINT					pStats;
 	ULONG					StatsLength;
 	PULONG					pCombinedPacketFilter;
-	PNDIS_LINK_STATE pLinkState;
 
 	HANDLE					hUserEvent;
 	PKEVENT					pKernelEvent;
@@ -1768,7 +1767,7 @@ NPF_IoControl(
 							}
 							else
 							{
-								pLinkState = (PNDIS_LINK_STATE) OidData->Data;
+								PNDIS_LINK_STATE pLinkState = (PNDIS_LINK_STATE) OidData->Data;
 								pLinkState->MediaConnectState = MediaConnectStateConnected;
 								pLinkState->MediaDuplexState = MediaDuplexStateFull;
 								pLinkState->XmitLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;

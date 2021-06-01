@@ -132,7 +132,7 @@ NPF_LoopbackSendNetBufferLists(
 NTSTATUS
 NPF_AllocateNBL(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ PMDL pMdl,
+	_In_ __drv_aliasesMem PMDL pMdl,
 	_In_ SIZE_T uDataLen,
 	_Outptr_result_nullonfailure_ PNET_BUFFER_LIST *ppNBL
        )
