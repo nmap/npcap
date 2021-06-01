@@ -976,21 +976,23 @@ Return Value:
 		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Deleting Adapter, Device Obj=%p (%p)",
 				DeviceObject, OldDeviceObject);
 
+		// Not sure if we need to acquire this lock, since no new IRPs can be issued during unload,
+		// but better safe than sorry.
 		NdisAcquireRWLockWrite(DeviceExtension->AllOpensLock, &lockState, 0);
-		for (CurrEntry = DeviceExtension->AllOpens.Flink;
-				CurrEntry != &DeviceExtension->AllOpens;
-				CurrEntry = CurrEntry->Flink)
+		CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
+		while (CurrEntry != &DeviceExtension->AllOpens)
 		{
 			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
-			if (pOpen->OpenStatus == OpenDetached)
-			{
-				CurrEntry = CurrEntry->Blink;
-				RemoveEntryList(&pOpen->AllOpensEntry);
 
-				NPF_CloseOpenInstance(pOpen);
-				NPF_ReleaseOpenInstanceResources(pOpen);
-				ExFreePool(pOpen);
-			}
+			// NPF_CloseOpenInstance needs PASSIVE_LEVEL
+			NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
+
+			NPF_CloseOpenInstance(pOpen);
+			NPF_ReleaseOpenInstanceResources(pOpen);
+			ExFreePool(pOpen);
+
+			NdisAcquireRWLockWrite(DeviceExtension->AllOpensLock, &lockState, 0);
+			CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
 		}
 		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
 
