@@ -745,18 +745,18 @@ NPF_registerLWF(
 #define SECONDS(seconds)			(((signed __int64)(seconds)) * MILLISECONDS(1000L))
 
 
-//-------------------------------------------------------------------
-_Use_decl_annotations_
-ULONG
-NPF_GetRegistryOption_Integer(
-	PUNICODE_STRING RegistryPath,
-	PUNICODE_STRING RegValueName
+_Ret_maybenull_
+static PKEY_VALUE_PARTIAL_INFORMATION
+NPF_GetRegistryOption(
+	_In_ PUNICODE_STRING RegistryPath,
+	_In_ PUNICODE_STRING RegValueName
 	)
 {
-	ULONG returnValue = 0;
 	OBJECT_ATTRIBUTES objAttrs;
 	NTSTATUS status;
 	HANDLE keyHandle;
+	PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = NULL;
+	SHORT retries = 2;
 
 	TRACE_ENTER();
 	IF_LOUD(DbgPrint("\nRegistryPath: %ws, RegValueName: %ws\n", RegistryPath->Buffer, RegValueName->Buffer);)
@@ -769,68 +769,85 @@ NPF_GetRegistryOption_Integer(
 	}
 	else //OK
 	{
-		BOOLEAN bTried = FALSE;
 		ULONG resultLength;
-		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
-		IF_LOUD(DbgPrint("\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
-REGISTRY_QUERY_VALUE_KEY:
-		status = ZwQueryValueKey(keyHandle,
-			RegValueName,
-			KeyValuePartialInformation,
-			&valueInfo,
-			sizeof(valueInfo),
-			&resultLength);
+		do
+		{
+			status = ZwQueryValueKey(keyHandle,
+				RegValueName,
+				KeyValuePartialInformation,
+				NULL,
+				0,
+				&resultLength);
 
-		if (status == STATUS_OBJECT_NAME_NOT_FOUND && bTried == FALSE)
-		{
-			LARGE_INTEGER delayTime;
-			delayTime.QuadPart = RELATIVE(MILLISECONDS(500));
-			IF_LOUD(DbgPrint("\nCalled KeDelayExecutionThread() to delay 500ms\n"););
-			KeDelayExecutionThread(KernelMode, FALSE, &delayTime);
-			bTried = TRUE;
-			goto REGISTRY_QUERY_VALUE_KEY;
-		}
-
-		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
-		{
-			IF_LOUD(DbgPrint("\nStatus of %x querying key value for size\n", status);)
-		}
-		else
-		{
-			// We know how big it needs to be.
-			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
-			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, NPF_SHORT_TERM_TAG);
-			if (valueInfoP != NULL)
+			if (NT_SUCCESS(status) || status == STATUS_BUFFER_OVERFLOW || status == STATUS_BUFFER_TOO_SMALL)
 			{
-				status = ZwQueryValueKey(keyHandle,
-					RegValueName,
-					KeyValuePartialInformation,
-					valueInfoP,
-					valueInfoLength,
-					&resultLength);
-				if (!NT_SUCCESS(status))
+
+				valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, resultLength, NPF_SHORT_TERM_TAG);
+				if (valueInfoP != NULL)
 				{
-					IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
+					status = ZwQueryValueKey(keyHandle,
+						RegValueName,
+						KeyValuePartialInformation,
+						valueInfoP,
+						resultLength,
+						&resultLength);
+					if (!NT_SUCCESS(status))
+					{
+						IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
+					}
+					else
+					{
+						break;
+					}
+					ExFreePool(valueInfoP);
+					valueInfoP = NULL;
 				}
 				else
 				{
-					IF_LOUD(DbgPrint("\"%ws\" Key = %08X\n", RegValueName->Buffer, *((DWORD *)valueInfoP->Data));)
-
-					if (valueInfoP->DataLength == 4)
-					{
-						returnValue = *((DWORD *) valueInfoP->Data);
-					}
+					IF_LOUD(DbgPrint("Error Allocating the buffer for the NPF_GetRegistryOption_String function\n");)
 				}
-
-				ExFreePool(valueInfoP);
 			}
 			else
 			{
-				IF_LOUD(DbgPrint("Error Allocating the buffer for the NPF_GetRegistryOption_Integer function\n");)
+				IF_LOUD(DbgPrint("\nStatus of %x querying key value for size\n", status);)
+				break;
 			}
-		}
+		} while (--retries > 0 && (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_BUFFER_OVERFLOW));
 
 		ZwClose(keyHandle);
+	}
+
+	TRACE_EXIT();
+	return valueInfoP;
+}
+
+//-------------------------------------------------------------------
+_Use_decl_annotations_
+ULONG
+NPF_GetRegistryOption_Integer(
+	PUNICODE_STRING RegistryPath,
+	PUNICODE_STRING RegValueName
+	)
+{
+	ULONG returnValue = 0;
+	PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = NULL;
+
+	TRACE_ENTER();
+
+	valueInfoP = NPF_GetRegistryOption(RegistryPath, RegValueName);
+
+	if (valueInfoP != NULL)
+	{
+		if (valueInfoP->Type == REG_DWORD && valueInfoP->DataLength == 4)
+		{
+			returnValue = *((DWORD *) valueInfoP->Data);
+			IF_LOUD(DbgPrint("\"%ws\" Key = %08X\n", RegValueName->Buffer, *((DWORD *)valueInfoP->Data));)
+		}
+		else
+		{
+			IF_LOUD(DbgPrint("\"%ws\" Key invalid type or length\n", RegValueName->Buffer);)
+		}
+		ExFreePool(valueInfoP);
 	}
 
 	TRACE_EXIT();
@@ -846,72 +863,36 @@ NPF_GetRegistryOption_String(
 	PNDIS_STRING g_OutputString
 	)
 {
-	OBJECT_ATTRIBUTES objAttrs;
-	NTSTATUS status;
-	HANDLE keyHandle;
+	PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = NULL;
 
 	TRACE_ENTER();
-	IF_LOUD(DbgPrint("\nRegistryPath: %ws, RegValueName: %ws\n", RegistryPath->Buffer, RegValueName->Buffer);)
 
-	InitializeObjectAttributes(&objAttrs, RegistryPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
-	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
-	if (!NT_SUCCESS(status))
-	{
-		IF_LOUD(DbgPrint("\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
-	}
-	else //OK
-	{
-		ULONG resultLength;
-		KEY_VALUE_PARTIAL_INFORMATION valueInfo;
-		status = ZwQueryValueKey(keyHandle,
-			RegValueName,
-			KeyValuePartialInformation,
-			&valueInfo,
-			sizeof(valueInfo),
-			&resultLength);
+	valueInfoP = NPF_GetRegistryOption(RegistryPath, RegValueName);
 
-		if (!NT_SUCCESS(status) && (status != STATUS_BUFFER_OVERFLOW))
+	if (valueInfoP != NULL)
+	{
+		if (valueInfoP->Type == REG_SZ && valueInfoP->DataLength > 1)
 		{
-			IF_LOUD(DbgPrint("\nStatus of %x querying key value for size\n", status);)
-		}
-		else
-		{
-			// We know how big it needs to be.
-			ULONG valueInfoLength = valueInfo.DataLength + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
-			PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, valueInfoLength, NPF_SHORT_TERM_TAG);
-			if (valueInfoP != NULL)
+			IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, (PWSTR)valueInfoP->Data);)
+
+			g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
+			g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
+			g_OutputString->Buffer = ExAllocatePoolWithTag(NonPagedPool, g_OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
+
+			if (g_OutputString->Buffer)
 			{
-				status = ZwQueryValueKey(keyHandle,
-					RegValueName,
-					KeyValuePartialInformation,
-					valueInfoP,
-					valueInfoLength,
-					&resultLength);
-				if (!NT_SUCCESS(status))
-				{
-					IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
-				}
-				else
-				{
-					IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, (PWSTR) valueInfoP->Data);)
-
-					g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
-					g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
-					g_OutputString->Buffer = ExAllocatePoolWithTag(NonPagedPool, g_OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
-
-					if (g_OutputString->Buffer)
-						RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
-				}
-
-				ExFreePool(valueInfoP);
+				RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
 			}
 			else
 			{
-				IF_LOUD(DbgPrint("Error Allocating the buffer for the NPF_GetRegistryOption_String function\n");)
+				g_OutputString->Length = g_OutputString->MaximumLength = 0;
 			}
 		}
-
-		ZwClose(keyHandle);
+		else
+		{
+			IF_LOUD(DbgPrint("\"%ws\" Key invalid type or length\n", RegValueName->Buffer);)
+		}
+		ExFreePool(valueInfoP);
 	}
 
 	TRACE_EXIT();
