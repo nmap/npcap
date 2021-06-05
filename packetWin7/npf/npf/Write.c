@@ -671,7 +671,7 @@ NPF_BufferedWrite(
 		RtlCopyMemory(npBuff, UserBuff + Pos, pWinpcapHdr->caplen);
 
 		// Allocate an MDL to map the packet data
-		TmpMdl = NdisAllocateMdl(Open->pFiltMod, npBuff, pWinpcapHdr->caplen);
+		TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, npBuff, pWinpcapHdr->caplen);
 
 		if (TmpMdl == NULL)
 		{
