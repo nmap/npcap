@@ -612,7 +612,9 @@ NPF_AlignProtocolField(
 
 //-------------------------------------------------------------------
 
-_Ret_maybenull_
+_Must_inspect_result_
+_Success_(return != NULL)
+__drv_allocatesMem(mem)
 PNPF_CAP_DATA NPF_GetCapData(
 		_Inout_ PLOOKASIDE_LIST_EX pPool,
 		_Inout_ PNPF_NB_COPIES pNBCopy,

@@ -82,7 +82,7 @@
 
 #include "stdafx.h"
 
-#include "packet.h"
+#include "Packet.h"
 #include "Loopback.h"
 #include "..\..\..\Common\WpcapNames.h"
 
@@ -242,7 +242,10 @@ NPF_GetFilterModuleByAdapterName(
   \return Pointer to the new open instance.
 
 */
-_Ret_maybenull_
+
+_Must_inspect_result_
+_Success_(return != NULL)
+__drv_allocatesMem(mem)
 POPEN_INSTANCE
 NPF_CreateOpenObject(
 	_In_ NDIS_HANDLE NdisHandle

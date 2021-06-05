@@ -531,15 +531,15 @@ NPF_ResetBufferContents(
 );
 
 VOID NPF_ReturnNBCopies(
-	_In_ _Frees_ptr_ PNPF_NB_COPIES pNBCopy,
+	_In_ PNPF_NB_COPIES pNBCopy,
 	_In_ PDEVICE_EXTENSION pDevExt);
 
 VOID NPF_ReturnNBLCopy(
-	_In_ _Frees_ptr_ PNPF_NBL_COPY pNBLCopy,
+	_In_ PNPF_NBL_COPY pNBLCopy,
 	_In_ PDEVICE_EXTENSION pDevExt);
 
 VOID NPF_ReturnCapData(
-	_In_ _Frees_ptr_ PNPF_CAP_DATA pCapData,
+	_In_ PNPF_CAP_DATA pCapData,
 	_In_ PDEVICE_EXTENSION pDevExt);
 
 /*!

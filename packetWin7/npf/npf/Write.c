@@ -89,6 +89,16 @@ extern ULONG g_DltNullMode;
 extern HANDLE g_InjectionHandle_IPv4;
 extern HANDLE g_InjectionHandle_IPv6;
 
+// This function exists only to suppress C6014 regarding memory leak.
+// Be very suspicious of any use of it!
+// MUST be accompanied by a well-researched justification.
+VOID
+#pragma warning(suppress: 28194) // We aren't really aliasing it here, but we know that it's aliased for some other reason.
+NPF_AnalysisAssumeAliased(_In_ __drv_aliasesMem PVOID p)
+{
+	UNREFERENCED_PARAMETER(p);
+	return;
+}
 
 /*!
   \brief Ends a send operation.
@@ -122,6 +132,7 @@ NPF_LoopbackSendNetBufferLists(
 #endif
 
 NTSTATUS
+_At_(*ppNBL, __drv_allocatesMem(mem))
 NPF_AllocateNBL(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ __drv_aliasesMem PMDL pMdl,
@@ -422,6 +433,12 @@ NPF_Write(
 						NDIS_DEFAULT_PORT_NUMBER,
 						1,
 						0); // If NDIS_RECEIVE_FLAGS_RESOURCES, would need to free pNetBufferList after this.
+					// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the annotations for
+					// NdisFIndicateReceiveNetBufferLists do not use __drv_aliasesMem for the 2nd parameter.
+					// When Flags (5th parameter) do *not* have NDIS_RECEIVE_FLAGS_RESOURCES set, the NBL is
+					// owned by NDIS until it is returned via NPF_ReturnEx (FilterReturnNetBufferLists handler)
+					// Therefore we must not free it, and it is not leaking here.
+					NPF_AnalysisAssumeAliased(pNetBufferList);
 				}
 				else
 #endif
@@ -673,6 +690,11 @@ NPF_BufferedWrite(
 		// Allocate an MDL to map the packet data
 		TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, npBuff, pWinpcapHdr->caplen);
 
+		// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
+		// is stored in the MDL and we retrieve it (via NdisQueryMdl) in NPF_FreePackets called from NPF_ReturnEx.
+		// Therefore, it is not leaking after this point.
+		NPF_AnalysisAssumeAliased(npBuff);
+
 		if (TmpMdl == NULL)
 		{
 			// Unable to map the memory: packet lost
@@ -764,6 +786,12 @@ NPF_BufferedWrite(
 					NDIS_DEFAULT_PORT_NUMBER,
 					1,
 					0); // If NDIS_RECEIVE_FLAGS_RESOURCES, would need to free pNetBufferList after this.
+				// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the annotations for
+				// NdisFIndicateReceiveNetBufferLists do not use __drv_aliasesMem for the 2nd parameter.
+				// When Flags (5th parameter) do *not* have NDIS_RECEIVE_FLAGS_RESOURCES set, the NBL is
+				// owned by NDIS until it is returned via NPF_ReturnEx (FilterReturnNetBufferLists handler)
+				// Therefore we must not free it, and it is not leaking here.
+				NPF_AnalysisAssumeAliased(pNetBufferList);
 			}
 			else
 #endif
