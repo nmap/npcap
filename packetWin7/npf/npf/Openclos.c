@@ -510,7 +510,6 @@ NPF_OpenAdapter(
 	PNPCAP_FILTER_MODULE			pFiltMod = NULL;
 	POPEN_INSTANCE			Open;
 	PIO_STACK_LOCATION		IrpSp;
-	NDIS_STATUS				Status = STATUS_SUCCESS;
 	ULONG idx;
 	PUNICODE_STRING FileName;
 	NDIS_HANDLE NdisFilterHandle = ((PDEVICE_EXTENSION)(DeviceObject->DeviceExtension))->FilterDriverHandle;
@@ -586,27 +585,7 @@ NPF_OpenAdapter(
 		Open);
 #endif
 
-	if (!NT_SUCCESS(Status))
-	{
-		// Free the open instance' resources
-		NPF_ReleaseOpenInstanceResources(Open);
-
-		// Free the open instance itself
-		ExFreePool(Open);
-		Open = NULL;
-
-		NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
-
-		Irp->IoStatus.Status = Status;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return Status;
-	}
-	else
-	{
-		//  Save or open here
-		IrpSp->FileObject->FsContext = Open;
-	}
+	IrpSp->FileObject->FsContext = Open;
 
 	NPF_AddToAllOpensList(Open);
 
@@ -625,12 +604,12 @@ NPF_OpenAdapter(
 		Open->OpenStatus = OpenDetached;
 	}
 
-	Irp->IoStatus.Status = Status;
+	Irp->IoStatus.Status = STATUS_SUCCESS;
 	Irp->IoStatus.Information = FILE_OPENED;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 	TRACE_EXIT();
-	return Status;
+	return STATUS_SUCCESS;
 }
 
 //-------------------------------------------------------------------
