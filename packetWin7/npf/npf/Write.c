@@ -690,11 +690,6 @@ NPF_BufferedWrite(
 		// Allocate an MDL to map the packet data
 		TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, npBuff, pWinpcapHdr->caplen);
 
-		// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
-		// is stored in the MDL and we retrieve it (via NdisQueryMdl) in NPF_FreePackets called from NPF_ReturnEx.
-		// Therefore, it is not leaking after this point.
-		NPF_AnalysisAssumeAliased(npBuff);
-
 		if (TmpMdl == NULL)
 		{
 			// Unable to map the memory: packet lost
@@ -705,6 +700,11 @@ NPF_BufferedWrite(
 			result = -STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
+
+		// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
+		// is stored in the MDL and we retrieve it (via NdisQueryMdl) in NPF_FreePackets called from NPF_ReturnEx.
+		// Therefore, it is not leaking after this point.
+		NPF_AnalysisAssumeAliased(npBuff);
 
 		Pos += pWinpcapHdr->caplen;
 
