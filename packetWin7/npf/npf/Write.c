@@ -89,17 +89,6 @@ extern ULONG g_DltNullMode;
 extern HANDLE g_InjectionHandle_IPv4;
 extern HANDLE g_InjectionHandle_IPv6;
 
-// This function exists only to suppress C6014 regarding memory leak.
-// Be very suspicious of any use of it!
-// MUST be accompanied by a well-researched justification.
-VOID
-#pragma warning(suppress: 28194) // We aren't really aliasing it here, but we know that it's aliased for some other reason.
-NPF_AnalysisAssumeAliased(_In_ __drv_aliasesMem PVOID p)
-{
-	UNREFERENCED_PARAMETER(p);
-	return;
-}
-
 /*!
   \brief Ends a send operation.
   \param pFiltMod Pointer to filter module context structure
@@ -126,10 +115,19 @@ NPF_SendCompleteExForEachOpen(
 NTSTATUS
 NPF_LoopbackSendNetBufferLists(
 	_In_ NDIS_HANDLE FilterModuleContext,
-	_In_ PNET_BUFFER_LIST NetBufferList
+	_In_ __drv_aliasesMem PNET_BUFFER_LIST NetBufferList
 	);
 
 #endif
+
+inline
+__drv_allocatesMem(mem)
+PVOID
+#pragma warning(suppress: 28195) // We aren't really allocating it here, but we know that it was allocated in some other un-annotated function.
+NPF_AnalysisAssumeAllocated(_In_ PVOID *p)
+{
+	return *p;
+}
 
 NTSTATUS
 _At_(*ppNBL, __drv_allocatesMem(mem))
@@ -151,6 +149,22 @@ NPF_AllocateNBL(
 			0,
 			uDataLen,
 			ppNBL);
+		if (NT_SUCCESS(Status) && *ppNBL)
+		{
+			// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the annotations for
+			// FwpsAllocateNetBufferAndNetBufferList do not use __drv_aliasesMem for the 4th parameter,
+			// even though it is just a wrapper for NdisAllocateNetBufferAndNetBufferList, which does alias the MDL.
+			NPF_AnalysisAssumeAliased(pMdl);
+			// WORKAROUND: FwpsAllocateNetBufferAndNetBufferList also does not have annotations for
+			// allocating the NBL. This fake function will suppress the warning about it.
+			*ppNBL = NPF_AnalysisAssumeAllocated(ppNBL);
+		}
+		else
+		{
+			// Can't indicate success if it didn't actually succeed.
+			Status = NT_SUCCESS(Status) ? STATUS_INSUFFICIENT_RESOURCES : Status;
+			*ppNBL = NULL;
+		}
 	}
 	else
 #endif
@@ -1213,6 +1227,11 @@ NPF_LoopbackSendNetBufferLists(
 			NetBufferList,
 			NPF_NetworkInjectionComplete,
 			FilterModuleContext);
+	if (NT_SUCCESS(status))
+	{
+		// Fwps* functions don't have annotations about aliasing or freeing memory. Have to do it ourselves.
+		NPF_AnalysisAssumeAliased(NetBufferList);
+	}
 
 	TRACE_EXIT();
 	return status;

@@ -547,8 +547,19 @@ VOID NPF_ReturnCapData(
 */
 VOID
 NPF_FreePackets(
-	_Inout_ PNET_BUFFER_LIST    NetBufferLists
+	_In_ __drv_freesMem(mem) PNET_BUFFER_LIST    NetBufferLists
 	);
+
+// This function exists only to suppress C6014 regarding memory leak.
+// Be very suspicious of any use of it!
+// MUST be accompanied by a well-researched justification.
+inline VOID
+#pragma warning(suppress: 28194) // We aren't really aliasing it here, but we know that it's aliased for some other reason.
+NPF_AnalysisAssumeAliased(_In_ __drv_aliasesMem PVOID p)
+{
+	UNREFERENCED_PARAMETER(p);
+	return;
+}
 
 /*!
 \brief Context information for originated sent packets

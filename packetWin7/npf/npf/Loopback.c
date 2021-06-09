@@ -267,6 +267,11 @@ NPF_TapLoopback(
 									"NPF_TapLoopback: Failed to allocate MDL.");
 							break;
 						}
+						// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
+						// is stored in the MDL and we retrieve it (via NdisQueryMdl) in the cleanup block below.
+						// Therefore, it is not leaking after this point.
+						NPF_AnalysisAssumeAliased(pTmpBuf);
+
 						pMdl->Next = NET_BUFFER_CURRENT_MDL(pNetBuffer)->Next;
 					}
 					else {
@@ -278,6 +283,7 @@ NPF_TapLoopback(
 									"NPF_TapLoopback: Failed to allocate MDL.");
 							break;
 						}
+						// No NPF_AnalysisAssumeAliased here because there is only one npBuff, and we keep it around until we free it below.
 						FirstMDLLen = numBytes;
 						pMdl->Next = NET_BUFFER_CURRENT_MDL(pNetBuffer);
 					}
