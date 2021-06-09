@@ -262,6 +262,7 @@ NPF_TapLoopback(
 						RtlCopyMemory(pTmpBuf + numBytes, pOrigBuf + Offset, OrigLen - Offset);
 						pMdl = NdisAllocateMdl(pLoopbackFilter->AdapterHandle, pTmpBuf, FirstMDLLen);
 						if (pMdl == NULL) {
+							NdisFreeMemory(pTmpBuf, FirstMDLLen, 0);
 							TRACE_MESSAGE(PACKET_DEBUG_LOUD,
 									"NPF_TapLoopback: Failed to allocate MDL.");
 							break;
@@ -317,11 +318,11 @@ NPF_TapLoopback(
 				pMdl = (PMDL)(NET_BUFFER_PROTOCOL_RESERVED(pFakeNetBuffer)[0]);
 
 				if (pMdl != NULL) {
-					/* If the MDL's buffer is numBytes long, it's npBuff and we'll free it later.
+					/* If it's npBuff, we'll free it later.
 					 * Otherwise it's unique and we should free it now. */
-					FirstMDLLen = MmGetMdlByteCount(pMdl);
-					if (FirstMDLLen != numBytes) {
-						pTmpBuf = MmGetSystemAddressForMdlSafe(pMdl, HighPagePriority|MdlMappingNoExecute);
+					NdisQueryMdl(pMdl, &pTmpBuf, &FirstMDLLen, HighPagePriority|MdlMappingNoExecute);
+					if (pTmpBuf != npBuff)
+					{
 						// See NPF_FreeNBCopies for TODO item related to this assert and
 						// justification for HighPagePriority above.
 						if (NT_VERIFY(pTmpBuf != NULL)) {
