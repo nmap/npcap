@@ -881,7 +881,7 @@ Callouts and filters will be removed during DriverUnload.
 		&g_WFPEngineHandle
 		);
 
-	if (status != NO_ERROR || !g_WFPEngineHandle || g_WFPEngineHandle == INVALID_HANDLE_VALUE)
+	if (!NT_SUCCESS(status) || !g_WFPEngineHandle || g_WFPEngineHandle == INVALID_HANDLE_VALUE)
 	{
 		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
 		goto Exit;
@@ -889,11 +889,8 @@ Callouts and filters will be removed during DriverUnload.
 	engineOpened = TRUE;
 
 	status = FwpmTransactionBegin(g_WFPEngineHandle, 0);
-	if (status != NO_ERROR)
+	if (!NT_SUCCESS(status))
 	{
-		// FwpmTransactionBegin annotations assume transaction is always started, even if there's a failure.
-		// We have to explicitly tell the engine that it isn't necessary to release/abort the transaction.
-		_Analysis_assume_lock_not_held_(g_WFPEngineHandle);
 		goto Exit;
 	}
 	inTransaction = TRUE;
@@ -907,7 +904,7 @@ Callouts and filters will be removed during DriverUnload.
 	provider.displayData.description = NPF_DRIVER_NAME_NORMAL_WIDECHAR;
 	provider.serviceName = NPF_DRIVER_NAME_SMALL_WIDECHAR;
 	status = FwpmProviderAdd(g_WFPEngineHandle, &provider, NULL);
-	if (status != NO_ERROR)
+	if (!NT_SUCCESS(status))
 	{
 		goto Exit;
 	}
@@ -925,7 +922,7 @@ Callouts and filters will be removed during DriverUnload.
 	// implementation.
 
 	status = FwpmSubLayerAdd(g_WFPEngineHandle, &NPFSubLayer, NULL);
-	if (status != NO_ERROR)
+	if (!NT_SUCCESS(status))
 	{
 		goto Exit;
 	}
@@ -994,12 +991,12 @@ Exit:
 	if (!NT_SUCCESS(status))
 	{
 		IF_LOUD(DbgPrint("NPF_RegisterCallouts: failed to register callouts\n");)
-		if (inTransaction && g_WFPEngineHandle && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+		if (inTransaction)
 		{
 			FwpmTransactionAbort(g_WFPEngineHandle);
 			_Analysis_assume_lock_not_held_(g_WFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
 		}
-		if (engineOpened && g_WFPEngineHandle && g_WFPEngineHandle != INVALID_HANDLE_VALUE)
+		if (engineOpened)
 		{
 			FwpmEngineClose(g_WFPEngineHandle);
 			g_WFPEngineHandle = INVALID_HANDLE_VALUE;
