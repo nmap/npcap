@@ -800,7 +800,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -813,7 +813,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NPCAP_OEM;WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -826,7 +826,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -838,7 +838,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|ARM64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -850,7 +850,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NPCAP_OEM;WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -862,7 +862,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Debug|ARM64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NPCAP_OEM;WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -874,7 +874,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -885,7 +885,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -896,7 +896,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -907,7 +907,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM RO Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;NPCAP_READ_ONLY;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;NPCAP_READ_ONLY;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -918,7 +918,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -929,7 +929,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -940,7 +940,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -951,7 +951,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -962,7 +962,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -973,7 +973,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -984,7 +984,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;STD_CALL;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -995,7 +995,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release SDV|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS_WDM=1;NDIS6X;WIN_NT_DRIVER;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS_WDM=1;NDIS6X;WIN_NT_DRIVER;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -1008,7 +1008,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1019,7 +1019,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1030,7 +1030,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1041,7 +1041,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1052,7 +1052,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM RO Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;NPCAP_READ_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;NPCAP_READ_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1063,7 +1063,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1074,7 +1074,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1085,7 +1085,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM RO Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;NPCAP_READ_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;NPCAP_READ_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1096,7 +1096,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1107,7 +1107,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1118,7 +1118,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1129,7 +1129,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Debug|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1140,7 +1140,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1151,7 +1151,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Debug|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1162,7 +1162,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1173,7 +1173,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1184,7 +1184,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1195,7 +1195,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win10 OEM RO Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1206,7 +1206,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1217,7 +1217,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1228,7 +1228,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1239,7 +1239,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NPCAP_OEM;NPCAP_READ_ONLY;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1250,7 +1250,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release SDV|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS_WDM=1;NDIS6X;WIN_NT_DRIVER;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS_WDM=1;NDIS6X;WIN_NT_DRIVER;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1264,7 +1264,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release SDV|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS_WDM=1;NDIS6X;WIN_NT_DRIVER;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;NDIS_WDM=1;NDIS6X;WIN_NT_DRIVER;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;POOL_NX_OPTIN_AUTO=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
