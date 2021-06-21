@@ -78,98 +78,59 @@
 
   </sect2>
 
-  <sect2 id="npcap-winpcap">
-    <title>Npcap and WinPcap</title>
+  <sect2 id="npcap-features">
+    <title>Npcap Features</title>
 
-    <para>Npcap is an update of <ulink role="hidepdf" url="http://www.winpcap.org/">WinPcap</ulink>
-      to the <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/hardware/ff565492(v=vs.85).aspx">NDIS 6 Light-Weight Filter (LWF)</ulink> API.
-      It supports <command>Windows 7, 8, 8.1, and 10</command>. It is developed
-      by the <ulink role="hidepdf" url="http://nmap.org/">Nmap Project</ulink>
-      as a continuation of the project started by Yang Luo
-      under <ulink role="hidepdf" url="https://www.google-melange.com/gsoc/project/details/google/gsoc2013/hsluoyz/5727390428823552">Google Summer of Code 2013</ulink> and
-      <ulink role="hidepdf" url="https://www.google-melange.com/gsoc/project/details/google/gsoc2015/hsluoyz/5723971634855936">2015</ulink>.
-      It also received many helpful tests from <ulink role="hidepdf" url="https://www.wireshark.org/">Wireshark</ulink>
-      and <ulink role="hidepdf" url="http://www.netscantools.com/">NetScanTools</ulink>.
-    </para>
-
-    <sect3 id="npcap-features">
-      <title>Feature comparison with WinPcap</title>
-
-      <para>Npcap carries on the WinPcap legacy, but is not without its own
-        innovations. Here are some of the most exciting improvements and new
-        features that Npcap adds:</para>
+      <para>Npcap has many exciting features that set it above other packet capture solutions:</para>
 
       <itemizedlist>
-        <listitem><para><emphasis>NDIS 6 Support</emphasis>: Npcap makes use of the new NDIS Lightweight Filter driver introduced in
-            NDIS 6.0. This driver type is faster and has less overhead
-            than the legacy <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/hardware/ff557012(v=vs.85).aspx">NDIS 5 Intermediate Driver</ulink>
-            type used by WinPcap.
+        <listitem><para><emphasis>Built for modern Windows</emphasis>: Npcap is written for Windows 10, Windows 8.1, Windows 8, and Windows 7. Using up-to-date NDIS versions, it allows you to capture traffic without slowing down the network stack. Npcap is implemented as a NDIS 6 Lightweight Filter driver, faster and with less overhead
+	    than the legacy <ulink role="hidepdf" url="https://docs.microsoft.com/en-us/previous-versions/windows/hardware/network/ff557149(v=vs.85)">NDIS 5 Protocol Driver</ulink>
+            used by WinPcap.
         </para></listitem>
 
-        <listitem><para><emphasis>Latest libpcap API Support</emphasis>: Npcap provides support
-            for the latest <ulink role="hidepdf" url="https://github.com/the-tcpdump-group/libpcap">libpcap API</ulink>
-            by accepting libpcap as a <ulink role="hidepdf" url="https://git-scm.com/docs/git-submodule">Git submodule</ulink>.
-            The latest libpcap 1.8 has integrated more fascinating features and functions than the
-            <ulink role="hidepdf" url="https://www.winpcap.org/misc/changelog.htm">deprecated libpcap 1.0.0 shipped by WinPcap</ulink>.
-            Moreover, since Linux already has a good support for latest libpcap API, using
-            Npcap on Windows facilitates your software to base on the same API on both Windows and Linux.</para></listitem>
+	<listitem><para><emphasis>WinPcap compatibility</emphasis>: Npcap is a
+	    drop-in replacement for <ulink role="hidepdf" url="https://www.winpcap.org/">WinPcap</ulink>
+	    in most applications. 
+        </para></listitem>
 
-        <listitem><para><emphasis><quote>Admin-only Mode</quote> Support</emphasis>: Npcap supports to restrict its
-            use to Administrators for safety purpose. If Npcap is installed with
-            the option <quote>Restrict Npcap driver's access to Administrators only</quote> checked,
-            when a non-Admin user tries to start a user software (Nmap, Wireshark, etc),
-            the <ulink role="hidepdf" url="http://windows.microsoft.com/en-us/windows/what-is-user-account-control#1TC=windows-7">User Account Control (UAC)</ulink>
-            dialog will prompt asking for Administrator privilege. Only when the end
-            user chooses Yes, the driver can be accessed. This is similar to UNIX
-            where you need root access to capture packets.</para></listitem>
+	<listitem><para><emphasis>Updated cross-platform libpcap API</emphasis>:
+	    The libpcap API allows cross-platform packet capture applications
+	    to target Linux, Windows, macOS, BSD, Solaris and others. Npcap includes
+            the latest version of <ulink role="hidepdf" url="https://tcpdump.org">libpcap</ulink>,
+	    providing the best solution for compatibility, performance, functionality, and security.
+            </para></listitem>
 
-        <listitem><para><emphasis>Loopback Packet Capture</emphasis>: Npcap is able to
+        <listitem><para><emphasis>Loopback packet capture and injection</emphasis>: Npcap is able to
             see Windows loopback packets using the
             <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/desktop/aa366510(v=vs.85).aspx">
               Windows Filtering Platform (WFP)</ulink>. Npcap supplies an
             interface named <quote>NPF_Loopback</quote>, with the description <quote>Adapter for loopback capture.</quote>
-            If you are a Wireshark user, choose this adapter
-            to capture, you will see all loopback traffic the same way as other
-            non-loopback adapters. Try it by typing in commands like <command>ping 127.0.0.1</command>
-            (IPv4) or <command>ping ::1</command> (IPv6).</para></listitem>
+            Wireshark users can choose this adapter to capture all loopback traffic the same way as other
+	    non-loopback adapters.
+	    Packet injection works as well with <function>pcap_inject()</function>.
+            </para></listitem>
 
-        <listitem><para><emphasis>Loopback Packet Injection</emphasis>: Besides loopback packet
-            capturing, Npcap can also send out loopback packets using the
-            <ulink role="hidepdf" url="https://msdn.microsoft.com/en-us/library/windows/hardware/ff556958(v=vs.85).aspx">Winsock Kernel (WSK)</ulink>
-            technique. A user software (e.g. Nmap) can just send packets
-            on the <quote>NPF_Loopback</quote> device using
-            <function>pcap_inject()</function> or
-            <function>PacketSendPacket</function> just like on a standard
-            interface. Npcap
-            will automatically remove the packet's DLT_NULL header and
-            inject the payload into Windows TCP/IP stack.</para></listitem>
-
-        <listitem><para><emphasis>Raw 802.11 Packets Capture Support</emphasis>: Npcap is able to see
-            <emphasis>802.11</emphasis> packets instead of <emphasis>fake Ethernet</emphasis> packets on ordinary wireless
+        <listitem><para><emphasis>Raw 802.11 Packet Capture Support</emphasis>: Npcap is able to see
+            <emphasis>802.11</emphasis> frames instead of <emphasis>emulated Ethernet</emphasis> frames on ordinary wireless
             adapters. You need to select the <option>Support raw 802.11 traffic (and monitor
               mode) for wireless adapters</option> option in the installation wizard to enable
             this feature. When your adapter is in <quote>Monitor Mode</quote>, Npcap will supply all
-            <emphasis>802.11 data + control + management</emphasis> packets with radiotap headers. When
+	    <emphasis>802.11 data + control + management</emphasis> packets with <ulink role="hidepdf" url="http://www.radiotap.org/">Radiotap</ulink> headers. When
             your adapter is in <quote>Managed Mode</quote>, Npcap will only supply <emphasis>Ethernet</emphasis>
-            packets. Npcap directly supports to use Wireshark to capture in <quote>Monitor Mode</quote>.
-            Meantime, Npcap also provides the <filename>WlanHelper.exe</filename>
-            tool to help you switch to <quote>Monitor Mode</quote> on your own. See more details
-            about this feature in section
-            <quote><link linkend="npcap-feature-dot11" endterm="npcap-feature-dot11.title"/></quote>.
-            See more details about radiotap here:
-            <ulink role="hidepdf" url="http://www.radiotap.org/">http://www.radiotap.org/</ulink></para></listitem>
+            packets. Npcap directly supports using Wireshark to capture in <quote>Monitor Mode</quote>.
+            Npcap also provides the <filename>WlanHelper.exe</filename>
+            tool to manually configure WiFi PHY parameters. See more details
+            about this feature in <xref linkend="npcap-feature-dot11" />.
+            </para></listitem>
 
-        <listitem><para><emphasis><quote>WinPcap API-compatible Mode</quote>
-              Support</emphasis>: <quote>WinPcap API-compatible Mode</quote> makes Npcap a
-            strict WinPcap replacement by using the same DLL location and service name as
-            WinPcap. This is useful for testing or migrating from software that only uses
-            WinPcap, but because Npcap is masquerading as WinPcap, software will not be
-            able to be aware of and use Npcap's newer features.  It's notable that before
-            installing in this mode, any existing WinPcap installation will be
-            uninstalled and replaced.
-        </para></listitem>
+        <listitem><para><emphasis><quote>Admin-only Mode</quote> Support</emphasis>: Npcap supports restricting its
+            use to Administrators for safety purpose. If Npcap is installed with
+            the option <quote>Restrict Npcap driver's access to Administrators only</quote> checked,
+            only Built-in Administrators may access its features via user software (Nmap, Wireshark, etc).
+	    This provides a level of restriction similar to requiring root access for packet capture on Linux/UNIX.</para></listitem>
+
       </itemizedlist>
-    </sect3>
   </sect2>
 
   <sect2>
@@ -177,9 +138,7 @@
 
     <para>The purpose of this manual is to provide a comprehensive and easy way
       to browse the documentation of the Npcap architecture. You will find
-      three main sections: <xref linkend="npcap-users-guide" />,
-      <xref linkend="npcap-devguide" />,
-      and <xref linkend="npcap-internals" />.</para>
+      three main sections:</para>
 
     <para><xref linkend="npcap-users-guide" /> is for end users of Npcap, and
       primarily concerns installation options, hardware compatibility, and bug
@@ -254,6 +213,16 @@
 
   <sect2 id="npcap-guide-copyright">
     <title>Acknowledgements and copyright</title>
+
+    <para>Npcap is an update of <ulink role="hidepdf" url="https://www.winpcap.org/">WinPcap</ulink>.
+      It is developed
+      by the <ulink role="hidepdf" url="https://nmap.org/">Nmap Project</ulink>
+      as a continuation of the project started by Yang Luo
+      under <ulink role="hidepdf" url="https://www.google-melange.com/gsoc/project/details/google/gsoc2013/hsluoyz/5727390428823552">Google Summer of Code 2013</ulink> and
+      <ulink role="hidepdf" url="https://www.google-melange.com/gsoc/project/details/google/gsoc2015/hsluoyz/5723971634855936">2015</ulink>.
+      It also received many helpful tests from <ulink role="hidepdf" url="https://www.wireshark.org/">Wireshark</ulink>
+      and <ulink role="hidepdf" url="https://www.netscantools.com/">NetScanTools</ulink>.
+    </para>
 
     <para>Portions of this guide were adapted from the WinPcap documentation.
       Copyright &#169; 2002-2005 Politecnico di Torino. Copyright &#169;
