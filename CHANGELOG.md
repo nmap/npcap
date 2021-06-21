@@ -1,4 +1,53 @@
 ﻿
+## Npcap 1.40 [2021-06-21]
+
+* Npcap can now be installed on Windows 10 for ARM64 devices. Both ARM64 and
+  x86 DLLs will be installed, allowing existing x86 applications such as Nmap
+  or Wireshark to run without modification.
+
+* Npcap SDK 1.10 release coincides with this release, providing updated
+  documentation and libs for ARM64.
+
+* Npcap code now passes Microsoft's Static Driver Verifier for NDIS drivers and
+  Visual Studio's Code Analysis "AllRules" ruleset. A couple of minor and
+  extremely-improbable bugs were fixed in addition to general code cleanup and annotation.
+
+* On Windows 8 and 8.1, the Npcap driver has been updated to NDIS 6.30,
+  supporting network stack improvements like RSC and QoS. Windows 10 still uses
+  NDIS 6.50 and Windows 7 uses NDIS 6.20.
+
+* Npcap is no longer distributed with SHA-1 digital signatures. Windows 7 and
+  Server 2008 R2 will require KB4474419 in order to install Npcap. All other
+  platforms support SHA-2 digital signatures by default.
+
+* Streamlined loopback packet injection to avoid using Winsock Kernel (WSK)
+  sockets. This removes a significant amount of complexity and overhead.
+
+* Due to Microsoft's [deprecation of cross-signed root certificates for kernel-mode code signing](https://docs.microsoft.com/en-us/windows-hardware/drivers/install/deprecation-of-software-publisher-certificates-and-commercial-release-certificates),
+  Npcap 1.40 may not install correctly on Windows versions prior to Windows 10.
+  Our testing did not show any issues, but users who experience installation
+  failures may use the `/prior_driver=yes` installation option to install the
+  Npcap 1.31 driver instead, which has no such issues.
+
+* The "npcapwatchdog" scheduled task, which ensures the Npcap driver service is
+  configured to start at boot, is now installed with a description when
+  possible (Windows 7 does not support creating scheduled tasks via PowerShell).
+  Fixes [#498](http://issues.npcap.org/498).
+
+* Fix an issue where installation under Citrix Remote Access or other
+  situations would fail with the message "Installer runtime error 255 at
+  76539962, Could not load SimpleSC.dll". Fixes [#226](http://issues.npcap.org/226).
+
+* Ensure driver signature can be validated on systems without Internet access
+  by installing the entire certificate chain, including the chain for the
+  timestamp counter-signature. This should address [#233](http://issues.npcap.org/233).
+
+* Fix an issue with comparing adapter names retrieved from the Registry. This
+  prevented Npcap 1.31 from being used for SendToRx and other less-used
+  features. Fixes [#311](http://issues.npcap.org/311).
+
+* Npcap driver no longer excludes adapters based on media type, which may allow
+  capture on some devices that were previously unavailable.
 ## Npcap 1.31 [2021-04-21]
 
 * Fix a bug with the non-default legacy loopback capture support that caused
