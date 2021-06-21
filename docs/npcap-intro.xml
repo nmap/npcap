@@ -185,21 +185,52 @@
     <para>Even though Npcap source code is publicly available for review, it is
       not open source software and may not be redistributed without special 
       permission from the Nmap Project. The
-      <ulink url="https://github.com/nmap/npcap/blob/master/LICENSE">Npcap License</ulink>
-      allows end users to download, install, and use Npcap from our site for
-      free. Software providers (open source or otherwise) which want to use
-      Npcap functionality are welcome to point their users to npcap.org for
-      those users to download and install.</para> 
-    <para>We fund the Npcap project by selling licenses to companies who wish
-      to redistribute Npcap within their products. The
-      <ulink url="https://nmap.org/npcap/oem/">Npcap OEM edition</ulink> allows
-      companies to silently and seamlessly install Npcap during their product's
-      installation rather than asking users to download and install Npcap
-      themselves. The Npcap OEM commercial license also includes support,
-      updates and indemnification. This is similar to the commercial licenses
-      we offer for embedding <ulink url="https://nmap.org/">Nmap</ulink> in
-      commercial software. More details are available from <ulink
-          url="https://nmap.org/npcap/oem/">the Npcap OEM page</ulink>.</para>
+      <ulink
+	  url="https://github.com/nmap/npcap/blob/master/LICENSE">Npcap
+      Free License</ulink>
+      allows end users to download, install, and use up to 5 copies of
+      Npcap from our site for
+      free. Copies which are only used with <ulink
+      url="https://nmap.org">Nmap</ulink>, <ulink url="https://www.wireshark.org">Wireshark</ulink>, and/or
+      <ulink
+	  url="https://www.microsoft.com/en-us/microsoft-365/security/identity-defender">Microsoft
+      Defender for Identity</ulink> don't count toward this 5-install
+      limit.
+    </para>
+
+
+    <para>We fund the Npcap project by selling the Npcap OEM
+    Edition. This special version of Npcap includes enterprise
+    features such as the silent installer and commercial support as
+    well as special license rights allowing customers to redistribute
+    Npcap with their products or to install it on more systems within
+    their organization with easy enterprise deployment. We offer two
+    commercial license types:</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>The <ulink
+	url="https://nmap.org/npcap/oem/redist.html">Npcap OEM
+	Redistribution License</ulink> is for companies that wish to
+	distribute Npcap OEM within their products (the free Npcap
+	edition does not allow this). Licensees generally use the
+	Npcap OEM silent installer, ensuring a seamless experience for
+	end users. Licensees may choose between a perpetual unlimited
+	license or an annual term license, along with options for
+	commercial support and updates.</para>
+      </listitem>
+      <listitem>
+	<para>The <ulink
+	url="https://nmap.org/npcap/oem/internal.html">Npcap OEM
+	Internal-Use License</ulink> is for organizations that wish to
+	use Npcap OEM internally without redistribution outside their
+	organization. This allows them to bypass the 5-system usage
+	cap of the Npcap free edition. It includes commercial support
+	and update options, and provides the extra Npcap OEM features
+	such as the silent installer for enterprise-wide
+	deployment.</para>
+      </listitem>
+    </itemizedlist>    
   </sect2>
 
   <sect2 id="npcap-download">
@@ -227,7 +258,7 @@
     <para>Portions of this guide were adapted from the WinPcap documentation.
       Copyright &#169; 2002-2005 Politecnico di Torino. Copyright &#169;
       2005-2010 CACE Technologies. Copyright &#169; 2010-2013 Riverbed
-      Technology. Copyright &#169; 2020 Insecure.Com, LLC. All rights
+      Technology. Copyright &#169; 2021 Insecure.Com, LLC. All rights
       reserved.</para>
   </sect2>
 </sect1>
