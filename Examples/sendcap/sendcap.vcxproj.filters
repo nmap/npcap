@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="iflist.c">
+    <ClCompile Include="sendcap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
