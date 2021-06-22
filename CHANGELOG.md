@@ -1,5 +1,7 @@
 ﻿
-## Npcap 1.40 [2021-06-21]
+## Npcap 1.50 [2021-06-22]
+
+* Fixed [#513](http://issues.npcap.org/513) which prevented Npcap 1.40 from installing.
 
 * Npcap can now be installed on Windows 10 for ARM64 devices. Both ARM64 and
   x86 DLLs will be installed, allowing existing x86 applications such as Nmap
@@ -34,6 +36,8 @@
   possible (Windows 7 does not support creating scheduled tasks via PowerShell).
   Fixes [#498](http://issues.npcap.org/498).
 
+* All PowerShell scripts installed or used during installation are now digitally signed.
+
 * Fix an issue where installation under Citrix Remote Access or other
   situations would fail with the message "Installer runtime error 255 at
   76539962, Could not load SimpleSC.dll". Fixes [#226](http://issues.npcap.org/226).
@@ -48,6 +52,11 @@
 
 * Npcap driver no longer excludes adapters based on media type, which may allow
   capture on some devices that were previously unavailable.
+
+## Npcap 1.40 [2021-06-21]
+
+* This release was retracted due to installer issues. See [#513](http://issues.npcap.org/513).
+
 ## Npcap 1.31 [2021-04-21]
 
 * Fix a bug with the non-default legacy loopback capture support that caused
