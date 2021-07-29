@@ -253,6 +253,11 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				DWORD err = GetLastError();
+				if (err == NETCFG_S_REBOOT) {
+					_tprintf(_T("Npcap LWF driver will be installed after reboot.\n"));
+					nStatus = err;
+					goto _EXIT;
+				}
 				if (err == NETCFG_E_MAX_FILTER_LIMIT) {
 					_tprintf(_T("Too many filters installed!\n"));
 					if (first_try && IncrementRegistryDword(_T("SYSTEM\\CurrentControlSet\\Control\\Network"), _T("MaxNumFilters"), 14))
@@ -284,6 +289,11 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 			{
 				DWORD err = GetLastError();
+				if (err == NETCFG_S_REBOOT) {
+					_tprintf(_T("Npcap LWF driver (with Wi-Fi support) will be installed after reboot.\n"));
+					nStatus = err;
+					goto _EXIT;
+				}
 				if (err == NETCFG_E_MAX_FILTER_LIMIT) {
 					_tprintf(_T("Too many filters installed!\n"));
 					if (first_try && IncrementRegistryDword(_T("SYSTEM\\CurrentControlSet\\Control\\Network"), _T("MaxNumFilters"), 14))
