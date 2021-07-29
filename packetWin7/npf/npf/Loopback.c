@@ -742,14 +742,8 @@ NPF_RegisterCallout(
 /* ++
 
 This function registers callouts and filters that intercept transport
-traffic at the following layers --
-
-FWPM_LAYER_INBOUND_IPPACKET_V4
-FWPM_LAYER_INBOUND_IPPACKET_V6
-FWPM_LAYER_OUTBOUND_IPPACKET_V4
-FWPM_LAYER_OUTBOUND_IPPACKET_V4_DISCARD
-
--- */
+traffic at the layers defined in NPF_RegisterCallouts
+*/
 {
 	TRACE_ENTER();
 	NTSTATUS status = STATUS_SUCCESS;
