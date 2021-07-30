@@ -326,7 +326,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 		Subnet->ss_family = Broadcast->ss_family = IfAddr->ss_family;
 		if (Subnet->ss_family == AF_INET)
 		{
-			((struct sockaddr_in *)Subnet)->sin_addr.S_un.S_addr = ul = 0xffffffff << (32 - pAddr->OnLinkPrefixLength);
+			((struct sockaddr_in *)Subnet)->sin_addr.S_un.S_addr = ul = htonl(0xffffffff << (32 - pAddr->OnLinkPrefixLength));
 			((struct sockaddr_in *)Broadcast)->sin_addr.S_un.S_addr = ~ul | ((struct sockaddr_in *)IfAddr)->sin_addr.S_un.S_addr;
 		}
 		else if (IfAddr->ss_family == AF_INET6)
@@ -341,7 +341,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 				}
 				else
 				{
-					WORD mask = 0xffff << (16 - i);
+					WORD mask = htons(0xffff << (16 - i));
 					((struct sockaddr_in6*)Subnet)->sin6_addr.u.Word[j] = mask;
 					((struct sockaddr_in6*)Broadcast)->sin6_addr.u.Word[j] = ~mask | ((struct sockaddr_in6*)IfAddr)->sin6_addr.u.Word[j];
 				}
