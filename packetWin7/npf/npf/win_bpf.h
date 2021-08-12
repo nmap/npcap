@@ -428,7 +428,7 @@ extern "C"
 	   the whole packet must be kept.
 	*/
 #ifdef WIN_NT_DRIVER
-	u_int bpf_filter(struct bpf_insn* pc, PMDL p, u_int data_offset, u_int wirelen);
+	u_int bpf_filter(const struct bpf_insn* pc, const PMDL p, u_int data_offset, u_int wirelen);
 #else
 	u_int bpf_filter(register struct bpf_insn *pc,
 		register UCHAR *p,

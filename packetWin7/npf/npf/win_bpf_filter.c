@@ -208,7 +208,7 @@ u_int32 xbyte(PMDL p, u_int32 k, int *err)
 	return CurBuf[k];
 }
 
-u_int bpf_filter(struct bpf_insn *pc, PMDL p, u_int data_offset, u_int wirelen)
+u_int bpf_filter(const struct bpf_insn *pc, const PMDL p, u_int data_offset, u_int wirelen)
 #else
 u_int bpf_filter(pc, p, wirelen, buflen)
 register struct bpf_insn *pc;

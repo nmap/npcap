@@ -441,7 +441,7 @@ _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID
 NPF_TapExForEachOpen(
 	_Inout_ POPEN_INSTANCE Open,
-	_In_ PNET_BUFFER_LIST pNetBufferLists,
+	_In_ const PNET_BUFFER_LIST pNetBufferLists,
 	_Inout_ PSINGLE_LIST_ENTRY NBLCopyHead,
 	_Inout_ struct timeval *tstamp,
 	_In_ BOOLEAN AtDispatchLevel
@@ -451,7 +451,7 @@ _Use_decl_annotations_
 VOID
 NPF_DoTap(
 	PNPCAP_FILTER_MODULE pFiltMod,
-	PNET_BUFFER_LIST NetBufferLists,
+	const PNET_BUFFER_LIST NetBufferLists,
 	POPEN_INSTANCE pOpenOriginating,
 	BOOLEAN AtDispatchLevel
 	)

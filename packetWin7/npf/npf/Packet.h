@@ -988,7 +988,7 @@ VOID
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 NPF_DoTap(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ PNET_BUFFER_LIST NetBufferLists,
+	_In_ const PNET_BUFFER_LIST NetBufferLists,
 	_In_opt_ POPEN_INSTANCE pOpenOriginating,
 	_In_ BOOLEAN AtDispatchLevel
 	);
