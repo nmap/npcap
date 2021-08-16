@@ -1030,6 +1030,17 @@ NPF_TapExForEachOpen(
 		pNetBuf = pNetBufList->FirstNetBuffer;
 		while (pNetBuf != NULL)
 		{
+			// Some checks for malformed packets that we've seen other drivers produce.
+			// If Npcap is implicated in crashes, use the debug build to turn these into assertion failures.
+			// DRIVER_IRQL_NOT_LESS_OR_EQUAL (d1) referencing addr 000a indicates null ptr deref.
+			if (!NT_VERIFY(NULL != NET_BUFFER_CURRENT_MDL(pNetBuf))
+				|| !NT_VERIFY(NULL != NET_BUFFER_FIRST_MDL(pNetBuf)))
+			{
+				// Skip this one, let someone else crash.
+				// We could drop it, but it's not our job to police the NDIS stack.
+				goto TEFEO_next_NB;
+			}
+
 			received++;
 
 			// Get the whole packet length.
