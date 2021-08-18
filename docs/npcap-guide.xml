@@ -171,6 +171,29 @@
           </varlistentry>
 
           <varlistentry>
+            <term><option>/downgrade</option></term>
+            <listitem><para>
+		Uninstall and replace an existing Npcap installation even if it
+		is newer than this version of the installer. By default, the
+		Npcap installer will not remove and replace a version of Npcap
+		that is newer than its own. In GUI mode, this hides the message
+		box asking the user how to proceed.
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>/force</option></term>
+            <listitem><para>
+		Uninstall and replace an existing Npcap installation regardless
+		of version or whether the installation would be modified. By
+		default, the Npcap installer will not remove and replace a
+		Npcap installation of the same version unless the install
+		options would be modified. In GUI mode, this hides the message
+		box asking the user how to proceed.
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term><option>/D</option> (destination directory)</term>
             <listitem><para>
                 The destination directory for installation can be overridden by
