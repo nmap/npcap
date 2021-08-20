@@ -99,9 +99,6 @@
 
 #include <tchar.h>
 
-#pragma warning(push)
-#pragma warning(disable : 4127)
-
 static VOID OutputDebugStringV(LPCTSTR Format, ...)
 {
 	FILE *f;
@@ -152,8 +149,6 @@ static VOID OutputDebugStringV(LPCTSTR Format, ...)
 
 	SetLastError(dwLastError);
 }
-
-#pragma warning(pop)
 
 #elif defined (_DBG)
 

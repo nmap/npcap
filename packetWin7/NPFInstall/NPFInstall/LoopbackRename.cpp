@@ -71,8 +71,6 @@ Abstract:
 This code is modified based on example: https://msdn.microsoft.com/en-us/library/windows/desktop/aa364686.aspx
 --*/
 
-#pragma warning(disable: 4311 4312)
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <objbase.h>

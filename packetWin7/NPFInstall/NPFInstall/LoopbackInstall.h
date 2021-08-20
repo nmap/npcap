@@ -69,8 +69,6 @@ Abstract:
 
 --*/
 
-#pragma warning(disable: 4311 4312)
-
 #include <windows.h>
 #include <tchar.h>
 #include <stdlib.h>

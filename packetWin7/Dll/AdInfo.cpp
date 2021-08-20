@@ -101,12 +101,6 @@
 
 #define UNICODE 1
 
-#pragma warning (disable : 4127)  //conditional expression is constant. Used for do{}while(FALSE) loops.
-
-#if (MSC_VER < 1300)
-#pragma warning (disable : 4710) // inline function not expanded. used for strsafe functions
-#endif
-
 #include <Packet32.h>
 #include "Packet32-Int.h"
 #include "debug.h"

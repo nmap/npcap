@@ -57,8 +57,6 @@
  * not to any changes made by the Nmap Project or to this entire file.     *
  *                                                                         *
  ***************************************************************************/
-#pragma warning(disable: 4311 4312)
-
 #include <tchar.h>
 #include <windows.h>
 

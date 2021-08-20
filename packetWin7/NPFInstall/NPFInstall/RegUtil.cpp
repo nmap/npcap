@@ -69,8 +69,6 @@ This is used for operating on registry.
 
 --*/
 
-#pragma warning(disable: 4311 4312)
-
 #include <Netcfgx.h>
 
 #include <iostream>
