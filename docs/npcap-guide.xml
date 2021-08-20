@@ -171,13 +171,23 @@
           </varlistentry>
 
           <varlistentry>
-            <term><option>/downgrade</option></term>
+            <term><option>/require_version</option></term>
             <listitem><para>
 		Uninstall and replace an existing Npcap installation even if it
 		is newer than this version of the installer. By default, the
 		Npcap installer will not remove and replace a version of Npcap
 		that is newer than its own. In GUI mode, this hides the message
 		box asking the user how to proceed.
+            </para></listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>/require_features</option></term>
+            <listitem><para>
+		Uninstall and replace an existing Npcap installation of any
+		version if it does not provide the same features as the other
+		command-line options specify. Features are the /winpcap_mode,
+		/dot11_support, /loopback_support, and /admin_only options.
             </para></listitem>
           </varlistentry>
 
