@@ -134,7 +134,6 @@ void PacketPopulateAdaptersInfoList();
 BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLen);
 PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName);
 BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName);
-BOOLEAN IsFireWire(TCHAR *AdapterDesc);
 LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterName);
 
 #ifdef __cplusplus
