@@ -1460,10 +1460,6 @@ BOOL PacketStartService()
 		return TRUE;
 	}
 
-	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_NAME;
-	CHAR	NpfServiceLocation[MAX_WINPCAP_KEY_CHARS] = SERVICES_REG_KEY NPF_DRIVER_NAME;
-
-
 	scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
 
 	if (scmHandle == NULL)
@@ -1477,7 +1473,7 @@ BOOL PacketStartService()
 		// check if the NPF registry key is already present
 		// this means that the driver is already installed and that we don't need to call PacketInstallDriver
 		KeyRes = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-			NpfServiceLocation,
+			SERVICES_REG_KEY NPF_DRIVER_NAME,
 			0,
 			KEY_READ | KEY_WOW64_32KEY,
 			&PathKey);
@@ -1500,7 +1496,7 @@ BOOL PacketStartService()
 		if (Result)
 		{
 			TRACE_PRINT("Trying to see if the NPF service is running...");
-			svcHandle = OpenServiceA(scmHandle, NpfDriverName, SERVICE_START | SERVICE_QUERY_STATUS);
+			svcHandle = OpenServiceA(scmHandle, NPF_DRIVER_NAME, SERVICE_START | SERVICE_QUERY_STATUS);
 
 			if (svcHandle != NULL)
 			{
@@ -1823,7 +1819,6 @@ BOOL PacketStopDriver()
     SC_HANDLE       schService;
     BOOL            ret;
     SERVICE_STATUS  serviceStatus;
-	CHAR	NpfDriverName[MAX_WINPCAP_KEY_CHARS] = NPF_DRIVER_NAME;
 
  	TRACE_ENTER();
  
@@ -1836,7 +1831,7 @@ BOOL PacketStopDriver()
 		TRACE_PRINT("Opened the SCM");
 		
 		schService = OpenServiceA (scmHandle,
-			NpfDriverName,
+			NPF_DRIVER_NAME,
 			SERVICE_STOP
 			);
 		
