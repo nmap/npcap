@@ -2397,8 +2397,8 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 {
     BOOLEAN			Res;
     DWORD			BytesTransfered, TotBytesTransfered=0;
-	struct timeval	BufStartTime;
-	LARGE_INTEGER	StartTicks, CurTicks, TargetTicks, TimeFreq;
+	struct timeval	BufStartTime = {};
+	LARGE_INTEGER	StartTicks = {}, CurTicks = {}, TargetTicks = {}, TimeFreq = {};
 
 
 	TRACE_ENTER();
