@@ -106,7 +106,6 @@
 #include "debug.h"
 
 #include <ws2tcpip.h>
-#include <windows.h>
 #include <windowsx.h>
 #include <iphlpapi.h>
 #include <strsafe.h>

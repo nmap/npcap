@@ -144,7 +144,6 @@ VOID PacketLoadLibrariesDynamically();
 LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName);
 #endif //_DEBUG_TO_FILE
 
-#include <windows.h>
 #include <windowsx.h>
 #include <iphlpapi.h>
 #include <ipifcons.h>
