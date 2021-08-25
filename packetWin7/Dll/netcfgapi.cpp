@@ -749,7 +749,7 @@ BOOL ConnectToNetCfg(PCWSTR lpszPnpID, LPTSTR lpszAppName)
 		return FALSE;
 	}
 
-	BOOL ok = RestartAllBindings(netcfg.p, lpszPnpID);
+	const BOOL ok = RestartAllBindings(netcfg.p, lpszPnpID);
 
 	hr = netcfg->Uninitialize();
 	if (FAILED(hr))

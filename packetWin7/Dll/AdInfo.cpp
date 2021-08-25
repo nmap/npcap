@@ -311,7 +311,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 			break;
 		}
 
-		int AddrLen = pAddr->Address.iSockaddrLength;
+		const int AddrLen = pAddr->Address.iSockaddrLength;
 		memcpy(&pItem->Addr.IPAddress, pAddr->Address.lpSockaddr, AddrLen);
 		struct sockaddr_storage *IfAddr = (struct sockaddr_storage *)pAddr->Address.lpSockaddr;
 		struct sockaddr_storage* Subnet = (struct sockaddr_storage *)&pItem->Addr.SubnetMask;
@@ -334,7 +334,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 				}
 				else
 				{
-					WORD mask = htons(0xffff << (16 - i));
+					const WORD mask = htons(0xffff << (16 - i));
 					((struct sockaddr_in6*)Subnet)->sin6_addr.u.Word[j] = mask;
 					((struct sockaddr_in6*)Broadcast)->sin6_addr.u.Word[j] = ~mask | ((struct sockaddr_in6*)IfAddr)->sin6_addr.u.Word[j];
 				}

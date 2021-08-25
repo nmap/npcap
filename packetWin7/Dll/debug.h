@@ -106,7 +106,7 @@ static VOID OutputDebugStringV(LPCTSTR Format, ...)
 	va_list Marker;
 	DWORD dwThreadId;
 	int loops = 0;
-	DWORD dwLastError = GetLastError();
+	const DWORD dwLastError = GetLastError();
 
 	dwThreadId = GetCurrentThreadId();
 

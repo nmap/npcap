@@ -271,9 +271,9 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 
 BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 {
-	int pid = GetCurrentProcessId();
+	const int pid = GetCurrentProcessId();
 	char params[BUFSIZE];
-	SHELLEXECUTEINFOA shExInfo = { 0 };
+	SHELLEXECUTEINFOA shExInfo = {};
 	DWORD nResult;
 	char lpFilename[BUFSIZE];
 	char szDrive[BUFSIZE];
@@ -313,7 +313,7 @@ BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 
 	if (!ShellExecuteExA(&shExInfo))
 	{
-		DWORD dwError = GetLastError();
+		const DWORD dwError = GetLastError();
 		if (dwError == ERROR_CANCELLED)
 		{
 			// The user refused to allow privileges elevation.
@@ -607,7 +607,7 @@ void NpcapStartHelper()
 	}
 
 	char pipeName[BUFSIZE];
-	int pid = GetCurrentProcessId();
+	const int pid = GetCurrentProcessId();
 	sprintf_s(pipeName, BUFSIZE, "npcap-%d", pid);
 	if (NpcapCreatePipe(pipeName, g_hDllHandle))
 	{
@@ -804,7 +804,6 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 {
 	TRACE_ENTER();
 
-    BOOLEAN Status=TRUE;
 	PADAPTER_INFO NewAdInfo;
 	TCHAR DllFileName[MAX_PATH];
 	g_hDllHandle = DllHandle;
@@ -900,7 +899,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
     }
 	
 	TRACE_EXIT();
-    return Status;
+    return TRUE;
 }
 
 
@@ -1294,7 +1293,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 			&BytesReturned,
 			NULL)==FALSE) 
 	{
-		DWORD dwLastError = GetLastError();
+		const DWORD dwLastError = GetLastError();
 		TRACE_PRINT("Error in DeviceIoControl");
 
 		CloseHandle(hEvent);
@@ -1928,7 +1927,7 @@ LPADAPTER PacketOpenAdapter(PCHAR AdapterNameWA)
 		//
 		// Unicode
 		//
-		size_t bufferSize = wcslen((PWCHAR)AdapterNameWA) + 1;
+		const size_t bufferSize = wcslen((PWCHAR)AdapterNameWA) + 1;
 		
 		AdapterNameA = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
 
@@ -3815,7 +3814,7 @@ int PacketSetMonitorMode(PCHAR AdapterName, int mode)
 		return -1;
 	}
 
-	ULONG ulOperationMode = mode ? DOT11_OPERATION_MODE_NETWORK_MONITOR : DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
+	const ULONG ulOperationMode = mode ? DOT11_OPERATION_MODE_NETWORK_MONITOR : DOT11_OPERATION_MODE_EXTENSIBLE_STATION;
 	OidData->Oid = OID_DOT11_CURRENT_OPERATION_MODE;
 	OidData->Length = sizeof(DOT11_CURRENT_OPERATION_MODE);
 	pOpMode->uCurrentOpMode = ulOperationMode;
