@@ -706,7 +706,7 @@ BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR szComponentId)
 	return TRUE;
 }
 
-BOOL ConnectToNetCfg(PCWSTR lpszPnpID, LPTSTR lpszAppName)
+BOOL ConnectToNetCfg(PCWSTR lpszPnpID, LPCTSTR lpszAppName)
 {
 	HRESULT hr;
 	CComPtr<INetCfg> netcfg;

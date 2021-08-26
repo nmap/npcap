@@ -391,11 +391,11 @@ extern "C"
 	BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject, struct bpf_stat* s);
 	BOOLEAN PacketSetBuff(LPADAPTER AdapterObject, int dim);
 	BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType* type);
-	BOOLEAN PacketIsLoopbackAdapter(PCHAR AdapterName);
-	int PacketIsMonitorModeSupported(PCHAR AdapterName);
-	int PacketSetMonitorMode(PCHAR AdapterName, int mode);
-	int PacketGetMonitorMode(PCHAR AdapterName);
-	LPADAPTER PacketOpenAdapter(PCHAR AdapterName);
+	BOOLEAN PacketIsLoopbackAdapter(PCCH AdapterName);
+	int PacketIsMonitorModeSupported(PCCH AdapterName);
+	int PacketSetMonitorMode(PCCH AdapterName, int mode);
+	int PacketGetMonitorMode(PCCH AdapterName);
+	LPADAPTER PacketOpenAdapter(PCCH AdapterName);
 	BOOLEAN PacketSendPacket(LPADAPTER AdapterObject, LPPACKET pPacket, BOOLEAN Sync);
 	INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOOLEAN Sync);
 	LPPACKET PacketAllocatePacket(void);
@@ -404,7 +404,7 @@ extern "C"
 	BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject, LPPACKET lpPacket, BOOLEAN Sync);
 	BOOLEAN PacketSetHwFilter(LPADAPTER AdapterObject, ULONG Filter);
 	BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize);
-	BOOLEAN PacketGetNetInfoEx(PCHAR AdapterName, npf_if_addr* buffer, PLONG NEntries);
+	BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries);
 	BOOLEAN PacketRequest(LPADAPTER  AdapterObject, BOOLEAN Set, PPACKET_OID_DATA  OidData);
 	HANDLE PacketGetReadEvent(LPADAPTER AdapterObject);
 	BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void* name, int len);

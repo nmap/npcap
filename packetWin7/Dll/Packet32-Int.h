@@ -132,9 +132,9 @@ ADAPTER_INFO, *PADAPTER_INFO;
 //
 void PacketPopulateAdaptersInfoList();
 BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLen);
-PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName);
-BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName);
-LPADAPTER PacketOpenAdapterNPF(LPCSTR AdapterName);
+PADAPTER_INFO PacketFindAdInfo(PCCH AdapterName);
+BOOLEAN PacketUpdateAdInfo(PCCH AdapterName);
+LPADAPTER PacketOpenAdapterNPF(PCCH AdapterName);
 
 #ifdef __cplusplus
 extern "C" {

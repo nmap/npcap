@@ -513,7 +513,7 @@ static BOOLEAN PacketGetAdaptersNPF()
   \param description description of the adapter.
   \return If the function succeeds, the return value is nonzero.
 */
-static BOOLEAN PacketAddAdapterAirpcap(PCHAR name, PCHAR description)
+static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 {
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	CHAR ebuf[AIRPCAP_ERRBUF_SIZE];
@@ -678,7 +678,7 @@ static BOOLEAN PacketGetAdaptersAirpcap()
   \param AdapterName Name of the adapter whose information has to be retrieved.
   \return If the function succeeds, the return value is non-null.
 */
-PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName)
+PADAPTER_INFO PacketFindAdInfo(PCCH AdapterName)
 {
 	//this function should NOT acquire the g_AdaptersInfoMutex, since it does return an ADAPTER_INFO structure
 	PADAPTER_INFO TAdInfo;
@@ -721,7 +721,7 @@ PADAPTER_INFO PacketFindAdInfo(PCHAR AdapterName)
   \return If the function succeeds, the return value is TRUE. A false value means that the adapter is no
   more valid or that it is disconnected.
 */
-BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
+BOOLEAN PacketUpdateAdInfo(PCCH AdapterName)
 {
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	PADAPTER_INFO TAdInfo, PrevAdInfo;
@@ -729,7 +729,7 @@ BOOLEAN PacketUpdateAdInfo(PCHAR AdapterName)
 	ULONG BufLen;
 	ULONG RetVal = ERROR_SUCCESS;
 	PIP_ADAPTER_ADDRESSES AdBuffer, TmpAddr;
-	PCHAR AdapterGuid = NULL;
+	PCCH AdapterGuid = NULL;
 	BOOLEAN found = FALSE;
 
 	TRACE_ENTER();

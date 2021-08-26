@@ -231,7 +231,7 @@ DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize)
 // Notes:
 //
 
-HRESULT InstallSpecifiedComponent(LPTSTR lpszInfFile, LPTSTR lpszAppName, const GUID* pguidClass)
+HRESULT InstallSpecifiedComponent(LPCTSTR lpszInfFile, LPCTSTR lpszAppName, const GUID* pguidClass)
 {
 	INetCfg* pnc;
 	LPTSTR lpszApp;
