@@ -1,4 +1,36 @@
 ﻿
+## Npcap 1.55 [2021-08-31]
+
+* Npcap installer can now recognize NetCfg status codes indicating that a
+  reboot is required (0x0004a020, `NETCFG_S_REBOOT`), and will prompt the user
+  to reboot. In silent mode, the installer will return code 3010 (0x0bc2,
+  `ERROR_SUCCESS_REBOOT_REQUIRED`) to indicate this result. Fixes [#224](http://issues.npcap.org/224).
+
+* Npcap installer's silent mode now offers better control over when to remove
+  and reinstall an existing Npcap installation. Documentation has been updated
+  for the new installation options `/require_version`, `/require_features`, and
+  `/force` and will be published with the new Npcap SDK 1.11. Fixes [#523](http://issues.npcap.org/523).
+
+* Fixed an installation failure (0xe0000247) on Windows 8.1/Server 2012 R2 and
+  earlier systems which have not updated root certificates. The root certificates
+  are now installed to the Roots trust store. Fixes [#233](http://issues.npcap.org/233).
+
+* Fixed an issue since Npcap 1.30 where broadcast and subnet masks for adapters
+  returned by `pcap_findalldevs()` were in host byte order, displaying values
+  like "0.240.255.255". Fixes [#525](http://issues.npcap.org/525).
+
+* Added specific bad-value checks for issues originating in other drivers which
+  may be incorrectly attributed to Npcap. These checks, in combination with
+  additional `const` qualifiers, should serve as assurance that Npcap is not
+  modifying traffic during capture and cannot be responsible for such crashes.
+
+* Powershell commands launched by the installer are now run with the
+  `-NoProfile` option. Fixes [#529](http://issues.npcap.org/529).
+
+* Npcap SDK minor change to add const qualifiers to parameters to several Packet.dll functions.
+
+* Npcap installer now uses Unicode internally. This may result in mixed-encoding install.log files.
+
 ## Npcap 1.50 [2021-06-22]
 
 * Fixed [#513](http://issues.npcap.org/513) which prevented Npcap 1.40 from installing.
