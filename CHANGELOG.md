@@ -19,6 +19,10 @@
   returned by `pcap_findalldevs()` were in host byte order, displaying values
   like "0.240.255.255". Fixes [#525](http://issues.npcap.org/525).
 
+* Libpcap 1.10.1 has been updated to include some recent changes to the libpcap-1.10
+  release branch which extend support to adapters with the NdisMediumIP media type,
+  including Wireguard Wintun virtual adapters. Fixes [#173](http://issues.npcap.org/173).
+
 * Added specific bad-value checks for issues originating in other drivers which
   may be incorrectly attributed to Npcap. These checks, in combination with
   additional `const` qualifiers, should serve as assurance that Npcap is not
