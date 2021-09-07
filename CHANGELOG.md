@@ -1,5 +1,5 @@
 ﻿
-## Npcap 1.55 [2021-08-31]
+## Npcap 1.55 [2021-09-03]
 
 * Npcap installer can now recognize NetCfg status codes indicating that a
   reboot is required (0x0004a020, `NETCFG_S_REBOOT`), and will prompt the user
