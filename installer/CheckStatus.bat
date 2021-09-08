@@ -22,15 +22,6 @@ for /F "usebackq tokens=1,4" %%A in (`sc.exe qc npcap`) do (
 	    )
 	)
 )
-if exist "%NPCAP_DIR%\loopback.ini" (
-	rem NetConnectionID may be different, see nmap/nmap#1416
-	rem but Name will always be Npcap Loopback Adapter
-	%SYSTEMROOT%\wbem\wmic.exe nic GET Name,NetConnectionID | find "Npcap Loopback Adapter"
-	if ERRORLEVEL 1 (
-		rem loopback.ini is present, but the adapter is gone. Run FixInstall.bat
-		goto FIXINSTALL
-	)
-)
 
 goto ABORT
 
@@ -38,3 +29,4 @@ goto ABORT
 "%NPCAP_DIR%\FixInstall.bat"
 
 :ABORT
+exit /b 0
