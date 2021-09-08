@@ -76,5 +76,7 @@ goto EOF
 
 :ABORT
 echo "Unable to find or fix your installation"
+exit /b 1
 
 :EOF
+exit /b 0

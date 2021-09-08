@@ -27,6 +27,7 @@ goto ABORT
 
 :FIXINSTALL
 "%NPCAP_DIR%\FixInstall.bat"
+exit /b %ERRORLEVEL%
 
 :ABORT
 exit /b 0
