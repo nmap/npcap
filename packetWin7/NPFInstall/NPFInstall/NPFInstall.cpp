@@ -89,7 +89,6 @@ _T("  -il\t\t\t: Install \"Npcap loopback adapter\"\n") \
 _T("  -ul\t\t\t: Uninstall \"Npcap loopback adapter\"\n") \
 _T("  -r\t\t\t: Restart all bindings\n") \
 _T("  -r2\t\t\t: Restart all bindings (with Wi-Fi support)\n") \
-_T("  -d\t\t\t: Detect whether the driver service is pending to stop\n") \
 _T("  -check_dll\t\t: Detect whether the Npcap DLLs are still used by any processes, will list them if yes\n") \
 _T("  -kill_proc\t\t: Terminate all the processes that are still using Npcap DLLs\n") \
 _T("  -kill_proc_soft\t: Gracefully terminate all the processes that are still using Npcap DLLs (only for GUI processes, CLI processes will not be terminated)\n") \
@@ -107,77 +106,6 @@ _T("\n") \
 _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPLES\n")
 
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"NPFInstall -h\" for help.\n")
-
-BOOL PacketIsServiceStopPending()
-{
-	TRACE_ENTER();
-
-	BOOL bResult = FALSE;
-	SERVICE_STATUS_PROCESS ssp;
-	DWORD dwStartTime = GetTickCount();
-	DWORD dwBytesNeeded;
-	DWORD dwTimeout = 30000; // 30-second time-out
-	// DWORD dwWaitTime;
-
-	// Get a handle to the SCM database.
-
-	SC_HANDLE schSCManager = OpenSCManager(
-		NULL,                    // local computer
-		NULL,                    // ServicesActive database
-		SC_MANAGER_CONNECT);  // minimal access rights
-
-	if (NULL == schSCManager)
-	{
-		TRACE_PRINT1("OpenSCManager failed (0x%08x)", GetLastError());
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	// Get a handle to the service.
-
-	SC_HANDLE schService = OpenService(
-		schSCManager,         // SCM database
-		_T(NPF_DRIVER_NAME_SMALL),            // name of service
-		SERVICE_QUERY_STATUS);
-
-	if (schService == NULL)
-	{
-		TRACE_PRINT1("OpenService failed (0x%08x)", GetLastError());
-		CloseServiceHandle(schSCManager);
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	// Make sure the service is not already stopped.
-
-	if ( !QueryServiceStatusEx(
-		schService,
-		SC_STATUS_PROCESS_INFO,
-		(LPBYTE)&ssp,
-		sizeof(SERVICE_STATUS_PROCESS),
-		&dwBytesNeeded ) )
-	{
-		TRACE_PRINT1("QueryServiceStatusEx failed (0x%08x)", GetLastError());
-		goto stop_cleanup;
-	}
-
-	if ( ssp.dwCurrentState == SERVICE_STOPPED )
-	{
-		TRACE_PRINT("Service is already stopped.");
-		goto stop_cleanup;
-	}
-
-	if (ssp.dwCurrentState == SERVICE_STOP_PENDING)
-	{
-		bResult = TRUE;
-	}
-
-stop_cleanup:
-	CloseServiceHandle(schService);
-	CloseServiceHandle(schSCManager);
-	TRACE_EXIT();
-	return bResult;
-}
 
 BOOL PacketRenableBindings()
 {
@@ -445,22 +373,6 @@ int _tmain(int argc, _TCHAR* argv[])
 				DWORD err = GetLastError();
 				nStatus = err ? err : 1;
 				_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-d"))
-		{
-			bSuccess = PacketIsServiceStopPending();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap service is pending to stop!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("Npcap service is not pending to stop.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
