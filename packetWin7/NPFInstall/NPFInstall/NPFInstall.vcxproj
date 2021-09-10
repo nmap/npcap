@@ -573,7 +573,6 @@
     <ClCompile Include="NPFInstall.cpp" />
     <ClCompile Include="..\..\Dll\ProtInstall.cpp" />
     <ClCompile Include="ProcessUtil.cpp" />
-    <ClCompile Include="RegKey.cpp" />
     <ClCompile Include="RegUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -588,7 +587,6 @@
     <ClInclude Include="..\..\Dll\ProtInstall.h" />
     <ClInclude Include="ProcessUtil.h" />
     <ClInclude Include="rc_ids.h" />
-    <ClInclude Include="RegKey.h" />
     <ClInclude Include="RegUtil.h" />
   </ItemGroup>
   <ItemGroup>

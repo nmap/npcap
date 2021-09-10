@@ -88,6 +88,3 @@ BOOL DeleteValueFromRegistry(LPCTSTR strSubKey, LPCTSTR strValueName);
 BOOL IncrementRegistryDword(LPCTSTR strSubKey, LPCTSTR strValueName, DWORD maxValue);
 
 tstring printAdapterNames(vector<tstring> nstr);
-
-BOOL addNpcapFolderToPath();
-BOOL removeNpcapFolderFromPath();

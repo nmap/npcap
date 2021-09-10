@@ -76,7 +76,6 @@ This is used for operating on registry.
 #include <devguid.h> // GUID_DEVCLASS_NET, ...
 
 #include "RegUtil.h"
-#include "RegKey.h"
 
 #include "debug.h"
 
@@ -212,38 +211,4 @@ tstring printAdapterNames(vector<tstring> nstr)
 		strResult += nstr[i];
 	}
 	return strResult;
-}
-
-BOOL addNpcapFolderToPath()
-{
-	TRACE_ENTER();
-
-	int iRes = ProcessRegistryTask(_T("PATH"), _T("C:\\Windows\\System32\\Npcap"), TRUE, TRUE, FALSE);
-	if (iRes == 0)
-	{
-		TRACE_EXIT();
-		return TRUE;
-	}
-	else
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
-}
-
-BOOL removeNpcapFolderFromPath()
-{
-	TRACE_ENTER();
-
-	int iRes = ProcessRegistryTask(_T("PATH"), _T("C:\\Windows\\System32\\Npcap"), FALSE, TRUE, FALSE);
-	if (iRes == 0)
-	{
-		TRACE_EXIT();
-		return TRUE;
-	}
-	else
-	{
-		TRACE_EXIT();
-		return FALSE;
-	}
 }

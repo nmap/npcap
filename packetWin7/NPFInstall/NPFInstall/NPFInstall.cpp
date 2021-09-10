@@ -94,8 +94,6 @@ _T("  -kill_proc\t\t: Terminate all the processes that are still using Npcap DLL
 _T("  -kill_proc_soft\t: Gracefully terminate all the processes that are still using Npcap DLLs (only for GUI processes, CLI processes will not be terminated)\n") \
 _T("  -kill_proc_polite\t: Politely terminate all the processes that are still using Npcap DLLs (wait for 15 seconds for GUI processes to close themselves, CLI processes will still be terminiated immediatelly)\n") \
 _T("  -c\t\t\t: Clear all the driverstore cache for the driver\n") \
-_T("  -add_path\t\t: Add Npcap folder to the PATH environment variable\n") \
-_T("  -remove_path\t\t: Remove Npcap folder from the PATH environment variable\n") \
 _T("  -n\t\t\t: Hide this window when executing the command\n") \
 _T("  -h\t\t\t: Print this help summary page\n") \
 _T("\n") \
@@ -454,38 +452,6 @@ int _tmain(int argc, _TCHAR* argv[])
 				DWORD err = GetLastError();
 				nStatus = err ? err : 1;
 				_tprintf(_T("Npcap driver cache in Driver Store has failed to be cleaned up.\n"));
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-add_path"))
-		{
-			bSuccess = addNpcapFolderToPath();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap folder has been successfully added to PATH!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("Npcap folder has failed to be added to PATH.\n"));
-				nStatus = -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-remove_path"))
-		{
-			bSuccess = removeNpcapFolderFromPath();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap folder has been successfully removed from PATH!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("Npcap folder has failed to be removed from PATH.\n"));
-				nStatus = -1;
 				goto _EXIT;
 			}
 		}
