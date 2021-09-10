@@ -18,13 +18,7 @@
     <ClCompile Include="..\AdInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\netcfgapi.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Packet32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ProtInstall.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\npf\npf\win_bpf_filter.c">
@@ -35,13 +29,7 @@
     <ClInclude Include="..\debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\netcfgapi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Packet32-Int.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ProtInstall.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\strsafe.h">

@@ -569,9 +569,9 @@
     <ClCompile Include="LoopbackRecord.cpp" />
     <ClCompile Include="LoopbackRename.cpp" />
     <ClCompile Include="LoopbackRename2.cpp" />
-    <ClCompile Include="..\..\Dll\netcfgapi.cpp" />
+    <ClCompile Include="netcfgapi.cpp" />
     <ClCompile Include="NPFInstall.cpp" />
-    <ClCompile Include="..\..\Dll\ProtInstall.cpp" />
+    <ClCompile Include="ProtInstall.cpp" />
     <ClCompile Include="ProcessUtil.cpp" />
     <ClCompile Include="RegUtil.cpp" />
   </ItemGroup>
@@ -583,8 +583,8 @@
     <ClInclude Include="LoopbackRename.h" />
     <ClInclude Include="LoopbackRename2.h" />
     <ClInclude Include="msg.h" />
-    <ClInclude Include="..\..\Dll\netcfgapi.h" />
-    <ClInclude Include="..\..\Dll\ProtInstall.h" />
+    <ClInclude Include="netcfgapi.h" />
+    <ClInclude Include="ProtInstall.h" />
     <ClInclude Include="ProcessUtil.h" />
     <ClInclude Include="rc_ids.h" />
     <ClInclude Include="RegUtil.h" />

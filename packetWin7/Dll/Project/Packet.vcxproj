@@ -1167,16 +1167,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\AdInfo.cpp" />
-    <ClCompile Include="..\netcfgapi.cpp" />
     <ClCompile Include="..\Packet32.cpp" />
-    <ClCompile Include="..\ProtInstall.cpp" />
     <ClCompile Include="..\..\npf\npf\win_bpf_filter.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\debug.h" />
-    <ClInclude Include="..\netcfgapi.h" />
     <ClInclude Include="..\Packet32-Int.h" />
-    <ClInclude Include="..\ProtInstall.h" />
     <ClInclude Include="..\strsafe.h" />
   </ItemGroup>
   <ItemGroup>

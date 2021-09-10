@@ -99,7 +99,6 @@
 #include <string>
 #include <ntddndis.h>
 
-#include "ProtInstall.h"
 #include "Packet32-Int.h"
 #include "../npf/npf/ioctls.h"
 
@@ -292,9 +291,10 @@ BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 	_splitpath_s(lpFilename, szDrive, BUFSIZE, szDir, BUFSIZE, NULL, 0, NULL, 0);
 	_makepath_s(lpFilename, BUFSIZE, szDrive, szDir, "NpcapHelper", ".exe");
 
-	if (!PathFileExistsA(lpFilename))
+	nResult = GetFileAttributesA(lpFilename);
+	if (nResult == INVALID_FILE_ATTRIBUTES || (nResult & FILE_ATTRIBUTE_DIRECTORY))
 	{
-		TRACE_PRINT1("PathFileExistsA failed. GLE=%d\n", GetLastError());
+		TRACE_PRINT1("%s does not exist or is a directory.", lpFileName);
 		TRACE_EXIT();
 		return FALSE;
 	}
@@ -1861,18 +1861,6 @@ BOOL PacketStopDriver()
 	
 	TRACE_EXIT();
 	return ret;
-}
-
-BOOL PacketStopDriver60()
-{
-	BOOL result;
-
-	TRACE_ENTER();
-
-	result = (BOOL) UninstallDriver();
-
-	TRACE_EXIT();
-	return result;
 }
 
 /*! 
