@@ -6,10 +6,17 @@
   to reboot. In silent mode, the installer will return code 3010 (0x0bc2,
   `ERROR_SUCCESS_REBOOT_REQUIRED`) to indicate this result. Fixes [#224](http://issues.npcap.org/224).
 
-* Npcap installer's silent mode now offers better control over when to remove
-  and reinstall an existing Npcap installation. Documentation has been updated
-  for the new installation options `/require_version`, `/require_features`, and
-  `/force` and will be published with the new Npcap SDK 1.11. Fixes [#523](http://issues.npcap.org/523).
+* The silent installer (only available in Nmap OEM) now offers better
+  control over when to remove and reinstall an existing Npcap. You can
+  specify your Npcap version number or feature requirements with the
+  new /require_version, /require_features, and /force
+  options. Software with strict requirements might re-run at startup
+  to ensure that Npcap hasn't been uninstalled or changed. If Npcap
+  still exists and meets your requirements, the installer quits
+  immediately. These new options are documented at
+  https://nmap.org/npcap/guide/npcap-users-guide.html and Nmap OEM is
+  described at https://nmap.org/npcap/#oem. Fixes
+  [#523](http://issues.npcap.org/523).
 
 * Fixed an installation failure (0xe0000247) on Windows 8.1/Server 2012 R2 and
   earlier systems which have not updated root certificates. The root certificates
