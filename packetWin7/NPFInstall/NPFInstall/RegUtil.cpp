@@ -198,17 +198,3 @@ BOOL DeleteValueFromRegistry(LPCTSTR strSubKey, LPCTSTR strValueName)
 	TRACE_EXIT();
 	return TRUE;
 }
-
-tstring printAdapterNames(vector<tstring> nstr)
-{
-	tstring strResult;
-	for (size_t i = 0; i < nstr.size(); i++)
-	{
-		if (i != 0)
-		{
-			strResult += _T(";");
-		}
-		strResult += nstr[i];
-	}
-	return strResult;
-}

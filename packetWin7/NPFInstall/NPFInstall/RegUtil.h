@@ -69,10 +69,6 @@ This is used for operating on registry.
 
 --*/
 
-#include <vector>
-#include <string>
-using namespace std;
-
 #include "..\..\Common\WpcapNames.h"
 
 #define		NPF_SOFT_REGISTRY_NAME_T			_T(NPF_SOFT_REGISTRY_NAME)
@@ -81,10 +77,6 @@ using namespace std;
 #define		NPCAP_SERVICE_REG_KEY_NAME			_T("SYSTEM\\CurrentControlSet\\Services\\") NPF_DRIVER_NAME_SMALL_T
 #define		NPCAP_REG_LOOPBACK_VALUE_NAME		_T("LoopbackAdapter")
 
-typedef std::basic_string<TCHAR> tstring;
-
 BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDeviceName, DWORD dwSamDesired);
 BOOL DeleteValueFromRegistry(LPCTSTR strSubKey, LPCTSTR strValueName);
 BOOL IncrementRegistryDword(LPCTSTR strSubKey, LPCTSTR strValueName, DWORD maxValue);
-
-tstring printAdapterNames(vector<tstring> nstr);
