@@ -290,9 +290,6 @@ DriverEntry(
 #endif
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
 	UNICODE_STRING deviceSymLink = { 0 };
-
-	// Use NonPaged Pool instead of No-Execute (NX) Nonpaged Pool for Win8 and later, this is for security purpose.
-	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 	
 	UNICODE_STRING AdapterName;
 
