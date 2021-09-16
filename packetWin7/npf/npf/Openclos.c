@@ -580,7 +580,11 @@ NPF_OpenAdapter(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	Open->UserPID = IoGetRequestorProcessId(Irp);
-	Open->pFiltMod = pFiltMod;
+	if (pFiltMod)
+	{
+		Open->pFiltMod = pFiltMod;
+		Open->AdapterID = pFiltMod->AdapterID;
+	}
 	Open->DeviceExtension = DeviceObject->DeviceExtension;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -740,11 +744,35 @@ NPF_StartUsingOpenInstance(
 	POPEN_INSTANCE pOpen, OPEN_STATE MaxState, BOOLEAN AtDispatchLevel)
 {
 	BOOLEAN returnStatus;
+	PSINGLE_LIST_ENTRY Curr;
+	PNPCAP_FILTER_MODULE pFiltMod;
+
 	if (!NT_VERIFY(MaxState <= OpenClosed))
 	{
 		return FALSE;
 	}
-	if (MaxState <= OpenAttached && !NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel))
+
+	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+	if (pOpen->pFiltMod == NULL && pOpen->AdapterID.Value != 0) {
+		// Check if we can reattach
+		FILTER_ACQUIRE_LOCK(&g_FilterArrayLock, 1);
+		Curr = g_arrFiltMod.Next;
+		while (Curr != NULL)
+		{
+			pFiltMod = CONTAINING_RECORD(Curr, NPCAP_FILTER_MODULE, FilterModulesEntry);
+			if (pFiltMod->AdapterID.Value == pOpen->AdapterID.Value)
+			{
+				pOpen->pFiltMod = pFiltMod;
+				NPF_AddToGroupOpenArray(pOpen, pFiltMod);
+				pOpen->OpenStatus = OpenAttached;
+				break;
+			}
+		}
+		FILTER_RELEASE_LOCK(&g_FilterArrayLock, 1);
+	}
+	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+
+	if (MaxState <= OpenAttached && (pOpen->pFiltMod == NULL || !NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel)))
 	{
 		// Not attached, but need to be.
 		return FALSE;
@@ -1558,6 +1586,7 @@ NPF_AddToGroupOpenArray(
 	// Acquire lock for writing (modify list)
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
+	NT_ASSERT(pOpen->pFiltMod == pFiltMod);
 	PushEntryList(&pFiltMod->OpenInstances, &pOpen->OpenInstancesEntry);
 
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
@@ -2336,6 +2365,7 @@ NPF_AttachAdapter(
 			TRACE_EXIT();
 			return returnStatus;
 		}
+		pFiltMod->AdapterID = AttachParameters->NetLuid;
 		pFiltMod->AdapterBindingStatus = FilterAttaching;
 
 #ifdef HAVE_RX_SUPPORT

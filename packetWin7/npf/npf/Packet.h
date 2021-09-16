@@ -341,6 +341,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	PNDIS_RW_LOCK_EX OpenInstancesLock; // GroupLock
 
 	NDIS_STRING				AdapterName;
+	NET_LUID AdapterID;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	BOOLEAN					Loopback;
 #endif
@@ -385,6 +386,7 @@ typedef struct _OPEN_INSTANCE
     SINGLE_LIST_ENTRY OpenInstancesEntry; //GroupNext
     LIST_ENTRY AllOpensEntry;
     PNPCAP_FILTER_MODULE pFiltMod;
+	NET_LUID AdapterID;
 
 	PDEVICE_EXTENSION DeviceExtension;
 	ULONG					MyPacketFilter;
