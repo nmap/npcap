@@ -102,6 +102,7 @@ extern NDIS_STRING g_SendToRxAdapterName;
 extern NDIS_STRING g_BlockRxAdapterName;
 extern ULONG g_Dot11SupportMode;
 extern ULONG g_TestMode;
+extern PDEVICE_OBJECT pNpcapDeviceObject;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	extern HANDLE g_WFPEngineHandle;
@@ -629,13 +630,10 @@ NPF_OpenAdapter(
 
 //-------------------------------------------------------------------
 _IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ PDEVICE_OBJECT pDevObj)
+NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod)
 {
 	NTSTATUS Status = STATUS_PENDING;
 	NDIS_EVENT Event;
-#ifndef HAVE_WFP_LOOPBACK_SUPPORT
-	UNREFERENCED_PARAMETER(pDevObj);
-#endif
 
 	if (pFiltMod == NULL)
 	{
@@ -715,7 +713,7 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod, _In_ PDEVICE_OBJECT p
 					break;
 				}
 
-				Status = NPF_RegisterCallouts(pDevObj);
+				Status = NPF_RegisterCallouts(pNpcapDeviceObject);
 				if (!NT_SUCCESS(Status))
 				{
 					if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
@@ -789,7 +787,7 @@ NPF_StartUsingOpenInstance(
 		}
 		else {
 			FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-			returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen->pFiltMod, pOpen->DeviceExtension->pDevObj));
+			returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen->pFiltMod));
 #ifdef HAVE_DOT11_SUPPORT
 			if (returnStatus && pOpen->pFiltMod->Dot11)
 			{

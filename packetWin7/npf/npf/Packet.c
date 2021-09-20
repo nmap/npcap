@@ -155,6 +155,7 @@ ULONG g_TestMode = 0;
 NDIS_HANDLE         FilterDriverHandle = NULL;			// NDIS handle for filter driver
 NDIS_HANDLE         FilterDriverHandle_WiFi = NULL;		// NDIS handle for WiFi filter driver
 NDIS_HANDLE         FilterDriverObject;					// Driver object for filter driver
+PDEVICE_OBJECT pNpcapDeviceObject = NULL;
 extern HANDLE g_WFPEngineHandle;
 
 #ifdef KeQuerySystemTime
@@ -435,7 +436,6 @@ DriverEntry(
 	}
 
 	PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
-	devExtP->pDevObj = devObjP;
 
 	devObjP->Flags |= DO_DIRECT_IO;
 
@@ -661,6 +661,7 @@ DriverEntry(
 		}
 	}
 
+	pNpcapDeviceObject = devObjP;
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
 }
