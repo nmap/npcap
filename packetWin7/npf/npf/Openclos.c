@@ -2418,7 +2418,7 @@ NPF_AttachAdapter(
 			PDEVICE_EXTENSION pDevExt = pNpcapDeviceObject->DeviceExtension;
 			// Traverse the AllOpens list looking for detached instances.
 			NdisAcquireRWLockRead(pDevExt->AllOpensLock, &lockState, NDIS_RWL_AT_DISPATCH_LEVEL);
-			for (PSINGLE_LIST_ENTRY Curr = pDevExt->AllOpens.Next; Curr != NULL; Curr = Curr->Next)
+			for (PLIST_ENTRY Curr = pDevExt->AllOpens.Flink; Curr != &(pDevExt->AllOpens); Curr = Curr->Flink)
 			{
 				POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, AllOpensEntry);
 				// If it doesn't already have a filter module and it matches this NET_LUID,
@@ -2428,7 +2428,7 @@ NPF_AttachAdapter(
 					NPF_AddToGroupOpenArray(pOpen, pFiltMod);
 				}
 			}
-			NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
+			NdisReleaseRWLock(pDevExt->AllOpensLock, &lockState);
 		}
 
 		returnStatus = STATUS_SUCCESS;
