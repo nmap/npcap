@@ -627,6 +627,7 @@ DriverEntry(
 				break;
 			}
 			pFiltMod->Loopback = TRUE;
+			pFiltMod->AdapterBindingStatus = FilterRunning;
 			pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
 
 			// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.

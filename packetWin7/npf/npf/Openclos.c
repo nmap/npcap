@@ -615,10 +615,6 @@ NPF_OpenAdapter(
 		NPF_AddToGroupOpenArray(Open, pFiltMod);
 		NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 	}
-	else
-	{
-		Open->OpenStatus = OpenDetached;
-	}
 
 	Irp->IoStatus.Status = STATUS_SUCCESS;
 	Irp->IoStatus.Information = FILE_OPENED;
@@ -1589,6 +1585,8 @@ NPF_AddToGroupOpenArray(
 
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
+	pOpen->OpenStatus = OpenAttached;
+
 	TRACE_EXIT();
 }
 
@@ -2074,7 +2072,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	//
 	NdisAllocateSpinLock(&Open->CountersLock);
 
-	Open->OpenStatus = OpenAttached;
+	Open->OpenStatus = OpenDetached;
 
 	TRACE_EXIT();
 	return Open;
@@ -2108,7 +2106,7 @@ NPF_CreateFilterModule(
 	RtlZeroMemory(pFiltMod, sizeof(NPCAP_FILTER_MODULE));
 
 	pFiltMod->AdapterHandle = NdisFilterHandle;
-	pFiltMod->AdapterBindingStatus = FilterAttaching;
+	pFiltMod->AdapterBindingStatus = FilterStateUnspecified;
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	pFiltMod->Loopback = FALSE;
 #endif
@@ -2186,7 +2184,7 @@ NPF_CreateFilterModule(
 	//
 	// set the proper binding flags before trying to open the MAC
 	//
-	pFiltMod->AdapterBindingStatus = FilterRunning;
+	pFiltMod->AdapterBindingStatus = FilterInitialized;
 	pFiltMod->AdapterHandleUsageCounter = 0;
 	NdisAllocateSpinLock(&pFiltMod->AdapterHandleLock);
 
