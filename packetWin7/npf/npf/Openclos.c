@@ -746,26 +746,6 @@ NPF_StartUsingOpenInstance(
 		return FALSE;
 	}
 
-	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-	if (pOpen->pFiltMod == NULL && pOpen->AdapterID.Value != 0) {
-		// Check if we can reattach
-		FILTER_ACQUIRE_LOCK(&g_FilterArrayLock, 1);
-		Curr = g_arrFiltMod.Next;
-		while (Curr != NULL)
-		{
-			pFiltMod = CONTAINING_RECORD(Curr, NPCAP_FILTER_MODULE, FilterModulesEntry);
-			if (pFiltMod->AdapterID.Value == pOpen->AdapterID.Value)
-			{
-				pOpen->pFiltMod = pFiltMod;
-				NPF_AddToGroupOpenArray(pOpen, pFiltMod);
-				pOpen->OpenStatus = OpenAttached;
-				break;
-			}
-		}
-		FILTER_RELEASE_LOCK(&g_FilterArrayLock, 1);
-	}
-	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-
 	if (MaxState <= OpenAttached && (pOpen->pFiltMod == NULL || !NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel)))
 	{
 		// Not attached, but need to be.
@@ -1581,6 +1561,7 @@ NPF_AddToGroupOpenArray(
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
 	NT_ASSERT(pOpen->pFiltMod == pFiltMod);
+	NT_ASSERT(pOpen->OpenInstancesEntry.Next == NULL);
 	PushEntryList(&pFiltMod->OpenInstances, &pOpen->OpenInstancesEntry);
 
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
@@ -1730,6 +1711,10 @@ NPF_RemoveFromGroupOpenArray(
 	if (!found)
 	{
 		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");)
+	}
+	else
+	{
+		pOpen->OpenInstancesEntry.Next = NULL;
 	}
 
 	TRACE_EXIT();
@@ -2274,6 +2259,7 @@ NPF_AttachAdapter(
 	)
 {
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
+	LOCK_STATE_EX lockState;
 	NDIS_STATUS             Status;
 	NDIS_STATUS				returnStatus;
 	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
@@ -2423,6 +2409,27 @@ NPF_AttachAdapter(
 			pFiltMod,
 			pFiltMod->Dot11);
 #endif
+
+
+		// Initial attach may be done before driver has finished loading and device is created, so be safe.
+		if (pNpcapDeviceObject && pNpcapDeviceObject->DeviceExtension
+				// Pretty sure this can't happen, but it'd be bad to proceed here if it did.
+				&& pFiltMod->AdapterID.Value != 0) {
+			PDEVICE_EXTENSION pDevExt = pNpcapDeviceObject->DeviceExtension;
+			// Traverse the AllOpens list looking for detached instances.
+			NdisAcquireRWLockRead(pDevExt->AllOpensLock, &lockState, NDIS_RWL_AT_DISPATCH_LEVEL);
+			for (PSINGLE_LIST_ENTRY Curr = pDevExt->AllOpens.Next; Curr != NULL; Curr = Curr->Next)
+			{
+				POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, AllOpensEntry);
+				// If it doesn't already have a filter module and it matches this NET_LUID,
+				if (pOpen->pFiltMod == NULL && pOpen->AdapterID.Value == pFiltMod->AdapterID.Value)
+				{
+					// add it to this filter module's list.
+					NPF_AddToGroupOpenArray(pOpen, pFiltMod);
+				}
+			}
+			NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
+		}
 
 		returnStatus = STATUS_SUCCESS;
 		pFiltMod->AdapterBindingStatus = FilterPaused;
