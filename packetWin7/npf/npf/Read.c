@@ -525,6 +525,11 @@ NPF_SendEx(
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
+
 	TRACE_ENTER();
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -563,6 +568,11 @@ NPF_TapEx(
 	UNREFERENCED_PARAMETER(PortNumber);
 	UNREFERENCED_PARAMETER(NumberOfNetBufferLists);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
+
 	if (NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags))
 	{
 		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
@@ -573,10 +583,6 @@ NPF_TapEx(
 		!(NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
 		 && NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		// Do not capture the normal NDIS receive traffic, if this is our loopback adapter.
-		&& pFiltMod->Loopback == FALSE
-#endif
 	   )
 	{
 		NPF_DoTap(pFiltMod, NetBufferLists, NULL, NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags));

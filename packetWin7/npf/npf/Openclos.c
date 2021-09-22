@@ -2213,6 +2213,12 @@ Return Value:
 	UNREFERENCED_PARAMETER(NdisFilterHandle);
 	TRACE_ENTER();
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!((PNPCAP_FILTER_MODULE) NdisFilterHandle)->Loopback);
+#endif
+
+
 	if (!NT_VERIFY(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject))
 	{
 		IF_LOUD(DbgPrint("NPF_RegisterOptions: driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);)
@@ -2267,6 +2273,11 @@ NPF_AttachAdapter(
 	BOOLEAN					bDot11;
 
 	TRACE_ENTER();
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
 
 	do
 	{
@@ -2466,6 +2477,11 @@ NPF_Pause(
 	UNREFERENCED_PARAMETER(PauseParameters);
 	TRACE_ENTER();
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
+
 	NdisInitializeEvent(&Event);
 	NdisResetEvent(&Event);
 
@@ -2507,6 +2523,11 @@ NPF_Restart(
 	PNDIS_RESTART_GENERAL_ATTRIBUTES GenAttr = NULL;
 
 	TRACE_ENTER();
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
 
 	if (RestartParameters == NULL)
 	{
@@ -2584,7 +2605,13 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is called for loopback module by NPF_Unload. */
 	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused || pFiltMod->Loopback);
+#else
+	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused);
+#endif
+
 	/* No need to lock the group since we are paused. */
 	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 	{
@@ -2645,6 +2672,11 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
     PVOID pBuffer = NULL;
 
 	TRACE_ENTER();
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
 
 	// Special case: if their new packet filter doesn't change the lower one
 	// then we don't pass it down but just return success.
@@ -2779,6 +2811,11 @@ Arguments:
 	PFILTER_REQUEST_CONTEXT             Context;
 	PNDIS_OID_REQUEST                   OriginalRequest = NULL;
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
+
 	FILTER_ACQUIRE_LOCK(&pFiltMod->OIDLock, NPF_IRQL_UNKNOWN);
 
 	Request = pFiltMod->PendingOidRequest;
@@ -2839,6 +2876,11 @@ Arguments:
 	PFILTER_REQUEST_CONTEXT             Context;
 
 	TRACE_ENTER();
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
 
 	Context = (PFILTER_REQUEST_CONTEXT)(&Request->SourceReserved[0]);
 	OriginalRequest = (*Context);
@@ -2932,6 +2974,11 @@ NOTE: called at <= DISPATCH_LEVEL
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
+
 // 	TRACE_ENTER();
 // 	IF_LOUD(DbgPrint("NPF: Status Indication\n");)
 
@@ -2974,6 +3021,11 @@ NOTE: called at PASSIVE_LEVEL
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 	NDIS_DEVICE_PNP_EVENT  DevicePnPEvent = NetDevicePnPEvent->DevicePnPEvent;
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
 
 /*	TRACE_ENTER();*/
 
@@ -3039,6 +3091,11 @@ NOTE: called at PASSIVE_LEVEL
 
 	TRACE_ENTER();
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
+
 	//
 	// The filter may do processing on the event here, including intercepting
 	// and dropping it entirely.  However, the sample does nothing with Net PNP
@@ -3087,7 +3144,10 @@ Arguments:
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 
-/*	TRACE_ENTER();*/
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
 
 	if (NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
 	{
@@ -3135,6 +3195,11 @@ Return Value:
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!pFiltMod->Loopback);
+#endif
+
 	NdisFCancelSendNetBufferLists(pFiltMod->AdapterHandle, CancelId);
 }
 
@@ -3165,6 +3230,11 @@ Return Value:
 {
    NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
    UNREFERENCED_PARAMETER(FilterModuleContext);
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	/* This callback is only for the NDIS LWF, not WFP/loopback */
+	NT_ASSERT(!((PNPCAP_FILTER_MODULE)FilterModuleContext)->Loopback);
+#endif
 
    return Status;
 }

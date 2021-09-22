@@ -1014,6 +1014,7 @@ Return Value:
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 
 	TRACE_ENTER();
+	/* This callback is used for NDIS LWF as well as WFP/loopback */
 
 	//
 	// If your filter injected any send packets into the datapath to be sent,
@@ -1128,6 +1129,8 @@ NPF_SendCompleteExForEachOpen(
 
 //-------------------------------------------------------------------
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+
 _IRQL_requires_min_(PASSIVE_LEVEL)
 _IRQL_requires_max_(DISPATCH_LEVEL)
 _IRQL_requires_same_
@@ -1138,6 +1141,9 @@ void NTAPI NPF_NetworkInjectionComplete(
 	)
 {
 	TRACE_ENTER();
+
+	/* This method should only be used for Loopback (for now, though see #516) */
+	NT_ASSERT(((PNPCAP_FILTER_MODULE) pContext)->Loopback);
 
 	if (pNetBufferList->Status != STATUS_SUCCESS)
 	{
@@ -1154,8 +1160,6 @@ void NTAPI NPF_NetworkInjectionComplete(
 	return;
 }
 
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 _Use_decl_annotations_
 NTSTATUS
 NPF_LoopbackSendNetBufferLists(
