@@ -590,7 +590,7 @@ NPF_OpenAdapter(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
-		"Opening the device %ws, BindingContext=%p, Loopback=%u",
+		"Opening the device %ws, BindingContext=%p, Loopback=%d",
 		IrpSp->FileObject->FileName.Buffer,
 		Open,
 		pFiltMod ? pFiltMod->Loopback : 0);
@@ -2301,7 +2301,7 @@ NPF_AttachAdapter(
 			AttachParameters->MiniportMediaType);
 		);
 
-		IF_LOUD(DbgPrint("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%I64u]=%d\n",
+		IF_LOUD(DbgPrint("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%I64u]=%x\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
 			SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME,
 			AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME]);
@@ -2408,7 +2408,7 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		TRACE_MESSAGE4(PACKET_DEBUG_LOUD,
-			"Opened the device %ws, BindingContext=%p, Loopback=%d, dot11=%d",
+			"Opened the device %ws, BindingContext=%p, Loopback=%u, dot11=%u",
 			AttachParameters->BaseMiniportName->Buffer,
 			pFiltMod,
 			pFiltMod->Loopback,

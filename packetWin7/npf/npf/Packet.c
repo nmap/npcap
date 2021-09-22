@@ -1752,7 +1752,7 @@ NPF_IoControl(
 						case OID_GEN_MAXIMUM_TOTAL_SIZE:
 						case OID_GEN_TRANSMIT_BUFFER_SPACE:
 						case OID_GEN_RECEIVE_BUFFER_SPACE:
-							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, Open->pFiltMod->MaxFrameSize);
+							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %u", Open->pFiltMod->AdapterName.Buffer, Open->pFiltMod->MaxFrameSize);
 							*((PUINT)OidData->Data) = Open->pFiltMod->MaxFrameSize;
 							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
 							break;

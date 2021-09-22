@@ -1203,7 +1203,7 @@ NPF_LoopbackSendNetBufferLists(
 				hInjectionHandle = g_InjectionHandle_IPv6;
 				break;
 			default:
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Invalid DLTNULLTYPE %d\n", pDltNullHdr->null_type);
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Invalid DLTNULLTYPE %u\n", pDltNullHdr->null_type);
 				status = STATUS_PROTOCOL_NOT_SUPPORTED;
 				break;
 		}
@@ -1220,7 +1220,7 @@ NPF_LoopbackSendNetBufferLists(
 				hInjectionHandle = g_InjectionHandle_IPv6;
 				break;
 			default:
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Invalid ETHERTYPE %d\n", RtlUshortByteSwap(pEthernetHdr->ether_type));
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Invalid ETHERTYPE %u\n", RtlUshortByteSwap(pEthernetHdr->ether_type));
 				status = STATUS_PROTOCOL_NOT_SUPPORTED;
 				break;
 		}

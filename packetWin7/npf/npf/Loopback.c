@@ -407,7 +407,7 @@ BOOL NPF_ShouldProcess(
 	{
 		// This is not our layer! Bail.
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-				"NPF_NetworkClassifyOutbound: bIPv4 cannot be determined, inFixedValues->layerId = %d\n", inFixedValues->layerId);
+				"NPF_NetworkClassifyOutbound: bIPv4 cannot be determined, inFixedValues->layerId = %u\n", inFixedValues->layerId);
 		*pbIPv4 = FALSE;
 		return FALSE;
 	}
@@ -491,7 +491,7 @@ NPF_NetworkClassifyOutbound(
 		return;
 	}
 
-	TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "NPF_NetworkClassifyOutbound: inFixedValues->layerId = %d, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %d, inMetaValues->compartmentId = 0x%x\n",
+	TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "NPF_NetworkClassifyOutbound: inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
 		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
 
 	// Outbound: Initial offset is already at the IP Header
@@ -576,7 +576,7 @@ NPF_NetworkClassifyInbound(
 		return;
 	}
 
-	TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "NPF_NetworkClassifyInbound: inFixedValues->layerId = %d, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %d, inMetaValues->compartmentId = 0x%x\n",
+	TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "NPF_NetworkClassifyInbound: inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
 		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
 
 	// Inbound: Initial offset is at the Transport Header, so retreat the size of the IP Header.
