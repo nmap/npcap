@@ -741,7 +741,7 @@ NPF_StartUsingOpenInstance(
 	PSINGLE_LIST_ENTRY Curr;
 	PNPCAP_FILTER_MODULE pFiltMod;
 
-	if (!NT_VERIFY(MaxState <= OpenClosed))
+	if (!NT_VERIFY(MaxState < OpenInvalidStateMax))
 	{
 		return FALSE;
 	}
@@ -798,6 +798,7 @@ NPF_StartUsingOpenInstance(
 	}
 	else
 	{
+		NT_ASSERT(MaxState < OpenClosed); // No IRPs can be pending for OpenClosed or higher state.
 		returnStatus = TRUE;
 		pOpen->PendingIrps[MaxState]++;
 	}
@@ -817,6 +818,7 @@ NPF_StopUsingOpenInstance(
 	)
 {
 	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+	NT_ASSERT(MaxState < OpenClosed);
 	NT_ASSERT(pOpen->PendingIrps[MaxState] > 0);
 	pOpen->PendingIrps[MaxState]--;
 	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
@@ -2045,6 +2047,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	// we need to keep a counter of the pending IRPs
 	// so that when the IRP_MJ_CLEANUP dispatcher gets called,
 	// we can wait for those IRPs to be completed
+	// NB: no IRPs can be pending for the OpenClosed state.
 	for (OPEN_STATE state = 0; state < OpenClosed; state++)
 	{
 		Open->PendingIrps[state] = 0;
@@ -2273,11 +2276,6 @@ NPF_AttachAdapter(
 	BOOLEAN					bDot11;
 
 	TRACE_ENTER();
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	/* This callback is only for the NDIS LWF, not WFP/loopback */
-	NT_ASSERT(!pFiltMod->Loopback);
-#endif
 
 	do
 	{

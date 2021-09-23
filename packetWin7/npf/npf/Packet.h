@@ -317,7 +317,8 @@ typedef enum _OPEN_STATE
 	OpenRunning, // All features available
 	OpenAttached, // Some features need to be initialized.
 	OpenDetached, // No NDIS adapter associated, most features unavailable
-	OpenClosed // No features available, about to shut down
+	OpenClosed, // No features available, about to shut down. New IRPs rejected.
+	OpenInvalidStateMax // all valid states are less than this
 } OPEN_STATE;
 
 typedef enum _FILTER_OPS_STATE
@@ -452,7 +453,7 @@ typedef struct _OPEN_INSTANCE
 
 	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
 	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
-	ULONG PendingIrps[OpenClosed];
+	ULONG PendingIrps[OpenClosed]; //Counters for pending IRPs at each state. No IRPs are accepted at OpenClosed and greater.
 
 	OPEN_STATE OpenStatus;
 	NDIS_SPIN_LOCK			OpenInUseLock;
@@ -1228,7 +1229,7 @@ _When_(pOpen->OpenStatus > OpenRunning, _IRQL_requires_(PASSIVE_LEVEL))
 BOOLEAN NPF_StartUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
-VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_ OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
+VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID NPF_CloseOpenInstance(_Inout_ POPEN_INSTANCE pOpen);
