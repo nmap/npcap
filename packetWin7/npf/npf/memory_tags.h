@@ -65,6 +65,8 @@
 #if(NTDDI_VERSION >= NTDDI_WIN8)
 #define NPF_NONPAGED NonPagedPoolNx
 #else
+/* NonPagedPoolNx is not available for Win7, so avoid warning about it. */
+#pragma warning(disable: 30030)
 #define NPF_NONPAGED NonPagedPool
 #endif
 
