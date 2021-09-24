@@ -163,7 +163,7 @@ AddService=%NPF_Filter_Name_WiFi%,,FilterWiFi.svc
 [FilterStandard.svc]
 DisplayName     = %NPF_Desc_Standard%
 ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
-StartType       = 3 ;SERVICE_DEMAND_START
+StartType       = 1 ;SERVICE_SYSTEM_START
 ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
 ServiceBinary   = %12%\%NPF_DriverName%.sys
 LoadOrderGroup  = NDIS
