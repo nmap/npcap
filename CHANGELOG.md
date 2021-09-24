@@ -9,7 +9,7 @@
 * The silent installer (only available in Nmap OEM) now offers better
   control over when to remove and reinstall an existing Npcap. You can
   specify your Npcap version number or feature requirements with the
-  new /require_version, /require_features, and /force
+  new `/require_version`, `/require_features`, and `/force`
   options. Software with strict requirements might re-run at startup
   to ensure that Npcap hasn't been uninstalled or changed. If Npcap
   still exists and meets your requirements, the installer quits
@@ -38,7 +38,9 @@
 * Powershell commands launched by the installer are now run with the
   `-NoProfile` option. Fixes [#529](http://issues.npcap.org/529).
 
-* Npcap SDK minor change to add const qualifiers to parameters to several Packet.dll functions.
+* Npcap SDK 1.11 released. This includes upstream libpcap changes to allow building with older
+  Visual Studio versions, as well as minor changes to add const qualifiers to parameters to several
+  Packet.dll functions.  Fixes [#518](http://issues.npcap.org/518).
 
 * Npcap installer now uses Unicode internally. This may result in mixed-encoding install.log files.
 
