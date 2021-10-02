@@ -282,36 +282,53 @@ HRESULT InstallSpecifiedComponent(LPCTSTR lpszInfFile, LPCTSTR lpszAppName, cons
 
 BOOL InstallDriver()
 {
-	BOOL bSucceed = TRUE;
 	TCHAR szFileFullPath[_MAX_PATH];
-	HRESULT hr;
+	HRESULT hr = S_OK;
+	PVOID OldValue = NULL;
 
 	TRACE_ENTER();
 
-	// Get Path to Service INF File
-	// ----------------------------
-	// The INF file is assumed to be in the same folder as this application...
-	
-	bSucceed = (BOOL) GetServiceInfFilePath(szFileFullPath, MAX_PATH);
-	if (!bSucceed)
+	do
 	{
-		TRACE_PRINT("Unable to get INF file path");
-		TRACE_EXIT();
-		return bSucceed;
-	}
+		if (!Wow64DisableWow64FsRedirection(&OldValue))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+			TRACE_PRINT("Unable to disable filesystem redirection");
+			break;
+		}
+		// Get Path to Service INF File
+		// ----------------------------
+		// The INF file is assumed to be in the same folder as this application...
 
-	hr = InstallSpecifiedComponent(szFileFullPath, APP_NAME, &GUID_DEVCLASS_NETSERVICE);
+		if (!(BOOL) GetServiceInfFilePath(szFileFullPath, MAX_PATH))
+		{
+			hr = HRESULT_FROM_WIN32(GetLastError());
+			TRACE_PRINT("Unable to get INF file path");
+			if (!Wow64RevertWow64FsRedirection(OldValue))
+			{
+				TRACE_PRINT1("Warning! Cannot revert filesystem redirection: 0x%x", GetLastError());
+			}
+			break;
+		}
 
-	if (hr != S_OK)
-	{
-		ErrMsg(hr, _T("InstallSpecifiedComponent\n"));
-		TRACE_EXIT();
-		SetLastError(hr);
-		return FALSE;
-	}
+		hr = InstallSpecifiedComponent(szFileFullPath, APP_NAME, &GUID_DEVCLASS_NETSERVICE);
 
+		if (hr != S_OK)
+		{
+			ErrMsg(hr, _T("InstallSpecifiedComponent\n"));
+			// Don't break, we still need to revert FS redirection
+		}
+
+		if (!Wow64RevertWow64FsRedirection(OldValue))
+		{
+			TRACE_PRINT1("Warning! Cannot revert filesystem redirection: 0x%x", GetLastError());
+			break;
+		}
+	} while (FALSE);
+
+	SetLastError(hr);
 	TRACE_EXIT();
-	return bSucceed;
+	return SUCCEEDED(hr);
 }
 
 BOOL UninstallDriver()
