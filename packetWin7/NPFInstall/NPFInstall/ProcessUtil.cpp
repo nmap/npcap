@@ -280,6 +280,13 @@ set<ULONG> getNpcapPIDs()
 	{
 		TRACE_PRINT("Npcap handle opened");
 		PULONG pids = (PULONG)HeapAlloc(hHeap, 0, dwLen);
+		if (!pids)
+		{
+			TRACE_PRINT1("HeapAlloc error 0x%08x", GetLastError());
+			CloseHandle(hFile);
+			TRACE_EXIT();
+			return empty;
+		}
 		if (!DeviceIoControl(hFile, BIOCGETPIDS, NULL, 0, pids, dwLen, &BytesReturned, NULL))
 		{
 			lasterr = GetLastError();
@@ -289,6 +296,13 @@ set<ULONG> getNpcapPIDs()
 				dwLen = (pids[0] + 1) * sizeof(ULONG);
 				HeapFree(hHeap, 0, pids);
 				pids = (PULONG)HeapAlloc(hHeap, 0, dwLen);
+				if (!pids)
+				{
+					TRACE_PRINT1("HeapAlloc error 0x%08x", GetLastError());
+					CloseHandle(hFile);
+					TRACE_EXIT();
+					return empty;
+				}
 				if (!DeviceIoControl(hFile, BIOCGETPIDS, NULL, 0, pids, dwLen, &BytesReturned, NULL))
 				{
 					lasterr = GetLastError();
