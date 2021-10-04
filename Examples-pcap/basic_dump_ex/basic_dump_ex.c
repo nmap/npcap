@@ -8,6 +8,7 @@
 
 #include <pcap.h>
 #include <stdio.h>
+#include <time.h>
 #ifdef _WIN32
 #include <tchar.h>
 BOOL LoadNpcapDlls()

@@ -35,6 +35,7 @@
 #include <stdio.h>
 
 #include <pcap.h>
+#include <time.h>
 
 #ifdef _WIN32
 #include <tchar.h>
@@ -173,7 +174,7 @@ void main(int argc, char **argv)
 		printf("An error occurred sending the packets: %s. Only %d bytes were sent\n", pcap_geterr(outdesc), res);
 	}
 	
-	cpu_time = (clock() - cpu_time)/CLK_TCK;
+	cpu_time = (clock() - cpu_time)/CLOCKS_PER_SEC;
 	
 	printf ("\n\nElapsed time: %5.3f\n", cpu_time);
 	printf ("\nTotal packets generated = %d", npacks);

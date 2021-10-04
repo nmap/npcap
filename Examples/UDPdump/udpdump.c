@@ -32,6 +32,7 @@
  */
 
 #include <pcap.h>
+#include <time.h>
 #include <Winsock2.h>
 #include <tchar.h>
 BOOL LoadNpcapDlls()

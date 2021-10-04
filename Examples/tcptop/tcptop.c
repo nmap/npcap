@@ -35,6 +35,7 @@
 #include <stdio.h>
 
 #include <pcap.h>
+#include <time.h>
 
 #include <tchar.h>
 BOOL LoadNpcapDlls()
