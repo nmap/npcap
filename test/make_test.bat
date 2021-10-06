@@ -1,3 +1,5 @@
+SET SAVEPID=0
+
 echo Testing iflist...
 for /f "TOKENS=1,2" %%a in ('nmap --iflist') do @if %%a==lo0 set devname=%%b
 if not %devname:~0,12%==\Device\NPF_ goto :error
@@ -18,6 +20,7 @@ echo Testing sendpack...
 
 echo Killing pcap_filter...
 taskkill /PID %SAVEPID% || goto :error
+SET SAVEPID=0
 
 echo Reading dump file...
 .\readfile.exe loopback.pcap || goto :error
@@ -48,6 +51,7 @@ echo Testing sendpack...
 
 echo Killing pcap_filter...
 taskkill /PID %SAVEPID% || goto :error
+SET SAVEPID=0
 
 echo Reading dump file...
 .\readfile.exe scanme.pcap || goto :error
@@ -60,5 +64,6 @@ exit /b
 
 :error
 echo Failed: %errorlevel%
+if %SAVEPID% NEQ 0 taskkill /PID %SAVEPID%
 pause
 exit /b %errorlevel%
