@@ -2426,7 +2426,7 @@ NPF_AttachAdapter(
 				&& pFiltMod->AdapterID.Value != 0) {
 			PDEVICE_EXTENSION pDevExt = pNpcapDeviceObject->DeviceExtension;
 			// Traverse the AllOpens list looking for detached instances.
-			NdisAcquireRWLockRead(pDevExt->AllOpensLock, &lockState, NDIS_RWL_AT_DISPATCH_LEVEL);
+			NdisAcquireRWLockRead(pDevExt->AllOpensLock, &lockState, 0);
 			for (PLIST_ENTRY Curr = pDevExt->AllOpens.Flink; Curr != &(pDevExt->AllOpens); Curr = Curr->Flink)
 			{
 				POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, AllOpensEntry);
