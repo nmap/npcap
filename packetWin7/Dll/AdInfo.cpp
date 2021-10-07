@@ -678,6 +678,7 @@ static BOOLEAN PacketGetAdaptersAirpcap()
   \param AdapterName Name of the adapter whose information has to be retrieved.
   \return If the function succeeds, the return value is non-null.
 */
+_Use_decl_annotations_
 PADAPTER_INFO PacketFindAdInfo(PCCH AdapterName)
 {
 	//this function should NOT acquire the g_AdaptersInfoMutex, since it does return an ADAPTER_INFO structure
@@ -721,6 +722,7 @@ PADAPTER_INFO PacketFindAdInfo(PCCH AdapterName)
   \return If the function succeeds, the return value is TRUE. A false value means that the adapter is no
   more valid or that it is disconnected.
 */
+_Use_decl_annotations_
 BOOLEAN PacketUpdateAdInfo(PCCH AdapterName)
 {
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter

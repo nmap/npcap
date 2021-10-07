@@ -1346,6 +1346,7 @@ LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName)
 
   \note uses the GetFileVersionInfoSize() and GetFileVersionInfo() WIN32 API functions
 */
+_Use_decl_annotations_
 BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLen)
 {
     DWORD   dwVerInfoSize;  // Size of version information block
@@ -1582,6 +1583,7 @@ BOOL PacketStartService()
 
   \note internal function used by PacketOpenAdapter() and AddAdapter()
 */
+_Use_decl_annotations_
 LPADAPTER PacketOpenAdapterNPF(PCCH AdapterNameA)
 {
 	DWORD error;
