@@ -343,24 +343,26 @@ typedef struct _NPCAP_FILTER_MODULE
 
 	NDIS_STRING				AdapterName;
 	NET_LUID AdapterID;
+
+	/* Config booleans as a bitfield */
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	BOOLEAN					Loopback;
+	UINT Loopback:1;
 #endif
 #ifdef HAVE_RX_SUPPORT
-	BOOLEAN					SendToRxPath;
-	BOOLEAN					BlockRxPath;
+	UINT SendToRxPath:1;
+	UINT BlockRxPath:1;
 #endif
 #ifdef HAVE_DOT11_SUPPORT
-	BOOLEAN					HasDataRateMappingTable;
-	DOT11_DATA_RATE_MAPPING_TABLE	DataRateMappingTable;
+	UINT Dot11:1;
+	UINT HasDataRateMappingTable:1;
 #endif
 
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
 	ULONG					PhysicalMedium;
 #ifdef HAVE_DOT11_SUPPORT
-	BOOLEAN					Dot11;
 	ULONG					Dot11PacketFilter;
+	DOT11_DATA_RATE_MAPPING_TABLE	DataRateMappingTable;
 #endif
 
 	NDIS_SPIN_LOCK			OIDLock;		///< Lock for protection of state and outstanding sends and recvs
@@ -401,7 +403,6 @@ typedef struct _OPEN_INSTANCE
 											///< BIOCSMINTOCOPY IOCTL.
 	LARGE_INTEGER			TimeOut;		///< Timeout after which a read is released, also if the amount of data in the buffer is
 											///< less than MinToCopy. Set with the BIOCSRTIMEOUT IOCTL.
-	int						mode;			///< Working mode of the driver. See PacketSetMode() for details.
 	LARGE_INTEGER			Nbytes;			///< Amount of bytes accepted by the filter when this instance is in statistical mode.
 	LARGE_INTEGER			Npackets;		///< Number of packets accepted by the filter when this instance is in statistical mode.
 	NDIS_SPIN_LOCK			CountersLock;	///< SpinLock that protects the statistical mode counters.
@@ -413,7 +414,19 @@ typedef struct _OPEN_INSTANCE
 											///< the same open instance.
 	NDIS_SPIN_LOCK			WriteLock;		///< SpinLock that protects the WriteInProgress variable.
 
-	BOOLEAN					SkipSentPackets;	///< True if this instance should not capture back the packets that it transmits.
+	/* Config booleans as a bitfield */
+	// working modes, see PacketSetMode():
+	UINT bModeCapt:1; // MODE_CAPT (1) vs MODE_STAT (0)
+	// UINT bModeMon:1; // MODE_MON not supported
+#ifdef NPCAP_KDUMP
+	UINT bModeDump:1; // MODE_DUMP not supported
+#endif
+	// Loopback Behavior:
+	UINT SkipSentPackets:1; ///< True if this instance should not capture back the packets that it transmits.
+	// Info used to match a FilterModule when reattaching:
+	UINT bDot11:1; // pFiltMod->Dot11
+	UINT bLoopback:1; // pFiltMod->Loopback
+
 #ifdef NPCAP_KDUMP
 	HANDLE					DumpFileHandle;	///< Handle of the file used in dump mode.
 	PFILE_OBJECT			DumpFileObject;	///< Pointer to the object of the file used in dump mode.

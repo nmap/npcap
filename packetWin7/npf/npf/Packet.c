@@ -1392,7 +1392,7 @@ NPF_IoControl(
 		}
 		else if (mode == MODE_CAPT)
 		{
-			Open->mode = MODE_CAPT;
+			Open->bModeCapt = 1;
 
 			SET_RESULT_SUCCESS(0);
 		}
@@ -1409,7 +1409,7 @@ NPF_IoControl(
 		{
 			if (mode & MODE_STAT)
 			{
-				Open->mode = MODE_STAT;
+				Open->bModeCapt = 0;
 				NdisAcquireSpinLock(&Open->CountersLock);
 				Open->Nbytes.QuadPart = 0;
 				Open->Npackets.QuadPart = 0;

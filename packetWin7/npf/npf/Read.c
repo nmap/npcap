@@ -205,7 +205,11 @@ NPF_Read(
 	}
 
 	//See if the buffer is full enough to be copied
-	if (Open->Size - Open->Free <= (LONG) Open->MinToCopy || Open->mode & MODE_DUMP)
+	if (Open->Size - Open->Free <= (LONG) Open->MinToCopy
+#ifdef NPCAP_KDUMP
+		|| Open->bModeDump
+#endif
+		)
 	{
 		if (Open->ReadEvent != NULL)
 		{
@@ -221,7 +225,7 @@ NPF_Read(
 			KeClearEvent(Open->ReadEvent);
 		}
 
-		if (Open->mode & MODE_STAT)
+		if (!Open->bModeCapt)
 		{
 			//this capture instance is in statistics mode
 			CurrBuff = (PUCHAR) MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
@@ -234,7 +238,7 @@ NPF_Read(
 			}
 
 #ifdef NPCAP_KDUMP
-			if (Open->mode & MODE_DUMP)
+			if (Open->bModeDump)
 			{
 				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 24)
 				{
@@ -297,16 +301,6 @@ NPF_Read(
 			return STATUS_SUCCESS;
 		}
 
-		//
-		// The MONITOR_MODE (aka TME extensions) is not supported on
-		// 64 bit architectures
-		//
-		if (Open->mode == MODE_MON)   //this capture instance is in monitor mode
-		{
-			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
-			TRACE_EXIT();
-			EXIT_FAILURE(0);
-		}
 	}
 
 
@@ -838,7 +832,7 @@ NPF_TapExForEachOpen(
 
 		// Informational headers
 		// Only bother with these if we are capturing, i.e. not MODE_STAT
-		if (Open->mode & MODE_DUMP || !(Open->mode & MODE_STAT))
+		if (Open->bModeCapt)
 		{
 			// Handle IEEE802.1Q VLAN tag here, the tag in OOB field will be copied to the packet data, currently only Ethernet supported.
 			// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
@@ -1099,7 +1093,7 @@ NPF_TapExForEachOpen(
 			if (fres > TotalPacketSize || fres == -1)
 				fres = TotalPacketSize;
 
-			if (Open->mode & MODE_STAT)
+			if (!Open->bModeCapt)
 			{
 				// we are in statistics mode
 				FILTER_ACQUIRE_LOCK(&Open->CountersLock, AtDispatchLevel);
@@ -1116,9 +1110,10 @@ NPF_TapExForEachOpen(
 
 				FILTER_RELEASE_LOCK(&Open->CountersLock, AtDispatchLevel);
 
-				if (!(Open->mode & MODE_DUMP))
+#ifdef NPCAP_KDUMP
+				if (!Open->bModeDump)
+#endif
 				{
-					//return NDIS_STATUS_NOT_ACCEPTED;
 					goto TEFEO_next_NB;
 				}
 			}
