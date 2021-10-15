@@ -260,11 +260,9 @@ NPF_Write(
 			break;
 		}
 
-		NdisAcquireSpinLock(&Open->WriteLock);
-		if (Open->WriteInProgress)
+		if (InterlockedExchange(&Open->WriteInProgress, 1) == 1)
 		{
 			// Another write operation is currently in progress
-			NdisReleaseSpinLock(&Open->WriteLock);
 
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Another Send operation is in progress, aborting.");
 
@@ -272,12 +270,6 @@ NPF_Write(
 
 			Status = STATUS_DEVICE_BUSY;
 			break;
-		}
-		else
-		{
-			Open->WriteInProgress = TRUE;
-			NdisReleaseSpinLock(&Open->WriteLock);
-			NdisResetEvent(&Open->NdisWriteCompleteEvent);
 		}
 
 
@@ -466,9 +458,7 @@ NPF_Write(
 	//
 	// no more writes are in progress
 	//
-	NdisAcquireSpinLock(&Open->WriteLock);
-	Open->WriteInProgress = FALSE;
-	NdisReleaseSpinLock(&Open->WriteLock);
+	InterlockedExchange(&Open->WriteInProgress, 0);
 
 	NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 

@@ -372,9 +372,8 @@ typedef struct _OPEN_INSTANCE
 											///< explanation
 	ULONG					Multiple_Write_Counter;	///< Counts the number of times a single write has already physically repeated.
 	NDIS_EVENT				WriteEvent;		///< Event used to synchronize the multiple write process.
-	BOOLEAN					WriteInProgress;///< True if a write is currently in progress. NPF currently allows a single write on
+	LONG WriteInProgress; ///< 1 if a write is currently in progress. NPF currently allows a single write on
 											///< the same open instance.
-	NDIS_SPIN_LOCK			WriteLock;		///< SpinLock that protects the WriteInProgress variable.
 
 	/* Config booleans as a bitfield */
 	// working modes, see PacketSetMode():

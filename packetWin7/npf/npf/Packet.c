@@ -1319,30 +1319,21 @@ NPF_IoControl(
 	case BIOCSENDPACKETSNOSYNC:
 		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSENDPACKETSNOSYNC");
 
-		NdisAcquireSpinLock(&Open->WriteLock);
-		if (Open->WriteInProgress)
+		if (InterlockedExchange(&Open->WriteInProgress, 1) == 1)
 		{
-			NdisReleaseSpinLock(&Open->WriteLock);
 			//
 			// Another write operation is currently in progress
 			//
 			SET_FAILURE(STATUS_DEVICE_BUSY);
 			break;
 		}
-		else
-		{
-			Open->WriteInProgress = TRUE;
-		}
-		NdisReleaseSpinLock(&Open->WriteLock);
 
 		WriteRes = NPF_BufferedWrite(Irp,
 			(PCHAR) Irp->AssociatedIrp.SystemBuffer,
 			IrpSp->Parameters.DeviceIoControl.InputBufferLength,
 			SyncWrite);
 
-		NdisAcquireSpinLock(&Open->WriteLock);
-		Open->WriteInProgress = FALSE;
-		NdisReleaseSpinLock(&Open->WriteLock);
+		InterlockedExchange(&Open->WriteInProgress, 0);
 
 		if (WriteRes >= 0)
 		{

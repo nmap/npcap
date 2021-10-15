@@ -994,7 +994,6 @@ NPF_ReleaseOpenInstanceResources(
 	NdisFreeRWLock(pOpen->BufferLock);
 	NdisFreeRWLock(pOpen->MachineLock);
 	NdisFreeSpinLock(&pOpen->CountersLock);
-	NdisFreeSpinLock(&pOpen->WriteLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
 
 	TRACE_EXIT();
@@ -1977,8 +1976,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 		TRACE_EXIT();
 		return NULL;
 	}
-	NdisAllocateSpinLock(&Open->WriteLock);
-	Open->WriteInProgress = FALSE;
+	Open->WriteInProgress = 0;
 
 	//
 	// Initialize the open instance
