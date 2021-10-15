@@ -997,17 +997,6 @@ NPF_ReleaseOpenInstanceResources(
 	NdisFreeSpinLock(&pOpen->WriteLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
 
-#ifdef NPCAP_KDUMP
-	//
-	// Free the string with the name of the dump file
-	//
-	if (pOpen->DumpFileName.Buffer != NULL)
-	{
-		ExFreePool(pOpen->DumpFileName.Buffer);
-		pOpen->DumpFileName.Buffer = NULL;
-	}
-#endif
-
 	TRACE_EXIT();
 }
 
@@ -1472,49 +1461,6 @@ NPF_Cleanup(
 
 	if (Open->ReadEvent != NULL)
 		KeSetEvent(Open->ReadEvent, 0, FALSE);
-
-#ifdef NPCAP_KDUMP
-	LARGE_INTEGER ThreadDelay;
-	
-	if (AdapterAlreadyClosing == FALSE)
-	{
-
-	
-		 Unfreeze the consumer
-	
-		if(Open->mode & MODE_DUMP)
-			NdisSetEvent(&Open->DumpEvent);
-		else
-			KeSetEvent(Open->ReadEvent,0,FALSE);
-
-		//
-		// If this instance is in dump mode, complete the dump and close the file
-		//
-		if((Open->mode & MODE_DUMP) && Open->DumpFileHandle != NULL)
-		{
-			NTSTATUS wres;
-
-			ThreadDelay.QuadPart = -50000000;
-
-			//
-			// Wait the completion of the thread
-			//
-			wres = KeWaitForSingleObject(Open->DumpThreadObject,
-				UserRequest,
-				KernelMode,
-				TRUE,
-				&ThreadDelay);
-
-			ObDereferenceObject(Open->DumpThreadObject);
-
-			//
-			// Flush and close the dump file
-			//
-			NPF_CloseDumpFile(Open);
-		}
-	}
-#endif //NPCAP_KDUMP
-
 
 	//
 	// release all the resources
@@ -2022,9 +1968,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 
 	NdisInitializeEvent(&Open->WriteEvent);
 	NdisInitializeEvent(&Open->NdisWriteCompleteEvent);
-#ifdef NPCAP_KDUMP
-	NdisInitializeEvent(&Open->DumpEvent);
-#endif
 	Open->MachineLock = NdisAllocateRWLock(NdisHandle);
 	if (Open->MachineLock == NULL)
 	{
@@ -2050,11 +1993,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->Multiple_Write_Counter = 0;
 	Open->MinToCopy = 0;
 	Open->TimeOut.QuadPart = (LONGLONG)1;
-#ifdef NPCAP_KDUMP
-	Open->DumpFileName.Buffer = NULL;
-	Open->DumpFileHandle = NULL;
-	Open->DumpLimitReached = FALSE;
-#endif
 	Open->Size = 0;
 	Open->SkipSentPackets = FALSE;
 	Open->ReadEvent = NULL;

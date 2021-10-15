@@ -1190,9 +1190,6 @@ NPF_IoControl(
 	PPACKET_OID_DATA		OidData;
 	PVOID OidBuffer = NULL;
 	ULONG					mode;
-#ifdef NPCAP_KDUMP
-	PWSTR					DumpNameBuff;
-#endif
 	PUCHAR					TmpBPFProgram;
 	INT						WriteRes;
 	BOOLEAN					SyncWrite = FALSE;
@@ -1486,11 +1483,9 @@ NPF_IoControl(
 
 			if (mode & MODE_DUMP)
 			{
-				//////kernel dump does not work at the moment//////////////////////////////////////////
+				//////kernel dump not supported
 				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
 				break;
-				// Open->mode |= MODE_DUMP;
-				// Open->MinToCopy=(Open->BufSize<2000000)?Open->BufSize/2:1000000;
 			}
 
 			SET_RESULT_SUCCESS(0);
@@ -1498,103 +1493,11 @@ NPF_IoControl(
 		break;
 
 	case BIOCSETDUMPFILENAME:
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETDUMPFILENAME");
-
-		///////kernel dump does not work at the moment//////////////////////////////////////////
-#ifdef NPCAP_KDUMP
-
-		if(Open->mode & MODE_DUMP)
-		{
-		
-			// Close current dump file
-			if(Open->DumpFileHandle != NULL)
-			{
-				NPF_CloseDumpFile(Open);
-				Open->DumpFileHandle = NULL;
-			}
-		
-			if(IrpSp->Parameters.DeviceIoControl.InputBufferLength == 0){
-				EXIT_FAILURE(0);
-			}
-		
-			// Allocate the buffer that will contain the string
-			DumpNameBuff=ExAllocatePoolWithTag(NPF_NONPAGED, IrpSp->Parameters.DeviceIoControl.InputBufferLength, NPF_DUMP_TAG);
-			if(DumpNameBuff==NULL || Open->DumpFileName.Buffer!=NULL){
-				IF_LOUD(DbgPrint("NPF: unable to allocate the dump filename: not enough memory or name already set\n");)
-					EXIT_FAILURE(0);
-			}
-		
-			// Copy the buffer
-			RtlCopyBytes((PVOID)DumpNameBuff,
-				Irp->AssociatedIrp.SystemBuffer,
-				IrpSp->Parameters.DeviceIoControl.InputBufferLength);
-		
-			// Force a \0 at the end of the filename to avoid that malformed strings cause RtlInitUnicodeString to crash the system
-			((PSHORT)DumpNameBuff)[IrpSp->Parameters.DeviceIoControl.InputBufferLength/2-1]=0;
-		
-			// Create the unicode string
-			RtlInitUnicodeString(&Open->DumpFileName, DumpNameBuff);
-		
-			IF_LOUD(DbgPrint("NPF: dump file name set to %ws, len=%d\n",
-				Open->DumpFileName.Buffer,
-				IrpSp->Parameters.DeviceIoControl.InputBufferLength);)
-		
-			// Try to create the file
-			if ( NT_SUCCESS( NPF_OpenDumpFile(Open,&Open->DumpFileName,FALSE)) &&
-				NT_SUCCESS( NPF_StartDump(Open)))
-			{
-				EXIT_SUCCESS(0);
-			}
-		}
-		
-		EXIT_FAILURE(0);
-#else
-		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-#endif
-		
-		break;
-
 	case BIOCSETDUMPLIMITS:
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETDUMPLIMITS");
-
-		///////kernel dump does not work at the moment//////////////////////////////////////////
-#ifdef NPCAP_KDUMP
-
-		if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < 2*sizeof(ULONG))
-		{
-			EXIT_FAILURE(0);
-		}
-		
-		Open->MaxDumpBytes = *(PULONG)Irp->AssociatedIrp.SystemBuffer;
-		Open->MaxDumpPacks = *((PULONG)Irp->AssociatedIrp.SystemBuffer + 1);
-		
-		IF_LOUD(DbgPrint("NPF: Set dump limits to %u bytes, %u packs\n", Open->MaxDumpBytes, Open->MaxDumpPacks);)
-		
-		EXIT_SUCCESS(0);
-#else
-		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-#endif
-		
-		break;
-
 	case BIOCISDUMPENDED:
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCISDUMPENDED");
-
-		///////kernel dump does not work at the moment//////////////////////////////////////////
-#ifdef NPCAP_KDUMP
-
-		if(IrpSp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(UINT))
-		{
-			EXIT_FAILURE(0);
-		}
-
-		*((UINT*)Irp->UserBuffer) = (Open->DumpLimitReached)?1:0;
-
-		EXIT_SUCCESS(4);
-#else
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Dump mode IOCTL received");
+		///////kernel dump not supported
 		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-#endif
-
 		break;
 
 	case BIOCISETLOBBEH:

@@ -195,7 +195,7 @@
         -->
 
       <para>NPF is able to perform a number of different operations: capture,
-        monitoring, dump to disk, packet injection. The following paragraphs
+        monitoring, packet injection. The following paragraphs
         will describe shortly each of these operations.</para>
       <sect4 id="npcap-internals-capture">
         <title>Packet Capture</title>
@@ -322,34 +322,6 @@
           user. No buffers are allocated at kernel and user level.</para>
       </sect4>
 
-      <!-- This functionality does not work in Npcap and did not work in the latest WinPcap either.
-      <sect4 id="npcap-internals-dump">
-        <title>Dump to disk</title>
-        <para>The dump to disk capability can be used to save the network data to
-          disk directly from kernel mode.</para>
-	--><!-- TODO: update this figure
-            <p align="center"><img border="0" src="npf-dump.gif" width="400" height="187">
-              </para>
-              <p align="center"><b>Figure 3: packet capture versus kernel-level dump.</b>
-              </para>
-	--><!-- kernel dump doesn't work
-        <para>In traditional systems, every packet is copied several times, and
-          normally 4 buffers are allocated: the one of the capture driver, the
-          one in the application that keeps the captured data, the one of the
-          stdio functions (or similar) that are used by the application to write
-          on file, and finally the one of the file system.</para>
-
-        <para>When the kernel-level traffic logging feature of NPF is enabled,
-          the capture driver addresses the file system directly.  Only two
-          buffers and a single copy are necessary, the number of system call is
-          drastically reduced, therefore the performance is considerably
-          better.</para>
-
-        <para>Current implementation dumps the to disk in the widely used libpcap
-          format. It gives also the possibility to filter the traffic before the
-          dump process in order to select the packet that will go to the disk.</para>
-      </sect4>
--->
     </sect3>
   </sect2>
   <sect2 id="npcap-internals-references">

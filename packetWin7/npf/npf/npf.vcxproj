@@ -1281,7 +1281,6 @@
     <FilesToPackage Include="@(Inf->'%(CopyOutput)')" Condition="'@(Inf)'!=''" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dump.c" />
     <ClCompile Include="Loopback.c" />
     <ClCompile Include="Openclos.c" />
     <ClCompile Include="Packet.c" />

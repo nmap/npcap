@@ -533,7 +533,7 @@ NPF_BufferedWrite(
 	LARGE_INTEGER			StartTicks = { 0 }, CurTicks, TargetTicks;
 	LARGE_INTEGER			TimeFreq;
 	struct timeval			BufStartTime = { 0 };
-	struct sf_pkthdr*		pWinpcapHdr;
+	struct dump_bpf_hdr* pWinpcapHdr = NULL;
 	PMDL					TmpMdl;
 	ULONG					Pos = 0;
 	//	PCHAR				CurPos;
@@ -626,7 +626,7 @@ NPF_BufferedWrite(
 			break;
 		}
 
-		pWinpcapHdr = (struct sf_pkthdr *)(UserBuff + Pos);
+		pWinpcapHdr = (struct dump_bpf_hdr *)(UserBuff + Pos);
 
 		if (pWinpcapHdr->caplen == 0 || pWinpcapHdr->caplen > Open->pFiltMod->MaxFrameSize)
 		{
@@ -805,7 +805,7 @@ NPF_BufferedWrite(
 				break;
 			}
 
-			pWinpcapHdr = (struct sf_pkthdr *)(UserBuff + Pos);
+			pWinpcapHdr = (struct dump_bpf_hdr *)(UserBuff + Pos);
 
 			if (pWinpcapHdr->caplen == 0 || pWinpcapHdr->caplen > Open->pFiltMod->MaxFrameSize || pWinpcapHdr->caplen > (UserBuffSize - Pos - sizeof(*pWinpcapHdr)))
 			{

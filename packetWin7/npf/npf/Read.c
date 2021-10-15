@@ -182,14 +182,6 @@ NPF_Read(
 			break;
 		}
 
-#ifdef NPCAP_KDUMP
-		if (Open->mode & MODE_DUMP && Open->DumpFileHandle == NULL)
-		{
-			// this instance is in dump mode, but the dump file has still not been opened
-			Status = STATUS_UNSUCCESSFUL;
-			break;
-		}
-#endif
 		NdisQueryMdl(Irp->MdlAddress, &packp, &available, NormalPagePriority | MdlMappingNoExecute);
 		if (packp == NULL)
 		{
@@ -204,13 +196,6 @@ NPF_Read(
 		if (!Open->bModeCapt)
 		{
 			plen += 2 * sizeof(LONGLONG);
-#ifdef NPCAP_KDUMP
-			// Dump+stat mode needs an additional LONGLONG for dump offset
-			if (Open->bModeDump)
-			{
-				plen += sizeof(LONGLONG);
-			}
-#endif
 		}
 
 		if (available < plen)
@@ -229,9 +214,6 @@ NPF_Read(
 
 	//See if the buffer is full enough to be copied
 	if (Open->Size - Open->Free <= (LONG) Open->MinToCopy
-#ifdef NPCAP_KDUMP
-		|| Open->bModeDump
-#endif
 		)
 	{
 		if (Open->ReadEvent != NULL)
@@ -262,12 +244,6 @@ NPF_Read(
 			header->bh_datalen = plen;
 			header->bh_hdrlen = sizeof(struct bpf_hdr);
 
-#ifdef NPCAP_KDUMP
-			if (Open->mode & MODE_DUMP)
-			{
-				Stats[2] = Open->DumpOffset.QuadPart;
-			}
-#endif
 			Stats[0] = Open->Npackets.QuadPart;
 			Stats[1] = Open->Nbytes.QuadPart;
 
@@ -1074,33 +1050,9 @@ NPF_TapExForEachOpen(
 
 				FILTER_RELEASE_LOCK(&Open->CountersLock, AtDispatchLevel);
 
-#ifdef NPCAP_KDUMP
-				if (!Open->bModeDump)
-#endif
-				{
-					goto TEFEO_next_NB;
-				}
+				goto TEFEO_next_NB;
 			}
 
-#ifdef NPCAP_KDUMP
-			if (Open->mode & MODE_DUMP && Open->MaxDumpPacks)
-			{
-				if (Open->Accepted > Open->MaxDumpPacks)
-				{
-					// Reached the max number of packets to save in the dump file. Discard the packet and stop the dump thread.
-					Open->DumpLimitReached = TRUE; // This stops the thread
-												   // Awake the dump thread
-					NdisSetEvent(&Open->DumpEvent);
-
-					// Awake the application
-					if (Open->ReadEvent != NULL)
-						KeSetEvent(Open->ReadEvent, 0, FALSE);
-
-					//return NDIS_STATUS_NOT_ACCEPTED;
-					goto TEFEO_next_NB;
-				}
-			}
-#endif
 			// Special case: zero-length buffer or negative free space can be checked without locking buffer
 			if (Open->Size <= 0)
 			{
@@ -1199,19 +1151,10 @@ NPF_TapExForEachOpen(
 			lCapSize = 0;
 			accepted++;
 
-			if (Open->Size - Open->Free >= (LONG) Open->MinToCopy)
+			if (Open->Size - Open->Free >= (LONG) Open->MinToCopy
+				&& Open->ReadEvent != NULL)
 			{
-#ifdef NPCAP_KDUMP
-				if (Open->mode & MODE_DUMP)
-					NdisSetEvent(&Open->DumpEvent);
-				else
-#endif
-				{
-					if (Open->ReadEvent != NULL)
-					{
-						KeSetEvent(Open->ReadEvent, 0, FALSE);
-					}
-				}
+				KeSetEvent(Open->ReadEvent, 0, FALSE);
 			}
 
 TEFEO_release_BufferLock:

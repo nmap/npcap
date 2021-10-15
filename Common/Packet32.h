@@ -407,9 +407,9 @@ extern "C"
 	BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries);
 	BOOLEAN PacketRequest(LPADAPTER  AdapterObject, BOOLEAN Set, PPACKET_OID_DATA  OidData);
 	HANDLE PacketGetReadEvent(LPADAPTER AdapterObject);
-	BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void* name, int len);
-	BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxnpacks);
-	BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync);
+	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void* name, int len);
+	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxnpacks);
+	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync);
 	BOOL PacketStopDriver();
 	BOOL PacketStopDriver60();
 	VOID PacketCloseAdapter(LPADAPTER lpAdapter);

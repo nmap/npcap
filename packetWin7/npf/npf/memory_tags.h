@@ -107,9 +107,5 @@
 #define NPF_LOOPBACK_COPY_TAG 'LBpN'
 // NPCAP_FILTER_MODULE::PacketPool
 #define NPF_PACKET_POOL_TAG 'PPpN'
-// Kernel dump mode
-#ifdef NPCAP_KDUMP
-#define NPF_DUMP_TAG 'DcpN'
-#endif
 
 #endif

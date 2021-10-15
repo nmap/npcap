@@ -142,31 +142,6 @@ extern NDIS_HANDLE         FilterDriverObject;
 
 #define IMMEDIATE 1			///< Immediate timeout. Forces a read call to return immediately.
 
-#ifdef NPCAP_KDUMP
-// The following definitions are used to provide compatibility
-// of the dump files with the ones of libpcap
-#define TCPDUMP_MAGIC						0xa1b2c3d4	///< Libpcap magic number. Used by programs like tcpdump to recognize a driver's generated dump file.
-#define PCAP_VERSION_MAJOR					2			///< Major libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
-#define PCAP_VERSION_MINOR					4			///< Minor libpcap version of the dump file. Used by programs like tcpdump to recognize a driver's generated dump file.
-
-/*!
-  \brief Header of a libpcap dump file.
-
-  Used when a driver instance is set in dump mode to create a libpcap-compatible file.
-*/
-struct packet_file_header
-{
-	UINT	magic;			///< Libpcap magic number
-	USHORT	version_major;	///< Libpcap major version
-	USHORT	version_minor;	///< Libpcap minor version
-	UINT	thiszone;		///< Gmt to local correction
-	UINT	sigfigs;		///< Accuracy of timestamps
-	UINT	snaplen;		///< Length of the max saved portion of each packet
-	UINT	linktype;		///< Data link type (DLT_*). See win_bpf.h for details.
-};
-
-#endif //NPCAP_KDUMP
-
 // Loopback behaviour definitions
 #define NPF_DISABLE_LOOPBACK				1	///< Tells the driver to drop the packets sent by itself. This is usefult when building applications like bridges.
 #define NPF_ENABLE_LOOPBACK					2	///< Tells the driver to capture the packets sent by itself.
@@ -218,19 +193,6 @@ struct packet_file_header
 			+ 3 /* MCS */ \
 			+ 12 /* VHT */
 #endif
-
-/*!
-  \brief Header associated to a packet in the driver's buffer when the driver is in dump mode.
-  Similar to the bpf_hdr structure, but simpler.
-*/
-struct sf_pkthdr
-{
-	struct timeval	ts;			///< time stamp
-	UINT			caplen;		///< Length of captured portion. The captured portion can be different from
-								///< the original packet, because it is possible (with a proper filter) to
-								///< instruct the driver to capture only a portion of the packets.
-	UINT			len;		///< Length of the original packet (off wire).
-};
 
 /*!
   \brief Structure containing an OID request.
@@ -418,31 +380,11 @@ typedef struct _OPEN_INSTANCE
 	// working modes, see PacketSetMode():
 	UINT bModeCapt:1; // MODE_CAPT (1) vs MODE_STAT (0)
 	// UINT bModeMon:1; // MODE_MON not supported
-#ifdef NPCAP_KDUMP
-	UINT bModeDump:1; // MODE_DUMP not supported
-#endif
 	// Loopback Behavior:
 	UINT SkipSentPackets:1; ///< True if this instance should not capture back the packets that it transmits.
 	// Info used to match a FilterModule when reattaching:
 	UINT bDot11:1; // pFiltMod->Dot11
 	UINT bLoopback:1; // pFiltMod->Loopback
-
-#ifdef NPCAP_KDUMP
-	HANDLE					DumpFileHandle;	///< Handle of the file used in dump mode.
-	PFILE_OBJECT			DumpFileObject;	///< Pointer to the object of the file used in dump mode.
-	PKTHREAD				DumpThreadObject;	///< Pointer to the object of the thread used in dump mode.
-	HANDLE					DumpThreadHandle;	///< Handle of the thread created by dump mode to asynchronously move the buffer to disk.
-	NDIS_EVENT				DumpEvent;		///< Event used to synchronize the dump thread with the tap when the instance is in dump mode.
-	LARGE_INTEGER			DumpOffset;		///< Current offset in the dump file.
-	UNICODE_STRING			DumpFileName;	///< String containing the name of the dump file.
-	UINT					MaxDumpBytes;	///< Maximum dimension in bytes of the dump file. If the dump file reaches this size it
-											///< will be closed. A value of 0 means unlimited size.
-	UINT					MaxDumpPacks;	///< Maximum number of packets that will be saved in the dump file. If this number of
-											///< packets is reached the dump will be closed. A value of 0 means unlimited number of
-											///< packets.
-	BOOLEAN					DumpLimitReached;	///< TRUE if the maximum dimension of the dump file (MaxDumpBytes or MaxDumpPacks) is
-											///< reached.
-#endif
 
 	PNDIS_RW_LOCK_EX MachineLock; ///< Lock that protects the BPF filter while in use.
 
@@ -658,8 +600,7 @@ FILTER_ATTACH NPF_AttachAdapter;
 
   Function called by NDIS when a new adapter is removed from the machine without shutting it down.
   NPF_DetachAdapter closes the adapter calling NdisCloseAdapter() and frees the memory and the structures
-  associated with it. It also releases the waiting user-level app and closes the dump thread if the instance
-  is in dump mode.
+  associated with it.
 */
 FILTER_DETACH NPF_DetachAdapter;
 // VOID
@@ -962,7 +903,7 @@ DRIVER_DISPATCH NPF_OpenAdapter;
 
   This function is called when a running instance of the driver is closed by the user with a CloseHandle().
   Used together with NPF_CloseAdapter().
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
+  It stops the capture process, deallocates the memory and the objects associated with the
   instance and closing the files.
 */
 _Dispatch_type_(IRP_MJ_CLEANUP)
@@ -983,7 +924,7 @@ DRIVER_DISPATCH NPF_Cleanup;
 
   This function is called when a running instance of the driver is closed by the user with a CloseHandle().
   Used together with NPF_Cleanup().
-  It stops the capture/monitoring/dump process, deallocates the memory and the objects associated with the
+  It stops the capture process, deallocates the memory and the objects associated with the
   instance and closing the files. The network adapter is then closed with a call to NdisCloseAdapter.
 */
 _Dispatch_type_(IRP_MJ_CLOSE)
@@ -1036,7 +977,6 @@ NPF_DoTap(
   - #BIOCSMINTOCOPY
   - #BIOCSETOID
   - #BIOCQUERYOID
-  - #BIOCSETDUMPFILENAME
   - #BIOCGEVNAME
   -	#BIOCSENDPACKETSSYNC
   -	#BIOCSENDPACKETSNOSYNC
@@ -1085,7 +1025,7 @@ DRIVER_DISPATCH NPF_Write;
 
   This function is called by the OS in consequence of a BIOCSENDPACKETSNOSYNC or a BIOCSENDPACKETSSYNC IOCTL.
   The buffer received as input parameter contains an arbitrary number of packets, each of which preceded by a
-  sf_pkthdr structure. NPF_BufferedWrite() scans the buffer and sends every packet via the NdisSend() function.
+  dump_bpf_hdr structure. NPF_BufferedWrite() scans the buffer and sends every packet via the NdisSend() function.
   When Sync is set to TRUE, the packets are synchronized with the KeQueryPerformanceCounter() function.
   This requires a remarkable amount of CPU, but allows to respect the timestamps associated with packets with a precision
   of some microseconds (depending on the precision of the performance counter of the machine).
@@ -1115,7 +1055,7 @@ NPF_BufferedWrite(
   - If the buffer contains less than MinToCopy bytes, the application's request isn't
   satisfied immediately, but it's blocked until at least MinToCopy bytes arrive from the net
   or the timeout on this read expires. The timeout is kept in the OPEN_INSTANCE::TimeOut field.
-  - If the instance is in statistical mode or in dump mode, the application's request is blocked until the
+  - If the instance is in statistical mode, the application's request is blocked until the
   timeout kept in OPEN_INSTANCE::TimeOut expires.
 */
 _Dispatch_type_(IRP_MJ_READ)
@@ -1172,71 +1112,6 @@ NPF_ReleaseOpenInstanceResources(_Inout_ POPEN_INSTANCE pOpen);
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID
 NPF_ReleaseFilterModuleResources(_Inout_ PNPCAP_FILTER_MODULE pFiltMod);
-
-
-#ifdef NPCAP_KDUMP
-/*!
-  \brief Creates the file that will receive the packets when the driver is in dump mode.
-  \param Open The NPF instance that opens the file.
-  \param fileName Pointer to a UNICODE string containing the name of the file.
-  \param append Boolean value that specifies if the data must be appended to the file.
-  \return The status of the operation. See ntstatus.h in the DDK.
-*/
-NTSTATUS NPF_OpenDumpFile(POPEN_INSTANCE Open, PUNICODE_STRING fileName, BOOLEAN append);
-
-
-/*!
-  \brief Starts dump to file.
-  \param Open The NPF instance that opens the file.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  This function performs two operations. First, it writes the libpcap header at the beginning of the file.
-  Second, it starts the thread that asynchronously dumps the network data to the file.
-*/
-NTSTATUS NPF_StartDump(POPEN_INSTANCE Open);
-
-
-/*!
-  \brief The dump thread.
-  \param Open The NPF instance that creates the thread.
-
-  This function moves the content of the NPF kernel buffer to file. It runs in the user context, so at lower
-  priority than the TAP.
-*/
-VOID NPF_DumpThread(PVOID Open);
-
-
-/*!
-  \brief Saves the content of the packet buffer to the file associated with current instance.
-  \param Open The NPF instance that creates the thread.
-
-  Used by NPF_DumpThread() and NPF_CloseDumpFile().
-*/
-NTSTATUS NPF_SaveCurrentBuffer(POPEN_INSTANCE Open);
-
-
-/*!
-  \brief Writes a block of packets on the dump file.
-  \param FileObject The file object that will receive the packets.
-  \param Offset The offset in the file where the packets will be put.
-  \param Length The amount of bytes to write.
-  \param Mdl MDL mapping the memory buffer that will be written to disk.
-  \param IoStatusBlock Used by the function to return the status of the operation.
-  \return The status of the operation. See ntstatus.h in the DDK.
-
-  NPF_WriteDumpFile addresses directly the file system, creating a custom IRP and using it to send a portion
-  of the NPF circular buffer to disk. This function is used by NPF_DumpThread().
-*/
-VOID NPF_WriteDumpFile(PFILE_OBJECT FileObject, PLARGE_INTEGER Offset, ULONG Length, PMDL Mdl, PIO_STATUS_BLOCK IoStatusBlock);
-
-
-/*!
-  \brief Closes the dump file associated with an instance of the driver.
-  \param Open The NPF instance that closes the file.
-  \return The status of the operation. See ntstatus.h in the DDK.
-*/
-NTSTATUS NPF_CloseDumpFile(POPEN_INSTANCE Open);
-#endif
 
 BOOLEAN NPF_IsOpenInstance(_In_ POPEN_INSTANCE pOpen);
 

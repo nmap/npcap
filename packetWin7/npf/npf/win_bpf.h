@@ -192,6 +192,23 @@ struct bpf_hdr
 						 plus alignment padding) */
 };
 
+/*!
+  \brief Dump packet header.
+
+  This structure defines the header associated with the packets in a buffer to be used with PacketSendPackets().
+  It is simpler than the bpf_hdr, because it corresponds to the header in the pcap-savefile(5) format.
+  This makes straightforward sending pcap dump files to the network.
+*/
+struct dump_bpf_hdr
+{
+	struct timeval ts;			///< Time stamp of the packet
+	UINT caplen;		///< Length of captured portion. The captured portion can smaller than the 
+	///< the original packet, because it is possible (with a proper filter) to 
+	///< instruct the driver to capture only a portion of the packets. 
+	UINT len;		///< Length of the original packet (off wire).
+};
+
+
 /*
  * Data-link level type codes.
  */

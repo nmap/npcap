@@ -2326,19 +2326,6 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 	return Result;
 }
 
-/*!
-  \brief Header associated to a packet in the driver's buffer when the driver is in dump mode.
-  Similar to the bpf_hdr structure, but simpler.
-*/
-struct sf_pkthdr {
-    struct timeval	ts;			///< time stamp
-    UINT			caplen;		///< Length of captured portion. The captured portion can be different from 
-								///< the original packet, because it is possible (with a proper filter) to 
-								///< instruct the driver to capture only a portion of the packets. 
-    UINT			len;		///< Length of the original packet (off wire).
-};
-
-
 /*! 
   \brief Sends a buffer of packets to the network.
   \param AdapterObject Pointer to an _ADAPTER structure identifying the network adapter that will 

@@ -151,7 +151,7 @@
 
   This IOCTL can be used to set the working mode of a NPF instance. The new mode, received by the driver in the
   buffer associated with the IOCTL command, can be #MODE_CAPT for capture mode (the default), #MODE_STAT for
-  statistical mode or #MODE_DUMP for dump mode.
+  statistical mode.
 */
 #define W_BIOCSMODE 7412
 #define BIOCSMODE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa05, METHOD_BUFFERED, FILE_READ_DATA)
@@ -189,13 +189,7 @@
 #define W_BIOCQUERYOID 0x80000004
 #define BIOCQUERYOID CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa09, METHOD_BUFFERED, FILE_READ_DATA)
 
-/*!
-  \brief IOCTL code: set the name of a the file used by kernel dump mode
-
-  This command opens a file whose name is contained in the IOCTL buffer and associates it with current NPf instance.
-  The dump thread uses it to copy the content of the circular buffer to file.
-  If a file was already opened, the driver closes it before opening the new one.
-*/
+// kernel dump mode not supported by Npcap.
 #define W_BIOCSETDUMPFILENAME 9029
 #define BIOCSETDUMPFILENAME CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0a, METHOD_BUFFERED, FILE_READ_DATA)
 
@@ -212,7 +206,7 @@
   \brief IOCTL code: Send a buffer containing multiple packets to the network, ignoring the timestamps.
 
   Command used to send a buffer of packets in a single system call. Every packet in the buffer is preceded by
-  a sf_pkthdr structure. The timestamps of the packets are ignored, i.e. the packets are sent as fast as 
+  a dump_bpf_hdr structure. The timestamps of the packets are ignored, i.e. the packets are sent as fast as 
   possible. The NPF_BufferedWrite() function is invoked to send the packets.
 */
 #define W_BIOCSENDPACKETSNOSYNC 9032
@@ -223,28 +217,18 @@
   \brief IOCTL code: Send a buffer containing multiple packets to the network, considering the timestamps.
 
   Command used to send a buffer of packets in a single system call. Every packet in the buffer is preceded by
-  a sf_pkthdr structure. The timestamps of the packets are used to synchronize the write, i.e. the packets 
-  are sent to the network respecting the intervals specified in the sf_pkthdr structure assiciated with each
+  a dump_bpf_hdr structure. The timestamps of the packets are used to synchronize the write, i.e. the packets 
+  are sent to the network respecting the intervals specified in the dump_bpf_hdr structure assiciated with each
   packet. NPF_BufferedWrite() function is invoked to send the packets. 
 */
 #define W_BIOCSENDPACKETSSYNC 9033
 #define BIOCSENDPACKETSSYNC CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0d, METHOD_BUFFERED, FILE_WRITE_DATA)
 
-/*!
-  \brief IOCTL code: Set the dump file limits.
-
-  This IOCTL sets the limits (maximum size and maximum number of packets) of the dump file created when the
-  driver works in dump mode.
-*/
+// kernel dump mode not supported by Npcap.
 #define W_BIOCSETDUMPLIMITS 9034
 #define BIOCSETDUMPLIMITS CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0e, METHOD_BUFFERED, FILE_READ_DATA)
 
-/*!
-  \brief IOCTL code: Get the status of the kernel dump process.
-
-  This command returns TRUE if the kernel dump is ended, i.e if one of the limits set with BIOCSETDUMPLIMITS
-  (amount of bytes or number of packets) has been reached.
-*/
+// kernel dump mode not supported by Npcap.
 #define W_BIOCISDUMPENDED 7411
 #define BIOCISDUMPENDED CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0f, METHOD_BUFFERED, FILE_READ_DATA)
 

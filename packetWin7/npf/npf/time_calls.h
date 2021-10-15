@@ -123,7 +123,7 @@ extern PQUERYSYSTEMTIME g_ptrQuerySystemTime;
 /*!
   \brief A microsecond precise timestamp.
 
-  included in the sf_pkthdr or the bpf_hdr that NPF associates with every packet. 
+  included in the bpf_hdr that NPF associates with every packet. 
 */
 struct timeval
 {
