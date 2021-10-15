@@ -200,137 +200,94 @@ NPF_Write(
 	)
 {
 	POPEN_INSTANCE		Open;
-	PIO_STACK_LOCATION	IrpSp;
 	ULONG				SendFlags = 0;
 	PNET_BUFFER_LIST	pNetBufferList = NULL;
 	ULONG				NumSends;
-	ULONG				numSentPackets;
+	ULONG numSentPackets = 0;
+	ULONG buflen = 0;
 	NTSTATUS Status = STATUS_SUCCESS;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 
-	IrpSp = IoGetCurrentIrpStackLocation(Irp);
-
-	Open = IrpSp->FileObject->FsContext;
-	if (!NPF_IsOpenInstance(Open))
+	/* Validate */
+	Status = NPF_ValidateIoIrp(Irp, &Open);
+	if (Status != STATUS_SUCCESS)
 	{
-		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
-		Irp->IoStatus.Information = 0;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return STATUS_INVALID_HANDLE;
+		goto NPF_Write_End;
 	}
 
 	if (!NPF_StartUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN))
 	{
 		// Write requires an attached adapter.
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = (Open->OpenStatus == OpenDetached
+		Status = (Open->OpenStatus == OpenDetached
 					? STATUS_DEVICE_REMOVED
 					: STATUS_CANCELLED);
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return STATUS_CANCELLED;
+		goto NPF_Write_End;
 	}
 
 	NumSends = Open->Nwrites;
-
-	//
-	// validate the send parameters set by the IOCTL
-	//
 	if (NumSends == 0)
 	{
+		Status = STATUS_SUCCESS;
 		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = STATUS_SUCCESS;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-		TRACE_EXIT();
-		return STATUS_SUCCESS;
+		goto NPF_Write_End;
 	}
 
-	//
-	// Validate input parameters: 
-	// 1. The packet size should be greater than 0,
-	// 2. less-equal than max frame size for the link layer and
-	// 3. the maximum frame size of the link layer should not be zero.
-	//
-	// These we can check without bothering with the filter module:
-	if (IrpSp->Parameters.Write.Length == 0 || 	// Check that the buffer provided by the user is not empty
-		Irp->MdlAddress == NULL)
+	// Failures after this point must call NPF_StopUsingOpenInstance
+	do
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Write parameters empty. Send aborted");
+		buflen = MmGetMdlByteCount(Irp->MdlAddress);
+		if (buflen == 0)
+		{
+			Status = STATUS_INVALID_PARAMETER;
+			break;
+		}
 
+		// Check that the MaxFrameSize is correctly initialized
+		if (Open->pFiltMod->MaxFrameSize == 0)
+		{
+			// TODO: better status code
+			Status = STATUS_UNSUCCESSFUL;
+			break;
+		}
+
+		// Check that the frame size is smaller than the MTU
+		if (buflen > Open->pFiltMod->MaxFrameSize)
+		{
+			// TODO: better status code
+			Status = STATUS_UNSUCCESSFUL;
+			break;
+		}
+
+		NdisAcquireSpinLock(&Open->WriteLock);
+		if (Open->WriteInProgress)
+		{
+			// Another write operation is currently in progress
+			NdisReleaseSpinLock(&Open->WriteLock);
+
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Another Send operation is in progress, aborting.");
+
+			NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
+
+			Status = STATUS_DEVICE_BUSY;
+			break;
+		}
+		else
+		{
+			Open->WriteInProgress = TRUE;
+			NdisReleaseSpinLock(&Open->WriteLock);
+			NdisResetEvent(&Open->NdisWriteCompleteEvent);
+		}
+
+
+	} while (FALSE);
+
+	if (Status != STATUS_SUCCESS)
+	{
 		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
-
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-		TRACE_EXIT();
-		return STATUS_UNSUCCESSFUL;
+		goto NPF_Write_End;
 	}
-
-	// 
-	// Increment the ref counter of the binding handle, if possible
-	//
-	if (!Open->pFiltMod)
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Adapter is probably unbinding, cannot send packets");
-
-		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
-
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-		TRACE_EXIT();
-		return STATUS_INVALID_DEVICE_REQUEST;
-	}
-
-	// Now that we have a handle to the filter module, validate specifics:
-	if (Open->pFiltMod->MaxFrameSize == 0 ||	// Check that the MaxFrameSize is correctly initialized
-		IrpSp->Parameters.Write.Length > Open->pFiltMod->MaxFrameSize) // Check that the fame size is smaller that the MTU
-	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Frame size out of range, or maxFrameSize = 0. Send aborted");
-
-		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
-
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-		TRACE_EXIT();
-
-		return STATUS_UNSUCCESSFUL;
-	}
-
-	NdisAcquireSpinLock(&Open->WriteLock);
-	if (Open->WriteInProgress)
-	{
-		// Another write operation is currently in progress
-		NdisReleaseSpinLock(&Open->WriteLock);
-
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Another Send operation is in progress, aborting.");
-
-		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
-
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = STATUS_DEVICE_BUSY;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-		TRACE_EXIT();
-
-		return STATUS_DEVICE_BUSY;
-	}
-	else
-	{
-		Open->WriteInProgress = TRUE;
-		NdisResetEvent(&Open->NdisWriteCompleteEvent);
-	}
-
-	NdisReleaseSpinLock(&Open->WriteLock);
 
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
 		"Max frame size = %u, packet size = %u",
@@ -360,7 +317,7 @@ NPF_Write(
 		 * DO_DIRECT_IO. */
 		Status = NPF_AllocateNBL(Open->pFiltMod,
 				Irp->MdlAddress,
-				Irp->MdlAddress->ByteCount,
+				buflen,
 				&pNetBufferList);
 
 		if (NT_SUCCESS(Status) && NT_VERIFY(pNetBufferList != NULL))
@@ -515,11 +472,12 @@ NPF_Write(
 
 	NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
+NPF_Write_End:
 	//
 	// Complete the Irp and return success
 	//
 	Irp->IoStatus.Status = Status;
-	Irp->IoStatus.Information = numSentPackets > 0 ? IrpSp->Parameters.Write.Length : 0;
+	Irp->IoStatus.Information = numSentPackets > 0 ? MmGetMdlByteOffset(Irp->MdlAddress) : 0;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
 	TRACE_EXIT();

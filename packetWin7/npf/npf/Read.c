@@ -148,37 +148,36 @@ NPF_Read(
 	)
 {
 	POPEN_INSTANCE			Open;
-	PIO_STACK_LOCATION		IrpSp;
-	PUCHAR					packp;
-	PUCHAR					CurrBuff;
+	PUCHAR packp = NULL;
 	struct bpf_hdr*			header;
-	ULONG					copied, plen, available;
+	ULONG copied=0;
+	ULONG plen, available;
 	LOCK_STATE_EX lockState;
 	NTSTATUS Status = STATUS_SUCCESS;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 
-	IrpSp = IoGetCurrentIrpStackLocation(Irp);
-	Open = IrpSp->FileObject->FsContext;
-
-	do /* Validate */
+	/* Validate */
+	Status = NPF_ValidateIoIrp(Irp, &Open);
+	if (Status != STATUS_SUCCESS)
 	{
-		if (!NPF_IsOpenInstance(Open))
-		{
-			Status = STATUS_INVALID_HANDLE;
-			break;
-		}
-		if (!NPF_StartUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN))
-		{
-			// Instance is being closed
-			Status = STATUS_CANCELLED;
-			break;
-		}
+		goto NPF_Read_End;
+	}
 
+	// Note a pending IRP at OpenDetached state
+	if (!NPF_StartUsingOpenInstance(Open, OpenDetached, FALSE))
+	{
+		// Instance is being closed
+		Status = STATUS_CANCELLED;
+		goto NPF_Read_End;
+	}
+
+	// Failures after this point must call NPF_StopUsingOpenInstance
+	do
+	{
 		if (Open->Size == 0)
 		{
-			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 			Status = STATUS_UNSUCCESSFUL;
 			break;
 		}
@@ -187,21 +186,45 @@ NPF_Read(
 		if (Open->mode & MODE_DUMP && Open->DumpFileHandle == NULL)
 		{
 			// this instance is in dump mode, but the dump file has still not been opened
-			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 			Status = STATUS_UNSUCCESSFUL;
 			break;
 		}
 #endif
+		NdisQueryMdl(Irp->MdlAddress, &packp, &available, NormalPagePriority | MdlMappingNoExecute);
+		if (packp == NULL)
+		{
+			Status = STATUS_INSUFFICIENT_RESOURCES;
+			break;
+		}
 
+		// Capture mode: need at least a bpf_hdr
+		plen = sizeof(struct bpf_hdr);
+
+		// Stat mode needs 2 LONGLONGs
+		if (!Open->bModeCapt)
+		{
+			plen += 2 * sizeof(LONGLONG);
+#ifdef NPCAP_KDUMP
+			// Dump+stat mode needs an additional LONGLONG for dump offset
+			if (Open->bModeDump)
+			{
+				plen += sizeof(LONGLONG);
+			}
+#endif
+		}
+
+		if (available < plen)
+		{
+			Status = STATUS_BUFFER_TOO_SMALL;
+			copied = plen; // report how much we need.
+			break;
+		}
 	} while (FALSE);
 
 	if (Status != STATUS_SUCCESS)
 	{
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = Status;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return Status;
+		NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
+		goto NPF_Read_End;
 	}
 
 	//See if the buffer is full enough to be copied
@@ -228,63 +251,25 @@ NPF_Read(
 		if (!Open->bModeCapt)
 		{
 			//this capture instance is in statistics mode
-			CurrBuff = (PUCHAR) MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
-
-			if (CurrBuff == NULL)
-			{
-				NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
-				TRACE_EXIT();
-				EXIT_FAILURE(0);
-			}
-
-#ifdef NPCAP_KDUMP
-			if (Open->bModeDump)
-			{
-				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 24)
-				{
-					NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
-					Irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
-					IoCompleteRequest(Irp, IO_NO_INCREMENT);
-					TRACE_EXIT();
-					return STATUS_BUFFER_TOO_SMALL;
-				}
-			}
-			else
-#endif
-			{
-				if (IrpSp->Parameters.Read.Length < sizeof(struct bpf_hdr) + 16)
-				{
-					NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
-					Irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
-					IoCompleteRequest(Irp, IO_NO_INCREMENT);
-					TRACE_EXIT();
-					return STATUS_BUFFER_TOO_SMALL;
-				}
-			}
+			LONGLONG *Stats = (LONGLONG *)(packp + sizeof(struct bpf_hdr));
+			copied = plen; // Set above during size validation
+			plen -= sizeof(struct bpf_hdr);
 
 			//fill the bpf header for this packet
-			header = (struct bpf_hdr *)CurrBuff;
+			header = (struct bpf_hdr *)packp;
 			GET_TIME(&header->bh_tstamp, &Open->start, Open->TimestampMode);
+			header->bh_caplen = plen;
+			header->bh_datalen = plen;
+			header->bh_hdrlen = sizeof(struct bpf_hdr);
 
 #ifdef NPCAP_KDUMP
 			if (Open->mode & MODE_DUMP)
 			{
-				*(LONGLONG *)(CurrBuff + sizeof(struct bpf_hdr) + 16) = Open->DumpOffset.QuadPart;
-				header->bh_caplen = 24;
-				header->bh_datalen = 24;
-				Irp->IoStatus.Information = 24 + sizeof(struct bpf_hdr);
+				Stats[2] = Open->DumpOffset.QuadPart;
 			}
-			else
 #endif
-			{
-				header->bh_caplen = 16;
-				header->bh_datalen = 16;
-				header->bh_hdrlen = sizeof(struct bpf_hdr);
-				Irp->IoStatus.Information = 16 + sizeof(struct bpf_hdr);
-			}
-
-			*(LONGLONG *) (CurrBuff + sizeof(struct bpf_hdr)) = Open->Npackets.QuadPart;
-			*(LONGLONG *) (CurrBuff + sizeof(struct bpf_hdr) + 8) = Open->Nbytes.QuadPart;
+			Stats[0] = Open->Npackets.QuadPart;
+			Stats[1] = Open->Nbytes.QuadPart;
 
 			//reset the countetrs
 			FILTER_ACQUIRE_LOCK(&Open->CountersLock, NPF_IRQL_UNKNOWN);
@@ -294,37 +279,13 @@ NPF_Read(
 
 			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 
-			Irp->IoStatus.Status = STATUS_SUCCESS;
-			IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-			TRACE_EXIT();
-			return STATUS_SUCCESS;
+			Status = STATUS_SUCCESS;
+			goto NPF_Read_End;
 		}
-
 	}
-
-
 
 	//------------------------------------------------------------------------------
 	copied = 0;
-	available = IrpSp->Parameters.Read.Length;
-
-	if (Irp->MdlAddress == 0x0)
-	{
-		NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
-		TRACE_EXIT();
-		EXIT_FAILURE(0);
-	}
-
-	packp = (PUCHAR) MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority | MdlMappingNoExecute);
-
-
-	if (packp == NULL)
-	{
-		NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
-		TRACE_EXIT();
-		EXIT_FAILURE(0);
-	}
 
 	if (Open->ReadEvent != NULL)
 		KeClearEvent(Open->ReadEvent);
@@ -419,15 +380,18 @@ NPF_Read(
 	{
 		// Filter module is detached and there are no more packets in the buffer
 		Status = STATUS_DEVICE_REMOVED;
-		Irp->IoStatus.Information = 0;
-		Irp->IoStatus.Status = Status;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return Status;
+	}
+	else
+	{
+		Status = STATUS_SUCCESS;
 	}
 
+NPF_Read_End:
+	Irp->IoStatus.Information = copied;
+	Irp->IoStatus.Status = Status;
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 	TRACE_EXIT();
-	EXIT_SUCCESS(copied);
+	return Status;
 }
 
 //-------------------------------------------------------------------

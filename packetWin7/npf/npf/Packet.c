@@ -1103,6 +1103,71 @@ Return Value:
 
 //-------------------------------------------------------------------
 
+/* DO_DIRECT_IO */
+_Use_decl_annotations_
+NTSTATUS NPF_ValidateIoIrp(
+		PIRP pIrp,
+		POPEN_INSTANCE *ppOpen)
+{
+	PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(pIrp);
+	POPEN_INSTANCE pOpen = IrpSp->FileObject->FsContext;
+	NTSTATUS Status = STATUS_UNSUCCESSFUL;
+
+	TRACE_ENTER();
+
+	// Validation done for Direct IO only
+	NT_ASSERT(!(pIrp->Flags & IRP_BUFFERED_IO));
+
+	do /* Validate */
+	{
+		/* Context is an Open instance (also checks for NULL) */
+		if (!NPF_IsOpenInstance(pOpen))
+		{
+			Status = STATUS_INVALID_HANDLE;
+			break;
+		}
+
+		/* output buffer exists (If buffer is 0-length, I/O manager passes NULL here) */
+		if (!pIrp->MdlAddress)
+		{
+			Status = STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		// Has this IRP been canceled?
+		if (pIrp->Cancel)
+		{
+			Status = STATUS_CANCELLED;
+			break;
+		}
+
+		// The subsequent assertions only make sense for both Read and Write if
+		// the Length field is in the same place in the Parameters union.
+		// We'll verify that with a compile-time assertion here.
+		C_ASSERT(FIELD_OFFSET(IO_STACK_LOCATION, Parameters.Read.Length) == FIELD_OFFSET(IO_STACK_LOCATION, Parameters.Write.Length));
+
+		// Make sure the buffer length is correct.
+		// This should be guaranteed by the I/O manager, but it'd be bad if we're wrong about that.
+		NT_ASSERT(MmGetMdlByteCount(pIrp->MdlAddress) == IrpSp->Parameters.Read.Length);
+		NT_ASSERT(MmGetMdlByteCount(pIrp->MdlAddress) == IrpSp->Parameters.Write.Length);
+
+		// Success! Fill out the output parameters.
+		Status = STATUS_SUCCESS;
+		if (ppOpen)
+			*ppOpen = pOpen;
+	} while (FALSE);
+
+	if (Status != STATUS_SUCCESS)
+	{
+		// Ensure output param is NULL on failure
+		if (ppOpen)
+			*ppOpen = NULL;
+	}
+
+	TRACE_EXIT();
+	return Status;
+}
+
 _Use_decl_annotations_
 NTSTATUS
 NPF_IoControl(

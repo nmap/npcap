@@ -905,6 +905,15 @@ FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
 // 	NDIS_HANDLE             FilterModuleContext
 // 	);
 
+/* Validate I/O IRP parameters and do boilerplate init.
+ * Suitable for IRP_MJ_READ and IRP_MJ_WRITE with DO_DIRECT_IO
+ */
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS NPF_ValidateIoIrp(
+	_In_ PIRP pIrp,
+	_Outptr_result_nullonfailure_ POPEN_INSTANCE* ppOpen
+);
+
 /*!
   \brief The initialization routine of the driver.
   \param DriverObject The driver object of NPF created by the system.
