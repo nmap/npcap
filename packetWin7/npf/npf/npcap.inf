@@ -169,13 +169,23 @@ ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
 ServiceBinary   = %12%\%NPF_DriverName%.sys
 LoadOrderGroup  = NDIS
 Description     = %NPF_Desc_Standard%
-AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
+AddReg          = NpcapConfig.reg, Common.Params.reg, NdisImPlatformBindingOptions.reg
 
 [FilterStandard.Remove.Services]
 DelService=%NPF_Filter_Name_Standard%,0x200 ; SPSVCINST_STOPSERVICE
 
 [FilterWiFi.Remove.Services]
 DelService=%NPF_Filter_Name_WiFi%,0x200 ; SPSVCINST_STOPSERVICE
+
+[NpcapConfig.reg]
+HKR, Parameters, LoopbackSupport, 0x00010001, 1
+HKR, Parameters, DltNull, 0x00010001, 1
+; These parameters may be overwritten by the installer
+HKR, Parameters, Edition, , "Npcap"
+HKR, Parameters, AdminOnly, 0x00010001, 0
+HKR, Parameters, Dot11Support, 0x00010001, 0
+; Historical, not used
+; HKR, Parameters, VlanSupport, 0x00010001, 0
 
 [Common.Params.reg]
 
