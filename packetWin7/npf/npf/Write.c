@@ -284,7 +284,7 @@ NPF_Write(
 	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
 		"Max frame size = %u, packet size = %u",
 		Open->pFiltMod->MaxFrameSize,
-		IrpSp->Parameters.Write.Length);
+		buflen);
 
 	// WinPcap emulation: loop back injected packets if anyone's listening.
 	// Except when NPF_DISABLE_LOOPBACK is chosen, then don't loop back.
@@ -508,15 +508,14 @@ NPF_WaitEndOfBufferedWrite(
 //-------------------------------------------------------------------
 
 _Use_decl_annotations_
-INT
-NPF_BufferedWrite(
-	PIRP Irp,
-	PCHAR UserBuff,
+NTSTATUS NPF_BufferedWrite(
+	POPEN_INSTANCE Open,
+	PUCHAR UserBuff,
 	ULONG UserBuffSize,
-	BOOLEAN Sync)
+	BOOLEAN Sync,
+	PULONG_PTR Written)
 {
-	POPEN_INSTANCE			Open;
-	PIO_STACK_LOCATION		IrpSp;
+	NTSTATUS Status = STATUS_SUCCESS;
 	PNET_BUFFER_LIST		pNetBufferList = NULL;
 	ULONG					SendFlags = 0;
 	UINT					i;
@@ -528,45 +527,44 @@ NPF_BufferedWrite(
 	ULONG					Pos = 0;
 	//	PCHAR				CurPos;
 	//	PCHAR				EndOfUserBuff = UserBuff + UserBuffSize;
-	INT						result;
 	PVOID npBuff = NULL;
 	NDIS_EVENT Event;
-	NTSTATUS Status = STATUS_SUCCESS;
 
 	TRACE_ENTER();
 
 	IF_LOUD(DbgPrint("NPF: BufferedWrite, UserBuff=%p, Size=%u\n", UserBuff, UserBuffSize);)
 
-	IrpSp = IoGetCurrentIrpStackLocation(Irp);
+	*Written = 0;
 
-	Open = (POPEN_INSTANCE) IrpSp->FileObject->FsContext;
-	if (!NPF_IsOpenInstance(Open))
+	if (!NPF_StartUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN))
 	{
 		TRACE_EXIT();
-		return -STATUS_INVALID_HANDLE;
+		return STATUS_CANCELLED;
 	}
 
-	if (!Open->pFiltMod)
+	if (InterlockedExchange(&Open->WriteInProgress, 1) == 1)
 	{
-		// The Network adapter was removed. 
+		//
+		// Another write operation is currently in progress
+		//
+		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 		TRACE_EXIT();
-		return -STATUS_DEVICE_DOES_NOT_EXIST;
+		return STATUS_DEVICE_BUSY;
 	}
 
 	// Sanity check on the user buffer
-	if (UserBuff == NULL)
+	if (!NT_VERIFY(UserBuff != NULL))
 	{
-		TRACE_EXIT();
-		return -STATUS_INVALID_PARAMETER;
+		Status = STATUS_INVALID_PARAMETER;
+		goto NPF_BufferedWrite_End;
 	}
 
 	// Check that the MaxFrameSize is correctly initialized
 	if (Open->pFiltMod->MaxFrameSize == 0)
 	{
 		IF_LOUD(DbgPrint("NPF_BufferedWrite: Open->MaxFrameSize not initialized, probably because of a problem in the OID query\n");)
-
-		TRACE_EXIT();
-		return -STATUS_UNSUCCESSFUL;
+		Status = STATUS_UNSUCCESSFUL;
+		goto NPF_BufferedWrite_End;
 	}
 
 	// WinPcap emulation: loop back injected packets if anyone's listening.
@@ -603,7 +601,6 @@ NPF_BufferedWrite(
 			//
 			// end of buffer
 			//
-			result = Pos;
 			break;
 		}
 
@@ -612,7 +609,7 @@ NPF_BufferedWrite(
 			// Malformed header
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-			result = -STATUS_INVALID_PARAMETER;
+			Status = STATUS_INVALID_PARAMETER;
 			break;
 		}
 
@@ -623,7 +620,7 @@ NPF_BufferedWrite(
 			// Malformed header
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-			result = -STATUS_INVALID_PARAMETER;
+			Status = STATUS_INVALID_PARAMETER;
 			break;
 		}
 
@@ -644,7 +641,7 @@ NPF_BufferedWrite(
 			//
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-			result = -STATUS_INVALID_PARAMETER;
+			Status = STATUS_INVALID_PARAMETER;
 			break;
 		}
 
@@ -655,7 +652,7 @@ NPF_BufferedWrite(
 		if (npBuff == NULL)
 		{
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
-			result = -STATUS_INSUFFICIENT_RESOURCES;
+			Status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
 		RtlCopyMemory(npBuff, UserBuff + Pos, pWinpcapHdr->caplen);
@@ -670,7 +667,7 @@ NPF_BufferedWrite(
 
 			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 
-			result = -STATUS_INSUFFICIENT_RESOURCES;
+			Status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
 
@@ -708,7 +705,8 @@ NPF_BufferedWrite(
 				NdisFreeMdl(TmpMdl);
 				ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 
-				result = -Status;
+				// TODO: Should we reset Pos here? Is it the
+				// amount sent or the place where we found a problem?
 				break;
 			}
 		}
@@ -742,7 +740,6 @@ NPF_BufferedWrite(
 			{
 				NpfInterlockedDecrement(&(LONG)Open->Multiple_Write_Counter);
 				NPF_FreePackets(pNetBufferList);
-				result = -Status;
 				break;
 			}
 		}
@@ -782,7 +779,6 @@ NPF_BufferedWrite(
 		{
 			if (Pos == UserBuffSize)
 			{
-				result = Pos;
 				break;
 			}
 
@@ -791,7 +787,7 @@ NPF_BufferedWrite(
 				// Malformed header
 				IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-				result = -STATUS_INVALID_PARAMETER;
+				Status = STATUS_INVALID_PARAMETER;
 				break;
 			}
 
@@ -802,7 +798,7 @@ NPF_BufferedWrite(
 				// Malformed header
 				IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
 
-				result = -STATUS_INVALID_PARAMETER;
+				Status = STATUS_INVALID_PARAMETER;
 				break;
 			}
 
@@ -811,7 +807,6 @@ NPF_BufferedWrite(
 			{
 				IF_LOUD(DbgPrint("NPF_BufferedWrite: timestamp elapsed, returning.\n");)
 
-				result = Pos;
 				break;
 			}
 
@@ -846,8 +841,14 @@ NPF_BufferedWrite(
 #endif
 		NPF_WaitEndOfBufferedWrite(Open);
 
+	*Written = Pos;
+
+NPF_BufferedWrite_End:
+	InterlockedExchange(&Open->WriteInProgress, 0);
+	NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
+
 	TRACE_EXIT();
-	return result;
+	return Status;
 }
 
 //-------------------------------------------------------------------

@@ -1168,840 +1168,829 @@ NTSTATUS NPF_ValidateIoIrp(
 	return Status;
 }
 
-_Use_decl_annotations_
-NTSTATUS
-NPF_IoControl(
-	IN PDEVICE_OBJECT DeviceObject,
-	IN PIRP Irp
-	)
+static NTSTATUS funcBIOCGSTATS(_In_ POPEN_INSTANCE pOpen,
+	       	_Out_writes_bytes_(ulBufLen) PVOID pBuf,
+	       	_In_ ULONG ulBufLen,
+	       	_Out_ PULONG_PTR Info)
 {
-	POPEN_INSTANCE			Open;
-	PSINGLE_LIST_ENTRY Curr;
-	PIO_STACK_LOCATION		IrpSp;
-	PINTERNAL_REQUEST		pRequest;
-	OPEN_STATE MaxState;
-	ULONG					FunctionCode;
-	NDIS_STATUS				Status = STATUS_INVALID_DEVICE_REQUEST;
-	ULONG					Information = 0;
-	PLIST_ENTRY				CurrEntry;
-	PULONG pUL;
-	ULONG					dim, timeout;
-	struct bpf_insn*		NewBpfProgram;
-	PPACKET_OID_DATA		OidData;
-	PVOID OidBuffer = NULL;
-	ULONG					mode;
-	PUCHAR					TmpBPFProgram;
-	INT						WriteRes;
-	BOOLEAN					SyncWrite = FALSE;
-	ULONG					insns;
-	ULONG					cnt;
-	PUINT					pStats;
-	ULONG					StatsLength;
-	PULONG					pCombinedPacketFilter;
+	static const ULONG uNeeded = 4 * sizeof(UINT);
 
-	HANDLE					hUserEvent;
-	PKEVENT					pKernelEvent;
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
+	{
+		*Info = 0;
+		return STATUS_CANCELLED;
+	}
+
+	((PUINT)pBuf)[0] = pOpen->Received;
+	((PUINT)pBuf)[1] = pOpen->Dropped + pOpen->ResourceDropped;
+	((PUINT)pBuf)[2] = 0;		// Not yet supported
+	((PUINT)pBuf)[3] = pOpen->Accepted;
+
+	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+	return STATUS_SUCCESS;
+}
+
+static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
+	       	_In_reads_bytes_(ulBufLen) LPCVOID pBuf,
+	       	_In_ ULONG ulBufLen,
+	       	_Out_ PULONG_PTR Info)
+{
 	LOCK_STATE_EX lockState;
-#ifdef _WIN64
-	VOID* POINTER_32		hUserEvent32Bit;
-#endif //_WIN64
+	static const ULONG uNeeded = sizeof(struct bpf_insn);
+	struct bpf_insn *NewBpfProgram = (struct bpf_insn *) pBuf;
+	ULONG insns = ulBufLen / sizeof(struct bpf_insn);
 
-	UNREFERENCED_PARAMETER(DeviceObject);
-	TRACE_ENTER();
+	*Info = 0;
 
-	IrpSp = IoGetCurrentIrpStackLocation(Irp);
-	FunctionCode = IrpSp->Parameters.DeviceIoControl.IoControlCode;
-	Open = IrpSp->FileObject->FsContext;
-	if (!NPF_IsOpenInstance(Open))
+	if (ulBufLen < uNeeded)
 	{
-		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
-		Irp->IoStatus.Information = 0;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return STATUS_INVALID_HANDLE;
+		*Info = uNeeded;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	/* If this instance is not attached to the NDIS filter module, we can't do some operations. */
-	Irp->IoStatus.Status = STATUS_SUCCESS;
-
-	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
-		"Function code is %08lx Input size=%08lx Output size %08lx",
-		FunctionCode,
-		IrpSp->Parameters.DeviceIoControl.InputBufferLength,
-		IrpSp->Parameters.DeviceIoControl.OutputBufferLength);
-
-	switch (FunctionCode)
+	// Validate the new program (valid instructions, only forward jumps, etc.)
+	if (!bpf_validate(NewBpfProgram, insns))
 	{
-		// BIOCSETBUFFERSIZE and BIOCSMODE do not technically require
-		// an attached adapter, but NPF_StartUsingOpenInstance(x, OpenRunning)
-		// does some initialization that is needed to start actually
-		// processing packets
-		case BIOCSETBUFFERSIZE:
-		case BIOCSMODE:
-		case BIOCSENDPACKETSSYNC:
-		case BIOCSENDPACKETSNOSYNC:
-			MaxState = OpenRunning;
-			break;
-		// These functions require an attached adapter, but do not have
-		// to have support for capture/injection
-		case BIOCSETOID:
-		case BIOCQUERYOID:
-			MaxState = OpenAttached;
-			break;
-		default:
-			// All others can work with detached instance
-			MaxState = OpenDetached;
-			break;
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BPF filter invalid.");
+		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 
-	if (!NPF_StartUsingOpenInstance(Open, MaxState, NPF_IRQL_UNKNOWN))
+	// Allocate the memory to contain the new filter program
+	PUCHAR TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NPF_NONPAGED, ulBufLen, NPF_BPF_TAG);
+	if (TmpBPFProgram == NULL)
 	{
-		SET_FAILURE(Open->OpenStatus == OpenDetached
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error - No memory for filter");
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	//copy the program in the new buffer
+	RtlCopyMemory(TmpBPFProgram, NewBpfProgram, ulBufLen);
+
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
+	{
+		ExFreePool(TmpBPFProgram);
+		return STATUS_CANCELLED;
+	}
+
+	// Lock the BPF engine for writing. 
+	NdisAcquireRWLockWrite(pOpen->MachineLock, &lockState, 0);
+
+	// Free the previous buffer if it was present
+	if (pOpen->bpfprogram != NULL)
+	{
+		ExFreePool(pOpen->bpfprogram);
+		pOpen->bpfprogram = NULL;
+	}
+	pOpen->bpfprogram = TmpBPFProgram;
+
+	// release the machine lock and then reset the buffer
+	NdisReleaseRWLock(pOpen->MachineLock, &lockState);
+
+	NPF_ResetBufferContents(pOpen, TRUE);
+
+	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+
+	*Info = ulBufLen;
+	return STATUS_SUCCESS;
+}
+
+static NTSTATUS funcBIOCSULONG(_In_ POPEN_INSTANCE pOpen,
+	    _In_reads_bytes_(ulBufLen) PULONG pBuf,
+	    _In_ ULONG ulBufLen,
+	    _Out_ PULONG_PTR Info,
+		_In_ OPEN_STATE MaxState,
+	    _Out_ PULONG pulOut)
+{
+	static const ULONG uNeeded = sizeof(ULONG);
+
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	if (!NPF_StartUsingOpenInstance(pOpen, MaxState, NPF_IRQL_UNKNOWN))
+	{
+		*Info = 0;
+		return (pOpen->OpenStatus == OpenDetached
 				? STATUS_DEVICE_REMOVED
 				: STATUS_CANCELLED);
-		Irp->IoStatus.Status = Status;
-		Irp->IoStatus.Information = Information;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
-		TRACE_EXIT();
-		return Status;
 	}
 
-#define _FAIL_IF_BUFFER_SMALL(__size__, __lenparam__) \
-	if (Irp->AssociatedIrp.SystemBuffer == NULL || \
-		IrpSp->Parameters.DeviceIoControl.__lenparam__ < __size__) \
-	{ \
-		SET_FAILURE_BUFFER(__size__); \
-		break; \
-	}
-#define FAIL_IF_INPUT_SMALL(__size__) _FAIL_IF_BUFFER_SMALL(__size__, InputBufferLength)
-#define FAIL_IF_OUTPUT_SMALL(__size__) _FAIL_IF_BUFFER_SMALL(__size__, OutputBufferLength)
+	*pulOut = *pBuf;
 
-	switch (FunctionCode)
+	NPF_StopUsingOpenInstance(pOpen, MaxState, NPF_IRQL_UNKNOWN);
+	return STATUS_SUCCESS;
+}
+
+static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
+	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
+	       _In_ ULONG ulBufLen,
+	       _Out_ PULONG_PTR Info)
+{
+	static const ULONG uNeeded = sizeof(ULONG);
+	ULONG mode = 0;
+
+	if (ulBufLen < uNeeded)
 	{
-	case BIOCGSTATS:
-		//function to get the capture stats
+		*Info = uNeeded;
+		return STATUS_BUFFER_TOO_SMALL;
+	}
 
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCGSTATS");
+	*Info = 0;
+	mode = *pBuf;
 
-		StatsLength = 4 * sizeof(UINT);
-		FAIL_IF_OUTPUT_SMALL(StatsLength);
+	// Compile-time assertion to ensure that MODE_CAPT and MODE_STAT are mutually exclusive.
+	C_ASSERT(MODE_CAPT == 0 && MODE_STAT == 1);
 
-		pStats = (PUINT)(Irp->AssociatedIrp.SystemBuffer);
-		
-		pStats[3] = Open->Accepted;
-		pStats[0] = Open->Received;
-		pStats[1] = Open->Dropped + Open->ResourceDropped;
-		pStats[2] = 0;		// Not yet supported
+	// If any bits except the least-significant are set, it's an invalid mode.
+	if (mode > 1) 
+	{
+		return STATUS_INVALID_DEVICE_REQUEST;
+	}
 
-		SET_RESULT_SUCCESS(StatsLength);
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN))
+	{
+		return (pOpen->OpenStatus == OpenDetached
+				? STATUS_DEVICE_REMOVED
+				: STATUS_CANCELLED);
+	}
 
-		break;
+	*Info = uNeeded;
+	if (mode == MODE_STAT)
+	{
+		pOpen->bModeCapt = 0;
+		NdisAcquireSpinLock(&pOpen->CountersLock);
+		pOpen->Nbytes.QuadPart = 0;
+		pOpen->Npackets.QuadPart = 0;
+		NdisReleaseSpinLock(&pOpen->CountersLock);
 
-	case BIOCGEVNAME:
-		//function to get the name of the event associated with the current instance
+		if (pOpen->TimeOut.QuadPart == 0)
+			pOpen->TimeOut.QuadPart = -10000000;
+	}
+	else // MODE_CAPT
+	{
+		pOpen->bModeCapt = 1;
+	}
 
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCGEVNAME");
+	NPF_StopUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN);
+	return STATUS_SUCCESS;
+}
 
-		//
-		// Since 20060405, the event handling has been changed:
-		// we no longer use named events, instead the user level app creates an event,
-		// and passes it back to the kernel, that references it (ObReferenceObjectByHandle), and
-		// signals it.
-		// For the time being, we still leave this ioctl code here, and we simply fail.
-		//
-		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-		break;
 
-#ifndef NPCAP_READ_ONLY
-	case BIOCSENDPACKETSSYNC:
-		SyncWrite = TRUE;
+static NTSTATUS funcBIOCISETLOBBEH(_In_ POPEN_INSTANCE pOpen,
+	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
+	       _In_ ULONG ulBufLen,
+	       _Out_ PULONG_PTR Info)
+{
+	static const ULONG uNeeded = sizeof(ULONG);
+	BOOLEAN SkipSent = FALSE;
 
-	case BIOCSENDPACKETSNOSYNC:
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSENDPACKETSNOSYNC");
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
 
-		if (InterlockedExchange(&Open->WriteInProgress, 1) == 1)
-		{
-			//
-			// Another write operation is currently in progress
-			//
-			SET_FAILURE(STATUS_DEVICE_BUSY);
+	switch (*pBuf)
+	{
+		case NPF_DISABLE_LOOPBACK:
+			SkipSent = TRUE;
 			break;
-		}
-
-		WriteRes = NPF_BufferedWrite(Irp,
-			(PCHAR) Irp->AssociatedIrp.SystemBuffer,
-			IrpSp->Parameters.DeviceIoControl.InputBufferLength,
-			SyncWrite);
-
-		InterlockedExchange(&Open->WriteInProgress, 0);
-
-		if (WriteRes >= 0)
-		{
-			SET_RESULT_SUCCESS(WriteRes);
-		}
-		else
-		{
-			SET_FAILURE_CUSTOM(-WriteRes);
-		}
-		break;
-#endif // NPCAP_READ_ONLY
-
-	case BIOCSETF:
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETF");
-
-		FAIL_IF_INPUT_SMALL(sizeof(struct bpf_insn));
-		//
-		// Get the pointer to the new program
-		//
-		NewBpfProgram = (struct bpf_insn *)Irp->AssociatedIrp.SystemBuffer;
-
-		// Lock the BPF engine for writing. 
-		NdisAcquireRWLockWrite(Open->MachineLock, &lockState, 0);
-
-		do
-		{
-			// Free the previous buffer if it was present
-			if (Open->bpfprogram != NULL)
-			{
-				TmpBPFProgram = Open->bpfprogram;
-				Open->bpfprogram = NULL;
-				ExFreePool(TmpBPFProgram);
-			}
-
-
-			insns = (IrpSp->Parameters.DeviceIoControl.InputBufferLength) / sizeof(struct bpf_insn);
-
-			//count the number of operative instructions
-			for (cnt = 0 ; (cnt < insns) && (NewBpfProgram[cnt].code != BPF_SEPARATION); cnt++)
-				;
-
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Operative instructions=%u", cnt);
-
-			if (cnt != insns)
-			{
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error installing the BPF filter. The filter contains TME extensions,"
-					" not supported on 64bit platforms.");
-
-				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-				break;
-			}
-
-			//the NPF processor has been initialized, we have to validate the operative instructions
-			insns = cnt;
-
-			//NOTE: the validation code checks for TME instructions, and fails if a TME instruction is
-			//encountered on 64 bit machines
-				if (bpf_validate(NewBpfProgram, cnt) == 0)
-				{
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error validating program");
-					//FIXME: the machine has been initialized(?), but the operative code is wrong.
-					//we have to reset the machine!
-					//something like: reallocate the mem_ex, and reset the tme_core
-					SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-					break;
-				}
-
-			// Allocate the memory to contain the new filter program
-			TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NPF_NONPAGED, cnt * sizeof(struct bpf_insn), NPF_BPF_TAG);
-			if (TmpBPFProgram == NULL)
-			{
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error - No memory for filter");
-				// no memory
-
-				SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
-				break;
-			}
-
-			//copy the program in the new buffer
-			RtlCopyMemory(TmpBPFProgram, NewBpfProgram, cnt * sizeof(struct bpf_insn));
-			Open->bpfprogram = TmpBPFProgram;
-
-			SET_RESULT_SUCCESS(0);
-		}
-		while (FALSE);
-
-		//
-		// release the machine lock and then reset the buffer
-		//
-		NdisReleaseRWLock(Open->MachineLock, &lockState);
-
-		NPF_ResetBufferContents(Open, TRUE);
-
-		break;
-
-	case BIOCSMODE:
-		//set the capture mode
-
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSMODE");
-
-		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
-
-		mode = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
-
-		// Verify no unsupported mode is set
-		if (mode == 0 || mode & ~(MODE_CAPT | MODE_MON | MODE_STAT | MODE_DUMP))
-		{
-			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-		}
-		else if (mode == MODE_CAPT)
-		{
-			Open->bModeCapt = 1;
-
-			SET_RESULT_SUCCESS(0);
-		}
-		else if (mode == MODE_MON)
-		{
-			//
-			// The MONITOR_MODE (aka TME extensions) is not supported on
-			// 64 bit architectures
-			//
-
-			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-		}
-		else
-		{
-			if (mode & MODE_STAT)
-			{
-				Open->bModeCapt = 0;
-				NdisAcquireSpinLock(&Open->CountersLock);
-				Open->Nbytes.QuadPart = 0;
-				Open->Npackets.QuadPart = 0;
-				NdisReleaseSpinLock(&Open->CountersLock);
-
-				if (Open->TimeOut.QuadPart == 0)
-					Open->TimeOut.QuadPart = -10000000;
-			}
-
-			if (mode & MODE_DUMP)
-			{
-				//////kernel dump not supported
-				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-				break;
-			}
-
-			SET_RESULT_SUCCESS(0);
-		}
-		break;
-
-	case BIOCSETDUMPFILENAME:
-	case BIOCSETDUMPLIMITS:
-	case BIOCISDUMPENDED:
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Dump mode IOCTL received");
-		///////kernel dump not supported
-		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-		break;
-
-	case BIOCISETLOBBEH:
-		FAIL_IF_INPUT_SMALL(sizeof(INT));
-
-		if (*(PINT) Irp->AssociatedIrp.SystemBuffer == NPF_DISABLE_LOOPBACK)
-		{
-			Open->SkipSentPackets = TRUE;
-		}
-		else if (*(PINT) Irp->AssociatedIrp.SystemBuffer == NPF_ENABLE_LOOPBACK)
-		{
-			Open->SkipSentPackets = FALSE;
-		}
-		else
-		{
-			// Unknown operation
-			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
+		case NPF_ENABLE_LOOPBACK:
+			SkipSent = FALSE;
 			break;
-		}
+		default:
+			return STATUS_INVALID_DEVICE_REQUEST;
+			break;
+	}
 
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
+	{
+		*Info = 0;
+		return STATUS_CANCELLED;
+	}
 
-		// Reset the capture buffers, since they could contain loopbacked packets
-		NPF_ResetBufferContents(Open, TRUE);
-
-		SET_RESULT_SUCCESS(0);
-		break;
-
-	case BIOCSETEVENTHANDLE:
-
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETEVENTHANDLE");
-
-#ifdef _WIN64
-		if (IoIs32bitProcess(Irp))
+	// Set the new value. If it's different than before,
+	if (pOpen->SkipSentPackets != SkipSent)
+	{
+		pOpen->SkipSentPackets = SkipSent;
+		// and they want to start skipping packets,
+		if (SkipSent)
 		{
-			//
-			// validate the input
-			//
-			if (IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(hUserEvent32Bit))
-			{
-				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-				break;
-			}
-
-			hUserEvent32Bit = *(VOID * POINTER_32 *)Irp->AssociatedIrp.SystemBuffer;
-			hUserEvent = hUserEvent32Bit;
+			// clear out any packets from the buffer that would have been skipped
+			// TODO: Change this to actually traverse the PacketQueue and
+			// remove only injected packets. Will need to extend
+			// NPF_CAP_DATA to hold this info.
+			NPF_ResetBufferContents(pOpen, TRUE);
 		}
-		else
-#endif //_WIN64
-		{
-			//
-			// validate the input
-			//
-			if (IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(hUserEvent))
-			{
-				SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-				break;
-			}
+	}
 
-			hUserEvent = *(PHANDLE)Irp->AssociatedIrp.SystemBuffer;
-		}
+	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+	return STATUS_SUCCESS;
+}
 
-		Status = ObReferenceObjectByHandle(hUserEvent,
+static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
+	       _In_reads_bytes_(ulBufLen) PVOID pBuf,
+	       _In_ ULONG ulBufLen,
+	       _In_ BOOLEAN is32bit,
+	       _In_ KPROCESSOR_MODE kMode,
+	       _Out_ PULONG_PTR Info)
+{
+	ULONG uNeeded = is32bit ? sizeof(VOID * POINTER_32) : sizeof(VOID * POINTER_64);
+	HANDLE hUserEvent = INVALID_HANDLE_VALUE;
+	PKEVENT pKernelEvent = NULL;
+	NTSTATUS Status = STATUS_UNSUCCESSFUL;
+
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	// We don't currently support overwriting the existing event.
+	if (pOpen->ReadEvent != NULL)
+	{
+		return STATUS_OBJECT_NAME_EXISTS;
+	}
+
+	if (is32bit)
+	{
+		hUserEvent = (HANDLE) (*(VOID * POINTER_32 *) pBuf);
+	}
+	else
+	{
+		hUserEvent = *(PHANDLE) pBuf;
+	}
+
+	Status = ObReferenceObjectByHandle(hUserEvent,
 			EVENT_MODIFY_STATE,
 			*ExEventObjectType,
-			Irp->RequestorMode,
+			kMode,
 			(PVOID *) &pKernelEvent,
 			NULL);
 
-		if (!NT_SUCCESS(Status))
-		{
-			// Status = ??? already set
-			Information = 0;
-			break;
-		}
+	if (!NT_SUCCESS(Status))
+	{
+		*Info = 0;
+		return Status;
+	}
 
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
+	{
+		*Info = 0;
+		return STATUS_CANCELLED;
+	}
 
-		if (InterlockedCompareExchangePointer(&Open->ReadEvent, pKernelEvent, NULL) != NULL)
-		{
-			//
-			// dereference the new pointer
-			//
+	// If the event is NULL, replace it. This returns the previous value, so if it's not NULL,
+	// we don't replace it and need to bail.
+	if (InterlockedCompareExchangePointer(&pOpen->ReadEvent, pKernelEvent, NULL) != NULL)
+	{
+		// dereference the new pointer
+		ObDereferenceObject(pKernelEvent);
+		NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+		return STATUS_OBJECT_NAME_EXISTS;
+	}
 
-			ObDereferenceObject(pKernelEvent);
-			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-			break;
-		}
+	KeResetEvent(pOpen->ReadEvent);
 
-		KeResetEvent(Open->ReadEvent);
+	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+	return STATUS_SUCCESS;
+}
 
-		SET_RESULT_SUCCESS(0);
-		break;
+static NTSTATUS funcBIOCSETBUFFERSIZE(_In_ POPEN_INSTANCE pOpen,
+	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
+	       _In_ ULONG ulBufLen,
+	       _Out_ PULONG_PTR Info)
+{
+	static const ULONG uNeeded = sizeof(ULONG);
+	LOCK_STATE_EX lockState;
+	ULONG dim = 0;
 
-	case BIOCSETBUFFERSIZE:
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETBUFFERSIZE");
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
 
-		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
+	dim = *(PULONG) pBuf;
 
-		// Get the number of bytes to allocate
-		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
+	// verify that the provided size value is sensible
+	if (dim > NPF_MAX_BUFFER_SIZE)
+	{
+		return STATUS_INSUFFICIENT_RESOURCES;
+	} 
 
-		// verify that the provided size value is sensible
-		if (dim > NPF_MAX_BUFFER_SIZE)
-		{
-			SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
-			break;
-		} 
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN))
+	{
+		*Info = 0;
+		return (pOpen->OpenStatus == OpenDetached
+				? STATUS_DEVICE_REMOVED
+				: STATUS_CANCELLED);
+	}
+
+	// Acquire buffer lock
+	NdisAcquireRWLockWrite(pOpen->BufferLock, &lockState, 0);
+
+	do
+	{
 		// If there's no change, we're done!
-		if ((LONG)dim == Open->Size) {
-			SET_RESULT_SUCCESS(0);
+		if ((LONG)dim == pOpen->Size) {
 			break;
 		}
-
-		// Acquire buffer lock
-		NdisAcquireRWLockWrite(Open->BufferLock, &lockState, 0);
 
 		// TODO: Could we avoid clearing the buffer but instead allow a
 		// negative Free count or maybe just clear out the amount that
 		// exceeds Size?
-		Open->Size = dim;
-		NPF_ResetBufferContents(Open, FALSE);
+		pOpen->Size = dim;
+		NPF_ResetBufferContents(pOpen, FALSE);
+	} while (FALSE);
 
-		NdisReleaseRWLock(Open->BufferLock, &lockState);
+	NdisReleaseRWLock(pOpen->BufferLock, &lockState);
 
-		SET_RESULT_SUCCESS(0);
-		break;
+	NPF_StopUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN);
+	return STATUS_SUCCESS;
+}
 
-	case BIOCSRTIMEOUT:
-		//set the timeout on the read calls
+// TODO: Open->TimeOut hasn't been settable via Packet.dll since the days of
+// Win9x. Reevaluate its use and strip out this code.
+static NTSTATUS funcBIOCSRTIMEOUT(_In_ POPEN_INSTANCE pOpen,
+	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
+	       _In_ ULONG ulBufLen,
+	       _Out_ PULONG_PTR Info)
+{
+	static const ULONG uNeeded = sizeof(ULONG);
+	ULONG timeout = 0;
 
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSRTIMEOUT");
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
 
-		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
+	timeout = *(PULONG) pBuf;
 
-		timeout = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
-		if (timeout == (ULONG) - 1)
-			Open->TimeOut.QuadPart = (LONGLONG)IMMEDIATE;
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
+	{
+		*Info = 0;
+		return STATUS_CANCELLED;
+	}
+
+	if (timeout == (ULONG) - 1)
+		pOpen->TimeOut.QuadPart = (LONGLONG)IMMEDIATE;
+	else
+	{
+		pOpen->TimeOut.QuadPart = (LONGLONG)timeout;
+		pOpen->TimeOut.QuadPart *= 10000;
+		pOpen->TimeOut.QuadPart = -pOpen->TimeOut.QuadPart;
+	}
+
+	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Read timeout set to %I64d", pOpen->TimeOut.QuadPart);
+	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+	return STATUS_SUCCESS;
+}
+
+static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
+	       _Inout_updates_bytes_(ulBufLenIn) PPACKET_OID_DATA OidData,
+	       _In_ ULONG ulBufLenIn,
+	       _In_ ULONG ulBufLenOut,
+	       _In_ BOOLEAN bSetOid,
+	       _Out_ PULONG_PTR Info)
+{
+	PINTERNAL_REQUEST pRequest = NULL;
+	PVOID OidBuffer = NULL;
+	LOCK_STATE_EX lockState;
+	ULONG ulTmp = 0;
+	NTSTATUS Status = STATUS_UNSUCCESSFUL;
+
+	// NDIS OID requests use the same buffer for in/out, so the caller must supply the same size buffers, too.
+	if (ulBufLenIn != ulBufLenOut ||
+			ulBufLenIn < sizeof(PACKET_OID_DATA) || // check before dereferencing OidData
+			ulBufLenIn < (sizeof(PACKET_OID_DATA) - 1 + OidData->Length) ||
+			OidData->Length == 0
+		)
+	{
+		//  buffer too small
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "buffer is too small");
+		*Info = sizeof(PACKET_OID_DATA);
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", bSetOid ? "BIOCSETOID" : "BIOCQUERYOID", OidData->Oid, OidData->Length);
+
+	*Info = 0;
+
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN))
+	{
+		return (pOpen->OpenStatus == OpenDetached
+				? STATUS_DEVICE_REMOVED
+				: STATUS_CANCELLED);
+	}
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (pOpen->pFiltMod->Loopback)
+	{
+		// We don't really support OID requests on our fake loopback
+		// adapter, but we can pretend.
+		if (bSetOid) {
+			switch (OidData->Oid) {
+				// Using a switch instead of if/else in case there are
+				// other OIDs we should accept
+				case OID_GEN_CURRENT_PACKET_FILTER:
+					Status = STATUS_SUCCESS;
+					break;
+				default:
+					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID not supported for Loopback");
+					Status = STATUS_INVALID_DEVICE_REQUEST;
+					break;
+			}
+		}
 		else
 		{
-			Open->TimeOut.QuadPart = (LONGLONG)timeout;
-			Open->TimeOut.QuadPart *= 10000;
-			Open->TimeOut.QuadPart = -Open->TimeOut.QuadPart;
-		}
-
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Read timeout set to %I64d", Open->TimeOut.QuadPart);
-
-		SET_RESULT_SUCCESS(0);
-		break;
-
-#ifndef NPCAP_READ_ONLY
-	case BIOCSWRITEREP:
-		//set the writes repetition number
-
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSWRITEREP");
-
-		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
-
-		Open->Nwrites = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
-
-		SET_RESULT_SUCCESS(0);
-		break;
-
-#endif // NPCAP_READ_ONLY
-
-	case BIOCSMINTOCOPY:
-		//set the minimum buffer's size to copy to the application
-
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSMINTOCOPY");
-
-		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
-
-		Open->MinToCopy = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
-
-		SET_RESULT_SUCCESS(0);
-		break;
-
-	case BIOCSETOID:
-	case BIOCQUERYOID:
-
-		OidData = Irp->AssociatedIrp.SystemBuffer;
-		TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", FunctionCode == BIOCQUERYOID ? "BIOCQUERYOID" : "BIOCSETOID", OidData->Oid, OidData->Length);
-
-		// Extract a request from the list of free ones
-		pRequest = (PINTERNAL_REQUEST) ExAllocateFromLookasideListEx(&Open->DeviceExtension->InternalRequestPool);
-		if (pRequest == NULL)
-		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
-			SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
-			break;
-		}
-		RtlZeroMemory(pRequest, sizeof(PINTERNAL_REQUEST));
-
-		//
-		//  See if it is an Ndis request
-		//
-		if ((IrpSp->Parameters.DeviceIoControl.InputBufferLength == IrpSp->Parameters.DeviceIoControl.OutputBufferLength) &&
-			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA)) &&
-			(IrpSp->Parameters.DeviceIoControl.InputBufferLength >= sizeof(PACKET_OID_DATA) - 1 + OidData->Length))
-		{
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			if (Open->pFiltMod->Loopback)
-			{ 
-				// We don't really support OID requests on our fake loopback
-				// adapter, but we can pretend.
-				if (FunctionCode == BIOCSETOID) {
-					switch (OidData->Oid) {
-						// Using a switch instead of if/else in case there are
-						// other OIDs we should accept
-						case OID_GEN_CURRENT_PACKET_FILTER:
-							SET_RESULT_SUCCESS(0);
-							break;
-						default:
-							TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID not supported for Loopback");
-							SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-							break;
-					}
-				}
-				else {
-					switch (OidData->Oid)
+			switch (OidData->Oid)
+			{
+				case OID_GEN_MAXIMUM_TOTAL_SIZE:
+				case OID_GEN_TRANSMIT_BUFFER_SPACE:
+				case OID_GEN_RECEIVE_BUFFER_SPACE:
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %u", pOpen->pFiltMod->AdapterName.Buffer, pOpen->pFiltMod->MaxFrameSize);
+					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
+					if (OidData->Length < sizeof(UINT))
 					{
-						case OID_GEN_MAXIMUM_TOTAL_SIZE:
-						case OID_GEN_TRANSMIT_BUFFER_SPACE:
-						case OID_GEN_RECEIVE_BUFFER_SPACE:
-							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %u", Open->pFiltMod->AdapterName.Buffer, Open->pFiltMod->MaxFrameSize);
-							*((PUINT)OidData->Data) = Open->pFiltMod->MaxFrameSize;
-							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-							break;
-
-						case OID_GEN_TRANSMIT_BLOCK_SIZE:
-						case OID_GEN_RECEIVE_BLOCK_SIZE:
-							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, 1);
-							*((PUINT)OidData->Data) = 1;
-							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-							break;
-						case OID_GEN_MEDIA_IN_USE:
-						case OID_GEN_MEDIA_SUPPORTED:
-							TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NdisMediumNull);
-							*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
-							OidData->Length = sizeof(UINT);
-							SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-							break;
-						case OID_GEN_LINK_STATE:
-							if (OidData->Length < sizeof(NDIS_LINK_STATE))
-							{
-								SET_FAILURE_BUFFER(sizeof(NDIS_LINK_STATE));
-							}
-							else
-							{
-								PNDIS_LINK_STATE pLinkState = (PNDIS_LINK_STATE) OidData->Data;
-								pLinkState->MediaConnectState = MediaConnectStateConnected;
-								pLinkState->MediaDuplexState = MediaDuplexStateFull;
-								pLinkState->XmitLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
-								pLinkState->RcvLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
-								pLinkState->PauseFunctions = NdisPauseFunctionsUnsupported;
-								SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-							}
-						default:
-							TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unsupported BIOCQUERYOID for Loopback");
-							SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-							break;
+						Status = STATUS_BUFFER_TOO_SMALL;
+						break;
 					}
-				}
+					*((PUINT)OidData->Data) = pOpen->pFiltMod->MaxFrameSize;
+					OidData->Length = sizeof(UINT);
+					Status = STATUS_SUCCESS;
+					break;
 
-				goto OID_REQUEST_DONE;
+				case OID_GEN_TRANSMIT_BLOCK_SIZE:
+				case OID_GEN_RECEIVE_BLOCK_SIZE:
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, 1);
+					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
+					if (OidData->Length < sizeof(UINT))
+					{
+						Status = STATUS_BUFFER_TOO_SMALL;
+						break;
+					}
+					*((PUINT)OidData->Data) = 1;
+					OidData->Length = sizeof(UINT);
+					Status = STATUS_SUCCESS;
+					break;
+				case OID_GEN_MEDIA_IN_USE:
+				case OID_GEN_MEDIA_SUPPORTED:
+					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumNull);
+					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
+					if (OidData->Length < sizeof(UINT))
+					{
+						Status = STATUS_BUFFER_TOO_SMALL;
+						break;
+					}
+					*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
+					OidData->Length = sizeof(UINT);
+					Status = STATUS_SUCCESS;
+					break;
+				case OID_GEN_LINK_STATE:
+					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(NDIS_LINK_STATE);
+					if (OidData->Length < sizeof(NDIS_LINK_STATE))
+					{
+						Status = STATUS_BUFFER_TOO_SMALL;
+						break;
+					}
+					PNDIS_LINK_STATE pLinkState = (PNDIS_LINK_STATE) OidData->Data;
+					pLinkState->MediaConnectState = MediaConnectStateConnected;
+					pLinkState->MediaDuplexState = MediaDuplexStateFull;
+					pLinkState->XmitLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
+					pLinkState->RcvLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
+					pLinkState->PauseFunctions = NdisPauseFunctionsUnsupported;
+					OidData->Length = sizeof(NDIS_LINK_STATE);
+					Status = STATUS_SUCCESS;
+					break;
+				default:
+					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unsupported BIOCQUERYOID for Loopback");
+					Status = STATUS_INVALID_DEVICE_REQUEST;
+					break;
 			}
+		}
+
+		goto OID_REQUEST_DONE;
+	}
 #endif
 
 #ifdef HAVE_DOT11_SUPPORT
-			if (Open->pFiltMod->Dot11 && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
+	if (pOpen->pFiltMod->Dot11 && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
+	{
+		if (bSetOid)
+		{
+			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", pOpen->pFiltMod->AdapterName.Buffer);
+			*Info = 0;
+			Status = STATUS_UNSUCCESSFUL;
+		}
+		else
+		{
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
+			*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
+			if (OidData->Length < sizeof(UINT))
 			{
-				if (FunctionCode == BIOCSETOID)
-				{
-					TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", Open->pFiltMod->AdapterName.Buffer);
-					SET_FAILURE(STATUS_UNSUCCESSFUL);
-				}
-				else
-				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", Open->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
-					*((PUINT)OidData->Data) = (UINT)NdisMediumRadio80211;
-					OidData->Length = sizeof(UINT);
-					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-				}
-
-				goto OID_REQUEST_DONE;
-			}
-#endif
-
-			//
-			//  The buffer is valid
-			//
-			NdisZeroMemory(&pRequest->Request, sizeof(NDIS_OID_REQUEST));
-			pRequest->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
-			pRequest->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
-			pRequest->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
-
-			/* NDIS_OID_REQUEST.InformationBuffer must be non-paged */
-			OidBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, OidData->Length, NPF_USER_OID_TAG);
-			if (OidBuffer == NULL)
-			{
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OidBuffer");
-				SET_FAILURE(STATUS_INSUFFICIENT_RESOURCES);
-				goto OID_REQUEST_DONE;
-			}
-			RtlCopyMemory(OidBuffer, OidData->Data, OidData->Length);
-
-			if (FunctionCode == BIOCSETOID)
-			{
-				pRequest->Request.RequestType = NdisRequestSetInformation;
-				pRequest->Request.DATA.SET_INFORMATION.Oid = OidData->Oid;
-
-				pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = OidBuffer;
-				pRequest->Request.DATA.SET_INFORMATION.InformationBufferLength = OidData->Length;
+				Status = STATUS_BUFFER_TOO_SMALL;
 			}
 			else
 			{
-				pRequest->Request.RequestType = NdisRequestQueryInformation;
-				pRequest->Request.DATA.QUERY_INFORMATION.Oid = OidData->Oid;
-
-				pRequest->Request.DATA.QUERY_INFORMATION.InformationBuffer = OidBuffer;
-				pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength = OidData->Length;
+				OidData->Length = sizeof(UINT);
+				*((PUINT)OidData->Data) = (UINT)NdisMediumRadio80211;
+				Status = STATUS_SUCCESS;
 			}
-
-			NdisInitializeEvent(&pRequest->InternalRequestCompletedEvent);
-			NdisResetEvent(&pRequest->InternalRequestCompletedEvent);
-
-			if (*((PVOID *) pRequest->Request.SourceReserved) != NULL)
-			{
-				*((PVOID *) pRequest->Request.SourceReserved) = NULL;
-			}
-
-			//
-			//  submit the request
-			//
-			pRequest->Request.RequestId = (PVOID) NPF_REQUEST_ID;
-			pRequest->Request.RequestHandle = Open->pFiltMod->AdapterHandle;
-			// ASSERT(Open->pFiltMod->AdapterHandle != NULL);
-
-			if (OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER && FunctionCode == BIOCSETOID)
-			{
-				NT_ASSERT(Open->pFiltMod != NULL);
-
-				// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
-				if (Open->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
-				{
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %#lx",
-						*(ULONG*)OidData->Data, Open->pFiltMod->MyPacketFilter);
-					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-
-					goto OID_REQUEST_DONE;
-				}
-
-				// Stash the old packet filter...
-				dim = Open->MyPacketFilter;
-				// Store the requested packet filter for *this* Open instance
-				Open->MyPacketFilter = *(ULONG*)OidData->Data;
-
-				/* We don't want NDIS_PACKET_TYPE_ALL_LOCAL, since that may cause NDIS to loop
-				 * packets back that shouldn't be. WinPcap had to do this as a protocol driver,
-				 * but Npcap sees outgoing packets from all protocols already.  We'll clear this
-				 * bit, but instead turn on the other aspects that it covers: packets that would
-				 * be indicated by the NIC anyway.
-				 */
-				if (Open->MyPacketFilter & NDIS_PACKET_TYPE_ALL_LOCAL) {
-					Open->MyPacketFilter ^= NDIS_PACKET_TYPE_ALL_LOCAL;
-					Open->MyPacketFilter |= NDIS_PACKET_TYPE_DIRECTED | NDIS_PACKET_TYPE_MULTICAST | NDIS_PACKET_TYPE_BROADCAST;
-				}
-
-				// If the new packet filter is the same as the old one, nothing left to do.
-				if (Open->MyPacketFilter == dim)
-				{
-					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-
-					goto OID_REQUEST_DONE;
-				}
-				// Set the filter module's packet filter to the union of all instances' filters
-				NdisAcquireRWLockRead(Open->pFiltMod->OpenInstancesLock, &lockState, 0);
-				// Stash the old filter
-				dim = Open->pFiltMod->MyPacketFilter;
-				Open->pFiltMod->MyPacketFilter = 0;
-				for (Curr = Open->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-				{
-					Open->pFiltMod->MyPacketFilter |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
-				}
-				NdisReleaseRWLock(Open->pFiltMod->OpenInstancesLock, &lockState);
-
-				// If the new packet filter is the same as the old one...
-				if (Open->pFiltMod->MyPacketFilter == dim
-						// ...or it wouldn't change the upper one
-						|| (Open->pFiltMod->MyPacketFilter & (~Open->pFiltMod->HigherPacketFilter)) == 0)
-				{
-					// Nothing left to do!
-					SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-
-					goto OID_REQUEST_DONE;
-				}
-
-                pCombinedPacketFilter = (PULONG) OidBuffer;
-#ifdef HAVE_DOT11_SUPPORT
-				*pCombinedPacketFilter = Open->pFiltMod->HigherPacketFilter | Open->pFiltMod->MyPacketFilter | Open->pFiltMod->Dot11PacketFilter;
-#else
-				*pCombinedPacketFilter = Open->pFiltMod->HigherPacketFilter | Open->pFiltMod->MyPacketFilter;
-#endif
-			}
-			Status = NdisFOidRequest(Open->pFiltMod->AdapterHandle, &pRequest->Request);
 		}
-		else
+
+		goto OID_REQUEST_DONE;
+	}
+#endif
+
+	// OID_GEN_CURRENT_PACKET_FILTER requires additional checks
+	if (bSetOid && OidData->Oid == OID_GEN_CURRENT_PACKET_FILTER)
+	{
+		NT_ASSERT(pOpen->pFiltMod != NULL);
+
+		*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(ULONG);
+		if (OidData->Length != sizeof(ULONG))
 		{
-			//
-			//  buffer too small
-			//
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "buffer is too small");
-			SET_FAILURE(STATUS_BUFFER_TOO_SMALL);
+			Status = STATUS_BUFFER_TOO_SMALL;
 			goto OID_REQUEST_DONE;
 		}
 
-		if (Status == NDIS_STATUS_PENDING)
+		// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
+		if (pOpen->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
 		{
-			NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 0);
-			Status = pRequest->RequestStatus;
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %#lx",
+					*(ULONG*)OidData->Data, pOpen->pFiltMod->MyPacketFilter);
+			Status = STATUS_SUCCESS;
+			goto OID_REQUEST_DONE;
 		}
 
+		// Stash the old packet filter...
+		ulTmp = pOpen->MyPacketFilter;
+		// Store the requested packet filter for *this* Open instance
+		pOpen->MyPacketFilter = *(ULONG*)OidData->Data;
+
+		/* We don't want NDIS_PACKET_TYPE_ALL_LOCAL, since that may cause NDIS to loop
+		 * packets back that shouldn't be. WinPcap had to do this as a protocol driver,
+		 * but Npcap sees outgoing packets from all protocols already.  We'll clear this
+		 * bit, but instead turn on the other aspects that it covers: packets that would
+		 * be indicated by the NIC anyway.
+		 */
+		if (pOpen->MyPacketFilter & NDIS_PACKET_TYPE_ALL_LOCAL) {
+			pOpen->MyPacketFilter ^= NDIS_PACKET_TYPE_ALL_LOCAL;
+			pOpen->MyPacketFilter |= NDIS_PACKET_TYPE_DIRECTED | NDIS_PACKET_TYPE_MULTICAST | NDIS_PACKET_TYPE_BROADCAST;
+		}
+
+		// If the new packet filter is the same as the old one, nothing left to do.
+		if (pOpen->MyPacketFilter == ulTmp)
+		{
+			Status = STATUS_SUCCESS;
+			goto OID_REQUEST_DONE;
+		}
+
+		// Set the filter module's packet filter to the union of all instances' filters
+		NdisAcquireRWLockRead(pOpen->pFiltMod->OpenInstancesLock, &lockState, 0);
+		// Stash the old filter
+		ulTmp = pOpen->pFiltMod->MyPacketFilter;
+		pOpen->pFiltMod->MyPacketFilter = 0;
+		for (PSINGLE_LIST_ENTRY Curr = pOpen->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
+		{
+			pOpen->pFiltMod->MyPacketFilter |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
+		}
+		NdisReleaseRWLock(pOpen->pFiltMod->OpenInstancesLock, &lockState);
+
+		// If the new packet filter is the same as the old one...
+		if (pOpen->pFiltMod->MyPacketFilter == ulTmp
+				// ...or it wouldn't change the upper one
+				|| (pOpen->pFiltMod->MyPacketFilter & (~pOpen->pFiltMod->HigherPacketFilter)) == 0)
+		{
+			// Nothing left to do!
+			Status = STATUS_SUCCESS;
+			goto OID_REQUEST_DONE;
+		}
+
+		ulTmp =
+#ifdef HAVE_DOT11_SUPPORT
+			pOpen->pFiltMod->Dot11PacketFilter |
+#endif
+			pOpen->pFiltMod->HigherPacketFilter | pOpen->pFiltMod->MyPacketFilter;
+
+		// Overwrite the input value in the buffer with our calculated value
+		*(PULONG) OidData->Data = ulTmp;
+	}
+
+	//  The buffer is valid
+
+	// Extract a request from the list of free ones
+	pRequest = (PINTERNAL_REQUEST) ExAllocateFromLookasideListEx(&pOpen->DeviceExtension->InternalRequestPool);
+	if (pRequest == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
+		Status = STATUS_INSUFFICIENT_RESOURCES;
+		goto OID_REQUEST_DONE;
+	}
+	// This also zeroes the NDIS_OID_REQUEST structure.
+	RtlZeroMemory(pRequest, sizeof(PINTERNAL_REQUEST));
+
+	pRequest->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
+	pRequest->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
+	pRequest->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
+
+	/* NDIS_OID_REQUEST.InformationBuffer must be non-paged */
+	// TODO: Test whether this copy needs to happen. Buffered I/O ought to
+	// mean AssociatedIrp.SystemBuffer is non-paged already and is not
+	// freed until we complete the IRP.
+	OidBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, OidData->Length, NPF_USER_OID_TAG);
+	if (OidBuffer == NULL)
+	{
+		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OidBuffer");
+		Status = STATUS_INSUFFICIENT_RESOURCES;
+		goto OID_REQUEST_DONE;
+	}
+	RtlCopyMemory(OidBuffer, OidData->Data, OidData->Length);
+
+	if (bSetOid)
+	{
+		pRequest->Request.RequestType = NdisRequestSetInformation;
+		pRequest->Request.DATA.SET_INFORMATION.Oid = OidData->Oid;
+
+		pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = OidBuffer;
+		pRequest->Request.DATA.SET_INFORMATION.InformationBufferLength = OidData->Length;
+	}
+	else
+	{
+		pRequest->Request.RequestType = NdisRequestQueryInformation;
+		pRequest->Request.DATA.QUERY_INFORMATION.Oid = OidData->Oid;
+
+		pRequest->Request.DATA.QUERY_INFORMATION.InformationBuffer = OidBuffer;
+		pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength = OidData->Length;
+	}
+
+	NdisInitializeEvent(&pRequest->InternalRequestCompletedEvent);
+	NdisResetEvent(&pRequest->InternalRequestCompletedEvent);
+
+	if (*((PVOID *) pRequest->Request.SourceReserved) != NULL)
+	{
+		*((PVOID *) pRequest->Request.SourceReserved) = NULL;
+	}
+
+	//
+	//  submit the request
+	//
+	pRequest->Request.RequestId = (PVOID) NPF_REQUEST_ID;
+	pRequest->Request.RequestHandle = pOpen->pFiltMod->AdapterHandle;
+	// ASSERT(pOpen->pFiltMod->AdapterHandle != NULL);
+
+	Status = NdisFOidRequest(pOpen->pFiltMod->AdapterHandle, &pRequest->Request);
+
+	if (Status == NDIS_STATUS_PENDING)
+	{
+		NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 0);
+		Status = pRequest->RequestStatus;
+	}
+
+	//
+	// Complete the request
+	//
+	if (bSetOid)
+	{
+		OidData->Length = pRequest->Request.DATA.SET_INFORMATION.BytesRead;
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCSETOID completed, BytesRead = %u", OidData->Length);
+		*Info = sizeof(PACKET_OID_DATA) - 1 + OidData->Length;
+	}
+	else
+	{
+		ulTmp = pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten;
+
+		// check for the stupid bug of the Nortel driver ipsecw2k.sys v. 4.10.0.0 that doesn't set the BytesWritten correctly
+		// The driver is the one shipped with Nortel client Contivity VPN Client V04_65.18, and the MD5 for the buggy (unsigned) driver
+		// is 3c2ff8886976214959db7d7ffaefe724 *ipsecw2k.sys (there are multiple copies of this binary with the same exact version info!)
 		//
-		// Complete the request
+		// The (certified) driver shipped with Nortel client Contivity VPN Client V04_65.320 doesn't seem affected by the bug.
 		//
-		if (FunctionCode == BIOCSETOID)
+		//if (pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten > pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength)
+		if (ulTmp > OidData->Length)
 		{
-			OidData->Length = pRequest->Request.DATA.SET_INFORMATION.BytesRead;
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCSETOID completed, BytesRead = %u", OidData->Length);
-		}
-		else
-		{
-			if (FunctionCode == BIOCQUERYOID)
-			{
-				OidData->Length = pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten;
-
-				if (Status == NDIS_STATUS_SUCCESS)
-				{
-					//
-					// check for the stupid bug of the Nortel driver ipsecw2k.sys v. 4.10.0.0 that doesn't set the BytesWritten correctly
-					// The driver is the one shipped with Nortel client Contivity VPN Client V04_65.18, and the MD5 for the buggy (unsigned) driver
-					// is 3c2ff8886976214959db7d7ffaefe724 *ipsecw2k.sys (there are multiple copies of this binary with the same exact version info!)
-					//
-					// The (certified) driver shipped with Nortel client Contivity VPN Client V04_65.320 doesn't seem affected by the bug.
-					//
-					if (pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten > pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength)
-					{
-						TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!", pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten, pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength);
-
-						Status = NDIS_STATUS_INVALID_DATA;
-					}
-				}
-				RtlCopyMemory(OidData->Data, OidBuffer, OidData->Length);
-
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
-			}
+			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!",
+					pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten, pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength);
+			ulTmp = OidData->Length; // truncate
+			Status = NDIS_STATUS_INVALID_DATA;
 		}
 
+		// Don't trust that the length fits in the output buffer
+		if (sizeof(PACKET_OID_DATA) - 1 + ulTmp > ulBufLenOut)
+		{
+			ulTmp = ulBufLenOut - (sizeof(PACKET_OID_DATA) - 1);
+			Status = NDIS_STATUS_INVALID_DATA;
+		}
+		RtlCopyMemory(OidData->Data, OidBuffer, ulTmp);
+		OidData->Length = ulTmp;
 
-		if (Status == NDIS_STATUS_SUCCESS)
-		{
-			SET_RESULT_SUCCESS(sizeof(PACKET_OID_DATA) - 1 + OidData->Length);
-		}
-		else
-		{
-			// Return the error code of NdisFOidRequest() to the application.
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Original NdisFOidRequest() Status = %#x", Status);
-			SET_FAILURE_CUSTOM(Status);
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Custom NdisFOidRequest() Status = %#x", Status);
-		}
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
+		*Info = sizeof(PACKET_OID_DATA) - 1 + ulTmp;
+	}
+
+
+	if (Status == NDIS_STATUS_SUCCESS)
+	{
+		Status = STATUS_SUCCESS;
+	}
+	else
+	{
+		// Return the error code of NdisFOidRequest() to the application.
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Original NdisFOidRequest() Status = %#x", Status);
+		// Why do we set this custom bit? Unfortunately now libpcap relies on it.
+		Status = (1 << 29) | Status;
+		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Custom NdisFOidRequest() Status = %#x", Status);
+	}
 
 OID_REQUEST_DONE:
 
-		ExFreeToLookasideListEx(&Open->DeviceExtension->InternalRequestPool, pRequest);
+	if (OidBuffer != NULL)
+	{
+		ExFreePoolWithTag(OidBuffer, NPF_USER_OID_TAG);
+	}
 
-		break;
+	if (pRequest)
+	{
+		ExFreeToLookasideListEx(&pOpen->DeviceExtension->InternalRequestPool, pRequest);
+		pRequest = NULL;
+	}
 
-	case BIOCSTIMESTAMPMODE:
-		FAIL_IF_INPUT_SMALL(sizeof(ULONG));
+	NPF_StopUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN);
+	return Status;
+}
 
-		dim = *((PULONG)Irp->AssociatedIrp.SystemBuffer);
-		
-		// verify that the provided mode is supported
-		if (!NPF_TimestampModeSupported(dim))
-		{
-			SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-			break;
-		} 
+static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
+	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
+	       _In_ ULONG ulBufLen,
+	       _Out_ PULONG_PTR Info)
+{
+	static const ULONG uNeeded = sizeof(ULONG);
+	ULONG mode = 0;
 
-		/* Reset buffer, since contents could have differing timestamps */
-		NPF_ResetBufferContents(Open, TRUE);
-		Open->TimestampMode = dim;
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
 
-		SET_RESULT_SUCCESS(0);
-		break;
+	mode = *(PULONG) pBuf;
 
-	case BIOCGTIMESTAMPMODES:
-		// Need to at least deliver the number of modes
-		FAIL_IF_OUTPUT_SMALL(sizeof(ULONG));
+	// verify that the provided mode is supported
+	if (!NPF_TimestampModeSupported(mode))
+	{
+		return STATUS_INVALID_DEVICE_REQUEST;
+	} 
 
-		dim = IrpSp->Parameters.DeviceIoControl.OutputBufferLength / sizeof(ULONG);
-		cnt = 0;
-		pUL = (PULONG)Irp->AssociatedIrp.SystemBuffer;
-		Status = STATUS_SUCCESS;
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
+	{
+		*Info = 0;
+		return STATUS_CANCELLED;
+	}
 
-		// Count each mode supported, and if they fit in the buffer, store them.
-#define NEXT_MODE(_M) if (dim > ++cnt) { \
-			pUL[cnt] = _M; \
-		} else { \
-			Status = STATUS_BUFFER_OVERFLOW; \
-		}
-		NEXT_MODE(TIMESTAMPMODE_SINGLE_SYNCHRONIZATION);
-		NEXT_MODE(TIMESTAMPMODE_QUERYSYSTEMTIME);
-		// Only report the _PRECISE version if it's different than QST
-		if (g_ptrQuerySystemTime !=
+	if (InterlockedExchange(&pOpen->TimestampMode, mode) != mode)
+	{
+		/* Reset buffer, since contents have differing timestamps */
+		NPF_ResetBufferContents(pOpen, TRUE);
+	}
+
+	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+	return STATUS_SUCCESS;
+}
+
+static NTSTATUS funcBIOCGTIMESTAMPMODES(_In_ POPEN_INSTANCE pOpen,
+	       _Out_writes_bytes_(ulBufLen) PVOID pBuf,
+	       _In_ ULONG ulBufLen,
+	       _Out_ PULONG_PTR Info)
+{
+	// Need to at least deliver the number of modes
+	ULONG uNeeded = sizeof(ULONG);
+	static ULONG SupportedModes[] = {
+		0, // count of modes, 0 means not initialized yet
+		TIMESTAMPMODE_SINGLE_SYNCHRONIZATION,
+		TIMESTAMPMODE_QUERYSYSTEMTIME,
+		// This is last and is not reported if not different than QST
+		TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
+	};
+
+	// Initialize the count if not already done.
+	if (SupportedModes[0] == 0)
+	{
+		// If all modes are supported, Count is length minus 1 for the count element.
+		SupportedModes[0] = sizeof(SupportedModes) / sizeof(ULONG) - 1;
+
+		// If KeQuerySystemTimePrecise is available, g_ptrQuerySystemTime will point to it.
+		// If it points to KeQuerySystemTime instead, it's not available.
+		if (g_ptrQuerySystemTime ==
 #ifdef KeQuerySystemTime
 				&KeQuerySystemTimeWrapper
 #else
@@ -2009,61 +1998,212 @@ OID_REQUEST_DONE:
 #endif
 		   )
 		{
-			NEXT_MODE(TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE);
+			// Precise not supported. Count is as before, but minus 1 for QST Precise.
+			SupportedModes[0] -= 1;
 		}
-		// First element is number of modes supported
-		*pUL = cnt;
-		// We didn't write more than dim ULONGs,
-		// nor more than the number of modes plus one to store the count
-		Information = sizeof(ULONG) * min(dim, cnt + 1);
-		// Status is set in NEXT_MODE()
-		break;
-
-	case BIOCGETPIDS:
-		// Need to at least deliver the number of PIDS
-		FAIL_IF_OUTPUT_SMALL(sizeof(ULONG));
-
-		dim = IrpSp->Parameters.DeviceIoControl.OutputBufferLength / sizeof(ULONG);
-		cnt = 0;
-		pUL = (PULONG)Irp->AssociatedIrp.SystemBuffer;
-
-		NdisAcquireRWLockRead(Open->DeviceExtension->AllOpensLock, &lockState, 0);
-
-		for (CurrEntry = Open->DeviceExtension->AllOpens.Flink;
-				CurrEntry != &Open->DeviceExtension->AllOpens;
-				CurrEntry = CurrEntry->Flink)
-		{
-			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
-			cnt++;
-			if (cnt < dim)
-			{
-				pUL[cnt] = pOpen->UserPID;
-			}
-		}
-		NdisReleaseRWLock(Open->DeviceExtension->AllOpensLock, &lockState);
-
-		*pUL = cnt;
-		Information = sizeof(ULONG) * min(dim, cnt + 1);
-		Status = (cnt < dim) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
-		break;
-
-	default:
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown IOCTL code");
-		SET_FAILURE(STATUS_INVALID_DEVICE_REQUEST);
-		break;
 	}
 
-    if (OidBuffer != NULL)
-    {
-        ExFreePoolWithTag(OidBuffer, NPF_USER_OID_TAG);
-    }
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
 
+	uNeeded = (SupportedModes[0] + 1) * sizeof(ULONG);
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		RtlCopyMemory(pBuf, SupportedModes, ulBufLen);
+		return STATUS_BUFFER_OVERFLOW;
+	}
+	else
+	{
+		RtlCopyMemory(pBuf, SupportedModes, uNeeded);
+		return STATUS_SUCCESS;
+	}
+}
 
-	//
-	// release the Open structure
-	//
-	NPF_StopUsingOpenInstance(Open, MaxState, NPF_IRQL_UNKNOWN);
+static NTSTATUS funcBIOCGETPIDS(_In_ POPEN_INSTANCE pOpen,
+	       _Out_writes_bytes_(ulBufLen) PULONG pBuf,
+	       _In_ ULONG ulBufLen,
+	       _Out_ PULONG_PTR Info)
+{
+	LOCK_STATE_EX lockState;
+	ULONG cnt = 0;
+	// Need to at least deliver the number of PIDS
+	ULONG uNeeded = sizeof(ULONG);
 
+	*Info = uNeeded;
+	if (ulBufLen < uNeeded)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
+	{
+		*Info = 0;
+		return STATUS_CANCELLED;
+	}
+
+	NdisAcquireRWLockRead(pOpen->DeviceExtension->AllOpensLock, &lockState, 0);
+
+	for (PLIST_ENTRY CurrEntry = pOpen->DeviceExtension->AllOpens.Flink;
+			CurrEntry != &pOpen->DeviceExtension->AllOpens;
+			CurrEntry = CurrEntry->Flink)
+	{
+		POPEN_INSTANCE pOpenTmp = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
+		cnt++;
+		if (cnt * sizeof(ULONG) + sizeof(ULONG) <= ulBufLen)
+		{
+			pBuf[cnt] = pOpenTmp->UserPID;
+		}
+	}
+	NdisReleaseRWLock(pOpen->DeviceExtension->AllOpensLock, &lockState);
+
+	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+	pBuf[0] = cnt;
+	if ((cnt * sizeof(ULONG) + sizeof(ULONG)) > ulBufLen)
+	{
+		*Info = ulBufLen - (ulBufLen % sizeof(ULONG));
+		return STATUS_BUFFER_OVERFLOW;
+	}
+	else
+	{
+		*Info = cnt * sizeof(ULONG) + sizeof(ULONG);
+		return STATUS_SUCCESS;
+	}
+}
+
+_Use_decl_annotations_
+NTSTATUS
+NPF_IoControl(
+	IN PDEVICE_OBJECT DeviceObject,
+	IN PIRP Irp
+	)
+{
+	ULONG_PTR Information = 0;
+	PVOID pBuf = Irp->AssociatedIrp.SystemBuffer;
+	PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(Irp);
+	POPEN_INSTANCE Open = IrpSp->FileObject->FsContext;
+	NTSTATUS Status = STATUS_SUCCESS;
+	ULONG InputBufferLength = IrpSp->Parameters.DeviceIoControl.InputBufferLength;
+	ULONG OutputBufferLength = IrpSp->Parameters.DeviceIoControl.OutputBufferLength;
+	ULONG FunctionCode = IrpSp->Parameters.DeviceIoControl.IoControlCode;
+
+	BOOLEAN SyncWrite = FALSE;
+
+	UNREFERENCED_PARAMETER(DeviceObject);
+	TRACE_ENTER();
+
+	if (!NPF_IsOpenInstance(Open))
+	{
+		Status = STATUS_INVALID_HANDLE;
+		goto NPF_IoControl_End;
+	}
+
+	// Has this IRP been canceled?
+	if (Irp->Cancel)
+	{
+		Status = STATUS_CANCELLED;
+		goto NPF_IoControl_End;
+	}
+
+	// Make sure at least one buffer is valid and not 0-length.
+	if (pBuf == NULL || InputBufferLength + OutputBufferLength == 0)
+	{
+		Status = STATUS_INVALID_PARAMETER;
+		goto NPF_IoControl_End;
+	}
+
+	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+		"Function code is %08lx Input size=%08lx Output size %08lx",
+		FunctionCode,
+		InputBufferLength,
+		OutputBufferLength);
+
+	switch (FunctionCode)
+	{
+		// OPEN_STATE must be OpenRunning:
+#ifndef NPCAP_READ_ONLY
+		case BIOCSENDPACKETSSYNC:
+			SyncWrite = TRUE;
+		case BIOCSENDPACKETSNOSYNC:
+			Status = NPF_BufferedWrite(Open, pBuf, InputBufferLength, SyncWrite, &Information);
+			break;
+		case BIOCSWRITEREP:
+			Status = funcBIOCSULONG(Open, pBuf, InputBufferLength, &Information, OpenDetached, &Open->Nwrites);
+			break;
+#endif // NPCAP_READ_ONLY
+
+		// BIOCSETBUFFERSIZE and BIOCSMODE do not technically require
+		// an attached adapter, but NPF_StartUsingOpenInstance(x, OpenRunning)
+		// does some initialization that is needed to start actually
+		// processing packets
+		case BIOCSETBUFFERSIZE:
+			Status = funcBIOCSETBUFFERSIZE(Open, pBuf, InputBufferLength, &Information);
+			break;
+		case BIOCSMODE:
+			Status = funcBIOCSMODE(Open, pBuf, InputBufferLength, &Information);
+			break;
+
+		// OPEN_STATE must be OpenAttached
+		case BIOCSETOID:
+			break;
+		case BIOCQUERYOID:
+			break;
+
+		// OPEN_STATE can be OpenDetached
+		case BIOCGSTATS:
+			Status = funcBIOCGSTATS(Open, pBuf, OutputBufferLength, &Information);
+			break;
+
+		case BIOCSETF:
+			Status = funcBIOCSETF(Open, pBuf, InputBufferLength, &Information);
+			break;
+		case BIOCSMINTOCOPY:
+			Status = funcBIOCSULONG(Open, pBuf, InputBufferLength, &Information, OpenDetached, &Open->MinToCopy);
+			break;
+		case BIOCISETLOBBEH:
+			Status = funcBIOCISETLOBBEH(Open, pBuf, InputBufferLength, &Information);
+			break;
+		case BIOCSETEVENTHANDLE:
+			Status = funcBIOCSETEVENTHANDLE(Open, pBuf, InputBufferLength,
+#ifdef _WIN64
+					IoIs32bitProcess(Irp),
+#else
+					FALSE,
+#endif
+					Irp->RequestorMode, &Information);
+			break;
+		case BIOCSRTIMEOUT:
+			Status = funcBIOCSRTIMEOUT(Open, pBuf, InputBufferLength, &Information);
+			break;
+		case BIOCSTIMESTAMPMODE:
+			Status = funcBIOCSTIMESTAMPMODE(Open, pBuf, InputBufferLength, &Information);
+			break;
+		case BIOCGETPIDS:
+			Status = funcBIOCGETPIDS(Open, pBuf, OutputBufferLength, &Information);
+			break;
+
+		// OPEN_STATE doesn't matter for now, since it's global for the whole driver.
+		case BIOCGTIMESTAMPMODES:
+			Status = funcBIOCGTIMESTAMPMODES(Open, pBuf, OutputBufferLength, &Information);
+			break;
+
+#if DBG
+		/* Deprecated codes */
+		case BIOCGEVNAME:
+		case BIOCSETDUMPFILENAME:
+		case BIOCSETDUMPLIMITS:
+		case BIOCISDUMPENDED:
+#endif
+		default:
+			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown IOCTL code");
+			Status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+	}
+
+NPF_IoControl_End:
 	//
 	// complete the IRP
 	//

@@ -1014,13 +1014,12 @@ DRIVER_DISPATCH NPF_Write;
 
 /*!
   \brief Writes a buffer of raw packets to the network.
-  \param Irp Pointer to the IRP containing the user request.
+  \param Open Pointer to the open instance performing this write
   \param UserBuff Pointer to the buffer containing the packets to send.
   \param UserBuffSize Size of the buffer with the packets.
   \param sync If set to TRUE, the packets are transmitted respecting their timestamps.
-  \return The amount of bytes actually sent. If the return value is smaller than the Size parameter, an
-		  error occurred during the send. The error can be caused by an adapter problem or by an
-		  inconsistent/bogus user buffer.
+  \param Written The amount of bytes actually sent.
+  \return NTSTATUS value indicating success or error.
 
   This function is called by the OS in consequence of a BIOCSENDPACKETSNOSYNC or a BIOCSENDPACKETSSYNC IOCTL.
   The buffer received as input parameter contains an arbitrary number of packets, each of which preceded by a
@@ -1030,13 +1029,13 @@ DRIVER_DISPATCH NPF_Write;
   of some microseconds (depending on the precision of the performance counter of the machine).
   If Sync is false, the timestamps are ignored and the packets are sent as fat as possible.
 */
-INT
 _IRQL_requires_(PASSIVE_LEVEL)
-NPF_BufferedWrite(
-	_In_ PIRP Irp,
-	_In_reads_(UserBuffSize) PCHAR UserBuff,
+NTSTATUS NPF_BufferedWrite(
+	_In_ POPEN_INSTANCE Open,
+	_In_reads_bytes_(UserBuffSize) PUCHAR UserBuff,
 	_In_ ULONG UserBuffSize,
-	_In_ BOOLEAN Sync
+	_In_ BOOLEAN Sync,
+	_Out_ PULONG_PTR Written
 	);
 
 /*!
