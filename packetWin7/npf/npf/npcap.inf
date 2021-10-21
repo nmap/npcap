@@ -10,6 +10,7 @@ ClassGUID       = {4D36E974-E325-11CE-BFC1-08002BE10318}
 CatalogFile     = %NPF_DriverName%.cat
 Provider        = %Insecure%
 DriverVer=05/15/2015,14.48.38.905
+PnpLockDown=1
 
 
 [Manufacturer]
