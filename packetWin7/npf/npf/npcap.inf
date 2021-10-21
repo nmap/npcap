@@ -159,7 +159,7 @@ HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter
 AddService=%NPF_Filter_Name_Standard%,,FilterStandard.svc
 
 [FilterWiFi.Services]
-AddService=%NPF_Filter_Name_WiFi%,,FilterWiFi.svc
+AddService=,2
 
 [FilterStandard.svc]
 DisplayName     = %NPF_Desc_Standard%
@@ -169,16 +169,6 @@ ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
 ServiceBinary   = %12%\%NPF_DriverName%.sys
 LoadOrderGroup  = NDIS
 Description     = %NPF_Desc_Standard%
-AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
-
-[FilterWiFi.svc]
-DisplayName     = %NPF_Desc_WiFi%
-ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
-StartType       = 3 ;SERVICE_DEMAND_START
-ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
-ServiceBinary   = %12%\%NPF_DriverName%.sys
-LoadOrderGroup  = NDIS
-Description     = %NPF_Desc_WiFi%
 AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
 
 [FilterStandard.Remove.Services]
