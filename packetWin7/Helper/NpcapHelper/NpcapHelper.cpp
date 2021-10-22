@@ -91,17 +91,22 @@ typedef struct _DeviceCache
 
 DeviceCache *g_DeviceCache = NULL;
 
-DWORD WINAPI InstanceThread(LPVOID); 
-VOID GetAnswerToRequest(LPSTR, LPSTR, LPDWORD); 
+DWORD WINAPI InstanceThread(LPVOID);
+
+VOID GetAnswerToRequest(_In_reads_bytes_(BUFSIZE) LPCSTR pchRequest,
+	_Out_writes_bytes_to_(BUFSIZE, *pchBytes) LPSTR pchReply,
+	LPDWORD pchBytes);
 
 
-void terminateSelf()
+void terminateSelf() noexcept
 {
 	HANDLE hself = GetCurrentProcess();
 	TerminateProcess(hself, 0);
 }
 
-HANDLE getDeviceHandleInternal(char *SymbolicLinkA, DWORD *pdwError)
+_Must_inspect_result_
+_Success_(return != INVALID_HANDLE_VALUE)
+HANDLE getDeviceHandleInternal(_In_ LPCSTR SymbolicLinkA, _Out_ _On_failure_(_Out_range_(1,MAXDWORD)) DWORD *pdwError)
 {
 	HANDLE hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
 	HANDLE hFileDup;
@@ -149,7 +154,7 @@ HANDLE getDeviceHandleInternal(char *SymbolicLinkA, DWORD *pdwError)
 	}
 }
 
-BOOL createPipe(char *pipeName)
+BOOL createPipe(LPCSTR pipeName) noexcept
 {
 	BOOL   fConnected = FALSE; 
 	DWORD  dwThreadId = 0; 
@@ -399,7 +404,8 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 	return 1;
 }
 
-VOID GetAnswerToRequest( LPSTR pchRequest, 
+_Use_decl_annotations_
+VOID GetAnswerToRequest( LPCSTR pchRequest,
 						LPSTR pchReply, 
 						LPDWORD pchBytes )
 						// This routine is a simple function to print the client request to the console
