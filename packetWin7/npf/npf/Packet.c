@@ -1404,6 +1404,7 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 	PKEVENT pKernelEvent = NULL;
 	NTSTATUS Status = STATUS_UNSUCCESSFUL;
 
+	*Info = 0;
 	// We don't currently support overwriting the existing event.
 	if (pOpen->ReadEvent != NULL)
 	{
