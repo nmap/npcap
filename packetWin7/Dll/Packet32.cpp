@@ -2492,35 +2492,21 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
   \param mode The new working mode of the adapter.
   \return If the function succeeds, the return value is nonzero.
 
-  The device driver of WinPcap has 4 working modes:
+  The device driver of Npcap has 2 working modes:
   - Capture mode (mode = PACKET_MODE_CAPT): normal capture mode. The packets transiting on the wire are copied
    to the application when PacketReceivePacket() is called. This is the default working mode of an adapter.
   - Statistical mode (mode = PACKET_MODE_STAT): programmable statistical mode. PacketReceivePacket() returns, at
-   precise intervals, statics values on the network traffic. The interval between the statistic samples is 
+   precise intervals, statistics values on the network traffic. The interval between the statistic samples is 
    by default 1 second but it can be set to any other value (with a 1 ms precision) with the 
    PacketSetReadTimeout() function. The data returned by PacketReceivePacket() when the adapter is in statistical
    mode is shown in the following figure:<p>
    	 \image html stats.gif "data structure returned by statistical mode"
    Two 64-bit counters are provided: the number of packets and the amount of bytes that satisfy a filter 
    previously set with PacketSetBPF(). If no filter has been set, all the packets are counted. The counters are 
-   encapsulated in a bpf_hdr structure, so that they will be parsed correctly by wpcap. Statistical mode has a 
+   encapsulated in a bpf_hdr structure, so that they will be parsed correctly by libpcap. Statistical mode has a 
    very low impact on system performance compared to capture mode. 
-  - Dump mode (mode = PACKET_MODE_DUMP): the packets are dumped to disk by the driver, in libpcap format. This
-   method is much faster than saving the packets after having captured them. No data is returned 
-   by PacketReceivePacket(). If the application sets a filter with PacketSetBPF(), only the packets that satisfy
-   this filter are dumped to disk.
-  - Statitical Dump mode (mode = PACKET_MODE_STAT_DUMP): the packets are dumped to disk by the driver, in libpcap 
-   format, like in dump mode. PacketReceivePacket() returns, at precise intervals, statics values on the 
-   network traffic and on the amount of data saved to file, in a way similar to statistical mode.
-   The data returned by PacketReceivePacket() when the adapter is in statistical dump mode is shown in 
-   the following figure:<p>   
-	 \image html dump.gif "data structure returned by statistical dump mode"
-   Three 64-bit counters are provided: the number of packets accepted, the amount of bytes accepted and the 
-   effective amount of data (including headers) dumped to file. If no filter has been set, all the packets are 
-   dumped to disk. The counters are encapsulated in a bpf_hdr structure, so that they will be parsed correctly 
-   by wpcap.
    Look at the NetMeter example in the 
-   WinPcap developer's pack to see how to use statistics mode.
+   Npcap SDK to see how to use statistics mode.
 */
 BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
 {
@@ -2728,12 +2714,12 @@ BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync)
   The event returned by this function is signaled by the driver if:
   - The adapter pointed by AdapterObject is in capture mode and an amount of data greater or equal 
   than the one set with the PacketSetMinToCopy() function is received from the network.
-  - the adapter pointed by AdapterObject is in capture mode, no data has been received from the network
-   but the the timeout set with the PacketSetReadTimeout() function has elapsed.
-  - the adapter pointed by AdapterObject is in statics mode and the the timeout set with the 
-   PacketSetReadTimeout() function has elapsed. This means that a new statistic sample is available.
+  - The adapter is removed from the system.
+  - The kernel buffer is full.
 
-  In every case, a call to PacketReceivePacket() will return immediately.
+  As long as the event is in a signaled state, a call to PacketReceivePacket() will return immediately.
+  Otherwise, PacketReceivePacket() itself will wait on the event to be signaled, until the timeout set by
+  PacketSetReadTimeout() expires.
   The event can be passed to standard Win32 functions (like WaitForSingleObject or WaitForMultipleObjects) 
   to wait until the driver's buffer contains some data. It is particularly useful in GUI applications that 
   need to wait concurrently on several events.

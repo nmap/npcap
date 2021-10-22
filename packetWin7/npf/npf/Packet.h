@@ -363,8 +363,6 @@ typedef struct _OPEN_INSTANCE
 											///< is used. See \ref NPF for details on the filtering process.
 	UINT					MinToCopy;		///< Minimum amount of data in the circular buffer that unlocks a read. Set with the
 											///< BIOCSMINTOCOPY IOCTL.
-	LARGE_INTEGER			TimeOut;		///< Timeout after which a read is released, also if the amount of data in the buffer is
-											///< less than MinToCopy. Set with the BIOCSRTIMEOUT IOCTL.
 	LARGE_INTEGER			Nbytes;			///< Amount of bytes accepted by the filter when this instance is in statistical mode.
 	LARGE_INTEGER			Npackets;		///< Number of packets accepted by the filter when this instance is in statistical mode.
 	NDIS_SPIN_LOCK			CountersLock;	///< SpinLock that protects the statistical mode counters.
@@ -1046,15 +1044,10 @@ NTSTATUS NPF_BufferedWrite(
 
   This function is called by the OS in consequence of user ReadFile() call. It moves the data present in the
   kernel buffer to the user buffer associated with Irp.
-  First of all, NPF_Read checks the amount of data in kernel buffer associated with current NPF instance.
-  - If the instance is in capture mode and the buffer contains more than OPEN_INSTANCE::MinToCopy bytes,
-  NPF_Read moves the data in the user buffer and returns immediately. In this way, the read performed by the
-  user is not blocking.
-  - If the buffer contains less than MinToCopy bytes, the application's request isn't
-  satisfied immediately, but it's blocked until at least MinToCopy bytes arrive from the net
-  or the timeout on this read expires. The timeout is kept in the OPEN_INSTANCE::TimeOut field.
-  - If the instance is in statistical mode, the application's request is blocked until the
-  timeout kept in OPEN_INSTANCE::TimeOut expires.
+  Any available packets are transferred regardless of MinToCopy. Statistics are
+  delivered regardless of PacketSetReadTimeout. These values are handled in
+  user-mode by Packet.dll. The Read call will return as quickly as possible
+  without waiting on the ReadEvent.
 */
 _Dispatch_type_(IRP_MJ_READ)
 _IRQL_requires_max_(PASSIVE_LEVEL)

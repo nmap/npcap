@@ -212,59 +212,45 @@ NPF_Read(
 		goto NPF_Read_End;
 	}
 
-	//See if the buffer is full enough to be copied
-	if (Open->Size - Open->Free <= (LONG) Open->MinToCopy
-		)
+	// Reset the event; all paths forward are STATUS_SUCCESS
+	if (Open->ReadEvent != NULL)
+		KeClearEvent(Open->ReadEvent);
+
+	// Stats mode returns and resets stats every time it is called.
+	// Packet.dll uses ReadEvent to time the read calls so they happen at
+	// regular intervals. bModeCapt prevents TapExForEachOpen from setting
+	// the event, so it's strictly a timed wait.
+	if (!Open->bModeCapt)
 	{
-		if (Open->ReadEvent != NULL)
-		{
-			//wait until some packets arrive or the timeout expires
-			if (Open->OpenStatus == OpenRunning && Open->TimeOut.QuadPart != (LONGLONG)IMMEDIATE)
-#pragma warning (disable: 28118)
-				KeWaitForSingleObject(Open->ReadEvent,
-				UserRequest,
-				KernelMode,
-				TRUE,
-				(Open->TimeOut.QuadPart == (LONGLONG)0) ? NULL : &(Open->TimeOut));
+		//this capture instance is in statistics mode
+		LONGLONG *Stats = (LONGLONG *)(packp + sizeof(struct bpf_hdr));
+		copied = plen; // Set above during size validation
+		plen -= sizeof(struct bpf_hdr);
 
-			KeClearEvent(Open->ReadEvent);
-		}
+		//fill the bpf header for this packet
+		header = (struct bpf_hdr *)packp;
+		GET_TIME(&header->bh_tstamp, &Open->start, Open->TimestampMode);
+		header->bh_caplen = plen;
+		header->bh_datalen = plen;
+		header->bh_hdrlen = sizeof(struct bpf_hdr);
 
-		if (!Open->bModeCapt)
-		{
-			//this capture instance is in statistics mode
-			LONGLONG *Stats = (LONGLONG *)(packp + sizeof(struct bpf_hdr));
-			copied = plen; // Set above during size validation
-			plen -= sizeof(struct bpf_hdr);
+		Stats[0] = Open->Npackets.QuadPart;
+		Stats[1] = Open->Nbytes.QuadPart;
 
-			//fill the bpf header for this packet
-			header = (struct bpf_hdr *)packp;
-			GET_TIME(&header->bh_tstamp, &Open->start, Open->TimestampMode);
-			header->bh_caplen = plen;
-			header->bh_datalen = plen;
-			header->bh_hdrlen = sizeof(struct bpf_hdr);
+		//reset the countetrs
+		FILTER_ACQUIRE_LOCK(&Open->CountersLock, NPF_IRQL_UNKNOWN);
+		Open->Npackets.QuadPart = 0;
+		Open->Nbytes.QuadPart = 0;
+		FILTER_RELEASE_LOCK(&Open->CountersLock, NPF_IRQL_UNKNOWN);
 
-			Stats[0] = Open->Npackets.QuadPart;
-			Stats[1] = Open->Nbytes.QuadPart;
+		NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
 
-			//reset the countetrs
-			FILTER_ACQUIRE_LOCK(&Open->CountersLock, NPF_IRQL_UNKNOWN);
-			Open->Npackets.QuadPart = 0;
-			Open->Nbytes.QuadPart = 0;
-			FILTER_RELEASE_LOCK(&Open->CountersLock, NPF_IRQL_UNKNOWN);
-
-			NPF_StopUsingOpenInstance(Open, OpenDetached, NPF_IRQL_UNKNOWN);
-
-			Status = STATUS_SUCCESS;
-			goto NPF_Read_End;
-		}
+		Status = STATUS_SUCCESS;
+		goto NPF_Read_End;
 	}
 
 	//------------------------------------------------------------------------------
 	copied = 0;
-
-	if (Open->ReadEvent != NULL)
-		KeClearEvent(Open->ReadEvent);
 
 	// Lock this so we don't increment Free during a buffer reset
 	NdisAcquireRWLockRead(Open->BufferLock, &lockState, 0);

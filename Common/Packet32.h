@@ -302,12 +302,11 @@ typedef struct _ADAPTER
 	///< It can be passed to standard Win32 functions (like WaitForSingleObject
 	///< or WaitForMultipleObjects) to wait until the driver's buffer contains some 
 	///< data. It is particularly useful in GUI applications that need to wait 
-	///< concurrently on several events. In Windows NT/2000 the PacketSetMinToCopy()
+	///< concurrently on several events. The PacketSetMinToCopy()
 	///< function can be used to define the minimum amount of data in the kernel buffer
 	///< that will cause the event to be signalled. 
 
-	UINT ReadTimeOut;			///< \internal The amount of time after which a read on the driver will be released and 
-	///< ReadEvent will be signaled, also if no packets were captured
+	UINT ReadTimeOut;  ///< \internal The amount of time PacketReceivePacket will wait for the ReadEvent to be signalled before issuing a ReadFile.
 	CHAR Name[ADAPTER_NAME_LENGTH];
 	PWAN_ADAPTER pWanAdapter;
 	UINT Flags;					///< Adapter's flags. Tell if this adapter must be treated in a different way.

@@ -1330,9 +1330,6 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 		pOpen->Nbytes.QuadPart = 0;
 		pOpen->Npackets.QuadPart = 0;
 		NdisReleaseSpinLock(&pOpen->CountersLock);
-
-		if (pOpen->TimeOut.QuadPart == 0)
-			pOpen->TimeOut.QuadPart = -10000000;
 	}
 	else // MODE_CAPT
 	{
@@ -1530,44 +1527,6 @@ static NTSTATUS funcBIOCSETBUFFERSIZE(_In_ POPEN_INSTANCE pOpen,
 	NdisReleaseRWLock(pOpen->BufferLock, &lockState);
 
 	NPF_StopUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN);
-	return STATUS_SUCCESS;
-}
-
-// TODO: Open->TimeOut hasn't been settable via Packet.dll since the days of
-// Win9x. Reevaluate its use and strip out this code.
-static NTSTATUS funcBIOCSRTIMEOUT(_In_ POPEN_INSTANCE pOpen,
-	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
-	       _In_ ULONG ulBufLen,
-	       _Out_ PULONG_PTR Info)
-{
-	static const ULONG uNeeded = sizeof(ULONG);
-	ULONG timeout = 0;
-
-	*Info = uNeeded;
-	if (ulBufLen < uNeeded)
-	{
-		return STATUS_BUFFER_TOO_SMALL;
-	}
-
-	timeout = *(PULONG) pBuf;
-
-	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
-	{
-		*Info = 0;
-		return STATUS_CANCELLED;
-	}
-
-	if (timeout == (ULONG) - 1)
-		pOpen->TimeOut.QuadPart = (LONGLONG)IMMEDIATE;
-	else
-	{
-		pOpen->TimeOut.QuadPart = (LONGLONG)timeout;
-		pOpen->TimeOut.QuadPart *= 10000;
-		pOpen->TimeOut.QuadPart = -pOpen->TimeOut.QuadPart;
-	}
-
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Read timeout set to %I64d", pOpen->TimeOut.QuadPart);
-	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
 	return STATUS_SUCCESS;
 }
 
@@ -2189,9 +2148,6 @@ NPF_IoControl(
 #endif
 			Status = funcBIOCSETEVENTHANDLE(Open, pBuf, InputBufferLength, bFlag, Irp->RequestorMode, &Information);
 			break;
-		case BIOCSRTIMEOUT:
-			Status = funcBIOCSRTIMEOUT(Open, pBuf, InputBufferLength, &Information);
-			break;
 		case BIOCSTIMESTAMPMODE:
 			Status = funcBIOCSTIMESTAMPMODE(Open, pBuf, InputBufferLength, &Information);
 			break;
@@ -2210,6 +2166,7 @@ NPF_IoControl(
 		case BIOCSETDUMPFILENAME:
 		case BIOCSETDUMPLIMITS:
 		case BIOCISDUMPENDED:
+		case BIOCSRTIMEOUT:
 #endif
 		default:
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown IOCTL code");

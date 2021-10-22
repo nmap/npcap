@@ -1990,7 +1990,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->Nwrites = 1;
 	Open->Multiple_Write_Counter = 0;
 	Open->MinToCopy = 0;
-	Open->TimeOut.QuadPart = (LONGLONG)1;
 	Open->Size = 0;
 	Open->SkipSentPackets = FALSE;
 	Open->ReadEvent = NULL;
