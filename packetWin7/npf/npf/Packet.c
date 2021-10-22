@@ -1403,16 +1403,9 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 	       _In_ KPROCESSOR_MODE kMode,
 	       _Out_ PULONG_PTR Info)
 {
-	ULONG uNeeded = is32bit ? sizeof(VOID * POINTER_32) : sizeof(VOID * POINTER_64);
 	HANDLE hUserEvent = INVALID_HANDLE_VALUE;
 	PKEVENT pKernelEvent = NULL;
 	NTSTATUS Status = STATUS_UNSUCCESSFUL;
-
-	*Info = uNeeded;
-	if (ulBufLen < uNeeded)
-	{
-		return STATUS_BUFFER_TOO_SMALL;
-	}
 
 	// We don't currently support overwriting the existing event.
 	if (pOpen->ReadEvent != NULL)
@@ -1420,13 +1413,35 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 		return STATUS_OBJECT_NAME_EXISTS;
 	}
 
-	if (is32bit)
+#ifndef _WIN64
+	// WIN32
+	UNREFERENCED_PARAMETER(is32bit);
+#else
+	// WIN64
+	if (!is32bit)
 	{
-		hUserEvent = (HANDLE) (*(VOID * POINTER_32 *) pBuf);
+	       	// 64-bit process
+		*Info = sizeof(VOID * POINTER_64);
+		if (ulBufLen < *Info)
+		{
+			return STATUS_BUFFER_TOO_SMALL;
+		}
+		// HANDLE is 64-bit address
+		hUserEvent = *(PHANDLE) pBuf;
 	}
 	else
+#endif
 	{
-		hUserEvent = *(PHANDLE) pBuf;
+		// 32-bit process
+		*Info = sizeof(VOID * POINTER_32);
+		if (ulBufLen < *Info)
+		{
+			return STATUS_BUFFER_TOO_SMALL;
+		}
+		// If 32-bit driver, HANDLE is 32-bit address.
+		// If 64-bit driver, first dereference as 32-bit address,
+		// THEN cast to 64-bit HANDLE to sign-extend.
+		hUserEvent = (HANDLE) (*(VOID * POINTER_32 *) pBuf);
 	}
 
 	Status = ObReferenceObjectByHandle(hUserEvent,
@@ -2090,7 +2105,8 @@ NPF_IoControl(
 	ULONG OutputBufferLength = IrpSp->Parameters.DeviceIoControl.OutputBufferLength;
 	ULONG FunctionCode = IrpSp->Parameters.DeviceIoControl.IoControlCode;
 
-	BOOLEAN SyncWrite = FALSE;
+	// general flag for a couple of ioctls
+	BOOLEAN bFlag = FALSE;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
@@ -2126,9 +2142,9 @@ NPF_IoControl(
 		// OPEN_STATE must be OpenRunning:
 #ifndef NPCAP_READ_ONLY
 		case BIOCSENDPACKETSSYNC:
-			SyncWrite = TRUE;
+			bFlag = TRUE;
 		case BIOCSENDPACKETSNOSYNC:
-			Status = NPF_BufferedWrite(Open, pBuf, InputBufferLength, SyncWrite, &Information);
+			Status = NPF_BufferedWrite(Open, pBuf, InputBufferLength, bFlag, &Information);
 			break;
 		case BIOCSWRITEREP:
 			Status = funcBIOCSULONG(Open, pBuf, InputBufferLength, &Information, OpenDetached, &Open->Nwrites);
@@ -2148,8 +2164,9 @@ NPF_IoControl(
 
 		// OPEN_STATE must be OpenAttached
 		case BIOCSETOID:
-			break;
+			bFlag = TRUE;
 		case BIOCQUERYOID:
+			funcBIOC_OID(Open, pBuf, InputBufferLength, OutputBufferLength, bFlag, &Information);
 			break;
 
 		// OPEN_STATE can be OpenDetached
@@ -2167,13 +2184,10 @@ NPF_IoControl(
 			Status = funcBIOCISETLOBBEH(Open, pBuf, InputBufferLength, &Information);
 			break;
 		case BIOCSETEVENTHANDLE:
-			Status = funcBIOCSETEVENTHANDLE(Open, pBuf, InputBufferLength,
 #ifdef _WIN64
-					IoIs32bitProcess(Irp),
-#else
-					FALSE,
+			bFlag = IoIs32bitProcess(Irp);
 #endif
-					Irp->RequestorMode, &Information);
+			Status = funcBIOCSETEVENTHANDLE(Open, pBuf, InputBufferLength, bFlag, Irp->RequestorMode, &Information);
 			break;
 		case BIOCSRTIMEOUT:
 			Status = funcBIOCSRTIMEOUT(Open, pBuf, InputBufferLength, &Information);
