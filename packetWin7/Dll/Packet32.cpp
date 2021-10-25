@@ -294,7 +294,7 @@ BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 	nResult = GetFileAttributesA(lpFilename);
 	if (nResult == INVALID_FILE_ATTRIBUTES || (nResult & FILE_ATTRIBUTE_DIRECTORY))
 	{
-		TRACE_PRINT1("%s does not exist or is a directory.", lpFileName);
+		TRACE_PRINT1("%s does not exist or is a directory.", lpFilename);
 		TRACE_EXIT();
 		return FALSE;
 	}
