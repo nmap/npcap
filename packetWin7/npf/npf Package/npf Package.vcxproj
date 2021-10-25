@@ -453,7 +453,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Debug|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -462,7 +462,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -471,7 +471,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Debug|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -480,7 +480,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Debug|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -489,7 +489,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Debug|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -498,7 +498,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -507,7 +507,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -516,7 +516,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -525,7 +525,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -534,7 +534,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM RO Release|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -543,7 +543,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -597,7 +597,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -606,7 +606,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release SDV|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -615,7 +615,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -624,7 +624,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -633,7 +633,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -642,7 +642,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -651,7 +651,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -660,7 +660,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM RO Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -669,7 +669,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -678,7 +678,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -687,7 +687,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -696,7 +696,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM RO Release|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -705,7 +705,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>8_$(DDKPlatform),6_3_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win10 Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -804,7 +804,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM Release|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -813,7 +813,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -822,7 +822,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 OEM RO Release|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -831,7 +831,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release SDV|x64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -840,7 +840,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release SDV|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
@@ -849,7 +849,7 @@
     <TimeStampServer />
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),Server2008R2_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win7 Release|Win32'">
     <Inf2Cat>
