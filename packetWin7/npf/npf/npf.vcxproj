@@ -133,6 +133,18 @@
       <Configuration>Win7 Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8 Debug|ARM64">
+      <Configuration>Win8 Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8 Debug|Win32">
+      <Configuration>Win8 Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8 Debug|x64">
+      <Configuration>Win8 Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Win8 OEM Release|ARM64">
       <Configuration>Win8 OEM Release</Configuration>
       <Platform>ARM64</Platform>
@@ -206,6 +218,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'" Label="Configuration">
     <TargetVersion>Windows8</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'" Label="Configuration">
+    <TargetVersion>Windows8</TargetVersion>
+    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|Win32'" Label="Configuration">
@@ -294,6 +311,11 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'" Label="Configuration">
+    <TargetVersion>Windows8</TargetVersion>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|x64'" Label="Configuration">
     <TargetVersion>Windows8</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -307,6 +329,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|ARM64'" Label="Configuration">
     <TargetVersion>Windows8</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|ARM64'" Label="Configuration">
+    <TargetVersion>Windows8</TargetVersion>
+    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|ARM64'" Label="Configuration">
@@ -447,6 +474,15 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <EnableInf2cat>false</EnableInf2cat>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
     <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
@@ -608,6 +644,15 @@
     <EnableInf2cat>false</EnableInf2cat>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <EnableInf2cat>false</EnableInf2cat>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|x64'">
     <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
@@ -627,6 +672,15 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|ARM64'">
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <EnableInf2cat>false</EnableInf2cat>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|ARM64'">
     <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <TimeStampServer />
@@ -893,6 +947,17 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>DBG=1;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -1039,6 +1104,17 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>DBG=1;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;NPCAP_OEM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -1064,6 +1140,17 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|ARM64'">
     <ClCompile>
       <PreprocessorDefinitions>NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|ARM64'">
+    <ClCompile>
+      <PreprocessorDefinitions>DBG=1;NDIS6X;WIN_NT_DRIVER;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -1305,6 +1392,7 @@
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 OEM Debug'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win7 Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win8 Release'" />
+    <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win8 Debug'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win8 OEM Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win8 OEM RO Release'" />
     <Inf Include="npcap.inf" Condition="'$(Configuration)'=='Win10 Release'" />
@@ -1319,6 +1407,7 @@
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 OEM Debug'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win7 Release'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win8 Release'" />
+    <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win8 Debug'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win8 OEM Release'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win8 OEM RO Release'" />
     <Inf Include="npcap_wfp.inf" Condition="'$(Configuration)'=='Win10 Release'" />
@@ -1335,6 +1424,7 @@
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 OEM Debug'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 Release'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win8 Release'" />
+    <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win8 Debug'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win8 OEM Release'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win8 OEM RO Release'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win10 Release'" />

@@ -133,6 +133,18 @@
       <Configuration>Win7 Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8 Debug|ARM64">
+      <Configuration>Win8 Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8 Debug|Win32">
+      <Configuration>Win8 Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Win8 Debug|x64">
+      <Configuration>Win8 Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Win8 OEM Release|ARM64">
       <Configuration>Win8 OEM Release</Configuration>
       <Platform>ARM64</Platform>
@@ -207,6 +219,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|Win32'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'" Label="Configuration">
+    <TargetVersion>Windows7</TargetVersion>
+    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|Win32'" Label="Configuration">
@@ -294,6 +311,11 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'" Label="Configuration">
+    <TargetVersion>Windows7</TargetVersion>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|x64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -307,6 +329,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|ARM64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|ARM64'" Label="Configuration">
+    <TargetVersion>Windows7</TargetVersion>
+    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|ARM64'" Label="Configuration">
@@ -491,6 +518,15 @@
     <IntDir>$(Configuration)\</IntDir>
     <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
+    <EnableInf2cat>true</EnableInf2cat>
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|Win32'">
     <EnableInf2cat>true</EnableInf2cat>
     <TargetName>npcap</TargetName>
@@ -608,6 +644,15 @@
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
+    <EnableInf2cat>true</EnableInf2cat>
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|x64'">
     <EnableInf2cat>true</EnableInf2cat>
     <TargetName>npcap</TargetName>
@@ -627,6 +672,15 @@
     <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|ARM64'">
+    <EnableInf2cat>true</EnableInf2cat>
+    <TargetName>npcap</TargetName>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <TimeStampServer />
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <Inf2CatWindowsVersionList>7_$(DDKPlatform),8_$(DDKPlatform),6_3_$(DDKPlatform),Server2008R2_$(DDKPlatform),Server8_$(DDKPlatform),Server6_3_$(DDKPlatform)</Inf2CatWindowsVersionList>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|ARM64'">
     <EnableInf2cat>true</EnableInf2cat>
     <TargetName>npcap</TargetName>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
@@ -807,6 +861,11 @@
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|Win32'">
+    <Inf2Cat>
+      <UseLocalTime>true</UseLocalTime>
+    </Inf2Cat>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|Win32'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
@@ -872,6 +931,11 @@
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|x64'">
+    <Inf2Cat>
+      <UseLocalTime>true</UseLocalTime>
+    </Inf2Cat>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 OEM Release|x64'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
@@ -883,6 +947,11 @@
     </Inf2Cat>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Release|ARM64'">
+    <Inf2Cat>
+      <UseLocalTime>true</UseLocalTime>
+    </Inf2Cat>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Win8 Debug|ARM64'">
     <Inf2Cat>
       <UseLocalTime>true</UseLocalTime>
     </Inf2Cat>
