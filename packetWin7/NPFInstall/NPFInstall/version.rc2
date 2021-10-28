@@ -35,7 +35,6 @@ BEGIN
 			VALUE "OriginalFilename",  "NPFInstall.exe"
 			VALUE "ProductName",       WINPCAP_PRODUCT_NAME
 			VALUE "ProductVersion",    WINPCAP_VER_STRING
-            VALUE "Build Description", WINPCAP_BUILD_DESCRIPTION
         END
     END
     BLOCK "VarFileInfo"
