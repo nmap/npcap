@@ -107,9 +107,13 @@
 #define /*
  !define /**/ NPCAP_SDK_VERSION "1.11"
 
-#define WINPCAP_WPCAP_STRING_VERSION WINPCAP_VER_STRING
-
 #define WINPCAP_COMPANY_NAME 			"Insecure.Com LLC."
+
+#ifdef RC_INVOKED
+/* NPFInstall.exe uses the VersionInfo.ProductName to identify Npcap DLLs, so
+ * we can't put OEM name in there unless we change that. */
+#define WINPCAP_PRODUCT_NAME "Npcap"
+#else
 
 #ifdef /*
  !ifdef /**/ NPCAP_OEM
@@ -129,6 +133,8 @@
  !define /**/ WINPCAP_PRODUCT_NAME 			"Npcap"
 #endif /*
  !endif /**/
+
+#endif /* RC_INVOKED */
 
 #define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2021, Insecure.Com LLC.  All rights reserved."
 #define /*
