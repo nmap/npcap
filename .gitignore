@@ -20,12 +20,6 @@ Debug/
 Release/
 OEM Debug/
 OEM Release/
-Win7 Debug/
-Win7 Release/
-Win7 Release(*)/
-OEM Win7 Debug/
-OEM Win7 Release/
-OEM Win7 Release(*)/
 Win7 Release SDV/
 sdv/
 build.err
@@ -42,13 +36,12 @@ npcap.res
 /dox/prj/
 *.VC.opendb
 .vs/
-Win10 OEM RO Release/
-Win10 OEM Release/
-Win10 Release/
-Win7 OEM RO Release(WinPcap Mode)/
-Win7 OEM RO Release/
-Win7 OEM Release(WinPcap Mode)/
-Win7 OEM Release/
+Win* OEM RO Release/
+Win* OEM Release/
+Win* Release/
+Win* Debug/
 x64/
+ARM64/
 /wpcap/build-win32/
 /wpcap/build-x64/
+/wpcap/build-ARM64/
