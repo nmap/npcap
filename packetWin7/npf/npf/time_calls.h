@@ -135,8 +135,6 @@ struct timeval
 
 #ifdef WIN_NT_DRIVER
 
-#pragma optimize ("g",off)  //Due to some weird behaviour of the optimizer of DDK build 2600 
-
 /* KeQueryPerformanceCounter TimeStamps */
 __inline void TIME_SYNCHRONIZE(
 		_Out_ struct timeval* start)
@@ -211,9 +209,6 @@ __inline void GetTimeQST_precise(
 	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
 }
-
-
-#pragma optimize ("g",on)  //Due to some weird behaviour of the optimizer of DDK build 2600 
 
 
 __inline void GET_TIME(
