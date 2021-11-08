@@ -74,7 +74,6 @@
 
 #include "Loopback.h"
 #include "packet.h"
-#include "winerror.h"
 #include "..\..\..\Common\WpcapNames.h"
 #include "..\..\..\version.h"
 
@@ -866,7 +865,7 @@ Callouts and filters will be removed during DriverUnload.
 -- */
 {
 	TRACE_ENTER();
-	DWORD status = ERROR_SUCCESS;
+	DWORD status = STATUS_SUCCESS;
 	FWPM_SUBLAYER NPFSubLayer;
 
 	BOOLEAN engineOpened = FALSE;

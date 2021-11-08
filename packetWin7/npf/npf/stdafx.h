@@ -57,9 +57,6 @@
  * not to any changes made by the Nmap Project or to this entire file.     *
  *                                                                         *
  ***************************************************************************/
-#pragma warning(disable: 4005 4201 4324)
-
-#define WIN_NT_DRIVER
 
 #define NPF_REQUEST_ID '5678'
 
