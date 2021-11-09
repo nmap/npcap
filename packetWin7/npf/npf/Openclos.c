@@ -2695,6 +2695,8 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 		if (Status != NDIS_STATUS_PENDING)
 		{
 			NPF_OidRequestComplete(pFiltMod, ClonedRequest, Status);
+			// We return PENDING here because NPF_OidRequestComplete called
+			// NdisFOidRequestComplete, which is only allowed if this function returns PENDING.
 			Status = NDIS_STATUS_PENDING;
 		}
 
