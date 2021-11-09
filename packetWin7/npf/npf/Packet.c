@@ -1773,7 +1773,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		goto OID_REQUEST_DONE;
 	}
 	// This also zeroes the NDIS_OID_REQUEST structure.
-	RtlZeroMemory(pRequest, sizeof(PINTERNAL_REQUEST));
+	RtlZeroMemory(pRequest, sizeof(INTERNAL_REQUEST));
 
 	pRequest->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
 	pRequest->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
