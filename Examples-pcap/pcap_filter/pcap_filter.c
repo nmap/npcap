@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 			errbuf								// error buffer
 			)) == NULL)
 		{
-			fprintf(stderr,"\nUnable to open the adapter.\n");
+			fprintf(stderr,"\nUnable to open the adapter: %s\n", errbuf);
 			return -2;
 		}
 	}
@@ -145,18 +145,18 @@ int main(int argc, char **argv)
 		NetMask=0xffffff;
 
 		//compile the filter
-		if(pcap_compile(fp, &fcode, filter, 1, NetMask) < 0)
+		if((res = pcap_compile(fp, &fcode, filter, 1, NetMask)) < 0)
 		{
-			fprintf(stderr,"\nError compiling filter: wrong syntax.\n");
+			fprintf(stderr,"\nError compiling filter: %s\n", pcap_statustostr(res));
 
 			pcap_close(fp);
 			return -3;
 		}
 
 		//set the filter
-		if(pcap_setfilter(fp, &fcode)<0)
+		if((res = pcap_setfilter(fp, &fcode))<0)
 		{
-			fprintf(stderr,"\nError setting the filter\n");
+			fprintf(stderr,"\nError setting the filter: %s\n", pcap_statustostr(res));
 
 			pcap_close(fp);
 			return -4;
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 
 		if (dumpfile == NULL)
 		{
-			fprintf(stderr,"\nError opening output file\n");
+			fprintf(stderr,"\nError opening output file: %s\n", pcap_geterr(fp));
 
 			pcap_close(fp);
 			return -5;
