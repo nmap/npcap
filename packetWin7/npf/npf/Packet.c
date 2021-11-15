@@ -1168,6 +1168,7 @@ NTSTATUS NPF_ValidateIoIrp(
 	return Status;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCGSTATS(_In_ POPEN_INSTANCE pOpen,
 	       	_Out_writes_bytes_(ulBufLen) PVOID pBuf,
 	       	_In_ ULONG ulBufLen,
@@ -1196,6 +1197,7 @@ static NTSTATUS funcBIOCGSTATS(_In_ POPEN_INSTANCE pOpen,
 	return STATUS_SUCCESS;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	       	_In_reads_bytes_(ulBufLen) LPCVOID pBuf,
 	       	_In_ ULONG ulBufLen,
@@ -1260,6 +1262,7 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	return STATUS_SUCCESS;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCSULONG(_In_ POPEN_INSTANCE pOpen,
 	    _In_reads_bytes_(ulBufLen) PULONG pBuf,
 	    _In_ ULONG ulBufLen,
@@ -1289,6 +1292,7 @@ static NTSTATUS funcBIOCSULONG(_In_ POPEN_INSTANCE pOpen,
 	return STATUS_SUCCESS;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
 	       _In_ ULONG ulBufLen,
@@ -1341,6 +1345,7 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 }
 
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCISETLOBBEH(_In_ POPEN_INSTANCE pOpen,
 	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
 	       _In_ ULONG ulBufLen,
@@ -1393,6 +1398,7 @@ static NTSTATUS funcBIOCISETLOBBEH(_In_ POPEN_INSTANCE pOpen,
 	return STATUS_SUCCESS;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 	       _In_reads_bytes_(ulBufLen) PVOID pBuf,
 	       _In_ ULONG ulBufLen,
@@ -1476,6 +1482,7 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 	return STATUS_SUCCESS;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCSETBUFFERSIZE(_In_ POPEN_INSTANCE pOpen,
 	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
 	       _In_ ULONG ulBufLen,
@@ -1530,6 +1537,7 @@ static NTSTATUS funcBIOCSETBUFFERSIZE(_In_ POPEN_INSTANCE pOpen,
 	return STATUS_SUCCESS;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	       _Inout_updates_bytes_(ulBufLenIn) PPACKET_OID_DATA OidData,
 	       _In_ ULONG ulBufLenIn,
@@ -1903,6 +1911,7 @@ OID_REQUEST_DONE:
 	return Status;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
 	       _In_reads_bytes_(ulBufLen) PULONG pBuf,
 	       _In_ ULONG ulBufLen,
@@ -1941,6 +1950,7 @@ static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
 	return STATUS_SUCCESS;
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCGTIMESTAMPMODES(_In_ POPEN_INSTANCE pOpen,
 	       _Out_writes_bytes_(ulBufLen) PVOID pBuf,
 	       _In_ ULONG ulBufLen,
@@ -1997,6 +2007,7 @@ static NTSTATUS funcBIOCGTIMESTAMPMODES(_In_ POPEN_INSTANCE pOpen,
 	}
 }
 
+_Must_inspect_result_
 static NTSTATUS funcBIOCGETPIDS(_In_ POPEN_INSTANCE pOpen,
 	       _Out_writes_bytes_(ulBufLen) PULONG pBuf,
 	       _In_ ULONG ulBufLen,
@@ -2125,7 +2136,7 @@ NPF_IoControl(
 		case BIOCSETOID:
 			bFlag = TRUE;
 		case BIOCQUERYOID:
-			funcBIOC_OID(Open, pBuf, InputBufferLength, OutputBufferLength, bFlag, &Information);
+			Status = funcBIOC_OID(Open, pBuf, InputBufferLength, OutputBufferLength, bFlag, &Information);
 			break;
 
 		// OPEN_STATE can be OpenDetached
