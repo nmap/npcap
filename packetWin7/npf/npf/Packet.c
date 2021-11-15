@@ -1455,6 +1455,7 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
 	{
+		ObDereferenceObject(pKernelEvent);
 		*Info = 0;
 		return STATUS_CANCELLED;
 	}
