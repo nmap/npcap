@@ -1411,19 +1411,24 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 		return STATUS_OBJECT_NAME_EXISTS;
 	}
 
+	*Info = is32bit ? sizeof(VOID * POINTER_32) : sizeof(VOID * POINTER_64);
+	if (ulBufLen < *Info)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+	else if (ulBufLen > *Info)
+	{
+		return STATUS_INVALID_PARAMETER;
+	}
+
 #ifndef _WIN64
 	// WIN32
-	UNREFERENCED_PARAMETER(is32bit);
+	NT_ASSERT(is32bit);
 #else
 	// WIN64
 	if (!is32bit)
 	{
 	       	// 64-bit process
-		*Info = sizeof(VOID * POINTER_64);
-		if (ulBufLen < *Info)
-		{
-			return STATUS_BUFFER_TOO_SMALL;
-		}
 		// HANDLE is 64-bit address
 		hUserEvent = *(PHANDLE) pBuf;
 	}
@@ -1431,15 +1436,8 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 #endif
 	{
 		// 32-bit process
-		*Info = sizeof(VOID * POINTER_32);
-		if (ulBufLen < *Info)
-		{
-			return STATUS_BUFFER_TOO_SMALL;
-		}
-		// If 32-bit driver, HANDLE is 32-bit address.
-		// If 64-bit driver, first dereference as 32-bit address,
-		// THEN cast to 64-bit HANDLE to sign-extend.
-		hUserEvent = (HANDLE) (*(VOID * POINTER_32 *) pBuf);
+		// Convert to native handle if necessary
+		hUserEvent = Handle32ToHandle(*(VOID * POINTER_32 *) pBuf);
 	}
 
 	Status = ObReferenceObjectByHandle(hUserEvent,
@@ -2146,6 +2144,8 @@ NPF_IoControl(
 		case BIOCSETEVENTHANDLE:
 #ifdef _WIN64
 			bFlag = IoIs32bitProcess(Irp);
+#else
+			bFlag = TRUE;
 #endif
 			Status = funcBIOCSETEVENTHANDLE(Open, pBuf, InputBufferLength, bFlag, Irp->RequestorMode, &Information);
 			break;
