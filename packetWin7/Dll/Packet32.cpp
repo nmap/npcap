@@ -228,6 +228,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
   TCHAR fullFileName[MAX_PATH+1];
   UINT res;
   HMODULE hModule = NULL;
+  DWORD err = ERROR_SUCCESS;
   do
   {
 	res = GetSystemDirectory(path, MAX_PATH);
@@ -237,6 +238,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 		//
 		// some bad failure occurred;
 		//
+		err = GetLastError();
 		break;
 	}
 	
@@ -245,7 +247,7 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 		//
 		// the buffer was not big enough
 		//
-		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		err = (ERROR_INSUFFICIENT_BUFFER);
 		break;
 	}
 
@@ -256,19 +258,21 @@ HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 		memcpy(&fullFileName[res + 1], lpFileName, (_tcslen(lpFileName) + 1) * sizeof(TCHAR));
 
 		hModule = LoadLibrary(fullFileName);
+		err = GetLastError();
 	}
 	else
 	{
-		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		err = (ERROR_INSUFFICIENT_BUFFER);
 	}
 
   }while(FALSE);
 
   TRACE_EXIT();
+  SetLastError(err);
   return hModule;
 }
 
-BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
+static BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 {
 	const int pid = GetCurrentProcessId();
 	char params[BUFSIZE];
@@ -284,18 +288,29 @@ BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 	nResult = GetModuleFileNameA((HMODULE) moduleName, lpFilename, BUFSIZE);
 	if (nResult == 0)
 	{
-		TRACE_PRINT1("GetModuleFileNameA failed. GLE=%d\n", GetLastError());
+		nResult = GetLastError();
+		TRACE_PRINT1("GetModuleFileNameA failed. GLE=%d\n", nResult);
 		TRACE_EXIT();
+		SetLastError(nResult);
 		return FALSE;
 	}
 	_splitpath_s(lpFilename, szDrive, BUFSIZE, szDir, BUFSIZE, NULL, 0, NULL, 0);
 	_makepath_s(lpFilename, BUFSIZE, szDrive, szDir, "NpcapHelper", ".exe");
 
 	nResult = GetFileAttributesA(lpFilename);
-	if (nResult == INVALID_FILE_ATTRIBUTES || (nResult & FILE_ATTRIBUTE_DIRECTORY))
+	if (nResult == INVALID_FILE_ATTRIBUTES)
 	{
-		TRACE_PRINT1("%s does not exist or is a directory.", lpFilename);
+		nResult = GetLastError();
+		TRACE_PRINT2("GetFileAttributesA(%s) failed: %d", lpFilename, nResult);
 		TRACE_EXIT();
+		SetLastError(nResult);
+		return FALSE;
+	}
+	if (nResult & FILE_ATTRIBUTE_DIRECTORY)
+	{
+		TRACE_PRINT1("%s is a directory.", lpFilename);
+		TRACE_EXIT();
+		SetLastError(ERROR_DIRECTORY_NOT_SUPPORTED);
 		return FALSE;
 	}
 
@@ -320,6 +335,7 @@ BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 			// Do nothing ...
 		}
 		TRACE_EXIT();
+		SetLastError(dwError);
 		return FALSE;
 	}
 	else
@@ -331,11 +347,12 @@ BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 	}
 }
 
-HANDLE NpcapConnect(const char *pipeName)
+static HANDLE NpcapConnect(const char *pipeName)
 {
 	HANDLE hPipe = INVALID_HANDLE_VALUE;
 	int tryTime = 0;
 	char lpszPipename[BUFSIZE];
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -358,32 +375,37 @@ HANDLE NpcapConnect(const char *pipeName)
 
 		if (hPipe != INVALID_HANDLE_VALUE)
 		{
+			err = ERROR_SUCCESS;
 			break;
 		}
 		else
 		{
+			err = GetLastError();
 			tryTime++;
 			Sleep(SLEEP_TIME);
 		}
 	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return hPipe;
 }
 
-HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
+static HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 {
 	LPCSTR lpvMessage = sMsg;
 	char  chBuf[BUFSIZE] = { 0 };
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
 	HANDLE hPipe = g_hNpcapHelperPipe;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
 	if (hPipe == INVALID_HANDLE_VALUE)
 	{
 		TRACE_EXIT();
+		SetLastError(ERROR_PIPE_NOT_CONNECTED);
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -396,8 +418,10 @@ HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 		NULL);    // don't set maximum time
 	if (!fSuccess)
 	{
-		TRACE_PRINT1("SetNamedPipeHandleState failed. GLE=%d\n", GetLastError());
+		err = GetLastError();
+		TRACE_PRINT1("SetNamedPipeHandleState failed. GLE=%d\n", err);
 		TRACE_EXIT();
+		SetLastError(err);
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -415,8 +439,10 @@ HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 
 	if (!fSuccess)
 	{
+		err = GetLastError();
 		TRACE_PRINT1("WriteFile to pipe failed. GLE=%d\n", GetLastError());
 		TRACE_EXIT();
+		SetLastError(err);
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -433,7 +459,7 @@ HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 			&cbRead,  // number of bytes read
 			NULL);    // not overlapped
 
-		if (!fSuccess && GetLastError() != ERROR_MORE_DATA)
+		if (!fSuccess && (err = GetLastError()) != ERROR_MORE_DATA)
 			break;
 
 		//printf("\"%s\"\n", chBuf );
@@ -441,8 +467,9 @@ HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 
 	if (!fSuccess)
 	{
-		TRACE_PRINT1("ReadFile from pipe failed. GLE=%d\n", GetLastError());
+		TRACE_PRINT1("ReadFile from pipe failed. GLE=%d\n", err);
 		TRACE_EXIT();
+		SetLastError(err);
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -453,16 +480,18 @@ HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 		_snscanf_s(chBuf, cbRead, "%p,%lu", &hd, pdwError);
 		TRACE_PRINT1("Received Driver Handle: %0p\n", hd);
 		TRACE_EXIT();
+		SetLastError(ERROR_SUCCESS);
 		return hd;
 	}
 	else
 	{
 		TRACE_EXIT();
+		SetLastError(ERROR_NO_DATA);
 		return INVALID_HANDLE_VALUE;
 	}
 }
 
-void NpcapGetLoopbackInterfaceName()
+static void NpcapGetLoopbackInterfaceName()
 {
 	TRACE_ENTER();
 
@@ -488,7 +517,7 @@ void NpcapGetLoopbackInterfaceName()
 	TRACE_EXIT();
 }
 
-BOOL NpcapIsAdminOnlyMode()
+static BOOL NpcapIsAdminOnlyMode()
 {
 	TRACE_ENTER();
 
@@ -522,7 +551,7 @@ BOOL NpcapIsAdminOnlyMode()
 	return (dwAdminOnlyMode != 0);
 }
 
-BOOL NpcapIsRunByAdmin()
+static BOOL NpcapIsRunByAdmin()
 {
 	BOOL bIsRunAsAdmin = FALSE;
 	DWORD dwError = ERROR_SUCCESS;
@@ -568,10 +597,11 @@ Cleanup:
 
 	TRACE_PRINT1("IsProcessRunningAsAdminMode result: %hs\n", bIsRunAsAdmin ? "yes" : "no");
 	TRACE_EXIT();
+	SetLastError(dwError);
 	return bIsRunAsAdmin;
 }
 
-void NpcapStartHelper()
+static void NpcapStartHelper()
 {
 	TRACE_ENTER();
 
@@ -625,7 +655,7 @@ void NpcapStartHelper()
 	TRACE_EXIT();
 }
 
-void NpcapStopHelper()
+static void NpcapStopHelper()
 {
 	TRACE_ENTER();
 
@@ -679,7 +709,7 @@ static const char* memstr(const char* full_data, size_t full_data_len, const cha
 }
 
 // For memory block [mem], substitute all [source] strings with [destination], return the new memory block (need to free), if not found, return NULL.
-PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR destination)
+static PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR destination)
 {
 	PCHAR tmp;
 	PCHAR newbuf;
@@ -996,197 +1026,6 @@ VOID PacketLoadLibrariesDynamically()
 }
 #endif
 
-/*
-BOOLEAN QueryWinPcapRegistryStringA(CHAR *SubKeyName,
-								 CHAR *Value,
-								 UINT *pValueLen,
-								 CHAR *DefaultVal)
-{
-#ifdef WPCAP_OEM
-	DWORD Type;
-	LONG QveRes;
-	HKEY hWinPcapKey;
-	
-	if (QveRes = RegOpenKeyExA(HKEY_LOCAL_MACHINE, 
-			WINPCAP_INSTANCE_KEY,
-			0,
-			KEY_ALL_ACCESS,
-			&hWinPcapKey) != ERROR_SUCCESS)
-	{
-		*pValueLen = 0;
-		
-		SetLastError(QveRes);
-
-		return FALSE;
-	}
-
-	//
-	// Query the requested value
-	//
-	QveRes = RegQueryValueExA(hWinPcapKey,
-		SubKeyName,
-		NULL,
-		&Type,
-		Value,
-		pValueLen);
-
-	RegCloseKey(hWinPcapKey);
-
-	if (QveRes == ERROR_SUCCESS)
-	{
-		//let's check that the key is text
-		if (Type != REG_SZ)
-		{
-			*pValueLen = 0;
-			
-			SetLastError(ERROR_INVALID_DATA);
-			return FALSE;
-		}
-		else
-		{
-			//success!
-			return TRUE;
-		}
-	}
-	else
-	if (QveRes == ERROR_MORE_DATA)
-	{
-		//
-		//the needed bytes are already set by RegQueryValueExA
-		//
-
-		SetLastError(QveRes);
-		return FALSE;
-	}
-	else
-	{
-		//
-		//print the error
-		//
-		ODSEx("QueryWinpcapRegistryKey, RegQueryValueEx failed, code %d",QveRes);
-		//
-		//JUST CONTINUE WITH THE DEFAULT VALUE
-		//
-	}
-
-#endif // WPCAP_OEM
-
-	if ((*pValueLen) < strlen(DefaultVal) + 1)
-	{
-		memcpy(Value, DefaultVal, *pValueLen - 1);
-		Value[*pValueLen - 1] = '\0';
-		*pValueLen = strlen(DefaultVal) + 1;
-		SetLastError(ERROR_MORE_DATA);
-		return FALSE;
-	}
-	else
-	{
-		strcpy(Value, DefaultVal);
-		*pValueLen = strlen(DefaultVal) + 1;
-		return TRUE;
-	}
-
-}
-						
-BOOLEAN QueryWinPcapRegistryStringW(WCHAR *SubKeyName,
-								 WCHAR *Value,
-								 UINT *pValueLen,
-								 WCHAR *DefaultVal)
-{
-#ifdef WPCAP_OEM
-	DWORD Type;
-	LONG QveRes;
-	HKEY hWinPcapKey;
-	DWORD InternalLenBytes;
-
-	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, 
-			WINPCAP_INSTANCE_KEY_WIDECHAR,
-			0,
-			KEY_ALL_ACCESS,
-			&hWinPcapKey) != ERROR_SUCCESS)
-	{
-		*pValueLen = 0;
-		return FALSE;
-	}
-
-	InternalLenBytes = *pValueLen * 2;
-	
-	//
-	// Query the requested value
-	//
-	QveRes = RegQueryValueExW(hWinPcapKey,
-		SubKeyName,
-		NULL,
-		&Type,
-		(LPBYTE)Value,
-		&InternalLenBytes);
-
-	RegCloseKey(hWinPcapKey);
-
-	if (QveRes == ERROR_SUCCESS)
-	{
-		//let's check that the key is text
-		if (Type != REG_SZ)
-		{
-			*pValueLen = 0;
-			SetLastError(ERROR_INVALID_DATA);
-			return FALSE;
-		}
-		else
-		{
-			//success!
-			*pValueLen = wcslen(Value) + 1;
-		
-			return TRUE;
-		}
-	}
-	else
-	if (QveRes == ERROR_MORE_DATA)
-	{
-		//
-		//the needed bytes are not set by RegQueryValueExW
-		//
-		
-		//the +1 is needed to round the needed buffer size (in WCHARs) to a number of WCHARs that will fit
-		//the number of needed bytes. In any case if it's a W string, the number of needed bytes should always be even!
-
-		*pValueLen = (InternalLenBytes + 1) / 2;
-
-		SetLastError(ERROR_MORE_DATA);
-		return FALSE;
-	}
-	else
-	{
-		//
-		//print the error
-		//
-		ODSEx("QueryWinpcapRegistryKey, RegQueryValueEx failed, code %d\n",QveRes);
-		//
-		//JUST CONTINUE WITH THE DEFAULT VALUE
-		//
-	}
-
-#endif // WPCAP_OEM
-
-	if (*pValueLen < wcslen(DefaultVal) + 1)
-	{
-		memcpy(Value, DefaultVal, (*pValueLen  - 1) * 2);
-		Value[*pValueLen - 1] = '\0';
-		*pValueLen = wcslen(DefaultVal) + 1;
-		SetLastError(ERROR_MORE_DATA);
-		return FALSE;
-	}
-	else
-	{
-		wcscpy(Value, DefaultVal);
-		*pValueLen = wcslen(DefaultVal) + 1;
-		return TRUE;
-	}
-
-}
-
-*/
-
 
 /*! 
   \brief Converts an ASCII string to UNICODE. Uses the MultiByteToWideChar() system function.
@@ -1232,9 +1071,10 @@ static PCHAR WChar2SChar(LPCWCH string)
 
 BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 {
-    BOOLEAN    Status;
+	BOOLEAN    Status;
 	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1] = { 0 };
-    PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
+	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 	
@@ -1242,10 +1082,21 @@ BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 	OidData->Oid=OID_GEN_MAXIMUM_LOOKAHEAD;
 	OidData->Length=sizeof(ULONG);
 	Status=PacketRequest(AdapterObject,FALSE,OidData);
+	if (!Status) {
+		err = GetLastError();
+		TRACE_EXIT();
+		SetLastError(err);
+		return FALSE;
+	}
+
 	OidData->Oid=OID_GEN_CURRENT_LOOKAHEAD;
 	Status=PacketRequest(AdapterObject,TRUE,OidData);	
+	if (!Status) {
+		err = GetLastError();
+	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return Status;
 }
 
@@ -1264,6 +1115,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 {
 	DWORD BytesReturned;
 	HANDLE hEvent;
+	DWORD err = ERROR_SUCCESS;
 
  	TRACE_ENTER();
 
@@ -1278,9 +1130,10 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 
 	if (hEvent == NULL)
 	{
+		err = GetLastError();
 		TRACE_PRINT("Error in CreateEvent");
-		//SetLastError done by CreateEvent	
  		TRACE_EXIT();
+		SetLastError(err);
 		return FALSE;
 	}
 
@@ -1293,14 +1146,13 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 			&BytesReturned,
 			NULL)==FALSE) 
 	{
-		const DWORD dwLastError = GetLastError();
+		err = GetLastError();
 		TRACE_PRINT("Error in DeviceIoControl");
 
 		CloseHandle(hEvent);
 
-		SetLastError(dwLastError);
-
 		TRACE_EXIT();
+		SetLastError(err);
 		return FALSE;
 	}
 
@@ -1356,6 +1208,7 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 	TCHAR	SubBlock[64];
 	PVOID	lpBuffer;
 	PCHAR	TmpStr;
+	DWORD err = ERROR_SUCCESS;
 	
 	// Structure used to store enumerated languages and code pages.
 	struct LANGANDCODEPAGE {
@@ -1374,25 +1227,31 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
         lpstrVffInfo = (LPTSTR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwVerInfoSize);
 		if (lpstrVffInfo == NULL)
 		{
+			err = GetLastError();
 			TRACE_PRINT("PacketGetFileVersion: failed to allocate memory");
 			TRACE_EXIT();
+			SetLastError(err);
 			return FALSE;
 		}
 
 		if(!GetFileVersionInfo(FileName, dwVerHnd, dwVerInfoSize, lpstrVffInfo)) 
 		{
-			TRACE_PRINT("PacketGetFileVersion: failed to call GetFileVersionInfo");
+			err = GetLastError();
+			TRACE_PRINT1("PacketGetFileVersion: failed to call GetFileVersionInfo: %d", err);
 			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
 			TRACE_EXIT();
+			SetLastError(err);
 			return FALSE;
 		}
 
 		// Read the list of languages and code pages.
 		if(!VerQueryValue(lpstrVffInfo,	TEXT("\\VarFileInfo\\Translation"),	(LPVOID*)&lpTranslate, &cbTranslate))
 		{
-			TRACE_PRINT("PacketGetFileVersion: failed to call VerQueryValue");
+			err = GetLastError();
+			TRACE_PRINT1("PacketGetFileVersion: failed to call VerQueryValue: %d", err);
 			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
 			TRACE_EXIT();
+			SetLastError(err);
 			return FALSE;
 		}
 		
@@ -1406,9 +1265,11 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 		// Retrieve the file version string for the language.
 		if(!VerQueryValue(lpstrVffInfo, SubBlock, &lpBuffer, &dwBytes))
 		{
-			TRACE_PRINT("PacketGetFileVersion: failed to call VerQueryValue");
+			err = GetLastError();
+			TRACE_PRINT1("PacketGetFileVersion: failed to call VerQueryValue: %d", err);
 			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
 			TRACE_EXIT();
+			SetLastError(err);
 			return FALSE;
 		}
 
@@ -1421,6 +1282,7 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
 			HeapFree(GetProcessHeap(), 0, TmpStr);
 			TRACE_EXIT();
+			SetLastError(ERROR_BUFFER_OVERFLOW);
 			return FALSE;
 		}
 
@@ -1432,8 +1294,10 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 	  } 
 	else 
 	{
-		TRACE_PRINT1("PacketGetFileVersion: failed to call GetFileVersionInfoSize, LastError = %8.8x", GetLastError());
+		err = GetLastError();
+		TRACE_PRINT1("PacketGetFileVersion: failed to call GetFileVersionInfoSize, LastError = %8.8x", err);
 		TRACE_EXIT();
+		SetLastError(err);
 		return FALSE;
 	
 	} 
@@ -1570,8 +1434,8 @@ BOOL PacketStartService()
 	if (scmHandle != NULL) CloseServiceHandle(scmHandle);
 
 	ServiceStartAttempted = TRUE;
-	SetLastError(error);
 	TRACE_EXIT();
+	SetLastError(error);
 	return Result;
 }
 
@@ -1612,9 +1476,8 @@ LPADAPTER PacketOpenAdapterNPF(PCCH AdapterNameA)
 	lpAdapter=(LPADAPTER)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER));
 	if (lpAdapter==NULL)
 	{
-		TRACE_PRINT("PacketOpenAdapterNPF: HeapAlloc Failed to allocate the ADAPTER structure");
 		error=GetLastError();
-		//set the error to the one on which we failed
+		TRACE_PRINT("PacketOpenAdapterNPF: HeapAlloc Failed to allocate the ADAPTER structure");
 		TRACE_EXIT();
 		SetLastError(error);
 		return NULL;
@@ -1821,6 +1684,7 @@ BOOL PacketStopDriver()
     SC_HANDLE       schService;
     BOOL            ret;
     SERVICE_STATUS  serviceStatus;
+    DWORD err = ERROR_SUCCESS;
 
  	TRACE_ENTER();
  
@@ -1847,6 +1711,7 @@ BOOL PacketStopDriver()
 				);
 			if (!ret)
 			{
+				err = GetLastError();
 				TRACE_PRINT("Failed to stop the NPF service");
 			}
 			else
@@ -1859,9 +1724,16 @@ BOOL PacketStopDriver()
 			CloseServiceHandle(scmHandle);
 			
 		}
+		else {
+			err = GetLastError();
+		}
+	}
+	else {
+		err = GetLastError();
 	}
 	
 	TRACE_EXIT();
+	SetLastError(err);
 	return ret;
 }
 
@@ -2117,16 +1989,19 @@ VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 LPPACKET PacketAllocatePacket(void)
 {
     LPPACKET    lpPacket;
+    DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
     
 	lpPacket=(LPPACKET)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PACKET));
     if (lpPacket==NULL)
     {
+	    err = GetLastError();
         TRACE_PRINT("PacketAllocatePacket: HeapAlloc Failed");
     }
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return lpPacket;
 }
 
@@ -2208,6 +2083,7 @@ VOID PacketInitPacket(LPPACKET lpPacket,PVOID Buffer,UINT Length)
 BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 {
 	BOOLEAN res;
+	DWORD err = ERROR_SUCCESS;
 
 	UNUSED(Sync);
 
@@ -2233,7 +2109,9 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
 				lpPacket->Length, 
 				&lpPacket->ulBytesReceived);
 
+		err = GetLastError();
 		TRACE_EXIT();
+		SetLastError(err);
 		return res;
 	}
 #endif // HAVE_AIRPCAP_API
@@ -2244,14 +2122,17 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
 			WaitForSingleObject(AdapterObject->ReadEvent, (AdapterObject->ReadTimeOut==0)?INFINITE:AdapterObject->ReadTimeOut);
 	
 		res = (BOOLEAN)ReadFile(AdapterObject->hFile, lpPacket->Buffer, lpPacket->Length, &lpPacket->ulBytesReceived,NULL);
+		err = GetLastError();
 	}
 	else
 	{
 		TRACE_PRINT1("Request to read on an unknown device type (%u)", AdapterObject->Flags);
 		res = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 	
 	TRACE_EXIT();
+	SetLastError(err);
 	return res;
 }
 
@@ -2288,6 +2169,7 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 {
     DWORD        BytesTransfered;
 	BOOLEAN		Result;    
+	DWORD err = ERROR_SUCCESS;
 	TRACE_ENTER();
 
 	UNUSED(Sync);
@@ -2299,7 +2181,9 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 		{
 			Result = (BOOLEAN)g_PAirpcapWrite(AdapterObject->AirpcapAd, (PCHAR) lpPacket->Buffer, lpPacket->Length);
 			
+			err = GetLastError();
 			TRACE_EXIT();
+			SetLastError(err);
 			return Result;
 		}
 		else
@@ -2307,6 +2191,7 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 			TRACE_PRINT("Transmission not supported with this version of AirPcap");
 
 			TRACE_EXIT();
+			SetLastError(ERROR_NOT_SUPPORTED);
 			return FALSE;
 		}
 	}
@@ -2315,14 +2200,17 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
 		Result = (BOOLEAN)WriteFile(AdapterObject->hFile,lpPacket->Buffer,lpPacket->Length,&BytesTransfered,NULL);
+		err = GetLastError();
 	}
 	else
 	{
 		TRACE_PRINT1("Request to write on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return Result;
 }
 
@@ -2359,6 +2247,7 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
     DWORD			BytesTransfered, TotBytesTransfered=0;
 	struct timeval	BufStartTime = {};
 	LARGE_INTEGER	StartTicks = {}, CurTicks = {}, TargetTicks = {}, TimeFreq = {};
+	DWORD err = ERROR_SUCCESS;
 
 
 	TRACE_ENTER();
@@ -2368,6 +2257,7 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 	{
 		TRACE_PRINT("PacketSendPackets: packet sending not allowed on airpcap adapters");
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return 0;
 	}
 #endif // HAVE_AIRPCAP_API
@@ -2389,7 +2279,6 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 
 		do{
 			// Send the data to the driver
-			//TODO Res is NEVER checked, this is REALLY bad.
 			Res = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,
 				(Sync)?BIOCSENDPACKETSSYNC:BIOCSENDPACKETSNOSYNC,
 				(PCHAR)PacketBuff + TotBytesTransfered,
@@ -2400,8 +2289,10 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 				NULL);
 
 			// Exit from the loop on error
-			if(Res != TRUE)
+			if(Res != TRUE) {
+				err = GetLastError();
 				break;
+			}
 
 			TotBytesTransfered += BytesTransfered;
 
@@ -2429,11 +2320,12 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 	else
 	{
 		TRACE_PRINT1("Request to write on an unknown device type (%u)", AdapterObject->Flags);
-		SetLastError(ERROR_BAD_DEV_TYPE);
+		err = (ERROR_BAD_DEV_TYPE);
 		TotBytesTransfered = 0;
 	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return TotBytesTransfered;
 }
 
@@ -2459,6 +2351,7 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
 {
 	DWORD BytesReturned;
 	BOOLEAN Result;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 	
@@ -2467,7 +2360,9 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
 	{
 		Result = (BOOLEAN)g_PAirpcapSetMinToCopy(AdapterObject->AirpcapAd, nbytes);
 
+		err = GetLastError();
 		TRACE_EXIT();
+		SetLastError(err);
 		return Result;
 	}
 #endif // HAVE_AIRPCAP_API
@@ -2475,14 +2370,17 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
 		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSMINTOCOPY,&nbytes,4,NULL,0,&BytesReturned,NULL);
+		err = GetLastError();
 	}
 	else
 	{
 		TRACE_PRINT1("Request to set mintocopy on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 	
 	TRACE_EXIT();
+	SetLastError(err);
 	return Result; 		
 }
 
@@ -2512,6 +2410,7 @@ BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
 {
 	DWORD BytesReturned;
 	BOOLEAN Result;
+	DWORD err = ERROR_SUCCESS;
 
    TRACE_ENTER();
 
@@ -2525,9 +2424,11 @@ BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
 	   else
 	   {
 		   Result = FALSE;
+		   err = ERROR_NOT_SUPPORTED;
 	   }
 
 	   TRACE_EXIT();
+	   SetLastError(err);
 	   return Result;
    }
 #endif //HAVE_AIRPCAP_API
@@ -2535,14 +2436,17 @@ BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
    if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
    {
 		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSMODE,&mode,4,NULL,0,&BytesReturned,NULL);
+		err = GetLastError();
    }
    else
    {
 	   TRACE_PRINT1("Request to set mode on an unknown device type (%u)", AdapterObject->Flags);
 	   Result = FALSE;
+	   err = ERROR_NOT_SUPPORTED;
    }
 
    TRACE_EXIT();
+   SetLastError(err);
    return Result;
 
 }
@@ -2564,6 +2468,7 @@ BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
 BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void *name, int len)
 {
 	DWORD	BytesReturned;
+	DWORD err = ERROR_SUCCESS;
 	WCHAR	*FileName;
 	BOOLEAN	res;
 	WCHAR	NameWithPath[1024];
@@ -2576,6 +2481,7 @@ BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void *name, int len)
 	{
 		TRACE_PRINT("PacketSetDumpName: not allowed on non-NPF adapters");
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
 
@@ -2600,14 +2506,17 @@ BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void *name, int len)
 		if (((PUCHAR) name)[1] != 0 && len > 1) HeapFree(GetProcessHeap(), 0, FileName);
 
 		TRACE_EXIT();
+		SetLastError(ERROR_FILENAME_EXCED_RANGE);
 		return FALSE;
 	}
 
     res = (BOOLEAN) DeviceIoControl(AdapterObject->hFile, BIOCSETDUMPFILENAME, NameWithPath, len, NULL, 0, &BytesReturned, NULL);
+    err = GetLastError();
 	if (((PUCHAR) name)[1]!=0 && len > 1)
 		HeapFree(GetProcessHeap(), 0, FileName);
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return res;
 }
 
@@ -2631,6 +2540,7 @@ BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxn
 	DWORD		BytesReturned;
 	UINT valbuff[2];
 	BOOLEAN Result;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -2638,6 +2548,7 @@ BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxn
 	{
 		TRACE_PRINT("PacketSetDumpLimits: not allowed on non-NPF adapters");
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
 
@@ -2653,7 +2564,9 @@ BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxn
 		&BytesReturned,
 		NULL);	
 
+    err = GetLastError();
 	TRACE_EXIT();
+	SetLastError(err);
 	return Result;
 
 }
@@ -2676,6 +2589,7 @@ BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync)
 	DWORD		BytesReturned;
 	int		IsDumpEnded;
 	BOOLEAN	res;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -2684,6 +2598,7 @@ BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync)
 		TRACE_PRINT("PacketIsDumpEnded: not allowed on non-NPF adapters");
 	
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
 
@@ -2699,7 +2614,9 @@ BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync)
 		&BytesReturned,
 		NULL);
 
+    err = GetLastError();
 	TRACE_EXIT();
+	SetLastError(err);
 	if(res == FALSE)
 		return TRUE; // If the IOCTL returns an error we consider the dump finished
 	else
@@ -2744,6 +2661,7 @@ BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject,int nwrites)
 {
 	DWORD BytesReturned;
 	BOOLEAN Result;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -2751,12 +2669,15 @@ BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject,int nwrites)
 	{
 		TRACE_PRINT("PacketSetNumWrites: not allowed on non-NPF adapters");
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
 
     Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSWRITEREP,&nwrites,4,NULL,0,&BytesReturned,NULL);
+    err = GetLastError();
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return Result;
 }
 
@@ -2775,6 +2696,7 @@ BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject,int nwrites)
 BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject,int timeout)
 {
 	BOOLEAN Result;
+	DWORD err = ERROR_SUCCESS;
 	
 	TRACE_ENTER();
 
@@ -2802,9 +2724,11 @@ BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject,int timeout)
 		//
 		TRACE_PRINT1("Request to set read timeout on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return Result;
 	
 }
@@ -2829,6 +2753,7 @@ BOOLEAN PacketSetBuff(LPADAPTER AdapterObject,int dim)
 {
 	DWORD BytesReturned;
 	BOOLEAN Result;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -2836,8 +2761,10 @@ BOOLEAN PacketSetBuff(LPADAPTER AdapterObject,int dim)
 	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
 	{
 		Result = (BOOLEAN)g_PAirpcapSetKernelBuffer(AdapterObject->AirpcapAd, dim);
+		err = GetLastError();
 		
 		TRACE_EXIT();
+		SetLastError(err);
 		return Result;
 	}
 #endif // HAVE_AIRPCAP_API
@@ -2845,14 +2772,17 @@ BOOLEAN PacketSetBuff(LPADAPTER AdapterObject,int dim)
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
 		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSETBUFFERSIZE,&dim,sizeof(dim),NULL,0,&BytesReturned,NULL);
+		err = GetLastError();
 	}
 	else
 	{
 		TRACE_PRINT1("Request to set buf size on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 	
 	TRACE_EXIT();
+	SetLastError(err);
 	return Result;
 }
 
@@ -2880,6 +2810,7 @@ BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
 {
 	DWORD BytesReturned;
 	BOOLEAN Result;
+	DWORD err = ERROR_SUCCESS;
 	
 	TRACE_ENTER();
 	
@@ -2889,8 +2820,10 @@ BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
 		Result = (BOOLEAN)g_PAirpcapSetFilter(AdapterObject->AirpcapAd, 
 			(char*)fp->bf_insns,
 			fp->bf_len * sizeof(struct bpf_insn));
+		err = GetLastError();
 
 		TRACE_EXIT();
+		SetLastError(err);
 		return Result;
 	}
 #endif // HAVE_AIRPCAP_API
@@ -2898,14 +2831,17 @@ BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
 		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSETF,(char*)fp->bf_insns,fp->bf_len*sizeof(struct bpf_insn),NULL,0,&BytesReturned,NULL);
+		err = GetLastError();
 	}
 	else
 	{
 		TRACE_PRINT1("Request to set BPF filter on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 	
 	TRACE_EXIT();
+	SetLastError(err);
 	return Result;
 }
 
@@ -2923,6 +2859,7 @@ BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavio
 {
 	DWORD BytesReturned;
 	BOOLEAN result;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -2931,6 +2868,7 @@ BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavio
 		TRACE_PRINT("PacketSetLoopbackBehavior: not allowed on non-NPF adapters");
 	
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
 
@@ -2943,8 +2881,10 @@ BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavio
 		0,
 		&BytesReturned,
 		NULL);
+	err = GetLastError();
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return result;
 }
 
@@ -2958,6 +2898,7 @@ BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
 {
 	DWORD BytesReturned;
 	BOOLEAN result;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -2966,6 +2907,7 @@ BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
 		TRACE_PRINT("PacketSetTimestampMode: not allowed on non-NPF adapters");
 	
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
 
@@ -2978,8 +2920,10 @@ BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
 		0,
 		&BytesReturned,
 		NULL);
+	err = GetLastError();
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return result;
 }
 
@@ -2993,6 +2937,7 @@ BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes)
 {
 	BOOLEAN result = FALSE;
 	DWORD BytesReturned = 0;
+	DWORD err = ERROR_SUCCESS;
 	TRACE_ENTER();
 
 	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
@@ -3012,7 +2957,9 @@ BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes)
 			pModes[0] * sizeof(ULONG),
 			&BytesReturned,
 			NULL);
+	err = GetLastError();
 	TRACE_EXIT();
+	SetLastError(err);
 	return result;
 }
 
@@ -3063,6 +3010,7 @@ BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
 {
 	BOOLEAN Res;
 	DWORD BytesReturned;
+	DWORD err = ERROR_SUCCESS;
 	struct bpf_stat tmpstat;	// We use a support structure to avoid kernel-level inconsistencies with old or malicious applications
 	
 	TRACE_ENTER();
@@ -3084,8 +3032,13 @@ BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
 			s->bs_recv = tas.Recvs;
 			s->ps_ifdrop = tas.IfDrops;
 		}
+		else
+		{
+			err = GetLastError();
+		}
 
 		TRACE_EXIT();
+		SetLastError(err);
 		return Res;
 	}
 #endif // HAVE_AIRPCAP_API
@@ -3108,15 +3061,21 @@ BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
 			s->bs_recv = tmpstat.bs_recv;
 			s->bs_drop = tmpstat.bs_drop;
 		}
+		else
+		{
+			err = GetLastError();
+		}
 
 	}
 	else
 	{	
 		TRACE_PRINT1("Request to obtain statistics on an unknown device type (%u)", AdapterObject->Flags);
 		Res = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return Res;
 
 }
@@ -3137,6 +3096,7 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 {
 	BOOLEAN Res;
 	DWORD BytesReturned;
+	DWORD err = ERROR_SUCCESS;
 	struct bpf_stat tmpstat;	// We use a support structure to avoid kernel-level inconsistencies with old or malicious applications
 
 	TRACE_ENTER();
@@ -3155,8 +3115,13 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 			s->bs_recv = tas.Recvs;
 			s->ps_ifdrop = tas.IfDrops;
 		}
+		else
+		{
+			err = GetLastError();
+		}
 
 		TRACE_EXIT();
+		SetLastError(err);
 		return Res;
 	}
 #endif // HAVE_AIRPCAP_API
@@ -3180,14 +3145,20 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 			s->ps_ifdrop = tmpstat.ps_ifdrop;
 			s->bs_capt = tmpstat.bs_capt;
 		}
+		else
+		{
+			err = GetLastError();
+		}
 	}
 	else
 	{	
 		TRACE_PRINT1("Request to obtain statistics on an unknown device type (%u)", AdapterObject->Flags);
 		Res = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return Res;
 
 }
@@ -3208,6 +3179,7 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 {
     DWORD		BytesReturned;
     BOOLEAN		Result;
+    DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -3215,6 +3187,7 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 	{
 		TRACE_PRINT("PacketRequest not supported on non-NPF adapters.");
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
 
@@ -3233,15 +3206,17 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 	}
 	else
 	{
+		err = GetLastError();
 		TRACE_PRINT5("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, Result = %d, ErrCode = 0x%.08x",
 			OidData->Oid,
 			OidData->Length,
 			Set,
 			Result,
-			GetLastError() & ~(1 << 29));
+			err & ~(1 << 29));
 	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return Result;
 }
 
@@ -3264,6 +3239,7 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 {
     BOOLEAN    Status;
+    DWORD err = ERROR_SUCCESS;
 	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1] = { 0 };
     PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA) IoCtlBuffer;
 	
@@ -3283,14 +3259,17 @@ BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 		OidData->Length = sizeof(ULONG);
 	    *((PULONG) OidData->Data) = Filter;
 		Status = PacketRequest(AdapterObject, TRUE, OidData);
+		err = GetLastError();
 	}
 	else
 	{
 		TRACE_PRINT1("Setting HW filter not supported on this adapter type (%u)", AdapterObject->Flags);
 		Status = FALSE;
+		err = ERROR_NOT_SUPPORTED;
 	}
 	
 	TRACE_EXIT();
+	SetLastError(err);
     return Status;
 }
 
@@ -3359,9 +3338,9 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 		TRACE_PRINT("No adapters found in the system. Failing.");
 		if (dwError == ERROR_SUCCESS)
 			dwError = ERROR_NO_MORE_ITEMS;
-		SetLastError(dwError);
  	
  		TRACE_EXIT();
+		SetLastError(dwError);
 		return FALSE;		// No adapters to return
 	}
 
@@ -3457,6 +3436,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	PCHAR Tname = NULL;
 	BOOLEAN Res;
 	PCHAR TranslatedAdapterName = NULL;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -3479,6 +3459,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	//
 	if(!PacketUpdateAdInfo(AdapterName))
 	{
+		err = GetLastError();
 		TRACE_PRINT("PacketGetNetInfoEx. Failed updating the adapter list. Failing.");
 		if(Tname)
 			HeapFree(GetProcessHeap(), 0, Tname);
@@ -3487,6 +3468,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 		
 		TRACE_EXIT();
+		SetLastError(err);
 		return FALSE;
 	}
 	
@@ -3526,6 +3508,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	{
 		TRACE_PRINT("PacketGetNetInfoEx: Adapter not found");
 		Res = FALSE;
+		err = ERROR_BAD_UNIT;
 	}
 	
 	ReleaseMutex(g_AdaptersInfoMutex);
@@ -3537,6 +3520,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return Res;
 }
 
@@ -3562,6 +3546,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	CHAR AdName[ADAPTER_NAME_LENGTH] = { 0 };
 	char* tag = NULL;
 	BOOLEAN ret;
+	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 	// Look up the adapter by its canonical name, meaning no WIFI_ tag.
@@ -3589,6 +3574,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	{
 		TRACE_PRINT("PacketGetNetType: Adapter not found");
 		ret =  FALSE;
+		err = ERROR_BAD_UNIT;
 	}
 
 	ReleaseMutex(g_AdaptersInfoMutex);
@@ -3600,6 +3586,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	}
 
 	TRACE_EXIT();
+	SetLastError(err);
 	return ret;
 }
 
