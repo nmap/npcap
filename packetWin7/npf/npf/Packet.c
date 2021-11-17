@@ -1176,7 +1176,7 @@ static NTSTATUS funcBIOCGSTATS(_In_ POPEN_INSTANCE pOpen,
 {
 	static const ULONG uNeeded = 4 * sizeof(UINT);
 
-	*Info = uNeeded;
+	*Info = 0;
 	if (ulBufLen < uNeeded)
 	{
 		return STATUS_BUFFER_TOO_SMALL;
@@ -1184,7 +1184,6 @@ static NTSTATUS funcBIOCGSTATS(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
 	{
-		*Info = 0;
 		return STATUS_CANCELLED;
 	}
 
@@ -1194,6 +1193,8 @@ static NTSTATUS funcBIOCGSTATS(_In_ POPEN_INSTANCE pOpen,
 	((PUINT)pBuf)[3] = pOpen->Accepted;
 
 	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
+
+	*Info = uNeeded;
 	return STATUS_SUCCESS;
 }
 
@@ -1212,7 +1213,6 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 
 	if (ulBufLen < uNeeded)
 	{
-		*Info = uNeeded;
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
@@ -1258,7 +1258,6 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 
 	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
 
-	*Info = ulBufLen;
 	return STATUS_SUCCESS;
 }
 
@@ -1272,7 +1271,7 @@ static NTSTATUS funcBIOCSULONG(_In_ POPEN_INSTANCE pOpen,
 {
 	static const ULONG uNeeded = sizeof(ULONG);
 
-	*Info = uNeeded;
+	*Info = 0;
 	if (ulBufLen < uNeeded)
 	{
 		return STATUS_BUFFER_TOO_SMALL;
@@ -1280,7 +1279,6 @@ static NTSTATUS funcBIOCSULONG(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, MaxState, NPF_IRQL_UNKNOWN))
 	{
-		*Info = 0;
 		return (pOpen->OpenStatus == OpenDetached
 				? STATUS_DEVICE_REMOVED
 				: STATUS_CANCELLED);
@@ -1301,13 +1299,12 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 	static const ULONG uNeeded = sizeof(ULONG);
 	ULONG mode = 0;
 
+	*Info = 0;
 	if (ulBufLen < uNeeded)
 	{
-		*Info = uNeeded;
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	*Info = 0;
 	mode = *pBuf;
 
 	// Compile-time assertion to ensure that MODE_CAPT and MODE_STAT are mutually exclusive.
@@ -1326,7 +1323,6 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 				: STATUS_CANCELLED);
 	}
 
-	*Info = uNeeded;
 	if (mode == MODE_STAT)
 	{
 		pOpen->bModeCapt = 0;
@@ -1354,7 +1350,7 @@ static NTSTATUS funcBIOCISETLOBBEH(_In_ POPEN_INSTANCE pOpen,
 	static const ULONG uNeeded = sizeof(ULONG);
 	BOOLEAN SkipSent = FALSE;
 
-	*Info = uNeeded;
+	*Info = 0;
 	if (ulBufLen < uNeeded)
 	{
 		return STATUS_BUFFER_TOO_SMALL;
@@ -1375,7 +1371,6 @@ static NTSTATUS funcBIOCISETLOBBEH(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
 	{
-		*Info = 0;
 		return STATUS_CANCELLED;
 	}
 
@@ -1409,6 +1404,7 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 	HANDLE hUserEvent = INVALID_HANDLE_VALUE;
 	PKEVENT pKernelEvent = NULL;
 	NTSTATUS Status = STATUS_UNSUCCESSFUL;
+	ULONG uNeeded = is32bit ? sizeof(VOID * POINTER_32) : sizeof(VOID * POINTER_64);
 
 	*Info = 0;
 	// We don't currently support overwriting the existing event.
@@ -1417,12 +1413,11 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 		return STATUS_OBJECT_NAME_EXISTS;
 	}
 
-	*Info = is32bit ? sizeof(VOID * POINTER_32) : sizeof(VOID * POINTER_64);
-	if (ulBufLen < *Info)
+	if (ulBufLen < uNeeded)
 	{
 		return STATUS_BUFFER_TOO_SMALL;
 	}
-	else if (ulBufLen > *Info)
+	else if (ulBufLen > uNeeded)
 	{
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -1455,14 +1450,12 @@ static NTSTATUS funcBIOCSETEVENTHANDLE(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NT_SUCCESS(Status))
 	{
-		*Info = 0;
 		return Status;
 	}
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
 	{
 		ObDereferenceObject(pKernelEvent);
-		*Info = 0;
 		return STATUS_CANCELLED;
 	}
 
@@ -1492,7 +1485,7 @@ static NTSTATUS funcBIOCSETBUFFERSIZE(_In_ POPEN_INSTANCE pOpen,
 	LOCK_STATE_EX lockState;
 	ULONG dim = 0;
 
-	*Info = uNeeded;
+	*Info = 0;
 	if (ulBufLen < uNeeded)
 	{
 		return STATUS_BUFFER_TOO_SMALL;
@@ -1508,7 +1501,6 @@ static NTSTATUS funcBIOCSETBUFFERSIZE(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN))
 	{
-		*Info = 0;
 		return (pOpen->OpenStatus == OpenDetached
 				? STATUS_DEVICE_REMOVED
 				: STATUS_CANCELLED);
@@ -1551,6 +1543,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	ULONG ulTmp = 0;
 	NTSTATUS Status = STATUS_UNSUCCESSFUL;
 
+	*Info = 0;
 	// NDIS OID requests use the same buffer for in/out, so the caller must supply the same size buffers, too.
 	if (ulBufLenIn != ulBufLenOut ||
 			ulBufLenIn < sizeof(PACKET_OID_DATA) || // check before dereferencing OidData
@@ -1558,15 +1551,10 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 			OidData->Length == 0
 		)
 	{
-		//  buffer too small
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "buffer is too small");
-		*Info = sizeof(PACKET_OID_DATA);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", bSetOid ? "BIOCSETOID" : "BIOCQUERYOID", OidData->Oid, OidData->Length);
-
-	*Info = 0;
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN))
 	{
@@ -1601,12 +1589,12 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 				case OID_GEN_TRANSMIT_BUFFER_SPACE:
 				case OID_GEN_RECEIVE_BUFFER_SPACE:
 					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %u", pOpen->pFiltMod->AdapterName.Buffer, pOpen->pFiltMod->MaxFrameSize);
-					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
 					if (OidData->Length < sizeof(UINT))
 					{
 						Status = STATUS_BUFFER_TOO_SMALL;
 						break;
 					}
+					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
 					*((PUINT)OidData->Data) = pOpen->pFiltMod->MaxFrameSize;
 					OidData->Length = sizeof(UINT);
 					Status = STATUS_SUCCESS;
@@ -1615,12 +1603,12 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 				case OID_GEN_TRANSMIT_BLOCK_SIZE:
 				case OID_GEN_RECEIVE_BLOCK_SIZE:
 					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, 1);
-					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
 					if (OidData->Length < sizeof(UINT))
 					{
 						Status = STATUS_BUFFER_TOO_SMALL;
 						break;
 					}
+					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
 					*((PUINT)OidData->Data) = 1;
 					OidData->Length = sizeof(UINT);
 					Status = STATUS_SUCCESS;
@@ -1628,23 +1616,23 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 				case OID_GEN_MEDIA_IN_USE:
 				case OID_GEN_MEDIA_SUPPORTED:
 					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumNull);
-					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
 					if (OidData->Length < sizeof(UINT))
 					{
 						Status = STATUS_BUFFER_TOO_SMALL;
 						break;
 					}
+					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
 					*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
 					OidData->Length = sizeof(UINT);
 					Status = STATUS_SUCCESS;
 					break;
 				case OID_GEN_LINK_STATE:
-					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(NDIS_LINK_STATE);
 					if (OidData->Length < sizeof(NDIS_LINK_STATE))
 					{
 						Status = STATUS_BUFFER_TOO_SMALL;
 						break;
 					}
+					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(NDIS_LINK_STATE);
 					PNDIS_LINK_STATE pLinkState = (PNDIS_LINK_STATE) OidData->Data;
 					pLinkState->MediaConnectState = MediaConnectStateConnected;
 					pLinkState->MediaDuplexState = MediaDuplexStateFull;
@@ -1671,19 +1659,18 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		if (bSetOid)
 		{
 			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", pOpen->pFiltMod->AdapterName.Buffer);
-			*Info = 0;
 			Status = STATUS_UNSUCCESSFUL;
 		}
 		else
 		{
 			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
-			*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
 			if (OidData->Length < sizeof(UINT))
 			{
 				Status = STATUS_BUFFER_TOO_SMALL;
 			}
 			else
 			{
+				*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
 				OidData->Length = sizeof(UINT);
 				*((PUINT)OidData->Data) = (UINT)NdisMediumRadio80211;
 				Status = STATUS_SUCCESS;
@@ -1699,12 +1686,12 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	{
 		NT_ASSERT(pOpen->pFiltMod != NULL);
 
-		*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(ULONG);
 		if (OidData->Length != sizeof(ULONG))
 		{
 			Status = STATUS_BUFFER_TOO_SMALL;
 			goto OID_REQUEST_DONE;
 		}
+		*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(ULONG);
 
 		// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
 		if (pOpen->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
@@ -1846,7 +1833,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	{
 		OidData->Length = pRequest->Request.DATA.SET_INFORMATION.BytesRead;
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCSETOID completed, BytesRead = %u", OidData->Length);
-		*Info = sizeof(PACKET_OID_DATA) - 1 + OidData->Length;
+		*Info = sizeof(PACKET_OID_DATA) - 1;
 	}
 	else
 	{
@@ -1920,7 +1907,7 @@ static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
 	static const ULONG uNeeded = sizeof(ULONG);
 	ULONG mode = 0;
 
-	*Info = uNeeded;
+	*Info = 0;
 	if (ulBufLen < uNeeded)
 	{
 		return STATUS_BUFFER_TOO_SMALL;
@@ -1936,7 +1923,6 @@ static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
 	{
-		*Info = 0;
 		return STATUS_CANCELLED;
 	}
 
@@ -1987,21 +1973,22 @@ static NTSTATUS funcBIOCGTIMESTAMPMODES(_In_ POPEN_INSTANCE pOpen,
 		}
 	}
 
-	*Info = uNeeded;
+	*Info = 0;
 	if (ulBufLen < uNeeded)
 	{
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	uNeeded = (SupportedModes[0] + 1) * sizeof(ULONG);
-	*Info = uNeeded;
 	if (ulBufLen < uNeeded)
 	{
+		*Info = ulBufLen;
 		RtlCopyMemory(pBuf, SupportedModes, ulBufLen);
 		return STATUS_BUFFER_OVERFLOW;
 	}
 	else
 	{
+		*Info = uNeeded;
 		RtlCopyMemory(pBuf, SupportedModes, uNeeded);
 		return STATUS_SUCCESS;
 	}
@@ -2015,10 +2002,11 @@ static NTSTATUS funcBIOCGETPIDS(_In_ POPEN_INSTANCE pOpen,
 {
 	LOCK_STATE_EX lockState;
 	ULONG cnt = 0;
+	ULONG ulWritten = 0;
 	// Need to at least deliver the number of PIDS
-	ULONG uNeeded = sizeof(ULONG);
+	static const ULONG uNeeded = sizeof(ULONG);
 
-	*Info = uNeeded;
+	*Info = 0;
 	if (ulBufLen < uNeeded)
 	{
 		return STATUS_BUFFER_TOO_SMALL;
@@ -2026,10 +2014,10 @@ static NTSTATUS funcBIOCGETPIDS(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
 	{
-		*Info = 0;
 		return STATUS_CANCELLED;
 	}
 
+	ulWritten = sizeof(ULONG);
 	NdisAcquireRWLockRead(pOpen->DeviceExtension->AllOpensLock, &lockState, 0);
 
 	for (PLIST_ENTRY CurrEntry = pOpen->DeviceExtension->AllOpens.Flink;
@@ -2038,25 +2026,22 @@ static NTSTATUS funcBIOCGETPIDS(_In_ POPEN_INSTANCE pOpen,
 	{
 		POPEN_INSTANCE pOpenTmp = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
 		cnt++;
-		if (cnt * sizeof(ULONG) + sizeof(ULONG) <= ulBufLen)
+		if (ulWritten <= ulBufLen - sizeof(ULONG))
 		{
 			pBuf[cnt] = pOpenTmp->UserPID;
+			ulWritten += sizeof(ULONG);
 		}
 	}
 	NdisReleaseRWLock(pOpen->DeviceExtension->AllOpensLock, &lockState);
 
 	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
 	pBuf[0] = cnt;
-	if ((cnt * sizeof(ULONG) + sizeof(ULONG)) > ulBufLen)
+	*Info = ulWritten;
+	if (ulWritten / (ULONG) sizeof(ULONG) < (1 + cnt))
 	{
-		*Info = ulBufLen - (ulBufLen % sizeof(ULONG));
 		return STATUS_BUFFER_OVERFLOW;
 	}
-	else
-	{
-		*Info = cnt * sizeof(ULONG) + sizeof(ULONG);
-		return STATUS_SUCCESS;
-	}
+	return STATUS_SUCCESS;
 }
 
 _Use_decl_annotations_
