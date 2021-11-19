@@ -793,6 +793,9 @@ static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix, const siz
 	}
 
 	outstr_len = prefix_len + strlen(src) + 1; //null-terminated
+	if (outstr_len == 0) {
+		return NULL;
+	}
 	outstr = (PCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, outstr_len);
 	if (!outstr) {
 		TRACE_PRINT("HeapAlloc failed");
