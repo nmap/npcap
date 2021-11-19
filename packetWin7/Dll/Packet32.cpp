@@ -758,67 +758,67 @@ static PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR 
 	return newbuf;
 }
 
-static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix, const size_t prefix_len)
+static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix)
 {
 	PCHAR outstr = NULL;
-	size_t outstr_len = 0;
 	const char *src = NULL;
+	HRESULT hr = S_OK;
 	TRACE_PRINT2("NpcapFormatAdapterName('%hs', '%hs')", AdapterName, prefix);
 
-	src = strstr(AdapterName, "NP");
-	if (src) {
-		src += 2; // NP
-		if (!strncmp(src, "F_", 2)) // NPF_
-		{
-			src += 2;
-		}
-		else if (!strncmp(src, "CAP", 3)) //NPCAP
+	do
+	{
+		src = strstr(AdapterName, "NPF");
+		if (src)
 		{
 			src += 3;
-			if (*src == '_' || *src == '\\') // NPCAP_ or NPCAP\ are ok
-			{
-				src++;
-			}
-			else {
-				src = NULL;
-			}
+			break;
 		}
-		else {
-			src = NULL;
-		}
-	}
-	if (!src) {
-		TRACE_PRINT("'NPF_' or 'NPCAP_' not found");
-		return NULL;
-	}
 
-	outstr_len = prefix_len + strlen(src) + 1; //null-terminated
-	if (outstr_len == 0) {
+		src = strstr(AdapterName, "NPCAP");
+		if (src)
+		{
+			src += 5;
+			break;
+		}
+
+		TRACE_PRINT("'NPF' or 'NPCAP' not found");
+		return NULL;
+	} while (FALSE);
+
+	if (src[0] != '_' && src[0] != '\\') // NPCAP_ or NPCAP\ are ok
+	{
+		TRACE_PRINT("'NPCAP' not followed by '_' or '\\'");
 		return NULL;
 	}
-	outstr = (PCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, outstr_len);
+	src++; // Move past \ or _
+
+	outstr = (PCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ADAPTER_NAME_LENGTH);
 	if (!outstr) {
 		TRACE_PRINT("HeapAlloc failed");
 		return NULL;
 	}
 
-	strcpy_s(outstr, outstr_len, prefix);
-
-	for (size_t i = 0, j = prefix_len; j < outstr_len - 1; i++, j++)
+	hr = StringCchPrintfA(outstr, ADAPTER_NAME_LENGTH, "%s%s", prefix, src);
+	if (FAILED(hr))
 	{
-		if (src[i] == '\0') {
-			break;
-		}
-		else {
-			outstr[j] = (CHAR)toupper(src[i]);
-		}
+		TRACE_PRINT("Adapter name too long");
+		HeapFree(GetProcessHeap(), 0, outstr);
+		return NULL;
 	}
+
+	if (_strupr_s(outstr, ADAPTER_NAME_LENGTH))
+	{
+		TRACE_PRINT1("_strupr_s failed with %d", errno);
+		HeapFree(GetProcessHeap(), 0, outstr);
+		return NULL;
+	}
+
 	return outstr;
 }
 
 #define NPF_DECLARE_FORMAT_NAME(_Fn, _Prefix) static PCHAR NpcapTranslateAdapterName_##_Fn(LPCSTR AdapterName) \
 { \
-	return NpcapFormatAdapterName(AdapterName, _Prefix, sizeof(_Prefix) - 1); \
+	return NpcapFormatAdapterName(AdapterName, _Prefix); \
 }
 
 NPF_DECLARE_FORMAT_NAME(Standard2Wifi, NPF_DRIVER_COMPLETE_DEVICE_PREFIX NPF_DEVICE_NAMES_TAG_WIFI)
