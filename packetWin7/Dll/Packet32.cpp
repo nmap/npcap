@@ -2958,6 +2958,12 @@ BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes)
 			&BytesReturned,
 			NULL);
 	err = GetLastError();
+	if (err != ERROR_MORE_DATA && BytesReturned != ((ULONGLONG)pModes[0] + 1) * sizeof(ULONG))
+	{
+		TRACE_PRINT2("PacketGetTimestampModes: Got %d bytes but expected %d!", BytesReturned, (pModes[0] + 1) * sizeof(ULONG));
+		// Have to adjust to avoid reading bad data.
+		pModes[0] = (BytesReturned / sizeof(ULONG)) - 1;
+	}
 	TRACE_EXIT();
 	SetLastError(err);
 	return result;
