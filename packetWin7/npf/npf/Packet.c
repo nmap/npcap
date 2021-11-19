@@ -1547,7 +1547,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	// NDIS OID requests use the same buffer for in/out, so the caller must supply the same size buffers, too.
 	if (ulBufLenIn != ulBufLenOut ||
 			ulBufLenIn < sizeof(PACKET_OID_DATA) || // check before dereferencing OidData
-			ulBufLenIn < (sizeof(PACKET_OID_DATA) - 1 + OidData->Length) ||
+			ulBufLenIn < (FIELD_OFFSET(PACKET_OID_DATA, Data) + OidData->Length) ||
 			OidData->Length == 0
 		)
 	{
@@ -1594,7 +1594,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 						Status = STATUS_BUFFER_TOO_SMALL;
 						break;
 					}
-					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
+					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
 					*((PUINT)OidData->Data) = pOpen->pFiltMod->MaxFrameSize;
 					OidData->Length = sizeof(UINT);
 					Status = STATUS_SUCCESS;
@@ -1608,7 +1608,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 						Status = STATUS_BUFFER_TOO_SMALL;
 						break;
 					}
-					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
+					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
 					*((PUINT)OidData->Data) = 1;
 					OidData->Length = sizeof(UINT);
 					Status = STATUS_SUCCESS;
@@ -1621,7 +1621,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 						Status = STATUS_BUFFER_TOO_SMALL;
 						break;
 					}
-					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
+					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
 					*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
 					OidData->Length = sizeof(UINT);
 					Status = STATUS_SUCCESS;
@@ -1632,7 +1632,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 						Status = STATUS_BUFFER_TOO_SMALL;
 						break;
 					}
-					*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(NDIS_LINK_STATE);
+					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(NDIS_LINK_STATE);
 					PNDIS_LINK_STATE pLinkState = (PNDIS_LINK_STATE) OidData->Data;
 					pLinkState->MediaConnectState = MediaConnectStateConnected;
 					pLinkState->MediaDuplexState = MediaDuplexStateFull;
@@ -1670,7 +1670,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 			}
 			else
 			{
-				*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(UINT);
+				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
 				OidData->Length = sizeof(UINT);
 				*((PUINT)OidData->Data) = (UINT)NdisMediumRadio80211;
 				Status = STATUS_SUCCESS;
@@ -1691,7 +1691,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 			Status = STATUS_BUFFER_TOO_SMALL;
 			goto OID_REQUEST_DONE;
 		}
-		*Info = sizeof(PACKET_OID_DATA) - 1 + sizeof(ULONG);
+		*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(ULONG);
 
 		// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
 		if (pOpen->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
@@ -1833,7 +1833,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	{
 		OidData->Length = pRequest->Request.DATA.SET_INFORMATION.BytesRead;
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCSETOID completed, BytesRead = %u", OidData->Length);
-		*Info = sizeof(PACKET_OID_DATA) - 1;
+		*Info = FIELD_OFFSET(PACKET_OID_DATA, Data);
 	}
 	else
 	{
@@ -1855,16 +1855,16 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		}
 
 		// Don't trust that the length fits in the output buffer
-		if (sizeof(PACKET_OID_DATA) - 1 + ulTmp > ulBufLenOut)
+		if (FIELD_OFFSET(PACKET_OID_DATA, Data) + ulTmp > ulBufLenOut)
 		{
-			ulTmp = ulBufLenOut - (sizeof(PACKET_OID_DATA) - 1);
+			ulTmp = ulBufLenOut - FIELD_OFFSET(PACKET_OID_DATA, Data);
 			Status = NDIS_STATUS_INVALID_DATA;
 		}
 		RtlCopyMemory(OidData->Data, OidBuffer, ulTmp);
 		OidData->Length = ulTmp;
 
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
-		*Info = sizeof(PACKET_OID_DATA) - 1 + ulTmp;
+		*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + ulTmp;
 	}
 
 
