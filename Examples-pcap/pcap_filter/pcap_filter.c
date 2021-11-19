@@ -67,7 +67,7 @@ void usage();
 int main(int argc, char **argv)
 {
 	pcap_t *fp;
-	char errbuf[PCAP_ERRBUF_SIZE];
+	char errbuf[PCAP_ERRBUF_SIZE] = {0};
 	char *source = NULL;
 	char *ofilename = NULL;
 	char *filter = NULL;
@@ -122,15 +122,34 @@ int main(int argc, char **argv)
 	// open a capture from the network
 	if (source != NULL)
 	{
-		if ((fp = pcap_open_live(source,		// name of the device
-			65536,								// portion of the packet to capture. 
-												// 65536 grants that the whole packet will be captured on all the MACs.
-			1,									// promiscuous mode (nonzero means promiscuous)
-			1000,								// read timeout
-			errbuf								// error buffer
-			)) == NULL)
-		{
-			fprintf(stderr,"\nUnable to open the adapter: %s\n", errbuf);
+		fprintf(stderr, "pcap_create(%s)\n", source);
+		fp = pcap_create(source, errbuf);
+		if (fp == NULL) {
+			fprintf(stderr, "pcap_create error: %s\n", errbuf);
+			return -2;
+		}
+		fprintf(stderr, "pcap_set_snaplen(65536)\n");
+		res = pcap_set_snaplen(fp, 65536);
+		if (res < 0) {
+			fprintf(stderr, "pcap_set_snaplen error: %s\n", pcap_statustostr(res));
+			return -2;
+		}
+		fprintf(stderr, "pcap_set_promisc(1)\n");
+		res = pcap_set_promisc(fp, 1);
+		if (res < 0) {
+			fprintf(stderr, "pcap_set_promisc error: %s\n", pcap_statustostr(res));
+			return -2;
+		}
+		fprintf(stderr, "pcap_set_timeout(1000)\n");
+		res = pcap_set_timeout(fp, 1000);
+		if (res < 0) {
+			fprintf(stderr, "pcap_set_timeout error: %s\n", pcap_statustostr(res));
+			return -2;
+		}
+		fprintf(stderr, "pcap_activate()\n");
+		res = pcap_activate(fp);
+		if (res < 0) {
+			fprintf(stderr, "pcap_activate error: %s\n", pcap_statustostr(res));
 			return -2;
 		}
 	}

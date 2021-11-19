@@ -66,7 +66,7 @@ void usage();
 void main(int argc, char **argv)
 {
 pcap_t *fp;
-char errbuf[PCAP_ERRBUF_SIZE];
+char errbuf[PCAP_ERRBUF_SIZE] = {0};
 char *source=NULL;
 char *ofilename=NULL;
 char *filter=NULL;
