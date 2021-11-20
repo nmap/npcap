@@ -122,31 +122,26 @@ int main(int argc, char **argv)
 	// open a capture from the network
 	if (source != NULL)
 	{
-		fprintf(stderr, "pcap_create(%s)\n", source);
 		fp = pcap_create(source, errbuf);
 		if (fp == NULL) {
 			fprintf(stderr, "pcap_create error: %s\n", errbuf);
 			return -2;
 		}
-		fprintf(stderr, "pcap_set_snaplen(65536)\n");
 		res = pcap_set_snaplen(fp, 65536);
 		if (res < 0) {
 			fprintf(stderr, "pcap_set_snaplen error: %s\n", pcap_statustostr(res));
 			return -2;
 		}
-		fprintf(stderr, "pcap_set_promisc(1)\n");
 		res = pcap_set_promisc(fp, 1);
 		if (res < 0) {
 			fprintf(stderr, "pcap_set_promisc error: %s\n", pcap_statustostr(res));
 			return -2;
 		}
-		fprintf(stderr, "pcap_set_timeout(1000)\n");
 		res = pcap_set_timeout(fp, 1000);
 		if (res < 0) {
 			fprintf(stderr, "pcap_set_timeout error: %s\n", pcap_statustostr(res));
 			return -2;
 		}
-		fprintf(stderr, "pcap_activate()\n");
 		res = pcap_activate(fp);
 		if (res < 0) {
 			fprintf(stderr, "pcap_activate error: %s\n", pcap_statustostr(res));
