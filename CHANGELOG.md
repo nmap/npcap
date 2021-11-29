@@ -1,4 +1,40 @@
 ﻿
+## Unreleased changes
+
+* Npcap can now tolerate network disconnections or NDIS stack modifications
+  that previously resulted in programs like Wireshark stopping with the error
+  "PacketReceivePacket error: The device has been removed. (1617)". This error
+  may still be returned, but user programs can consider it a transient error.
+  If the network is reconnected, capture can resume on the same handle.
+  Fixes [#506](http://issues.npcap.org/506).
+
+* Improved validation for IRP parameters, resolving potential BSoD crashes that
+  could be triggered by software interacting directly with the driver's device
+  interface. These bugs still affect the last releases of WinPcap.
+
+* Fix an issue with NX pool compatibility that caused Npcap 1.50 and 1.55 to
+  fail to run on Windows 7. Fixes [#536](http://issues.npcap.org/536).
+
+* Fix how the installer handles `/option=enforced`, which was broken in Npcap
+  1.55. Fixes [#556](http://issues.npcap.org/556).
+
+* Further deprecate the "Legacy loopback support" option: The npcapwatchdog
+  scheduled task will not check for the existence of the Npcap Loopback
+  Adapter.
+
+* The `/prior_driver` installer option now selects the Npcap 1.30 driver, since
+  the cross-certificate used for Npcap 1.31 expired 30 minutes prior to
+  signing. See [#536](http://issues.npcap.org/536).
+
+* When installing Npcap in WinPcap API-Compatible mode (the default), the Npcap
+  installer will perform the uninstallation of WinPcap directly instead of
+  running the WinPcap uninstaller. This prevents the WinPcap uninstaller from
+  rebooting the system and allows us to clean up partial or broken installations.
+
+* Replaced a feature of NPFInstall.exe and the SimpleSC.dll NSIS plugin with
+  Powershell commands to improve installer size and compatibility.
+  May fix [#226](http://issues.npcap.org/226).
+
 ## Npcap 1.55 [2021-09-03]
 
 * Npcap installer can now recognize NetCfg status codes indicating that a
