@@ -925,8 +925,6 @@ NPF_DetachOpenInstance(
 	}
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
-	NPF_RemoveFromGroupOpenArray(pOpen); //Remove the Open from the filter module's list
-
 	if (old_state == OpenRunning)
 	{
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -1454,9 +1452,9 @@ NPF_Cleanup(
 
 	NT_ASSERT(Open != NULL);
 
-	NPF_RemoveFromGroupOpenArray(Open); //Remove the Open from the filter module's list
-
 	NPF_CloseOpenInstance(Open);
+
+	NPF_RemoveFromGroupOpenArray(Open); //Remove the Open from the filter module's list
 
 	if (Open->ReadEvent != NULL)
 		KeSetEvent(Open->ReadEvent, 0, FALSE);
@@ -2557,25 +2555,35 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE)FilterModuleContext;
 	PSINGLE_LIST_ENTRY Curr;
 	POPEN_INSTANCE pOpen;
+	LOCK_STATE_EX lockState;
 
 	TRACE_ENTER();
 
+	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	/* This callback is called for loopback module by NPF_Unload. */
 	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused || pFiltMod->Loopback);
 #else
 	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused);
 #endif
+	pFiltMod->AdapterBindingStatus = FilterDetaching;
+	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
-	/* No need to lock the group since we are paused. */
-	for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
+	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
+	Curr = pFiltMod->OpenInstances.Next;
+	while (Curr != NULL)
 	{
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+		Curr = Curr->Next;
+		pFiltMod->OpenInstances.Next = Curr;
+		NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 		NPF_DetachOpenInstance(pOpen);
 
 		if (pOpen->ReadEvent != NULL)
 			KeSetEvent(pOpen->ReadEvent, 0, FALSE);
+		NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 	}
+	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
 	NPF_CloseBinding(pFiltMod);
 
