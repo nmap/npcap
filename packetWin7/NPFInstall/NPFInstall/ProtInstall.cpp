@@ -284,18 +284,11 @@ BOOL InstallDriver()
 {
 	TCHAR szFileFullPath[_MAX_PATH];
 	HRESULT hr = S_OK;
-	PVOID OldValue = NULL;
 
 	TRACE_ENTER();
 
 	do
 	{
-		if (!Wow64DisableWow64FsRedirection(&OldValue))
-		{
-			hr = HRESULT_FROM_WIN32(GetLastError());
-			TRACE_PRINT("Unable to disable filesystem redirection");
-			break;
-		}
 		// Get Path to Service INF File
 		// ----------------------------
 		// The INF file is assumed to be in the same folder as this application...
@@ -304,10 +297,6 @@ BOOL InstallDriver()
 		{
 			hr = HRESULT_FROM_WIN32(GetLastError());
 			TRACE_PRINT("Unable to get INF file path");
-			if (!Wow64RevertWow64FsRedirection(OldValue))
-			{
-				TRACE_PRINT1("Warning! Cannot revert filesystem redirection: 0x%x", GetLastError());
-			}
 			break;
 		}
 
@@ -316,18 +305,13 @@ BOOL InstallDriver()
 		if (hr != S_OK)
 		{
 			ErrMsg(hr, _T("InstallSpecifiedComponent\n"));
-			// Don't break, we still need to revert FS redirection
-		}
-
-		if (!Wow64RevertWow64FsRedirection(OldValue))
-		{
-			TRACE_PRINT1("Warning! Cannot revert filesystem redirection: 0x%x", GetLastError());
 			break;
 		}
+
 	} while (FALSE);
 
-	SetLastError(hr);
 	TRACE_EXIT();
+	SetLastError(hr);
 	return SUCCEEDED(hr);
 }
 
