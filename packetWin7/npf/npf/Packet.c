@@ -1864,7 +1864,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		OidData->Length = ulTmp;
 
 		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
-		*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + ulTmp;
+		*Info = (ULONG_PTR) FIELD_OFFSET(PACKET_OID_DATA, Data) + ulTmp;
 	}
 
 

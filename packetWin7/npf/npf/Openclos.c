@@ -2248,9 +2248,9 @@ NPF_AttachAdapter(
 			AttachParameters->MiniportMediaType);
 		);
 
-		IF_LOUD(DbgPrint("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%I64u]=%x\n",
+		IF_LOUD(DbgPrint("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%u]=%x\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
-			SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME,
+			(UINT) SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME,
 			AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME]);
 		);
 

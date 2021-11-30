@@ -241,7 +241,6 @@ typedef struct _DEVICE_EXTENSION
 	LIST_ENTRY AllOpens;
 	PNDIS_RW_LOCK_EX AllOpensLock;
 	NDIS_HANDLE FilterDriverHandle;
-	PDEVICE_OBJECT pDevObj; // pointer to the DEVICE_OBJECT for this device
 
 	LOOKASIDE_LIST_EX BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
 	LOOKASIDE_LIST_EX NBLCopyPool; // Pool of NPF_NBL_COPY, NPF_NB_COPIES, NPF_SRC_NB objects
