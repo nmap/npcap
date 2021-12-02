@@ -6,21 +6,31 @@ if NOT "%1" == "" SET VERB="%1"
 rem call build_sdk.bat || goto :error
 cd %TOPSRCDIR%
 
-for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version 16 -property installationPath`) do call "%%a\VC\Auxiliary\Build\vcvarsall.bat" x86
+Call :BUILD_TEST x86 || goto :error
+Call :BUILD_TEST x64 || goto :error
+Call :BUILD_TEST ARM64 || goto :error
+exit /b
+
+:BUILD_TEST
+for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version 16 -property installationPath`) do call "%%a\VC\Auxiliary\Build\vcvarsall.bat" %1
 if %ERRORLEVEL% NEQ 0 goto :error
 
-msbuild ".\npcap-sdk\Examples-pcap\MakeAll.sln" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="x86" || goto :error
-msbuild ".\npcap-sdk\Examples-remote\sendcap\sendcap.vcxproj" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="x86" || goto :error
-if NOT "%VERB%" == "Build" exit /b
+msbuild ".\npcap-sdk\Examples-pcap\MakeAll.sln" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="%1" || goto :error
+msbuild ".\npcap-sdk\Examples-remote\sendcap\sendcap.vcxproj" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="%1" || goto :error
+if NOT "%VERB%" == "Build" goto :EOF
 
-copy /b ".\npcap-sdk\Examples-pcap\%MODE%\iflist.exe" test\
-copy /b ".\npcap-sdk\Examples-pcap\%MODE%\pcap_filter.exe" test\
-copy /b ".\npcap-sdk\Examples-pcap\%MODE%\sendpack.exe" test\
-copy /b ".\npcap-sdk\Examples-pcap\%MODE%\readfile.exe" test\
+set BINDIR=%1\
+if "%1" == "x86" set BINDIR=""
 
-copy /b ".\npcap-sdk\Examples-remote\sendcap\%MODE%\sendcap.exe" test\
+mkdir test\%1\
+copy /b ".\npcap-sdk\Examples-pcap\%BINDIR%%MODE%\iflist.exe" test\%1\
+copy /b ".\npcap-sdk\Examples-pcap\%BINDIR%%MODE%\pcap_filter.exe" test\%1\
+copy /b ".\npcap-sdk\Examples-pcap\%BINDIR%%MODE%\sendpack.exe" test\%1\
+copy /b ".\npcap-sdk\Examples-pcap\%BINDIR%%MODE%\readfile.exe" test\%1\
 
-exit /b
+copy /b ".\npcap-sdk\Examples-remote\sendcap\%BINDIR%%MODE%\sendcap.exe" test\%1\
+
+goto :EOF
 
 :error
 echo Something failed: %ERRORLEVEL%
