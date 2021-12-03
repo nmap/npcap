@@ -1,5 +1,6 @@
 SET SAVEPID=0
 
+set ARCH=x86
 rem All platforms support x86 emulation
 Call :DO_TEST x86 || goto :error
 
@@ -9,11 +10,20 @@ if "%PROCESSOR_ARCHITEW6432%" == "" (
 	if "%PROCESSOR_ARCHITECTURE%" == "x86" goto :quit
 
 	rem Otherwise, test the native arch
-	Call :DO_TEST %PROCESSOR_ARCHITECTURE% || goto :error
+	set ARCH=%PROCESSOR_ARCHITECTURE%
 ) else (
 	rem Otherwise, we're running in WOW64, so test the native arch
-	Call :DO_TEST %PROCESSOR_ARCHITEW6432% || goto :error
+	set ARCH=%PROCESSOR_ARCHITEW6432%
 )
+
+if "%ARCH%" == "AMD64" (
+	set ARCH=x64
+) else (
+	if NOT "%ARCH%" == "ARM" goto :error
+	set ARCH=ARM64
+)
+
+Call :DO_TEST %ARCH% || goto :error
 
 :quit
 pause
@@ -22,7 +32,7 @@ exit /b %ERR%
 :error
 set ERR=%ERRORLEVEL%
 if "%ERR%" == "" set ERR=1
-echo Failed: %ERR%
+echo %ARCH% Failed: %ERR%
 if %SAVEPID% NEQ 0 taskkill /PID %SAVEPID%
 goto :quit
 

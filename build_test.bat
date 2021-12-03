@@ -12,11 +12,13 @@ Call :BUILD_TEST ARM64 || goto :error
 exit /b
 
 :BUILD_TEST
-for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version 16 -property installationPath`) do call "%%a\VC\Auxiliary\Build\vcvarsall.bat" %1
+set TOOLSET=%1
+if "%1" == "ARM64" set TOOLSET=amd64_arm64
+for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version 16 -property installationPath`) do call "%%a\VC\Auxiliary\Build\vcvarsall.bat" %TOOLSET%
 if %ERRORLEVEL% NEQ 0 goto :error
 
-msbuild ".\npcap-sdk\Examples-pcap\MakeAll.sln" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="%1" || goto :error
-msbuild ".\npcap-sdk\Examples-remote\sendcap\sendcap.vcxproj" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="%1" || goto :error
+msbuild /p:ForceImportBeforeCppTargets="%CD%\test\static.props" ".\npcap-sdk\Examples-pcap\MakeAll.sln" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="%1" || goto :error
+msbuild /p:ForceImportBeforeCppTargets="%CD%\test\static.props" ".\npcap-sdk\Examples-remote\sendcap\sendcap.vcxproj" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="%1" || goto :error
 if NOT "%VERB%" == "Build" goto :EOF
 
 set BINDIR=%1\
