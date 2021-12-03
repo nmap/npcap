@@ -19,8 +19,7 @@ if "%PROCESSOR_ARCHITEW6432%" == "" (
 if "%ARCH%" == "AMD64" (
 	set ARCH=x64
 ) else (
-	if NOT "%ARCH%" == "ARM" goto :error
-	set ARCH=ARM64
+	if NOT "%ARCH%" == "ARM64" goto :error
 )
 
 Call :DO_TEST %ARCH% || goto :error
