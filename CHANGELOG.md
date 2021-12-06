@@ -1,5 +1,5 @@
 ﻿
-## Unreleased changes
+## Npcap 1.60 [2021-12-06]
 
 * Npcap can now tolerate network disconnections or NDIS stack modifications
   that previously resulted in programs like Wireshark stopping with the error
