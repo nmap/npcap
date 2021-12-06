@@ -19,6 +19,12 @@
 * Fix how the installer handles `/option=enforced`, which was broken in Npcap
   1.55. Fixes [#556](http://issues.npcap.org/556).
 
+* Fix an issue causing `pcap_setmode()`/`PacketSetMode()` with a value of
+  `MODE_CAPT` to fail. `MODE_CAPT` is the default for new handles, so this only
+  affects software that uses `MODE_STAT` and then switches to `MODE_CAPT`, or
+  software that expects a call to `pcap_setmode(MODE_CAPT)` on a handle already
+  in `MODE_CAPT` to succeed. Fixes [#558](http://issues.npcap.org/558).
+
 * Further deprecate the "Legacy loopback support" option: The npcapwatchdog
   scheduled task will not check for the existence of the Npcap Loopback
   Adapter.
