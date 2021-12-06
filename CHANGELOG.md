@@ -24,8 +24,8 @@
   Adapter.
 
 * The `/prior_driver` installer option now selects the Npcap 1.30 driver, since
-  the Microsoft's cross-certificate expired 30 minutes prior to signing Version
-  1.31. See [#536](http://issues.npcap.org/536).
+  Microsoft's cross-certificate expired 30 minutes before we signed Version 1.31.
+  See [#536](http://issues.npcap.org/536).
 
 * When installing Npcap in WinPcap API-Compatible mode (the default), the Npcap
   installer will perform the uninstallation of WinPcap directly instead of
