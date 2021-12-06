@@ -10,10 +10,11 @@
 
 * Improved validation for IRP parameters, resolving potential BSoD crashes that
   could be triggered by software interacting directly with the driver's device
-  interface. These bugs still affect the last releases of WinPcap.
+  interface. These bugs still affect the last releases of WinPcap. Thanks to Ilja
+  Van Sprundel from IOActive for reporting them.
 
 * Fix an issue with NX pool compatibility that caused Npcap 1.50 and 1.55 to
-  fail to run on Windows 7. Fixes [#536](http://issues.npcap.org/536).
+  fail to run on some Windows 7 systems. Fixes [#536](http://issues.npcap.org/536).
 
 * Fix how the installer handles `/option=enforced`, which was broken in Npcap
   1.55. Fixes [#556](http://issues.npcap.org/556).
@@ -23,8 +24,8 @@
   Adapter.
 
 * The `/prior_driver` installer option now selects the Npcap 1.30 driver, since
-  the cross-certificate used for Npcap 1.31 expired 30 minutes prior to
-  signing. See [#536](http://issues.npcap.org/536).
+  the Microsoft's cross-certificate expired 30 minutes prior to signing Version
+  1.31. See [#536](http://issues.npcap.org/536).
 
 * When installing Npcap in WinPcap API-Compatible mode (the default), the Npcap
   installer will perform the uninstallation of WinPcap directly instead of
