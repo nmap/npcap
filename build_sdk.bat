@@ -23,6 +23,8 @@ rem Requires xsltproc and Docbook XSL stylesheets
 call create_docs.bat %1 %2
 
 del %SDKFILENAME%
+copy SDK_README.md .\npcap-sdk\SDK_README.md
+xcopy /v /Y "SDK_README.md" .\npcap-sdk\
 cd .\npcap-sdk
 "C:\Program Files\7-Zip\7z.exe" a ..\%SDKFILENAME% .
 PAUSE

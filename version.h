@@ -105,7 +105,7 @@
 #define /*
  !define /**/ WINPCAP_VER_STRING		"1.60"
 #define /*
- !define /**/ NPCAP_SDK_VERSION "1.11"
+ !define /**/ NPCAP_SDK_VERSION "1.12"
 
 #define WINPCAP_COMPANY_NAME 			"Insecure.Com LLC."
 
