@@ -37,7 +37,7 @@
   [#536](http://issues.npcap.org/536).
 
 * Simplified the code base by removing a bunch of unused or
-  unneccessary code. This includes "kernel dump mode" (MODE_DUMP)
+  unneccessary code. This includes "kernel dump mode" (`MODE_DUMP`)
   which was inherited from WinPcap 3.1 even though it had already been
   deactivated there.  Also removed legacy WinPcap code which allowed
   their (long discontinued) "Pro" version DLL to install the driver
