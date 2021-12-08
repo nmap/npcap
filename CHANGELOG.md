@@ -1,46 +1,84 @@
 ﻿
 ## Npcap 1.60 [2021-12-06]
 
-* Npcap can now tolerate network disconnections or NDIS stack modifications
-  that previously resulted in programs like Wireshark stopping with the error
-  "PacketReceivePacket error: The device has been removed. (1617)". This error
-  may still be returned, but user programs can consider it a transient error.
-  If the network is reconnected, capture can resume on the same handle.
-  Fixes [#506](http://issues.npcap.org/506).
+* Npcap can now tolerate network disconnections or NDIS stack
+  modifications that previously resulted in programs like Wireshark
+  stopping with the error "PacketReceivePacket error: The device has
+  been removed. (1617)". This error may still be returned, but user
+  programs can consider it a transient error.  If the network is
+  reconnected, capture can resume on the same handle.  Fixes
+  [#506](http://issues.npcap.org/506).
 
-* Improved validation for IRP parameters, resolving potential BSoD crashes that
-  could be triggered by software interacting directly with the driver's device
-  interface. These bugs still affect the last releases of WinPcap. Thanks to Ilja
-  Van Sprundel from IOActive for reporting them.
+* Improved validation for IRP parameters, resolving potential BSoD
+  crashes that could be triggered by software interacting directly
+  with the driver's device interface. These bugs still affect the last
+  releases of WinPcap. Thanks to Ilja Van Sprundel from IOActive for
+  reporting them.
 
-* Fix an issue with NX pool compatibility that caused Npcap 1.50 and 1.55 to
-  fail to run on some Windows 7 systems. Fixes [#536](http://issues.npcap.org/536).
+* Fix an issue with NX pool compatibility that caused Npcap 1.50 and
+  1.55 to fail to run on some Windows 7 systems. Fixes
+  [#536](http://issues.npcap.org/536).
 
-* Fix how the installer handles `/option=enforced`, which was broken in Npcap
-  1.55. Fixes [#556](http://issues.npcap.org/556).
+* Fix how the installer handles `/option=enforced`, which was broken
+  in Npcap 1.55. Fixes [#556](http://issues.npcap.org/556).
 
-* Fix an issue causing `pcap_setmode()`/`PacketSetMode()` with a value of
-  `MODE_CAPT` to fail. `MODE_CAPT` is the default for new handles, so this only
-  affects software that uses `MODE_STAT` and then switches to `MODE_CAPT`, or
-  software that expects a call to `pcap_setmode(MODE_CAPT)` on a handle already
-  in `MODE_CAPT` to succeed. Fixes [#558](http://issues.npcap.org/558).
+* Concurrently released the Npcap SDK Version 1.12, which fixes native
+  ARM compilation by including the ARM65 wpcap.lib, among other
+  changes.  The SDK now has its own change log at
+  https://github.com/nmap/npcap/blob/master/SDK_CHANGELOG.md.
 
-* Further deprecate the "Legacy loopback support" option: The npcapwatchdog
-  scheduled task will not check for the existence of the Npcap Loopback
-  Adapter.
+* Further driver source code hardening to catch more bugs
+  before they manifest in worse ways. This includes adding more SAL
+  annotations for code analysis, extra assertions, etc.
 
-* The `/prior_driver` installer option now selects the Npcap 1.30 driver, since
-  Microsoft's cross-certificate expired 30 minutes before we signed Version 1.31.
-  See [#536](http://issues.npcap.org/536).
+* The `/prior_driver` installer option now selects the Npcap 1.30
+  driver, since Microsoft's cross-certificate expired 30 minutes
+  before we signed Version 1.31. See
+  [#536](http://issues.npcap.org/536).
 
-* When installing Npcap in WinPcap API-Compatible mode (the default), the Npcap
-  installer will perform the uninstallation of WinPcap directly instead of
-  running the WinPcap uninstaller. This prevents the WinPcap uninstaller from
-  rebooting the system and allows us to clean up partial or broken installations.
+* Simplified the code base by removing a bunch of unused or
+  unneccessary code. This includes "kernel dump mode" (MODE_DUMP)
+  which was inherited from WinPcap 3.1 even though it had already been
+  deactivated there.  Also removed legacy WinPcap code which allowed
+  their (long discontinued) "Pro" version DLL to install the driver
+  itself. This is not allowed by modern operating systems.  We were
+  able to remove a bunch of code from NPFInstall.exe too.  Updated the
+  INF file to prevent npf_wifi service from being configured, since it
+  was never actually used.
 
-* Replaced a feature of NPFInstall.exe and the SimpleSC.dll NSIS plugin with
-  Powershell commands to improve installer size and compatibility.
-  May fix [#226](http://issues.npcap.org/226).
+* Fix an issue causing `pcap_setmode()`/`PacketSetMode()` with a value
+  of `MODE_CAPT` to fail. `MODE_CAPT` is the default for new handles,
+  so this only affects software that uses `MODE_STAT` and then
+  switches to `MODE_CAPT`, or software that expects a call to
+  `pcap_setmode(MODE_CAPT)` on a handle already in `MODE_CAPT` to
+  succeed. Fixes [#558](http://issues.npcap.org/558).
+
+* When installing Npcap in WinPcap API-Compatible mode (the default),
+  the Npcap installer will perform the uninstallation of WinPcap
+  directly instead of running the WinPcap uninstaller. This prevents
+  the WinPcap uninstaller from rebooting the system and allows us to
+  clean up partial or broken installations.
+
+* Further deprecate the "Legacy loopback support" option: The
+  npcapwatchdog scheduled task will not check for the existence of the
+  Npcap Loopback Adapter.
+
+* Added the PnpLockDown directive to the npcap.sys INF file for
+  additional Windows file protection of the driver binary.
+
+* Replaced a feature of NPFInstall.exe and the SimpleSC.dll NSIS
+  plugin with Powershell commands to improve installer size and
+  compatibility.  May fix [#226](http://issues.npcap.org/226).
+
+* While you won't see it in the code itself, we dramatically improved
+  our automated build and testing proceses.  We now run automated
+  native-arch builds and testing of multiple programs (particularly
+  the SDK Examples) on all 3 architectures (x86, x64, and ARM). All
+  tests are run with the debug build of the driver (assertions on) and
+  Driver Verifier with at least standard settings, and only when that
+  passes is the release build run through the same tests, also with
+  Driver Verifier.  The tests are also run in x86 emulation on x64 and
+  ARM.
 
 ## Npcap 1.55 [2021-09-03]
 
