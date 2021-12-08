@@ -23,7 +23,7 @@
   in Npcap 1.55. Fixes [#556](http://issues.npcap.org/556).
 
 * Concurrently released the Npcap SDK Version 1.12, which fixes native
-  ARM compilation by including the ARM65 wpcap.lib, among other
+  ARM compilation by including the ARM64 wpcap.lib, among other
   changes.  The SDK now has its own change log at
   https://github.com/nmap/npcap/blob/master/SDK_CHANGELOG.md.
 
@@ -63,7 +63,7 @@
   npcapwatchdog scheduled task will not check for the existence of the
   Npcap Loopback Adapter.
 
-* Added the PnpLockDown directive to the npcap.sys INF file for
+* Added the `PnpLockDown` directive to the npcap.sys INF file for
   additional Windows file protection of the driver binary.
 
 * Replaced a feature of NPFInstall.exe and the SimpleSC.dll NSIS
