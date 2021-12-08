@@ -39,7 +39,7 @@
 * Simplified the code base by removing a bunch of unused or
   unneccessary code. This includes "kernel dump mode" (`MODE_DUMP`)
   which was inherited from WinPcap 3.1 even though it had already been
-  deactivated there.  Also removed legacy WinPcap code which allowed
+  deactivated there in 2005.  Also removed legacy WinPcap code which allowed
   their (long discontinued) "Pro" version DLL to install the driver
   itself. This is not allowed by modern operating systems.  We were
   able to remove a bunch of code from NPFInstall.exe too.  Updated the
