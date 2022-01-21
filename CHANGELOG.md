@@ -95,8 +95,8 @@
   to ensure that Npcap hasn't been uninstalled or changed. If Npcap
   still exists and meets your requirements, the installer quits
   immediately. These new options are documented at
-  https://nmap.org/npcap/guide/npcap-users-guide.html and Nmap OEM is
-  described at https://nmap.org/npcap/#oem. Fixes
+  https://npcap.com/guide/npcap-users-guide.html and Nmap OEM is
+  described at https://npcap.com/oem/ . Fixes
   [#523](http://issues.npcap.org/523).
 
 * Fixed an installation failure (0xe0000247) on Windows 8.1/Server 2012 R2 and
@@ -220,7 +220,7 @@
 * Upgrade wpcap.dll to libpcap 1.10. This change enables software to use
   `pcap_set_tstamp_type()` to set the packet capture time source and precision
   per capture handle. The currently-supported types (see
-  [`pcap-tstamp`](https://nmap.org/npcap/guide/wpcap/pcap-tstamp.html)) are:
+  [`pcap-tstamp`](https://npcap.com/guide/wpcap/pcap-tstamp.html)) are:
   * `PCAP_TSTAMP_HOST_HIPREC_UNSYNCED` - default, maps to `TIMESTAMPMODE_SINGLE_SYNCHRONIZATION`
   * `PCAP_TSTAMP_HOST_LOWPREC` - maps to `TIMESTAMPMODE_QUERYSYSTEMTIME`
   * `PCAP_TSTAMP_HOST_HIPREC` - maps to `TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE`
@@ -466,7 +466,7 @@
   connectivity when they are removed. See [#1998](https://issues.nmap.org/1998).
 
 * Include debug symbols for `wpcap.dll` in our debug symbols zip file at
-  https://npcap.org/#download . Fixes [#1844](https://issues.nmap.org/1844).
+  https://npcap.com/#download . Fixes [#1844](https://issues.nmap.org/1844).
 
 * Fixed [#1996](https://issues.nmap.org/1996): heap corruption in
   `NPFInstall.exe` since Npcap 0.9989 leading to hung installs when the "raw
@@ -574,7 +574,7 @@
   newer Windows WFP and NDIS features for better performance and
   compatibility. Folks who must still run these ancient Windows releases
   should use Npcap version 0.9984 from
-  https://nmap.org/npcap/dist/?C=M;O=D. That was the last Npcap release
+  https://npcap.com/dist/?C=M;O=D. That was the last Npcap release
   to support the old (and less secure) SHA-128 driver signatures
   required by these Windows Vista/2008. Please note that Windows Server
   2008 r2 and Windows 7 are still supported in this release even though
@@ -655,7 +655,7 @@
   `Edition` value under the npcap service's Parameters registry key.
 
 * Fixed a couple of issues with the
-  [DiagReport tool](https://npcap.org/guide/npcap-users-guide.html#npcap-issues-diagreport)
+  [DiagReport tool](https://npcap.com/guide/npcap-users-guide.html#npcap-issues-diagreport)
   used for bug report diagnostics: remove extraneous partial output lines
   ([#1760](http://issues.nmap.org/1760)), and avoid relying on the Server
   service to determine privilege level ([#1757](http://issues.nmap.org/1757)).
@@ -875,7 +875,7 @@
 * Detect in-use WinPcap installations before attempting to overwrite DLLs.
   Offer to terminate the processes just as we do for in-use Npcap.
 
-* [Improved documentation](https://npcap.org/guide/) based on WinPcap
+* [Improved documentation](https://npcap.com/guide/) based on WinPcap
   documentation including updates for Npcap changes. Example code builds on
   Visual Studio 2015 and works with Npcap. Npcap SDK 1.01 includes these changes.
 
@@ -974,7 +974,7 @@
   for companies who only want to use Nmap internally.  We also still
   offer the Npcap OEM redistribution license for companies wanting to
   redistribute Npcap with their software.  See
-  https://nmap.org/npcap/oem/.
+  https://npcap.com/oem/.
 
 * Improved installation of the Npcap Loopback Adapter, ensuring it can be
   correctly removed and reinstalled.
@@ -1012,7 +1012,7 @@
   `/winpcap_mode=no` command-line option.
 
 * The Silent installation feature of the Npcap installer is now limited to the
-  [Npcap OEM edition](https://nmap.org/npcap/oem/).
+  [Npcap OEM edition](https://npcap.com/oem/).
 
 ## Npcap 0.96 [2017-10-31]
 
@@ -1045,7 +1045,7 @@
   causing some installation failures. Fixes [#994](http://issues.nmap.org/994).
 
 * Silent installs will not downgrade the Npcap version unless the new
-  `/downgrade=yes` option is given. Any version of [Npcap OEM](http://nmap.org/npcap/oem/)
+  `/downgrade=yes` option is given. Any version of [Npcap OEM](http://npcap.com/oem/)
    will be considered a "newer version" than any non-OEM version.
 
 ## Npcap 0.94 [2017-08-29]
@@ -1123,7 +1123,7 @@
 
 ## Npcap 0.81 [2017-02-16]
 
-* Moved distribution of executable installer to http://npcap.org/ from Github.
+* Moved distribution of executable installer to http://npcap.com/ from Github.
 
 * Write log files in UTF-8 encoding to preserve localized error messages.
 

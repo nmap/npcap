@@ -18,18 +18,18 @@
 
     <para>
       Npcap is distributed as a signed executable installer, downloadable from
-      <ulink url="https://nmap.org/npcap/#download">Nmap.com</ulink>. Major
+      <ulink url="https://npcap.com/#download">Nmap.com</ulink>. Major
       versions are backwards-compatible, and users of the free non-commercial
       version are encouraged to upgrade regularly for security and stability
       fixes. Software distributors may have separate requirements for supported
       Npcap versions.  Please refer to
-      <ulink url="http://www.npcap.org/#License">the Npcap License</ulink> for
+      <ulink url="http://npcap.com/#license">the Npcap License</ulink> for
       terms of use and redistribution.</para>
 
     <para>
       The Npcap installer and uninstaller are easy to use in
       <quote>Graphical Mode</quote> (direct run) and <quote>Silent Mode</quote> (run with
-      <option>/S</option> parameter, available only with <ulink url="https://nmap.org/npcap/oem/">Npcap OEM</ulink>).
+      <option>/S</option> parameter, available only with <ulink url="https://npcap.com/oem/">Npcap OEM</ulink>).
     </para>
 
     <sect3 id="npcap-installation-options">

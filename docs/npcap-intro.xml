@@ -210,7 +210,7 @@
     <itemizedlist>
       <listitem>
 	<para>The <ulink
-	url="https://nmap.org/npcap/oem/redist.html">Npcap OEM
+	url="https://npcap.com/oem/redist.html">Npcap OEM
 	Redistribution License</ulink> is for companies that wish to
 	distribute Npcap OEM within their products (the free Npcap
 	edition does not allow this). Licensees generally use the
@@ -221,7 +221,7 @@
       </listitem>
       <listitem>
 	<para>The <ulink
-	url="https://nmap.org/npcap/oem/internal.html">Npcap OEM
+	url="https://npcap.com/oem/internal.html">Npcap OEM
 	Internal-Use License</ulink> is for organizations that wish to
 	use Npcap OEM internally without redistribution outside their
 	organization. This allows them to bypass the 5-system usage
@@ -237,7 +237,7 @@
     <title>Obtaining Npcap</title>
 
     <para>The latest Npcap release can always be found
-      <ulink url="https://nmap.org/npcap/#download">on the Npcap
+      <ulink url="https://npcap.com/#download">on the Npcap
         website</ulink> as an executable installer and as a source code
       archive.</para>
   </sect2>
