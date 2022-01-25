@@ -102,13 +102,12 @@
         is an e-version string like <quote>5.0.7.424</quote>
       </para>
       <screen>
-        GetDllVersion "C:\Program Files\Npcap\NPFInstall.exe" $R0 $R1
-        IntOp $R2 $R0 / 0x00010000
-        IntOp $R3 $R0 &amp; 0x0000FFFF
-        IntOp $R4 $R1 / 0x00010000
-        IntOp $R5 $R1 &amp; 0x0000FFFF
-        StrCpy $inst_ver "$R2.$R3.$R4.$R5"
-      </screen>
+GetDllVersion "C:\Program Files\Npcap\NPFInstall.exe" $R0 $R1
+IntOp $R2 $R0 / 0x00010000
+IntOp $R3 $R0 &amp; 0x0000FFFF
+IntOp $R4 $R1 / 0x00010000
+IntOp $R5 $R1 &amp; 0x0000FFFF
+StrCpy $inst_ver "$R2.$R3.$R4.$R5"</screen>
 
       <para>
         You can check the installation options of an already installed Npcap by reading the registry
@@ -137,11 +136,10 @@
       </para>
 
       <screen>
-        char *pcap_version = pcap_lib_version();
-        printf("%s", pcap_version);
-        // Npcap output: "Npcap version 0.92, based on libpcap version 1.8.1"
-        // WinPcap output: "WinPcap version 4.1.3"
-      </screen>
+char *pcap_version = pcap_lib_version();
+printf("%s", pcap_version);
+// Npcap output: "Npcap version 0.92, based on libpcap version 1.8.1"
+// WinPcap output: "WinPcap version 4.1.3"</screen>
 
       <para>Npcap requires the <varname>npcap</varname> service to be running. If
         installed in <quote>WinPcap Compatible Mode</quote>, the
@@ -412,51 +410,50 @@
           <example id="npcap-ex-wlanhelper-man">
             <title>WlanHelper Man</title>
             <screen>
-              C:\> <userinput>WlanHelper.exe</userinput>
-              WlanHelper for Npcap 0.91 ( http://npcap.com )
-              Usage: WlanHelper [Commands]
-              or: WlanHelper {Interface Name or GUID} [Options]
+C:\> <userinput>WlanHelper.exe</userinput>
+WlanHelper for Npcap 0.91 ( http://npcap.com )
+Usage: WlanHelper [Commands]
+or: WlanHelper {Interface Name or GUID} [Options]
 
-              OPTIONS:
-              mode                  : Get interface operation mode
-              mode &lt;managed|monitor|master|..&gt;  : Set interface operation mode
-              modes                 : Get all operation modes supported by the interface, comma-separated
-              channel               : Get interface channel
-              channel &lt;1-14&gt;            : Set interface channel (only works in monitor mode)
-              freq                  : Get interface frequency
-              freq &lt;VALUE&gt;              : Set interface frequency (only works in monitor mode)
-              modu                  : Get interface modulation
-              modu &lt;dsss|fhss|irbaseband|ofdm|hrdsss|erp|ht|vht|ihv (VALUE)|..&gt; : Set interface modulation
-              modus                 : Get all modulations supported by the interface, comma-separated
+OPTIONS:
+mode                  : Get interface operation mode
+mode &lt;managed|monitor|master|..&gt;  : Set interface operation mode
+modes                 : Get all operation modes supported by the interface, comma-separated
+channel               : Get interface channel
+channel &lt;1-14&gt;            : Set interface channel (only works in monitor mode)
+freq                  : Get interface frequency
+freq &lt;VALUE&gt;              : Set interface frequency (only works in monitor mode)
+modu                  : Get interface modulation
+modu &lt;dsss|fhss|irbaseband|ofdm|hrdsss|erp|ht|vht|ihv (VALUE)|..&gt; : Set interface modulation
+modus                 : Get all modulations supported by the interface, comma-separated
 
-              COMMANDS:
-              -i                    : Enter the interactive mode
-              -h                    : Print this help summary page
+COMMANDS:
+-i                    : Enter the interactive mode
+-h                    : Print this help summary page
 
-              OPERATION MODES:
-              managed   : The Extensible Station (ExtSTA) operation mode
-              monitor   : The Network Monitor (NetMon) operation mode
-              master    : The Extensible Access Point (ExtAP) operation mode (supported from Windows 7 and later)
-              wfd_device    : The Wi-Fi Direct Device operation mode (supported from Windows 8 and later)
-              wfd_owner : The Wi-Fi Direct Group Owner operation mode (supported from Windows 8 and later)
-              wfd_client    : The Wi-Fi Direct Client operation mode (supported from Windows 8 and later)
+OPERATION MODES:
+managed   : The Extensible Station (ExtSTA) operation mode
+monitor   : The Network Monitor (NetMon) operation mode
+master    : The Extensible Access Point (ExtAP) operation mode (supported from Windows 7 and later)
+wfd_device    : The Wi-Fi Direct Device operation mode (supported from Windows 8 and later)
+wfd_owner : The Wi-Fi Direct Group Owner operation mode (supported from Windows 8 and later)
+wfd_client    : The Wi-Fi Direct Client operation mode (supported from Windows 8 and later)
 
-              802.11 MODULATIONS (https://en.wikipedia.org/wiki/IEEE_802.11):
-              802.11-1997   : dsss, fhss
-              802.11a   : ofdm
-              802.11b   : dsss
-              802.11g   : ofdm
-              802.11n   : mimo-ofdm
-              802.11ac  : mimo-ofdm
+802.11 MODULATIONS (https://en.wikipedia.org/wiki/IEEE_802.11):
+802.11-1997   : dsss, fhss
+802.11a   : ofdm
+802.11b   : dsss
+802.11g   : ofdm
+802.11n   : mimo-ofdm
+802.11ac  : mimo-ofdm
 
-              EXAMPLES:
-              WlanHelper Wi-Fi mode
-              WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11
-              WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2
-              WlanHelper "Wireless Network Connection" mode monitor
+EXAMPLES:
+WlanHelper Wi-Fi mode
+WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da channel 11
+WlanHelper 42dfd47a-2764-43ac-b58e-3df569c447da freq 2
+WlanHelper "Wireless Network Connection" mode monitor
 
-              SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPLES
-            </screen>
+SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPLES</screen>
           </example>
           <para>
             An example:
@@ -464,41 +461,40 @@
           <example id="npcap-ex-wlanhelper-api">
             <title>WlanHelper API Usage</title>
             <screen>
-              C:\> <userinput>netsh wlan show interfaces</userinput>
+C:\> <userinput>netsh wlan show interfaces</userinput>
 
-              There is 1 interface on the system:
+There is 1 interface on the system:
 
-              Name                   : <replaceable>Wi-Fi</replaceable>
-              Description            : Qualcomm Atheros AR9485WB-EG Wireless Network Adapter
-              GUID                   : <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable>
-              Physical address       : a4:db:30:d9:3a:9a
-              State                  : connected
-              SSID                   : LUO-PC_Network
-              BSSID                  : d8:15:0d:72:8c:18
-              Network type           : Infrastructure
-              Radio type             : 802.11n
-              Authentication         : WPA2-Personal
-              Cipher                 : CCMP
-              Connection mode        : Auto Connect
-              Channel                : 1
-              Receive rate (Mbps)    : 150
-              Transmit rate (Mbps)   : 150
-              Signal                 : 100%
-              Profile                : LUO-PC_Network
+Name                   : <replaceable>Wi-Fi</replaceable>
+Description            : Qualcomm Atheros AR9485WB-EG Wireless Network Adapter
+GUID                   : <replaceable>42dfd47a-2764-43ac-b58e-3df569c447da</replaceable>
+Physical address       : a4:db:30:d9:3a:9a
+State                  : connected
+SSID                   : LUO-PC_Network
+BSSID                  : d8:15:0d:72:8c:18
+Network type           : Infrastructure
+Radio type             : 802.11n
+Authentication         : WPA2-Personal
+Cipher                 : CCMP
+Connection mode        : Auto Connect
+Channel                : 1
+Receive rate (Mbps)    : 150
+Transmit rate (Mbps)   : 150
+Signal                 : 100%
+Profile                : LUO-PC_Network
 
-              Hosted network status  : Not available
+Hosted network status  : Not available
 
-              C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode</userinput>
-              managed
-              C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode monitor</userinput>
-              Success
-              C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode </userinput>
-              monitor
-              C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode managed</userinput>
-              Success
-              C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode</userinput>
-              managed
-            </screen>
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode</userinput>
+managed
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode monitor</userinput>
+Success
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode </userinput>
+monitor
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode managed</userinput>
+Success
+C:\> <userinput>WlanHelper.exe <replaceable>wi-fi</replaceable> mode</userinput>
+managed</screen>
           </example>
         </sect5>
       </sect4>
