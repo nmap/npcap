@@ -3264,7 +3264,6 @@
      <text:p text:style-name="P125">Removed the 1983 copyright notice from UC Berkeley since that code is no longer in Npcap. The notice from their 1990’s contributions is still there.</text:p>
     </text:list-item>
    </text:list>
-   <text:p text:style-name="P20"><text:a xlink:type="simple" xlink:href="https://npcap.org/src/WinPcap-License-And-Acknowledgements.txt" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T91"/></text:a></text:p>
    <text:p text:style-name="P112">Copyright (c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy).</text:p>
    <text:p text:style-name="P112">Copyright (c) 2005 - 2010 CACE Technologies, Davis (California).</text:p>
    <text:p text:style-name="P112">All rights reserved.</text:p>
@@ -3310,9 +3309,9 @@
    <text:p text:style-name="P99"/>
    <text:p text:style-name="P107">Copyright Statements and Acknowledgement/Disclaimer Text</text:p>
    <text:p text:style-name="P105"/>
-   <text:p text:style-name="P104">Here is the complete copyright/acknowledgement/disclaimer text as required by the various open source licenses (see above). <text:s/>We’re including this both to fulfill the license agreements ourselves, and as a template that companies distributing Npcap (which is only allowed with <text:span text:style-name="T150">the redistribution</text:span> license <text:span text:style-name="T150">described at </text:span><text:a xlink:type="simple" xlink:href="https://nmap.org/npcap/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T150">https://nmap.org/npcap/oem/redist.html</text:span></text:a><text:span text:style-name="T150">) </text:span>can use in their own documentation as well.</text:p>
+   <text:p text:style-name="P104">Here is the complete copyright/acknowledgement/disclaimer text as required by the various open source licenses (see above). <text:s/>We’re including this both to fulfill the license agreements ourselves, and as a template that companies distributing Npcap (which is only allowed with <text:span text:style-name="T150">the redistribution</text:span> license <text:span text:style-name="T150">described at </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T150">https://npcap.com/oem/redist.html</text:span></text:a><text:span text:style-name="T150">) </text:span>can use in their own documentation as well.</text:p>
    <text:p text:style-name="P104"/>
-   <text:p text:style-name="P101">Npcap is Copyright (c) 2013-202<text:span text:style-name="T150">1</text:span> Insecure.Com LLC. All rights reserved. See <text:a xlink:type="simple" xlink:href="https://npcap.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.org</text:a> for details. </text:p>
+   <text:p text:style-name="P101">Npcap is Copyright (c) 2013-202<text:span text:style-name="T150">1</text:span> Insecure.Com LLC. All rights reserved. See <text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com</text:a> for details. </text:p>
    <text:p text:style-name="P101"/>
    <text:p text:style-name="P100">Portions <text:span text:style-name="T149">of Npcap are Copyright </text:span>(c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy).</text:p>
    <text:p text:style-name="P100">Portions <text:span text:style-name="T149">of Npcap are Copyright </text:span>(c) 2005 - 2010 CACE Technologies, Davis (California).</text:p>
