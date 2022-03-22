@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <office:document xmlns:officeooo="http://openoffice.org/2009/office" xmlns:css3t="http://www.w3.org/TR/css3-text/" xmlns:grddl="http://www.w3.org/2003/g/data-view#" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:rpt="http://openoffice.org/2005/report" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:ooo="http://openoffice.org/2004/office" xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" xmlns:formx="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0" xmlns:calcext="urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0" xmlns:drawooo="http://openoffice.org/2010/draw" xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0" xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" xmlns:ooow="http://openoffice.org/2004/writer" xmlns:oooc="http://openoffice.org/2004/calc" xmlns:tableooo="http://openoffice.org/2009/table" xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0" xmlns:math="http://www.w3.org/1998/Math/MathML" xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" xmlns:dom="http://www.w3.org/2001/xml-events" xmlns:xforms="http://www.w3.org/2002/xforms" office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.text">
- <office:meta><dc:title>Nmap Technology License Agreement</dc:title><meta:initial-creator>Insecure.Com LLC</meta:initial-creator><meta:creation-date>2016-08-17T21:15:00</meta:creation-date><dc:date>2022-01-25T14:15:09.090000000</dc:date><meta:print-date>2016-08-17T21:19:00</meta:print-date><meta:editing-cycles>35</meta:editing-cycles><meta:editing-duration>PT23H14M2S</meta:editing-duration><meta:generator>LibreOffice/6.4.7.2$Linux_X86_64 LibreOffice_project/40$Build-2</meta:generator><meta:document-statistic meta:table-count="0" meta:image-count="0" meta:object-count="0" meta:page-count="5" meta:paragraph-count="93" meta:word-count="1936" meta:character-count="13239" meta:non-whitespace-character-count="11358"/><meta:template xlink:type="simple" xlink:actuate="onRequest" xlink:title="Normal" xlink:href=""/></office:meta>
+ <office:meta><dc:title>Third-Party Open Source Software Used By Npcap</dc:title><meta:initial-creator>Insecure.Com LLC</meta:initial-creator><meta:creation-date>2016-08-17T21:15:00</meta:creation-date><dc:date>2022-01-25T14:15:09.090000000</dc:date><meta:print-date>2016-08-17T21:19:00</meta:print-date><meta:editing-cycles>35</meta:editing-cycles><meta:editing-duration>PT23H14M2S</meta:editing-duration><meta:generator>LibreOffice/6.4.7.2$Linux_X86_64 LibreOffice_project/40$Build-2</meta:generator><meta:document-statistic meta:table-count="0" meta:image-count="0" meta:object-count="0" meta:page-count="5" meta:paragraph-count="93" meta:word-count="1936" meta:character-count="13239" meta:non-whitespace-character-count="11358"/><meta:template xlink:type="simple" xlink:actuate="onRequest" xlink:title="Normal" xlink:href=""/></office:meta>
  <office:settings>
   <config:config-item-set config:name="ooo:view-settings">
-   <config:config-item config:name="ViewAreaTop" config:type="long">0</config:config-item>
+   <config:config-item config:name="ViewAreaTop" config:type="long">14393</config:config-item>
    <config:config-item config:name="ViewAreaLeft" config:type="long">0</config:config-item>
    <config:config-item config:name="ViewAreaWidth" config:type="long">36038</config:config-item>
    <config:config-item config:name="ViewAreaHeight" config:type="long">49638</config:config-item>
@@ -13,12 +13,12 @@
    <config:config-item-map-indexed config:name="Views">
     <config:config-item-map-entry>
      <config:config-item config:name="ViewId" config:type="string">view2</config:config-item>
-     <config:config-item config:name="ViewLeft" config:type="long">21138</config:config-item>
-     <config:config-item config:name="ViewTop" config:type="long">17240</config:config-item>
+     <config:config-item config:name="ViewLeft" config:type="long">16436</config:config-item>
+     <config:config-item config:name="ViewTop" config:type="long">22199</config:config-item>
      <config:config-item config:name="VisibleLeft" config:type="long">0</config:config-item>
-     <config:config-item config:name="VisibleTop" config:type="long">0</config:config-item>
+     <config:config-item config:name="VisibleTop" config:type="long">14393</config:config-item>
      <config:config-item config:name="VisibleRight" config:type="long">36036</config:config-item>
-     <config:config-item config:name="VisibleBottom" config:type="long">49636</config:config-item>
+     <config:config-item config:name="VisibleBottom" config:type="long">64029</config:config-item>
      <config:config-item config:name="ZoomType" config:type="short">0</config:config-item>
      <config:config-item config:name="ViewLayoutColumns" config:type="short">1</config:config-item>
      <config:config-item config:name="ViewLayoutBookMode" config:type="boolean">false</config:config-item>
@@ -92,7 +92,7 @@
    </config:config-item-map-indexed>
    <config:config-item config:name="PrinterSetup" config:type="base64Binary"/>
    <config:config-item config:name="AddParaTableSpacingAtStart" config:type="boolean">true</config:config-item>
-   <config:config-item config:name="Rsid" config:type="int">5870826</config:config-item>
+   <config:config-item config:name="Rsid" config:type="int">5981002</config:config-item>
    <config:config-item config:name="EmbeddedDatabaseName" config:type="string"/>
    <config:config-item config:name="FieldAutoUpdate" config:type="boolean">true</config:config-item>
    <config:config-item config:name="OutlineLevelYieldsNumbering" config:type="boolean">false</config:config-item>
@@ -148,8 +148,8 @@
   <style:font-face style:name="Lucida Sans" svg:font-family="&apos;Lucida Sans&apos;" style:font-family-generic="swiss"/>
   <style:font-face style:name="Liberation Serif" svg:font-family="&apos;Liberation Serif&apos;" style:font-family-generic="roman" style:font-pitch="variable"/>
   <style:font-face style:name="Times" svg:font-family="Times" style:font-family-generic="roman" style:font-pitch="variable"/>
-  <style:font-face style:name="Times New Roman" svg:font-family="&apos;Times New Roman&apos;" style:font-family-generic="roman" style:font-pitch="variable"/>
-  <style:font-face style:name="Times New Roman1" svg:font-family="&apos;Times New Roman&apos;" style:font-adornments="Bold" style:font-family-generic="roman" style:font-pitch="variable"/>
+  <style:font-face style:name="Times New Roman1" svg:font-family="&apos;Times New Roman&apos;" style:font-family-generic="roman" style:font-pitch="variable"/>
+  <style:font-face style:name="Times New Roman" svg:font-family="&apos;Times New Roman&apos;" style:font-adornments="Bold" style:font-family-generic="roman" style:font-pitch="variable"/>
   <style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss" style:font-pitch="variable"/>
   <style:font-face style:name="Lohit Devanagari" svg:font-family="&apos;Lohit Devanagari&apos;" style:font-family-generic="system" style:font-pitch="variable"/>
   <style:font-face style:name="Source Han Sans CN Regular" svg:font-family="&apos;Source Han Sans CN Regular&apos;" style:font-family-generic="system" style:font-pitch="variable"/>
@@ -157,7 +157,7 @@
  <office:styles>
   <style:default-style style:family="graphic">
    <style:graphic-properties svg:stroke-color="#3465a4" draw:fill-color="#729fcf" fo:wrap-option="no-wrap" draw:shadow-offset-x="0.1181in" draw:shadow-offset-y="0.1181in" draw:start-line-spacing-horizontal="0.1114in" draw:start-line-spacing-vertical="0.1114in" draw:end-line-spacing-horizontal="0.1114in" draw:end-line-spacing-vertical="0.1114in" style:flow-with-text="false"/>
-   <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:writing-mode="lr-tb" style:font-independent-line-spacing="false">
+   <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:font-independent-line-spacing="false">
     <style:tab-stops/>
    </style:paragraph-properties>
    <style:text-properties style:use-window-font-color="true" style:font-name="Liberation Serif" fo:font-size="12pt" fo:language="en" fo:country="US" style:letter-kerning="true" style:font-name-asian="Source Han Sans CN Regular" style:font-size-asian="10.5pt" style:language-asian="zh" style:country-asian="CN" style:font-name-complex="Lohit Devanagari" style:font-size-complex="12pt" style:language-complex="hi" style:country-complex="IN"/>
@@ -174,7 +174,7 @@
   </style:default-style>
   <style:style style:name="Standard" style:family="paragraph" style:class="text">
    <style:paragraph-properties fo:orphans="0" fo:widows="0" style:writing-mode="lr-tb"/>
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-family="&apos;Times New Roman&apos;" style:font-family-generic="roman" style:font-pitch="variable" fo:font-size="11pt" fo:language="en" fo:country="US" style:font-name-asian="Times New Roman" style:font-family-asian="&apos;Times New Roman&apos;" style:font-family-generic-asian="roman" style:font-pitch-asian="variable" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-family-complex="&apos;Times New Roman&apos;" style:font-family-generic-complex="roman" style:font-pitch-complex="variable" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-family="&apos;Times New Roman&apos;" style:font-family-generic="roman" style:font-pitch="variable" fo:font-size="11pt" fo:language="en" fo:country="US" style:font-name-asian="Times New Roman1" style:font-family-asian="&apos;Times New Roman&apos;" style:font-family-generic-asian="roman" style:font-pitch-asian="variable" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-family-complex="&apos;Times New Roman&apos;" style:font-family-generic-complex="roman" style:font-pitch-complex="variable" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="Heading" style:family="paragraph" style:parent-style-name="Standard" style:next-style-name="Standard" style:default-outline-level="1" style:list-style-name="" style:class="text">
    <style:paragraph-properties fo:margin-top="0.1665in" fo:margin-bottom="0.0417in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false"/>
@@ -221,11 +221,11 @@
   </style:style>
   <style:style style:name="Title" style:family="paragraph" style:parent-style-name="Heading" style:class="chapter">
    <style:paragraph-properties fo:text-align="center" style:justify-single-word="false"/>
-   <style:text-properties style:font-name="Times New Roman1" fo:font-family="&apos;Times New Roman&apos;" style:font-style-name="Bold" style:font-family-generic="roman" style:font-pitch="variable" fo:font-size="20pt" fo:font-weight="bold" style:font-size-asian="28pt" style:font-weight-asian="bold" style:font-size-complex="28pt" style:font-weight-complex="bold"/>
+   <style:text-properties style:font-name="Times New Roman" fo:font-family="&apos;Times New Roman&apos;" style:font-style-name="Bold" style:font-family-generic="roman" style:font-pitch="variable" fo:font-size="20pt" fo:font-weight="bold" style:font-size-asian="28pt" style:font-weight-asian="bold" style:font-size-complex="28pt" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="Subtitle" style:family="paragraph" style:parent-style-name="Heading" style:class="chapter">
    <style:paragraph-properties fo:margin-top="0.0417in" fo:margin-bottom="0.0835in" loext:contextual-spacing="false" fo:text-align="center" style:justify-single-word="false"/>
-   <style:text-properties style:font-name="Times New Roman1" fo:font-family="&apos;Times New Roman&apos;" style:font-style-name="Bold" style:font-family-generic="roman" style:font-pitch="variable" fo:font-size="18pt" style:font-size-asian="18pt" style:font-size-complex="18pt"/>
+   <style:text-properties style:font-name="Times New Roman" fo:font-family="&apos;Times New Roman&apos;" style:font-style-name="Bold" style:font-family-generic="roman" style:font-pitch="variable" fo:font-size="18pt" style:font-size-asian="18pt" style:font-size-complex="18pt"/>
   </style:style>
   <style:style style:name="Quotations" style:family="paragraph" style:parent-style-name="Standard" style:class="html">
    <style:paragraph-properties fo:margin-left="0.3937in" fo:margin-right="0.3937in" fo:margin-top="0in" fo:margin-bottom="0.1965in" loext:contextual-spacing="false" fo:text-indent="0in" style:auto-text-indent="false"/>
@@ -342,45 +342,32 @@
    <style:text-properties officeooo:paragraph-rsid="004f76bd"/>
   </style:style>
   <style:style style:name="P11" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:orphans="0" fo:widows="0" style:writing-mode="lr-tb"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" officeooo:paragraph-rsid="005732ba" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="P12" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:orphans="0" fo:widows="0" style:writing-mode="lr-tb"/>
-   <style:text-properties officeooo:paragraph-rsid="0053ec82"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" officeooo:paragraph-rsid="0053ec82" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
-  <style:style style:name="P13" style:family="paragraph" style:parent-style-name="Subtitle">
-   <style:text-properties officeooo:paragraph-rsid="005732ba"/>
+  <style:style style:name="P13" style:family="paragraph" style:parent-style-name="Standard">
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" officeooo:paragraph-rsid="00553f12" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="P14" style:family="paragraph" style:parent-style-name="Standard">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" officeooo:paragraph-rsid="005732ba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="0056425b" officeooo:paragraph-rsid="005732ba" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="P15" style:family="paragraph" style:parent-style-name="Standard">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" officeooo:paragraph-rsid="0053ec82" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:paragraph-properties fo:orphans="0" fo:widows="0" style:writing-mode="lr-tb"/>
   </style:style>
   <style:style style:name="P16" style:family="paragraph" style:parent-style-name="Standard">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" officeooo:paragraph-rsid="00553f12" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:paragraph-properties fo:orphans="0" fo:widows="0" style:writing-mode="lr-tb"/>
+   <style:text-properties officeooo:paragraph-rsid="0053ec82"/>
   </style:style>
   <style:style style:name="P17" style:family="paragraph" style:parent-style-name="Standard">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="0056425b" officeooo:paragraph-rsid="005732ba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
-  </style:style>
-  <style:style style:name="P18" style:family="paragraph" style:parent-style-name="Standard" style:list-style-name="L1"/>
-  <style:style style:name="P19" style:family="paragraph" style:parent-style-name="Standard">
-   <style:text-properties officeooo:paragraph-rsid="0053ec82"/>
-  </style:style>
-  <style:style style:name="P20" style:family="paragraph" style:parent-style-name="Standard">
-   <style:text-properties officeooo:rsid="0053ec82" officeooo:paragraph-rsid="0053ec82"/>
-  </style:style>
-  <style:style style:name="P21" style:family="paragraph" style:parent-style-name="Standard">
    <style:paragraph-properties fo:orphans="0" fo:widows="0" style:writing-mode="lr-tb"/>
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" officeooo:paragraph-rsid="0053ec82" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" officeooo:paragraph-rsid="0053ec82" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
-  <style:style style:name="P22" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:orphans="0" fo:widows="0" style:writing-mode="lr-tb"/>
+  <style:style style:name="P18" style:family="paragraph" style:parent-style-name="Subtitle">
+   <style:text-properties officeooo:paragraph-rsid="005732ba"/>
   </style:style>
-  <style:style style:name="P23" style:family="paragraph" style:parent-style-name="Standard">
-   <style:paragraph-properties fo:orphans="0" fo:widows="0" style:writing-mode="lr-tb"/>
-   <style:text-properties officeooo:paragraph-rsid="0053ec82"/>
-  </style:style>
+  <style:style style:name="P19" style:family="paragraph" style:parent-style-name="Standard" style:list-style-name="L1"/>
   <style:style style:name="T1" style:family="text">
    <style:text-properties fo:font-size="9.5pt" style:font-size-asian="9.5pt"/>
   </style:style>
@@ -400,66 +387,69 @@
    <style:text-properties officeooo:rsid="004bd6bd"/>
   </style:style>
   <style:style style:name="T7" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="004bd6bd" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="004bd6bd" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T8" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ec82" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T9" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ed15" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0053ed15" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T10" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="00553f12" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="00553f12" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T11" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0056425b" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0056425b" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T12" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="005732ba" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="005732ba" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T13" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="00580212" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="00580212" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T14" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:text-position="super 58%" style:font-name="Times New Roman" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0056425b" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="005b434a" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T15" style:family="text">
-   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="18pt" fo:language="en" fo:country="US" fo:font-weight="bold" officeooo:rsid="005994ea" style:letter-kerning="true" style:font-name-asian="Times New Roman" style:font-size-asian="18pt" style:font-weight-asian="bold" style:font-name-complex="Arial" style:font-size-complex="18pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="bold"/>
+   <style:text-properties style:use-window-font-color="true" style:text-position="super 58%" style:font-name="Times New Roman1" fo:font-size="11pt" fo:language="en" fo:country="US" officeooo:rsid="0056425b" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T16" style:family="text">
-   <style:text-properties officeooo:rsid="004c6593"/>
+   <style:text-properties style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="18pt" fo:language="en" fo:country="US" fo:font-weight="bold" officeooo:rsid="005994ea" style:letter-kerning="true" style:font-name-asian="Times New Roman1" style:font-size-asian="18pt" style:font-weight-asian="bold" style:font-name-complex="Arial" style:font-size-complex="18pt" style:language-complex="ar" style:country-complex="SA" style:font-weight-complex="bold"/>
   </style:style>
   <style:style style:name="T17" style:family="text">
-   <style:text-properties officeooo:rsid="004cd03c"/>
+   <style:text-properties officeooo:rsid="004c6593"/>
   </style:style>
   <style:style style:name="T18" style:family="text">
-   <style:text-properties officeooo:rsid="004e0489"/>
+   <style:text-properties officeooo:rsid="004cd03c"/>
   </style:style>
   <style:style style:name="T19" style:family="text">
-   <style:text-properties officeooo:rsid="004f76bd"/>
+   <style:text-properties officeooo:rsid="004e0489"/>
   </style:style>
   <style:style style:name="T20" style:family="text">
-   <style:text-properties officeooo:rsid="00515e90"/>
+   <style:text-properties officeooo:rsid="004f76bd"/>
   </style:style>
   <style:style style:name="T21" style:family="text">
-   <style:text-properties officeooo:rsid="005223f1"/>
+   <style:text-properties officeooo:rsid="00515e90"/>
   </style:style>
   <style:style style:name="T22" style:family="text">
-   <style:text-properties style:text-position="super 58%" officeooo:rsid="005223f1"/>
+   <style:text-properties officeooo:rsid="005223f1"/>
   </style:style>
   <style:style style:name="T23" style:family="text">
-   <style:text-properties officeooo:rsid="0053ec82"/>
+   <style:text-properties style:text-position="super 58%" officeooo:rsid="005223f1"/>
   </style:style>
   <style:style style:name="T24" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" style:use-window-font-color="true" style:font-name="Times New Roman" fo:font-size="11pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="0056425b" style:font-name-asian="Times New Roman" style:font-size-asian="11pt" style:font-name-complex="Times New Roman" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
+   <style:text-properties officeooo:rsid="0053ec82"/>
   </style:style>
   <style:style style:name="T25" style:family="text">
-   <style:text-properties officeooo:rsid="005732ba"/>
+   <style:text-properties fo:font-variant="normal" fo:text-transform="none" style:use-window-font-color="true" style:font-name="Times New Roman1" fo:font-size="11pt" fo:letter-spacing="normal" fo:language="en" fo:country="US" fo:font-style="normal" fo:font-weight="normal" officeooo:rsid="0056425b" style:font-name-asian="Times New Roman1" style:font-size-asian="11pt" style:font-name-complex="Times New Roman1" style:font-size-complex="10pt" style:language-complex="ar" style:country-complex="SA"/>
   </style:style>
   <style:style style:name="T26" style:family="text">
-   <style:text-properties officeooo:rsid="00580212"/>
+   <style:text-properties officeooo:rsid="005732ba"/>
   </style:style>
   <style:style style:name="T27" style:family="text">
+   <style:text-properties officeooo:rsid="00580212"/>
+  </style:style>
+  <style:style style:name="T28" style:family="text">
    <style:text-properties officeooo:rsid="005994ea"/>
   </style:style>
   <style:style style:name="fr1" style:family="graphic" style:parent-style-name="Frame">
@@ -553,7 +543,7 @@
   <office:text text:use-soft-page-breaks="true">
    <office:forms form:automatic-focus="false" form:apply-design-mode="false"/>
    <text:tracked-changes text:track-changes="false">
-    <text:changed-region xml:id="ct94633582017568" text:id="ct94633582017568">
+    <text:changed-region xml:id="ct94633585445888" text:id="ct94633585445888">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -561,7 +551,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633562042640" text:id="ct94633562042640">
+    <text:changed-region xml:id="ct94633576069248" text:id="ct94633576069248">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -569,7 +559,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633576736544" text:id="ct94633576736544">
+    <text:changed-region xml:id="ct94633580207376" text:id="ct94633580207376">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -577,7 +567,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633579861632" text:id="ct94633579861632">
+    <text:changed-region xml:id="ct94633601331584" text:id="ct94633601331584">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -585,7 +575,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633580306784" text:id="ct94633580306784">
+    <text:changed-region xml:id="ct94633550777344" text:id="ct94633550777344">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -593,7 +583,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633602815616" text:id="ct94633602815616">
+    <text:changed-region xml:id="ct94633557850464" text:id="ct94633557850464">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -601,7 +591,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633602940480" text:id="ct94633602940480">
+    <text:changed-region xml:id="ct94633574107744" text:id="ct94633574107744">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -609,7 +599,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633482696256" text:id="ct94633482696256">
+    <text:changed-region xml:id="ct94633577073344" text:id="ct94633577073344">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -617,7 +607,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633561747216" text:id="ct94633561747216">
+    <text:changed-region xml:id="ct94633583211600" text:id="ct94633583211600">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -625,7 +615,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633569679360" text:id="ct94633569679360">
+    <text:changed-region xml:id="ct94633558484960" text:id="ct94633558484960">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -633,7 +623,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633478829392" text:id="ct94633478829392">
+    <text:changed-region xml:id="ct94633547578576" text:id="ct94633547578576">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -641,7 +631,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633586441184" text:id="ct94633586441184">
+    <text:changed-region xml:id="ct94633577072736" text:id="ct94633577072736">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -649,7 +639,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633583100416" text:id="ct94633583100416">
+    <text:changed-region xml:id="ct94633560455248" text:id="ct94633560455248">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -657,7 +647,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633568751312" text:id="ct94633568751312">
+    <text:changed-region xml:id="ct94633569863760" text:id="ct94633569863760">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -665,7 +655,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633562164592" text:id="ct94633562164592">
+    <text:changed-region xml:id="ct94633578766336" text:id="ct94633578766336">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -673,7 +663,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633581895904" text:id="ct94633581895904">
+    <text:changed-region xml:id="ct94633577853040" text:id="ct94633577853040">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -681,7 +671,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633572735184" text:id="ct94633572735184">
+    <text:changed-region xml:id="ct94633578183680" text:id="ct94633578183680">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -689,7 +679,15 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633561931952" text:id="ct94633561931952">
+    <text:changed-region xml:id="ct94633585405248" text:id="ct94633585405248">
+     <text:insertion>
+      <office:change-info>
+       <dc:creator>Unknown Author</dc:creator>
+       <dc:date>2022-03-22T03:31:10</dc:date>
+      </office:change-info>
+     </text:insertion>
+    </text:changed-region>
+    <text:changed-region xml:id="ct94633568968752" text:id="ct94633568968752">
      <text:insertion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -697,7 +695,7 @@
       </office:change-info>
      </text:insertion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633579182944" text:id="ct94633579182944">
+    <text:changed-region xml:id="ct94633583796800" text:id="ct94633583796800">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -705,7 +703,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633570189312" text:id="ct94633570189312">
+    <text:changed-region xml:id="ct94633478916880" text:id="ct94633478916880">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -713,7 +711,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633581923968" text:id="ct94633581923968">
+    <text:changed-region xml:id="ct94633478698864" text:id="ct94633478698864">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -721,7 +719,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633567023088" text:id="ct94633567023088">
+    <text:changed-region xml:id="ct94633569025840" text:id="ct94633569025840">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -729,7 +727,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633482687232" text:id="ct94633482687232">
+    <text:changed-region xml:id="ct94633571612816" text:id="ct94633571612816">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -737,7 +735,7 @@
       </office:change-info>
      </text:deletion>
     </text:changed-region>
-    <text:changed-region xml:id="ct94633578381312" text:id="ct94633578381312">
+    <text:changed-region xml:id="ct94633584008736" text:id="ct94633584008736">
      <text:deletion>
       <office:change-info>
        <dc:creator>Unknown Author</dc:creator>
@@ -755,22 +753,22 @@
    </text:sequence-decls>
    <text:h text:style-name="Title" text:outline-level="1">Third-Party Open Source Software Used By Npcap</text:h>
    <text:p text:style-name="Standard"/>
-   <text:p text:style-name="P5"><text:span text:style-name="T6">Npcap </text:span><text:change-start text:change-id="ct94633582017568"/><text:span text:style-name="T25">(</text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T25">https://npcap.com</text:span></text:a><text:span text:style-name="T25">) </text:span><text:change-end text:change-id="ct94633582017568"/><text:span text:style-name="T6">is a software library for packet captu</text:span><text:span text:style-name="T17">re and transmission</text:span><text:span text:style-name="T6"> on the Microsoft Windows platform</text:span><text:change-start text:change-id="ct94633562042640"/><text:span text:style-name="T6">,</text:span><text:change-end text:change-id="ct94633562042640"/><text:change-start text:change-id="ct94633576736544"/><text:span text:style-name="T6">. </text:span><text:change-end text:change-id="ct94633576736544"/><text:change-start text:change-id="ct94633579861632"/><text:span text:style-name="T6"><text:s/>as </text:span><text:change-end text:change-id="ct94633579861632"/><text:change-start text:change-id="ct94633580306784"/><text:span text:style-name="T6">distributed and described at </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T6">https://npcap.com</text:span></text:a><text:span text:style-name="T6">. </text:span><text:change-end text:change-id="ct94633580306784"/><text:span text:style-name="T16">The</text:span><text:span text:style-name="T18">re is a free/demo Npcap which is mostly for personal use, and a commercial </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T17">Npcap OEM Edition</text:span></text:a><text:span text:style-name="T17"> </text:span><text:span text:style-name="T18">for companies who want automated deployment, commercial support, greater internal-use rights, or even to redistribute Npcap OEM with</text:span><text:change-start text:change-id="ct94633602815616"/><text:span text:style-name="T25">in</text:span><text:change-end text:change-id="ct94633602815616"/><text:span text:style-name="T18"> their </text:span><text:change-start text:change-id="ct94633602940480"/><text:span text:style-name="T18">r</text:span><text:change-end text:change-id="ct94633602940480"/><text:span text:style-name="T18">p</text:span><text:change-start text:change-id="ct94633482696256"/><text:span text:style-name="T25">r</text:span><text:change-end text:change-id="ct94633482696256"/><text:span text:style-name="T18">oducts.</text:span></text:p>
+   <text:p text:style-name="P5"><text:span text:style-name="T6">Npcap </text:span><text:change-start text:change-id="ct94633585445888"/><text:span text:style-name="T26">(</text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T26">https://npcap.com</text:span></text:a><text:span text:style-name="T26">) </text:span><text:change-end text:change-id="ct94633585445888"/><text:span text:style-name="T6">is a software library for packet captu</text:span><text:span text:style-name="T18">re and transmission</text:span><text:span text:style-name="T6"> on the Microsoft Windows platform</text:span><text:change-start text:change-id="ct94633576069248"/><text:span text:style-name="T6">,</text:span><text:change-end text:change-id="ct94633576069248"/><text:change-start text:change-id="ct94633580207376"/><text:span text:style-name="T6">. </text:span><text:change-end text:change-id="ct94633580207376"/><text:change-start text:change-id="ct94633601331584"/><text:span text:style-name="T6"><text:s/>as </text:span><text:change-end text:change-id="ct94633601331584"/><text:change-start text:change-id="ct94633550777344"/><text:span text:style-name="T6">distributed and described at </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T6">https://npcap.com</text:span></text:a><text:span text:style-name="T6">. </text:span><text:change-end text:change-id="ct94633550777344"/><text:span text:style-name="T17">The</text:span><text:span text:style-name="T19">re is a free/demo Npcap which is mostly for personal use, and a commercial </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T18">Npcap OEM Edition</text:span></text:a><text:span text:style-name="T18"> </text:span><text:span text:style-name="T19">for companies who want automated deployment, commercial support, greater internal-use rights, or even to redistribute Npcap OEM with</text:span><text:change-start text:change-id="ct94633557850464"/><text:span text:style-name="T26">in</text:span><text:change-end text:change-id="ct94633557850464"/><text:span text:style-name="T19"> their </text:span><text:change-start text:change-id="ct94633574107744"/><text:span text:style-name="T19">r</text:span><text:change-end text:change-id="ct94633574107744"/><text:span text:style-name="T19">p</text:span><text:change-start text:change-id="ct94633577073344"/><text:span text:style-name="T26">r</text:span><text:change-end text:change-id="ct94633577073344"/><text:span text:style-name="T19">oducts.</text:span></text:p>
    <text:p text:style-name="P5"/>
-   <text:p text:style-name="P5"><text:span text:style-name="T6">Npcap </text:span>uses <text:span text:style-name="T26">three</text:span> third-party open source software <text:span text:style-name="T18">components: </text:span><text:span text:style-name="T26">Libpcap, Winpcap, and ieee80211_radiotap.h.</text:span> All <text:span text:style-name="T18">of these </text:span>are open source with BSD-style licenses that allow for unlimited use and royalty-free redistribution within other software (including commercial/proprietary software). Some include a warranty disclaimer (relating to the original authors) and require a small amount of acknowledgment text be added to the documentation of any software which includes them (including indirectly through Npcap). An example of such text <text:change-start text:change-id="ct94633561747216"/><text:span text:style-name="T25">provided in the next section of this document.</text:span><text:change-end text:change-id="ct94633561747216"/><text:change-start text:change-id="ct94633569679360"/><text:span text:style-name="T25">is in the copyright statements section at the end of this document. S</text:span><text:change-end text:change-id="ct94633569679360"/><text:change-start text:change-id="ct94633478829392"/> <text:span text:style-name="T25">S</text:span><text:change-end text:change-id="ct94633478829392"/>ince <text:span text:style-name="T7">Nmap Software</text:span> LLC is not the author of this third-party code, we can not waive or modify its software copyright or license. Npcap users and redistributors must comply with the relevant Npcap license (either the free/demo license or a commercial Npcap OEM license<text:span text:style-name="T18">)</text:span> as well as the fairly minimal requirements of th<text:span text:style-name="T18">e</text:span> third-party open source software <text:span text:style-name="T18">listed </text:span><text:span text:style-name="T26">here. <text:s/>Each of the three components has a section later in this document </text:span><text:span text:style-name="T13">detailing the software and providing its</text:span><text:span text:style-name="T26"> full license text.</text:span></text:p>
+   <text:p text:style-name="P5"><text:span text:style-name="T6">Npcap </text:span>uses <text:span text:style-name="T27">three</text:span> third-party open source software <text:span text:style-name="T19">components: </text:span><text:span text:style-name="T27">Libpcap, Winpcap, and ieee80211_radiotap.h.</text:span> All <text:span text:style-name="T19">of these </text:span>are open source with BSD-style licenses that allow for unlimited use and royalty-free redistribution within other software (including commercial/proprietary software). Some include a warranty disclaimer (relating to the original authors) and require a small amount of acknowledgment text be added to the documentation of any software which includes them (including indirectly through Npcap). An example of such text <text:change-start text:change-id="ct94633583211600"/><text:span text:style-name="T26">provided in the next section of this document.</text:span><text:change-end text:change-id="ct94633583211600"/><text:change-start text:change-id="ct94633558484960"/><text:span text:style-name="T26">is in the copyright statements section at the end of this document. S</text:span><text:change-end text:change-id="ct94633558484960"/><text:change-start text:change-id="ct94633547578576"/> <text:span text:style-name="T26">S</text:span><text:change-end text:change-id="ct94633547578576"/>ince <text:span text:style-name="T7">Nmap Software</text:span> LLC is not the author of this third-party code, we can not waive or modify its software copyright or license. Npcap users and redistributors must comply with the relevant Npcap license (either the free/demo license or a commercial Npcap OEM license<text:span text:style-name="T19">)</text:span> as well as the fairly minimal requirements of th<text:span text:style-name="T19">e</text:span> third-party open source software <text:span text:style-name="T19">listed </text:span><text:span text:style-name="T27">here. <text:s/>Each of the three components has a section later in this document </text:span><text:span text:style-name="T13">detailing the software and providing its</text:span><text:span text:style-name="T27"> full license text.</text:span></text:p>
    <text:p text:style-name="Standard"/>
-   <text:p text:style-name="Standard">Please note that all Npcap support, warranties and indemnification that we (<text:span text:style-name="T7">Nmap Software</text:span> LLC) offer to commercial customers <text:span text:style-name="T18">apply to </text:span>these third-party <text:change-start text:change-id="ct94633586441184"/>libraries along with all <text:change-end text:change-id="ct94633586441184"/><text:change-start text:change-id="ct94633583100416"/><text:span text:style-name="T12">components and all </text:span><text:change-end text:change-id="ct94633583100416"/>other Npcap code. The warranty disclaimers in their license text just mean that the original library authors and maintainers aren’t responsible for that support <text:span text:style-name="T18">you buy from us instead.</text:span></text:p>
+   <text:p text:style-name="Standard">Please note that all Npcap support, warranties and indemnification that we (<text:span text:style-name="T7">Nmap Software</text:span> LLC) offer to commercial customers <text:span text:style-name="T19">apply to </text:span>these third-party <text:change-start text:change-id="ct94633577072736"/>libraries along with all <text:change-end text:change-id="ct94633577072736"/><text:change-start text:change-id="ct94633560455248"/><text:span text:style-name="T12">components and all </text:span><text:change-end text:change-id="ct94633560455248"/>other Npcap code. The warranty disclaimers in their license text just mean that the original library authors and maintainers aren’t responsible for that support <text:span text:style-name="T19">you buy from us instead.</text:span></text:p>
    <text:p text:style-name="Standard"/>
    <text:p text:style-name="Standard">This document covers <text:span text:style-name="T2">Npcap version 1.60</text:span>. Licensees or potential licensees who want this information for a different N<text:span text:style-name="T4">pc</text:span>ap release should contact <text:a xlink:type="simple" xlink:href="mailto:sales@nmap.com" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">sales@nmap.com</text:a>.</text:p>
    <text:p text:style-name="Standard"/>
-   <text:p text:style-name="P10"><text:span text:style-name="T19">Anyone may redistribute this document in whole or part, including incorporating it into larger documents. In particular, redistributing this document along with Npcap OEM (for parties who hold an </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T19">Npcap OEM Redistribution License</text:span></text:a><text:span text:style-name="T19">) is often helpful to comply with attribution clauses of the software component licenses detailed </text:span><text:change-start text:change-id="ct94633568751312"/><text:span text:style-name="T19">below</text:span><text:change-end text:change-id="ct94633568751312"/><text:change-start text:change-id="ct94633562164592"/><text:span text:style-name="T12">herein</text:span><text:change-end text:change-id="ct94633562164592"/><text:span text:style-name="T19">.</text:span></text:p>
-   <text:p text:style-name="Standard"><text:change-start text:change-id="ct94633581895904"/></text:p>
-   <text:h text:style-name="P13" text:outline-level="1"><text:change-end text:change-id="ct94633581895904"/><text:span text:style-name="T15">Suggested</text:span><text:change-start text:change-id="ct94633572735184"/> Acknowledgment Text</text:h>
+   <text:p text:style-name="P10"><text:span text:style-name="T20">Anyone may redistribute this document in whole or part, including incorporating it into larger documents. In particular, redistributing this document along with Npcap OEM (for parties who hold an </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link"><text:span text:style-name="T20">Npcap OEM Redistribution License</text:span></text:a><text:span text:style-name="T20">) is often helpful to comply with attribution clauses of the software component licenses detailed </text:span><text:change-start text:change-id="ct94633569863760"/><text:span text:style-name="T20">below</text:span><text:change-end text:change-id="ct94633569863760"/><text:change-start text:change-id="ct94633578766336"/><text:span text:style-name="T12">herein</text:span><text:change-end text:change-id="ct94633578766336"/><text:span text:style-name="T20">.</text:span></text:p>
+   <text:p text:style-name="Standard"><text:change-start text:change-id="ct94633577853040"/></text:p>
+   <text:h text:style-name="P18" text:outline-level="1"><text:change-end text:change-id="ct94633577853040"/><text:span text:style-name="T16">Suggested</text:span><text:change-start text:change-id="ct94633578183680"/> Acknowledgment Text</text:h>
    <text:p text:style-name="P9"/>
-   <text:p text:style-name="P9"><text:span text:style-name="T21">To give credit where due and also comply with attribution clauses of the various 3</text:span><text:span text:style-name="T22">rd</text:span><text:span text:style-name="T21"> party </text:span><text:span text:style-name="T23">software component licenses detailed in this document, we </text:span><text:span text:style-name="T8">suggest that </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">companies licensed to redistribute Npcap OEM</text:a><text:span text:style-name="T8"> include this document </text:span><text:span text:style-name="T12">itself </text:span><text:span text:style-name="T8">along with their software and also include </text:span><text:span text:style-name="T12">a statement like the one below </text:span><text:span text:style-name="T8">in their documentation:</text:span></text:p>
-   <text:p text:style-name="P14"/>
-   <text:p text:style-name="P9"><text:span text:style-name="T8">This </text:span><text:span text:style-name="T9">program</text:span><text:span text:style-name="T8"> contains the Npcap OEM Windows packet capturing software (</text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com</text:a><text:span text:style-name="T8">) pursuant to a license </text:span><text:span text:style-name="T9">agreement with</text:span><text:span text:style-name="T8"> Nmap Software LLC. </text:span><text:span text:style-name="T9">Npcap OEM contains programming code from the Libpcap project (</text:span><text:a xlink:type="simple" xlink:href="https://www.tcpdump.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://www.tcpdump.org</text:a><text:span text:style-name="T9">) which is Copyright (c) by The TCPdump Group and its contributors. Npcap also incorporates code from the now-defunct WinPcap </text:span><text:span text:style-name="T12">software</text:span><text:span text:style-name="T9"> (</text:span><text:a xlink:type="simple" xlink:href="https://winpcap.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://winpcap.org</text:a><text:span text:style-name="T9">) which is Copyright (c) NetGroup, Politecnico di Torino, CACE Technologies, </text:span><text:span text:style-name="T10">and </text:span><text:span text:style-name="T9">The Regents of the University of California. </text:span><text:span text:style-name="T11">In addition, </text:span><text:span text:style-name="T10">Npcap contains an ieee80211_radiotap.h header file which is Copyright (c) David Young. </text:span><text:span text:style-name="T11">Full license text and details for these 3</text:span><text:span text:style-name="T14">rd</text:span><text:span text:style-name="T11"> party components are available in the Npcap-Third-Party-Open-Source.pdf file included with this program and/or available at </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/src/docs/Npcap-Third-Party-Open-Source.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com/src/docs/Npcap-Third-Party-Open-Source.pdf</text:a><text:span text:style-name="T24">.</text:span><text:change-end text:change-id="ct94633572735184"/><text:change-start text:change-id="ct94633561931952"/></text:p>
-   <text:p text:style-name="P17"><text:change-end text:change-id="ct94633561931952"/></text:p>
+   <text:p text:style-name="P9"><text:span text:style-name="T22">To give credit where due and also comply with attribution clauses of the various 3</text:span><text:span text:style-name="T23">rd</text:span><text:span text:style-name="T22"> party </text:span><text:span text:style-name="T24">software component licenses detailed in this document, we </text:span><text:span text:style-name="T8">suggest that </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">companies licensed to redistribute Npcap OEM</text:a><text:span text:style-name="T8"> include this document </text:span><text:span text:style-name="T12">itself </text:span><text:span text:style-name="T8">along with their software and also include </text:span><text:span text:style-name="T12">a statement like the one below </text:span><text:span text:style-name="T8">in their documentation:</text:span></text:p>
+   <text:p text:style-name="P11"/>
+   <text:p text:style-name="P9"><text:span text:style-name="T8">This </text:span><text:span text:style-name="T9">program</text:span><text:span text:style-name="T8"> contains the Npcap OEM Windows packet capturing software (</text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com</text:a><text:span text:style-name="T8">) pursuant to a license </text:span><text:span text:style-name="T9">agreement with</text:span><text:span text:style-name="T8"> Nmap Software LLC. </text:span><text:span text:style-name="T9">Npcap OEM contains programming code from the Libpcap project (</text:span><text:a xlink:type="simple" xlink:href="https://www.tcpdump.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://www.tcpdump.org</text:a><text:span text:style-name="T9">) which is Copyright (c) by The TCPdump Group and its contributors. Npcap also incorporates code from the now-defunct Win</text:span><text:change-end text:change-id="ct94633578183680"/><text:span text:style-name="T14">p</text:span><text:change-start text:change-id="ct94633585405248"/><text:span text:style-name="T9">cap </text:span><text:span text:style-name="T12">software</text:span><text:span text:style-name="T9"> (</text:span><text:a xlink:type="simple" xlink:href="https://winpcap.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://winpcap.org</text:a><text:span text:style-name="T9">) which is Copyright (c) NetGroup, Politecnico di Torino, CACE Technologies, </text:span><text:span text:style-name="T10">and </text:span><text:span text:style-name="T9">The Regents of the University of California. </text:span><text:span text:style-name="T11">In addition, </text:span><text:span text:style-name="T10">Npcap contains an ieee80211_radiotap.h header file which is Copyright (c) David Young. </text:span><text:span text:style-name="T11">Full license text and details for these 3</text:span><text:span text:style-name="T15">rd</text:span><text:span text:style-name="T11"> party components are available in the Npcap-Third-Party-Open-Source.pdf file included with this program and/or available at </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/src/docs/Npcap-Third-Party-Open-Source.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com/src/docs/Npcap-Third-Party-Open-Source.pdf</text:a><text:span text:style-name="T25">.</text:span><text:change-end text:change-id="ct94633585405248"/><text:change-start text:change-id="ct94633568968752"/></text:p>
+   <text:p text:style-name="P14"><text:change-end text:change-id="ct94633568968752"/></text:p>
    <text:h text:style-name="Subtitle" text:outline-level="1">Libpcap Portable Packet Capturing Library</text:h>
    <text:p text:style-name="Standard"><text:soft-page-break/></text:p>
    <text:p text:style-name="Standard"><text:span text:style-name="T2">Description:</text:span> Libpcap is a popular reference implementation of the pcap packet capturing API. It is produced by The T<text:span text:style-name="T4">CP</text:span>dump Group and supports Linux and Mac OS X systems (among others). Npcap implements this API for Microsoft Windows by combining the high-level open source libpcap API code with our own custom Windows driver that implements the low-level network operations. Our wpcap.dll library file is mostly <text:span text:style-name="T4">l</text:span>ibpcap code. We occasionally make our own fixes and changes to the libpcap code, but we have a great relationship with The T<text:span text:style-name="T4">CP</text:span>dump Group and try to submit all of our changes to them for incorporation in future libpcap releases.</text:p>
@@ -792,33 +790,33 @@
    <text:p text:style-name="Standard"><text:span text:style-name="T2">Version used:</text:span> 4.1.3</text:p>
    <text:p text:style-name="Standard"><text:span text:style-name="T2">License Summary:</text:span> Modified BSD license (3-clause) – allows free redistribution as long as you include attribution statement and warranty disclaimer somewhere in your documentation. The fourth clause, which relates to attribution in advertising materials has been officially removed and revoked by the University of California, Berkeley: <text:a xlink:type="simple" xlink:href="https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf</text:a></text:p>
    <text:p text:style-name="Standard"><text:soft-page-break/><text:span text:style-name="T2">License T</text:span><text:span text:style-name="T3">e</text:span><text:span text:style-name="T2">xt:</text:span> This was taken from <text:a xlink:type="simple" xlink:href="https://www.winpcap.org/misc/copyright.htm" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://www.winpcap.org/misc/copyright.htm</text:a> on March 11, 2016 and we made the following updates:</text:p>
-   <text:list xml:id="list2763939241" text:style-name="L1">
+   <text:list xml:id="list227141542" text:style-name="L1">
     <text:list-item>
-     <text:p text:style-name="P18">Removed the “advertising clause” from University of California, Berkeley copyright statement because they have officiall<text:span text:style-name="T4">y</text:span> removed and revoked that as documented here: <text:a xlink:type="simple" xlink:href="https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf</text:a></text:p>
+     <text:p text:style-name="P19">Removed the “advertising clause” from University of California, Berkeley copyright statement because they have officiall<text:span text:style-name="T4">y</text:span> removed and revoked that as documented here: <text:a xlink:type="simple" xlink:href="https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://ipira.berkeley.edu/sites/default/files/shared/docs/Advertising_clause_removed_from_BSD_license.pdf</text:a></text:p>
     </text:list-item>
     <text:list-item>
-     <text:p text:style-name="P18">Removed copyright notice from Kungliga Tekniska Högskolan because that code is no longer in Npcap.</text:p>
+     <text:p text:style-name="P19">Removed copyright notice from Kungliga Tekniska Högskolan because that code is no longer in Npcap.</text:p>
     </text:list-item>
     <text:list-item>
-     <text:p text:style-name="P18">Removed copyright notice from Yen Yen Lim and north Dakota State University because that code is no longer in Npcap.</text:p>
+     <text:p text:style-name="P19">Removed copyright notice from Yen Yen Lim and north Dakota State University because that code is no longer in Npcap.</text:p>
     </text:list-item>
     <text:list-item>
-     <text:p text:style-name="P18">Removed copyright notice from Digital Equipment Corporation because that code is no longer in Npcap.</text:p>
+     <text:p text:style-name="P19">Removed copyright notice from Digital Equipment Corporation because that code is no longer in Npcap.</text:p>
     </text:list-item>
     <text:list-item>
-     <text:p text:style-name="P18">Removed copyright notice from WIDE Project because that code is no longer in Npcap.</text:p>
+     <text:p text:style-name="P19">Removed copyright notice from WIDE Project because that code is no longer in Npcap.</text:p>
     </text:list-item>
     <text:list-item>
-     <text:p text:style-name="P18">Removed copyright notice from Juniper Networks because that code is no longer in Npcap.</text:p>
+     <text:p text:style-name="P19">Removed copyright notice from Juniper Networks because that code is no longer in Npcap.</text:p>
     </text:list-item>
     <text:list-item>
-     <text:p text:style-name="P18">Removed copyright notice from Daniel Hartmeier since that code is no longer in Npcap.</text:p>
+     <text:p text:style-name="P19">Removed copyright notice from Daniel Hartmeier since that code is no longer in Npcap.</text:p>
     </text:list-item>
     <text:list-item>
-     <text:p text:style-name="P18">Removed copyright notice from Carnegie Mellon since that code is no longer in Npcap.</text:p>
+     <text:p text:style-name="P19">Removed copyright notice from Carnegie Mellon since that code is no longer in Npcap.</text:p>
     </text:list-item>
     <text:list-item>
-     <text:p text:style-name="P18">Removed the 1983 copyright notice from UC Berkeley since that code is no longer in Npcap. The notice from their 1990’s contributions is still there.</text:p>
+     <text:p text:style-name="P19">Removed the 1983 copyright notice from UC Berkeley since that code is no longer in Npcap. The notice from their 1990’s contributions is still there.</text:p>
     </text:list-item>
    </text:list>
    <text:p text:style-name="Standard"/>
@@ -850,41 +848,41 @@
    <text:p text:style-name="Quotations">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
    <text:p text:style-name="Quotations">2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the <text:soft-page-break/>distribution.</text:p>
    <text:p text:style-name="Quotations">3. The name of David Young may not be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
-   <text:p text:style-name="Quotations">THIS SOFTWARE IS PROVIDED BY DAVID YOUNG ``AS IS&apos;&apos; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. <text:s/>IN NO EVENT SHALL DAVID YOUNG BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<text:change-start text:change-id="ct94633579182944"/></text:p>
-   <text:p text:style-name="Quotations"><text:change-end text:change-id="ct94633579182944"/><text:change-start text:change-id="ct94633570189312"/>Copyright Statements and Acknowledgment/Disclaimer Text</text:p>
+   <text:p text:style-name="Quotations">THIS SOFTWARE IS PROVIDED BY DAVID YOUNG ``AS IS&apos;&apos; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. <text:s/>IN NO EVENT SHALL DAVID YOUNG BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<text:change-start text:change-id="ct94633583796800"/></text:p>
+   <text:p text:style-name="Quotations"><text:change-end text:change-id="ct94633583796800"/><text:change-start text:change-id="ct94633478916880"/>Copyright Statements and Acknowledgment/Disclaimer Text</text:p>
    <text:p text:style-name="Standard"/>
-   <text:p text:style-name="P6"><text:span text:style-name="T21">To give credit where due and also comply with attribution clauses of the various 3</text:span><text:span text:style-name="T22">rd</text:span><text:span text:style-name="T21"> party </text:span><text:span text:style-name="T23">software component licenses detailed in this document, we </text:span><text:span text:style-name="T8">suggest that </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">companies licensed to redistribute Npcap OEM</text:a><text:span text:style-name="T8"> include this document along with their software and also include </text:span><text:change-end text:change-id="ct94633570189312"/><text:change-start text:change-id="ct94633581923968"/><text:span text:style-name="T9">the following (or similar) </text:span><text:span text:style-name="T8">statement </text:span><text:change-end text:change-id="ct94633581923968"/><text:change-start text:change-id="ct94633567023088"/><text:span text:style-name="T8">in their documentation:</text:span></text:p>
-   <text:p text:style-name="P15"/>
-   <text:p text:style-name="P6"><text:span text:style-name="T8">This </text:span><text:span text:style-name="T9">program</text:span><text:span text:style-name="T8"> contains the Npcap OEM Windows packet capturing software (</text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com</text:a><text:span text:style-name="T8">) pursuant to a license </text:span><text:span text:style-name="T9">agreement with</text:span><text:span text:style-name="T8"> Nmap Software LLC. <text:s/></text:span><text:span text:style-name="T9">Npcap OEM contains programming code from the Libpcap project (</text:span><text:a xlink:type="simple" xlink:href="https://www.tcpdump.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://www.tcpdump.org</text:a><text:span text:style-name="T9">) which is </text:span><text:change-end text:change-id="ct94633567023088"/><text:change-start text:change-id="ct94633482687232"/><text:span text:style-name="T9">and also from WinPcap (https://winpcap.org).</text:span><text:change-end text:change-id="ct94633482687232"/><text:change-start text:change-id="ct94633578381312"/></text:p>
-   <text:p text:style-name="P16"/>
-   <text:p text:style-name="P15">the following acknowledgment/disclaimer statement in the </text:p>
+   <text:p text:style-name="P6"><text:span text:style-name="T22">To give credit where due and also comply with attribution clauses of the various 3</text:span><text:span text:style-name="T23">rd</text:span><text:span text:style-name="T22"> party </text:span><text:span text:style-name="T24">software component licenses detailed in this document, we </text:span><text:span text:style-name="T8">suggest that </text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">companies licensed to redistribute Npcap OEM</text:a><text:span text:style-name="T8"> include this document along with their software and also include </text:span><text:change-end text:change-id="ct94633478916880"/><text:change-start text:change-id="ct94633478698864"/><text:span text:style-name="T9">the following (or similar) </text:span><text:span text:style-name="T8">statement </text:span><text:change-end text:change-id="ct94633478698864"/><text:change-start text:change-id="ct94633569025840"/><text:span text:style-name="T8">in their documentation:</text:span></text:p>
+   <text:p text:style-name="P12"/>
+   <text:p text:style-name="P6"><text:span text:style-name="T8">This </text:span><text:span text:style-name="T9">program</text:span><text:span text:style-name="T8"> contains the Npcap OEM Windows packet capturing software (</text:span><text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com</text:a><text:span text:style-name="T8">) pursuant to a license </text:span><text:span text:style-name="T9">agreement with</text:span><text:span text:style-name="T8"> Nmap Software LLC. <text:s/></text:span><text:span text:style-name="T9">Npcap OEM contains programming code from the Libpcap project (</text:span><text:a xlink:type="simple" xlink:href="https://www.tcpdump.org/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://www.tcpdump.org</text:a><text:span text:style-name="T9">) which is </text:span><text:change-end text:change-id="ct94633569025840"/><text:change-start text:change-id="ct94633571612816"/><text:span text:style-name="T9">and also from WinPcap (https://winpcap.org).</text:span><text:change-end text:change-id="ct94633571612816"/><text:change-start text:change-id="ct94633584008736"/></text:p>
+   <text:p text:style-name="P13"/>
+   <text:p text:style-name="P12">the following acknowledgment/disclaimer statement in the </text:p>
    <text:p text:style-name="P6"/>
    <text:p text:style-name="P7">Npcap is Copyright (c) 2013-2022 Nmap Software</text:p>
    <text:p text:style-name="P6"/>
-   <text:p text:style-name="P6"><text:span text:style-name="T21"><text:s/>above</text:span>the <text:span text:style-name="T20">following </text:span>copyright/acknowledgment/disclaimer <text:span text:style-name="T20">text </text:span><text:s/><text:span text:style-name="T20">we use give fair attribution to the authors o</text:span>as required by the various open source licenses (see above). <text:s/>We’re including this both to fulfill the license agreements ourselves, and as a template that companies distributing Npcap (which is only allowed with the redistribution license described at <text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com/oem/redist.html</text:a>) can use in their own documentation as well.</text:p>
-   <text:p text:style-name="P21"/>
-   <text:p text:style-name="P12">Npcap is Copyright (c) 2013-202<text:span text:style-name="T5">2 Nmap Software</text:span> LLC. All rights reserved. See <text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com</text:a> for details.</text:p>
-   <text:p text:style-name="P11">Portions of Npcap are Copyright (c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy).</text:p>
-   <text:p text:style-name="P11">Portions of Npcap are Copyright (c) 2005 - 2010 CACE Technologies, Davis (California).</text:p>
-   <text:p text:style-name="P11">All rights reserved.</text:p>
-   <text:p text:style-name="P11">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
-   <text:p text:style-name="P11">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
-   <text:p text:style-name="P11">2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</text:p>
-   <text:p text:style-name="P11">3. Neither the name of the Politecnico di Torino, CACE Technologies nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
-   <text:p text:style-name="P11">THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</text:p>
-   <text:p text:style-name="P11">This product includes software developed by the University of California, Lawrence Berkeley Laboratory and its contributors.</text:p>
-   <text:p text:style-name="P11">Portions of Npcap are Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997 The Regents of the University of California. All rights reserved.</text:p>
-   <text:p text:style-name="P11">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
-   <text:p text:style-name="P11">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
-   <text:p text:style-name="P11">2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</text:p>
-   <text:p text:style-name="P11">3. Neither the name of the University nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
-   <text:p text:style-name="P11">THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS&apos;&apos; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</text:p>
-   <text:p text:style-name="P11">Portions of Npcap are Copyright (c) 2003, 2004 David Young. <text:s/>All rights reserved.</text:p>
-   <text:p text:style-name="P11">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
-   <text:p text:style-name="P11">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
-   <text:p text:style-name="P11">2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</text:p>
-   <text:p text:style-name="P11">3. The name of David Young may not be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
-   <text:p text:style-name="P6">THIS SOFTWARE IS PROVIDED BY DAVID YOUNG ``AS IS&apos;&apos; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. <text:s/>IN NO EVENT SHALL DAVID YOUNG BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<text:change-end text:change-id="ct94633578381312"/></text:p>
+   <text:p text:style-name="P6"><text:span text:style-name="T22"><text:s/>above</text:span>the <text:span text:style-name="T21">following </text:span>copyright/acknowledgment/disclaimer <text:span text:style-name="T21">text </text:span><text:s/><text:span text:style-name="T21">we use give fair attribution to the authors o</text:span>as required by the various open source licenses (see above). <text:s/>We’re including this both to fulfill the license agreements ourselves, and as a template that companies distributing Npcap (which is only allowed with the redistribution license described at <text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com/oem/redist.html</text:a>) can use in their own documentation as well.</text:p>
+   <text:p text:style-name="P17"/>
+   <text:p text:style-name="P16">Npcap is Copyright (c) 2013-202<text:span text:style-name="T5">2 Nmap Software</text:span> LLC. All rights reserved. See <text:a xlink:type="simple" xlink:href="https://npcap.com/" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com</text:a> for details.</text:p>
+   <text:p text:style-name="P15">Portions of Npcap are Copyright (c) 1999 - 2005 NetGroup, Politecnico di Torino (Italy).</text:p>
+   <text:p text:style-name="P15">Portions of Npcap are Copyright (c) 2005 - 2010 CACE Technologies, Davis (California).</text:p>
+   <text:p text:style-name="P15">All rights reserved.</text:p>
+   <text:p text:style-name="P15">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
+   <text:p text:style-name="P15">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
+   <text:p text:style-name="P15">2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</text:p>
+   <text:p text:style-name="P15">3. Neither the name of the Politecnico di Torino, CACE Technologies nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
+   <text:p text:style-name="P15">THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</text:p>
+   <text:p text:style-name="P15">This product includes software developed by the University of California, Lawrence Berkeley Laboratory and its contributors.</text:p>
+   <text:p text:style-name="P15">Portions of Npcap are Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997 The Regents of the University of California. All rights reserved.</text:p>
+   <text:p text:style-name="P15">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
+   <text:p text:style-name="P15">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
+   <text:p text:style-name="P15">2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</text:p>
+   <text:p text:style-name="P15">3. Neither the name of the University nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
+   <text:p text:style-name="P15">THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS&apos;&apos; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</text:p>
+   <text:p text:style-name="P15">Portions of Npcap are Copyright (c) 2003, 2004 David Young. <text:s/>All rights reserved.</text:p>
+   <text:p text:style-name="P15">Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</text:p>
+   <text:p text:style-name="P15">1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</text:p>
+   <text:p text:style-name="P15">2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</text:p>
+   <text:p text:style-name="P15">3. The name of David Young may not be used to endorse or promote products derived from this software without specific prior written permission.</text:p>
+   <text:p text:style-name="P6">THIS SOFTWARE IS PROVIDED BY DAVID YOUNG ``AS IS&apos;&apos; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. <text:s/>IN NO EVENT SHALL DAVID YOUNG BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<text:change-end text:change-id="ct94633584008736"/></text:p>
   </office:text>
  </office:body>
 </office:document>
