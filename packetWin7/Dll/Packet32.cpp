@@ -1409,7 +1409,7 @@ BOOL PacketStartService()
 						error = GetLastError();
 						if (error != ERROR_SERVICE_ALREADY_RUNNING && error != ERROR_ALREADY_EXISTS)
 						{
-							TRACE_PRINT1("PacketOpenAdapterNPF: StartService failed, LastError=%8.8x", error);
+							TRACE_PRINT1("StartService failed, LastError=%8.8x", error);
 							Result = FALSE;
 						}
 					}
@@ -1862,18 +1862,6 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 			break;
 		}
 #endif // HAVE_AIRPCAP_API
-
-		if(TAdInfo->Flags == INFO_FLAG_DONT_EXPORT)
-		{
-			//
-			// The adapter is flagged as not exported, probably because it's broken 
-			// or incompatible with WinPcap. We end here with an error.
-			//
-			TRACE_PRINT1("Trying to open the adapter %hs which is flagged as not exported. Failing (BAD_UNIT)", AdapterNameWA);
-			dwLastError = ERROR_BAD_UNIT;
-			
-			break;
-		}
 
 		if (TAdInfo->Flags != INFO_FLAG_NDIS_ADAPTER)
 		{
@@ -3358,12 +3346,9 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	//
 	for(TAdInfo = g_AdaptersInfoList; TAdInfo != NULL; TAdInfo = TAdInfo->Next)
 	{
-		if(TAdInfo->Flags != INFO_FLAG_DONT_EXPORT)
-		{
 			// Update the size variables
 			SizeNeeded += (ULONG)strlen(TAdInfo->Name) + (ULONG)strlen(TAdInfo->Description) + 2;
 			SizeNames += (ULONG)strlen(TAdInfo->Name) + 1;
-		}
 	}
 
 	// Check that we don't overflow the buffer.
@@ -3388,8 +3373,6 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	//
 	for(TAdInfo = g_AdaptersInfoList, SizeNames = 0, SizeDesc = 0; TAdInfo != NULL; TAdInfo = TAdInfo->Next)
 	{
-		if(TAdInfo->Flags != INFO_FLAG_DONT_EXPORT)
-		{
 			// Copy the data
 			StringCchCopyA(
 				((PCHAR)pStr) + SizeNames, 
@@ -3403,7 +3386,6 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 			// Update the size variables
 			SizeNames += (ULONG)strlen(TAdInfo->Name) + 1;
 			SizeDesc += (ULONG)strlen(TAdInfo->Description) + 1;
-		}
 	}
 
 	// Separate the two lists
