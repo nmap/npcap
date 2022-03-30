@@ -318,6 +318,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	UINT HasDataRateMappingTable:1;
 #endif
 
+	ULONG SupportedPacketFilters;
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
 	ULONG					PhysicalMedium;

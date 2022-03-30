@@ -1652,6 +1652,7 @@ NPF_RemoveFromGroupOpenArray(
 #else
 		*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
 #endif
+		*(PULONG) pBuffer = *(PULONG) pBuffer & pFiltMod->SupportedPacketFilters;
 
 			NPF_DoInternalRequest(pFiltMod,
 				NdisRequestSetInformation,
@@ -2498,12 +2499,13 @@ NPF_Restart(
 		goto NPF_Restart_End;
 	}
 
-	// MtuSize is actually OID_GEN_MAXIMUM_FRAME_SIZE and does not include link header
-	// We'll grab it because it's available, but we'll try to get something better
 	while (Curr) {
 		if (Curr->Oid == OID_GEN_MINIPORT_RESTART_ATTRIBUTES) {
 			GenAttr = (PNDIS_RESTART_GENERAL_ATTRIBUTES) Curr->Data;
+			// MtuSize is actually OID_GEN_MAXIMUM_FRAME_SIZE and does not include link header
+			// We'll grab it because it's available, but we'll try to get something better
 			pFiltMod->MaxFrameSize = GenAttr->MtuSize;
+			pFiltMod->SupportedPacketFilters = GenAttr->SupportedPacketFilters;
 			break;
 		}
 		Curr = Curr->Next;
@@ -3291,6 +3293,7 @@ NPF_SetDot11PacketFilter(
 	}
 
 	*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter | pFiltMod->Dot11PacketFilter;
+	*(PULONG) pBuffer = *(PULONG) pBuffer & pFiltMod->SupportedPacketFilters;
 
 	// set the PacketFilter
 	Status = NPF_DoInternalRequest(pFiltMod,
@@ -3352,6 +3355,8 @@ NPF_SetPacketFilter(
 #else
 	*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
 #endif
+	// Avoid setting unsupported packet filter types
+	*(PULONG) pBuffer = *(PULONG) pBuffer & pFiltMod->SupportedPacketFilters;
 
 	// set the PacketFilter
 	Status = NPF_DoInternalRequest(pFiltMod,
