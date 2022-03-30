@@ -1620,6 +1620,7 @@ NPF_RemoveFromGroupOpenArray(
 		if (Curr == &(pOpen->OpenInstancesEntry)) {
 			/* This is the one to remove. Ignore its parameters. */
 			Prev->Next = Curr->Next;
+			Curr->Next = NULL;
 			found = TRUE;
 		}
 		else {
@@ -1656,10 +1657,6 @@ NPF_RemoveFromGroupOpenArray(
 	if (!found)
 	{
 		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");)
-	}
-	else
-	{
-		pOpen->OpenInstancesEntry.Next = NULL;
 	}
 
 	TRACE_EXIT();
