@@ -321,6 +321,8 @@ typedef struct _NPCAP_FILTER_MODULE
 	ULONG SupportedPacketFilters;
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
+	ULONG MyLookaheadSize;
+	ULONG HigherLookaheadSize;
 	ULONG					PhysicalMedium;
 #ifdef HAVE_DOT11_SUPPORT
 	ULONG					Dot11PacketFilter;
@@ -355,6 +357,7 @@ typedef struct _OPEN_INSTANCE
 
 	PDEVICE_EXTENSION DeviceExtension;
 	ULONG					MyPacketFilter;
+	ULONG					MyLookaheadSize;
 	PKEVENT					ReadEvent;		///< Pointer to the event on which the read calls on this instance must wait.
 	PUCHAR					bpfprogram;		///< Pointer to the filtering pseudo-code associated with current instance of the driver.
 											///< This code is used only in particular situations (for example when the packet received

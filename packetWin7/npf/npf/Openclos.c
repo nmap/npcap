@@ -153,6 +153,12 @@ NPF_SetDot11PacketFilter(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod
 );
 #endif
+_IRQL_requires_(PASSIVE_LEVEL)
+NDIS_STATUS
+NPF_SetLookaheadSize(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ ULONG LookaheadSize
+);
 
 /*!
   \brief Utility routine that forms and sends an NDIS_OID_REQUEST to the miniport adapter.
@@ -1576,8 +1582,10 @@ NPF_RemoveFromGroupOpenArray(
 	PNPCAP_FILTER_MODULE pFiltMod;
 	PSINGLE_LIST_ENTRY Prev = NULL;
 	PSINGLE_LIST_ENTRY Curr = NULL;
+	POPEN_INSTANCE pCurrOpen = NULL;
 
-	ULONG OldPacketFilter;
+	ULONG NewPacketFilter;
+	ULONG NewLookaheadSize;
 	ULONG BytesProcessed;
 	PVOID pBuffer = NULL;
 	BOOLEAN found = FALSE;
@@ -1596,13 +1604,11 @@ NPF_RemoveFromGroupOpenArray(
 	// Acquire lock for writing (modify list)
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
-	/* Store the previous combined packet filter */
-	OldPacketFilter = pFiltMod->MyPacketFilter;
-	/* Reset the combined packet filter and recalculate it */
-	pFiltMod->MyPacketFilter = 0;
+	/* Recalculate the combined tracked interface parameters */
+	NewPacketFilter = 0;
+	NewLookaheadSize = 0;
 #ifdef HAVE_DOT11_SUPPORT
 	// Reset the raw wifi filter in case this was the last instance
-	OldPacketFilter |= pFiltMod->Dot11PacketFilter;
 	pFiltMod->Dot11PacketFilter = 0;
 #endif
 
@@ -1612,62 +1618,39 @@ NPF_RemoveFromGroupOpenArray(
 	while (Curr != NULL)
 	{
 		if (Curr == &(pOpen->OpenInstancesEntry)) {
-			/* This is the one to remove. Ignore its filter. */
+			/* This is the one to remove. Ignore its parameters. */
 			Prev->Next = Curr->Next;
 			found = TRUE;
 		}
 		else {
 			/* OR the filter in */
-			pFiltMod->MyPacketFilter |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
-#ifdef HAVE_DOT11_SUPPORT
-			if (pFiltMod->Dot11) {
-				// There's still an open instance, so keep the raw wifi filter
-				pFiltMod->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
-			}
-#endif
+			pCurrOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+			NewPacketFilter |= pCurrOpen->MyPacketFilter;
+			NewLookaheadSize = max(NewLookaheadSize, pCurrOpen->MyLookaheadSize);
 		}
 		/* Regardless, keep traversing. */
 		Prev = Curr;
 		Curr = Prev->Next;
 	}
+#ifdef HAVE_DOT11_SUPPORT
+	if (pFiltMod->Dot11 && pFiltMod->OpenInstances.Next != NULL)
+	{
+		// There's still an open instance, so keep the raw wifi filter
+		pFiltMod->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
+	}
+#endif
 
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
 	/* If the packet filter has changed, originate an OID Request to set it to the new value */
-	if ((pFiltMod->MyPacketFilter
-#ifdef HAVE_DOT11_SUPPORT
-			| pFiltMod->Dot11PacketFilter
-#endif
-		) != OldPacketFilter)
+	if (STATUS_SUCCESS != NPF_SetPacketFilter(pFiltMod, NewPacketFilter))
 	{
-        pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
-        if (pBuffer == NULL)
-        {
-            IF_LOUD(DbgPrint("Allocate pBuffer failed, can't reset packet filter\n");)
-        }
-		else
-		{
-#ifdef HAVE_DOT11_SUPPORT
-		*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter | pFiltMod->Dot11PacketFilter;
-#else
-		*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
-#endif
-		*(PULONG) pBuffer = *(PULONG) pBuffer & pFiltMod->SupportedPacketFilters;
-
-			NPF_DoInternalRequest(pFiltMod,
-				NdisRequestSetInformation,
-				OID_GEN_CURRENT_PACKET_FILTER,
-				pBuffer,
-				sizeof(ULONG),
-				0,
-				0,
-				&BytesProcessed);
-			ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
-			if (BytesProcessed != sizeof(ULONG))
-			{
-				IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");)
-			}
-		}
+		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");)
+	}
+	// If the new lookahead value is different than the old one, originate an OID request to set to the new value
+	if (STATUS_SUCCESS != NPF_SetLookaheadSize(pFiltMod, NewLookaheadSize))
+	{
+		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting lookahead.\n");)
 	}
 
 	if (!found)
@@ -1991,6 +1974,8 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->MinToCopy = 0;
 	Open->Size = 0;
 	Open->SkipSentPackets = FALSE;
+	Open->MyPacketFilter = 0;
+	Open->MyLookaheadSize = 0;
 	Open->ReadEvent = NULL;
 
 	//
@@ -2367,6 +2352,7 @@ NPF_AttachAdapter(
 				&& pFiltMod->AdapterID.Value != 0) {
 			PDEVICE_EXTENSION pDevExt = pNpcapDeviceObject->DeviceExtension;
 			ULONG NewPacketFilter = 0;
+			ULONG NewLookaheadSize = 0;
 			// Traverse the AllOpens list looking for detached instances.
 			NdisAcquireRWLockRead(pDevExt->AllOpensLock, &lockState, 0);
 			for (PLIST_ENTRY Curr = pDevExt->AllOpens.Flink; Curr != &(pDevExt->AllOpens); Curr = Curr->Flink)
@@ -2385,6 +2371,7 @@ NPF_AttachAdapter(
 					NPF_AddToGroupOpenArray(pOpen, pFiltMod, TRUE);
 					// 'OR' in the open's filter
 					NewPacketFilter |= pOpen->MyPacketFilter;
+					NewLookaheadSize = max(NewLookaheadSize, pOpen->MyLookaheadSize);
 				}
 			}
 			NdisReleaseRWLock(pDevExt->AllOpensLock, &lockState);
@@ -2392,7 +2379,11 @@ NPF_AttachAdapter(
 			if (!NT_SUCCESS(returnStatus))
 			{
 				IF_LOUD(DbgPrint("NPF_SetPacketFilter: error, Status=%x.\n", returnStatus);)
-				break;
+			}
+			returnStatus = NPF_SetLookaheadSize(pFiltMod, NewLookaheadSize);
+			if (!NT_SUCCESS(returnStatus))
+			{
+				IF_LOUD(DbgPrint("NPF_SetLookaheadSize: error, Status=%x.\n", returnStatus);)
 			}
 		}
 
@@ -2506,6 +2497,7 @@ NPF_Restart(
 			// We'll grab it because it's available, but we'll try to get something better
 			pFiltMod->MaxFrameSize = GenAttr->MtuSize;
 			pFiltMod->SupportedPacketFilters = GenAttr->SupportedPacketFilters;
+			pFiltMod->HigherLookaheadSize = GenAttr->LookaheadSize;
 			break;
 		}
 		Curr = Curr->Next;
@@ -2643,16 +2635,38 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 	NT_ASSERT(!pFiltMod->Loopback);
 #endif
 
-	// Special case: if their new packet filter doesn't change the lower one
+	// Special case: if their OID doesn't change a value we already set
 	// then we don't pass it down but just return success.
-	if (Request->RequestType == NdisRequestSetInformation
-			&& Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER
-			&& (*(PULONG) Request->DATA.SET_INFORMATION.InformationBuffer | pFiltMod->MyPacketFilter) == (pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter))
+	if (Request->RequestType == NdisRequestSetInformation)
 	{
-		pFiltMod->HigherPacketFilter = *(PULONG) Request->DATA.SET_INFORMATION.InformationBuffer;
-		Request->DATA.SET_INFORMATION.BytesRead = sizeof(ULONG);
-		return NDIS_STATUS_SUCCESS;
+		pBuffer = Request->DATA.SET_INFORMATION.InformationBuffer;
+		switch (Request->DATA.SET_INFORMATION.Oid)
+		{
+			case OID_GEN_CURRENT_PACKET_FILTER:
+				// If new combined filter is the same as existing
+				if ((*(PULONG) pBuffer | pFiltMod->MyPacketFilter) == (pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter))
+				{
+					// Note the new value and return success
+					pFiltMod->HigherPacketFilter = *(PULONG) pBuffer;
+					Request->DATA.SET_INFORMATION.BytesRead = sizeof(ULONG);
+					return NDIS_STATUS_SUCCESS;
+				}
+				break;
+			case OID_GEN_CURRENT_LOOKAHEAD:
+				// If requested lookahead is less than or equal to ours
+				if (*(PULONG) pBuffer <= pFiltMod->MyLookaheadSize)
+				{
+					// Note the new value and return success
+					pFiltMod->HigherLookaheadSize = *(PULONG) pBuffer;
+					Request->DATA.SET_INFORMATION.BytesRead = sizeof(ULONG);
+					return NDIS_STATUS_SUCCESS;
+				}
+				break;
+			default:
+				break;
+		}
 	}
+
 	do
 	{
 		Status = NdisAllocateCloneOidRequest(pFiltMod->AdapterHandle,
@@ -2665,25 +2679,39 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 			break;
 		}
 
-		if (Request->RequestType == NdisRequestSetInformation && Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER)
+		if (Request->RequestType == NdisRequestSetInformation &&
+				(Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER
+				 || Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_LOOKAHEAD))
 		{
 			// ExAllocatePoolWithTag is permitted to be used at DISPATCH_LEVEL iff allocating from NPF_NONPAGED
 #pragma warning(suppress: 28118)
 			pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_CLONE_OID_TAG);
 			if (pBuffer == NULL)
 			{
-				IF_LOUD(DbgPrint("Allocate pBuffer failed, cannot modify packet filter.\n");)
+				IF_LOUD(DbgPrint("Allocate pBuffer failed, cannot modify OID value.\n");)
 			}
 			else
 			{
 
-
-				pFiltMod->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
+				switch (Request->DATA.SET_INFORMATION.Oid)
+				{
+					case OID_GEN_CURRENT_PACKET_FILTER:
+						pFiltMod->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
+						*(PULONG) pBuffer = (pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter 
 #ifdef HAVE_DOT11_SUPPORT
-				*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter | pFiltMod->Dot11PacketFilter;
-#else
-				*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
+								| pFiltMod->Dot11PacketFilter
 #endif
+								);
+						break;
+					case OID_GEN_CURRENT_LOOKAHEAD:
+						pFiltMod->HigherLookaheadSize = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
+						// We already checked for <= earlier, but better to be clear:
+						*(PULONG) pBuffer = max(pFiltMod->HigherLookaheadSize, pFiltMod->MyLookaheadSize);
+						break;
+					default:
+						NT_ASSERT(FALSE && "UNREACHABLE");
+						break;
+				}
 				ClonedRequest->DATA.SET_INFORMATION.InformationBuffer = pBuffer;
 			}
 		}
@@ -3374,6 +3402,64 @@ NPF_SetPacketFilter(
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
 		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));)
+		Status = NDIS_STATUS_FAILURE;
+	}
+	TRACE_EXIT();
+	return Status;
+}
+
+_Use_decl_annotations_
+NDIS_STATUS
+NPF_SetLookaheadSize(
+	PNPCAP_FILTER_MODULE pFiltMod,
+	ULONG LookaheadSize
+)
+{
+	PVOID pBuffer = NULL;
+	NDIS_STATUS Status = STATUS_SUCCESS;
+	ULONG BytesProcessed = 0;
+
+	TRACE_ENTER();
+
+	// If the new size is the same as the old one...
+	if (LookaheadSize == pFiltMod->MyLookaheadSize)
+	{
+		// Nothing left to do!
+		return NDIS_STATUS_SUCCESS;
+	}
+	pFiltMod->MyLookaheadSize = LookaheadSize;
+	// ...or it's less than the one already set by the protocols,
+	if (LookaheadSize < pFiltMod->HigherLookaheadSize)
+	{
+		// Nothing left to do!
+		return NDIS_STATUS_SUCCESS;
+	}
+
+	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
+	if (pBuffer == NULL)
+	{
+		IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+			TRACE_EXIT();
+		return NDIS_STATUS_RESOURCES;
+	}
+	*(PULONG) pBuffer = pFiltMod->MyLookaheadSize;
+
+	// set the LookaheadSize
+	Status = NPF_DoInternalRequest(pFiltMod,
+		NdisRequestSetInformation,
+		OID_GEN_CURRENT_LOOKAHEAD,
+		pBuffer,
+		sizeof(ULONG),
+		0,
+		0,
+		&BytesProcessed
+	);
+
+	ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
+
+	if (Status != STATUS_SUCCESS || BytesProcessed != sizeof(ULONG))
+	{
+		IF_LOUD(DbgPrint("NPF_DoInternalRequest error %#x, BytesProcessed = %#lx, sizeof(ULONG) = %#zx\n", Status, BytesProcessed, sizeof(ULONG));)
 		Status = NDIS_STATUS_FAILURE;
 	}
 	TRACE_EXIT();

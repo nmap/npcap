@@ -1773,6 +1773,54 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		// Overwrite the input value in the buffer with our calculated value
 		*(PULONG) OidData->Data = ulTmp;
 	}
+	else if (bSetOid && OidData->Oid == OID_GEN_CURRENT_LOOKAHEAD)
+	{
+		// Stash the old lookahead
+		ulTmp = pOpen->MyLookaheadSize;
+		pOpen->MyLookaheadSize = *(PULONG) OidData->Data;
+		// If it didn't change, or
+		if (pOpen->MyLookaheadSize == ulTmp ||
+			// if it got bigger but would not increase the current value,
+			(pOpen->MyLookaheadSize > ulTmp && pOpen->MyLookaheadSize <= pOpen->pFiltMod->MyLookaheadSize))
+		{
+			// Nothing left to do!
+			Status = STATUS_SUCCESS;
+			goto OID_REQUEST_DONE;
+		}
+		// Remaining possibilities:
+		// 1. It got smaller, so MAY decrease the current value,
+		if (pOpen->MyLookaheadSize < ulTmp) {
+			// Figure out the max of all open instances' lookaheads
+			NdisAcquireRWLockRead(pOpen->pFiltMod->OpenInstancesLock, &lockState, 0);
+			// Stash the old value
+			ulTmp = pOpen->pFiltMod->MyLookaheadSize;
+			pOpen->pFiltMod->MyLookaheadSize = 0;
+			for (PSINGLE_LIST_ENTRY Curr = pOpen->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
+			{
+				pOpen->pFiltMod->MyLookaheadSize = max(pOpen->pFiltMod->MyLookaheadSize,
+						CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyLookaheadSize);
+			}
+			NdisReleaseRWLock(pOpen->pFiltMod->OpenInstancesLock, &lockState);
+			// If the new max is the same as the old one, no need to set it.
+			if (pOpen->pFiltMod->MyLookaheadSize == ulTmp) {
+				// Nothing left to do!
+				Status = STATUS_SUCCESS;
+				goto OID_REQUEST_DONE;
+			}
+		}
+		// 2. It got bigger and will increase the current value.
+		else {
+			pOpen->pFiltMod->MyLookaheadSize = pOpen->MyLookaheadSize;
+		}
+		// If the max lookahead is smaller than or same as that already set by the protocols...
+		if (pOpen->pFiltMod->MyLookaheadSize <= pOpen->pFiltMod->HigherLookaheadSize) {
+			// Nothing left to do!
+			Status = STATUS_SUCCESS;
+			goto OID_REQUEST_DONE;
+		}
+		// Finally, set the value to the new max and send the OID
+		*(PULONG) OidData->Data = pOpen->pFiltMod->MyLookaheadSize;
+	}
 
 	//  The buffer is valid
 
