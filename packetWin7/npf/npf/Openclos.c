@@ -600,6 +600,8 @@ NPF_OpenAdapter(
 	{
 		Open->pFiltMod = pFiltMod;
 		Open->AdapterID = pFiltMod->AdapterID;
+		Open->bDot11 = pFiltMod->Dot11;
+		Open->bLoopback = pFiltMod->Loopback;
 	}
 	Open->DeviceExtension = DeviceObject->DeviceExtension;
 
