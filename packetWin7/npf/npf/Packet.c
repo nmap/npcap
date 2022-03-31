@@ -1318,7 +1318,7 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN))
 	{
-		return (pOpen->OpenStatus == OpenDetached
+		return (pOpen->OpenStatus <= OpenDetached
 				? STATUS_DEVICE_REMOVED
 				: STATUS_CANCELLED);
 	}
@@ -1501,7 +1501,7 @@ static NTSTATUS funcBIOCSETBUFFERSIZE(_In_ POPEN_INSTANCE pOpen,
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN))
 	{
-		return (pOpen->OpenStatus == OpenDetached
+		return (pOpen->OpenStatus <= OpenDetached
 				? STATUS_DEVICE_REMOVED
 				: STATUS_CANCELLED);
 	}
@@ -2168,7 +2168,7 @@ NPF_IoControl(
 			Status = NPF_BufferedWrite(Open, pBuf, InputBufferLength, bFlag, &Information);
 			break;
 		case BIOCSWRITEREP:
-			Status = funcBIOCSULONG(Open, pBuf, InputBufferLength, &Information, OpenDetached, &Open->Nwrites);
+			Status = funcBIOCSULONG(Open, pBuf, InputBufferLength, &Information, OpenRunning, &Open->Nwrites);
 			break;
 #endif // NPCAP_READ_ONLY
 

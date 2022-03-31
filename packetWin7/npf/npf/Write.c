@@ -220,7 +220,7 @@ NPF_Write(
 	if (!NPF_StartUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN))
 	{
 		// Write requires an attached adapter.
-		Status = (Open->OpenStatus == OpenDetached
+		Status = (Open->OpenStatus <= OpenDetached
 					? STATUS_DEVICE_REMOVED
 					: STATUS_CANCELLED);
 		goto NPF_Write_End;
@@ -539,7 +539,9 @@ NTSTATUS NPF_BufferedWrite(
 	if (!NPF_StartUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN))
 	{
 		TRACE_EXIT();
-		return STATUS_CANCELLED;
+		return (Open->OpenStatus <= OpenDetached
+					? STATUS_DEVICE_REMOVED
+					: STATUS_CANCELLED);
 	}
 
 	if (InterlockedExchange(&Open->WriteInProgress, 1) == 1)

@@ -709,9 +709,9 @@ NPF_TapExForEachOpen(
 	
 	//TRACE_ENTER();
 
-	if (!NPF_StartUsingOpenInstance(Open, OpenRunning, AtDispatchLevel))
+	// We have a packet to record. OpenDetached is the highest needed level here.
+	if (!NPF_StartUsingOpenInstance(Open, OpenDetached, AtDispatchLevel))
  	{
- 		// The adapter is in use or even released, stop the tapping.
  		return;
  	}
 
