@@ -755,6 +755,7 @@ NPF_StartUsingOpenInstance(
 	POPEN_INSTANCE pOpen, OPEN_STATE MaxState, BOOLEAN AtDispatchLevel)
 {
 	BOOLEAN returnStatus;
+	NDIS_EVENT Event;
 
 	if (!NT_VERIFY(MaxState < OpenInvalidStateMax))
 	{
@@ -770,6 +771,7 @@ NPF_StartUsingOpenInstance(
 	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 	if (MaxState == OpenRunning && pOpen->OpenStatus == OpenAttached)
 	{
+		pOpen->OpenStatus = OpenInitializing;
 		// NPF_EnableOps must be called at PASSIVE_LEVEL. Release the lock first.
 		NT_ASSERT(!AtDispatchLevel);
 		if (AtDispatchLevel) {
@@ -803,18 +805,31 @@ NPF_StartUsingOpenInstance(
 #endif
 
 				pOpen->OpenStatus = OpenRunning;
-				pOpen->PendingIrps[OpenRunning]++;
+			}
+			else
+			{
+				pOpen->OpenStatus = OpenAttached;
 			}
 		}
 	}
-	else if (pOpen->OpenStatus > MaxState)
+	else if (MaxState == OpenRunning && pOpen->OpenStatus == OpenInitializing)
 	{
-		returnStatus = FALSE;
+		// Wait until it's ready...
+		NdisInitializeEvent(&Event);
+		NdisResetEvent(&Event);
+		// Wait for other thread to finish enabling
+		while (pOpen->OpenStatus == OpenInitializing)
+		{
+			FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+			NdisWaitEvent(&Event, 1);
+			FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+		}
 	}
-	else
+
+	returnStatus = (pOpen->OpenStatus <= MaxState);
+	if (returnStatus)
 	{
 		NT_ASSERT(MaxState < OpenClosed); // No IRPs can be pending for OpenClosed or higher state.
-		returnStatus = TRUE;
 		pOpen->PendingIrps[MaxState]++;
 	}
 	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);

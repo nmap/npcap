@@ -276,6 +276,7 @@ typedef enum _FILTER_STATE
 typedef enum _OPEN_STATE
 {
 	OpenRunning, // All features available
+	OpenInitializing, // A thread is initializing features
 	OpenAttached, // Some features need to be initialized.
 	OpenDetached, // No NDIS adapter associated, most features unavailable
 	OpenClosed, // No features available, about to shut down. New IRPs rejected.
@@ -300,7 +301,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	// List of open instances needs to be write-locked only when inserting/removing.
 	// Ordinary traversal can use faster and concurrent read-lock.
 	SINGLE_LIST_ENTRY OpenInstances; //GroupHead
-	PNDIS_RW_LOCK_EX OpenInstancesLock; // GroupLock
+	PNDIS_RW_LOCK_EX OpenInstancesLock; // Also protects MyPacketFilter and MyLookaheadSize
 
 	NDIS_STRING				AdapterName;
 	NET_LUID AdapterID;
