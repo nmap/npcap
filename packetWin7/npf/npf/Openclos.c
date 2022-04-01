@@ -147,11 +147,7 @@ NPF_SetPacketFilter(
 	_In_ ULONG PacketFilter
 );
 #ifdef HAVE_DOT11_SUPPORT
-_IRQL_requires_(PASSIVE_LEVEL)
-NDIS_STATUS
-NPF_SetDot11PacketFilter(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod
-);
+#define NPCAP_DOT11_RAW_PACKET_FILTER (NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT)
 #endif
 _IRQL_requires_(PASSIVE_LEVEL)
 NDIS_STATUS
@@ -159,7 +155,6 @@ NPF_SetLookaheadSize(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ ULONG LookaheadSize
 );
-
 /*!
   \brief Utility routine that forms and sends an NDIS_OID_REQUEST to the miniport adapter.
   \param FilterModuleContext Pointer to the filter context structure.
@@ -630,6 +625,12 @@ NPF_OpenAdapter(
 	if (pFiltMod)
 	{
 		NPF_AddToGroupOpenArray(Open, pFiltMod, FALSE);
+#ifdef HAVE_DOT11_SUPPORT
+		if (Open->bDot11)
+		{
+			Open->MyPacketFilter = NPCAP_DOT11_RAW_PACKET_FILTER;
+		}
+#endif
 		NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 	}
 
@@ -781,13 +782,6 @@ NPF_StartUsingOpenInstance(
 		else {
 			FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 			returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen->pFiltMod));
-#ifdef HAVE_DOT11_SUPPORT
-			if (returnStatus && pOpen->pFiltMod->Dot11)
-			{
-				/* Update packet filter for raw wifi (must be PASSIVE_LEVEL) */
-				NPF_SetDot11PacketFilter(pOpen->pFiltMod);
-			}
-#endif
 			FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 
 			if (returnStatus)
@@ -1624,11 +1618,6 @@ NPF_RemoveFromGroupOpenArray(
 	/* Recalculate the combined tracked interface parameters */
 	NewPacketFilter = 0;
 	NewLookaheadSize = 0;
-#ifdef HAVE_DOT11_SUPPORT
-	// Reset the raw wifi filter in case this was the last instance
-	pFiltMod->Dot11PacketFilter = 0;
-#endif
-
 
 	Prev = &(pFiltMod->OpenInstances);
 	Curr = Prev->Next;
@@ -1650,13 +1639,6 @@ NPF_RemoveFromGroupOpenArray(
 		Prev = Curr;
 		Curr = Prev->Next;
 	}
-#ifdef HAVE_DOT11_SUPPORT
-	if (pFiltMod->Dot11 && pFiltMod->OpenInstances.Next != NULL)
-	{
-		// There's still an open instance, so keep the raw wifi filter
-		pFiltMod->Dot11PacketFilter = NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT;
-	}
-#endif
 
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
@@ -2044,20 +2026,13 @@ NPF_CreateFilterModule(
 
 	pFiltMod->AdapterHandle = NdisFilterHandle;
 	pFiltMod->AdapterBindingStatus = FilterStateUnspecified;
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	pFiltMod->Loopback = FALSE;
-#endif
 
-#ifdef HAVE_RX_SUPPORT
 	pFiltMod->SendToRxPath = FALSE;
 	pFiltMod->BlockRxPath = FALSE;
-#endif
 
-#ifdef HAVE_DOT11_SUPPORT
 	pFiltMod->Dot11 = FALSE;
-	pFiltMod->Dot11PacketFilter = 0x0;
 	pFiltMod->HasDataRateMappingTable = FALSE;
-#endif
 
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;
@@ -2222,7 +2197,7 @@ NPF_AttachAdapter(
 	NDIS_STATUS				returnStatus;
 	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
 	BOOLEAN					bFalse = FALSE;
-	BOOLEAN					bDot11;
+	BOOLEAN					bDot11 = FALSE;
 
 	TRACE_ENTER();
 
@@ -2259,11 +2234,13 @@ NPF_AttachAdapter(
 			IF_LOUD(DbgPrint("NPF_AttachAdapter: This is the standard filter binding!\n");)
 			bDot11 = FALSE;
 		}
+#ifdef HAVE_DOT11_SUPPORT
 		else if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'5')
 		{
 			IF_LOUD(DbgPrint("NPF_AttachAdapter: This is the WiFi filter binding!\n");)
 			bDot11 = TRUE;
 		}
+#endif
 		else
 		{
 			IF_LOUD(DbgPrint("NPF_AttachAdapter: error, unrecognized filter binding!\n");)
@@ -2349,9 +2326,7 @@ NPF_AttachAdapter(
 			"PhysicalMedium=%x",
 			pFiltMod->PhysicalMedium);
 
-#ifdef HAVE_DOT11_SUPPORT
 		pFiltMod->Dot11 = g_Dot11SupportMode && bDot11;
-#endif
 
 		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
 			"Opened the device %ws, BindingContext=%p, dot11=%u",
@@ -2374,10 +2349,8 @@ NPF_AttachAdapter(
 				POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, AllOpensEntry);
 				// If it doesn't already have a filter module and it's not Loopback (since this is for NDIS only)
 				if (pOpen->pFiltMod == NULL && !pOpen->bLoopback
-#ifdef HAVE_DOT11_SUPPORT
 						// and its Dot11 status matches
 						&& pOpen->bDot11 == pFiltMod->Dot11
-#endif
 						// and the AdapterID matches
 					       	&& pOpen->AdapterID.Value == pFiltMod->AdapterID.Value)
 				{
@@ -2711,11 +2684,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 				{
 					case OID_GEN_CURRENT_PACKET_FILTER:
 						pFiltMod->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
-						*(PULONG) pBuffer = (pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter 
-#ifdef HAVE_DOT11_SUPPORT
-								| pFiltMod->Dot11PacketFilter
-#endif
-								);
+						*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
 						break;
 					case OID_GEN_CURRENT_LOOKAHEAD:
 						pFiltMod->HigherLookaheadSize = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
@@ -3300,66 +3269,6 @@ NPF_GetPacketFilter(
 
 //-------------------------------------------------------------------
 
-#ifdef HAVE_DOT11_SUPPORT
-#define NPCAP_DOT11_RAW_PACKET_FILTER (NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT)
-_Use_decl_annotations_
-NDIS_STATUS
-NPF_SetDot11PacketFilter(
-	PNPCAP_FILTER_MODULE pFiltMod
-)
-{
-	PVOID pBuffer = NULL;
-	NDIS_STATUS Status = STATUS_SUCCESS;
-	ULONG BytesProcessed = 0;
-
-	TRACE_ENTER();
-	// Validate
-	if (!NT_VERIFY(pFiltMod->Dot11)) {
-		TRACE_EXIT();
-		return NDIS_STATUS_INVALID_DEVICE_REQUEST;
-	}
-	// If it's already set, don't bother.
-	if (pFiltMod->Dot11PacketFilter == NPCAP_DOT11_RAW_PACKET_FILTER) {
-		// Nothing left to do!
-		TRACE_EXIT();
-		return NDIS_STATUS_SUCCESS;
-	}
-	pFiltMod->Dot11PacketFilter = NPCAP_DOT11_RAW_PACKET_FILTER;
-
-	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
-	if (pBuffer == NULL)
-	{
-		IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
-			TRACE_EXIT();
-		return NDIS_STATUS_RESOURCES;
-	}
-
-	*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter | pFiltMod->Dot11PacketFilter;
-	*(PULONG) pBuffer = *(PULONG) pBuffer & pFiltMod->SupportedPacketFilters;
-
-	// set the PacketFilter
-	Status = NPF_DoInternalRequest(pFiltMod,
-		NdisRequestSetInformation,
-		OID_GEN_CURRENT_PACKET_FILTER,
-		pBuffer,
-		sizeof(ULONG),
-		0,
-		0,
-		&BytesProcessed
-	);
-
-	ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
-
-	if (BytesProcessed != sizeof(ULONG))
-	{
-		IF_LOUD(DbgPrint("BytesProcessed != sizeof(ULONG), BytesProcessed = %#lx, sizeof(ULONG) = %#zx\n", BytesProcessed, sizeof(ULONG));)
-		Status = NDIS_STATUS_FAILURE;
-	}
-	TRACE_EXIT();
-	return Status;
-}
-#endif
-
 _Use_decl_annotations_
 NDIS_STATUS
 NPF_SetPacketFilter(
@@ -3370,20 +3279,31 @@ NPF_SetPacketFilter(
 	PVOID pBuffer = NULL;
 	NDIS_STATUS Status = STATUS_SUCCESS;
 	ULONG BytesProcessed = 0;
+	LOCK_STATE_EX lockState;
+	BOOLEAN bail_early = FALSE;
 
 	TRACE_ENTER();
 
+	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
+
 	// If the new packet filter is the same as the old one...
 	if (PacketFilter == pFiltMod->MyPacketFilter
-		// ...or it wouldn't add to the upper one
-		|| (PacketFilter & (~pFiltMod->HigherPacketFilter)) == 0)
-       	{
-		pFiltMod->MyPacketFilter = PacketFilter;
+			// ...or it wouldn't add to the upper one
+			|| (PacketFilter & (~pFiltMod->HigherPacketFilter)) == 0)
+	{
 		// Nothing left to do!
-		return NDIS_STATUS_SUCCESS;
+		bail_early = TRUE;
 	}
 
 	pFiltMod->MyPacketFilter = PacketFilter;
+	PacketFilter |= pFiltMod->HigherPacketFilter;
+
+	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
+
+	if (bail_early)
+	{
+		return NDIS_STATUS_SUCCESS;
+	}
 
 	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
 	if (pBuffer == NULL)
@@ -3392,13 +3312,8 @@ NPF_SetPacketFilter(
 			TRACE_EXIT();
 		return NDIS_STATUS_RESOURCES;
 	}
-#ifdef HAVE_DOT11_SUPPORT
-	*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter | pFiltMod->Dot11PacketFilter;
-#else
-	*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
-#endif
 	// Avoid setting unsupported packet filter types
-	*(PULONG) pBuffer = *(PULONG) pBuffer & pFiltMod->SupportedPacketFilters;
+	*(PULONG) pBuffer = PacketFilter & pFiltMod->SupportedPacketFilters;
 
 	// set the PacketFilter
 	Status = NPF_DoInternalRequest(pFiltMod,

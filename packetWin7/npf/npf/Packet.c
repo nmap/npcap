@@ -1706,6 +1706,12 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		ulTmp = pOpen->MyPacketFilter;
 		// Store the requested packet filter for *this* Open instance
 		pOpen->MyPacketFilter = *(ULONG*)OidData->Data;
+#ifdef HAVE_DOT11_SUPPORT
+		if (pOpen->bDot11)
+		{
+			pOpen->MyPacketFilter |= NPCAP_DOT11_RAW_PACKET_FILTER;
+		}
+#endif
 
 		/* We don't want NDIS_PACKET_TYPE_ALL_LOCAL, since that may cause NDIS to loop
 		 * packets back that shouldn't be. WinPcap had to do this as a protocol driver,
@@ -1764,11 +1770,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 			goto OID_REQUEST_DONE;
 		}
 
-		ulTmp = pOpen->pFiltMod->SupportedPacketFilters & (
-#ifdef HAVE_DOT11_SUPPORT
-			pOpen->pFiltMod->Dot11PacketFilter |
-#endif
-			pOpen->pFiltMod->HigherPacketFilter | pOpen->pFiltMod->MyPacketFilter);
+		ulTmp = pOpen->pFiltMod->SupportedPacketFilters & (pOpen->pFiltMod->HigherPacketFilter | pOpen->pFiltMod->MyPacketFilter);
 
 		// Overwrite the input value in the buffer with our calculated value
 		*(PULONG) OidData->Data = ulTmp;

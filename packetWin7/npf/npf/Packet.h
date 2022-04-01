@@ -307,17 +307,11 @@ typedef struct _NPCAP_FILTER_MODULE
 	NET_LUID AdapterID;
 
 	/* Config booleans as a bitfield */
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	UINT Loopback:1;
-#endif
-#ifdef HAVE_RX_SUPPORT
 	UINT SendToRxPath:1;
 	UINT BlockRxPath:1;
-#endif
-#ifdef HAVE_DOT11_SUPPORT
 	UINT Dot11:1;
 	UINT HasDataRateMappingTable:1;
-#endif
 
 	ULONG SupportedPacketFilters;
 	ULONG					MyPacketFilter;
@@ -326,7 +320,6 @@ typedef struct _NPCAP_FILTER_MODULE
 	ULONG HigherLookaheadSize;
 	ULONG					PhysicalMedium;
 #ifdef HAVE_DOT11_SUPPORT
-	ULONG					Dot11PacketFilter;
 	DOT11_DATA_RATE_MAPPING_TABLE	DataRateMappingTable;
 #endif
 
