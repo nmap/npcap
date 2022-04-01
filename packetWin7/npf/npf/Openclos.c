@@ -276,8 +276,7 @@ NPF_CreateOpenObject(
 #ifdef HAVE_DOT11_SUPPORT
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetDataRateMappingTable(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_Out_ PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable
+	_Inout_ PNPCAP_FILTER_MODULE pFiltMod,
 	);
 
 _IRQL_requires_(PASSIVE_LEVEL)
@@ -707,10 +706,7 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod)
 		{
 			// Fetch the device's data rate mapping table with the OID_DOT11_DATA_RATE_MAPPING_TABLE OID.
 			pFiltMod->HasDataRateMappingTable = NT_SUCCESS(
-					NPF_GetDataRateMappingTable(
-						pFiltMod,
-						&pFiltMod->DataRateMappingTable
-						));
+					NPF_GetDataRateMappingTable(pFiltMod));
 		}
 #endif
 
@@ -1105,47 +1101,32 @@ _Use_decl_annotations_
 NTSTATUS
 NPF_GetDataRateMappingTable(
 	PNPCAP_FILTER_MODULE pFiltMod,
-	PDOT11_DATA_RATE_MAPPING_TABLE pDataRateMappingTable
 )
 {
 	TRACE_ENTER();
 	NT_ASSERT(pFiltMod != NULL);
-	NT_ASSERT(pDataRateMappingTable != NULL);
 
 	ULONG BytesProcessed = 0;
-    PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(DOT11_DATA_RATE_MAPPING_TABLE), NPF_INTERNAL_OID_TAG);
-    if (pBuffer == NULL)
-    {
-        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
-            TRACE_EXIT();
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-	NPF_DoInternalRequest(pFiltMod,
+	NDIS_STATUS Status = NPF_DoInternalRequest(pFiltMod,
 		NdisRequestQueryInformation,
 		OID_DOT11_DATA_RATE_MAPPING_TABLE,
-		pBuffer,
+		&pFiltMod->DataRateMappingTable,
 		sizeof(DOT11_DATA_RATE_MAPPING_TABLE),
 		0,
 		0,
 		&BytesProcessed
 	);
 
-	if (BytesProcessed != sizeof(DOT11_DATA_RATE_MAPPING_TABLE))
+	if (Status == NDIS_STATUS_SUCCESS && (
+		BytesProcessed != sizeof(DOT11_DATA_RATE_MAPPING_TABLE)
+		|| pFiltMod->DataRateMappingTable.Header.Size != sizeof(DOT11_DATA_RATE_MAPPING_TABLE)
+		))
 	{
-        ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
-		TRACE_EXIT();
-		return STATUS_UNSUCCESSFUL;
+		Status = NDIS_STATUS_FAILURE;
 	}
-	else
-	{
-		*pDataRateMappingTable = *(DOT11_DATA_RATE_MAPPING_TABLE *) pBuffer;
-        ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
-		TRACE_EXIT();
-		return STATUS_SUCCESS;
-	}
+	TRACE_EXIT();
+	return Status;
 }
 
 //-------------------------------------------------------------------
