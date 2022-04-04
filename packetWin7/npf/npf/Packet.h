@@ -192,6 +192,7 @@ extern NDIS_HANDLE         FilterDriverObject;
 			+ 1 /* Antenna signal */ \
 			+ 3 /* MCS */ \
 			+ 12 /* VHT */
+#define NPCAP_DOT11_RAW_PACKET_FILTER (NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT)
 #endif
 
 /*!

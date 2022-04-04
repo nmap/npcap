@@ -146,9 +146,6 @@ NPF_SetPacketFilter(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ ULONG PacketFilter
 );
-#ifdef HAVE_DOT11_SUPPORT
-#define NPCAP_DOT11_RAW_PACKET_FILTER (NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT)
-#endif
 _IRQL_requires_(PASSIVE_LEVEL)
 NDIS_STATUS
 NPF_SetLookaheadSize(
@@ -276,7 +273,7 @@ NPF_CreateOpenObject(
 #ifdef HAVE_DOT11_SUPPORT
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetDataRateMappingTable(
-	_Inout_ PNPCAP_FILTER_MODULE pFiltMod,
+	_Inout_ PNPCAP_FILTER_MODULE pFiltMod
 	);
 
 _IRQL_requires_(PASSIVE_LEVEL)
@@ -1100,7 +1097,7 @@ NPF_GetDeviceMTU(
 _Use_decl_annotations_
 NTSTATUS
 NPF_GetDataRateMappingTable(
-	PNPCAP_FILTER_MODULE pFiltMod,
+	PNPCAP_FILTER_MODULE pFiltMod
 )
 {
 	TRACE_ENTER();
