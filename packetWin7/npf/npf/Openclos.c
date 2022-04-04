@@ -763,16 +763,17 @@ NPF_StartUsingOpenInstance(
 	}
 
 	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-	if (MaxState == OpenRunning && pOpen->OpenStatus == OpenAttached)
+	if (MaxState == OpenRunning)
 	{
-		pOpen->OpenStatus = OpenInitializing;
 		// NPF_EnableOps must be called at PASSIVE_LEVEL. Release the lock first.
 		NT_ASSERT(!AtDispatchLevel);
 		if (AtDispatchLevel) {
 			// This is really bad! We should never be able to get here.
 			returnStatus = FALSE;
 		}
-		else {
+		else if (pOpen->OpenStatus == OpenAttached)
+		{
+			pOpen->OpenStatus = OpenInitializing;
 			FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 			returnStatus = NT_SUCCESS(NPF_EnableOps(pOpen->pFiltMod));
 			FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
@@ -798,18 +799,18 @@ NPF_StartUsingOpenInstance(
 				pOpen->OpenStatus = OpenAttached;
 			}
 		}
-	}
-	else if (MaxState == OpenRunning && pOpen->OpenStatus == OpenInitializing)
-	{
-		// Wait until it's ready...
-		NdisInitializeEvent(&Event);
-		NdisResetEvent(&Event);
-		// Wait for other thread to finish enabling
-		while (pOpen->OpenStatus == OpenInitializing)
+		else if (pOpen->OpenStatus == OpenInitializing)
 		{
-			FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-			NdisWaitEvent(&Event, 1);
-			FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+			// Wait until it's ready...
+			NdisInitializeEvent(&Event);
+			NdisResetEvent(&Event);
+			// Wait for other thread to finish enabling
+			while (pOpen->OpenStatus == OpenInitializing)
+			{
+				FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+				NdisWaitEvent(&Event, 1);
+				FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+			}
 		}
 	}
 
