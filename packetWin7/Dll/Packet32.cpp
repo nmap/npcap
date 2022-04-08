@@ -1747,6 +1747,7 @@ BOOL PacketStopDriver()
   \return If the function succeeds, the return value is the pointer to a properly initialized ADAPTER object,
    otherwise the return value is NULL.
 */
+_Use_decl_annotations_
 LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 {
     LPADAPTER lpAdapter = NULL;
@@ -1930,6 +1931,7 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 
   PacketCloseAdapter closes the given adapter and frees the associated ADAPTER structure
 */
+_Use_decl_annotations_
 VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 {
 	TRACE_ENTER();
@@ -2004,6 +2006,7 @@ LPPACKET PacketAllocatePacket(void)
   by this function and \b must be explicitly deallocated by the programmer.
 
 */
+_Use_decl_annotations_
 VOID PacketFreePacket(LPPACKET lpPacket)
 
 {
@@ -2028,6 +2031,7 @@ VOID PacketFreePacket(LPPACKET lpPacket)
   decrease the number of system calls, reducing the impcat of the capture process on the processor.
 */
 
+_Use_decl_annotations_
 VOID PacketInitPacket(LPPACKET lpPacket,PVOID Buffer,UINT Length)
 
 {
@@ -2071,6 +2075,7 @@ VOID PacketInitPacket(LPPACKET lpPacket,PVOID Buffer,UINT Length)
   Examples can be seen either in the TestApp sample application (see the \ref packetsamps page) provided
   in the developer's pack, or in the pcap_read() function of wpcap.
 */
+_Use_decl_annotations_
 BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 {
 	BOOLEAN res;
@@ -2156,6 +2161,7 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
   that uses the multiple write method will run in Windows 9x as well, but its performance will be very low 
   compared to the one of WindowsNTx.
 */
+_Use_decl_annotations_
 BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 {
     DWORD        BytesTransfered;
@@ -2232,6 +2238,7 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
   (depending on the precision of the performance counter of the machine). Such a precision cannot be reached 
   sending the packets separately with PacketSendPacket().
 */
+_Use_decl_annotations_
 INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOOLEAN Sync)
 {
     BOOLEAN			Res;
@@ -2338,6 +2345,7 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
   this possibility, therefore PacketSetMinToCopy is implemented under these systems only for compatibility.
 */
 
+_Use_decl_annotations_
 BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
 {
 	DWORD BytesReturned;
@@ -2397,6 +2405,7 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
    Look at the NetMeter example in the 
    Npcap SDK to see how to use statistics mode.
 */
+_Use_decl_annotations_
 BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
 {
 	DWORD BytesReturned;
@@ -2633,6 +2642,7 @@ BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync)
   need to wait concurrently on several events.
 
 */
+_Use_decl_annotations_
 HANDLE PacketGetReadEvent(LPADAPTER AdapterObject)
 {
 	TRACE_ENTER();
@@ -2648,6 +2658,7 @@ HANDLE PacketGetReadEvent(LPADAPTER AdapterObject)
 
 	See PacketSendPacket() for details.
 */
+_Use_decl_annotations_
 BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject,int nwrites)
 {
 	DWORD BytesReturned;
@@ -2684,6 +2695,7 @@ BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject,int nwrites)
   \note This function works also if the adapter is working in statistics mode, and can be used to set the 
   time interval between two statistic reports.
 */
+_Use_decl_annotations_
 BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject,int timeout)
 {
 	BOOLEAN Result;
@@ -2740,6 +2752,7 @@ BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject,int timeout)
   The buffer size is set to 0 when an instance of the driver is opened: the programmer should remember to 
   set it to a proper value. As an example, wpcap sets the buffer size to 1MB at the beginning of a capture.
 */
+_Use_decl_annotations_
 BOOLEAN PacketSetBuff(LPADAPTER AdapterObject,int dim)
 {
 	DWORD BytesReturned;
@@ -2797,6 +2810,7 @@ BOOLEAN PacketSetBuff(LPADAPTER AdapterObject,int dim)
   flags to obtain the pseudocode.
 
 */
+_Use_decl_annotations_
 BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
 {
 	DWORD BytesReturned;
@@ -2846,6 +2860,7 @@ BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
 
   \note: when opened, adapters have loopback capture \b enabled.
 */
+_Use_decl_annotations_
 BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavior)
 {
 	DWORD BytesReturned;
@@ -2885,6 +2900,7 @@ BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavio
 \param mode The new timestamp mode from the TIMESTAMPMODE_* definitions
 \return TRUE if the function succeeds, FALSE otherwise.
 */
+_Use_decl_annotations_
 BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
 {
 	DWORD BytesReturned;
@@ -2924,6 +2940,7 @@ BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
   \return If the function succeeds, the return value is nonzero. If the return value is zero, pModes[0] contains 
           the number of ULONGs that are needed to contain the timestamp mode list.
 	  */
+_Use_decl_annotations_
 BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes)
 {
 	BOOLEAN result = FALSE;
@@ -2974,6 +2991,7 @@ BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes)
   \note: the return value can be different from the snaplen parameter, for example some boards round the
   snaplen to 4 bytes.
 */
+_Use_decl_annotations_
 INT PacketSetSnapLen(LPADAPTER AdapterObject, int snaplen)
 {
 	INT Result;
@@ -3003,6 +3021,7 @@ INT PacketSetSnapLen(LPADAPTER AdapterObject, int snaplen)
   - the number of packets that have been dropped by the driver. A packet is dropped when the kernel
    buffer associated with the adapter is full. 
 */
+_Use_decl_annotations_
 BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
 {
 	BOOLEAN Res;
@@ -3089,6 +3108,7 @@ BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
   - the number of packets that reached the application, i.e that were accepted by the kernel filter and
   that fitted in the kernel buffer. 
 */
+_Use_decl_annotations_
 BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 {
 	BOOLEAN Res;
@@ -3172,6 +3192,7 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
   provided by all the cards (see the Microsoft DDKs to see which functions are mandatory). If you use a 
   facultative function, be careful to enclose it in an if statement to check the result.
 */
+_Use_decl_annotations_
 BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  OidData)
 {
     DWORD		BytesReturned;
@@ -3233,6 +3254,7 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
   - NDIS_PACKET_TYPE_ALL_MULTICAST: every multicast packet is accepted. 
   - NDIS_PACKET_TYPE_ALL_LOCAL: all local packets, i.e. NDIS_PACKET_TYPE_DIRECTED + NDIS_PACKET_TYPE_BROADCAST + NDIS_PACKET_TYPE_MULTICAST 
 */
+_Use_decl_annotations_
 BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 {
     BOOLEAN    Status;
@@ -3291,6 +3313,7 @@ BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
   - a double "\0". 
 */
 
+_Use_decl_annotations_
 BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 {
 	PADAPTER_INFO	TAdInfo;
@@ -3421,6 +3444,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
   is full, the reaming addresses are dropeed, therefore set its dimension to sizeof(npf_if_addr)
   if you want only the first address.
 */
+_Use_decl_annotations_
 BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries)
 {
 	PADAPTER_INFO TAdInfo;
@@ -3531,6 +3555,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
   - NdisMediumAtm: ATM 
   - NdisMediumArcnet878_2: ARCNET (878.2) 
 */
+_Use_decl_annotations_
 BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 {
 	PADAPTER_INFO TAdInfo;
@@ -3588,6 +3613,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 
   Other software loopback adapters may exist, but they will not be identified with this function.
 */
+_Use_decl_annotations_
 BOOLEAN PacketIsLoopbackAdapter(PCCH AdapterName)
 {
 	BOOLEAN ret;
@@ -3623,6 +3649,7 @@ BOOLEAN PacketIsLoopbackAdapter(PCCH AdapterName)
 \param AdapterObject The adapter on which information is needed.
 \return 1 if yes, 0 if no, -1 if the function fails.
 */
+_Use_decl_annotations_
 int PacketIsMonitorModeSupported(PCCH AdapterName)
 {
 	LPADAPTER pAdapter;
@@ -3694,6 +3721,7 @@ int PacketIsMonitorModeSupported(PCCH AdapterName)
 \param mode The new operation mode of the adapter, 1 for monitor mode, 0 for managed mode.
 \return 1 if the function succeeds, 0 if monitor mode is not supported, -1 if the function fails with other errors.
 */
+_Use_decl_annotations_
 int PacketSetMonitorMode(PCCH AdapterName, int mode)
 {
 	int rval = 0;
@@ -3778,6 +3806,7 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 \param mode The new operation mode of the adapter, 1 for monitor mode, 0 for managed mode.
 \return 1 if it's monitor mode, 0 if it's not monitor mode, -1 if the function fails.
 */
+_Use_decl_annotations_
 int PacketGetMonitorMode(PCCH AdapterName)
 {
 	int mode;
@@ -3852,6 +3881,7 @@ int PacketGetMonitorMode(PCCH AdapterName)
   WEP decryption. For more details about the AirPcap wireless capture adapters, see 
   http://www.cacetech.com/products/airpcap.htm.
 */
+_Use_decl_annotations_
 PAirpcapHandle PacketGetAirPcapHandle(LPADAPTER AdapterObject)
 {
 	PAirpcapHandle handle = NULL;

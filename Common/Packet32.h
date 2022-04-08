@@ -177,6 +177,7 @@ typedef struct NetType
 struct bpf_program
 {
 	UINT bf_len;				///< Indicates the number of instructions of the program, i.e. the number of struct bpf_insn that will follow.
+	_Field_size_full_(bf_len)
 	struct bpf_insn* bf_insns;	///< A pointer to the first instruction of the program.
 };
 
@@ -325,6 +326,7 @@ typedef struct _PACKET
 {
 	HANDLE hEvent;		///< \deprecated Still present for compatibility with old applications.
 	OVERLAPPED OverLapped;	///< \deprecated Still present for compatibility with old applications.
+	_Field_size_bytes_part_(Length, ulBytesReceived)
 	PVOID Buffer;		///< Buffer with containing the packets. See the PacketReceivePacket() for
 	///< details about the organization of the data in this buffer
 	UINT Length;		///< Length of the buffer
@@ -345,6 +347,7 @@ struct _PACKET_OID_DATA
 	ULONG Oid;					///< OID code. See the Microsoft DDK documentation or the file ntddndis.h
 	///< for a complete list of valid codes.
 	ULONG Length;				///< Length of the data field
+	_Field_size_full_(Length)
 	UCHAR Data[1];				///< variable-lenght field that contains the information passed to or received 
 	///< from the adapter.
 }; 
@@ -377,44 +380,44 @@ extern "C"
 	LPCSTR PacketGetVersion();
 	LPCSTR PacketGetDriverVersion();
 	LPCSTR PacketGetDriverName();
-	BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject, int nbytes);
-	BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject, int nwrites);
-	BOOLEAN PacketSetMode(LPADAPTER AdapterObject, int mode);
-	BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject, int timeout);
-	BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program* fp);
-	BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavior);
-	BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode);
-	BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes);
-	INT PacketSetSnapLen(LPADAPTER AdapterObject, int snaplen);
-	BOOLEAN PacketGetStats(LPADAPTER AdapterObject, struct bpf_stat* s);
-	BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject, struct bpf_stat* s);
-	BOOLEAN PacketSetBuff(LPADAPTER AdapterObject, int dim);
-	BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType* type);
-	BOOLEAN PacketIsLoopbackAdapter(PCCH AdapterName);
-	int PacketIsMonitorModeSupported(PCCH AdapterName);
-	int PacketSetMonitorMode(PCCH AdapterName, int mode);
-	int PacketGetMonitorMode(PCCH AdapterName);
-	LPADAPTER PacketOpenAdapter(PCCH AdapterName);
-	BOOLEAN PacketSendPacket(LPADAPTER AdapterObject, LPPACKET pPacket, BOOLEAN Sync);
-	INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOOLEAN Sync);
+	_Success_(return) BOOLEAN PacketSetMinToCopy(_In_ LPADAPTER AdapterObject, _In_ int nbytes);
+	_Success_(return) BOOLEAN PacketSetNumWrites(_In_ LPADAPTER AdapterObject, _In_ int nwrites);
+	_Success_(return) BOOLEAN PacketSetMode(_In_ LPADAPTER AdapterObject, _In_ int mode);
+	_Success_(return) BOOLEAN PacketSetReadTimeout(_In_ LPADAPTER AdapterObject, _In_ int timeout);
+	_Success_(return) BOOLEAN PacketSetBpf(_In_ LPADAPTER AdapterObject, _In_ struct bpf_program* fp);
+	_Success_(return) BOOLEAN PacketSetLoopbackBehavior(_In_ LPADAPTER  AdapterObject, _In_ UINT LoopbackBehavior);
+	_Success_(return) BOOLEAN PacketSetTimestampMode(_In_ LPADAPTER AdapterObject, _In_ ULONG mode);
+	_Success_(return) BOOLEAN PacketGetTimestampModes(_In_ LPADAPTER AdapterObject, _Inout_updates_to_(pModes[0], pModes[0]) PULONG pModes);
+	INT PacketSetSnapLen(_In_ LPADAPTER AdapterObject, _In_ int snaplen);
+	_Success_(return) BOOLEAN PacketGetStats(_In_ LPADAPTER AdapterObject, _Out_ struct bpf_stat* s);
+	_Success_(return) BOOLEAN PacketGetStatsEx(_In_ LPADAPTER AdapterObject, _Out_ struct bpf_stat* s);
+	_Success_(return) BOOLEAN PacketSetBuff(_In_ LPADAPTER AdapterObject, _In_ int dim);
+	_Success_(return) BOOLEAN PacketGetNetType(_In_ LPADAPTER AdapterObject, _Out_ NetType* type);
+	BOOLEAN PacketIsLoopbackAdapter(_In_ PCCH AdapterName);
+	int PacketIsMonitorModeSupported(_In_ PCCH AdapterName);
+	int PacketSetMonitorMode(_In_ PCCH AdapterName, _In_ int mode);
+	int PacketGetMonitorMode(_In_ PCCH AdapterName);
+	_Ret_maybenull_ LPADAPTER PacketOpenAdapter(_In_ PCCH AdapterName);
+	_Success_(return) BOOLEAN PacketSendPacket(_In_ LPADAPTER AdapterObject, _In_ LPPACKET pPacket, _In_ BOOLEAN Sync);
+	INT PacketSendPackets(_In_ LPADAPTER AdapterObject, _In_ PVOID PacketBuff, _In_ ULONG Size, _In_ BOOLEAN Sync);
 	LPPACKET PacketAllocatePacket(void);
-	VOID PacketInitPacket(LPPACKET lpPacket, PVOID  Buffer, UINT  Length);
-	VOID PacketFreePacket(LPPACKET lpPacket);
-	BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject, LPPACKET lpPacket, BOOLEAN Sync);
-	BOOLEAN PacketSetHwFilter(LPADAPTER AdapterObject, ULONG Filter);
-	BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize);
-	BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries);
-	BOOLEAN PacketRequest(LPADAPTER  AdapterObject, BOOLEAN Set, PPACKET_OID_DATA  OidData);
-	HANDLE PacketGetReadEvent(LPADAPTER AdapterObject);
+	VOID PacketInitPacket(_Out_ LPPACKET lpPacket, _In_reads_bytes_(Length) PVOID  Buffer, _In_ UINT  Length);
+	VOID PacketFreePacket(_In_ _Post_invalid_ LPPACKET lpPacket);
+	_Success_(return) BOOLEAN PacketReceivePacket(_In_ LPADAPTER AdapterObject, _Out_ LPPACKET lpPacket, _In_ BOOLEAN Sync);
+	_Success_(return) BOOLEAN PacketSetHwFilter(_In_ LPADAPTER AdapterObject, _In_ ULONG Filter);
+	_Success_(return) BOOLEAN PacketGetAdapterNames(_Out_writes_opt_(_Old_(*BufferSize)) PCHAR pStr, _Inout_ PULONG  BufferSize);
+	_Success_(return) BOOLEAN PacketGetNetInfoEx(_In_ PCCH AdapterName, _Out_writes_to_(_Old_(*NEntries),*NEntries) npf_if_addr* buffer, _Inout_ PLONG NEntries);
+	_Success_(return) BOOLEAN PacketRequest(_In_ LPADAPTER  AdapterObject, _In_ BOOLEAN Set, _Inout_ PPACKET_OID_DATA  OidData);
+	HANDLE PacketGetReadEvent(_In_ LPADAPTER AdapterObject);
 	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void* name, int len);
 	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxnpacks);
 	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync);
 	BOOL PacketStopDriver();
 	BOOL PacketStopDriver60();
-	VOID PacketCloseAdapter(LPADAPTER lpAdapter);
-	BOOLEAN PacketStartOem(PCHAR errorString, UINT errorStringLength);
-	BOOLEAN PacketStartOemEx(PCHAR errorString, UINT errorStringLength, ULONG flags);
-	PAirpcapHandle PacketGetAirPcapHandle(LPADAPTER AdapterObject);
+	VOID PacketCloseAdapter(_In_ _Post_invalid_ LPADAPTER lpAdapter);
+	__declspec(deprecated("Deprecated WinPcap Pro function")) BOOLEAN PacketStartOem(PCHAR errorString, UINT errorStringLength);
+	__declspec(deprecated("Deprecated WinPcap Pro function")) BOOLEAN PacketStartOemEx(PCHAR errorString, UINT errorStringLength, ULONG flags);
+	PAirpcapHandle PacketGetAirPcapHandle(_In_ LPADAPTER AdapterObject);
 
 	//
 	// Used by PacketStartOemEx
