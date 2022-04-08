@@ -1176,6 +1176,6 @@ TEFEO_done_with_NBs:
 	NpfInterlockedExchangeAdd(&(LONG)Open->Received, received);
 	NpfInterlockedExchangeAdd(&(LONG)Open->Accepted, accepted);
 
-	NPF_StopUsingOpenInstance(Open, OpenRunning, AtDispatchLevel);
+	NPF_StopUsingOpenInstance(Open, OpenDetached, AtDispatchLevel);
 	//TRACE_EXIT();
 }
