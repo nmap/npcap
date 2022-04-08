@@ -3039,6 +3039,29 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 
 }
 
+_Success_(return == ERROR_SUCCESS)
+static DWORD PacketRequestHelper(
+		_In_ HANDLE hAdapter,
+		_In_ BOOLEAN Set,
+		_In_ PPACKET_OID_DATA OidData)
+{
+	DWORD BytesReturned = 0;
+	DWORD err = ERROR_SUCCESS;
+	if(!DeviceIoControl(hAdapter, (DWORD) (Set ? BIOCSETOID : BIOCQUERYOID),
+                           OidData, sizeof(PACKET_OID_DATA) - 1 + OidData->Length,
+			   OidData, sizeof(PACKET_OID_DATA) - 1 + OidData->Length,
+			   &BytesReturned, NULL))
+	{
+		err = GetLastError();
+	}
+	TRACE_PRINT4("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, ErrCode = 0x%.08x",
+			OidData->Oid,
+			OidData->Length,
+			Set,
+			err & ~(1 << 29));
+	return err;
+}
+
 /*!
   \brief Performs a query/set operation on an internal variable of the network card driver.
   \param AdapterObject Pointer to an _ADAPTER structure.
@@ -3054,10 +3077,7 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 _Use_decl_annotations_
 BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  OidData)
 {
-    DWORD		BytesReturned;
-    BOOLEAN		Result;
-    DWORD err = ERROR_SUCCESS;
-
+	DWORD err = ERROR_SUCCESS;
 	TRACE_ENTER();
 
 	if(AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
@@ -3068,33 +3088,11 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 		return FALSE;
 	}
 
-	Result=(BOOLEAN)DeviceIoControl(AdapterObject->hFile,(DWORD) Set ? (DWORD)BIOCSETOID : (DWORD)BIOCQUERYOID,
-                           OidData,sizeof(PACKET_OID_DATA)-1+OidData->Length,OidData,
-                           sizeof(PACKET_OID_DATA)-1+OidData->Length,&BytesReturned,NULL);
-    
-	// output some debug info
-	if (Result)
-	{
-		TRACE_PRINT4("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, Result = %d",
-			OidData->Oid,
-			OidData->Length,
-			Set,
-			Result);
-	}
-	else
-	{
-		err = GetLastError();
-		TRACE_PRINT5("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, Result = %d, ErrCode = 0x%.08x",
-			OidData->Oid,
-			OidData->Length,
-			Set,
-			Result,
-			err & ~(1 << 29));
-	}
+	err = PacketRequestHelper(AdapterObject->hFile, Set, OidData);
 
 	TRACE_EXIT();
 	SetLastError(err);
-	return Result;
+	return (err == ERROR_SUCCESS);
 }
 
 /*!
@@ -3550,8 +3548,7 @@ BOOLEAN PacketIsLoopbackAdapter(PCCH AdapterName)
 _Use_decl_annotations_
 int PacketIsMonitorModeSupported(PCCH AdapterName)
 {
-	LPADAPTER pAdapter;
-	BOOLEAN    Status;
+	HANDLE hAdapter;
 	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_OPERATION_MODE_CAPABILITY pOperationModeCapability;
@@ -3570,11 +3567,11 @@ int PacketIsMonitorModeSupported(PCCH AdapterName)
 		return -1;
 	}
 
-	pAdapter = PacketOpenAdapterNPF(WifiAdapterName);
-	if (!pAdapter)
+	hAdapter = PacketGetAdapterHandle(WifiAdapterName);
+	if (hAdapter == INVALID_HANDLE_VALUE)
 	{
 		dwResult = GetLastError();
-		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketOpenAdapter error");
+		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketGetAdapterHandle error");
 		TRACE_EXIT();
 		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
 		SetLastError(dwResult);
@@ -3583,10 +3580,9 @@ int PacketIsMonitorModeSupported(PCCH AdapterName)
 
 	OidData->Oid = OID_DOT11_OPERATION_MODE_CAPABILITY;
 	OidData->Length = sizeof(DOT11_OPERATION_MODE_CAPABILITY);
-	Status = PacketRequest(pAdapter, FALSE, OidData);
-	if (Status)
+	dwResult = PacketRequestHelper(hAdapter, FALSE, OidData);
+	if (dwResult == ERROR_SUCCESS)
 	{
-		dwResult = ERROR_SUCCESS;
 		pOperationModeCapability = (PDOT11_OPERATION_MODE_CAPABILITY) OidData->Data;
 		if ((pOperationModeCapability->uOpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR) == DOT11_OPERATION_MODE_NETWORK_MONITOR)
 		{
@@ -3599,12 +3595,11 @@ int PacketIsMonitorModeSupported(PCCH AdapterName)
 	}
 	else
 	{
-		dwResult = GetLastError();
 		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketRequest error");
 		mode = -1;
 	}
 
-	PacketCloseAdapter(pAdapter);
+	CloseHandle(hAdapter);
 
 	TRACE_PRINT2("PacketIsMonitorModeSupported: AdapterName = %hs, mode = %d", AdapterName, mode);
 
@@ -3624,10 +3619,9 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 {
 	int rval = 0;
 	DWORD dwResult = ERROR_INVALID_DATA;
-	BOOLEAN Status;
 	PCHAR TranslatedAdapterName;
 	PCHAR WifiAdapterName;
-	LPADAPTER lpAdapter = NULL;
+	HANDLE hAdapter = INVALID_HANDLE_VALUE;
 	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_CURRENT_OPERATION_MODE pOpMode = (PDOT11_CURRENT_OPERATION_MODE)OidData->Data;
@@ -3643,12 +3637,12 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 		return -1;
 	}
 
-	lpAdapter = PacketOpenAdapterNPF(WifiAdapterName);
-	if (lpAdapter == NULL)
+	hAdapter = PacketGetAdapterHandle(WifiAdapterName);
+	if (hAdapter == INVALID_HANDLE_VALUE)
 	{
 		dwResult = GetLastError();
 		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
-		TRACE_PRINT("PacketSetMonitorMode failed, PacketOpenAdapterNPF error");
+		TRACE_PRINT("PacketSetMonitorMode failed, PacketGetAdapterHandle error");
 		TRACE_EXIT();
 		SetLastError(dwResult);
 		return -1;
@@ -3658,43 +3652,37 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 	OidData->Oid = OID_DOT11_CURRENT_OPERATION_MODE;
 	OidData->Length = sizeof(DOT11_CURRENT_OPERATION_MODE);
 	pOpMode->uCurrentOpMode = ulOperationMode;
-	Status = PacketRequest(lpAdapter, TRUE, OidData);
+	dwResult = PacketRequestHelper(hAdapter, TRUE, OidData);
 
-	if (!Status)
-	{
-		dwResult = GetLastError();
-		TRACE_PRINT("PacketSetMonitorMode failed, PacketRequest error");
-		TRACE_EXIT();
+#ifndef NDIS_STATUS_INVALID_DATA
 #define NDIS_STATUS_INVALID_DATA                ((NDIS_STATUS)0xC0010015L)
 #define NDIS_STATUS_INVALID_OID                 ((NDIS_STATUS)0xC0010017L)
-		if (dwResult != NDIS_STATUS_INVALID_DATA && dwResult != NDIS_STATUS_INVALID_OID)
-		{
-			HeapFree(GetProcessHeap(), 0, WifiAdapterName);
-			TRACE_EXIT();
-			SetLastError(dwResult);
-			return -1;
-		}
-		else
-		{
+#endif
+	switch (dwResult)
+	{
+		case ERROR_SUCCESS:
+			rval = 1;
+			// Update the adapter's monitor mode in the global map.
+			TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
+			if (TranslatedAdapterName)
+			{
+				g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
+				HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
+			}
+		case NDIS_STATUS_INVALID_DATA:
+		case NDIS_STATUS_INVALID_OID:
 			// Monitor mode is not supported.
 			rval = 0;
-		}
+			break;
+		default:
+			TRACE_PRINT("PacketSetMonitorMode failed, PacketRequest error");
+			rval = -1;
+			break;
 	}
-	else
-	{
-		rval = 1;
-		// Update the adapter's monitor mode in the global map.
-		TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
-		if (TranslatedAdapterName)
-		{
-			g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
-			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-		}
-	}
-
 
 	HeapFree(GetProcessHeap(), 0, WifiAdapterName);
 	TRACE_EXIT();
+	SetLastError(dwResult);
 	return rval;
 }
 
@@ -3708,8 +3696,7 @@ _Use_decl_annotations_
 int PacketGetMonitorMode(PCCH AdapterName)
 {
 	int mode;
-	LPADAPTER pAdapter;
-	BOOLEAN    Status;
+	HANDLE hAdapter = INVALID_HANDLE_VALUE;
 	DWORD dwResult = ERROR_INVALID_DATA;
 	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
@@ -3728,12 +3715,12 @@ int PacketGetMonitorMode(PCCH AdapterName)
 		return -1;
 	}
 
-	pAdapter = PacketOpenAdapterNPF(WifiAdapterName);
-	if (pAdapter == NULL)
+	hAdapter = PacketGetAdapterHandle(WifiAdapterName);
+	if (hAdapter == INVALID_HANDLE_VALUE)
 	{
 		dwResult = GetLastError();
 		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
-		TRACE_PRINT("PacketSetMonitorMode failed, PacketOpenAdapterNPF error");
+		TRACE_PRINT("PacketSetMonitorMode failed, PacketGetAdapterHandle error");
 		TRACE_EXIT();
 		SetLastError(dwResult);
 		return -1;
@@ -3741,11 +3728,10 @@ int PacketGetMonitorMode(PCCH AdapterName)
 
 	OidData->Oid = OID_DOT11_CURRENT_OPERATION_MODE;
 	OidData->Length = sizeof(DOT11_CURRENT_OPERATION_MODE);
-	Status = PacketRequest(pAdapter, FALSE, OidData);
+	dwResult = PacketRequestHelper(hAdapter, FALSE, OidData);
 
-	if (!Status)
+	if (dwResult != ERROR_SUCCESS)
 	{
-		dwResult = GetLastError();
 		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
 		TRACE_PRINT("PacketGetMonitorMode failed, PacketRequest error");
 		TRACE_EXIT();
