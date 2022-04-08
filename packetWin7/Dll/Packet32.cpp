@@ -1052,6 +1052,13 @@ BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
+
+	if (g_bLoopbackSupport && PacketIsLoopbackAdapter(AdapterObject->Name)) {
+		// Loopback adapter doesn't support this; fake success
+		TRACE_EXIT();
+		SetLastError(ERROR_SUCCESS);
+		return TRUE;
+	}
 	
 	//set the size of the lookahead buffer to the maximum available by the the NIC driver
 	OidData->Oid=OID_GEN_MAXIMUM_LOOKAHEAD;
