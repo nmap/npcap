@@ -3326,14 +3326,15 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 
 	if(TAdInfo != NULL)
 	{
-		LONG numEntries = 0, i;
+		LONG numEntries = 0;
 		PNPF_IF_ADDRESS_ITEM pCursor;
 		TRACE_PRINT("Adapter found.");
 
 		pCursor = TAdInfo->pNetworkAddresses;
 
-		while(pCursor != NULL)
+		while(pCursor != NULL && numEntries < *NEntries)
 		{
+			buffer[numEntries] = pCursor->Addr;
 			numEntries ++;
 			pCursor = pCursor->Next;
 		}
@@ -3341,13 +3342,6 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 		if (numEntries < *NEntries)
 		{
 			*NEntries = numEntries;
-		}
-
-		pCursor = TAdInfo->pNetworkAddresses;
-		for (i = 0; (i < *NEntries) && (pCursor != NULL); i++)
-		{
-			buffer[i] = pCursor->Addr;
-			pCursor = pCursor->Next;
 		}
 
 		Res = TRUE;
