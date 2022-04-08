@@ -1414,7 +1414,8 @@ BOOL PacketStartService()
 	return Result;
 }
 
-static HANDLE PacketGetAdapterHandle(PCCH AdapterNameA)
+_Use_decl_annotations_
+HANDLE PacketGetAdapterHandle(PCCH AdapterNameA)
 {
 	CHAR SymbolicLinkA[MAX_PATH] = {0};
 	HRESULT hrStatus = S_OK;

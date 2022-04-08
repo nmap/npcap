@@ -144,6 +144,8 @@ BOOLEAN PacketUpdateAdInfo(_In_ PCCH AdapterName);
 _Ret_maybenull_
 LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterName);
 
+HANDLE PacketGetAdapterHandle(_In_ PCCH AdapterNameA);
+
 #ifdef __cplusplus
 extern "C" {
 #endif

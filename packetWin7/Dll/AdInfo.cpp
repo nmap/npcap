@@ -138,7 +138,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 {
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	LONG		Status;
-	LPADAPTER	adapter = NULL;
+	HANDLE hAdapter = INVALID_HANDLE_VALUE;
 	PADAPTER_INFO	TmpAdInfo;
 	PADAPTER_INFO TAdInfo;	
 	CHAR AdName[ADAPTER_NAME_LENGTH];
@@ -178,9 +178,9 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	TRACE_PRINT("Trying to open the NPF adapter and see if it's available...");
 
 	// Try to Open the adapter
-	adapter = PacketOpenAdapterNPF(AdName);
+	hAdapter = PacketGetAdapterHandle(AdName);
 
-	if(adapter == NULL)
+	if(hAdapter == INVALID_HANDLE_VALUE)
 	{
 		TRACE_PRINT("NPF Adapter not available, do not add it to the global list");
 		// We are not able to open this adapter. Skip to the next one.
@@ -189,7 +189,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 		return FALSE;
 	}
 
-	PacketCloseAdapter(adapter);
+	CloseHandle(hAdapter);
 	
 	//
 	// PacketOpenAdapter was succesful. Consider this a valid adapter and allocate an entry for it
