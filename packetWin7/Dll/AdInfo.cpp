@@ -123,58 +123,9 @@ HANDLE g_AdaptersInfoMutex = NULL;						///< Mutex that protects the adapter inf
 static ULONG g_GaaBufLast = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE; // Last good value for GAA buffer size
 
 #ifdef HAVE_AIRPCAP_API
-extern AirpcapGetLastErrorHandler g_PAirpcapGetLastError;
 extern AirpcapGetDeviceListHandler g_PAirpcapGetDeviceList;
 extern AirpcapFreeDeviceListHandler g_PAirpcapFreeDeviceList;
-extern AirpcapOpenHandler g_PAirpcapOpen;
-extern AirpcapCloseHandler g_PAirpcapClose;
-extern AirpcapGetLinkTypeHandler g_PAirpcapGetLinkType;
-extern AirpcapSetKernelBufferHandler g_PAirpcapSetKernelBuffer;
-extern AirpcapSetFilterHandler g_PAirpcapSetFilter;
-extern AirpcapGetMacAddressHandler g_PAirpcapGetMacAddress;
-extern AirpcapSetMinToCopyHandler g_PAirpcapSetMinToCopy;
-extern AirpcapGetReadEventHandler g_PAirpcapGetReadEvent;
-extern AirpcapReadHandler g_PAirpcapRead;
-extern AirpcapGetStatsHandler g_PAirpcapGetStats;
 #endif /* HAVE_AIRPCAP_API */
-
-/*! 
-  \brief Gets the link layer of an adapter, querying the registry.
-  \param AdapterObject Handle to an open adapter.
-  \param type Pointer to a NetType structure that will be filled by the function.
-  \return If the function succeeds, the return value is nonzero, otherwise the return value is zero.
-
-  This function retrieves from the registry the link layer and the speed (in bps) of an opened adapter.
-  These values are copied in the NetType structure provided by the user.
-  The LinkType field of the type parameter can have one of the following values:
-
-  - NdisMedium802_3: Ethernet (802.3) 
-  - NdisMediumWan: WAN 
-  - NdisMedium802_5: Token Ring (802.5) 
-  - NdisMediumFddi: FDDI 
-  - NdisMediumAtm: ATM 
-  - NdisMediumArcnet878_2: ARCNET (878.2) 
-*/
-static BOOLEAN PacketGetLinkLayerFromRegistry(LPADAPTER AdapterObject, NetType *type)
-{
-	BOOLEAN    Status;
-	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA)+sizeof(ULONG)-1] = {0};
-	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA) IoCtlBuffer;
-
-	TRACE_ENTER();
-
-	//get the link-layer type
-	OidData->Oid = OID_GEN_MEDIA_IN_USE;
-	OidData->Length = sizeof (ULONG);
-	Status = PacketRequest(AdapterObject,FALSE,OidData);
-	type->LinkType=*((UINT*)OidData->Data);
-
-	TRACE_PRINT1("Media:%.010d", type->LinkType);
-
-	TRACE_EXIT();
-	return Status;
-}
-
 
 /*!
   \brief Adds an entry to the adapter description list.
@@ -238,6 +189,7 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 		return FALSE;
 	}
 
+	PacketCloseAdapter(adapter);
 	
 	//
 	// PacketOpenAdapter was succesful. Consider this a valid adapter and allocate an entry for it
@@ -248,7 +200,6 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	if (TmpAdInfo == NULL) 
 	{
 		TRACE_PRINT("AddAdapter: HeapAlloc Failed allocating the buffer for the AdInfo to be added to the global list. Returning.");
-		PacketCloseAdapter(adapter);
 		ReleaseMutex(g_AdaptersInfoMutex);
 		TRACE_EXIT();
 		return FALSE;
@@ -265,24 +216,10 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	// Conversion error? ensure it's terminated and ignore.
 	if (Status == 0) TmpAdInfo->Description[ADAPTER_DESC_LENGTH] = '\0';
 
-	// TODO: If we can map the IfType to a NDIS_MEDIUM enum value, we can skip this part:
-	Status = PacketGetLinkLayerFromRegistry(adapter, &(TmpAdInfo->LinkLayer));
 	// Average of Xmit and Rcv speeds is historical. Maybe we should report min instead?
 	TmpAdInfo->LinkLayer.LinkSpeed = (pAdapterAddr->TransmitLinkSpeed + pAdapterAddr->ReceiveLinkSpeed) / 2;
 
-	PacketCloseAdapter(adapter);
 
-	if (Status == FALSE)
-	{
-		TRACE_PRINT("PacketAddAdapterNPF: PacketGetLinkLayerFromRegistry failed. Returning.");
-		HeapFree(GetProcessHeap(), 0, TmpAdInfo);
-		ReleaseMutex(g_AdaptersInfoMutex);
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	// Retrieve the adapter MAC address querying the NIC driver
-	// XXX At the moment only Ethernet is supported.
 	TmpAdInfo->MacAddressLen = pAdapterAddr->PhysicalAddressLength;
 	if (TmpAdInfo->MacAddressLen > 0)
 	{
@@ -368,7 +305,6 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 static BOOLEAN PacketAddLoopbackAdapter()
 {
 	PADAPTER_INFO TmpAdInfo;
-	LPADAPTER adapter;
 
 	TRACE_ENTER();
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
@@ -381,23 +317,10 @@ static BOOLEAN PacketAddLoopbackAdapter()
 			return TRUE;
 		}
 	}
-	TRACE_PRINT("Trying to open the Loopback adapter...");
-
-	// Try to Open the adapter
-	adapter = PacketOpenAdapterNPF(FAKE_LOOPBACK_ADAPTER_NAME);
-
-	if (adapter == NULL)
-	{
-		TRACE_PRINT("Could not open Loopback adapter.");
-		// We are not able to open this adapter. Skip to the next one.
-		ReleaseMutex(g_AdaptersInfoMutex);
-		return FALSE;
-	}
 	TmpAdInfo = (PADAPTER_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER_INFO));
 	if (TmpAdInfo == NULL)
 	{
 		TRACE_PRINT("AddAdapter: HeapAlloc Failed");
-		PacketCloseAdapter(adapter);
 		ReleaseMutex(g_AdaptersInfoMutex);
 		return FALSE;
 	}
@@ -405,13 +328,10 @@ static BOOLEAN PacketAddLoopbackAdapter()
 	// Copy the device name
 	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), FAKE_LOOPBACK_ADAPTER_NAME, _TRUNCATE);
 	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), FAKE_LOOPBACK_ADAPTER_DESCRIPTION, _TRUNCATE);
-	TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumNull;
-	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 	TmpAdInfo->Flags = 0;
 	memset(TmpAdInfo->MacAddress, '\0', 6);
 	TmpAdInfo->MacAddressLen = 6;
 	TmpAdInfo->pNetworkAddresses = NULL;
-	PacketCloseAdapter(adapter);
 
 	// Update the AdaptersInfo list
 	TmpAdInfo->Next = g_AdaptersInfoList;
@@ -516,15 +436,10 @@ static BOOLEAN PacketGetAdaptersNPF()
 static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 {
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
-	CHAR ebuf[AIRPCAP_ERRBUF_SIZE];
 	PADAPTER_INFO TmpAdInfo;
-	PAirpcapHandle AirpcapAdapter;
-	BOOL GllRes;
-	AirpcapLinkType AirpcapLinkLayer;
 	BOOLEAN Result = TRUE;
 
 	TRACE_ENTER();
-	//XXX what about checking if the adapter already exists???
 	
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 
@@ -555,7 +470,6 @@ static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 		//
 		// Allocate a descriptor for this adapter
 		//			
-		//here we do not acquire the mutex, since we are not touching the list, yet.
 		TmpAdInfo = (PADAPTER_INFO) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER_INFO));
 		if (TmpAdInfo == NULL) 
 		{
@@ -574,55 +488,6 @@ static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 			description);
 		
 		TmpAdInfo->Flags = INFO_FLAG_AIRPCAP_CARD;
-		
-		if(g_PAirpcapOpen)
-		{
-			AirpcapAdapter = g_PAirpcapOpen(name, ebuf);
-		}
-		else
-		{
-			AirpcapAdapter = NULL;
-		}
-		
-		if(!AirpcapAdapter)
-		{
-			HeapFree(GetProcessHeap(), 0, TmpAdInfo);
-			Result = FALSE;
-			break;
-		}
-		
-		GllRes = g_PAirpcapGetLinkType(AirpcapAdapter, &AirpcapLinkLayer);
-		if(!GllRes)
-		{
-			g_PAirpcapClose(AirpcapAdapter);
-			HeapFree(GetProcessHeap(), 0, TmpAdInfo);
-			Result = FALSE;
-			break;
-		}
-		
-		switch(AirpcapLinkLayer) 
-		{ 
-		case AIRPCAP_LT_802_11:
-			TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumBare80211;
-			break;
-		case AIRPCAP_LT_802_11_PLUS_RADIO:
-			TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumRadio80211;
-			break;
-		case AIRPCAP_LT_802_11_PLUS_PPI:
-			TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumPpi;
-			break;
-		default:
-			TmpAdInfo->LinkLayer.LinkType = (UINT)NdisMediumNull; // Note: custom linktype, NDIS doesn't provide an equivalent
-			break;
-		}			
-		
-		//
-		// For the moment, we always set the speed to 54Mbps, since the speed is not channel-specific,
-		// but per packet
-		//
-		TmpAdInfo->LinkLayer.LinkSpeed = 54000000; 
-		
-		g_PAirpcapClose(AirpcapAdapter);
 		
 		// Update the AdaptersInfo list
 		TmpAdInfo->Next = g_AdaptersInfoList;

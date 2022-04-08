@@ -3558,52 +3558,97 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 _Use_decl_annotations_
 BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 {
-	PADAPTER_INFO TAdInfo;
-	CHAR AdName[ADAPTER_NAME_LENGTH] = { 0 };
-	char* tag = NULL;
-	BOOLEAN ret;
 	DWORD err = ERROR_SUCCESS;
+	PADAPTER_INFO TAdInfo = NULL;
+	PCHAR WasWifiName = NULL;
+	PCHAR AdName = NULL;
 
 	TRACE_ENTER();
-	// Look up the adapter by its canonical name, meaning no WIFI_ tag.
-	strcpy_s(AdName, ADAPTER_NAME_LENGTH, AdapterObject->Name);
-	tag = strstr(AdName, NPF_DEVICE_NAMES_TAG_WIFI);
-	if (tag) {
-		tag--;
-		do {
-			tag++;
-			*tag = *(tag + sizeof(NPF_DEVICE_NAMES_TAG_WIFI) - 1);
-		} while (*tag != '\0');
+	if (type == NULL) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
 	}
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-	// Find the PADAPTER_INFO structure associated with this adapter 
-	TAdInfo = PacketFindAdInfo(AdName);
 
-	if(TAdInfo != NULL)
-	{
-		TRACE_PRINT("Adapter found");
-		// Copy the data
-		memcpy(type, &(TAdInfo->LinkLayer), sizeof(struct NetType));
-		ret = TRUE;
+#ifdef HAVE_AIRPCAP_API
+	PAirpcapHandle AirpcapAd = PacketGetAirPcapHandle(AdapterObject);
+	AirpcapLinkType AirpcapLinkLayer;
+	if (AirpcapAd)  {
+		type->LinkType = (UINT)NdisMediumNull; // Note: custom linktype, NDIS doesn't provide an equivalent
+		if (g_PAirpcapGetLinkType(AirpcapAd, &AirpcapLinkLayer)) {
+			switch(AirpcapLinkLayer)
+			{
+				case AIRPCAP_LT_802_11:
+					type->LinkType = (UINT)NdisMediumBare80211;
+					break;
+				case AIRPCAP_LT_802_11_PLUS_RADIO:
+					type->LinkType = (UINT)NdisMediumRadio80211;
+					break;
+				case AIRPCAP_LT_802_11_PLUS_PPI:
+					type->LinkType = (UINT)NdisMediumPpi;
+					break;
+				default:
+					break;
+			}
+		}
+		//
+		// For the moment, we always set the speed to 54Mbps, since the speed is not channel-specific,
+		// but per packet
+		//
+		type->LinkSpeed = 54000000;
 	}
 	else
-	{
-		TRACE_PRINT("PacketGetNetType: Adapter not found");
-		ret =  FALSE;
-		err = ERROR_BAD_UNIT;
+#endif // HAVE_AIRPCAP_API
+	if (g_bLoopbackSupport && PacketIsLoopbackAdapter(AdapterObject->Name)) {
+		type->LinkType = (UINT)NdisMediumNull;
+		type->LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
+	}
+	else {
+		WasWifiName = NpcapReplaceMemory(AdapterObject->Name, ADAPTER_NAME_LENGTH, NPF_DEVICE_NAMES_TAG_WIFI, "");
+		AdName = WasWifiName ? WasWifiName : AdapterObject->Name;
+
+		WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
+		TAdInfo = PacketFindAdInfo(AdName);
+		if(TAdInfo == NULL)
+		{
+			PacketUpdateAdInfo(AdName);
+			TAdInfo = PacketFindAdInfo(AdName);
+		}
+		ReleaseMutex(g_AdaptersInfoMutex);
+
+		if(TAdInfo == NULL) {
+			TRACE_PRINT("Failed to open adapter, failing with ERROR_BAD_UNIT");
+			err = ERROR_BAD_UNIT; //this is the best we can do....
+		}
+		else {
+			type->LinkSpeed = TAdInfo->LinkLayer.LinkSpeed;
+
+			// If this is a WIFI_ adapter, change the link type.
+			if (WasWifiName) {
+				type->LinkType = (UINT)NdisMediumRadio80211;
+			}
+			else
+			{
+				CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA)+sizeof(ULONG)-1] = {0};
+				PPACKET_OID_DATA OidData = (PPACKET_OID_DATA) IoCtlBuffer;
+
+				//get the link-layer type
+				OidData->Oid = OID_GEN_MEDIA_IN_USE;
+				OidData->Length = sizeof (ULONG);
+				if (!PacketRequest(AdapterObject, FALSE, OidData)) {
+					err = GetLastError();
+					TRACE_PRINT1("PacketGetLinkLayerFromRegistry error: %d", err);
+				}
+				else {
+					type->LinkType=*((UINT*)OidData->Data);
+				}
+			}
+		}
 	}
 
-	ReleaseMutex(g_AdaptersInfoMutex);
-
-	// Check whether it is a WLAN adapter in monitor mode.
-	if (type->LinkType == NdisMedium802_3 && g_nbAdapterMonitorModes[AdName] != 0)
-	{
-		type->LinkType = (UINT)NdisMediumRadio80211;
-	}
-
+	if (NULL != WasWifiName) HeapFree(GetProcessHeap(), 0, WasWifiName);
 	TRACE_EXIT();
 	SetLastError(err);
-	return ret;
+	return (err == ERROR_SUCCESS);
 }
 
 /*! 
