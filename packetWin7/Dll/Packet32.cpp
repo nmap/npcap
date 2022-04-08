@@ -1041,6 +1041,7 @@ static PCHAR WChar2SChar(LPCWCH string)
   without performing a copy. This function tries to increase the size of that buffer.
 
   NOTE: this function is used for NPF adapters, only.
+  Npcap NOTE: This may no longer be necessary. Testing required.
 */
 
 BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
@@ -1413,9 +1414,81 @@ BOOL PacketStartService()
 	return Result;
 }
 
-/*! 
+static HANDLE PacketGetAdapterHandle(PCCH AdapterNameA)
+{
+	CHAR SymbolicLinkA[MAX_PATH] = {0};
+	HRESULT hrStatus = S_OK;
+	DWORD err = ERROR_SUCCESS;
+	HANDLE hFile = INVALID_HANDLE_VALUE;
+
+	// Create the NPF device name from the original device name
+	TRACE_ENTER();
+
+	TRACE_PRINT1("Trying to open adapter %hs", AdapterNameA);
+
+#define DEVICE_PREFIX "\\Device\\"
+
+	if (strlen(AdapterNameA) <= strlen(DEVICE_PREFIX))
+	{
+		TRACE_PRINT("Device name too short.");
+		TRACE_EXIT();
+		SetLastError(ERROR_INVALID_NAME);
+		return INVALID_HANDLE_VALUE;
+	}
+	hrStatus = StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\Global\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
+	if (FAILED(hrStatus))
+	{
+		TRACE_PRINT1("Failed to format symbolic link: %08x", hrStatus);
+		TRACE_EXIT();
+		// STRSAFE_E_INSUFFICIENT_BUFFER
+		SetLastError(ERROR_BUFFER_OVERFLOW);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	// Start the driver service and/or Helper if needed
+	PacketStartService();
+
+	// Try NpcapHelper to request handle if we are in Non-Admin mode.
+	if (NpcapIsAdminOnlyMode())
+	{
+		if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
+		{
+			// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
+			NpcapStartHelper();
+			if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
+			{
+				err = GetLastError();
+				TRACE_PRINT("Could not contact NpcapHelper");
+				TRACE_EXIT();
+				SetLastError(err);
+				return INVALID_HANDLE_VALUE;
+			}
+		}
+		hFile = NpcapRequestHandle(SymbolicLinkA, &err);
+		TRACE_PRINT1("Driver handle from NpcapHelper = %08x", hFile);
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			TRACE_PRINT1("ErrorCode = %d", err);
+			SetLastError(err);
+			return INVALID_HANDLE_VALUE;
+		}
+	}
+	else
+	{
+		// Try if it is possible to open the adapter immediately
+		hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
+				0, NULL, OPEN_EXISTING, 0, 0);
+		err = GetLastError();
+		TRACE_PRINT2("SymbolicLinkA = %hs, hFile = %08x", SymbolicLinkA, hFile);
+	}
+	TRACE_EXIT();
+	SetLastError(err);
+	return hFile;
+}
+
+/*!
   \brief Opens an adapter using the NPF device driver.
-  \param AdapterName A string containing the name of the device to open. 
+  \param AdapterName A string containing the name of the device to open.
   \return If the function succeeds, the return value is the pointer to a properly initialized ADAPTER object,
    otherwise the return value is NULL.
 
@@ -1426,26 +1499,8 @@ LPADAPTER PacketOpenAdapterNPF(PCCH AdapterNameA)
 {
 	DWORD error;
 	LPADAPTER lpAdapter;
-	
-	CHAR SymbolicLinkA[MAX_PATH];
 
-	// Create the NPF device name from the original device name
 	TRACE_ENTER();
-
-	TRACE_PRINT1("Trying to open adapter %hs", AdapterNameA);
-
-	// Start the driver service and/or Helper if needed
-	// Though don't bother if we already have a valid pipe to NpcapHelper
-	if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
-	{
-		PacketStartService();
-		if (NpcapIsAdminOnlyMode())
-		{
-			// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
-			NpcapStartHelper();
-		}
-	}
-
 
 	lpAdapter=(LPADAPTER)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER));
 	if (lpAdapter==NULL)
@@ -1459,84 +1514,49 @@ LPADAPTER PacketOpenAdapterNPF(PCCH AdapterNameA)
 
 	lpAdapter->NumWrites=1;
 
-#define DEVICE_PREFIX "\\Device\\"
+	lpAdapter->hFile = PacketGetAdapterHandle(AdapterNameA);
 
-	if (strlen(AdapterNameA) > strlen(DEVICE_PREFIX))
-	{
-		StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\Global\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
-	}
-	else
-	{
-		ZeroMemory(SymbolicLinkA, sizeof(SymbolicLinkA));
-	}
-
-/*	}*/
-
-	//
-	// NOTE GV 20061114 This is a sort of breaking change. In the past we were putting what
-	// we could fit inside this variable. Now we simply put NOTHING. It's just useless
-	//
-	ZeroMemory(lpAdapter->SymbolicLink, sizeof(lpAdapter->SymbolicLink));
-
-	// Try NpcapHelper to request handle if we are in Non-Admin mode.
-	if (g_hNpcapHelperPipe != INVALID_HANDLE_VALUE)
-	{
-		//try if it is possible to open the adapter immediately
-		DWORD dwErrorReceived;
-		lpAdapter->hFile = NpcapRequestHandle(SymbolicLinkA, &dwErrorReceived);
-		TRACE_PRINT1("Driver handle from NpcapHelper = %08x", lpAdapter->hFile);
+	do {
+		error=GetLastError();
 		if (lpAdapter->hFile == INVALID_HANDLE_VALUE)
 		{
-			TRACE_PRINT1("ErrorCode = %d", dwErrorReceived);
-			SetLastError(dwErrorReceived);
+			TRACE_PRINT("PacketOpenAdapterNPF: Failed to get adapter handle");
+			break;
 		}
-	}
-	else
-	{
-		// Try if it is possible to open the adapter immediately
-		lpAdapter->hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ,
-				0, NULL, OPEN_EXISTING, 0, 0);
-		TRACE_PRINT2("SymbolicLinkA = %hs, lpAdapter->hFile = %08x", SymbolicLinkA, lpAdapter->hFile);
-	}
-	
-	if (lpAdapter->hFile != INVALID_HANDLE_VALUE) 
-	{
 
-		if(PacketSetReadEvt(lpAdapter)==FALSE){
+		if(!PacketSetReadEvt(lpAdapter)) {
 			error=GetLastError();
 			TRACE_PRINT("PacketOpenAdapterNPF: Unable to open the read event");
-			if (lpAdapter->hFile != NULL)
-				CloseHandle(lpAdapter->hFile);
-			HeapFree(GetProcessHeap(), 0, lpAdapter);
-			//set the error to the one on which we failed
-		    
-			TRACE_PRINT1("PacketOpenAdapterNPF: PacketSetReadEvt failed, LastError=%8.8x",error);
-			TRACE_EXIT();
+			break;
+		}
 
-
-			SetLastError(error);
-			return NULL;
-		}		
-		
-		PacketSetMaxLookaheadsize(lpAdapter);
-
+		if (!PacketSetMaxLookaheadsize(lpAdapter)) {
+			error=GetLastError();
+			TRACE_PRINT("PacketOpenAdapterNPF: Unable to set lookahead");
+			break;
+		}
 		//
 		// Indicate that this is a device managed by NPF.sys
 		//
 		lpAdapter->Flags = INFO_FLAG_NDIS_ADAPTER;
 
 
-		StringCchCopyA(lpAdapter->Name, ADAPTER_NAME_LENGTH, AdapterNameA);
+		if (FAILED(StringCchCopyA(lpAdapter->Name, ADAPTER_NAME_LENGTH, AdapterNameA)))
+		{
+			error = ERROR_BUFFER_OVERFLOW;
+			TRACE_PRINT("PacketOpenAdapterNPF: Unable to copy adapter name");
+			break;
+		}
 
 		TRACE_PRINT("Successfully opened adapter");
 		TRACE_EXIT();
 		return lpAdapter;
-	}
+	} while (FALSE);
 
-	error=GetLastError();
-	HeapFree(GetProcessHeap(), 0, lpAdapter);
+	TRACE_PRINT1("PacketOpenAdapterNPF: LastError= %8.8x",error);
+	PacketCloseAdapter(lpAdapter);
+
 	//set the error to the one on which we failed
-    TRACE_PRINT1("PacketOpenAdapterNPF: CreateFile failed, LastError= %8.8x",error);
 	TRACE_EXIT();
 	SetLastError(error);
 	return NULL;
@@ -1929,9 +1949,14 @@ VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 	}
 	else
 	{
-		SetEvent(lpAdapter->ReadEvent);
-	    CloseHandle(lpAdapter->ReadEvent);
-		CloseHandle(lpAdapter->hFile);
+		if (lpAdapter->ReadEvent != NULL) {
+			SetEvent(lpAdapter->ReadEvent);
+			CloseHandle(lpAdapter->ReadEvent);
+			lpAdapter->ReadEvent = NULL;
+		}
+		if (lpAdapter->hFile != INVALID_HANDLE_VALUE && lpAdapter->hFile != NULL) {
+			CloseHandle(lpAdapter->hFile);
+		}
 		HeapFree(GetProcessHeap(), 0, lpAdapter);
 	}
 
