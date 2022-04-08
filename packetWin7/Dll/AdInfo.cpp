@@ -411,7 +411,13 @@ static BOOLEAN PacketGetAdaptersNPF()
 	for (TmpAddr=AdBuffer; TmpAddr != NULL; TmpAddr = TmpAddr->Next)
 	{
 		// If the adapter is valid, add it to the list.
-		PacketAddAdapterNPF(TmpAddr);
+		if (TmpAddr->OperStatus != IfOperStatusDown &&
+			TmpAddr->OperStatus != IfOperStatusNotPresent &&
+			TmpAddr->OperStatus != IfOperStatusLowerLayerDown
+		   )
+		{
+			PacketAddAdapterNPF(TmpAddr);
+		}
 	}
 	
 	if (g_bLoopbackSupport) {
