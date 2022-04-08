@@ -521,32 +521,18 @@ static BOOL NpcapIsAdminOnlyMode()
 {
 	TRACE_ENTER();
 
-	HKEY hKey;
-	DWORD type;
-	char buffer[BUFSIZE];
-	DWORD size = sizeof(buffer);
-	DWORD dwAdminOnlyMode = 0;
+	static BOOLEAN cached = FALSE;
+	static DWORD dwAdminOnlyMode = 0;
+	DWORD size = sizeof(DWORD);
+	LSTATUS status = ERROR_SUCCESS;
 
-	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, NPCAP_SERVICE_REGISTRY_KEY "\\Parameters", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-	{
-		if (RegQueryValueExA(hKey, "AdminOnly", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_DWORD)
-		{
-			dwAdminOnlyMode = *((DWORD *) buffer);
+	if (!cached) {
+		status = RegGetValue(HKEY_LOCAL_MACHINE, _T(NPCAP_SERVICE_REGISTRY_KEY "\\Parameters"), _T("AdminOnly"), RRF_RT_REG_DWORD, NULL, &dwAdminOnlyMode, &size);
+		if (status != ERROR_SUCCESS) {
+			TRACE_PRINT1("RegGetValue(Services\\Npcap\\Parameters\\AdminOnly) failed: %#x\n", status);
 		}
-		else
-		{
-			TRACE_PRINT1("RegQueryValueExA(AdminOnly) failed or not REG_DWORD: %#x\n", GetLastError());
-			dwAdminOnlyMode = 0;
-		}
-
-		RegCloseKey(hKey);
+		cached = TRUE;
 	}
-	else
-	{
-		TRACE_PRINT1("RegOpenKeyExA(Services\\Npcap\\Parameters) failed: %#x\n", GetLastError());
-		dwAdminOnlyMode = 0;
-	}
- 
 	TRACE_EXIT();
 	return (dwAdminOnlyMode != 0);
 }
