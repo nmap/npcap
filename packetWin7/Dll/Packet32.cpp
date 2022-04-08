@@ -1017,21 +1017,6 @@ VOID PacketLoadLibrariesDynamically()
 
 
 /*! 
-  \brief Converts an ASCII string to UNICODE. Uses the MultiByteToWideChar() system function.
-  \param string The string to convert.
-  \return The converted string.
-*/
-static PWCHAR SChar2WChar(PCCH string)
-{
-	PWCHAR TmpStr;
-	TmpStr = (WCHAR*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (DWORD)(strlen(string)+2)*sizeof(WCHAR));
-	if (TmpStr != NULL)
-		MultiByteToWideChar(CP_ACP, 0, string, -1, TmpStr, (DWORD)(strlen(string)+2));
-
-	return TmpStr;
-}
-
-/*! 
   \brief Converts an UNICODE string to ASCII. Uses the WideCharToMultiByte() system function.
   \param string The string to convert.
   \return The converted string.
@@ -2438,175 +2423,37 @@ BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
 }
 
 /*!
-  \brief Sets the name of the file that will receive the packet when the adapter is in dump mode.
-  \param AdapterObject Pointer to an _ADAPTER structure.
-  \param name the file name, in ASCII or UNICODE.
-  \param len the length of the buffer containing the name, in bytes.
-  \return If the function succeeds, the return value is nonzero.
-
-  This function defines the file name that the driver will open to store the packets on disk when 
-  it works in dump mode. The adapter must be in dump mode, i.e. PacketSetMode() should have been
-  called previously with mode = PACKET_MODE_DUMP. otherwise this function will fail.
-  If PacketSetDumpName was already invoked on the adapter pointed by AdapterObject, the driver 
-  closes the old file and opens the new one.
+  Dump mode functions not supported by Npcap
 */
 
 BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void *name, int len)
 {
-	DWORD	BytesReturned;
-	DWORD err = ERROR_SUCCESS;
-	WCHAR	*FileName;
-	BOOLEAN	res;
-	WCHAR	NameWithPath[1024];
-	int		TStrLen;
-	WCHAR	*NamePos;
-
 	TRACE_ENTER();
-
-	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
-	{
-		TRACE_PRINT("PacketSetDumpName: not allowed on non-NPF adapters");
-		TRACE_EXIT();
-		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
-	}
-
-	if (((PUCHAR) name)[1] != 0 && len > 1)
-	{	// ASCII
-		FileName = SChar2WChar((PCHAR) name);
-		len *= 2;
-	} 
-	else
-	{
-		// Unicode
-		FileName = (WCHAR*) name;
-	}
-
-	TStrLen = GetFullPathName(FileName, 1024, NameWithPath, &NamePos);
-
-	len = TStrLen * 2 + 2;  // add the terminating null character
-
-	// Try to catch malformed strings
-	if (len > 2048)
-	{
-		if (((PUCHAR) name)[1] != 0 && len > 1) HeapFree(GetProcessHeap(), 0, FileName);
-
-		TRACE_EXIT();
-		SetLastError(ERROR_FILENAME_EXCED_RANGE);
-		return FALSE;
-	}
-
-    res = (BOOLEAN) DeviceIoControl(AdapterObject->hFile, BIOCSETDUMPFILENAME, NameWithPath, len, NULL, 0, &BytesReturned, NULL);
-    err = GetLastError();
-	if (((PUCHAR) name)[1]!=0 && len > 1)
-		HeapFree(GetProcessHeap(), 0, FileName);
-
+	UNREFERENCED_PARAMETER(AdapterObject);
+	UNREFERENCED_PARAMETER(name);
+	UNREFERENCED_PARAMETER(len);
 	TRACE_EXIT();
-	SetLastError(err);
-	return res;
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return FALSE;
 }
-
-/*
-  \brief Set the dump mode limits.
-  \param AdapterObject Pointer to an _ADAPTER structure.
-  \param maxfilesize The maximum dimension of the dump file, in bytes. 0 means no limit.
-  \param maxnpacks The maximum number of packets contained in the dump file. 0 means no limit.
-  \return If the function succeeds, the return value is nonzero.
-
-  This function sets the limits after which the NPF driver stops to save the packets to file when an adapter
-  is in dump mode. This allows to limit the dump file to a precise number of bytes or packets, avoiding that
-  very long dumps fill the disk space. If both maxfilesize and maxnpacks are set, the dump is stopped when
-  the first of the two is reached.
-
-  \note When a limit is reached, the dump is stopped, but the file remains opened. In order to flush 
-  correctly the data and access the file consistently, you need to close the adapter with PacketCloseAdapter().
-*/
 BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxnpacks)
 {
-	DWORD		BytesReturned;
-	UINT valbuff[2];
-	BOOLEAN Result;
-	DWORD err = ERROR_SUCCESS;
-
 	TRACE_ENTER();
-
-	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
-	{
-		TRACE_PRINT("PacketSetDumpLimits: not allowed on non-NPF adapters");
-		TRACE_EXIT();
-		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
-	}
-
-	valbuff[0] = maxfilesize;
-	valbuff[1] = maxnpacks;
-
-    Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,
-		BIOCSETDUMPLIMITS,
-		valbuff,
-		sizeof valbuff,
-		NULL,
-		0,
-		&BytesReturned,
-		NULL);	
-
-    err = GetLastError();
+	UNREFERENCED_PARAMETER(AdapterObject);
+	UNREFERENCED_PARAMETER(maxfilesize);
+	UNREFERENCED_PARAMETER(maxnpacks);
 	TRACE_EXIT();
-	SetLastError(err);
-	return Result;
-
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return FALSE;
 }
-
-/*!
-  \brief Returns the status of the kernel dump process, i.e. tells if one of the limits defined with PacketSetDumpLimits() was reached.
-  \param AdapterObject Pointer to an _ADAPTER structure.
-  \param sync if TRUE, the function blocks until the dump is finished, otherwise it returns immediately.
-  \return TRUE if the dump is ended, FALSE otherwise.
-
-  PacketIsDumpEnded() informs the user about the limits that were set with a previous call to 
-  PacketSetDumpLimits().
-
-  \warning If no calls to PacketSetDumpLimits() were performed or if the dump process has no limits 
-  (i.e. if the arguments of the last call to PacketSetDumpLimits() were both 0), setting sync to TRUE will
-  block the application on this call forever.
-*/
 BOOLEAN PacketIsDumpEnded(LPADAPTER AdapterObject, BOOLEAN sync)
 {
-	DWORD		BytesReturned;
-	int		IsDumpEnded;
-	BOOLEAN	res;
-	DWORD err = ERROR_SUCCESS;
-
 	TRACE_ENTER();
-
-	if(AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
-	{
-		TRACE_PRINT("PacketIsDumpEnded: not allowed on non-NPF adapters");
-	
-		TRACE_EXIT();
-		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
-	}
-
-	if(sync)
-		WaitForSingleObject(AdapterObject->ReadEvent, INFINITE);
-
-    res = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,
-		BIOCISDUMPENDED,
-		NULL,
-		0,
-		&IsDumpEnded,
-		4,
-		&BytesReturned,
-		NULL);
-
-    err = GetLastError();
+	UNREFERENCED_PARAMETER(AdapterObject);
+	UNREFERENCED_PARAMETER(sync);
 	TRACE_EXIT();
-	SetLastError(err);
-	if(res == FALSE)
-		return TRUE; // If the IOCTL returns an error we consider the dump finished
-	else
-		return (BOOLEAN)IsDumpEnded;
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return FALSE;
 }
 
 /*!
