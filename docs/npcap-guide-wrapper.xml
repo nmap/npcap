@@ -11,9 +11,10 @@
 
 <article id="npcap">
 <articleinfo>
-  <title>Npcap: Nmap Project's packet sniffing library for Windows</title>
+  <title>Npcap Reference Guide</title>
   <abstract>
-    <para>A guide to Npcap, a packet capture and network analysis framework for Windows, for users and software developers. Npcap is a modern, safe, and compatible update to WinPcap.</para>
+    <para>A manual and guide to Npcap, a packet capture and network analysis framework for Windows, for users and
+      software developers. Npcap is a modern, safe, and compatible update to WinPcap.</para>
   </abstract>
 </articleinfo>
 
