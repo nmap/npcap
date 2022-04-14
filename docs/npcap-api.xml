@@ -1,5 +1,20 @@
-<sect2 id="npcap-api">
+<sect1 id="npcap-api">
   <title>The Npcap API</title>
+  <sect1info>
+    <abstract>
+      <para>The Npcap Application Programming Interface (<acronym>API</acronym>) consists of the
+        libpcap API and a few non-portable extensions: <code>pcap_setbuff</code>, 
+          <code>pcap_setuserbuffer</code>,
+          <code>pcap_setmintocopy</code>,
+          <code>pcap_getevent</code>,
+          <code>pcap_setmode</code>,
+          <code>pcap_oid_get_request</code> and <code>pcap_oid_set_request</code>,
+          functions for batch-sending packets with <code>pcap_send_queue</code>,
+          and <code>pcap_stats_ex</code>.
+        </para>
+    </abstract>
+  </sect1info>
+
   <para>The Npcap API is exported by <filename>wpcap.dll</filename> and is the
 	  Windows port of <ulink url="https://www.tcpdump.org/">libpcap</ulink>.
 	  The API and functions are described in
@@ -263,4 +278,4 @@
 
     </variablelist>
   </sect2>
-</sect2>
+</sect1>
