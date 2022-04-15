@@ -526,7 +526,7 @@ BOOL SetWlanOperationMode(tstring strGUID, tstring strMode)
 }
 
 #define STR_COMMAND_USAGE \
-_T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.com )\n") \
+_T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( https://npcap.com )\n") \
 _T("Usage: WlanHelper [Commands]\n") \
 _T("   or: WlanHelper {Interface Name or GUID} [Options]\n") \
 _T("\n") \
@@ -574,7 +574,7 @@ _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPL
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	SetConsoleTitle(_T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.com)"));
+	SetConsoleTitle(_T("WlanHelper for Npcap ") _T(WINPCAP_VER_STRING) _T(" (https://npcap.com)"));
 	vector<tstring> strArgs;
 	for (int i = 0; i < argc; i++)
 	{

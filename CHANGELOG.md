@@ -1045,7 +1045,7 @@
   causing some installation failures. Fixes [#994](http://issues.nmap.org/994).
 
 * Silent installs will not downgrade the Npcap version unless the new
-  `/downgrade=yes` option is given. Any version of [Npcap OEM](http://npcap.com/oem/)
+  `/downgrade=yes` option is given. Any version of [Npcap OEM](https://npcap.com/oem/)
    will be considered a "newer version" than any non-OEM version.
 
 ## Npcap 0.94 [2017-08-29]

@@ -75,7 +75,7 @@
 extern BOOLEAN bWiFiService;
 
 #define STR_COMMAND_USAGE \
-_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( http://npcap.com )\n") \
+_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" ( https://npcap.com )\n") \
 _T("Usage: NPFInstall [Options]\n") \
 _T("\n") \
 _T("OPTIONS:\n") \
@@ -125,7 +125,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	BOOL bNoWindow = FALSE;
 	int nStatus = 0;
 
-	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (http://npcap.com)"));
+	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (https://npcap.com)"));
 	vector<tstring> strArgs;
 	tstring strTmp;
 	for (int i = 0; i < argc; i++)

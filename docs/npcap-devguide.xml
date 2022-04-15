@@ -13,7 +13,7 @@
 
     <para>
       To build software that uses Npcap, use the latest version of the Npcap Software Development Kit (SDK).
-      The latest SDK can be downloaded on <ulink role="hidepdf" url="http://npcap.com/#download">Npcap.org</ulink>.
+      The latest SDK can be downloaded on <ulink role="hidepdf" url="https://npcap.com/#download">Npcap.org</ulink>.
       Updates to the SDK are much less frequent than updates to the Npcap binaries.
     </para>
   </sect2>
@@ -411,7 +411,7 @@ printf("%s", pcap_version);
             <title>WlanHelper Man</title>
             <screen>
 C:\> <userinput>WlanHelper.exe</userinput>
-WlanHelper for Npcap 0.91 ( http://npcap.com )
+WlanHelper for Npcap 0.91 ( https://npcap.com )
 Usage: WlanHelper [Commands]
 or: WlanHelper {Interface Name or GUID} [Options]
 

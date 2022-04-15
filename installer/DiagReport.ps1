@@ -73,7 +73,7 @@ function get_props_safe($item)
 }
 
 write_report ("*************************************************")
-write_report "DiagReport for Npcap ( http://npcap.com )"
+write_report "DiagReport for Npcap ( https://npcap.com )"
 write_report ("*************************************************")
 "Script Architecture:`t`t" + (get_script_bit)
 "Script Path:`t`t`t" + ($MyInvocation.MyCommand.Definition)
