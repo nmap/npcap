@@ -1,8 +1,8 @@
 /***********************IMPORTANT NPCAP LICENSE TERMS***********************
  *                                                                         *
- * Npcap is a Windows packet sniffing driver and library and is copyright  *
- * (c) 2013-2021 by Insecure.Com LLC ("The Nmap Project").  All rights     *
- * reserved.                                                               *
+ * Npcap (https://npcap.com) is the Nmap Project's packet capture (and     *
+ * transmission) library for Microsoft Windows. It is (c) 2013-2022 by     *
+ * Nmap Software LLC ("The Nmap Project"). All rights reserved.            *
  *                                                                         *
  * Even though Npcap source code is publicly available for review, it is   *
  * not open source software and the free version may not be redistributed  *
@@ -20,7 +20,7 @@
  * silent installer, ensuring a seamless experience for end                *
  * users. Licensees may choose between a perpetual unlimited license or    *
  * an annual term license, along with options for commercial support and   *
- * updates. Prices and details: https://nmap.org/npcap/oem/redist.html     *
+ * updates. Prices and details: https://npcap.com/oem/redist.html          *
  *                                                                         *
  * The Npcap OEM Internal-Use License is for organizations that wish to    *
  * use Npcap OEM internally, without redistribution outside their          *
@@ -28,7 +28,7 @@
  * Npcap free edition. It includes commercial support and update options,  *
  * and provides the extra Npcap OEM features such as the silent installer  *
  * for automated deployment. Prices and details:                           *
- * https://nmap.org/npcap/oem/internal.html                                *
+ * https://npcap.com/oem/internal.html                                     *
  *                                                                         *
  * Free and open source software producers are also welcome to contact us  *
  * for redistribution requests, but we normally recommend that such        *
@@ -42,7 +42,7 @@
  * special license conditions or restrictions on your contributions, just  *
  * say so when you send them. Otherwise, it is understood that you are     *
  * offering the Nmap Project the unlimited, non-exclusive right to reuse,  *
- * modify, and relicence your code contributions so that we may (but are   *
+ * modify, and relicense your code contributions so that we may (but are   *
  * not obligated to) incorporate them into Npcap.                          *
  *                                                                         *
  * This software is distributed in the hope that it will be useful, but    *
