@@ -522,13 +522,11 @@ NTSTATUS NPF_BufferedWrite(
 	LARGE_INTEGER			StartTicks = { 0 }, CurTicks, TargetTicks;
 	LARGE_INTEGER			TimeFreq;
 	struct timeval			BufStartTime = { 0 };
-	struct dump_bpf_hdr* pWinpcapHdr = NULL;
+	struct dump_bpf_hdr* pHdr = NULL;
 	PMDL					TmpMdl;
-	ULONG					Pos = 0;
 	//	PCHAR				CurPos;
 	//	PCHAR				EndOfUserBuff = UserBuff + UserBuffSize;
 	PVOID npBuff = NULL;
-	NDIS_EVENT Event;
 
 	TRACE_ENTER();
 
@@ -555,7 +553,7 @@ NTSTATUS NPF_BufferedWrite(
 	}
 
 	// Sanity check on the user buffer
-	if (!NT_VERIFY(UserBuff != NULL))
+	if (!NT_VERIFY(UserBuff != NULL) || UserBuffSize < sizeof(struct dump_bpf_hdr))
 	{
 		Status = STATUS_INVALID_PARAMETER;
 		goto NPF_BufferedWrite_End;
@@ -583,65 +581,45 @@ NTSTATUS NPF_BufferedWrite(
 	// Reset the pending packets counter
 	Open->Multiple_Write_Counter = 0;
 
-	// Save the current time stamp counter
-	CurTicks = KeQueryPerformanceCounter(&TimeFreq);
+	pHdr = (struct dump_bpf_hdr *)(UserBuff);
 
 	if (Sync)
 	{
-		// Initialize event used for synchronization
-		NdisInitializeEvent(&Event);
-		NdisResetEvent(&Event);
+		// Retrieve the time references
+		StartTicks = KeQueryPerformanceCounter(&TimeFreq);
+		BufStartTime.tv_sec = pHdr->ts.tv_sec;
+		BufStartTime.tv_usec = pHdr->ts.tv_usec;
 	}
 
 	//
 	// Main loop: send the buffer to the wire
 	//
+	ULONG Pos = 0;
 	while (TRUE)
 	{
-		if (Pos == UserBuffSize)
+		if (Pos >= UserBuffSize)
 		{
-			//
 			// end of buffer
-			//
 			break;
 		}
 
-		if (UserBuffSize - Pos < sizeof(*pWinpcapHdr))
+		if (UserBuffSize - Pos < sizeof(*pHdr))
+		{
+			// Missing header
+			IF_LOUD(DbgPrint("NPF_BufferedWrite: not enough data for a dump_bpf_hdr, aborting write.\n");)
+
+			Status = STATUS_INVALID_USER_BUFFER;
+			break;
+		}
+		pHdr = (struct dump_bpf_hdr *)(UserBuff + Pos);
+		ULONG ulDataOffset = Pos + sizeof(*pHdr);
+
+		if (pHdr->caplen == 0
+				|| pHdr->caplen > Open->pFiltMod->MaxFrameSize
+				|| pHdr->caplen > (UserBuffSize - ulDataOffset))
 		{
 			// Malformed header
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
-
-			Status = STATUS_INVALID_PARAMETER;
-			break;
-		}
-
-		pWinpcapHdr = (struct dump_bpf_hdr *)(UserBuff + Pos);
-
-		if (pWinpcapHdr->caplen == 0 || pWinpcapHdr->caplen > Open->pFiltMod->MaxFrameSize)
-		{
-			// Malformed header
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
-
-			Status = STATUS_INVALID_PARAMETER;
-			break;
-		}
-
-		if (Pos == 0)
-		{
-			// Retrieve the time references
-			StartTicks = KeQueryPerformanceCounter(&TimeFreq);
-			BufStartTime.tv_sec = pWinpcapHdr->ts.tv_sec;
-			BufStartTime.tv_usec = pWinpcapHdr->ts.tv_usec;
-		}
-
-		Pos += sizeof(*pWinpcapHdr);
-
-		if (pWinpcapHdr->caplen > UserBuffSize - Pos)
-		{
-			//
-			// the packet is missing!!
-			//
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
+			IF_LOUD(DbgPrint("NPF_BufferedWrite: invalid caplen, aborting write.\n");)
 
 			Status = STATUS_INVALID_PARAMETER;
 			break;
@@ -650,17 +628,17 @@ NTSTATUS NPF_BufferedWrite(
 		/* Copy packet data to non-paged memory, otherwise we induce
 		 * page faults in NIC drivers: http://issues.nmap.org/1398
 		 * Alternately, we could possibly use Direct I/O for the BIOCSENDPACKETS IoCtl? */
-		npBuff = ExAllocatePoolWithTag(NPF_NONPAGED, pWinpcapHdr->caplen, NPF_BUFFERED_WRITE_TAG);
+		npBuff = ExAllocatePoolWithTag(NPF_NONPAGED, pHdr->caplen, NPF_BUFFERED_WRITE_TAG);
 		if (npBuff == NULL)
 		{
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
 			Status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
-		RtlCopyMemory(npBuff, UserBuff + Pos, pWinpcapHdr->caplen);
+		RtlCopyMemory(npBuff, UserBuff + ulDataOffset, pHdr->caplen);
 
 		// Allocate an MDL to map the packet data
-		TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, npBuff, pWinpcapHdr->caplen);
+		TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, npBuff, pHdr->caplen);
 
 		if (TmpMdl == NULL)
 		{
@@ -678,12 +656,10 @@ NTSTATUS NPF_BufferedWrite(
 		// Therefore, it is not leaking after this point.
 		NPF_AnalysisAssumeAliased(npBuff);
 
-		Pos += pWinpcapHdr->caplen;
-
 		// Allocate a packet from our free list
 		Status = NPF_AllocateNBL(Open->pFiltMod,
 				TmpMdl,
-				pWinpcapHdr->caplen,
+				pHdr->caplen,
 				&pNetBufferList);
 		if (!NT_SUCCESS(Status))
 		{
@@ -696,7 +672,7 @@ NTSTATUS NPF_BufferedWrite(
 			// Try again to allocate a packet
 			Status = NPF_AllocateNBL(Open->pFiltMod,
 					TmpMdl,
-					pWinpcapHdr->caplen,
+					pHdr->caplen,
 					&pNetBufferList);
 
 			if (!NT_SUCCESS(Status))
@@ -707,8 +683,6 @@ NTSTATUS NPF_BufferedWrite(
 				NdisFreeMdl(TmpMdl);
 				ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 
-				// TODO: Should we reset Pos here? Is it the
-				// amount sent or the place where we found a problem?
 				break;
 			}
 		}
@@ -723,6 +697,43 @@ NTSTATUS NPF_BufferedWrite(
 
 		// Increment the number of pending sends
 		NpfInterlockedIncrement(&(LONG)Open->Multiple_Write_Counter);
+
+		if (Sync)
+		{
+			// Save the current time stamp counter
+			CurTicks = KeQueryPerformanceCounter(&TimeFreq);
+			// Time offset of this packet from the first one (usecs)
+			LONGLONG usec_diff = ((LONGLONG)pHdr->ts.tv_sec - BufStartTime.tv_sec) * 1000000
+				+ pHdr->ts.tv_usec - BufStartTime.tv_usec;
+			// Release the application if it has been or would be blocked for more than 1 second
+			if (usec_diff > 1000000)
+			{
+				IF_LOUD(DbgPrint("NPF_BufferedWrite: timestamp elapsed, returning.\n");)
+
+				NPF_FreePackets(pNetBufferList);
+				break;
+			}
+
+			// Calculate the target QPC ticks to send the next packet
+			TargetTicks.QuadPart = StartTicks.QuadPart + usec_diff * TimeFreq.QuadPart / 1000000;
+
+			// If we need to wait, do so
+			if (CurTicks.QuadPart < TargetTicks.QuadPart)
+			{
+				// whole microseconds remaining.
+				// Explicit cast ok since condition above ensures this will be at most 1000000ms.
+				i = (UINT)(((TargetTicks.QuadPart - CurTicks.QuadPart) * 1000000) / TimeFreq.QuadPart);
+				NT_ASSERT(i < 1000000);
+				if (i >= 50)
+				{
+					NdisMSleep(i);
+				}
+				else
+				{
+					NdisStallExecution(i);
+				}
+			}
+		}
 
 		//receive the packets before sending them
 		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
@@ -777,61 +788,7 @@ NTSTATUS NPF_BufferedWrite(
 		// We've sent the packet, so leave it up to SendComplete to free the buffer
 		npBuff = NULL;
 
-		if (Sync)
-		{
-			if (Pos == UserBuffSize)
-			{
-				break;
-			}
-
-			if ((UserBuffSize - Pos) < sizeof(*pWinpcapHdr))
-			{
-				// Malformed header
-				IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
-
-				Status = STATUS_INVALID_PARAMETER;
-				break;
-			}
-
-			pWinpcapHdr = (struct dump_bpf_hdr *)(UserBuff + Pos);
-
-			if (pWinpcapHdr->caplen == 0 || pWinpcapHdr->caplen > Open->pFiltMod->MaxFrameSize || pWinpcapHdr->caplen > (UserBuffSize - Pos - sizeof(*pWinpcapHdr)))
-			{
-				// Malformed header
-				IF_LOUD(DbgPrint("NPF_BufferedWrite: malformed or bogus user buffer, aborting write.\n");)
-
-				Status = STATUS_INVALID_PARAMETER;
-				break;
-			}
-
-			// Release the application if it has been blocked for approximately more than 1 seconds
-			if (pWinpcapHdr->ts.tv_sec - BufStartTime.tv_sec > 1)
-			{
-				IF_LOUD(DbgPrint("NPF_BufferedWrite: timestamp elapsed, returning.\n");)
-
-				break;
-			}
-
-			// Calculate the time interval to wait before sending the next packet
-			TargetTicks.QuadPart = StartTicks.QuadPart +
-				((LONGLONG)pWinpcapHdr->ts.tv_sec - BufStartTime.tv_sec) * TimeFreq.QuadPart +
-				((LONGLONG)pWinpcapHdr->ts.tv_usec - BufStartTime.tv_usec) * (TimeFreq.QuadPart) / 1000000;
-
-			// Wait until the time interval has elapsed
-			while (CurTicks.QuadPart < TargetTicks.QuadPart)
-			{
-				// whole milliseconds remaining.
-				// Explicit cast ok since condition above ensures this will be at most 1000ms.
-				i = (UINT)(((TargetTicks.QuadPart - CurTicks.QuadPart) * 1000) / TimeFreq.QuadPart);
-				if (i >= 1)
-				{
-					// Sleep with millisecond resolution.
-					NdisWaitEvent(&Event, i);
-				}
-				// else perform a busy wait.
-				CurTicks = KeQueryPerformanceCounter(NULL);
-			}
-		}
+		Pos = ulDataOffset + pHdr->caplen;
 	}
 
 	// Wait the completion of pending sends
