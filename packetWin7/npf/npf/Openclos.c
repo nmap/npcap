@@ -886,6 +886,7 @@ VOID
 NPF_DecrementLoopbackInstances(
 		_Inout_ PNPCAP_FILTER_MODULE pFiltMod)
 {
+	NT_ASSERT(pFiltMod->Loopback);
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
 	if (NpfInterlockedDecrement(&(LONG)g_NumLoopbackInstances) == 0)
 	{
@@ -1608,7 +1609,8 @@ NPF_RemoveFromGroupOpenArray(
 			Curr->Next = NULL;
 			found = TRUE;
 		}
-		else {
+		else if (!pFiltMod->Loopback)
+		{
 			/* OR the filter in */
 			pCurrOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
 			NewPacketFilter |= pCurrOpen->MyPacketFilter;
@@ -3262,6 +3264,13 @@ NPF_SetPacketFilter(
 	BOOLEAN bail_early = FALSE;
 
 	TRACE_ENTER();
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (pFiltMod->Loopback)
+	{
+		// Fake it
+		return NDIS_STATUS_SUCCESS;
+	}
+#endif
 
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
@@ -3329,6 +3338,13 @@ NPF_SetLookaheadSize(
 
 	TRACE_ENTER();
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (pFiltMod->Loopback)
+	{
+		// Fake it
+		return NDIS_STATUS_SUCCESS;
+	}
+#endif
 	// If the new size is the same as the old one...
 	if (LookaheadSize == pFiltMod->MyLookaheadSize)
 	{
