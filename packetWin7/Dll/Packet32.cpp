@@ -1835,7 +1835,7 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 		TRACE_PRINT("Adapter found in our list. Check adapter type and see if it's actually supported.");
 
 #ifdef HAVE_AIRPCAP_API
-		if(TAdInfo->Flags == INFO_FLAG_AIRPCAP_CARD)
+		if(TAdInfo->bAirpcap)
 		{
 			//
 			// This is an airpcap card. Open it using the airpcap api
@@ -1864,14 +1864,6 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 			break;
 		}
 #endif // HAVE_AIRPCAP_API
-
-		if (TAdInfo->Flags != INFO_FLAG_NDIS_ADAPTER)
-		{
-			TRACE_PRINT1("Trying to open the adapter with an unknown flag type %u", TAdInfo->Flags);
-			dwLastError = ERROR_BAD_UNIT;
-			
-			break;
-		}
 
 		if (g_nbAdapterMonitorModes[AdapterNameWA] != 0)
 		{
@@ -3459,11 +3451,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	}
 	else
 #endif // HAVE_AIRPCAP_API
-	if (g_bLoopbackSupport && PacketIsLoopbackAdapter(AdapterObject->Name)) {
-		type->LinkType = (UINT)NdisMediumNull;
-		type->LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
-	}
-	else {
+	{
 		WasWifiName = NpcapReplaceMemory(AdapterObject->Name, ADAPTER_NAME_LENGTH, NPF_DEVICE_NAMES_TAG_WIFI, "");
 		AdName = WasWifiName ? WasWifiName : AdapterObject->Name;
 
@@ -3481,13 +3469,14 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 			err = ERROR_BAD_UNIT; //this is the best we can do....
 		}
 		else {
-			type->LinkSpeed = TAdInfo->LinkLayer.LinkSpeed;
+			*type = TAdInfo->LinkLayer;
 
 			// If this is a WIFI_ adapter, change the link type.
 			if (WasWifiName) {
 				type->LinkType = (UINT)NdisMediumRadio80211;
 			}
-			else
+			// If it's not our loopback adapter, request the media type from the driver
+			else if (!TAdInfo->bLoopback)
 			{
 				CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA)+sizeof(ULONG)-1] = {0};
 				PPACKET_OID_DATA OidData = (PPACKET_OID_DATA) IoCtlBuffer;

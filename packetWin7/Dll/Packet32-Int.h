@@ -122,7 +122,10 @@ typedef struct _ADAPTER_INFO
 	UCHAR MacAddress[MAX_MAC_ADDR_LENGTH];	///< Link layer address.
 	NetType LinkLayer;						///< Physical characteristics of this adapter. This NetType structure contains the link type and the speed of the adapter.
 	PNPF_IF_ADDRESS_ITEM pNetworkAddresses;///< Pointer to a linked list of IP addresses, each of which specifies a network address of this adapter.
-	UINT Flags;								///< Adapter's flags. Tell if this adapter must be treated in a different way.
+	UCHAR bLoopback:1; // Loopback adapter flag
+#ifdef HAVE_AIRPCAP_API
+	UCHAR bAirpcap:1; // AirPcap adapter flag
+#endif
 }
 ADAPTER_INFO, *PADAPTER_INFO;
 

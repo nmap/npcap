@@ -288,8 +288,6 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 
 		pAddr = pAddr->Next;
 	}
-		
-	TmpAdInfo->Flags = INFO_FLAG_NDIS_ADAPTER;
 	
 	// Update the AdaptersInfo list
 	TmpAdInfo->Next = g_AdaptersInfoList;
@@ -328,10 +326,12 @@ static BOOLEAN PacketAddLoopbackAdapter()
 	// Copy the device name
 	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), FAKE_LOOPBACK_ADAPTER_NAME, _TRUNCATE);
 	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), FAKE_LOOPBACK_ADAPTER_DESCRIPTION, _TRUNCATE);
-	TmpAdInfo->Flags = 0;
+	TmpAdInfo->bLoopback = 1;
 	memset(TmpAdInfo->MacAddress, '\0', 6);
 	TmpAdInfo->MacAddressLen = 6;
 	TmpAdInfo->pNetworkAddresses = NULL;
+	TmpAdInfo->LinkLayer.LinkType = (UINT) NdisMediumNull;
+	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 
 	// Update the AdaptersInfo list
 	TmpAdInfo->Next = g_AdaptersInfoList;
@@ -457,7 +457,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 		//
 		for (TmpAdInfo = g_AdaptersInfoList; TmpAdInfo != NULL; TmpAdInfo = TmpAdInfo->Next)
 		{
-			if (TmpAdInfo->Flags == INFO_FLAG_AIRPCAP_CARD)
+			if (TmpAdInfo->bAirpcap)
 			{
 				if (_stricmp(TmpAdInfo->Name, name) == 0)
 					break;
@@ -493,7 +493,7 @@ static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 			sizeof(TmpAdInfo->Description), 
 			description);
 		
-		TmpAdInfo->Flags = INFO_FLAG_AIRPCAP_CARD;
+		TmpAdInfo->bAirpcap = 1;
 		
 		// Update the AdaptersInfo list
 		TmpAdInfo->Next = g_AdaptersInfoList;
