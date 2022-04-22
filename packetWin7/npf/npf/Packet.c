@@ -934,6 +934,7 @@ Return Value:
 --*/
 {
 	PLIST_ENTRY CurrEntry = NULL;
+	LIST_ENTRY ClosedOpens;
 	PDEVICE_OBJECT DeviceObject;
 	PDEVICE_OBJECT OldDeviceObject;
 	PDEVICE_EXTENSION DeviceExtension;
@@ -988,23 +989,31 @@ Return Value:
 
 		// Not sure if we need to acquire this lock, since no new IRPs can be issued during unload,
 		// but better safe than sorry.
+		InitializeListHead(&ClosedOpens);
 		NdisAcquireRWLockWrite(DeviceExtension->AllOpensLock, &lockState, 0);
 		CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
 		while (CurrEntry != &DeviceExtension->AllOpens)
 		{
 			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
+			InsertTailList(&ClosedOpens, CurrEntry);
+			// Pretty sure we don't get here unless all this is already closed up, but better to be thorough.
+			OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenClosed, TRUE);
 
-			// NPF_CloseOpenInstance needs PASSIVE_LEVEL
-			NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
+			CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
+		}
 
-			NPF_CloseOpenInstance(pOpen);
+		// NPF_RemoveFromGroupOpenArray needs PASSIVE_LEVEL
+		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
+		CurrEntry = RemoveHeadList(&ClosedOpens);
+		while (CurrEntry != &ClosedOpens)
+		{
+			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
+			NPF_RemoveFromGroupOpenArray(pOpen);
 			NPF_ReleaseOpenInstanceResources(pOpen);
 			ExFreePool(pOpen);
 
-			NdisAcquireRWLockWrite(DeviceExtension->AllOpensLock, &lockState, 0);
-			CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
+			CurrEntry = RemoveHeadList(&ClosedOpens);
 		}
-		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
 
 		if (DeviceExtension->ExportString)
 		{

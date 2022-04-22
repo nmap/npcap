@@ -1096,6 +1096,9 @@ NPF_CreateFilterModule(
 
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID
+NPF_RemoveFromGroupOpenArray( _Inout_ POPEN_INSTANCE pOpen);
+
+VOID
 NPF_ReleaseOpenInstanceResources(_Inout_ POPEN_INSTANCE pOpen);
 
 _IRQL_requires_(PASSIVE_LEVEL)
@@ -1117,8 +1120,13 @@ BOOLEAN NPF_StartUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(Open
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
-_IRQL_requires_(PASSIVE_LEVEL)
-VOID NPF_CloseOpenInstance(_Inout_ POPEN_INSTANCE pOpen);
+_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
+OPEN_STATE
+NPF_DemoteOpenStatus(
+	_Inout_ POPEN_INSTANCE pOpen,
+	_In_range_(OpenDetached,OpenClosed) OPEN_STATE NewState,
+	_In_ BOOLEAN AtDispatchLevel
+	);
 
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetDeviceMTU(_In_ PNPCAP_FILTER_MODULE pFiltMod, _Out_ PUINT  pMtu);

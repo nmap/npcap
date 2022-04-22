@@ -231,19 +231,6 @@ NPF_RemoveFromFilterModuleArray(
 	);
 
 /*!
-  \brief Remove the open context from the group open array of a filter module.
-  \param pOpen Pointer to open context structure.
-
-  This function is used by NPF_Cleanup() and NPF_CleanupForUnclosed()
-  to remove an open context from the group open array of a filter module.
-*/
-_IRQL_requires_(PASSIVE_LEVEL)
-void
-NPF_RemoveFromGroupOpenArray(
-	_Inout_ POPEN_INSTANCE pOpen
-	);
-
-/*!
   \brief Get a pointer to filter module from the global array.
   \param pAdapterName The adapter name of the target filter module.
   \return Pointer to the filter module, or NULL if not found.
@@ -389,7 +376,7 @@ NPF_CloseBinding(
 	NdisResetEvent(&Event);
 
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	pFiltMod->AdapterBindingStatus = FilterDetaching;
+	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterDetaching);
 
 	while (pFiltMod->AdapterHandleUsageCounter > 0)
 	{
@@ -850,32 +837,22 @@ NPF_StopUsingOpenInstance(
 //-------------------------------------------------------------------
 
 _Use_decl_annotations_
-VOID
-NPF_CloseOpenInstance(
-	POPEN_INSTANCE pOpen
+OPEN_STATE
+NPF_DemoteOpenStatus(
+	POPEN_INSTANCE pOpen,
+	OPEN_STATE NewState,
+	BOOLEAN AtDispatchLevel
 	)
 {
-	NDIS_EVENT Event;
-	OPEN_STATE state;
+	OPEN_STATE OldState;
 
-	NdisInitializeEvent(&Event);
-	NdisResetEvent(&Event);
+	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+	NT_ASSERT(NewState > pOpen->OpenStatus);
+	OldState = pOpen->OpenStatus;
+	pOpen->OpenStatus = NewState;
 
-	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-	pOpen->OpenStatus = OpenClosed;
-
-	// Wait for all IRPs to complete for all states
-	for (state = OpenRunning; state < OpenClosed; state++)
-	{
-		while (pOpen->PendingIrps[state] > 0)
-		{
-			NdisReleaseSpinLock(&pOpen->OpenInUseLock);
-			NdisWaitEvent(&Event, 1);
-			NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-		}
-	}
-
-	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
+	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+	return OldState;
 }
 
 //-------------------------------------------------------------------
@@ -909,24 +886,21 @@ NPF_DecrementLoopbackInstances(
 #endif
 
 _IRQL_requires_(PASSIVE_LEVEL)
-VOID
-NPF_DetachOpenInstance(
-	_Inout_ POPEN_INSTANCE pOpen
+VOID NPF_OpenWaitPendingIrps(
+	_In_ POPEN_INSTANCE pOpen
 	)
 {
 	NDIS_EVENT Event;
-	OPEN_STATE old_state;
 	OPEN_STATE state;
 
 	NdisInitializeEvent(&Event);
 	NdisResetEvent(&Event);
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
-	old_state = pOpen->OpenStatus;
-	pOpen->OpenStatus = OpenDetached;
+	NT_ASSERT(pOpen->OpenStatus <= OpenClosed);
 
 	// Wait for IRPs that require an attached adapter
-	for (state = OpenDetached - 1; state >= OpenRunning; state--)
+	for (state = pOpen->OpenStatus - 1; state < OpenClosed && state >= OpenRunning; state--)
 	{
 		while (pOpen->PendingIrps[state] > 0)
 		{
@@ -936,18 +910,6 @@ NPF_DetachOpenInstance(
 		}
 	}
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
-
-	if (old_state == OpenRunning)
-	{
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		if (pOpen->pFiltMod && pOpen->pFiltMod->Loopback)
-		{
-			NPF_DecrementLoopbackInstances(pOpen->pFiltMod);
-		}
-#endif
-	}
-
-	pOpen->pFiltMod = NULL;
 }
 
 //-------------------------------------------------------------------
@@ -962,16 +924,10 @@ NPF_ReleaseOpenInstanceResources(
 	TRACE_ENTER();
 
 	NT_ASSERT(pOpen != NULL);
+	NT_ASSERT(pOpen->OpenStatus == OpenClosed);
 
 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open= %p", pOpen);
 
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pOpen->OpenStatus == OpenRunning && pOpen->pFiltMod && pOpen->pFiltMod->Loopback)
-	{
-		NPF_DecrementLoopbackInstances(pOpen->pFiltMod);
-	}
-#endif
 
 	//
 	// Free the filter if it's present
@@ -1406,10 +1362,8 @@ NPF_CloseAdapter(
 	//
 	// Free the open instance itself
 	//
-	if (pOpen)
-	{
-		ExFreePool(pOpen);
-	}
+	NT_ASSERT(pOpen->OpenStatus == OpenClosed);
+	ExFreePool(pOpen);
 
 	Irp->IoStatus.Status = STATUS_SUCCESS;
 	Irp->IoStatus.Information = 0;
@@ -1449,12 +1403,20 @@ NPF_Cleanup(
 
 	NT_ASSERT(Open != NULL);
 
-	NPF_CloseOpenInstance(Open);
+	OPEN_STATE OldState = NPF_DemoteOpenStatus(Open, OpenClosed, FALSE);
+	if (Open->ReadEvent != NULL)
+		KeSetEvent(Open->ReadEvent, 0, FALSE);
+	NPF_OpenWaitPendingIrps(Open);
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (OldState < OpenAttached && Open->pFiltMod && Open->bLoopback)
+	{
+		NPF_DecrementLoopbackInstances(Open->pFiltMod);
+	}
+#endif
 
 	NPF_RemoveFromGroupOpenArray(Open); //Remove the Open from the filter module's list
 
-	if (Open->ReadEvent != NULL)
-		KeSetEvent(Open->ReadEvent, 0, FALSE);
 
 	//
 	// release all the resources
@@ -1507,24 +1469,22 @@ NPF_AddToGroupOpenArray(
 
 	LOCK_STATE_EX lockState;
 
-	if (!pOpen->pFiltMod)
-	{
-		pOpen->pFiltMod = pFiltMod;
-	}
-	else
-	{
-		NT_ASSERT(pOpen->pFiltMod == pFiltMod);
-	}
+	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, bAtDispatchLevel);
+
+	NT_ASSERT(pOpen->OpenStatus >= OpenDetached);
+	NT_ASSERT(pOpen->pFiltMod == NULL);
 	NT_ASSERT(pOpen->OpenInstancesEntry.Next == NULL);
 
 	// Acquire lock for writing (modify list)
-	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, bAtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
+	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, NDIS_RWL_AT_DISPATCH_LEVEL);
 
 	PushEntryList(&pFiltMod->OpenInstances, &pOpen->OpenInstancesEntry);
 
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
+	pOpen->pFiltMod = pFiltMod;
 	pOpen->OpenStatus = OpenAttached;
+	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, bAtDispatchLevel);
 
 	TRACE_EXIT();
 }
@@ -1584,13 +1544,19 @@ NPF_RemoveFromGroupOpenArray(
 
 	TRACE_ENTER();
 
+	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 	pFiltMod = pOpen->pFiltMod;
 	if (!pFiltMod) {
 		/* This adapter was already removed, so no filter module exists.
 		 * Nothing left to do!
 		 */
+		NT_ASSERT(pOpen->OpenStatus >= OpenDetached);
+		NT_ASSERT(pOpen->OpenInstancesEntry.Next == NULL);
+		NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 		return;
 	}
+	pOpen->OpenStatus = max(pOpen->OpenStatus, OpenDetached);
+	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
 	// Acquire lock for writing (modify list)
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
@@ -2335,6 +2301,8 @@ NPF_AttachAdapter(
 						// and the AdapterID matches
 					       	&& pOpen->AdapterID.Value == pFiltMod->AdapterID.Value)
 				{
+					// Verify OpenStatus
+					NT_ASSERT(pOpen->OpenStatus == OpenDetached);
 					// add it to this filter module's list.
 					NPF_AddToGroupOpenArray(pOpen, pFiltMod, TRUE);
 					// 'OR' in the open's filter
@@ -2515,9 +2483,11 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 --*/
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE)FilterModuleContext;
-	PSINGLE_LIST_ENTRY Curr;
-	POPEN_INSTANCE pOpen;
+	PSINGLE_LIST_ENTRY Curr = NULL;
+	SINGLE_LIST_ENTRY DetachedOpens = {NULL};
+	POPEN_INSTANCE pOpen = NULL;
 	LOCK_STATE_EX lockState;
+	ULONG numOpensRunning = 0;
 
 	TRACE_ENTER();
 
@@ -2532,22 +2502,43 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
-	Curr = pFiltMod->OpenInstances.Next;
+	Curr = PopEntryList(&pFiltMod->OpenInstances);
 	while (Curr != NULL)
 	{
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-		Curr = Curr->Next;
-		pFiltMod->OpenInstances.Next = Curr;
-		NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
-		NPF_DetachOpenInstance(pOpen);
+		PushEntryList(&DetachedOpens, Curr);
+		OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenDetached, TRUE);
+		if (OldState == OpenRunning)
+		{
+			numOpensRunning++;
+		}
 
 		if (pOpen->ReadEvent != NULL)
 			KeSetEvent(pOpen->ReadEvent, 0, FALSE);
-		NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
+
+		Curr = PopEntryList(&pFiltMod->OpenInstances);
 	}
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
-	NPF_CloseBinding(pFiltMod);
+	// for each of the instances, wait for pending irps
+	Curr = PopEntryList(&DetachedOpens);
+	while (Curr != NULL)
+	{
+		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+		NPF_OpenWaitPendingIrps(pOpen);
+		pOpen->pFiltMod = NULL;
+		Curr = PopEntryList(&DetachedOpens);
+	}
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (pFiltMod->Loopback)
+	{
+		for(; numOpensRunning > 0; numOpensRunning--)
+		{
+			NPF_DecrementLoopbackInstances(pFiltMod);
+		}
+	}
+#endif
+	NPF_CloseBinding(pFiltMod); // sets AdapterBindingStatus to FilterDetached
 
 	NPF_RemoveFromFilterModuleArray(pFiltMod); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
 	NPF_ReleaseFilterModuleResources(pFiltMod);
