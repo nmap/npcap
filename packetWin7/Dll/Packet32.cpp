@@ -2231,7 +2231,7 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
   \note Using this function if more efficient than issuing a series of PacketSendPacket(), because the packets are
   buffered in the kernel driver, so the number of context switches is reduced.
 
-  \note When Sync is set to TRUE, the packets are synchronized in the kerenl with a high precision timestamp.
+  \note When Sync is set to TRUE, the packets are synchronized in the kernel with a high precision timestamp.
   This requires a remarkable amount of CPU, but allows to send the packets with a precision of some microseconds
   (depending on the precision of the performance counter of the machine). Such a precision cannot be reached 
   sending the packets separately with PacketSendPacket().
@@ -2240,10 +2240,12 @@ _Use_decl_annotations_
 INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOOLEAN Sync)
 {
     BOOLEAN			Res;
+    C_ASSERT(sizeof(DWORD) == sizeof(ULONG));
     DWORD			BytesTransfered, TotBytesTransfered=0;
 	struct timeval	BufStartTime = {};
 	LARGE_INTEGER	StartTicks = {}, CurTicks = {}, TargetTicks = {}, TimeFreq = {};
 	DWORD err = ERROR_SUCCESS;
+	struct dump_bpf_hdr *pHdr = NULL;
 
 
 	TRACE_ENTER();
@@ -2260,24 +2262,26 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 
 	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
 	{
+		pHdr = (struct dump_bpf_hdr *)PacketBuff;
 		if (Sync)
 		{
 			// Obtain starting timestamp of the buffer
-			BufStartTime.tv_sec = ((struct timeval*)(PacketBuff))->tv_sec;
-			BufStartTime.tv_usec = ((struct timeval*)(PacketBuff))->tv_usec;
+			BufStartTime.tv_sec = pHdr->ts.tv_sec;
+			BufStartTime.tv_usec = pHdr->ts.tv_usec;
+
+			// Request millisecond resolution of sleep timer
+			timeBeginPeriod(1);
 
 			// Retrieve the reference time counters
 			QueryPerformanceCounter(&StartTicks);
 			QueryPerformanceFrequency(&TimeFreq);
-
-			CurTicks.QuadPart = StartTicks.QuadPart;
 		}
 
 		do{
 			// Send the data to the driver
 			Res = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,
 				(Sync)?BIOCSENDPACKETSSYNC:BIOCSENDPACKETSNOSYNC,
-				(PCHAR)PacketBuff + TotBytesTransfered,
+				(PCHAR) pHdr,
 				Size - TotBytesTransfered,
 				NULL,
 				0,
@@ -2296,22 +2300,46 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 			if(TotBytesTransfered >= Size)
 				break;
 
+			// If there's less than a packet header remaining, exit and error
+			if (Size < TotBytesTransfered + sizeof(struct dump_bpf_hdr)) {
+				err = ERROR_INVALID_PARAMETER;
+				break;
+			}
+
+			pHdr = (struct dump_bpf_hdr *)((PCHAR)pHdr + BytesTransfered);
+
 			if (Sync)
 			{
-				// calculate the time interval to wait before sending the next packet
-				TargetTicks.QuadPart = StartTicks.QuadPart +
-					((LONGLONG)((struct timeval*)((PCHAR)PacketBuff + TotBytesTransfered))->tv_sec - BufStartTime.tv_sec) * TimeFreq.QuadPart +
-					 ((LONGLONG)((struct timeval*)((PCHAR)PacketBuff + TotBytesTransfered))->tv_usec - BufStartTime.tv_usec) *
-					(TimeFreq.QuadPart) / 1000000;
+				QueryPerformanceCounter(&CurTicks);
+				LONGLONG usec_diff = ((LONGLONG)pHdr->ts.tv_sec - BufStartTime.tv_sec) * 1000000
+					+ pHdr->ts.tv_usec - BufStartTime.tv_usec;
+				// calculate the target QPC ticks to send the next packet
+				TargetTicks.QuadPart = StartTicks.QuadPart + (usec_diff * TimeFreq.QuadPart) / 1000000;
 
-				// Wait until the time interval has elapsed
-				// TODO: if it's very long, do a sleep instead?
-				while( CurTicks.QuadPart <= TargetTicks.QuadPart )
-					QueryPerformanceCounter(&CurTicks);
+				if (CurTicks.QuadPart < TargetTicks.QuadPart)
+				{
+					// calculate how much time is left to wait (milliseconds)
+					LONGLONG msec_diff = (TargetTicks.QuadPart - CurTicks.QuadPart) * 1000 / TimeFreq.QuadPart;
+					// Weirdly-huge intervals would lead to integer overflow or infinite sleep.
+					if (msec_diff >= MAXDWORD || msec_diff == INFINITE) {
+						err = ERROR_INVALID_TIME;
+						break;
+					}
+
+					// Wait until the time interval has elapsed.  Intervals less than 1ms are assumed to be
+					// lost in IRP processing, thread scheduling, and other jitter.
+					if (msec_diff > 0) {
+						Sleep((DWORD)msec_diff);
+					}
+				}
 			}
 
 		}
 		while(TRUE);
+
+		if (Sync) {
+			timeEndPeriod(1);
+		}
 	}
 	else
 	{
