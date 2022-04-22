@@ -1053,6 +1053,7 @@ BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 
 	TRACE_ENTER();
 
+	_ASSERT(AdapterObject->Name[0] != '\0');
 	if (g_bLoopbackSupport && PacketIsLoopbackAdapter(AdapterObject->Name)) {
 		// Loopback adapter doesn't support this; fake success
 		TRACE_EXIT();
@@ -1532,6 +1533,13 @@ LPADAPTER PacketOpenAdapterNPF(PCCH AdapterNameA)
 			break;
 		}
 
+		if (FAILED(StringCchCopyA(lpAdapter->Name, ADAPTER_NAME_LENGTH, AdapterNameA)))
+		{
+			error = ERROR_BUFFER_OVERFLOW;
+			TRACE_PRINT("PacketOpenAdapterNPF: Unable to copy adapter name");
+			break;
+		}
+
 		if(!PacketSetReadEvt(lpAdapter)) {
 			error=GetLastError();
 			TRACE_PRINT("PacketOpenAdapterNPF: Unable to open the read event");
@@ -1541,20 +1549,14 @@ LPADAPTER PacketOpenAdapterNPF(PCCH AdapterNameA)
 		if (!PacketSetMaxLookaheadsize(lpAdapter)) {
 			error=GetLastError();
 			TRACE_PRINT("PacketOpenAdapterNPF: Unable to set lookahead");
-			break;
+			// We do not consider this a failure. Would like to avoid it for loopback, though.
+			// break;
 		}
 		//
 		// Indicate that this is a device managed by NPF.sys
 		//
 		lpAdapter->Flags = INFO_FLAG_NDIS_ADAPTER;
 
-
-		if (FAILED(StringCchCopyA(lpAdapter->Name, ADAPTER_NAME_LENGTH, AdapterNameA)))
-		{
-			error = ERROR_BUFFER_OVERFLOW;
-			TRACE_PRINT("PacketOpenAdapterNPF: Unable to copy adapter name");
-			break;
-		}
 
 		TRACE_PRINT("Successfully opened adapter");
 		TRACE_EXIT();
@@ -3426,6 +3428,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
+	_ASSERT(AdapterObject->Name[0] != '\0');
 
 #ifdef HAVE_AIRPCAP_API
 	PAirpcapHandle AirpcapAd = PacketGetAirPcapHandle(AdapterObject);
