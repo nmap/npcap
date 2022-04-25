@@ -1,4 +1,43 @@
 ﻿
+## Upcoming changes for the next release
+
+* Packet sendqueue operations (`pcap_sendqueue_transmit()`, `PacketSendPackets()`)
+  with time synchronization (`sync` parameter) have been improved to use timed waits when
+  possible, only falling back to busy wait for inter-packet delays of less than 50
+  microseconds. Time difference calculations have been revised to avoid integer overflows
+  and loss of precision. Fixes [#580](http://issues.npcap.org/580).
+
+* Packet sendqueue operations now strictly check timestamp order. If an out-of-order
+  timestamp is encountered, the packet will not be transmitted. `PacketSendPackets()` will
+  set the last error value to `ERROR_INVALID_TIME`.
+
+* Getting a list of supported network adapters (`pcap_findalldevs()`,
+  `PacketGetAdapterNames()`) is now faster and less disruptive to the network stack.
+  Each adapter is still opened once to verify support, but the operations needed to make
+  it ready for capture are not performed and a full ADAPTER object is not allocated.
+  Adapters known to be not supported (e.g. down) are not attempted.
+
+* Npcap is now built with the Win11 SDK and WDK (10.0.22000). We look forward to
+  implementing support for the exciting new features of NDIS and WFP.
+
+* Improve capture handle state transitions within the Npcap driver. State mismatches led
+  to issues like [#584](http://issues.npcap.org/584), where the wrong error code was
+  reported when the adapter was detached and reattached.
+
+* Fix an issue where raw WiFi capture handles (`/dot11_support` install option) would not
+  reattach after a network disconnect and reconnect. Normal handles got this ability in
+  Npcap 1.60, but raw WiFi frame captures (monitor mode) did not take advantage of it.
+  Fixes [#591](http://issues.npcap.org/591).
+
+* Npcap now avoids setting hardware packet filters (`OID_GEN_CURRENT_PACKET_FILTER`,
+  `PacketSetHwFilter()`) that the miniport does not declare support for. This may improve
+  compatibility with WWAN (e.g. 3G and LTE) and VPN connections.
+
+* Npcap now tracks the original lookahead value (`OID_GEN_CURRENT_LOOKAHEAD`,
+  `PacketSetMaxLookahead()`) before requesting the max value from the miniport, and restores it once
+  the capture handle is closed. The practice of setting the lookahead to max value was inherited
+  from WinPcap, and may be changed in the future subject to performance testing.
+
 ## Npcap 1.60 [2021-12-06]
 
 * Npcap can now tolerate network disconnections or NDIS stack
