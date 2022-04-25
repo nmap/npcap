@@ -2247,7 +2247,7 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 	TIMECAPS tcap = {};
 	DWORD err = ERROR_SUCCESS;
 	struct dump_bpf_hdr *pHdr = NULL;
-
+	LONGLONG prev_usec_diff = 0;
 
 	TRACE_ENTER();
 
@@ -2297,6 +2297,9 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 			// Exit from the loop on error
 			if(Res != TRUE) {
 				err = GetLastError();
+				if (err == RPC_S_INVALID_TIMEOUT) {
+					err = ERROR_INVALID_TIME;
+				}
 				break;
 			}
 
@@ -2319,6 +2322,13 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 				QueryPerformanceCounter(&CurTicks);
 				LONGLONG usec_diff = ((LONGLONG)pHdr->ts.tv_sec - BufStartTime.tv_sec) * 1000000
 					+ pHdr->ts.tv_usec - BufStartTime.tv_usec;
+				if (usec_diff < prev_usec_diff) {
+					// Timestamps out of order
+					err = ERROR_INVALID_TIME;
+					break;
+				}
+				prev_usec_diff = usec_diff;
+
 				// calculate the target QPC ticks to send the next packet
 				TargetTicks.QuadPart = StartTicks.QuadPart + (usec_diff * TimeFreq.QuadPart) / 1000000;
 

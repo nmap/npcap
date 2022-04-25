@@ -522,6 +522,7 @@ NTSTATUS NPF_BufferedWrite(
 	LARGE_INTEGER			StartTicks = { 0 }, CurTicks, TargetTicks;
 	LARGE_INTEGER			TimeFreq;
 	struct timeval			BufStartTime = { 0 };
+	LONGLONG prev_usec_diff = 0;
 	struct dump_bpf_hdr* pHdr = NULL;
 	PMDL					TmpMdl;
 	//	PCHAR				CurPos;
@@ -705,6 +706,13 @@ NTSTATUS NPF_BufferedWrite(
 			// Time offset of this packet from the first one (usecs)
 			LONGLONG usec_diff = ((LONGLONG)pHdr->ts.tv_sec - BufStartTime.tv_sec) * 1000000
 				+ pHdr->ts.tv_usec - BufStartTime.tv_usec;
+			if (usec_diff < prev_usec_diff) {
+				IF_LOUD(DbgPrint("NPF_BufferedWrite: timestamp out of order!\n");)
+				NPF_FreePackets(pNetBufferList);
+				Status = RPC_NT_INVALID_TIMEOUT;
+				break;
+			}
+			prev_usec_diff = usec_diff;
 			// Release the application if it has been or would be blocked for more than 1 second
 			if (usec_diff > 1000000)
 			{
