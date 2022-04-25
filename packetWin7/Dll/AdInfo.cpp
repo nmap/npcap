@@ -219,21 +219,6 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	// Average of Xmit and Rcv speeds is historical. Maybe we should report min instead?
 	TmpAdInfo->LinkLayer.LinkSpeed = (pAdapterAddr->TransmitLinkSpeed + pAdapterAddr->ReceiveLinkSpeed) / 2;
 
-
-	TmpAdInfo->MacAddressLen = pAdapterAddr->PhysicalAddressLength;
-	if (TmpAdInfo->MacAddressLen > 0)
-	{
-		memcpy(TmpAdInfo->MacAddress, pAdapterAddr->PhysicalAddress, TmpAdInfo->MacAddressLen);
-	}
-
-	TRACE_PRINT6("Successfully obtained the MAC address, it's %.02x:%.02x:%.02x:%.02x:%.02x:%.02x",
-		TmpAdInfo->MacAddress[0],
-		TmpAdInfo->MacAddress[1],
-		TmpAdInfo->MacAddress[2],
-		TmpAdInfo->MacAddress[3],
-		TmpAdInfo->MacAddress[4],
-		TmpAdInfo->MacAddress[5]);
-		
 	// Retrieve IP addresses
 	TmpAdInfo->pNetworkAddresses = NULL;
 
@@ -327,8 +312,6 @@ static BOOLEAN PacketAddLoopbackAdapter()
 	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), FAKE_LOOPBACK_ADAPTER_NAME, _TRUNCATE);
 	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), FAKE_LOOPBACK_ADAPTER_DESCRIPTION, _TRUNCATE);
 	TmpAdInfo->bLoopback = 1;
-	memset(TmpAdInfo->MacAddress, '\0', 6);
-	TmpAdInfo->MacAddressLen = 6;
 	TmpAdInfo->pNetworkAddresses = NULL;
 	TmpAdInfo->LinkLayer.LinkType = (UINT) NdisMediumNull;
 	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet

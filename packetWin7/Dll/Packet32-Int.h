@@ -118,8 +118,6 @@ typedef struct _ADAPTER_INFO
 	struct _ADAPTER_INFO *Next;				///< Pointer to the next adapter in the list.
 	CHAR Name[ADAPTER_NAME_LENGTH + 1];		///< Name of the device representing the adapter.
 	CHAR Description[ADAPTER_DESC_LENGTH + 1];	///< Human understandable description of the adapter
-	UINT MacAddressLen;						///< Length of the link layer address.
-	UCHAR MacAddress[MAX_MAC_ADDR_LENGTH];	///< Link layer address.
 	NetType LinkLayer;						///< Physical characteristics of this adapter. This NetType structure contains the link type and the speed of the adapter.
 	PNPF_IF_ADDRESS_ITEM pNetworkAddresses;///< Pointer to a linked list of IP addresses, each of which specifies a network address of this adapter.
 	UCHAR bLoopback:1; // Loopback adapter flag
@@ -169,7 +167,6 @@ typedef VOID (*AirpcapCloseHandler)(PAirpcapHandle Handle);											///< proto
 typedef BOOL (*AirpcapGetLinkTypeHandler)(PAirpcapHandle Handle, AirpcapLinkType* LinkLayer);		///< prototype used to dynamically load the dll
 typedef BOOL (*AirpcapSetKernelBufferHandler)(PAirpcapHandle Handle, ULONG Size);					///< prototype used to dynamically load the dll
 typedef BOOL (*AirpcapSetFilterHandler)(PAirpcapHandle Handle, void *Instructions, UINT Len);		///< prototype used to dynamically load the dll
-typedef BOOL (*AirpcapGetMacAddressHandler)(PAirpcapHandle Handle, CHAR **MacAddress);				///< prototype used to dynamically load the dll
 typedef BOOL (*AirpcapSetMinToCopyHandler)(PAirpcapHandle Handle, ULONG Bytes);						///< prototype used to dynamically load the dll
 typedef BOOL (*AirpcapGetReadEventHandler)(PAirpcapHandle Handle, HANDLE* PReadEvent);				///< prototype used to dynamically load the dll
 typedef BOOL (*AirpcapReadHandler)(PAirpcapHandle Handle, PUCHAR BufferToFill, ULONG BufSize, PULONG ReceievedBytes);	///< prototype used to dynamically load the dll

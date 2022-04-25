@@ -190,7 +190,6 @@ AirpcapCloseHandler g_PAirpcapClose;
 AirpcapGetLinkTypeHandler g_PAirpcapGetLinkType;
 AirpcapSetKernelBufferHandler g_PAirpcapSetKernelBuffer;
 AirpcapSetFilterHandler g_PAirpcapSetFilter;
-AirpcapGetMacAddressHandler g_PAirpcapGetMacAddress;
 AirpcapSetMinToCopyHandler g_PAirpcapSetMinToCopy;
 AirpcapGetReadEventHandler g_PAirpcapGetReadEvent;
 AirpcapReadHandler g_PAirpcapRead;
@@ -976,7 +975,6 @@ VOID PacketLoadLibrariesDynamically()
 		g_PAirpcapGetLinkType = (AirpcapGetLinkTypeHandler) GetProcAddress(AirpcapLib, "AirpcapGetLinkType");
 		g_PAirpcapSetKernelBuffer = (AirpcapSetKernelBufferHandler) GetProcAddress(AirpcapLib, "AirpcapSetKernelBuffer");
 		g_PAirpcapSetFilter = (AirpcapSetFilterHandler) GetProcAddress(AirpcapLib, "AirpcapSetFilter");
-		g_PAirpcapGetMacAddress = (AirpcapGetMacAddressHandler) GetProcAddress(AirpcapLib, "AirpcapGetMacAddress");
 		g_PAirpcapSetMinToCopy = (AirpcapSetMinToCopyHandler) GetProcAddress(AirpcapLib, "AirpcapSetMinToCopy");
 		g_PAirpcapGetReadEvent = (AirpcapGetReadEventHandler) GetProcAddress(AirpcapLib, "AirpcapGetReadEvent");
 		g_PAirpcapRead = (AirpcapReadHandler) GetProcAddress(AirpcapLib, "AirpcapRead");
@@ -993,7 +991,6 @@ VOID PacketLoadLibrariesDynamically()
 			g_PAirpcapGetLinkType == NULL ||
 			g_PAirpcapSetKernelBuffer == NULL ||
 			g_PAirpcapSetFilter == NULL ||
-			g_PAirpcapGetMacAddress == NULL ||
 			g_PAirpcapSetMinToCopy == NULL ||
 			g_PAirpcapGetReadEvent == NULL ||
 			g_PAirpcapRead == NULL ||
