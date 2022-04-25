@@ -1,6 +1,16 @@
 ﻿
 ## Upcoming changes for the next release
 
+* Npcap is only supported on Windows 7 SP1 and later, and requires KB4474419 to support SHA-2
+  signature validation. The installer will now check these specific requirements, rather than
+  attempting an installation that will fail anyway.
+
+* Added timeouts to subprocess executions in the installer to prevent a hung installation.
+
+* Fixed a minor issue with Npcap OEM's silent installer: Npcap 1.55 and later ought to avoid
+  reinstalling the same version if the existing installation options match the requested options,
+  but `/winpcap_mode=no` would never match.
+
 * Packet sendqueue operations (`pcap_sendqueue_transmit()`, `PacketSendPackets()`)
   with time synchronization (`sync` parameter) have been improved to use timed waits when
   possible, only falling back to busy wait for inter-packet delays of less than 50
