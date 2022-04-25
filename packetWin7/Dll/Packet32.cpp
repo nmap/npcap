@@ -2244,6 +2244,7 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
     DWORD			BytesTransfered, TotBytesTransfered=0;
 	struct timeval	BufStartTime = {};
 	LARGE_INTEGER	StartTicks = {}, CurTicks = {}, TargetTicks = {}, TimeFreq = {};
+	TIMECAPS tcap = {};
 	DWORD err = ERROR_SUCCESS;
 	struct dump_bpf_hdr *pHdr = NULL;
 
@@ -2269,8 +2270,13 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 			BufStartTime.tv_sec = pHdr->ts.tv_sec;
 			BufStartTime.tv_usec = pHdr->ts.tv_usec;
 
-			// Request millisecond resolution of sleep timer
-			timeBeginPeriod(1);
+			// Request highest resolution of sleep timer
+			if (MMSYSERR_NOERROR == timeGetDevCaps(&tcap, sizeof(tcap))) {
+				timeBeginPeriod(tcap.wPeriodMin);
+			}
+			else {
+				tcap.wPeriodMin = 0;
+			}
 
 			// Retrieve the reference time counters
 			QueryPerformanceCounter(&StartTicks);
@@ -2337,8 +2343,8 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 		}
 		while(TRUE);
 
-		if (Sync) {
-			timeEndPeriod(1);
+		if (Sync && tcap.wPeriodMin > 0) {
+			timeEndPeriod(tcap.wPeriodMin);
 		}
 	}
 	else
