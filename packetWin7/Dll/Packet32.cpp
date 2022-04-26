@@ -1933,7 +1933,7 @@ VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 	}
 
 #ifdef HAVE_AIRPCAP_API
-	if(lpAdapter->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(lpAdapter->Flags & INFO_FLAG_AIRPCAP_CARD)
 		{
 			g_PAirpcapClose(lpAdapter->AirpcapAd);
 			HeapFree(GetProcessHeap(), 0, lpAdapter);
@@ -1942,7 +1942,7 @@ VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 		}
 #endif // HAVE_AIRPCAP_API
 
-	if (lpAdapter->Flags != INFO_FLAG_NDIS_ADAPTER)
+	if (lpAdapter->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT1("Trying to close an unknown adapter type (%u)", lpAdapter->Flags);
 	}
@@ -2081,7 +2081,7 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
 	TRACE_ENTER();
 
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		//
 		// Wait for data, only if the user requested us to do that
@@ -2107,19 +2107,19 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
+	{
+		TRACE_PRINT1("Request to read on an unknown device type (%u)", AdapterObject->Flags);
+		res = FALSE;
+		err = ERROR_NOT_SUPPORTED;
+	}
+	else
 	{
 		if((int)AdapterObject->ReadTimeOut != -1)
 			WaitForSingleObject(AdapterObject->ReadEvent, (AdapterObject->ReadTimeOut==0)?INFINITE:AdapterObject->ReadTimeOut);
 	
 		res = (BOOLEAN)ReadFile(AdapterObject->hFile, lpPacket->Buffer, lpPacket->Length, &lpPacket->ulBytesReceived,NULL);
 		err = GetLastError();
-	}
-	else
-	{
-		TRACE_PRINT1("Request to read on an unknown device type (%u)", AdapterObject->Flags);
-		res = FALSE;
-		err = ERROR_NOT_SUPPORTED;
 	}
 	
 	TRACE_EXIT();
@@ -2167,7 +2167,7 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 	UNUSED(Sync);
 
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		if(g_PAirpcapWrite)
 		{
@@ -2189,16 +2189,16 @@ BOOLEAN PacketSendPacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sync)
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
-	{
-		Result = (BOOLEAN)WriteFile(AdapterObject->hFile,lpPacket->Buffer,lpPacket->Length,&BytesTransfered,NULL);
-		err = GetLastError();
-	}
-	else
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT1("Request to write on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
 		err = ERROR_NOT_SUPPORTED;
+	}
+	else
+	{
+		Result = (BOOLEAN)WriteFile(AdapterObject->hFile,lpPacket->Buffer,lpPacket->Length,&BytesTransfered,NULL);
+		err = GetLastError();
 	}
 
 	TRACE_EXIT();
@@ -2249,7 +2249,7 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 	TRACE_ENTER();
 
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		TRACE_PRINT("PacketSendPackets: packet sending not allowed on airpcap adapters");
 		TRACE_EXIT();
@@ -2258,7 +2258,13 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
+	{
+		TRACE_PRINT1("Request to write on an unknown device type (%u)", AdapterObject->Flags);
+		err = (ERROR_BAD_DEV_TYPE);
+		TotBytesTransfered = 0;
+	}
+	else
 	{
 		pHdr = (struct dump_bpf_hdr *)PacketBuff;
 		if (Sync)
@@ -2354,12 +2360,6 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 			timeEndPeriod(tcap.wPeriodMin);
 		}
 	}
-	else
-	{
-		TRACE_PRINT1("Request to write on an unknown device type (%u)", AdapterObject->Flags);
-		err = (ERROR_BAD_DEV_TYPE);
-		TotBytesTransfered = 0;
-	}
 
 	TRACE_EXIT();
 	SetLastError(err);
@@ -2394,7 +2394,7 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
 	TRACE_ENTER();
 	
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		Result = (BOOLEAN)g_PAirpcapSetMinToCopy(AdapterObject->AirpcapAd, nbytes);
 
@@ -2405,16 +2405,16 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
 	}
 #endif // HAVE_AIRPCAP_API
 	
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
-	{
-		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSMINTOCOPY,&nbytes,4,NULL,0,&BytesReturned,NULL);
-		err = GetLastError();
-	}
-	else
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT1("Request to set mintocopy on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
 		err = ERROR_NOT_SUPPORTED;
+	}
+	else
+	{
+		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSMINTOCOPY,&nbytes,4,NULL,0,&BytesReturned,NULL);
+		err = GetLastError();
 	}
 	
 	TRACE_EXIT();
@@ -2454,7 +2454,7 @@ BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
    TRACE_ENTER();
 
 #ifdef HAVE_AIRPCAP_API
-   if (AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+   if (AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
    {
 	   if (mode == PACKET_MODE_CAPT)
 	   {
@@ -2472,16 +2472,16 @@ BOOLEAN PacketSetMode(LPADAPTER AdapterObject,int mode)
    }
 #endif //HAVE_AIRPCAP_API
 
-   if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
-   {
-		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSMODE,&mode,4,NULL,0,&BytesReturned,NULL);
-		err = GetLastError();
-   }
-   else
+   if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
    {
 	   TRACE_PRINT1("Request to set mode on an unknown device type (%u)", AdapterObject->Flags);
 	   Result = FALSE;
 	   err = ERROR_NOT_SUPPORTED;
+   }
+   else
+   {
+		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSMODE,&mode,4,NULL,0,&BytesReturned,NULL);
+		err = GetLastError();
    }
 
    TRACE_EXIT();
@@ -2568,7 +2568,7 @@ BOOLEAN PacketSetNumWrites(LPADAPTER AdapterObject,int nwrites)
 
 	TRACE_ENTER();
 
-	if(AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
+	if(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT("PacketSetNumWrites: not allowed on non-NPF adapters");
 		TRACE_EXIT();
@@ -2610,18 +2610,14 @@ BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject,int timeout)
 	//
 	// Timeout with AirPcap is handled at user level
 	//
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		TRACE_EXIT();
 		return TRUE;
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if(AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
-	{
-		Result = TRUE;
-	}
-	else
+	if(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		//
 		// if we are here, it's an unsupported ADAPTER type!
@@ -2629,6 +2625,10 @@ BOOLEAN PacketSetReadTimeout(LPADAPTER AdapterObject,int timeout)
 		TRACE_PRINT1("Request to set read timeout on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
 		err = ERROR_NOT_SUPPORTED;
+	}
+	else
+	{
+		Result = TRUE;
 	}
 
 	TRACE_EXIT();
@@ -2663,7 +2663,7 @@ BOOLEAN PacketSetBuff(LPADAPTER AdapterObject,int dim)
 	TRACE_ENTER();
 
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		Result = (BOOLEAN)g_PAirpcapSetKernelBuffer(AdapterObject->AirpcapAd, dim);
 		err = GetLastError();
@@ -2674,16 +2674,16 @@ BOOLEAN PacketSetBuff(LPADAPTER AdapterObject,int dim)
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
-	{
-		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSETBUFFERSIZE,&dim,sizeof(dim),NULL,0,&BytesReturned,NULL);
-		err = GetLastError();
-	}
-	else
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT1("Request to set buf size on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
 		err = ERROR_NOT_SUPPORTED;
+	}
+	else
+	{
+		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSETBUFFERSIZE,&dim,sizeof(dim),NULL,0,&BytesReturned,NULL);
+		err = GetLastError();
 	}
 	
 	TRACE_EXIT();
@@ -2721,7 +2721,7 @@ BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
 	TRACE_ENTER();
 	
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		Result = (BOOLEAN)g_PAirpcapSetFilter(AdapterObject->AirpcapAd, 
 			(char*)fp->bf_insns,
@@ -2734,16 +2734,16 @@ BOOLEAN PacketSetBpf(LPADAPTER AdapterObject, struct bpf_program *fp)
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
-	{
-		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSETF,(char*)fp->bf_insns,fp->bf_len*sizeof(struct bpf_insn),NULL,0,&BytesReturned,NULL);
-		err = GetLastError();
-	}
-	else
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT1("Request to set BPF filter on an unknown device type (%u)", AdapterObject->Flags);
 		Result = FALSE;
 		err = ERROR_NOT_SUPPORTED;
+	}
+	else
+	{
+		Result = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,BIOCSETF,(char*)fp->bf_insns,fp->bf_len*sizeof(struct bpf_insn),NULL,0,&BytesReturned,NULL);
+		err = GetLastError();
 	}
 	
 	TRACE_EXIT();
@@ -2770,7 +2770,7 @@ BOOLEAN PacketSetLoopbackBehavior(LPADAPTER  AdapterObject, UINT LoopbackBehavio
 
 	TRACE_ENTER();
 
-	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT("PacketSetLoopbackBehavior: not allowed on non-NPF adapters");
 	
@@ -2810,7 +2810,7 @@ BOOLEAN PacketSetTimestampMode(LPADAPTER AdapterObject, ULONG mode)
 
 	TRACE_ENTER();
 
-	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT("PacketSetTimestampMode: not allowed on non-NPF adapters");
 	
@@ -2849,7 +2849,7 @@ BOOLEAN PacketGetTimestampModes(LPADAPTER AdapterObject, PULONG pModes)
 	DWORD err = ERROR_SUCCESS;
 	TRACE_ENTER();
 
-	if (AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		*pModes = 0;
 		TRACE_PRINT("PacketGetTimestampMode: not allowed on non-NPF adapters");
@@ -2933,7 +2933,7 @@ BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
 	TRACE_ENTER();
 
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		AirpcapStats tas;
 
@@ -2960,7 +2960,13 @@ BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
+	{	
+		TRACE_PRINT1("Request to obtain statistics on an unknown device type (%u)", AdapterObject->Flags);
+		Res = FALSE;
+		err = ERROR_NOT_SUPPORTED;
+	}
+	else
 	{
 			Res = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,
 			BIOCGSTATS,
@@ -2983,12 +2989,6 @@ BOOLEAN PacketGetStats(LPADAPTER AdapterObject,struct bpf_stat *s)
 			err = GetLastError();
 		}
 
-	}
-	else
-	{	
-		TRACE_PRINT1("Request to obtain statistics on an unknown device type (%u)", AdapterObject->Flags);
-		Res = FALSE;
-		err = ERROR_NOT_SUPPORTED;
 	}
 
 	TRACE_EXIT();
@@ -3020,7 +3020,7 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 	TRACE_ENTER();
 
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		AirpcapStats tas;
 
@@ -3044,7 +3044,13 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
+	{	
+		TRACE_PRINT1("Request to obtain statistics on an unknown device type (%u)", AdapterObject->Flags);
+		Res = FALSE;
+		err = ERROR_NOT_SUPPORTED;
+	}
+	else
 	{
 			Res = (BOOLEAN)DeviceIoControl(AdapterObject->hFile,
 			BIOCGSTATS,
@@ -3067,12 +3073,6 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 		{
 			err = GetLastError();
 		}
-	}
-	else
-	{	
-		TRACE_PRINT1("Request to obtain statistics on an unknown device type (%u)", AdapterObject->Flags);
-		Res = FALSE;
-		err = ERROR_NOT_SUPPORTED;
 	}
 
 	TRACE_EXIT();
@@ -3122,7 +3122,7 @@ BOOLEAN PacketRequest(LPADAPTER  AdapterObject,BOOLEAN Set,PPACKET_OID_DATA  Oid
 	DWORD err = ERROR_SUCCESS;
 	TRACE_ENTER();
 
-	if(AdapterObject->Flags != INFO_FLAG_NDIS_ADAPTER)
+	if(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
 	{
 		TRACE_PRINT("PacketRequest not supported on non-NPF adapters.");
 		TRACE_EXIT();
@@ -3164,26 +3164,26 @@ BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 	TRACE_ENTER();
 
 #ifdef HAVE_AIRPCAP_API
-	if(AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		// Airpcap for the moment is always in promiscuous mode, and ignores any other filters
 		return TRUE;
 	}
 #endif // HAVE_AIRPCAP_API
 
-	if (AdapterObject->Flags == INFO_FLAG_NDIS_ADAPTER)
+	if (AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
+	{
+		TRACE_PRINT1("Setting HW filter not supported on this adapter type (%u)", AdapterObject->Flags);
+		Status = FALSE;
+		err = ERROR_NOT_SUPPORTED;
+	}
+	else
 	{
 		OidData->Oid = OID_GEN_CURRENT_PACKET_FILTER;
 		OidData->Length = sizeof(ULONG);
 	    *((PULONG) OidData->Data) = Filter;
 		Status = PacketRequest(AdapterObject, TRUE, OidData);
 		err = GetLastError();
-	}
-	else
-	{
-		TRACE_PRINT1("Setting HW filter not supported on this adapter type (%u)", AdapterObject->Flags);
-		Status = FALSE;
-		err = ERROR_NOT_SUPPORTED;
 	}
 	
 	TRACE_EXIT();
@@ -3812,7 +3812,7 @@ PAirpcapHandle PacketGetAirPcapHandle(LPADAPTER AdapterObject)
 	TRACE_ENTER();
 
 #ifdef HAVE_AIRPCAP_API
-	if (AdapterObject->Flags == INFO_FLAG_AIRPCAP_CARD)
+	if (AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
 	{
 		handle = AdapterObject->AirpcapAd;
 	}
