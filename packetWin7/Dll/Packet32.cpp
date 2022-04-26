@@ -1050,8 +1050,7 @@ BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 
 	TRACE_ENTER();
 
-	_ASSERT(AdapterObject->Name[0] != '\0');
-	if (g_bLoopbackSupport && PacketIsLoopbackAdapter(AdapterObject->Name)) {
+	if (AdapterObject->Flags & INFO_FLAG_NPCAP_LOOPBACK) {
 		// Loopback adapter doesn't support this; fake success
 		TRACE_EXIT();
 		SetLastError(ERROR_SUCCESS);
@@ -1498,10 +1497,10 @@ HANDLE PacketGetAdapterHandle(PCCH AdapterNameA)
   \return If the function succeeds, the return value is the pointer to a properly initialized ADAPTER object,
    otherwise the return value is NULL.
 
-  \note internal function used by PacketOpenAdapter() and AddAdapter()
+  \note internal function used by PacketOpenAdapter()
 */
-_Use_decl_annotations_
-LPADAPTER PacketOpenAdapterNPF(PCCH AdapterNameA)
+_Ret_maybenull_
+LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterNameA)
 {
 	DWORD error;
 	LPADAPTER lpAdapter;
@@ -1516,6 +1515,10 @@ LPADAPTER PacketOpenAdapterNPF(PCCH AdapterNameA)
 		TRACE_EXIT();
 		SetLastError(error);
 		return NULL;
+	}
+
+	if (g_bLoopbackSupport && PacketIsLoopbackAdapter(AdapterNameA)) {
+		lpAdapter->Flags |= INFO_FLAG_NPCAP_LOOPBACK;
 	}
 
 	lpAdapter->NumWrites=1;
