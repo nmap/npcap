@@ -216,9 +216,6 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	// Conversion error? ensure it's terminated and ignore.
 	if (Status == 0) TmpAdInfo->Description[ADAPTER_DESC_LENGTH] = '\0';
 
-	// Average of Xmit and Rcv speeds is historical. Maybe we should report min instead?
-	TmpAdInfo->LinkLayer.LinkSpeed = (pAdapterAddr->TransmitLinkSpeed + pAdapterAddr->ReceiveLinkSpeed) / 2;
-
 	// Retrieve IP addresses
 	TmpAdInfo->pNetworkAddresses = NULL;
 
@@ -313,8 +310,6 @@ static BOOLEAN PacketAddLoopbackAdapter()
 	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), FAKE_LOOPBACK_ADAPTER_DESCRIPTION, _TRUNCATE);
 	TmpAdInfo->bLoopback = 1;
 	TmpAdInfo->pNetworkAddresses = NULL;
-	TmpAdInfo->LinkLayer.LinkType = (UINT) NdisMediumNull;
-	TmpAdInfo->LinkLayer.LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 
 	// Update the AdaptersInfo list
 	TmpAdInfo->Next = g_AdaptersInfoList;

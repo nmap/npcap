@@ -118,7 +118,6 @@ typedef struct _ADAPTER_INFO
 	struct _ADAPTER_INFO *Next;				///< Pointer to the next adapter in the list.
 	CHAR Name[ADAPTER_NAME_LENGTH + 1];		///< Name of the device representing the adapter.
 	CHAR Description[ADAPTER_DESC_LENGTH + 1];	///< Human understandable description of the adapter
-	NetType LinkLayer;						///< Physical characteristics of this adapter. This NetType structure contains the link type and the speed of the adapter.
 	PNPF_IF_ADDRESS_ITEM pNetworkAddresses;///< Pointer to a linked list of IP addresses, each of which specifies a network address of this adapter.
 	UCHAR bLoopback:1; // Loopback adapter flag
 #ifdef HAVE_AIRPCAP_API

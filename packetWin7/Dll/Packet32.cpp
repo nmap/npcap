@@ -3456,8 +3456,7 @@ _Use_decl_annotations_
 BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 {
 	DWORD err = ERROR_SUCCESS;
-	PADAPTER_INFO TAdInfo = NULL;
-	PCHAR AdName = NULL;
+	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA)+sizeof(NDIS_LINK_SPEED)] = {0};
 
 	TRACE_ENTER();
 	if (type == NULL) {
@@ -3496,59 +3495,51 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	else
 #endif // HAVE_AIRPCAP_API
 	{
-		if (AdapterObject->Flags & INFO_FLAG_NPCAP_DOT11) {
-			AdName = NpcapReplaceMemory(AdapterObject->Name, ADAPTER_NAME_LENGTH, NPF_DEVICE_NAMES_TAG_WIFI, "");
-			if (!AdName) {
-				TRACE_PRINT2("Raw WiFi capture handle %s missing %s tag", AdapterObject->Name, NPF_DEVICE_NAMES_TAG_WIFI);
-				err = ERROR_ARENA_TRASHED;
+		// If this is our loopback adapter, use static values.
+		if (AdapterObject->Flags & INFO_FLAG_NPCAP_LOOPBACK) {
+			type->LinkType = (UINT) NdisMediumNull;
+			type->LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
+		}
+		// request the media type from the driver
+		else do
+		{
+			// Request the link speed
+			PPACKET_OID_DATA OidData = (PPACKET_OID_DATA) IoCtlBuffer;
+			//get the link-layer speed
+			OidData->Oid = OID_GEN_LINK_SPEED_EX;
+			OidData->Length = sizeof(NDIS_LINK_SPEED);
+			if (!PacketRequest(AdapterObject, FALSE, OidData)) {
+				err = GetLastError();
+				TRACE_PRINT1("PacketRequest(OID_GEN_LINK_SPEED_EX) error: %d", err);
 				break;
 			}
-		}
-
-		WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-		TAdInfo = PacketFindAdInfo(AdName);
-		if(TAdInfo == NULL)
-		{
-			PacketUpdateAdInfo(AdName);
-			TAdInfo = PacketFindAdInfo(AdName);
-		}
-		ReleaseMutex(g_AdaptersInfoMutex);
-
-		if(TAdInfo == NULL) {
-			TRACE_PRINT("Failed to open adapter, failing with ERROR_BAD_UNIT");
-			err = ERROR_BAD_UNIT; //this is the best we can do....
-		}
-		else {
-			*type = TAdInfo->LinkLayer;
+			else {
+				PNDIS_LINK_SPEED NdisSpeed = (PNDIS_LINK_SPEED)OidData->Data;
+				// Average of Xmit and Rcv speeds is historical. Maybe we should report min instead?
+				type->LinkSpeed = (NdisSpeed->XmitLinkSpeed + NdisSpeed->RcvLinkSpeed) / 2;
+			}
 
 			// If this is a WIFI_ adapter, change the link type.
 			if (AdapterObject->Flags & INFO_FLAG_NPCAP_DOT11) {
 				type->LinkType = (UINT)NdisMediumRadio80211;
 			}
-			// If it's not our loopback adapter, request the media type from the driver
-			else if (!TAdInfo->bLoopback)
-			{
-				CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA)+sizeof(ULONG)-1] = {0};
-				PPACKET_OID_DATA OidData = (PPACKET_OID_DATA) IoCtlBuffer;
-
+			else {
+				ZeroMemory(IoCtlBuffer, sizeof(IoCtlBuffer));
 				//get the link-layer type
 				OidData->Oid = OID_GEN_MEDIA_IN_USE;
 				OidData->Length = sizeof (ULONG);
 				if (!PacketRequest(AdapterObject, FALSE, OidData)) {
 					err = GetLastError();
 					TRACE_PRINT1("PacketGetLinkLayerFromRegistry error: %d", err);
+					break;
 				}
 				else {
 					type->LinkType=*((UINT*)OidData->Data);
 				}
 			}
-		}
+		} while (FALSE);
 	}
 
-
-	if ((AdapterObject->Flags & INFO_FLAG_NPCAP_DOT11) && NULL != AdName) {
-		HeapFree(GetProcessHeap(), 0, AdName);
-	}
 	TRACE_EXIT();
 	SetLastError(err);
 	return (err == ERROR_SUCCESS);
