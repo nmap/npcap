@@ -1878,6 +1878,7 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 				}
 				else
 				{
+					lpAdapter->Flags |= INFO_FLAG_NPCAP_DOT11;
 					break;
 				}
 			}
@@ -3456,7 +3457,6 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 {
 	DWORD err = ERROR_SUCCESS;
 	PADAPTER_INFO TAdInfo = NULL;
-	PCHAR WasWifiName = NULL;
 	PCHAR AdName = NULL;
 
 	TRACE_ENTER();
@@ -3496,8 +3496,14 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 	else
 #endif // HAVE_AIRPCAP_API
 	{
-		WasWifiName = NpcapReplaceMemory(AdapterObject->Name, ADAPTER_NAME_LENGTH, NPF_DEVICE_NAMES_TAG_WIFI, "");
-		AdName = WasWifiName ? WasWifiName : AdapterObject->Name;
+		if (AdapterObject->Flags & INFO_FLAG_NPCAP_DOT11) {
+			AdName = NpcapReplaceMemory(AdapterObject->Name, ADAPTER_NAME_LENGTH, NPF_DEVICE_NAMES_TAG_WIFI, "");
+			if (!AdName) {
+				TRACE_PRINT2("Raw WiFi capture handle %s missing %s tag", AdapterObject->Name, NPF_DEVICE_NAMES_TAG_WIFI);
+				err = ERROR_ARENA_TRASHED;
+				break;
+			}
+		}
 
 		WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 		TAdInfo = PacketFindAdInfo(AdName);
@@ -3516,7 +3522,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 			*type = TAdInfo->LinkLayer;
 
 			// If this is a WIFI_ adapter, change the link type.
-			if (WasWifiName) {
+			if (AdapterObject->Flags & INFO_FLAG_NPCAP_DOT11) {
 				type->LinkType = (UINT)NdisMediumRadio80211;
 			}
 			// If it's not our loopback adapter, request the media type from the driver
@@ -3539,7 +3545,10 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 		}
 	}
 
-	if (NULL != WasWifiName) HeapFree(GetProcessHeap(), 0, WasWifiName);
+
+	if ((AdapterObject->Flags & INFO_FLAG_NPCAP_DOT11) && NULL != AdName) {
+		HeapFree(GetProcessHeap(), 0, AdName);
+	}
 	TRACE_EXIT();
 	SetLastError(err);
 	return (err == ERROR_SUCCESS);

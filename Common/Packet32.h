@@ -287,7 +287,8 @@ typedef WAN_ADAPTER* PWAN_ADAPTER; ///< Describes an opened wan (dialup, VPN...)
 #define INFO_FLAG_AIRPCAP_CARD		16	///< Flag for ADAPTER_INFO: this is an airpcap card
 #define INFO_FLAG_NPFIM_DEVICE		32 /// NPFIM device, not supported
 #define INFO_FLAG_MASK_NOT_NPF 0xff /// If any of these bits are set, it's not a NPF/Npcap-managed adapter.
-#define INFO_FLAG_NPCAP_LOOPBACK 0x100
+#define INFO_FLAG_NPCAP_LOOPBACK 0x100 // Npcap loopback adapter
+#define INFO_FLAG_NPCAP_DOT11 0x200 // Npcap dot11_support raw Wifi frame capture
 
 /*!
   \brief Describes an opened network adapter.
