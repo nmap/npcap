@@ -97,6 +97,9 @@
 #include <windows.h>
 #include <ntddndis.h>
 
+#define ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE 15000
+#define ADAPTERS_ADDRESSES_MAX_TRIES 3
+
 /*!
   \brief Linked list item containing one of the IP addresses associated with an adapter.
 */
@@ -118,11 +121,6 @@ typedef struct _ADAPTER_INFO
 	struct _ADAPTER_INFO *Next;				///< Pointer to the next adapter in the list.
 	CHAR Name[ADAPTER_NAME_LENGTH + 1];		///< Name of the device representing the adapter.
 	CHAR Description[ADAPTER_DESC_LENGTH + 1];	///< Human understandable description of the adapter
-	PNPF_IF_ADDRESS_ITEM pNetworkAddresses;///< Pointer to a linked list of IP addresses, each of which specifies a network address of this adapter.
-	UCHAR bLoopback:1; // Loopback adapter flag
-#ifdef HAVE_AIRPCAP_API
-	UCHAR bAirpcap:1; // AirPcap adapter flag
-#endif
 }
 ADAPTER_INFO, *PADAPTER_INFO;
 
@@ -142,6 +140,18 @@ _Success_(return != 0)
 BOOLEAN PacketUpdateAdInfo(_In_ PCCH AdapterName);
 
 HANDLE PacketGetAdapterHandle(_In_ PCCH AdapterNameA);
+
+static inline VOID InterlockedMax(PULONG Location, ULONG NewValue)
+{
+	ULONG prev;
+	// If NewValue is bigger, safely exchange value only if the value hasn't changed.
+	// If it has changed, check it again.
+	do {
+		prev = *Location;
+		if (prev >= NewValue)
+			return;
+	} while (InterlockedCompareExchange((PLONG)Location, NewValue, prev) != (LONG)prev); 
+}
 
 #ifdef __cplusplus
 extern "C" {

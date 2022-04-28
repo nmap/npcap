@@ -95,12 +95,12 @@
 #include <Packet32.h>
 #include <tchar.h>
 #include <strsafe.h>
-#include <shlwapi.h>
 #include <string>
 #include <ntddndis.h>
 
 #include "Packet32-Int.h"
 #include "../npf/npf/ioctls.h"
+#include <ws2tcpip.h>
 
 #include <map>
 using namespace std;
@@ -882,18 +882,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 		
 		while(g_AdaptersInfoList != NULL)
 		{
-			PNPF_IF_ADDRESS_ITEM pCursor, pNext;
-
 			NewAdInfo = g_AdaptersInfoList->Next;
-
-			pCursor = g_AdaptersInfoList->pNetworkAddresses;
-
-			while(pCursor != NULL)
-			{
-				pNext = pCursor->Next;
-				HeapFree(GetProcessHeap(), 0, pCursor);
-				pCursor = pNext;
-			}
 
 			HeapFree(GetProcessHeap(), 0, g_AdaptersInfoList);
 			
@@ -1049,6 +1038,7 @@ BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
+	_ASSERT(!(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF));
 
 	if (AdapterObject->Flags & INFO_FLAG_NPCAP_LOOPBACK) {
 		// Loopback adapter doesn't support this; fake success
@@ -1097,6 +1087,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 	DWORD err = ERROR_SUCCESS;
 
  	TRACE_ENTER();
+	_ASSERT(!(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF));
 
 	if (AdapterObject->ReadEvent != NULL)
 	{
@@ -1581,6 +1572,12 @@ LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterNameA)
   \note internal function used by PacketOpenAdapter()
 */
 #ifdef HAVE_AIRPCAP_API
+static BOOLEAN IsAirpcapName(LPCSTR AdapterName)
+{
+	static PCCH airpcap_prefix = "\\\\.\\airpcap";
+	return (strncmp(AdapterName, airpcap_prefix, sizeof(airpcap_prefix) - 1) == 0);
+}
+
 static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 {
 	CHAR Ebuf[AIRPCAP_ERRBUF_SIZE];
@@ -1800,42 +1797,11 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 		AdapterNameWA = TranslatedAdapterNameA;
 	}
 
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-
 	do
 	{
 
-		//
-		// If we are here it's because we need to update the list
-		// 
-
-
-		TRACE_PRINT("Looking for the adapter in our list 1st time...");
-
-		// Find the PADAPTER_INFO structure associated with this adapter 
-		PADAPTER_INFO TAdInfo = PacketFindAdInfo(AdapterNameWA);
-		if(TAdInfo == NULL)
-		{
-			TRACE_PRINT("Adapter not found in our list. Try to refresh the list.");
-
-			PacketUpdateAdInfo(AdapterNameWA);
-			TAdInfo = PacketFindAdInfo(AdapterNameWA);
-
-			TRACE_PRINT("Looking for the adapter in our list 2nd time...");
-		}
-
-		if(TAdInfo == NULL)
-		{
-			TRACE_PRINT("Failed to open adapter, failing with ERROR_BAD_UNIT");
-			dwLastError = ERROR_BAD_UNIT; //this is the best we can do....
-
-			break;
-		}
-
-		TRACE_PRINT("Adapter found in our list. Check adapter type and see if it's actually supported.");
-
 #ifdef HAVE_AIRPCAP_API
-		if(TAdInfo->bAirpcap)
+		if(IsAirpcapName(AdapterNameWA))
 		{
 			//
 			// This is an airpcap card. Open it using the airpcap api
@@ -3350,20 +3316,16 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 _Use_decl_annotations_
 BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries)
 {
-	PADAPTER_INFO TAdInfo;
+	static ULONG MaxGAABufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
+	ULONG BufLen = MaxGAABufLen;
+	PIP_ADAPTER_ADDRESSES AdBuffer = NULL, TmpAddr = NULL;
 	PCHAR Tname = NULL;
-	BOOLEAN Res;
-	PCHAR TranslatedAdapterName = NULL;
+	BOOLEAN Res = FALSE;
 	DWORD err = ERROR_SUCCESS;
+	static npf_if_addr loopback_addrs[2] = {0};
+	static BOOLEAN loopback_addrs_init = FALSE;
 
 	TRACE_ENTER();
-
-	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
-	if (TranslatedAdapterName)
-	{
-		AdapterName = TranslatedAdapterName;
-	}
 
 	// Provide conversion for backward compatibility
 	if(AdapterName[1] == 0)
@@ -3372,64 +3334,169 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 		AdapterName = Tname;
 	}
 
-	//
-	// Update the information about this adapter
-	//
-	if(!PacketUpdateAdInfo(AdapterName))
-	{
-		err = GetLastError();
-		TRACE_PRINT("PacketGetNetInfoEx. Failed updating the adapter list. Failing.");
-		if(Tname)
-			HeapFree(GetProcessHeap(), 0, Tname);
-
-		if (TranslatedAdapterName)
-			HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-		
-		TRACE_EXIT();
-		SetLastError(err);
-		return FALSE;
-	}
-	
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-	// Find the PADAPTER_INFO structure associated with this adapter 
-	TAdInfo = PacketFindAdInfo(AdapterName);
-
-	if(TAdInfo != NULL)
-	{
-		LONG numEntries = 0;
-		PNPF_IF_ADDRESS_ITEM pCursor;
-		TRACE_PRINT("Adapter found.");
-
-		pCursor = TAdInfo->pNetworkAddresses;
-
-		while(pCursor != NULL && numEntries < *NEntries)
-		{
-			buffer[numEntries] = pCursor->Addr;
-			numEntries ++;
-			pCursor = pCursor->Next;
-		}
-
-		if (numEntries < *NEntries)
-		{
-			*NEntries = numEntries;
-		}
-
+#ifdef HAVE_AIRPCAP_API
+	// Airpcap devices don't have network addresses
+	if (IsAirpcapName(AdapterName)) {
+		*NEntries = 0;
 		Res = TRUE;
+		goto END_PacketGetNetInfoEx;
 	}
-	else
+#endif
+
+	if (PacketIsLoopbackAdapter(AdapterName))
 	{
-		TRACE_PRINT("PacketGetNetInfoEx: Adapter not found");
-		Res = FALSE;
-		err = ERROR_BAD_UNIT;
+		if (!loopback_addrs_init) {
+			struct sockaddr_in *pV4 = (struct sockaddr_in *)&loopback_addrs[0].IPAddress;
+			pV4->sin_family = AF_INET;
+			if (1 > InetPtonA(AF_INET, "127.0.0.1", &pV4->sin_addr)) {
+				goto END_PacketGetNetInfoEx;
+			}
+
+			pV4 = (struct sockaddr_in*)&loopback_addrs[0].SubnetMask;
+			pV4->sin_family = AF_INET;
+			if (1 > InetPtonA(AF_INET, "255.0.0.0", &pV4->sin_addr)) {
+				goto END_PacketGetNetInfoEx;
+			}
+
+			struct sockaddr_in6 *pV6 = (struct sockaddr_in6 *)&loopback_addrs[1].IPAddress;
+			pV6->sin6_family = AF_INET6;
+			pV6->sin6_scope_struct.Level = ScopeLevelLink;
+			if (1 > InetPtonA(AF_INET6, "::1", &pV6->sin6_addr)) {
+				goto END_PacketGetNetInfoEx;
+			}
+
+			pV6 = (struct sockaddr_in6*)&loopback_addrs[1].SubnetMask;
+			pV6->sin6_family = AF_INET6;
+			pV6->sin6_scope_struct.Level = ScopeLevelLink;
+			memset(&pV6->sin6_addr, 0xff, sizeof(IN6_ADDR));
+
+			loopback_addrs_init = TRUE;
+		}
+		*NEntries = min(2, *NEntries);
+		for (int i=0; i < *NEntries; i++) {
+			buffer[i] = loopback_addrs[i];
+		}
+		Res = TRUE;
+		goto END_PacketGetNetInfoEx;
+	}
+
+	PCCH AdapterGuid = strchr(AdapterName, '{');
+	if (AdapterGuid == NULL)
+	{
+		goto END_PacketGetNetInfoEx;
+	}
+
+	AdBuffer = (PIP_ADAPTER_ADDRESSES)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, BufLen);
+	if (AdBuffer == NULL)
+	{
+		goto END_PacketGetNetInfoEx;
+	}
+	ULONG RetVal = ERROR_SUCCESS;
+	for (int i = 0; i < ADAPTERS_ADDRESSES_MAX_TRIES; i++)
+	{
+
+		RetVal = GetAdaptersAddresses(AF_UNSPEC,
+			GAA_FLAG_SKIP_DNS_INFO | // Undocumented, reported to help avoid errors on Win10 1809
+			// We don't use any of these features:
+			GAA_FLAG_SKIP_DNS_SERVER |
+			GAA_FLAG_SKIP_ANYCAST |
+			GAA_FLAG_SKIP_MULTICAST |
+			GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
+		if (RetVal == ERROR_BUFFER_OVERFLOW)
+		{
+			TRACE_PRINT("PacketGetNetInfoEx: GetAdaptersAddresses Too small buffer");
+			TmpAddr = (PIP_ADAPTER_ADDRESSES)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, AdBuffer, BufLen);
+			if (TmpAddr == NULL)
+			{
+				goto END_PacketGetNetInfoEx;
+			}
+			AdBuffer = TmpAddr;
+		}
+		else
+		{
+			err = GetLastError();
+			break;
+		}
+	}
+
+	if (RetVal != ERROR_SUCCESS)
+	{
+		goto END_PacketGetNetInfoEx;
+	}
+
+
+	//
+	// Now obtain the information about this adapter
+	//
+	for (TmpAddr=AdBuffer; TmpAddr != NULL; TmpAddr = TmpAddr->Next)
+	{
+		// If the adapter matches, copy its addresses.
+		if(_stricmp(TmpAddr->AdapterName, AdapterGuid) == 0)
+		{
+			Res = TRUE;
+			PIP_ADAPTER_UNICAST_ADDRESS pAddr = TmpAddr->FirstUnicastAddress;
+			LONG numEntries = 0;
+			while (pAddr != NULL && numEntries < *NEntries)
+			{
+				ULONG ul = 0;
+				npf_if_addr *pItem = &buffer[numEntries];
+
+				const int AddrLen = pAddr->Address.iSockaddrLength;
+				memcpy(&pItem->IPAddress, pAddr->Address.lpSockaddr, AddrLen);
+				struct sockaddr_storage *IfAddr = (struct sockaddr_storage *)pAddr->Address.lpSockaddr;
+				struct sockaddr_storage* Subnet = (struct sockaddr_storage *)&pItem->SubnetMask;
+				struct sockaddr_storage* Broadcast = (struct sockaddr_storage *)&pItem->Broadcast;
+				Subnet->ss_family = Broadcast->ss_family = IfAddr->ss_family;
+				if (IfAddr->ss_family == AF_INET && pAddr->OnLinkPrefixLength <= 32)
+				{
+					((struct sockaddr_in *)Subnet)->sin_addr.S_un.S_addr = ul = htonl(0xffffffff << (32 - pAddr->OnLinkPrefixLength));
+					((struct sockaddr_in *)Broadcast)->sin_addr.S_un.S_addr = ~ul | ((struct sockaddr_in *)IfAddr)->sin_addr.S_un.S_addr;
+				}
+				else if (IfAddr->ss_family == AF_INET6 && pAddr->OnLinkPrefixLength <= 128)
+				{
+					memset(&((struct sockaddr_in6*)Broadcast)->sin6_addr, 0xff, sizeof(IN6_ADDR));
+					for (int i = pAddr->OnLinkPrefixLength, j = 0; i > 0; i-=16, j++)
+					{
+						if (i > 16)
+						{
+							((struct sockaddr_in6*)Subnet)->sin6_addr.u.Word[j] = 0xffff;
+							((struct sockaddr_in6*)Broadcast)->sin6_addr.u.Word[j] = ((struct sockaddr_in6*)IfAddr)->sin6_addr.u.Word[j];
+						}
+						else
+						{
+							const WORD mask = htons(0xffff << (16 - i));
+							((struct sockaddr_in6*)Subnet)->sin6_addr.u.Word[j] = mask;
+							((struct sockaddr_in6*)Broadcast)->sin6_addr.u.Word[j] = ~mask | ((struct sockaddr_in6*)IfAddr)->sin6_addr.u.Word[j];
+						}
+					}
+				}
+				else
+				{
+					// else unsupported address family, no broadcast or netmask
+					Subnet->ss_family = Broadcast->ss_family = 0;
+				}
+
+				pAddr = pAddr->Next;
+			}
+			*NEntries = min(numEntries, *NEntries);
+			break;
+		}
 	}
 	
-	ReleaseMutex(g_AdaptersInfoMutex);
-	
+END_PacketGetNetInfoEx:
+	if (!Res) {
+		if (err == ERROR_SUCCESS)
+			err = ERROR_BAD_UNIT;
+		*NEntries = 0;
+	}
+
 	if(Tname)
 		HeapFree(GetProcessHeap(), 0, Tname);
+	if(AdBuffer)
+		HeapFree(GetProcessHeap(), 0, AdBuffer);
 
-	if (TranslatedAdapterName)
-		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
+	// Avoid minimizing buffer length in case new info is added.
+	InterlockedMax(&MaxGAABufLen, BufLen);
 
 	TRACE_EXIT();
 	SetLastError(err);

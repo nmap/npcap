@@ -105,8 +105,6 @@
 #include "Packet32-Int.h"
 #include "debug.h"
 
-#include <ws2tcpip.h>
-#include <windowsx.h>
 #include <iphlpapi.h>
 #include <strsafe.h>
 #include <WpcapNames.h>
@@ -114,13 +112,8 @@
 
 extern BOOLEAN g_bLoopbackSupport;
 
-#define BUFSIZE 512
 PADAPTER_INFO g_AdaptersInfoList = NULL;				///< Head of the adapter information list. This list is populated when packet.dll is linked by the application.
 HANDLE g_AdaptersInfoMutex = NULL;						///< Mutex that protects the adapter information list. NOTE: every API that takes an ADAPTER_INFO as parameter assumes that it has been called with the mutex acquired.
-
-#define ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE 15000
-#define ADAPTERS_ADDRESSES_MAX_TRIES 3
-static ULONG g_GaaBufLast = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE; // Last good value for GAA buffer size
 
 #ifdef HAVE_AIRPCAP_API
 extern AirpcapGetDeviceListHandler g_PAirpcapGetDeviceList;
@@ -216,61 +209,6 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	// Conversion error? ensure it's terminated and ignore.
 	if (Status == 0) TmpAdInfo->Description[ADAPTER_DESC_LENGTH] = '\0';
 
-	// Retrieve IP addresses
-	TmpAdInfo->pNetworkAddresses = NULL;
-
-	PIP_ADAPTER_UNICAST_ADDRESS pAddr = pAdapterAddr->FirstUnicastAddress;
-	while (pAddr != NULL)
-	{
-		ULONG ul = 0;
-		PNPF_IF_ADDRESS_ITEM pItem = (PNPF_IF_ADDRESS_ITEM)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(NPF_IF_ADDRESS_ITEM));
-		if (pItem == NULL)
-		{
-			TRACE_PRINT("PacketAddAdapterNPF: HeapAlloc failed for NPF_IF_ADDRESS_ITEM");
-			break;
-		}
-
-		const int AddrLen = pAddr->Address.iSockaddrLength;
-		memcpy(&pItem->Addr.IPAddress, pAddr->Address.lpSockaddr, AddrLen);
-		struct sockaddr_storage *IfAddr = (struct sockaddr_storage *)pAddr->Address.lpSockaddr;
-		struct sockaddr_storage* Subnet = (struct sockaddr_storage *)&pItem->Addr.SubnetMask;
-		struct sockaddr_storage* Broadcast = (struct sockaddr_storage *)&pItem->Addr.Broadcast;
-		Subnet->ss_family = Broadcast->ss_family = IfAddr->ss_family;
-		if (Subnet->ss_family == AF_INET)
-		{
-			((struct sockaddr_in *)Subnet)->sin_addr.S_un.S_addr = ul = htonl(0xffffffff << (32 - pAddr->OnLinkPrefixLength));
-			((struct sockaddr_in *)Broadcast)->sin_addr.S_un.S_addr = ~ul | ((struct sockaddr_in *)IfAddr)->sin_addr.S_un.S_addr;
-		}
-		else if (IfAddr->ss_family == AF_INET6)
-		{
-			memset(&((struct sockaddr_in6*)Broadcast)->sin6_addr, 0xff, sizeof(IN6_ADDR));
-			for (int i = pAddr->OnLinkPrefixLength, j = 0; i > 0; i-=16, j++)
-			{
-				if (i > 16)
-				{
-					((struct sockaddr_in6*)Subnet)->sin6_addr.u.Word[j] = 0xffff;
-					((struct sockaddr_in6*)Broadcast)->sin6_addr.u.Word[j] = ((struct sockaddr_in6*)IfAddr)->sin6_addr.u.Word[j];
-				}
-				else
-				{
-					const WORD mask = htons(0xffff << (16 - i));
-					((struct sockaddr_in6*)Subnet)->sin6_addr.u.Word[j] = mask;
-					((struct sockaddr_in6*)Broadcast)->sin6_addr.u.Word[j] = ~mask | ((struct sockaddr_in6*)IfAddr)->sin6_addr.u.Word[j];
-				}
-			}
-		}
-		else
-		{
-			// else unsupported address family, no broadcast or netmask
-			Subnet->ss_family = Broadcast->ss_family = 0;
-		}
-
-		pItem->Next = TmpAdInfo->pNetworkAddresses;
-		TmpAdInfo->pNetworkAddresses = pItem;
-
-		pAddr = pAddr->Next;
-	}
-	
 	// Update the AdaptersInfo list
 	TmpAdInfo->Next = g_AdaptersInfoList;
 	g_AdaptersInfoList = TmpAdInfo;
@@ -308,9 +246,6 @@ static BOOLEAN PacketAddLoopbackAdapter()
 	// Copy the device name
 	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), FAKE_LOOPBACK_ADAPTER_NAME, _TRUNCATE);
 	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), FAKE_LOOPBACK_ADAPTER_DESCRIPTION, _TRUNCATE);
-	TmpAdInfo->bLoopback = 1;
-	TmpAdInfo->pNetworkAddresses = NULL;
-
 	// Update the AdaptersInfo list
 	TmpAdInfo->Next = g_AdaptersInfoList;
 	g_AdaptersInfoList = TmpAdInfo;
@@ -327,6 +262,7 @@ static BOOLEAN PacketAddLoopbackAdapter()
 */
 static BOOLEAN PacketGetAdaptersNPF()
 {
+	static ULONG MaxGAABufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
 	ULONG Iterations;
 	ULONG BufLen;
 	ULONG RetVal = ERROR_SUCCESS;
@@ -335,7 +271,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 	TRACE_ENTER();
 
 
-	BufLen = g_GaaBufLast;
+	BufLen = MaxGAABufLen;
 	AdBuffer = (PIP_ADAPTER_ADDRESSES)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, BufLen);
 	if (AdBuffer == NULL)
 	{
@@ -350,6 +286,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 			GAA_FLAG_SKIP_DNS_INFO | // Undocumented, reported to help avoid errors on Win10 1809
 			// We don't use any of these features:
 			GAA_FLAG_SKIP_DNS_SERVER |
+			GAA_FLAG_SKIP_UNICAST | // We don't need any address info, just names
 			GAA_FLAG_SKIP_ANYCAST |
 			GAA_FLAG_SKIP_MULTICAST |
 			GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
@@ -384,7 +321,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 	}
 
 	// Stash the value that worked here
-	g_GaaBufLast = BufLen;
+	InterlockedMax(&MaxGAABufLen, BufLen);
 
 	for (TmpAddr=AdBuffer; TmpAddr != NULL; TmpAddr = TmpAddr->Next)
 	{
@@ -431,15 +368,12 @@ static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 	{
 		
 		//
-		// check if the adapter is already there, and remove it
+		// check if the adapter is already there
 		//
 		for (TmpAdInfo = g_AdaptersInfoList; TmpAdInfo != NULL; TmpAdInfo = TmpAdInfo->Next)
 		{
-			if (TmpAdInfo->bAirpcap)
-			{
-				if (_stricmp(TmpAdInfo->Name, name) == 0)
-					break;
-			}
+			if (_stricmp(TmpAdInfo->Name, name) == 0)
+				break;
 		}
 
 		if (TmpAdInfo != NULL)
@@ -471,8 +405,6 @@ static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 			sizeof(TmpAdInfo->Description), 
 			description);
 		
-		TmpAdInfo->bAirpcap = 1;
-		
 		// Update the AdaptersInfo list
 		TmpAdInfo->Next = g_AdaptersInfoList;
 		g_AdaptersInfoList = TmpAdInfo;
@@ -502,7 +434,7 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 	if(!g_PAirpcapGetDeviceList(&Devs, Ebuf))
 	{
 		// No airpcap cards found on this system
-		TRACE_PRINT("No AirPcap adapters found");
+		TRACE_PRINT1("No AirPcap adapters found: %s", Ebuf);
 		TRACE_EXIT();
 		return FALSE;
 	}
@@ -521,218 +453,6 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 }
 #endif // HAVE_AIRPCAP_API
 
-
-/*!
-\brief Find the information about an adapter scanning the global ADAPTER_INFO list.
-  \param AdapterName Name of the adapter whose information has to be retrieved.
-  \return If the function succeeds, the return value is non-null.
-*/
-_Use_decl_annotations_
-PADAPTER_INFO PacketFindAdInfo(PCCH AdapterName)
-{
-	//this function should NOT acquire the g_AdaptersInfoMutex, since it does return an ADAPTER_INFO structure
-	PADAPTER_INFO TAdInfo;
-
-	TRACE_ENTER();
-	
-	if (g_AdaptersInfoList == NULL)
-	{
-		TRACE_PRINT("Repopulating the adapters info list...");
-		PacketPopulateAdaptersInfoList();
-	}
-
-	TAdInfo = g_AdaptersInfoList;
-	
-	while(TAdInfo != NULL)
-	{
-		if(_stricmp(TAdInfo->Name, AdapterName) == 0) 
-		{
-			TRACE_PRINT1("Found AdInfo for adapter %hs", AdapterName);
-			break;
-		}
-
-		TAdInfo = TAdInfo->Next;
-	}
-
-	if (TAdInfo == NULL)
-	{
-		TRACE_PRINT1("NOT found AdInfo for adapter %hs", AdapterName);
-	}
-
-	TRACE_EXIT();
-	return TAdInfo;
-}
-
-
-
-/*!
-  \brief Updates information about an adapter in the global ADAPTER_INFO list.
-  \param AdapterName Name of the adapter whose information has to be retrieved.
-  \return If the function succeeds, the return value is TRUE. A false value means that the adapter is no
-  more valid or that it is disconnected.
-*/
-_Use_decl_annotations_
-BOOLEAN PacketUpdateAdInfo(PCCH AdapterName)
-{
-	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
-	PADAPTER_INFO TAdInfo, PrevAdInfo;
-	ULONG Iterations;
-	ULONG BufLen;
-	ULONG RetVal = ERROR_SUCCESS;
-	PIP_ADAPTER_ADDRESSES AdBuffer, TmpAddr;
-	PCCH AdapterGuid = NULL;
-	BOOLEAN found = FALSE;
-
-	TRACE_ENTER();
-
-	TRACE_PRINT1("Updating adapter info for adapter %hs", AdapterName);
-	
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-	
-	PrevAdInfo = TAdInfo = g_AdaptersInfoList;
-
-	//
-	// If an entry for this adapter is present in the list, we destroy it
-	//
-	while(TAdInfo != NULL)
-	{
-		if(_stricmp(TAdInfo->Name, AdapterName) == 0)
-		{
-			if(TAdInfo == g_AdaptersInfoList)
-			{
-				g_AdaptersInfoList = TAdInfo->Next;
-			}
-			else
-			{
-				PrevAdInfo->Next = TAdInfo->Next;
-			}
-
-			if (TAdInfo->pNetworkAddresses != NULL)
-			{
-				PNPF_IF_ADDRESS_ITEM pItem, pNext;
-
-				pItem = TAdInfo->pNetworkAddresses;
-
-				while(pItem != NULL)
-				{
-					pNext = pItem->Next;
-
-					HeapFree(GetProcessHeap(), 0, pItem);
-					pItem = pNext;
-				}
-			}
-			
-			HeapFree(GetProcessHeap(), 0, TAdInfo);
-
-			break;
-		}
-
-		PrevAdInfo = TAdInfo;
-
-		TAdInfo = TAdInfo->Next;
-	}
-
-	ReleaseMutex(g_AdaptersInfoMutex);
-	if (_stricmp(AdapterName, FAKE_LOOPBACK_ADAPTER_NAME) == 0) {
-		found = (g_bLoopbackSupport && PacketAddLoopbackAdapter());
-		TRACE_EXIT();
-		return found;
-	}
-
-	AdapterGuid = strchr(AdapterName, '{');
-	if (AdapterGuid == NULL)
-	{
-		TRACE_PRINT("PacketUpdateAdInfo: Not a valid adapter name");
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	BufLen = g_GaaBufLast;
-	AdBuffer = (PIP_ADAPTER_ADDRESSES)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, BufLen);
-	if (AdBuffer == NULL)
-	{
-		TRACE_PRINT("PacketUpdateAdInfo: HeapAlloc Failed");
-		TRACE_EXIT();
-		return FALSE;
-	}
-	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
-	{
-
-		RetVal = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_INTERFACES | // Get everything
-			GAA_FLAG_SKIP_DNS_INFO | // Undocumented, reported to help avoid errors on Win10 1809
-			// We don't use any of these features:
-			GAA_FLAG_SKIP_DNS_SERVER |
-			GAA_FLAG_SKIP_ANYCAST |
-			GAA_FLAG_SKIP_MULTICAST |
-			GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
-		if (RetVal == ERROR_BUFFER_OVERFLOW)
-		{
-			TRACE_PRINT("PacketUpdateAdInfo: GetAdaptersAddresses Too small buffer");
-			TmpAddr = (PIP_ADAPTER_ADDRESSES)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, AdBuffer, BufLen);
-			if (TmpAddr == NULL)
-			{
-				TRACE_PRINT("PacketUpdateAdInfo: HeapReAlloc Failed");
-				HeapFree(GetProcessHeap(), 0, AdBuffer);
-				TRACE_EXIT();
-				return FALSE;
-			}
-			AdBuffer = TmpAddr;
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	if (RetVal != ERROR_SUCCESS)
-	{
-		TRACE_PRINT("PacketUpdateAdInfo: GetAdaptersAddresses Failed while retrieving the addresses");
-		if (AdBuffer)
-		{
-			HeapFree(GetProcessHeap(), 0, AdBuffer);
-		}
-		TRACE_EXIT();
-		return FALSE;
-	}
-
-	// Stash the value that worked here
-	g_GaaBufLast = BufLen;
-
-	//
-	// Now obtain the information about this adapter
-	//
-	for (TmpAddr=AdBuffer; TmpAddr != NULL; TmpAddr = TmpAddr->Next)
-	{
-		// If the adapter matches, add it to the list.
-		if(_stricmp(TmpAddr->AdapterName, AdapterGuid) == 0)
-		{
-			PacketAddAdapterNPF(TmpAddr);
-			found = TRUE;
-			break;
-		}
-	}
-
-#ifdef HAVE_AIRPCAP_API
-	if (!found)
-	{
-		if (g_PAirpcapGetDeviceList != NULL)
-		{
-			PacketGetAdaptersAirpcap();
-			found = (PacketFindAdInfo(AdapterName) != NULL);
-		}
-		else
-		{
-			TRACE_PRINT("AirPcap extension not available");
-		}
-	}
-#endif
-	if (AdBuffer)
-	{
-		HeapFree(GetProcessHeap(), 0, AdBuffer);
-	}
-	TRACE_EXIT();
-	return found;
-}
 
 /*!
   \brief Populates the list of the adapters.
@@ -755,18 +475,9 @@ void PacketPopulateAdaptersInfoList()
 		TAdInfo = g_AdaptersInfoList;
 		while(TAdInfo != NULL)
 		{
-			PNPF_IF_ADDRESS_ITEM pItem, pCursor;
 			Mem2 = TAdInfo;
-			
-			pCursor = TAdInfo->pNetworkAddresses;
 			TAdInfo = TAdInfo->Next;
 			
-			while(pCursor != NULL)
-			{
-				pItem = pCursor->Next;
-				HeapFree(GetProcessHeap(), 0, pCursor);
-				pCursor = pItem;
-			}
 			HeapFree(GetProcessHeap(), 0, Mem2);
 		}
 		
