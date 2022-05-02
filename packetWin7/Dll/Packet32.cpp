@@ -139,10 +139,6 @@ VOID PacketLoadLibrariesDynamically();
 #endif
 
 
-#ifdef _DEBUG_TO_FILE
-LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName);
-#endif //_DEBUG_TO_FILE
-
 #include <iphlpapi.h>
 
 #include <WpcapNames.h>
@@ -739,18 +735,6 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 
 		TRACE_PRINT("************Packet32: DllMain************");
 
-#ifdef _DEBUG_TO_FILEx
-		PacketDumpRegistryKey("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\" NPF_DRIVER_NAME,"npf.reg");
-		
-		// dump a bunch of registry keys useful for debug to file
-		PacketDumpRegistryKey("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4D36E972-E325-11CE-BFC1-08002BE10318}",
-			"adapters.reg");
-		PacketDumpRegistryKey("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip",
-			"tcpip.reg");
-		PacketDumpRegistryKey("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services",
-			"services.reg");
-
-#endif
 
 		// Create the mutex that will protect the adapter information list
 		g_AdaptersInfoMutex = CreateMutex(NULL, FALSE, NULL);
@@ -1037,32 +1021,6 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 	TRACE_EXIT();
 	return TRUE;
 }
-
-/*! 
-  \brief Dumps a registry key to disk in text format. Uses regedit.
-  \param KeyName Name of the ket to dump. All its subkeys will be saved recursively.
-  \param FileName Name of the file that will contain the dump.
-  \return If the function succeeds, the return value is nonzero.
-
-  For debugging purposes, we use this function to obtain some registry keys from the user's machine.
-*/
-
-#ifdef _DEBUG_TO_FILE
-
-LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName)
-{
-	CHAR Command[256];
-
-	TRACE_ENTER();
-	StringCchPrintfA(Command, sizeof(Command), "regedit /e %s %s", FileName, KeyName);
-
-	/// Let regedit do the dirty work for us
-	system(Command);
-
-	TRACE_EXIT();
-	return TRUE;
-}
-#endif
 
 /*! 
   \brief Returns the version of a dll or exe file 
