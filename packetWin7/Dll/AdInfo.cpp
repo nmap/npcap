@@ -261,6 +261,7 @@ static BOOLEAN PacketAddLoopbackAdapter(
 
   This function populates the list of adapter descriptions, retrieving the information from the registry. 
 */
+_Success_(return != 0)
 static BOOLEAN PacketGetAdaptersNPF()
 {
 	static ULONG MaxGAABufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
@@ -418,6 +419,7 @@ static BOOLEAN PacketAddAdapterAirpcap(_In_ PCCH name, _In_ PCCH description,
 
   This function populates the list of adapter descriptions, looking for AirPcap cards on the system. 
 */
+_Success_(return != 0)
 static BOOLEAN PacketGetAdaptersAirpcap()
 {
 	CHAR Ebuf[AIRPCAP_ERRBUF_SIZE];

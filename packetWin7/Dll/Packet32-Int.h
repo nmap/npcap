@@ -101,16 +101,6 @@
 #define ADAPTERS_ADDRESSES_MAX_TRIES 3
 
 /*!
-  \brief Linked list item containing one of the IP addresses associated with an adapter.
-*/
-typedef struct _NPF_IF_ADDRESS_ITEM
-{
-	npf_if_addr Addr;			///< IP address
-	struct _NPF_IF_ADDRESS_ITEM *Next; ///< Pointer to the next item in the linked list.
-}
-	NPF_IF_ADDRESS_ITEM, *PNPF_IF_ADDRESS_ITEM;
-
-/*!
   \brief Contains comprehensive information about a network adapter.
 
   This structure is filled with all the accessory information that the user can need about an adapter installed
@@ -146,12 +136,6 @@ DWORD PacketPopulateAdaptersInfoList();
 
 _Success_(return != 0)
 BOOL PacketGetFileVersion(_In_ LPCTSTR FileName, _Out_writes_(VersionBuffLen) PCHAR VersionBuff, _In_ UINT VersionBuffLen);
-
-_Ret_maybenull_
-PADAPTER_INFO PacketFindAdInfo(_In_ PCCH AdapterName);
-
-_Success_(return != 0)
-BOOLEAN PacketUpdateAdInfo(_In_ PCCH AdapterName);
 
 HANDLE PacketGetAdapterHandle(_In_ PCCH AdapterNameA);
 
