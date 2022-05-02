@@ -1,7 +1,6 @@
 LIBRARY packet
 
 EXPORTS
-		PacketLibraryVersion
 		PacketGetVersion
 		PacketGetDriverVersion
 		PacketGetDriverName

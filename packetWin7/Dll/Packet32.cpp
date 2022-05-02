@@ -100,6 +100,7 @@
 
 #include "Packet32-Int.h"
 #include "../npf/npf/ioctls.h"
+#include "../../version.h"
 #include <ws2tcpip.h>
 
 #include <map>
@@ -147,17 +148,17 @@ VOID PacketLoadLibrariesDynamically();
 //
 // Current packet.dll version. It can be retrieved directly or through the PacketGetVersion() function.
 //
-char PacketLibraryVersion[64]; 
+static const char PacketLibraryVersion[] = WINPCAP_VER_STRING; 
 
 //
-// Current driver version. It can be retrieved directly or through the PacketGetVersion() function.
+// Current driver version. It can be retrieved directly or through the PacketGetDriverVersion() function.
 //
 char PacketDriverVersion[64]; 
 
 //
-// Current driver name ("NPF" or "NPCAP"). It can be retrieved directly or through the PacketGetVersion() function.
+// Current driver name ("NPF" or "NPCAP"). It can be retrieved directly or through the PacketGetDriverName() function.
 //
-char PacketDriverName[64];
+static const char PacketDriverName[] = NPF_DRIVER_NAME;
 
 
 //
@@ -724,7 +725,6 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 	TRACE_ENTER();
 
 	PADAPTER_INFO NewAdInfo;
-	TCHAR DllFileName[MAX_PATH];
 	g_hDllHandle = DllHandle;
 
 	UNUSED(lpReserved);
@@ -745,20 +745,11 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 #endif
 
 		//
-		// Retrieve packet.dll version information from the file
-		//
-		// XXX We want to replace this with a constant. We leave it out for the moment
-		if(GetModuleFileName((HMODULE) DllHandle, DllFileName, sizeof(DllFileName) / sizeof(DllFileName[0])) > 0)
-		{
-			PacketGetFileVersion(DllFileName, PacketLibraryVersion, sizeof(PacketLibraryVersion));
-		}
-		//
 		// Retrieve NPF.sys version information from the file
 		//
 		// XXX We want to replace this with a constant. We leave it out for the moment
 		// TODO fixme. Those hardcoded strings are terrible...
 		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
-		strcpy_s(PacketDriverName, 64, NPF_DRIVER_NAME);
 
 		// Get the name for "Npcap Loopback Adapter"
 		NpcapGetLoopbackInterfaceName();
