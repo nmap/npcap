@@ -91,7 +91,7 @@
 
 #ifndef __PACKET_DEBUG_393073863432093179878957
 #define __PACKET_DEBUG_393073863432093179878957
-
+#include <assert.h>
 #if defined(_DBG) || defined(_DEBUG_TO_FILE)
 
 #include <stdio.h>

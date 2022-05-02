@@ -120,15 +120,29 @@ typedef struct _ADAPTER_INFO
 {
 	struct _ADAPTER_INFO *Next;				///< Pointer to the next adapter in the list.
 	CHAR Name[ADAPTER_NAME_LENGTH + 1];		///< Name of the device representing the adapter.
+	ULONG NameLen; // length of name
 	CHAR Description[ADAPTER_DESC_LENGTH + 1];	///< Human understandable description of the adapter
+	ULONG DescLen; // length of description
 }
 ADAPTER_INFO, *PADAPTER_INFO;
+
+typedef struct ADAPTERS_INFO_LIST
+{
+	ULONG NamesLen; // The length of all names and null terminators
+	ULONG DescsLen; // The length of all descriptions and null terminators
+	ULONGLONG TicksLastUpdate; // The tick count when the list was last updated.
+	PADAPTER_INFO Adapters;
+} ADINFO_LIST, *PADINFO_LIST;
+
+// After this many ms, regen the list of adapters
+#define ADINFO_LIST_STALE_TICK_COUNT 1000
 
 
 //
 // Internal functions
 //
-void PacketPopulateAdaptersInfoList();
+_Success_(return == ERROR_SUCCESS)
+DWORD PacketPopulateAdaptersInfoList();
 
 _Success_(return != 0)
 BOOL PacketGetFileVersion(_In_ LPCTSTR FileName, _Out_writes_(VersionBuffLen) PCHAR VersionBuff, _In_ UINT VersionBuffLen);

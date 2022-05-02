@@ -112,8 +112,8 @@
 
 extern BOOLEAN g_bLoopbackSupport;
 
-PADAPTER_INFO g_AdaptersInfoList = NULL;				///< Head of the adapter information list. This list is populated when packet.dll is linked by the application.
-HANDLE g_AdaptersInfoMutex = NULL;						///< Mutex that protects the adapter information list. NOTE: every API that takes an ADAPTER_INFO as parameter assumes that it has been called with the mutex acquired.
+ADINFO_LIST g_AdaptersInfoList = {0, 0, 0, NULL}; /// Head of the adapter information list.
+HANDLE g_AdaptersInfoMutex = NULL; /// Mutex that protects the adapter information list.
 
 #ifdef HAVE_AIRPCAP_API
 extern AirpcapGetDeviceListHandler g_PAirpcapGetDeviceList;
@@ -127,18 +127,23 @@ extern AirpcapFreeDeviceListHandler g_PAirpcapFreeDeviceList;
 
   Used by PacketGetAdaptersNPF(). Queries the driver to fill the PADAPTER_INFO describing the new adapter.
 */
-static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
+_Success_(return != 0)
+static BOOLEAN PacketAddAdapterNPF(_In_ PIP_ADAPTER_ADDRESSES pAdapterAddr,
+		_Outptr_result_nullonfailure_ PADAPTER_INFO *ppAdInfo
+		)
 {
-	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	LONG		Status;
 	HANDLE hAdapter = INVALID_HANDLE_VALUE;
 	PADAPTER_INFO	TmpAdInfo;
-	PADAPTER_INFO TAdInfo;	
 	CHAR AdName[ADAPTER_NAME_LENGTH];
+	PCHAR NameEnd = NULL;
 	HRESULT hrStatus = S_OK;
 	
 	TRACE_ENTER();
+	assert(pAdapterAddr != NULL);
+	assert(ppAdInfo != NULL);
  	TRACE_PRINT1("Trying to add adapter %hs", pAdapterAddr->AdapterName);
+	*ppAdInfo = NULL;
 	
 	// Create the NPF device name from the original device name
 	hrStatus = StringCchPrintfA(AdName,
@@ -152,22 +157,6 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 		return FALSE;
 	}
 
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-	
-	for(TAdInfo = g_AdaptersInfoList; TAdInfo != NULL; TAdInfo = TAdInfo->Next)
-	{
-		if(_stricmp(AdName, TAdInfo->Name) == 0)
-		{
-			TRACE_PRINT("PacketAddAdapterNPF: Adapter already present in the list");
-			ReleaseMutex(g_AdaptersInfoMutex);
-			TRACE_EXIT();
-			return TRUE;
-		}
-	}
-	
-	//here we could have released the mutex, but what happens if two threads try to add the same adapter? 
-	//The adapter would be duplicated on the linked list
-
 	TRACE_PRINT("Trying to open the NPF adapter and see if it's available...");
 
 	// Try to Open the adapter
@@ -177,7 +166,6 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	{
 		TRACE_PRINT("NPF Adapter not available, do not add it to the global list");
 		// We are not able to open this adapter. Skip to the next one.
-		ReleaseMutex(g_AdaptersInfoMutex);
 		TRACE_EXIT();
 		return FALSE;
 	}
@@ -193,64 +181,77 @@ static BOOLEAN PacketAddAdapterNPF(PIP_ADAPTER_ADDRESSES pAdapterAddr)
 	if (TmpAdInfo == NULL) 
 	{
 		TRACE_PRINT("AddAdapter: HeapAlloc Failed allocating the buffer for the AdInfo to be added to the global list. Returning.");
-		ReleaseMutex(g_AdaptersInfoMutex);
 		TRACE_EXIT();
 		return FALSE;
 	}
 	
 	// Copy the device name
-	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), AdName, _TRUNCATE);
+	hrStatus = StringCchCopyExA(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), AdName, &NameEnd, NULL, 0);
+	if (FAILED(hrStatus)) {
+		HeapFree(GetProcessHeap(), 0, TmpAdInfo);
+		TRACE_EXIT();
+		return FALSE;
+	}
+	TmpAdInfo->NameLen = (ULONG)(NameEnd - TmpAdInfo->Name);
 
 	//we do not need to terminate the string TmpAdInfo->Name, since we have left a char at the end, and
 	//the memory for TmpAdInfo was zeroed upon allocation
 
 	// Copy the description
-	Status = WideCharToMultiByte(CP_ACP, 0, pAdapterAddr->Description, (int)wcslen(pAdapterAddr->Description), TmpAdInfo->Description, ADAPTER_DESC_LENGTH, NULL, NULL);
+	// -1 for cchWideChar means returned length will _include_ null terminator
+	Status = WideCharToMultiByte(CP_ACP, 0, pAdapterAddr->Description, -1, TmpAdInfo->Description, ADAPTER_DESC_LENGTH, NULL, NULL);
 	// Conversion error? ensure it's terminated and ignore.
-	if (Status == 0) TmpAdInfo->Description[ADAPTER_DESC_LENGTH] = '\0';
+	if (Status <= 0) {
+		TmpAdInfo->Description[ADAPTER_DESC_LENGTH] = '\0';
+		Status = 0; // Length at this point includes the null terminator
+	}
+	TmpAdInfo->DescLen = Status - 1; // ADAPTER_INFO lengths do *not* include null terminator.
 
 	// Update the AdaptersInfo list
-	TmpAdInfo->Next = g_AdaptersInfoList;
-	g_AdaptersInfoList = TmpAdInfo;
+	*ppAdInfo = TmpAdInfo;
 	
-	ReleaseMutex(g_AdaptersInfoMutex);
-
 	TRACE_PRINT("PacketAddAdapterNPF: Adapter successfully added to the list");
 	TRACE_EXIT();
 	return TRUE;
 }
 
-static BOOLEAN PacketAddLoopbackAdapter()
+_Success_(return != 0)
+static BOOLEAN PacketAddLoopbackAdapter(
+		_Outptr_result_nullonfailure_ PADAPTER_INFO *ppAdInfo
+		)
 {
-	PADAPTER_INFO TmpAdInfo;
+	PADAPTER_INFO TmpAdInfo = NULL;
+	HRESULT hrStatus = S_OK;
+	PCHAR NameEnd = NULL;
 
 	TRACE_ENTER();
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-	for (TmpAdInfo = g_AdaptersInfoList; TmpAdInfo != NULL; TmpAdInfo = TmpAdInfo->Next)
-	{
-		if (_stricmp(FAKE_LOOPBACK_ADAPTER_NAME, TmpAdInfo->Name) == 0)
-		{
-			TRACE_PRINT("PacketGetAdaptersNPF: Loopback already present in the list");
-			ReleaseMutex(g_AdaptersInfoMutex);
-			return TRUE;
-		}
-	}
+	assert(ppAdInfo != NULL);
+	*ppAdInfo = NULL;
+
 	TmpAdInfo = (PADAPTER_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER_INFO));
 	if (TmpAdInfo == NULL)
 	{
 		TRACE_PRINT("AddAdapter: HeapAlloc Failed");
-		ReleaseMutex(g_AdaptersInfoMutex);
 		return FALSE;
 	}
 
 	// Copy the device name
-	strncpy_s(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), FAKE_LOOPBACK_ADAPTER_NAME, _TRUNCATE);
-	strncpy_s(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), FAKE_LOOPBACK_ADAPTER_DESCRIPTION, _TRUNCATE);
-	// Update the AdaptersInfo list
-	TmpAdInfo->Next = g_AdaptersInfoList;
-	g_AdaptersInfoList = TmpAdInfo;
+	hrStatus = StringCchCopyExA(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), FAKE_LOOPBACK_ADAPTER_NAME, &NameEnd, NULL, 0);
+	if (FAILED(hrStatus)) {
+		HeapFree(GetProcessHeap(), 0, TmpAdInfo);
+		TRACE_EXIT();
+		return FALSE;
+	}
+	TmpAdInfo->NameLen = (ULONG)(NameEnd - TmpAdInfo->Name);
+	hrStatus = StringCchCopyExA(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), FAKE_LOOPBACK_ADAPTER_DESCRIPTION, &NameEnd, NULL, 0);
+	if (FAILED(hrStatus)) {
+		HeapFree(GetProcessHeap(), 0, TmpAdInfo);
+		TRACE_EXIT();
+		return FALSE;
+	}
+	TmpAdInfo->DescLen = (ULONG)(NameEnd - TmpAdInfo->Description);
 
-	ReleaseMutex(g_AdaptersInfoMutex);
+	*ppAdInfo = TmpAdInfo;
 	return TRUE;
 }
 
@@ -267,6 +268,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 	ULONG BufLen;
 	ULONG RetVal = ERROR_SUCCESS;
 	PIP_ADAPTER_ADDRESSES AdBuffer, TmpAddr;
+	PADAPTER_INFO TmpAdInfo = NULL;
 
 	TRACE_ENTER();
 
@@ -326,11 +328,21 @@ static BOOLEAN PacketGetAdaptersNPF()
 	for (TmpAddr=AdBuffer; TmpAddr != NULL; TmpAddr = TmpAddr->Next)
 	{
 		// If the adapter is valid, add it to the list.
-		PacketAddAdapterNPF(TmpAddr);
+		if (PacketAddAdapterNPF(TmpAddr, &TmpAdInfo)) {
+			TmpAdInfo->Next = g_AdaptersInfoList.Adapters;
+			g_AdaptersInfoList.Adapters = TmpAdInfo;
+			// The info list lengths *include* the null terminators.
+			g_AdaptersInfoList.NamesLen += TmpAdInfo->NameLen + 1;
+			g_AdaptersInfoList.DescsLen += TmpAdInfo->DescLen + 1;
+		}
 	}
 	
-	if (g_bLoopbackSupport) {
-		PacketAddLoopbackAdapter();
+	if (g_bLoopbackSupport && PacketAddLoopbackAdapter(&TmpAdInfo)) {
+		TmpAdInfo->Next = g_AdaptersInfoList.Adapters;
+		g_AdaptersInfoList.Adapters = TmpAdInfo;
+		// The info list lengths *include* the null terminators.
+		g_AdaptersInfoList.NamesLen += TmpAdInfo->NameLen + 1;
+		g_AdaptersInfoList.DescsLen += TmpAdInfo->DescLen + 1;
 	}
 
 	if (AdBuffer)
@@ -348,37 +360,22 @@ static BOOLEAN PacketGetAdaptersNPF()
   \param description description of the adapter.
   \return If the function succeeds, the return value is nonzero.
 */
-static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
+_Success_(return != 0)
+static BOOLEAN PacketAddAdapterAirpcap(_In_ PCCH name, _In_ PCCH description,
+		_Outptr_result_nullonfailure_ PADAPTER_INFO *ppAdInfo)
 {
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
-	PADAPTER_INFO TmpAdInfo;
-	BOOLEAN Result = TRUE;
+	PADAPTER_INFO TmpAdInfo = NULL;
+	BOOLEAN Result = FALSE;
+	HRESULT hrStatus = S_OK;
+	PCHAR NameEnd = NULL;
 
 	TRACE_ENTER();
+	assert(ppAdInfo != NULL);
+	*ppAdInfo = NULL;
 	
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-
 	do
 	{
-		
-		//
-		// check if the adapter is already there
-		//
-		for (TmpAdInfo = g_AdaptersInfoList; TmpAdInfo != NULL; TmpAdInfo = TmpAdInfo->Next)
-		{
-			if (_stricmp(TmpAdInfo->Name, name) == 0)
-				break;
-		}
-
-		if (TmpAdInfo != NULL)
-		{
-			//
-			// we already have it in the list. Just return
-			//
-			Result = TRUE;
-			break;
-		}
-		
 		//
 		// Allocate a descriptor for this adapter
 		//			
@@ -386,26 +383,30 @@ static BOOLEAN PacketAddAdapterAirpcap(PCCH name, PCCH description)
 		if (TmpAdInfo == NULL) 
 		{
 			TRACE_PRINT("PacketAddAdapterAirpcap: HeapAlloc Failed");
-			Result = FALSE;
 			break;
 		}
 		
 		// Copy the device name and description
-		StringCchCopyA(TmpAdInfo->Name, 
-			sizeof(TmpAdInfo->Name), 
-			name);
+		hrStatus = StringCchCopyExA(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), name, &NameEnd, NULL, 0);
+		if (FAILED(hrStatus)) {
+			break;
+		}
+		TmpAdInfo->NameLen = (ULONG)(NameEnd - TmpAdInfo->Name);
 		
-		StringCchCopyA(TmpAdInfo->Description, 
-			sizeof(TmpAdInfo->Description), 
-			description);
+		hrStatus = StringCchCopyExA(TmpAdInfo->Description, sizeof(TmpAdInfo->Description), description, &NameEnd, NULL, 0);
+		if (FAILED(hrStatus)) {
+			break;
+		}
+		TmpAdInfo->DescLen = (ULONG)(NameEnd - TmpAdInfo->Description);
 		
-		// Update the AdaptersInfo list
-		TmpAdInfo->Next = g_AdaptersInfoList;
-		g_AdaptersInfoList = TmpAdInfo;
+		Result = TRUE;
+		*ppAdInfo = TmpAdInfo;
 	}
 	while(FALSE);
 
-	ReleaseMutex(g_AdaptersInfoMutex);
+	if (!Result && TmpAdInfo) {
+		HeapFree(GetProcessHeap(), 0, TmpAdInfo);
+	}
 
 	TRACE_EXIT();
 	return Result;
@@ -432,11 +433,16 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 		TRACE_EXIT();
 		return FALSE;
 	}
-	else
+	for(TmpDevs = Devs, i = 0; TmpDevs != NULL; TmpDevs = TmpDevs->next)
 	{
-		for(TmpDevs = Devs, i = 0; TmpDevs != NULL; TmpDevs = TmpDevs->next)
-		{
-			PacketAddAdapterAirpcap(TmpDevs->Name, TmpDevs->Description);
+		PADAPTER_INFO TmpAdInfo = NULL;
+		// If the adapter is valid, add it to the list.
+		if (PacketAddAdapterAirpcap(TmpDevs->Name, TmpDevs->Description, &TmpAdInfo)) {
+			TmpAdInfo->Next = g_AdaptersInfoList.Adapters;
+			g_AdaptersInfoList.Adapters = TmpAdInfo;
+			// The info list lengths *include* the null terminators.
+			g_AdaptersInfoList.NamesLen += TmpAdInfo->NameLen + 1;
+			g_AdaptersInfoList.DescsLen += TmpAdInfo->DescLen + 1;
 		}
 	}
 	
@@ -453,20 +459,29 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 
   This function populates the list of adapter descriptions, invoking PacketGetAdapters*()
 */
-void PacketPopulateAdaptersInfoList()
+_Use_decl_annotations_
+DWORD PacketPopulateAdaptersInfoList()
 {
 	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	PADAPTER_INFO TAdInfo;
 	PVOID Mem2;
+	DWORD dwError = ERROR_SUCCESS;
+	ULONGLONG Now = GetTickCount64();
 
 	TRACE_ENTER();
 
 	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 
-	if(g_AdaptersInfoList)
+	if (Now - g_AdaptersInfoList.TicksLastUpdate < ADINFO_LIST_STALE_TICK_COUNT) {
+		// Data is still valid
+		ReleaseMutex(g_AdaptersInfoMutex);
+		return ERROR_SUCCESS;
+	}
+
+	if(g_AdaptersInfoList.Adapters)
 	{
 		// Free the old list
-		TAdInfo = g_AdaptersInfoList;
+		TAdInfo = g_AdaptersInfoList.Adapters;
 		while(TAdInfo != NULL)
 		{
 			Mem2 = TAdInfo;
@@ -475,14 +490,18 @@ void PacketPopulateAdaptersInfoList()
 			HeapFree(GetProcessHeap(), 0, Mem2);
 		}
 		
-		g_AdaptersInfoList = NULL;
+		g_AdaptersInfoList.Adapters = NULL;
 	}
+	// Each list is terminated with an empty string, so length of list is 1 + total length
+	g_AdaptersInfoList.NamesLen = 1;
+	g_AdaptersInfoList.DescsLen = 1;
 
 	//
 	// Fill the new list
 	//
 	if(!PacketGetAdaptersNPF())
 	{
+		dwError = GetLastError();
 		// No info about adapters in the registry. (NDIS adapters, i.e. exported by NPF)
 		TRACE_PRINT("PacketPopulateAdaptersInfoList: registry scan for adapters failed!");
 	}
@@ -492,11 +511,19 @@ void PacketPopulateAdaptersInfoList()
 	{
 		if(!PacketGetAdaptersAirpcap())
 		{
+			if (dwError == ERROR_SUCCESS) {
+				dwError = GetLastError();
+			}
 			TRACE_PRINT("PacketPopulateAdaptersInfoList: lookup of airpcap adapters failed!");
 		}
 	}
 #endif // HAVE_AIRPCAP_API
 
+	if (g_AdaptersInfoList.Adapters == NULL && dwError == ERROR_SUCCESS) {
+		dwError = ERROR_NO_MORE_ITEMS;
+	}
+
 	ReleaseMutex(g_AdaptersInfoMutex);
 	TRACE_EXIT();
+	return dwError;
 }

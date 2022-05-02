@@ -143,9 +143,7 @@ VOID PacketLoadLibrariesDynamically();
 LONG PacketDumpRegistryKey(PCHAR KeyName, PCHAR FileName);
 #endif //_DEBUG_TO_FILE
 
-#include <windowsx.h>
 #include <iphlpapi.h>
-#include <ipifcons.h>
 
 #include <WpcapNames.h>
 
@@ -169,7 +167,7 @@ char PacketDriverName[64];
 //
 // Global adapters list related variables
 //
-extern PADAPTER_INFO g_AdaptersInfoList;
+extern ADINFO_LIST g_AdaptersInfoList;
 extern HANDLE g_AdaptersInfoMutex;
 
 #ifdef LOAD_OPTIONAL_LIBRARIES
@@ -653,97 +651,7 @@ static void NpcapStopHelper()
 	TRACE_EXIT();
 }
 
-// find [substr] from a fixed-length buffer
-// [full_data] will be treated as binary data buffer)
-// return NULL if not found
-static const char* memstr(const char* full_data, size_t full_data_len, const char* substr)
-{
-	size_t sublen;
-	const char* cur;
-	size_t last_possible;
-
-	if (full_data == NULL || full_data_len <= 0 || substr == NULL)
-	{
-		return NULL;
-	}
-
-	if (*substr == '\0')
-	{
-		return NULL;
-	}
-
-	sublen = strlen(substr);
-
-	cur = full_data;
-	last_possible = full_data_len - sublen + 1;
-	for (size_t i = 0; i < last_possible; i++)
-	{
-		if (*cur == *substr)
-		{
-			//assert(full_data_len - i >= sublen);
-			if (memcmp(cur, substr, sublen) == 0)
-			{
-				//found
-				return cur;
-			}
-		}
-		cur ++;
-	}
-
-	return NULL;
-}
-
-// For memory block [mem], substitute all [source] strings with [destination], return the new memory block (need to free), if not found, return NULL.
-static PCHAR NpcapReplaceMemory(LPCSTR buf, int buf_size, LPCSTR source, LPCSTR destination)
-{
-	PCHAR tmp;
-	PCHAR newbuf;
-	PCHAR retbuf;
-	LPCCH sk;
-	size_t size;
-
-	sk = memstr(buf, buf_size, source);
-	if (sk == NULL)
-		return NULL;
-
-	size = 2 * static_cast<size_t>(buf_size) + strlen(destination) + 1;
-	newbuf = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	if (newbuf == NULL)
-		return NULL;
-
-	retbuf = (PCHAR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	if (retbuf == NULL)
-	{
-		HeapFree(GetProcessHeap(), 0, newbuf);
-		return NULL;
-	}
-
-	memcpy_s(newbuf, size - 1, buf, buf_size);
-	sk = memstr(newbuf, size, source);
-
-	while (sk != NULL)
-	{
-		size_t pos = 0;
-		memcpy(retbuf + pos, newbuf, sk - newbuf);
-		pos += sk - newbuf;
-		sk += strlen(source);
-		memcpy(retbuf + pos, destination, strlen(destination));
-		pos += strlen(destination);
-		memcpy(retbuf + pos, sk, newbuf + size - sk);
-
-		tmp = newbuf;
-		newbuf = retbuf;
-		retbuf = tmp;
-
-		memset(retbuf, 0, size);
-		sk = memstr(newbuf, size, source);
-	}
-
-	HeapFree(GetProcessHeap(), 0, retbuf);
-	return newbuf;
-}
-
-static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix)
+static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix, BOOLEAN toupper)
 {
 	PCHAR outstr = NULL;
 	const char *src = NULL;
@@ -791,7 +699,7 @@ static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix)
 		return NULL;
 	}
 
-	if (_strupr_s(outstr, ADAPTER_NAME_LENGTH))
+	if (toupper && _strupr_s(outstr, ADAPTER_NAME_LENGTH))
 	{
 		TRACE_PRINT1("_strupr_s failed with %d", errno);
 		HeapFree(GetProcessHeap(), 0, outstr);
@@ -801,18 +709,15 @@ static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix)
 	return outstr;
 }
 
-#define NPF_DECLARE_FORMAT_NAME(_Fn, _Prefix) static PCHAR NpcapTranslateAdapterName_##_Fn(LPCSTR AdapterName) \
+#define NPF_DECLARE_FORMAT_NAME(_Fn, _Prefix, _ToUpper) \
+static PCHAR NpcapTranslateAdapterName_##_Fn(LPCSTR AdapterName) \
 { \
-	return NpcapFormatAdapterName(AdapterName, _Prefix); \
+	return NpcapFormatAdapterName(AdapterName, _Prefix, _ToUpper); \
 }
 
-NPF_DECLARE_FORMAT_NAME(Standard2Wifi, NPF_DRIVER_COMPLETE_DEVICE_PREFIX NPF_DEVICE_NAMES_TAG_WIFI)
-NPF_DECLARE_FORMAT_NAME(Npf2Npcap, NPF_DRIVER_COMPLETE_DEVICE_PREFIX)
-
-static PCHAR NpcapTranslateMemory_Npcap2Npf(LPCSTR pStr, int iBufSize)
-{
-	return NpcapReplaceMemory(pStr, iBufSize, NPF_DEVICE_NAMES_PREFIX, "NPF_");
-}
+NPF_DECLARE_FORMAT_NAME(Standard2Wifi, NPF_DRIVER_COMPLETE_DEVICE_PREFIX NPF_DEVICE_NAMES_TAG_WIFI, TRUE)
+NPF_DECLARE_FORMAT_NAME(Npf2Npcap, NPF_DRIVER_COMPLETE_DEVICE_PREFIX, TRUE)
+NPF_DECLARE_FORMAT_NAME(Npcap2Npf, "\\Device\\NPF_", FALSE)
 
 /*! 
   \brief The main dll function.
@@ -880,13 +785,13 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 
 		CloseHandle(g_AdaptersInfoMutex);
 		
-		while(g_AdaptersInfoList != NULL)
+		while(g_AdaptersInfoList.Adapters != NULL)
 		{
-			NewAdInfo = g_AdaptersInfoList->Next;
+			NewAdInfo = g_AdaptersInfoList.Adapters->Next;
 
-			HeapFree(GetProcessHeap(), 0, g_AdaptersInfoList);
+			HeapFree(GetProcessHeap(), 0, g_AdaptersInfoList.Adapters);
 			
-			g_AdaptersInfoList = NewAdInfo;
+			g_AdaptersInfoList.Adapters = NewAdInfo;
 		}
 
 		// NpcapHelper De-Initialization.
@@ -1038,7 +943,7 @@ BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
-	_ASSERT(!(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF));
+	assert(!(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF));
 
 	if (AdapterObject->Flags & INFO_FLAG_NPCAP_LOOPBACK) {
 		// Loopback adapter doesn't support this; fake success
@@ -1087,7 +992,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 	DWORD err = ERROR_SUCCESS;
 
  	TRACE_ENTER();
-	_ASSERT(!(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF));
+	assert(!(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF));
 
 	if (AdapterObject->ReadEvent != NULL)
 	{
@@ -3187,13 +3092,14 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 {
 	PADAPTER_INFO	TAdInfo;
 	ULONG	SizeNeeded = 0;
-	ULONG	SizeNames = 0;
-	ULONG	SizeDesc;
-	ULONG	OffDescriptions;
-	PCHAR pStrTranslated = NULL;
 	DWORD dwError = ERROR_SUCCESS;
 
 	TRACE_ENTER();
+
+	if (BufferSize == NULL) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
 	TRACE_PRINT_OS_INFO();
 
@@ -3214,84 +3120,110 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	//
 	TRACE_PRINT("Populating the adapter list...");
 
-	PacketPopulateAdaptersInfoList();
-	dwError = GetLastError();
+	dwError = PacketPopulateAdaptersInfoList();
 
-	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
-
-	if(!g_AdaptersInfoList) 
+	if(dwError != ERROR_SUCCESS) 
 	{
-		ReleaseMutex(g_AdaptersInfoMutex);
 		*BufferSize = 0;
 
 		TRACE_PRINT("No adapters found in the system. Failing.");
-		if (dwError == ERROR_SUCCESS)
-			dwError = ERROR_NO_MORE_ITEMS;
  	
  		TRACE_EXIT();
 		SetLastError(dwError);
 		return FALSE;		// No adapters to return
 	}
 
-	// 
-	// First scan of the list to calculate the offsets and check the sizes
-	//
-	for(TAdInfo = g_AdaptersInfoList; TAdInfo != NULL; TAdInfo = TAdInfo->Next)
-	{
-			// Update the size variables
-			SizeNeeded += (ULONG)strlen(TAdInfo->Name) + (ULONG)strlen(TAdInfo->Description) + 2;
-			SizeNames += (ULONG)strlen(TAdInfo->Name) + 1;
-	}
+	WaitForSingleObject(g_AdaptersInfoMutex, INFINITE);
 
+	SizeNeeded = g_AdaptersInfoList.NamesLen + g_AdaptersInfoList.DescsLen;
 	// Check that we don't overflow the buffer.
-	// Note: 2 is the number of additional separators needed inside the list
-	if(SizeNeeded + 2 > *BufferSize || pStr == NULL)
+	if (pStr == NULL || SizeNeeded > *BufferSize)
 	{
 		ReleaseMutex(g_AdaptersInfoMutex);
 
-		TRACE_PRINT2("PacketGetAdapterNames: input buffer too small (%u) need %u bytes", *BufferSize, SizeNeeded + 2);
+		TRACE_PRINT2("PacketGetAdapterNames: input buffer too small (%u) need %u bytes", pStr ? *BufferSize : 0, SizeNeeded);
  
-		*BufferSize = SizeNeeded + 2;  // Report the required size
+		*BufferSize = SizeNeeded;  // Report the required size
 
 		TRACE_EXIT();
 		SetLastError(ERROR_INSUFFICIENT_BUFFER);
 		return FALSE;
 	}
 
-	OffDescriptions = SizeNames + 1;
-
-	// 
-	// Second scan of the list to copy the information
-	//
-	for(TAdInfo = g_AdaptersInfoList, SizeNames = 0, SizeDesc = 0; TAdInfo != NULL; TAdInfo = TAdInfo->Next)
+	// Leave 1 byte each for empty-string list terminators
+	size_t cchNamesRemaining = g_AdaptersInfoList.NamesLen - 1;
+	size_t cchDescsRemaining = g_AdaptersInfoList.DescsLen - 1;
+	PCHAR pNames = pStr;
+	PCHAR pDescs = pStr + g_AdaptersInfoList.NamesLen;
+	HRESULT hrStatus = S_OK;
+	// Copy the information
+	for(TAdInfo = g_AdaptersInfoList.Adapters; TAdInfo != NULL; TAdInfo = TAdInfo->Next)
 	{
-			// Copy the data
-			StringCchCopyA(
-				((PCHAR)pStr) + SizeNames, 
-				*BufferSize - SizeNames, 
-				TAdInfo->Name);
-			StringCchCopyA(
-				((PCHAR)pStr) + OffDescriptions + SizeDesc, 
-				*BufferSize - OffDescriptions - SizeDesc,
-				TAdInfo->Description);
+		// Translate the adapter name string's "NPCAP_{XXX}" to "NPF_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+		// NOTE: This is only safe because NPF is shorter than NPCAP. We'll have to fix up the lengths later...
+		PCHAR TranslatedName = NpcapTranslateAdapterName_Npcap2Npf(TAdInfo->Name);
+		// Copy the name
+		hrStatus = StringCchCopyExA(
+				pNames, 
+				cchNamesRemaining, 
+				TranslatedName ? TranslatedName : TAdInfo->Name,
+				&pNames, // Receives pointer to null terminator at the end of the name
+				&cchNamesRemaining, // Receives unused chars *including* null terminator.
+				0);
+		if (TranslatedName) {
+			HeapFree(GetProcessHeap(), 0, TranslatedName);
+		}
+		if (FAILED(hrStatus)) {
+			break;
+		}
+		// skip null terminator
+		pNames++;
+		cchNamesRemaining--;
 
-			// Update the size variables
-			SizeNames += (ULONG)strlen(TAdInfo->Name) + 1;
-			SizeDesc += (ULONG)strlen(TAdInfo->Description) + 1;
+		// Copy the description
+		hrStatus = StringCchCopyExA(
+				pDescs,
+				cchDescsRemaining,
+				TAdInfo->Description,
+				&pDescs,
+				&cchDescsRemaining,
+				0);
+		if (FAILED(hrStatus)) {
+			break;
+		}
+		// skip null terminator
+		pDescs++;
+		cchDescsRemaining--;
+	}
+	// Check that all copies succeeded
+	if (FAILED(hrStatus)) {
+		ReleaseMutex(g_AdaptersInfoMutex);
+
+		TRACE_PRINT1("PacketGetAdapterNames: Copy of data failed: %08x", hrStatus);
+ 
+		*BufferSize = SizeNeeded;  // Report the required size
+
+		TRACE_EXIT();
+		SetLastError(hrStatus == STRSAFE_E_INSUFFICIENT_BUFFER ? ERROR_INSUFFICIENT_BUFFER : ERROR_INVALID_PARAMETER);
+		return FALSE;
 	}
 
-	// Separate the two lists
-	((PCHAR)pStr)[SizeNames] = 0;
+	// End each list with a null (empty string)
+	*pNames = '\0';
+	*pDescs = '\0';
 
-	// End the list with a further \0
-	((PCHAR)pStr)[SizeNeeded + 1] = 0;
+	// If we had leftover space for descriptions, adjust reported size (unexpected)
+	SizeNeeded -= (ULONG) cchDescsRemaining;
 
-	// Translate the adapter name string's "NPCAP_{XXX}" to "NPF_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	pStrTranslated = NpcapTranslateMemory_Npcap2Npf(pStr, *BufferSize);
-	if (pStrTranslated)
-	{
-		memcpy_s(((PCHAR)pStr), *BufferSize, pStrTranslated, *BufferSize);
-		HeapFree(GetProcessHeap(), 0, pStrTranslated);
+	// If the names took up less space than we anticipated (due to Npcap2Npf translation)
+	// then we need to shift the descriptions to the left.
+	if (cchNamesRemaining > 0) {
+		// Copy from the original descriptions offset, shifting left by the remaining amount.
+		for (ULONG i = g_AdaptersInfoList.NamesLen; i < SizeNeeded; i++) {
+			pStr[i - cchNamesRemaining] = pStr[i];
+		}
+		// Adjust reported size
+		SizeNeeded -= (ULONG) cchNamesRemaining;
 	}
 
 	ReleaseMutex(g_AdaptersInfoMutex);
@@ -3530,7 +3462,7 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-	_ASSERT(AdapterObject->Name[0] != '\0');
+	assert(AdapterObject->Name[0] != '\0');
 
 #ifdef HAVE_AIRPCAP_API
 	PAirpcapHandle AirpcapAd = PacketGetAirPcapHandle(AdapterObject);
