@@ -101,9 +101,7 @@
 
 #define UNICODE 1
 
-#include <Packet32.h>
 #include "Packet32-Int.h"
-#include "debug.h"
 
 #include <iphlpapi.h>
 #include <strsafe.h>

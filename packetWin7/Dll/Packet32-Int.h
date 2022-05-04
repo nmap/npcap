@@ -92,6 +92,8 @@
 //
 // Internal constants
 //
+#include <Packet32.h>
+#include "debug.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

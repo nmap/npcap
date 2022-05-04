@@ -92,13 +92,12 @@
 
 #define UNICODE 1
 
-#include <Packet32.h>
+#include "Packet32-Int.h"
 #include <tchar.h>
 #include <strsafe.h>
 #include <string>
 #include <ntddndis.h>
 
-#include "Packet32-Int.h"
 #include "../npf/npf/ioctls.h"
 #include "../../version.h"
 #include <ws2tcpip.h>
@@ -106,7 +105,6 @@
 #include <map>
 using namespace std;
 
-#include "debug.h"
 
 #define BUFSIZE 512
 #define MAX_SEM_COUNT 10
