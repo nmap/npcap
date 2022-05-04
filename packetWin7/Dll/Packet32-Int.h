@@ -102,6 +102,10 @@
 #define ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE 15000
 #define ADAPTERS_ADDRESSES_MAX_TRIES 3
 
+#define DEVICE_PREFIX "\\Device\\"
+#define WINPCAP_COMPAT_DEVICE_PREFIX DEVICE_PREFIX "NPF_"
+#define NPCAP_LOOPBACK_ADAPTER_BUILTIN "Loopback"
+
 /*!
   \brief Contains comprehensive information about a network adapter.
 

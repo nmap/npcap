@@ -115,8 +115,8 @@ using namespace std;
 HANDLE g_hNpcapHelperPipe				=	INVALID_HANDLE_VALUE;	// Handle for NpcapHelper named pipe.
 HANDLE g_hDllHandle						=	NULL;					// The handle to this DLL.
 
-CHAR g_strLoopbackAdapterName[BUFSIZE]	= "";						// The name of "Npcap Loopback Adapter".
-#define NPCAP_LOOPBACK_ADAPTER_BUILTIN "NPF_Loopback"
+
+CHAR g_strLoopbackAdapterName[ADAPTER_NAME_LENGTH] = "\0"; // The name of legacy "Npcap Loopback Adapter" from registry.
 BOOLEAN g_bLoopbackSupport = TRUE;
 
 map<string, int> g_nbAdapterMonitorModes;							// The states for all the wireless adapters that show whether it is in the monitor mode.
@@ -498,9 +498,18 @@ static void NpcapGetLoopbackInterfaceName()
 			g_bLoopbackSupport = (0 != *((DWORD *) buffer));
 		}
 		size = sizeof(buffer);
-		if (g_bLoopbackSupport && RegQueryValueExA(hKey, "LoopbackAdapter", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
+		// if we support loopback
+		if (g_bLoopbackSupport
+				// and there's a loopback adapter device name recorded
+				&& RegQueryValueExA(hKey, "LoopbackAdapter", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS
+				// and the type matches and it's an appropriate size
+				&& type == REG_SZ && size < ADAPTER_NAME_LENGTH + sizeof(DEVICE_PREFIX) && size > sizeof(DEVICE_PREFIX))
 		{
-			strncpy_s(g_strLoopbackAdapterName, 512, buffer, sizeof(g_strLoopbackAdapterName)/ sizeof(g_strLoopbackAdapterName[0]) - 1);
+			// Try to copy the adapter ID (skip the "\\Device\\" prefix)
+			if (FAILED(StringCchCopyA(g_strLoopbackAdapterName, sizeof(g_strLoopbackAdapterName), buffer + sizeof(DEVICE_PREFIX) - 1))) {
+				// Failed? Null it out and ignore.
+				g_strLoopbackAdapterName[0] = '\0';
+			}
 		}
 
 		RegCloseKey(hKey);
@@ -712,7 +721,6 @@ static PCHAR NpcapTranslateAdapterName_##_Fn(LPCSTR AdapterName) \
 
 NPF_DECLARE_FORMAT_NAME(Standard2Wifi, NPF_DRIVER_COMPLETE_DEVICE_PREFIX NPF_DEVICE_NAMES_TAG_WIFI, TRUE)
 NPF_DECLARE_FORMAT_NAME(Npf2Npcap, NPF_DRIVER_COMPLETE_DEVICE_PREFIX, TRUE)
-NPF_DECLARE_FORMAT_NAME(Npcap2Npf, "\\Device\\NPF_", FALSE)
 
 /*! 
   \brief The main dll function.
@@ -1274,8 +1282,6 @@ HANDLE PacketGetAdapterHandle(PCCH AdapterNameA)
 
 	TRACE_PRINT1("Trying to open adapter %hs", AdapterNameA);
 
-#define DEVICE_PREFIX "\\Device\\"
-
 	if (strlen(AdapterNameA) <= strlen(DEVICE_PREFIX))
 	{
 		TRACE_PRINT("Device name too short.");
@@ -1642,13 +1648,6 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 		AdapterNameWA = AdapterNameA;
 	}
 
-	// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-	TranslatedAdapterNameA = NpcapTranslateAdapterName_Npf2Npcap(AdapterNameWA);
-	if (TranslatedAdapterNameA)
-	{
-		AdapterNameWA = TranslatedAdapterNameA;
-	}
-
 	do
 	{
 
@@ -1682,6 +1681,14 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 			break;
 		}
 #endif // HAVE_AIRPCAP_API
+
+		// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+		TranslatedAdapterNameA = NpcapTranslateAdapterName_Npf2Npcap(AdapterNameWA);
+		if (TranslatedAdapterNameA)
+		{
+			AdapterNameWA = TranslatedAdapterNameA;
+		}
+
 
 		if (g_nbAdapterMonitorModes[AdapterNameWA] != 0)
 		{
@@ -3106,20 +3113,13 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	// Copy the information
 	for(TAdInfo = g_AdaptersInfoList.Adapters; TAdInfo != NULL; TAdInfo = TAdInfo->Next)
 	{
-		// Translate the adapter name string's "NPCAP_{XXX}" to "NPF_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-		// NOTE: This is only safe because NPF is shorter than NPCAP. We'll have to fix up the lengths later...
-		PCHAR TranslatedName = NpcapTranslateAdapterName_Npcap2Npf(TAdInfo->Name);
-		// Copy the name
-		hrStatus = StringCchCopyExA(
-				pNames, 
-				cchNamesRemaining, 
-				TranslatedName ? TranslatedName : TAdInfo->Name,
+		// Format the adapter name as "NPF_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
+		hrStatus = StringCchPrintfExA(pNames, cchNamesRemaining,
 				&pNames, // Receives pointer to null terminator at the end of the name
 				&cchNamesRemaining, // Receives unused chars *including* null terminator.
-				0);
-		if (TranslatedName) {
-			HeapFree(GetProcessHeap(), 0, TranslatedName);
-		}
+				0,
+				// Airpcap devices are reported as-is; all others get the WinPcap compatibility prefix.
+				IsAirpcapName(TAdInfo->Name) ? "%s" : WINPCAP_COMPAT_DEVICE_PREFIX "%s", TAdInfo->Name);
 		if (FAILED(hrStatus)) {
 			break;
 		}
@@ -3159,10 +3159,16 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 	*pNames = '\0';
 	*pDescs = '\0';
 
+	// There should be no reason for accounting errors in length of these strings.
+	assert(cchDescsRemaining == 0);
+	assert(cchNamesRemaining == 0);
+// Save this code, but hope we never have to use it.
+#define NAME_LENGTH_FIXUP 0
+#if NAME_LENGTH_FIXUP
 	// If we had leftover space for descriptions, adjust reported size (unexpected)
 	SizeNeeded -= (ULONG) cchDescsRemaining;
 
-	// If the names took up less space than we anticipated (due to Npcap2Npf translation)
+	// If the names took up less space than we anticipated (due to adapters disappearing, etc.)
 	// then we need to shift the descriptions to the left.
 	if (cchNamesRemaining > 0) {
 		// Copy from the original descriptions offset, shifting left by the remaining amount.
@@ -3172,6 +3178,7 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 		// Adjust reported size
 		SizeNeeded -= (ULONG) cchNamesRemaining;
 	}
+#endif
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 
@@ -3504,20 +3511,20 @@ _Use_decl_annotations_
 BOOLEAN PacketIsLoopbackAdapter(PCCH AdapterName)
 {
 	BOOLEAN ret;
+	PCCH AdapterGuid = AdapterName + sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1;
 
 	TRACE_ENTER();
 
-	if (strlen(AdapterName) < sizeof(DEVICE_PREFIX)) {
-		// The adapter name is too short.
+	if (0 != _strnicmp(AdapterName, WINPCAP_COMPAT_DEVICE_PREFIX, sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1)) {
+		// The adapter name is too short or isn't a NPF device name
 		ret = FALSE;
 	}
 	// Compare to NPF_Loopback
-	else if (_stricmp(AdapterName + sizeof(DEVICE_PREFIX) - 1, NPCAP_LOOPBACK_ADAPTER_BUILTIN) == 0 ||
-			// or compare to value in Registry, if it's found and long enough.
-			(strlen(g_strLoopbackAdapterName) > sizeof(DEVICE_PREFIX) &&
-			 strlen(AdapterName) > sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) &&
-			 _stricmp(g_strLoopbackAdapterName + sizeof(DEVICE_PREFIX) - 1,
-				 AdapterName + sizeof(DEVICE_PREFIX) - 1 + sizeof(NPF_DEVICE_NAMES_PREFIX) - 1) == 0)
+	else if (0 ==_stricmp(AdapterGuid, NPCAP_LOOPBACK_ADAPTER_BUILTIN) ||
+			// or compare to value from Registry, if it was found.
+			// Need to test explicitly for empty string, since we don't want to match an invalid device name.
+			('\0' != g_strLoopbackAdapterName[0] &&
+			 0 == _stricmp(g_strLoopbackAdapterName, AdapterGuid))
 	   )
 	{
 		ret = TRUE;

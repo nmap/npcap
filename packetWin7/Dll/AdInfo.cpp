@@ -184,7 +184,7 @@ static BOOLEAN PacketAddAdapterNPF(_In_ PIP_ADAPTER_ADDRESSES pAdapterAddr,
 	}
 	
 	// Copy the device name
-	hrStatus = StringCchCopyExA(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), AdName, &NameEnd, NULL, 0);
+	hrStatus = StringCchCopyExA(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), pAdapterAddr->AdapterName, &NameEnd, NULL, 0);
 	if (FAILED(hrStatus)) {
 		HeapFree(GetProcessHeap(), 0, TmpAdInfo);
 		TRACE_EXIT();
@@ -234,7 +234,7 @@ static BOOLEAN PacketAddLoopbackAdapter(
 	}
 
 	// Copy the device name
-	hrStatus = StringCchCopyExA(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), FAKE_LOOPBACK_ADAPTER_NAME, &NameEnd, NULL, 0);
+	hrStatus = StringCchCopyExA(TmpAdInfo->Name, sizeof(TmpAdInfo->Name), NPCAP_LOOPBACK_ADAPTER_BUILTIN, &NameEnd, NULL, 0);
 	if (FAILED(hrStatus)) {
 		HeapFree(GetProcessHeap(), 0, TmpAdInfo);
 		TRACE_EXIT();
@@ -330,8 +330,9 @@ static BOOLEAN PacketGetAdaptersNPF()
 		if (PacketAddAdapterNPF(TmpAddr, &TmpAdInfo)) {
 			TmpAdInfo->Next = g_AdaptersInfoList.Adapters;
 			g_AdaptersInfoList.Adapters = TmpAdInfo;
-			// The info list lengths *include* the null terminators.
-			g_AdaptersInfoList.NamesLen += TmpAdInfo->NameLen + 1;
+			// The info list lengths include the "\\Device\\NPF_" prefix and a null terminator.
+			// Both of those are taken care of with this sizeof operator.
+			g_AdaptersInfoList.NamesLen += TmpAdInfo->NameLen + sizeof(WINPCAP_COMPAT_DEVICE_PREFIX);
 			g_AdaptersInfoList.DescsLen += TmpAdInfo->DescLen + 1;
 		}
 	}
@@ -339,8 +340,9 @@ static BOOLEAN PacketGetAdaptersNPF()
 	if (g_bLoopbackSupport && PacketAddLoopbackAdapter(&TmpAdInfo)) {
 		TmpAdInfo->Next = g_AdaptersInfoList.Adapters;
 		g_AdaptersInfoList.Adapters = TmpAdInfo;
-		// The info list lengths *include* the null terminators.
-		g_AdaptersInfoList.NamesLen += TmpAdInfo->NameLen + 1;
+		// The info list lengths include the "\\Device\\NPF_" prefix and a null terminator.
+		// Both of those are taken care of with this sizeof operator.
+		g_AdaptersInfoList.NamesLen += TmpAdInfo->NameLen + sizeof(WINPCAP_COMPAT_DEVICE_PREFIX);
 		g_AdaptersInfoList.DescsLen += TmpAdInfo->DescLen + 1;
 	}
 
@@ -441,6 +443,7 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 			TmpAdInfo->Next = g_AdaptersInfoList.Adapters;
 			g_AdaptersInfoList.Adapters = TmpAdInfo;
 			// The info list lengths *include* the null terminators.
+			// We don't add any prefixes to Airpcap adapter names.
 			g_AdaptersInfoList.NamesLen += TmpAdInfo->NameLen + 1;
 			g_AdaptersInfoList.DescsLen += TmpAdInfo->DescLen + 1;
 		}
