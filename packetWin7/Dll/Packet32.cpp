@@ -1721,8 +1721,6 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 
 	}while(FALSE);
 
-	ReleaseMutex(g_AdaptersInfoMutex);
-
 	if (NULL != AdapterNameA) HeapFree(GetProcessHeap(), 0, AdapterNameA);
 	if (NULL != WifiAdapterNameA) HeapFree(GetProcessHeap(), 0, WifiAdapterNameA);
 	if (NULL != TranslatedAdapterNameA) HeapFree(GetProcessHeap(), 0, TranslatedAdapterNameA);

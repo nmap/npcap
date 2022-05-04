@@ -365,7 +365,6 @@ _Success_(return != 0)
 static BOOLEAN PacketAddAdapterAirpcap(_In_ PCCH name, _In_ PCCH description,
 		_Outptr_result_nullonfailure_ PADAPTER_INFO *ppAdInfo)
 {
-	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	PADAPTER_INFO TmpAdInfo = NULL;
 	BOOLEAN Result = FALSE;
 	HRESULT hrStatus = S_OK;
@@ -465,7 +464,6 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 _Use_decl_annotations_
 DWORD PacketPopulateAdaptersInfoList()
 {
-	//this function should acquire the g_AdaptersInfoMutex, since it's NOT called with an ADAPTER_INFO as parameter
 	PADAPTER_INFO TAdInfo;
 	PVOID Mem2;
 	DWORD dwError = ERROR_SUCCESS;
