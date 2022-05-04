@@ -107,7 +107,6 @@ using namespace std;
 
 
 #define BUFSIZE 512
-#define MAX_SEM_COUNT 10
 #define MAX_TRY_TIME 50
 #define SLEEP_TIME 50
 
@@ -655,72 +654,59 @@ static void NpcapStopHelper()
 	TRACE_EXIT();
 }
 
-static PCHAR NpcapFormatAdapterName(LPCSTR AdapterName, LPCSTR prefix, BOOLEAN toupper)
+/* Copies the adapter ID (GUID, or whatever comes after "NPF_" in the name) to a new string.
+ * Canonicalizes capitalization for the monitor-mode map (not needed otherwise).
+ * Returned string is a dup and must be freed.
+ * NpfOpenFlags will be set to an appropriate value based on any tags found (e.g. "WIFI_")
+ */
+_Success_(return != NULL)
+_Must_inspect_result_
+static PCHAR NpcapGetAdapterID(_In_ LPCSTR AdapterName, _Out_opt_ PULONG pNpfOpenFlags)
 {
 	PCHAR outstr = NULL;
 	const char *src = NULL;
-	HRESULT hr = S_OK;
-	TRACE_PRINT2("NpcapFormatAdapterName('%hs', '%hs')", AdapterName, prefix);
+	ULONG NpfOpenFlags = 0;
 
-	do
-	{
-		src = strstr(AdapterName, "NPF");
-		if (src)
-		{
-			src += 3;
-			break;
-		}
-
-		src = strstr(AdapterName, "NPCAP");
-		if (src)
-		{
-			src += 5;
-			break;
-		}
-
-		TRACE_PRINT("'NPF' or 'NPCAP' not found");
-		return NULL;
-	} while (FALSE);
-
-	if (src[0] != '_' && src[0] != '\\') // NPCAP_ or NPCAP\ are ok
-	{
-		TRACE_PRINT("'NPCAP' not followed by '_' or '\\'");
+	if (0 != _strnicmp(AdapterName, WINPCAP_COMPAT_DEVICE_PREFIX, sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1)) {
+		// Not expected format
+		SetLastError(ERROR_INVALID_NAME);
 		return NULL;
 	}
-	src++; // Move past \ or _
+	src = AdapterName + sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1;
 
-	outstr = (PCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ADAPTER_NAME_LENGTH);
+	// Look for tags (case sensitive)
+	// First the most common case: no tag or it's loopback
+	if (src[0] == '{' || 0 == _stricmp(src, NPCAP_LOOPBACK_ADAPTER_BUILTIN)) {
+		;// Do nothing
+	}
+	// WIFI_ tag check
+	else if (0 == strncmp(src, NPF_DEVICE_NAMES_TAG_WIFI, sizeof(NPF_DEVICE_NAMES_TAG_WIFI) - 1)) {
+		src += sizeof(NPF_DEVICE_NAMES_TAG_WIFI) - 1;
+		NpfOpenFlags |= NPF_OPEN_FLAG_WIFI;
+	}
+
+	size_t NameLen = strnlen(AdapterName, ADAPTER_NAME_LENGTH);
+	if (NameLen >= ADAPTER_NAME_LENGTH) {
+		TRACE_PRINT("Unterminated or too-long adapter name");
+		SetLastError(ERROR_INVALID_NAME);
+		return NULL;
+	}
+	outstr = (PCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, NameLen + 1);
 	if (!outstr) {
 		TRACE_PRINT("HeapAlloc failed");
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
 
-	hr = StringCchPrintfA(outstr, ADAPTER_NAME_LENGTH, "%s%s", prefix, src);
-	if (FAILED(hr))
-	{
-		TRACE_PRINT("Adapter name too long");
-		HeapFree(GetProcessHeap(), 0, outstr);
-		return NULL;
+	for (UINT i=0; i <= NameLen && src[i] != '\0'; i++) {
+		outstr[i] = (char) toupper(src[i]);
 	}
 
-	if (toupper && _strupr_s(outstr, ADAPTER_NAME_LENGTH))
-	{
-		TRACE_PRINT1("_strupr_s failed with %d", errno);
-		HeapFree(GetProcessHeap(), 0, outstr);
-		return NULL;
+	if (pNpfOpenFlags != NULL) {
+		*pNpfOpenFlags = NpfOpenFlags;
 	}
-
 	return outstr;
 }
-
-#define NPF_DECLARE_FORMAT_NAME(_Fn, _Prefix, _ToUpper) \
-static PCHAR NpcapTranslateAdapterName_##_Fn(LPCSTR AdapterName) \
-{ \
-	return NpcapFormatAdapterName(AdapterName, _Prefix, _ToUpper); \
-}
-
-NPF_DECLARE_FORMAT_NAME(Standard2Wifi, NPF_DRIVER_COMPLETE_DEVICE_PREFIX NPF_DEVICE_NAMES_TAG_WIFI, TRUE)
-NPF_DECLARE_FORMAT_NAME(Npf2Npcap, NPF_DRIVER_COMPLETE_DEVICE_PREFIX, TRUE)
 
 /*! 
   \brief The main dll function.
@@ -1269,27 +1255,32 @@ BOOL PacketStartService()
 	return Result;
 }
 
+PCCH NpfDeviceTag(_In_ ULONG NpfOpenFlags)
+{
+	if ((NpfOpenFlags & NPF_OPEN_FLAG_WIFI) > 0) {
+		return NPF_DEVICE_NAMES_TAG_WIFI;
+	}
+	return "";
+}
+
 _Use_decl_annotations_
-HANDLE PacketGetAdapterHandle(PCCH AdapterNameA)
+HANDLE PacketGetAdapterHandle(PCCH AdapterNameA, ULONG NpfOpenFlags)
 {
 	CHAR SymbolicLinkA[MAX_PATH] = {0};
 	HRESULT hrStatus = S_OK;
 	DWORD err = ERROR_SUCCESS;
 	HANDLE hFile = INVALID_HANDLE_VALUE;
 
+
 	// Create the NPF device name from the original device name
 	TRACE_ENTER();
 
-	TRACE_PRINT1("Trying to open adapter %hs", AdapterNameA);
+	TRACE_PRINT2("Trying to open adapter %hs (%#x)", AdapterNameA, NpfOpenFlags);
 
-	if (strlen(AdapterNameA) <= strlen(DEVICE_PREFIX))
-	{
-		TRACE_PRINT("Device name too short.");
-		TRACE_EXIT();
-		SetLastError(ERROR_INVALID_NAME);
-		return INVALID_HANDLE_VALUE;
-	}
-	hrStatus = StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\Global\\%s", AdapterNameA + strlen(DEVICE_PREFIX));
+	hrStatus = StringCchPrintfA(SymbolicLinkA, MAX_PATH, "\\\\.\\Global\\%s%s%s",
+			NPF_DEVICE_NAMES_PREFIX,
+			NpfDeviceTag(NpfOpenFlags),
+			AdapterNameA);
 	if (FAILED(hrStatus))
 	{
 		TRACE_PRINT1("Failed to format symbolic link: %08x", hrStatus);
@@ -1349,7 +1340,7 @@ HANDLE PacketGetAdapterHandle(PCCH AdapterNameA)
   \note internal function used by PacketOpenAdapter()
 */
 _Ret_maybenull_
-LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterNameA)
+LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterID, ULONG NpfOpenFlags)
 {
 	DWORD error;
 	LPADAPTER lpAdapter;
@@ -1366,26 +1357,17 @@ LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterNameA)
 		return NULL;
 	}
 
-	if (g_bLoopbackSupport && PacketIsLoopbackAdapter(AdapterNameA)) {
-		lpAdapter->Flags |= INFO_FLAG_NPCAP_LOOPBACK;
+	if ((NpfOpenFlags & NPF_OPEN_FLAG_WIFI) > 0) {
+		lpAdapter->Flags |= INFO_FLAG_NPCAP_DOT11;
 	}
 
-	lpAdapter->NumWrites=1;
-
-	lpAdapter->hFile = PacketGetAdapterHandle(AdapterNameA);
+	lpAdapter->hFile = PacketGetAdapterHandle(AdapterID, NpfOpenFlags);
 
 	do {
 		error=GetLastError();
 		if (lpAdapter->hFile == INVALID_HANDLE_VALUE)
 		{
 			TRACE_PRINT("PacketOpenAdapterNPF: Failed to get adapter handle");
-			break;
-		}
-
-		if (FAILED(StringCchCopyA(lpAdapter->Name, ADAPTER_NAME_LENGTH, AdapterNameA)))
-		{
-			error = ERROR_BUFFER_OVERFLOW;
-			TRACE_PRINT("PacketOpenAdapterNPF: Unable to copy adapter name");
 			break;
 		}
 
@@ -1401,11 +1383,6 @@ LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterNameA)
 			// We do not consider this a failure. Would like to avoid it for loopback, though.
 			// break;
 		}
-		//
-		// Indicate that this is a device managed by NPF.sys
-		//
-		lpAdapter->Flags = INFO_FLAG_NDIS_ADAPTER;
-
 
 		TRACE_PRINT("Successfully opened adapter");
 		TRACE_EXIT();
@@ -1476,8 +1453,6 @@ static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 		return NULL;					
 	}
 		  				
-	StringCchCopyA(lpAdapter->Name, ADAPTER_NAME_LENGTH, AdapterName);
-	
 	TRACE_EXIT();
 	return lpAdapter;
 }
@@ -1608,8 +1583,7 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 {
     LPADAPTER lpAdapter = NULL;
 	PCHAR AdapterNameA = NULL;
-	PCHAR TranslatedAdapterNameA = NULL;
-	PCHAR WifiAdapterNameA = NULL;
+	PCHAR AdapterID = NULL;
 	
 	DWORD dwLastError = ERROR_SUCCESS;
  
@@ -1682,48 +1656,49 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 		}
 #endif // HAVE_AIRPCAP_API
 
-		// Translate the adapter name string's "NPF_{XXX}" to "NPCAP_{XXX}" for compatibility with WinPcap, because some user softwares hard-coded the "NPF_" string
-		TranslatedAdapterNameA = NpcapTranslateAdapterName_Npf2Npcap(AdapterNameWA);
-		if (TranslatedAdapterNameA)
+		ULONG NpfOpenFlags = 0;
+		AdapterID = NpcapGetAdapterID(AdapterNameWA, &NpfOpenFlags);
+		if (!AdapterID)
 		{
-			AdapterNameWA = TranslatedAdapterNameA;
+			dwLastError = GetLastError();
+			break;
 		}
 
 
-		if (g_nbAdapterMonitorModes[AdapterNameWA] != 0)
+		// If there's no WIFI hint in the name, but we know it's in monitor mode, try the WIFI version
+		if ((NpfOpenFlags & NPF_OPEN_FLAG_WIFI) == 0 && g_nbAdapterMonitorModes[AdapterID] != 0)
 		{
 			TRACE_PRINT("Try to open in monitor mode");
-			WifiAdapterNameA = NpcapTranslateAdapterName_Standard2Wifi(AdapterNameWA);
-			if (WifiAdapterNameA != NULL)
-			{
-				lpAdapter = PacketOpenAdapterNPF(WifiAdapterNameA);
-				if (lpAdapter == NULL)
-				{
-					dwLastError = GetLastError();
-				}
-				else
-				{
-					lpAdapter->Flags |= INFO_FLAG_NPCAP_DOT11;
-					break;
-				}
-			}
-		}
-		if (lpAdapter == NULL)
-		{
-			// monitor mode failed or not available.
-			TRACE_PRINT("Normal NPF adapter, trying to open it...");
-			lpAdapter = PacketOpenAdapterNPF(AdapterNameWA);
+			lpAdapter = PacketOpenAdapterNPF(AdapterID, NPF_OPEN_FLAG_WIFI);
 			if (lpAdapter == NULL)
 			{
 				dwLastError = GetLastError();
 			}
+			else
+			{
+				lpAdapter->Flags |= INFO_FLAG_NPCAP_DOT11;
+				break;
+			}
+		}
+		if (lpAdapter == NULL)
+		{
+			// Ordinary open
+			TRACE_PRINT("Normal NPF adapter, trying to open it...");
+			lpAdapter = PacketOpenAdapterNPF(AdapterID, NpfOpenFlags);
+			if (lpAdapter == NULL)
+			{
+				dwLastError = GetLastError();
+				break;
+			}
+		}
+		if (g_bLoopbackSupport && PacketIsLoopbackAdapter(AdapterNameWA)) {
+			lpAdapter->Flags |= INFO_FLAG_NPCAP_LOOPBACK;
 		}
 
 	}while(FALSE);
 
 	if (NULL != AdapterNameA) HeapFree(GetProcessHeap(), 0, AdapterNameA);
-	if (NULL != WifiAdapterNameA) HeapFree(GetProcessHeap(), 0, WifiAdapterNameA);
-	if (NULL != TranslatedAdapterNameA) HeapFree(GetProcessHeap(), 0, TranslatedAdapterNameA);
+	if (NULL != AdapterID) HeapFree(GetProcessHeap(), 0, AdapterID);
 
 
 	if (dwLastError != ERROR_SUCCESS)
@@ -3116,8 +3091,12 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 				&pNames, // Receives pointer to null terminator at the end of the name
 				&cchNamesRemaining, // Receives unused chars *including* null terminator.
 				0,
+#ifdef HAVE_AIRPCAP_API
 				// Airpcap devices are reported as-is; all others get the WinPcap compatibility prefix.
-				IsAirpcapName(TAdInfo->Name) ? "%s" : WINPCAP_COMPAT_DEVICE_PREFIX "%s", TAdInfo->Name);
+				IsAirpcapName(TAdInfo->Name) ? "%s" :
+#endif
+				WINPCAP_COMPAT_DEVICE_PREFIX "%s",
+				TAdInfo->Name);
 		if (FAILED(hrStatus)) {
 			break;
 		}
@@ -3416,7 +3395,6 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-	assert(AdapterObject->Name[0] != '\0');
 
 #ifdef HAVE_AIRPCAP_API
 	PAirpcapHandle AirpcapAd = PacketGetAirPcapHandle(AdapterObject);
@@ -3545,31 +3523,31 @@ _Use_decl_annotations_
 int PacketIsMonitorModeSupported(PCCH AdapterName)
 {
 	HANDLE hAdapter;
+	PCHAR AdapterID = NULL;
 	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_OPERATION_MODE_CAPABILITY pOperationModeCapability;
 	int mode;
-	PCHAR WifiAdapterName;
 	DWORD dwResult = ERROR_INVALID_DATA;
 
 	TRACE_ENTER();
 
-	WifiAdapterName = NpcapTranslateAdapterName_Standard2Wifi(AdapterName);
-	if (!WifiAdapterName)
-	{
-		TRACE_PRINT("PacketIsMonitorModeSupported failed, NpcapTranslateAdapterName_Standard2Wifi error");
+	AdapterID = NpcapGetAdapterID(AdapterName, NULL);
+	if (AdapterID == NULL) {
+		dwResult = GetLastError();
+		TRACE_PRINT1("PacketIsMonitorModeSupported failed, NpcapGetAdapterID error %#x", dwResult);
 		TRACE_EXIT();
 		SetLastError(dwResult);
 		return -1;
 	}
 
-	hAdapter = PacketGetAdapterHandle(WifiAdapterName);
+	hAdapter = PacketGetAdapterHandle(AdapterID, NPF_OPEN_FLAG_WIFI);
 	if (hAdapter == INVALID_HANDLE_VALUE)
 	{
 		dwResult = GetLastError();
 		TRACE_PRINT("PacketIsMonitorModeSupported failed, PacketGetAdapterHandle error");
 		TRACE_EXIT();
-		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+		HeapFree(GetProcessHeap(), 0, AdapterID);
 		SetLastError(dwResult);
 		return -1;
 	}
@@ -3596,6 +3574,7 @@ int PacketIsMonitorModeSupported(PCCH AdapterName)
 	}
 
 	CloseHandle(hAdapter);
+	HeapFree(GetProcessHeap(), 0, AdapterID);
 
 	TRACE_PRINT2("PacketIsMonitorModeSupported: AdapterName = %hs, mode = %d", AdapterName, mode);
 
@@ -3615,8 +3594,7 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 {
 	int rval = 0;
 	DWORD dwResult = ERROR_INVALID_DATA;
-	PCHAR TranslatedAdapterName;
-	PCHAR WifiAdapterName;
+	PCHAR AdapterID = NULL;
 	HANDLE hAdapter = INVALID_HANDLE_VALUE;
 	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
@@ -3624,22 +3602,22 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 
 	TRACE_ENTER();
 
-	WifiAdapterName = NpcapTranslateAdapterName_Standard2Wifi(AdapterName);
-	if (!WifiAdapterName)
-	{
-		TRACE_PRINT("PacketSetMonitorMode failed, NpcapTranslateAdapterName_Standard2Wifi error");
+	AdapterID = NpcapGetAdapterID(AdapterName, NULL);
+	if (AdapterID == NULL) {
+		dwResult = GetLastError();
+		TRACE_PRINT1("PacketSetMonitorMode failed, NpcapGetAdapterID error %#x", dwResult);
 		TRACE_EXIT();
 		SetLastError(dwResult);
 		return -1;
 	}
 
-	hAdapter = PacketGetAdapterHandle(WifiAdapterName);
+	hAdapter = PacketGetAdapterHandle(AdapterID, NPF_OPEN_FLAG_WIFI);
 	if (hAdapter == INVALID_HANDLE_VALUE)
 	{
 		dwResult = GetLastError();
-		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
 		TRACE_PRINT("PacketSetMonitorMode failed, PacketGetAdapterHandle error");
 		TRACE_EXIT();
+		HeapFree(GetProcessHeap(), 0, AdapterID);
 		SetLastError(dwResult);
 		return -1;
 	}
@@ -3659,12 +3637,7 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 		case ERROR_SUCCESS:
 			rval = 1;
 			// Update the adapter's monitor mode in the global map.
-			TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
-			if (TranslatedAdapterName)
-			{
-				g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
-				HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-			}
+			g_nbAdapterMonitorModes[AdapterID] = mode;
 		case NDIS_STATUS_INVALID_DATA:
 		case NDIS_STATUS_INVALID_OID:
 			// Monitor mode is not supported.
@@ -3676,7 +3649,7 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 			break;
 	}
 
-	HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+	HeapFree(GetProcessHeap(), 0, AdapterID);
 	TRACE_EXIT();
 	SetLastError(dwResult);
 	return rval;
@@ -3697,27 +3670,26 @@ int PacketGetMonitorMode(PCCH AdapterName)
 	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_CURRENT_OPERATION_MODE pOperationMode = (PDOT11_CURRENT_OPERATION_MODE)OidData->Data;
-	PCHAR TranslatedAdapterName;
-	PCHAR WifiAdapterName;
+	PCHAR AdapterID = NULL;
 
 	TRACE_ENTER();
 
-	WifiAdapterName = NpcapTranslateAdapterName_Standard2Wifi(AdapterName);
-	if (!WifiAdapterName)
-	{
-		TRACE_PRINT("PacketGetMonitorMode failed, NpcapTranslateAdapterName_Standard2Wifi error");
+	AdapterID = NpcapGetAdapterID(AdapterName, NULL);
+	if (AdapterID == NULL) {
+		dwResult = GetLastError();
+		TRACE_PRINT1("PacketGetMonitorMode failed, NpcapGetAdapterID error %#x", dwResult);
 		TRACE_EXIT();
 		SetLastError(dwResult);
 		return -1;
 	}
 
-	hAdapter = PacketGetAdapterHandle(WifiAdapterName);
+	hAdapter = PacketGetAdapterHandle(AdapterID, NPF_OPEN_FLAG_WIFI);
 	if (hAdapter == INVALID_HANDLE_VALUE)
 	{
 		dwResult = GetLastError();
-		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
 		TRACE_PRINT("PacketSetMonitorMode failed, PacketGetAdapterHandle error");
 		TRACE_EXIT();
+		HeapFree(GetProcessHeap(), 0, AdapterID);
 		SetLastError(dwResult);
 		return -1;
 	}
@@ -3728,7 +3700,6 @@ int PacketGetMonitorMode(PCCH AdapterName)
 
 	if (dwResult != ERROR_SUCCESS)
 	{
-		HeapFree(GetProcessHeap(), 0, WifiAdapterName);
 		TRACE_PRINT("PacketGetMonitorMode failed, PacketRequest error");
 		TRACE_EXIT();
 		SetLastError(dwResult);
@@ -3736,15 +3707,10 @@ int PacketGetMonitorMode(PCCH AdapterName)
 	}
 	mode = (pOperationMode->uCurrentOpMode == DOT11_OPERATION_MODE_NETWORK_MONITOR) ? 1 : 0;
 
-	TranslatedAdapterName = NpcapTranslateAdapterName_Npf2Npcap(AdapterName);
-	if (TranslatedAdapterName)
-	{
-		// Update the adapter's monitor mode in the global map.
-		g_nbAdapterMonitorModes[TranslatedAdapterName] = mode;
-		HeapFree(GetProcessHeap(), 0, TranslatedAdapterName);
-	}
+	// Update the adapter's monitor mode in the global map.
+	g_nbAdapterMonitorModes[AdapterID] = mode;
 
-	HeapFree(GetProcessHeap(), 0, WifiAdapterName);
+	HeapFree(GetProcessHeap(), 0, AdapterID);
 	TRACE_EXIT();
 	return mode;
 }

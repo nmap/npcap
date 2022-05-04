@@ -143,7 +143,10 @@ DWORD PacketPopulateAdaptersInfoList();
 _Success_(return != 0)
 BOOL PacketGetFileVersion(_In_ LPCTSTR FileName, _Out_writes_(VersionBuffLen) PCHAR VersionBuff, _In_ UINT VersionBuffLen);
 
-HANDLE PacketGetAdapterHandle(_In_ PCCH AdapterNameA);
+#define NPF_OPEN_FLAG_WIFI 0x1
+_Success_(return != INVALID_HANDLE_VALUE)
+_Must_inspect_result_
+HANDLE PacketGetAdapterHandle(_In_ PCCH AdapterNameA, _In_ ULONG NpfOpenFlags);
 
 static inline VOID InterlockedMax(PULONG Location, ULONG NewValue)
 {

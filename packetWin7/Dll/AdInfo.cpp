@@ -120,7 +120,6 @@ extern AirpcapFreeDeviceListHandler g_PAirpcapFreeDeviceList;
 
 /*!
   \brief Adds an entry to the adapter description list.
-  \param AdName Name of the adapter to add
   \return If the function succeeds, the return value is nonzero.
 
   Used by PacketGetAdaptersNPF(). Queries the driver to fill the PADAPTER_INFO describing the new adapter.
@@ -133,7 +132,6 @@ static BOOLEAN PacketAddAdapterNPF(_In_ PIP_ADAPTER_ADDRESSES pAdapterAddr,
 	LONG		Status;
 	HANDLE hAdapter = INVALID_HANDLE_VALUE;
 	PADAPTER_INFO	TmpAdInfo;
-	CHAR AdName[ADAPTER_NAME_LENGTH];
 	PCHAR NameEnd = NULL;
 	HRESULT hrStatus = S_OK;
 	
@@ -143,13 +141,7 @@ static BOOLEAN PacketAddAdapterNPF(_In_ PIP_ADAPTER_ADDRESSES pAdapterAddr,
  	TRACE_PRINT1("Trying to add adapter %hs", pAdapterAddr->AdapterName);
 	*ppAdInfo = NULL;
 	
-	// Create the NPF device name from the original device name
-	hrStatus = StringCchPrintfA(AdName,
-		sizeof(AdName),
-		"%s%s",
-		NPF_DRIVER_COMPLETE_DEVICE_PREFIX,
-		pAdapterAddr->AdapterName);
-	if (FAILED(hrStatus)) {
+	if (strlen(pAdapterAddr->AdapterName) > ADAPTER_NAME_LENGTH) {
 		TRACE_PRINT("PacketAddAdapterNPF: adapter name is too long to be stored into ADAPTER_INFO::Name, simply skip it");
 		TRACE_EXIT();
 		return FALSE;
@@ -158,7 +150,7 @@ static BOOLEAN PacketAddAdapterNPF(_In_ PIP_ADAPTER_ADDRESSES pAdapterAddr,
 	TRACE_PRINT("Trying to open the NPF adapter and see if it's available...");
 
 	// Try to Open the adapter
-	hAdapter = PacketGetAdapterHandle(AdName);
+	hAdapter = PacketGetAdapterHandle(pAdapterAddr->AdapterName, 0);
 
 	if(hAdapter == INVALID_HANDLE_VALUE)
 	{
