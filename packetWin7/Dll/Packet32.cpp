@@ -3175,6 +3175,8 @@ BOOLEAN PacketGetAdapterNames(PCHAR pStr, PULONG  BufferSize)
 
 	ReleaseMutex(g_AdaptersInfoMutex);
 
+	*BufferSize = SizeNeeded;  // Report the size we used
+
 	TRACE_EXIT();
 	return TRUE;
 }
