@@ -24,10 +24,11 @@ skip_tags: true
 #    environment configuration    #
 #---------------------------------#
 
-os: Windows Server 2012
+image: Visual Studio 2019
 
 # clone directory
 clone_folder: C:\Npcap
+clone_depth: 10
 
 # environment variables
 environment:
@@ -57,7 +58,6 @@ install:
 build_script:
   - cmd: cd installer
   - cmd: echo .| Build.bat
-  - cmd: echo .| Deploy.bat
 
 # to disable automatic builds
 # build: off
