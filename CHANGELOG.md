@@ -1,6 +1,12 @@
 ﻿
 ## Upcoming changes for the next release
 
+* Major overhaul of Packet.dll to improve performance of `PacketGetAdapterNames()`, used by
+  `pcap_findalldevs()`, and `PacketOpenAdapter()`, used in all libpcap functions that return a
+  `pcap_t`. Reduced calls to `GetAdaptersAddresses()`, properly caching results for short periods.
+  Errors from lower functions are correctly propagated, making diagnosis of failures easier. Fixes
+  [#168](http://issues.npcap.org/168), [#61](http://issues.npcap.org/61), and [#586](http://issues.npcap.org/586).
+
 * Npcap is only supported on Windows 7 SP1 and later, and requires KB4474419 to support SHA-2
   signature validation. The installer will now check these specific requirements, rather than
   attempting an installation that will fail anyway.
