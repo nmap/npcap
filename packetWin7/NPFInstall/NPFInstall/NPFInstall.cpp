@@ -105,6 +105,12 @@ _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPL
 
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"NPFInstall -h\" for help.\n")
 
+static int trace_exit(_In_ int nStatus)
+{
+	TRACE_PRINT2("<-- _tmain: %s, nStatus = %d.", nStatus == 0 ? "succeed" : "error", nStatus);
+	return nStatus;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	TRACE_ENTER();
@@ -114,23 +120,36 @@ int _tmain(int argc, _TCHAR* argv[])
 	int nStatus = 0;
 
 	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (https://npcap.com)"));
-	vector<tstring> strArgs;
-	tstring strTmp;
 	bWiFiService = FALSE;
-	for (int i = 0; i < argc; i++)
+	PTSTR theArg = NULL;
+
+	if (argc <= 1 || argc > 3)
 	{
-		strTmp = argv[i];
+		_tprintf(STR_COMMAND_USAGE);
+		return trace_exit(0);
+	}
+
+	for (int i = 1; i < argc; i++)
+	{
 		TRACE_PRINT2("_tmain: executing, argv[%d] = %s.", i, argv[i]);
-		if (strTmp == _T("-n"))
-		{
-			bNoWindow = TRUE;
-		}
-		else if (strTmp.size() == 3 && strTmp[2] == '2') {
-			bWiFiService = TRUE;
-		}
-		else
-		{
-			strArgs.push_back(strTmp);
+		if (argv[i][0] == _T('-')) {
+			if (argv[i][1] == _T('n') && argv[i][2] == _T('\0')) {
+				// -n
+				bNoWindow = TRUE;
+			}
+			else if (argv[i][1] != _T('\0')) {
+				if (theArg != NULL) {
+					// only one command at a time!
+					nStatus = -1;
+					break;
+				}
+				theArg = argv[i];
+				if (theArg[2] == _T('2') && theArg[3] == _T('\0')) {
+					// -i2, -r2, etc.
+					bWiFiService = TRUE;
+					theArg[2] = _T('\0');
+				}
+			}
 		}
 	}
 
@@ -139,260 +158,246 @@ int _tmain(int argc, _TCHAR* argv[])
 		ShowWindow(GetConsoleWindow(), SW_HIDE);
 	}
 
-	if (strArgs.size() == 1)
-	{
-		_tprintf(STR_COMMAND_USAGE);
-		nStatus = 0;
-		goto _EXIT;
-
-	}
-	else if (strArgs.size() >= 3)
+	if (!theArg || nStatus != 0)
 	{
 		_tprintf(STR_INVALID_PARAMETER);
-		nStatus = -1;
-		goto _EXIT;
-	}
-	else //strArgs.size() == 2
-	{
-		if (strArgs[1] == _T("-i") || strArgs[1] == _T("-i2"))
-		{
-			BOOL first_try = TRUE;
-		tryagain_i:
-			bSuccess = InstallDriver();
-			if (bSuccess)
-			{
-				_tprintf(_T("%s has been successfully installed!\n"),
-						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				if (err == NETCFG_S_REBOOT) {
-					_tprintf(_T("%s will be installed after reboot.\n"),
-							bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
-					nStatus = err;
-					goto _EXIT;
-				}
-				if (err == NETCFG_E_MAX_FILTER_LIMIT) {
-					_tprintf(_T("Too many filters installed!\n"));
-					if (first_try && IncrementRegistryDword(_T("SYSTEM\\CurrentControlSet\\Control\\Network"), _T("MaxNumFilters"), 14))
-					{
-						first_try = FALSE;
-						goto tryagain_i;
-					}
-				}
-				else {
-					_tprintf(_T("Unknown error! %x\n"), err);
-				}
-				_tprintf(_T("%s has failed to be installed.\n"),
-						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
-				nStatus = err ? err : -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-u"))
-		{
-			bSuccess = UninstallDriver();
-			if (bSuccess)
-			{
-				_tprintf(_T("%s has been successfully uninstalled!\n"),
-						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
-				nStatus = 0;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				_tprintf(_T("%s failed to be uninstalled.\n"),
-						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
-				nStatus = err ? err : -1;
-			}
-			goto _EXIT;
-		}
-		else if (strArgs[1] == _T("-r"))
-		{
-			bSuccess = RenableBindings();
-			if (bSuccess)
-			{
-				_tprintf(_T("The bindings of %s have been successfully restarted!\n"),
-						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
-				nStatus = 0;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				nStatus = err ? err : 1;
-				_tprintf(_T("The bindings of %s have failed to be restarted.\n"),
-						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
-			}
-			goto _EXIT;
-		}
-		else if (strArgs[1] == _T("-il"))
-		{
-			bSuccess = InstallLoopbackAdapter();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap Loopback adapter has been successfully installed!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				nStatus = err ? err : 1;
-				_tprintf(_T("Npcap Loopback adapter has failed to be installed.\n"));
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-ul"))
-		{
-			bSuccess = UninstallLoopbackAdapter();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap Loopback adapter has been successfully uninstalled!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				nStatus = err ? err : 1;
-				_tprintf(_T("Npcap Loopback adapter has failed to be uninstalled.\n"));
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-iw"))
-		{
-			bSuccess = InstallWFPCallout();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap WFP callout driver has been successfully installed!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				nStatus = err ? err : 1;
-				_tprintf(_T("Npcap WFP callout driver has failed to be installed.\n"));
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-uw"))
-		{
-			bSuccess = UninstallWFPCallout();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap WFP callout driver has been successfully uninstalled!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				nStatus = err ? err : 1;
-				_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-check_dll"))
-		{
-			tstring strInUseProcesses = getInUseProcesses();
-			if (strInUseProcesses == _T(""))
-			{
-				_tprintf(_T("<NULL>\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("%s\n"), strInUseProcesses.c_str());
-				nStatus = -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-kill_proc"))
-		{
-			bSuccess = killInUseProcesses();
-			if (bSuccess)
-			{
-				_tprintf(_T("All the processes that are still using Npcap DLLs have been successfully terminated!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("Some of the processes that are still using Npcap DLLs have failed to be terminated.\n"));
-				nStatus = -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-kill_proc_soft"))
-		{
-			bSuccess = killInUseProcesses_Soft();
-			if (bSuccess)
-			{
-				_tprintf(_T("All the processes that are still using Npcap DLLs have been successfully terminated gracefully!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("Some of the processes that are still using Npcap DLLs have failed to be terminated gracefully.\n"));
-				nStatus = -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-kill_proc_polite"))
-		{
-			bSuccess = killInUseProcesses_Polite();
-			if (bSuccess)
-			{
-				_tprintf(_T("All the processes that are still using Npcap DLLs have been successfully terminated politely!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				_tprintf(_T("Some of the processes that are still using Npcap DLLs have failed to be terminated politely.\n"));
-				nStatus = -1;
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-c"))
-		{
-			bSuccess = ClearDriverStore();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap driver cache in Driver Store has been successfully cleaned up!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				nStatus = err ? err : 1;
-				_tprintf(_T("Npcap driver cache in Driver Store has failed to be cleaned up.\n"));
-				goto _EXIT;
-			}
-		}
-		else if (strArgs[1] == _T("-h"))
-		{
-			_tprintf(STR_COMMAND_USAGE);
-			nStatus = 0;
-			goto _EXIT;
-		}
-		else
-		{
-			_tprintf(STR_INVALID_PARAMETER);
-			nStatus = -1;
-			goto _EXIT;
-		}
+		return trace_exit(-1);
 	}
 
-_EXIT:
-	TRACE_PRINT1("_tmain: %s, nStatus = %d.", nStatus == 0 ? "succeed" : "error", nStatus);
-	TRACE_EXIT();
-	return nStatus;
+	// Guaranteed theArg starts with '-' now
+	switch (theArg[1]) {
+		case _T('i'):
+			if (theArg[2] == _T('\0')) {
+				// -i or -i2
+				BOOL first_time = TRUE;
+				BOOL try_again = FALSE;
+				do {
+					try_again = FALSE;
+					if (InstallDriver())
+					{
+						_tprintf(_T("%s has been successfully installed!\n"),
+								bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
+						break;
+					}
+
+					const DWORD err = GetLastError();
+					if (err == NETCFG_S_REBOOT) {
+						_tprintf(_T("%s will be installed after reboot.\n"),
+								bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
+						nStatus = err;
+					}
+					else if (first_time && err == NETCFG_E_MAX_FILTER_LIMIT) {
+						_tprintf(_T("Too many filters installed!\n"));
+						if (IncrementRegistryDword(_T("SYSTEM\\CurrentControlSet\\Control\\Network"), _T("MaxNumFilters"), 14))
+						{
+							try_again = TRUE;
+						}
+						else {
+							_tprintf(_T("Failed to increment MaxNumFilters: %x\n"), GetLastError());
+						}
+					}
+					else {
+						_tprintf(_T("Unknown error! %x\n"), err);
+						_tprintf(_T("%s has failed to be installed.\n"),
+								bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
+						nStatus = err ? err : -1;
+					}
+					first_time = FALSE;
+				} while (try_again);
+			}
+			else if (theArg[3] == _T('\0')) {
+				switch (theArg[2]) {
+					case _T('l'):
+						if (InstallLoopbackAdapter())
+						{
+							_tprintf(_T("Npcap Loopback adapter has been successfully installed!\n"));
+						}
+						else
+						{
+							const DWORD err = GetLastError();
+							_tprintf(_T("Npcap Loopback adapter has failed to be installed.\n"));
+							nStatus = err ? err : 1;
+						}
+						break;
+					case _T('w'):
+						if (InstallWFPCallout())
+						{
+							_tprintf(_T("Npcap WFP callout driver has been successfully installed!\n"));
+						}
+						else
+						{
+							const DWORD err = GetLastError();
+							_tprintf(_T("Npcap WFP callout driver has failed to be installed.\n"));
+							nStatus = err ? err : 1;
+						}
+						break;
+					default:
+						_tprintf(STR_INVALID_PARAMETER);
+						nStatus = -1;
+						break;
+				}
+			}
+			else {
+				_tprintf(STR_INVALID_PARAMETER);
+				nStatus = -1;
+			}
+			break;
+		case _T('u'):
+			if (theArg[2] == _T('\0')) {
+				bSuccess = UninstallDriver();
+				if (bSuccess)
+				{
+					_tprintf(_T("%s has been successfully uninstalled!\n"),
+							bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
+				}
+				else
+				{
+					const DWORD err = GetLastError();
+					_tprintf(_T("%s failed to be uninstalled.\n"),
+							bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
+					nStatus = err ? err : -1;
+				}
+			}
+			else if (theArg[3] == _T('\0')) {
+				switch (theArg[2]) {
+					case _T('l'):
+						if (UninstallLoopbackAdapter())
+						{
+							_tprintf(_T("Npcap Loopback adapter has been successfully uninstalled!\n"));
+						}
+						else
+						{
+							const DWORD err = GetLastError();
+							_tprintf(_T("Npcap Loopback adapter has failed to be uninstalled.\n"));
+							nStatus = err ? err : 1;
+						}
+						break;
+					case _T('w'):
+						if (UninstallWFPCallout())
+						{
+							_tprintf(_T("Npcap WFP callout driver has been successfully uninstalled!\n"));
+						}
+						else
+						{
+							const DWORD err = GetLastError();
+							_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
+							nStatus = err ? err : 1;
+						}
+					default:
+						_tprintf(STR_INVALID_PARAMETER);
+						nStatus = -1;
+						break;
+				}
+			}
+			else {
+				_tprintf(STR_INVALID_PARAMETER);
+				nStatus = -1;
+			}
+			break;
+		case _T('r'):
+			if (theArg[2] == _T('\0')) {
+				if (RenableBindings())
+				{
+					_tprintf(_T("The bindings of %s have been successfully restarted!\n"),
+							bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
+				}
+				else
+				{
+					const DWORD err = GetLastError();
+					_tprintf(_T("The bindings of %s have failed to be restarted.\n"),
+							bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
+					nStatus = err ? err : 1;
+				}
+			}
+			else {
+				_tprintf(STR_INVALID_PARAMETER);
+				nStatus = -1;
+			}
+			break;
+		case _T('c'):
+			if (theArg[2] == _T('\0'))
+			{
+				if (ClearDriverStore())
+				{
+					_tprintf(_T("Npcap driver cache in Driver Store has been successfully cleaned up!\n"));
+				}
+				else
+				{
+					const DWORD err = GetLastError();
+					_tprintf(_T("Npcap driver cache in Driver Store has failed to be cleaned up.\n"));
+					nStatus = err ? err : 1;
+				}
+			}
+			else if (0 == _tcscmp(theArg, _T("-check_dll"))) {
+				tstring strInUseProcesses = getInUseProcesses();
+				if (strInUseProcesses == _T(""))
+				{
+					_tprintf(_T("<NULL>\n"));
+				}
+				else
+				{
+					_tprintf(_T("%s\n"), strInUseProcesses.c_str());
+					nStatus = -1;
+				}
+			}
+			else {
+				_tprintf(STR_INVALID_PARAMETER);
+				nStatus = -1;
+			}
+			break;
+		case _T('k'):
+			if (0 == _tcscmp(theArg, _T("-kill_proc")))
+			{
+				if (killInUseProcesses())
+				{
+					_tprintf(_T("All the processes that are still using Npcap DLLs have been successfully terminated!\n"));
+				}
+				else
+				{
+					_tprintf(_T("Some of the processes that are still using Npcap DLLs have failed to be terminated.\n"));
+					nStatus = -1;
+				}
+			}
+			else if (0 == _tcscmp(theArg, _T("-kill_proc_soft")))
+			{
+				if (killInUseProcesses_Soft())
+				{
+					_tprintf(_T("All the processes that are still using Npcap DLLs have been successfully terminated gracefully!\n"));
+				}
+				else
+				{
+					_tprintf(_T("Some of the processes that are still using Npcap DLLs have failed to be terminated gracefully.\n"));
+					nStatus = -1;
+				}
+			}
+			else if (0 == _tcscmp(theArg, _T("-kill_proc_polite")))
+			{
+				if (killInUseProcesses_Polite())
+				{
+					_tprintf(_T("All the processes that are still using Npcap DLLs have been successfully terminated politely!\n"));
+				}
+				else
+				{
+					_tprintf(_T("Some of the processes that are still using Npcap DLLs have failed to be terminated politely.\n"));
+					nStatus = -1;
+				}
+			}
+			else {
+				_tprintf(STR_INVALID_PARAMETER);
+				nStatus = -1;
+			}
+			break;
+		case _T('h'):
+			if (theArg[2] == _T('\0'))
+			{
+				_tprintf(STR_COMMAND_USAGE);
+			}
+			// else fall through to default invalid parameter
+		default:
+			_tprintf(STR_INVALID_PARAMETER);
+			nStatus = -1;
+			break;
+	}
+
+	return trace_exit(nStatus);
 }
