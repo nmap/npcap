@@ -879,13 +879,23 @@ VOID PacketLoadLibrariesDynamically()
   \param string The string to convert.
   \return The converted string.
 */
-static PCHAR WChar2SChar(LPCWCH string)
+_Success_(return != NULL)
+_Must_inspect_result_
+static PCHAR WChar2SChar(_In_ LPCWCH string)
 {
 	PCHAR TmpStr;
 	TmpStr = (CHAR*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (DWORD)(wcslen(string)+2));
 
-	if (TmpStr != NULL)
-		WideCharToMultiByte(CP_ACP, 0, string, -1, TmpStr, (DWORD)(wcslen(string)+2), NULL, NULL);
+	if (TmpStr == NULL) {
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return NULL;
+	}
+	if (!WideCharToMultiByte(CP_ACP, 0, string, -1, TmpStr, (DWORD)(wcslen(string)+2), NULL, NULL)) {
+		DWORD err = GetLastError();
+		HeapFree(GetProcessHeap(), 0, TmpStr);
+		SetLastError(err);
+		return NULL;
+	}
 
 	return TmpStr;
 }
@@ -1043,10 +1053,9 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
         lpstrVffInfo = (LPTSTR) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwVerInfoSize);
 		if (lpstrVffInfo == NULL)
 		{
-			err = GetLastError();
 			TRACE_PRINT("PacketGetFileVersion: failed to allocate memory");
 			TRACE_EXIT();
-			SetLastError(err);
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 			return FALSE;
 		}
 
@@ -1091,6 +1100,14 @@ BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffL
 
 		// Convert to ASCII
 		TmpStr = WChar2SChar((PWCHAR) lpBuffer);
+		if (TmpStr == NULL) {
+			err = GetLastError();
+			TRACE_PRINT1("PacketGetFileVersion: failed to convert name to ASCII: %d", err);
+			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
+			TRACE_EXIT();
+			SetLastError(err);
+			return FALSE;
+		}
 
 		if(strlen(TmpStr) >= VersionBuffLen)
 		{
@@ -1350,10 +1367,9 @@ LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterID, ULONG NpfOpenFlags)
 	lpAdapter=(LPADAPTER)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER));
 	if (lpAdapter==NULL)
 	{
-		error=GetLastError();
 		TRACE_PRINT("PacketOpenAdapterNPF: HeapAlloc Failed to allocate the ADAPTER structure");
 		TRACE_EXIT();
-		SetLastError(error);
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
 
@@ -1433,6 +1449,7 @@ static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 	if (lpAdapter == NULL)
 	{
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
 
@@ -1645,6 +1662,7 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 			if(!g_PAirpcapGetReadEvent(lpAdapter->AirpcapAd, &lpAdapter->ReadEvent))
 			{
 				PacketCloseAdapter(lpAdapter);
+				lpAdapter = NULL;
 				dwLastError = ERROR_BAD_UNIT;
 			}
 			else
@@ -1701,19 +1719,9 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 	if (NULL != AdapterID) HeapFree(GetProcessHeap(), 0, AdapterID);
 
 
-	if (dwLastError != ERROR_SUCCESS)
-	{
-		TRACE_EXIT();
-		SetLastError(dwLastError);
-
-		return NULL;
-	}
-	else
-	{
-		TRACE_EXIT();
-
-		return lpAdapter;
-	}
+	TRACE_EXIT();
+	SetLastError(dwLastError);
+	return lpAdapter;
 
 }
 
@@ -1786,7 +1794,7 @@ LPPACKET PacketAllocatePacket(void)
 	lpPacket=(LPPACKET)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PACKET));
     if (lpPacket==NULL)
     {
-	    err = GetLastError();
+	    err = ERROR_NOT_ENOUGH_MEMORY;
         TRACE_PRINT("PacketAllocatePacket: HeapAlloc Failed");
     }
 
@@ -3196,6 +3204,11 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	if(AdapterName[1] == 0)
 	{
 		Tname = WChar2SChar((PWCHAR)AdapterName);
+		if (Tname == NULL) {
+			err = GetLastError();
+			Res = FALSE;
+			goto END_PacketGetNetInfoEx;
+		}
 		AdapterName = Tname;
 	}
 
@@ -3214,12 +3227,14 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 			struct sockaddr_in *pV4 = (struct sockaddr_in *)&loopback_addrs[0].IPAddress;
 			pV4->sin_family = AF_INET;
 			if (1 > InetPtonA(AF_INET, "127.0.0.1", &pV4->sin_addr)) {
+				assert(FALSE);
 				goto END_PacketGetNetInfoEx;
 			}
 
 			pV4 = (struct sockaddr_in*)&loopback_addrs[0].SubnetMask;
 			pV4->sin_family = AF_INET;
 			if (1 > InetPtonA(AF_INET, "255.0.0.0", &pV4->sin_addr)) {
+				assert(FALSE);
 				goto END_PacketGetNetInfoEx;
 			}
 
@@ -3227,6 +3242,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 			pV6->sin6_family = AF_INET6;
 			pV6->sin6_scope_struct.Level = ScopeLevelLink;
 			if (1 > InetPtonA(AF_INET6, "::1", &pV6->sin6_addr)) {
+				assert(FALSE);
 				goto END_PacketGetNetInfoEx;
 			}
 
@@ -3248,12 +3264,14 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	PCCH AdapterGuid = strchr(AdapterName, '{');
 	if (AdapterGuid == NULL)
 	{
+		err = ERROR_INVALID_NAME;
 		goto END_PacketGetNetInfoEx;
 	}
 
 	AdBuffer = (PIP_ADAPTER_ADDRESSES)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, BufLen);
 	if (AdBuffer == NULL)
 	{
+		err = ERROR_NOT_ENOUGH_MEMORY;
 		goto END_PacketGetNetInfoEx;
 	}
 	ULONG RetVal = ERROR_SUCCESS;
@@ -3273,6 +3291,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 			TmpAddr = (PIP_ADAPTER_ADDRESSES)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, AdBuffer, BufLen);
 			if (TmpAddr == NULL)
 			{
+				err = ERROR_NOT_ENOUGH_MEMORY;
 				goto END_PacketGetNetInfoEx;
 			}
 			AdBuffer = TmpAddr;

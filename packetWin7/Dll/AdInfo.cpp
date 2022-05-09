@@ -270,6 +270,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 	{
 		TRACE_PRINT("PacketGetAdaptersNPF: HeapAlloc Failed");
 		TRACE_EXIT();
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return FALSE;
 	}
 	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
@@ -292,6 +293,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 				TRACE_PRINT("PacketGetAdaptersNPF: HeapReAlloc Failed");
 				HeapFree(GetProcessHeap(), 0, AdBuffer);
 				TRACE_EXIT();
+				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 				return FALSE;
 			}
 			AdBuffer = TmpAddr;
@@ -310,6 +312,7 @@ static BOOLEAN PacketGetAdaptersNPF()
 			HeapFree(GetProcessHeap(), 0, AdBuffer);
 		}
 		TRACE_EXIT();
+		SetLastError(RetVal);
 		return FALSE;
 	}
 
