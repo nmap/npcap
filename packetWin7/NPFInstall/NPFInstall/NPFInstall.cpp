@@ -105,18 +105,6 @@ _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPL
 
 #define STR_INVALID_PARAMETER _T("Error: invalid parameter, type in \"NPFInstall -h\" for help.\n")
 
-BOOL PacketRenableBindings()
-{
-	BOOL result;
-
-	TRACE_ENTER();
-
-	result = (BOOL) RenableBindings();
-
-	TRACE_EXIT();
-	return result;
-}
-
 int _tmain(int argc, _TCHAR* argv[])
 {
 	TRACE_ENTER();
@@ -273,7 +261,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		else if (strArgs[1] == _T("-r"))
 		{
 			bWiFiService = FALSE;
-			bSuccess = PacketRenableBindings();
+			bSuccess = RenableBindings();
 			if (bSuccess)
 			{
 				_tprintf(_T("The bindings of Npcap driver have been successfully restarted!\n"));
@@ -291,7 +279,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		else if (strArgs[1] == _T("-r2"))
 		{
 			bWiFiService = TRUE;
-			bSuccess = PacketRenableBindings();
+			bSuccess = RenableBindings();
 			if (bSuccess)
 			{
 				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have been successfully restarted!\n"));
