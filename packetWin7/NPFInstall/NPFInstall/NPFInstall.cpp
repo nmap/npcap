@@ -116,6 +116,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (https://npcap.com)"));
 	vector<tstring> strArgs;
 	tstring strTmp;
+	bWiFiService = FALSE;
 	for (int i = 0; i < argc; i++)
 	{
 		strTmp = argv[i];
@@ -123,6 +124,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		if (strTmp == _T("-n"))
 		{
 			bNoWindow = TRUE;
+		}
+		else if (strTmp.size() == 3 && strTmp[2] == '2') {
+			bWiFiService = TRUE;
 		}
 		else
 		{
@@ -150,15 +154,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	else //strArgs.size() == 2
 	{
-		if (strArgs[1] == _T("-i"))
+		if (strArgs[1] == _T("-i") || strArgs[1] == _T("-i2"))
 		{
 			BOOL first_try = TRUE;
 		tryagain_i:
-			bWiFiService = FALSE;
 			bSuccess = InstallDriver();
 			if (bSuccess)
 			{
-				_tprintf(_T("Npcap LWF driver has been successfully installed!\n"));
+				_tprintf(_T("%s has been successfully installed!\n"),
+						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
 				nStatus = 0;
 				goto _EXIT;
 			}
@@ -166,7 +170,8 @@ int _tmain(int argc, _TCHAR* argv[])
 			{
 				DWORD err = GetLastError();
 				if (err == NETCFG_S_REBOOT) {
-					_tprintf(_T("Npcap LWF driver will be installed after reboot.\n"));
+					_tprintf(_T("%s will be installed after reboot.\n"),
+							bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
 					nStatus = err;
 					goto _EXIT;
 				}
@@ -181,118 +186,47 @@ int _tmain(int argc, _TCHAR* argv[])
 				else {
 					_tprintf(_T("Unknown error! %x\n"), err);
 				}
-				_tprintf(_T("Npcap LWF driver has failed to be installed.\n"));
-				nStatus = err ? err : -1;
-				goto _EXIT;
-			}
-		}
-		if (strArgs[1] == _T("-i2"))
-		{
-			BOOL first_try = TRUE;
-		tryagain_i2:
-			bWiFiService = TRUE;
-			bSuccess = InstallDriver();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has been successfully installed!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				if (err == NETCFG_S_REBOOT) {
-					_tprintf(_T("Npcap LWF driver (with Wi-Fi support) will be installed after reboot.\n"));
-					nStatus = err;
-					goto _EXIT;
-				}
-				if (err == NETCFG_E_MAX_FILTER_LIMIT) {
-					_tprintf(_T("Too many filters installed!\n"));
-					if (first_try && IncrementRegistryDword(_T("SYSTEM\\CurrentControlSet\\Control\\Network"), _T("MaxNumFilters"), 14))
-					{
-						first_try = FALSE;
-						goto tryagain_i2;
-					}
-				}
-				else {
-					_tprintf(_T("Unknown error! %x\n"), err);
-				}
-				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be installed.\n"));
+				_tprintf(_T("%s has failed to be installed.\n"),
+						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
 				nStatus = err ? err : -1;
 				goto _EXIT;
 			}
 		}
 		else if (strArgs[1] == _T("-u"))
 		{
-			bWiFiService = FALSE;
 			bSuccess = UninstallDriver();
 			if (bSuccess)
 			{
-				_tprintf(_T("Npcap LWF driver has been successfully uninstalled!\n"));
+				_tprintf(_T("%s has been successfully uninstalled!\n"),
+						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
 				nStatus = 0;
-				goto _EXIT;
 			}
 			else
 			{
 				DWORD err = GetLastError();
-				_tprintf(_T("Npcap LWF driver has failed to be uninstalled.\n"));
+				_tprintf(_T("%s failed to be uninstalled.\n"),
+						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
 				nStatus = err ? err : -1;
-				goto _EXIT;
 			}
-		}
-		else if (strArgs[1] == _T("-u2"))
-		{
-			bWiFiService = TRUE;
-			bSuccess = UninstallDriver();
-			if (bSuccess)
-			{
-				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has been successfully uninstalled!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				_tprintf(_T("Npcap LWF driver (with Wi-Fi support) has failed to be uninstalled.\n"));
-				nStatus = err ? err : 1;
-				goto _EXIT;
-			}
+			goto _EXIT;
 		}
 		else if (strArgs[1] == _T("-r"))
 		{
-			bWiFiService = FALSE;
 			bSuccess = RenableBindings();
 			if (bSuccess)
 			{
-				_tprintf(_T("The bindings of Npcap driver have been successfully restarted!\n"));
+				_tprintf(_T("The bindings of %s have been successfully restarted!\n"),
+						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
 				nStatus = 0;
-				goto _EXIT;
 			}
 			else
 			{
 				DWORD err = GetLastError();
 				nStatus = err ? err : 1;
-				_tprintf(_T("The bindings of Npcap driver have failed to be restarted.\n"));
-				goto _EXIT;
+				_tprintf(_T("The bindings of %s have failed to be restarted.\n"),
+						bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
 			}
-		}
-		else if (strArgs[1] == _T("-r2"))
-		{
-			bWiFiService = TRUE;
-			bSuccess = RenableBindings();
-			if (bSuccess)
-			{
-				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have been successfully restarted!\n"));
-				nStatus = 0;
-				goto _EXIT;
-			}
-			else
-			{
-				DWORD err = GetLastError();
-				nStatus = err ? err : 1;
-				_tprintf(_T("The bindings of Npcap driver (with Wi-Fi support) have failed to be restarted.\n"));
-				goto _EXIT;
-			}
+			goto _EXIT;
 		}
 		else if (strArgs[1] == _T("-il"))
 		{
@@ -458,14 +392,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 _EXIT:
-	if (nStatus == 0)
-	{
-		TRACE_PRINT1("_tmain: succeed, nStatus = %d.", nStatus);
-	}
-	else
-	{
-		TRACE_PRINT1("_tmain: error, nStatus = %d.", nStatus);
-	}
+	TRACE_PRINT1("_tmain: %s, nStatus = %d.", nStatus == 0 ? "succeed" : "error", nStatus);
 	TRACE_EXIT();
 	return nStatus;
 }
