@@ -136,10 +136,10 @@
 
 #endif /* RC_INVOKED */
 
-#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2021, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_COPYRIGHT_STRING 		"Copyright (c) 2022, Insecure.Com LLC.  All rights reserved."
 #define /*
- !define /**/ WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2021, Insecure.Com LLC.  All rights reserved."
-#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2021, Insecure.Com LLC.  All rights reserved."
+ !define /**/ WINPCAP_INSTALLERHELPER_COPYRIGHT_STRING "Copyright (c) 2022, Insecure.Com LLC.  All rights reserved."
+#define WINPCAP_RPCAPD_COPYRIGHT_STRING "Copyright (c) 2022, Insecure.Com LLC.  All rights reserved."
 
 #define WINPCAP_BUILD_DESCRIPTION 		""
 #define WINPCAP_PRIVATE_BUILD			""

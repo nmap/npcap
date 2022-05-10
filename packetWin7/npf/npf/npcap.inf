@@ -1,7 +1,7 @@
 ;-------------------------------------------------------------------------
 ; NPCAP.INF -- Npcap NDIS 6.x LightWeight Filter Driver
 ;
-; Copyright (c) 2021, Insecure.Com LLC.  All rights reserved.
+; Copyright (c) 2022, Insecure.Com LLC.  All rights reserved.
 ;------------------------------------------------------------------------
 [version]
 Signature       = "$Windows NT$"
