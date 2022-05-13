@@ -3417,7 +3417,10 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 
 #ifdef HAVE_AIRPCAP_API
 	PAirpcapHandle AirpcapAd = PacketGetAirPcapHandle(AdapterObject);
+#pragma warning(disable:26812)
+	// Can't do anything about airpcap's enum type
 	AirpcapLinkType AirpcapLinkLayer;
+#pragma warning(default:26812)
 	if (AirpcapAd)  {
 		type->LinkType = (UINT)NdisMediumNull; // Note: custom linktype, NDIS doesn't provide an equivalent
 		if (g_PAirpcapGetLinkType(AirpcapAd, &AirpcapLinkLayer)) {
