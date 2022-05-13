@@ -7,6 +7,11 @@
   Errors from lower functions are correctly propagated, making diagnosis of failures easier. Fixes
   [#168](http://issues.npcap.org/168), [#61](http://issues.npcap.org/61), and [#586](http://issues.npcap.org/586).
 
+* PacketGetNetType() now always sets the LinkSpeed field to 0. Many adapters did not support the OID
+  that was being used to get the link speed, and libpcap (Npcap's published API) does not pass this
+  information through, so there should be no impact on the majority of software. Software that needs
+  link speed may use `pcap_oid_get_request()` or `GetAdaptersAddresses()` to get the information.
+
 * Npcap is only supported on Windows 7 SP1 and later, and requires KB4474419 to support SHA-2
   signature validation. The installer will now check these specific requirements, rather than
   attempting an installation that will fail anyway.

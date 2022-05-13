@@ -3439,11 +3439,6 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 					break;
 			}
 		}
-		//
-		// For the moment, we always set the speed to 54Mbps, since the speed is not channel-specific,
-		// but per packet
-		//
-		type->LinkSpeed = 54000000;
 	}
 	else
 #endif // HAVE_AIRPCAP_API
@@ -3451,48 +3446,29 @@ BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 		// If this is our loopback adapter, use static values.
 		if (AdapterObject->Flags & INFO_FLAG_NPCAP_LOOPBACK) {
 			type->LinkType = (UINT) NdisMediumNull;
-			type->LinkSpeed = 10 * 1000 * 1000; //we emulate a fake 10MBit Ethernet
 		}
-		// request the media type from the driver
-		else do
-		{
-			// Request the link speed
+		// If this is a WIFI_ adapter, change the link type.
+		else if (AdapterObject->Flags & INFO_FLAG_NPCAP_DOT11) {
+			type->LinkType = (UINT)NdisMediumRadio80211;
+		}
+		else {
+			//get the link-layer type
 			PPACKET_OID_DATA OidData = (PPACKET_OID_DATA) IoCtlBuffer;
-			//get the link-layer speed
-			OidData->Oid = OID_GEN_LINK_SPEED_EX;
-			OidData->Length = sizeof(NDIS_LINK_SPEED);
+
+			OidData->Oid = OID_GEN_MEDIA_IN_USE;
+			OidData->Length = sizeof (ULONG);
 			if (!PacketRequest(AdapterObject, FALSE, OidData)) {
 				err = GetLastError();
-				TRACE_PRINT1("PacketRequest(OID_GEN_LINK_SPEED_EX) error: %d", err);
-				break;
+				TRACE_PRINT1("PacketGetLinkLayerFromRegistry error: %d", err);
 			}
 			else {
-				PNDIS_LINK_SPEED NdisSpeed = (PNDIS_LINK_SPEED)OidData->Data;
-				// Average of Xmit and Rcv speeds is historical. Maybe we should report min instead?
-				type->LinkSpeed = (NdisSpeed->XmitLinkSpeed + NdisSpeed->RcvLinkSpeed) / 2;
+				type->LinkType=*((UINT*)OidData->Data);
 			}
-
-			// If this is a WIFI_ adapter, change the link type.
-			if (AdapterObject->Flags & INFO_FLAG_NPCAP_DOT11) {
-				type->LinkType = (UINT)NdisMediumRadio80211;
-			}
-			else {
-				ZeroMemory(IoCtlBuffer, sizeof(IoCtlBuffer));
-				//get the link-layer type
-				OidData->Oid = OID_GEN_MEDIA_IN_USE;
-				OidData->Length = sizeof (ULONG);
-				if (!PacketRequest(AdapterObject, FALSE, OidData)) {
-					err = GetLastError();
-					TRACE_PRINT1("PacketGetLinkLayerFromRegistry error: %d", err);
-					break;
-				}
-				else {
-					type->LinkType=*((UINT*)OidData->Data);
-				}
-			}
-		} while (FALSE);
+		}
 	}
 
+	// LinkSpeed is not supported
+	type->LinkSpeed = 0;
 	TRACE_EXIT();
 	SetLastError(err);
 	return (err == ERROR_SUCCESS);

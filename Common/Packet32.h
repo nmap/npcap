@@ -156,12 +156,12 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 /*!
   \brief Network type structure.
 
-  This structure is used by the PacketGetNetType() function to return information on the current adapter's type and speed.
+  This structure is used by the PacketGetNetType() function to return information on the current adapter's type.
 */
 typedef struct NetType
 {
 	UINT LinkType;	///< The MAC of the current network adapter (see function PacketGetNetType() for more information)
-	ULONGLONG LinkSpeed;	///< The speed of the network in bits per second
+	ULONGLONG LinkSpeed;	/// UNUSED, set to 0
 }NetType;
 
 
