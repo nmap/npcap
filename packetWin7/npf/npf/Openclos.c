@@ -576,10 +576,6 @@ NPF_OpenAdapter(
 	Open->UserPID = IoGetRequestorProcessId(Irp);
 	if (pFiltMod)
 	{
-		Open->pFiltMod = pFiltMod;
-		Open->AdapterID = pFiltMod->AdapterID;
-		Open->bDot11 = pFiltMod->Dot11;
-		Open->bLoopback = pFiltMod->Loopback;
 	}
 	Open->DeviceExtension = DeviceObject->DeviceExtension;
 
@@ -607,6 +603,7 @@ NPF_OpenAdapter(
 
 	if (pFiltMod)
 	{
+		// Initializes pFiltMod, AdapterID, bDot11, bLoopback, OpenStatus
 		NPF_AddToGroupOpenArray(Open, pFiltMod, FALSE);
 #ifdef HAVE_DOT11_SUPPORT
 		if (Open->bDot11)
@@ -1483,6 +1480,9 @@ NPF_AddToGroupOpenArray(
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
 	pOpen->pFiltMod = pFiltMod;
+	pOpen->AdapterID = pFiltMod->AdapterID;
+	pOpen->bDot11 = pFiltMod->Dot11;
+	pOpen->bLoopback = pFiltMod->Loopback;
 	pOpen->OpenStatus = OpenAttached;
 	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, bAtDispatchLevel);
 
