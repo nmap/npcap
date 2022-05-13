@@ -283,6 +283,7 @@ int _tmain(int argc, _TCHAR* argv[])
 							_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
 							nStatus = err ? err : 1;
 						}
+						break;
 					default:
 						_tprintf(STR_INVALID_PARAMETER);
 						nStatus = -1;
