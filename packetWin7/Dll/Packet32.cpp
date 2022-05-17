@@ -3339,40 +3339,43 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 		ULONG ul = 0;
 		npf_if_addr *pItem = &buffer[numEntries];
 
-		const int AddrLen = pAddr->Address.iSockaddrLength;
-		memcpy(&pItem->IPAddress, pAddr->Address.lpSockaddr, AddrLen);
-		struct sockaddr_storage *IfAddr = (struct sockaddr_storage *)pAddr->Address.lpSockaddr;
-		struct sockaddr_storage* Subnet = (struct sockaddr_storage *)&pItem->SubnetMask;
-		struct sockaddr_storage* Broadcast = (struct sockaddr_storage *)&pItem->Broadcast;
-		Subnet->ss_family = Broadcast->ss_family = IfAddr->ss_family;
-		if (IfAddr->ss_family == AF_INET && pAddr->OnLinkPrefixLength <= 32)
+		// Copy the address (SOCKADDR, a.k.a. sockaddr_storage)
+		memcpy(&pItem->IPAddress, pAddr->Address.lpSockaddr, pAddr->Address.iSockaddrLength);
+
+		// Calculate subnet and broadcast
+		if (pItem->IPAddress.ss_family == AF_INET && pAddr->OnLinkPrefixLength <= 32)
 		{
-			((struct sockaddr_in *)Subnet)->sin_addr.S_un.S_addr = ul = htonl(0xffffffff << (32 - pAddr->OnLinkPrefixLength));
-			((struct sockaddr_in *)Broadcast)->sin_addr.S_un.S_addr = ~ul | ((struct sockaddr_in *)IfAddr)->sin_addr.S_un.S_addr;
+			struct sockaddr_in* IfAddr = (struct sockaddr_in *)&pItem->IPAddress;
+			struct sockaddr_in* Subnet = (struct sockaddr_in *)&pItem->SubnetMask;
+			struct sockaddr_in* Broadcast = (struct sockaddr_in *)&pItem->Broadcast;
+			Subnet->sin_family = Broadcast->sin_family = AF_INET;
+			Subnet->sin_addr.S_un.S_addr = ul = htonl(0xffffffff << (32 - pAddr->OnLinkPrefixLength));
+			Broadcast->sin_addr.S_un.S_addr = ~ul | IfAddr->sin_addr.S_un.S_addr;
 		}
-		else if (IfAddr->ss_family == AF_INET6 && pAddr->OnLinkPrefixLength <= 128)
+		else if (pItem->IPAddress.ss_family == AF_INET6 && pAddr->OnLinkPrefixLength <= 128)
 		{
-			memset(&((struct sockaddr_in6*)Broadcast)->sin6_addr, 0xff, sizeof(IN6_ADDR));
+			struct sockaddr_in6* IfAddr = (struct sockaddr_in6 *)&pItem->IPAddress;
+			struct sockaddr_in6* Subnet = (struct sockaddr_in6 *)&pItem->SubnetMask;
+			struct sockaddr_in6* Broadcast = (struct sockaddr_in6 *)&pItem->Broadcast;
+			Subnet->sin6_family = Broadcast->sin6_family = AF_INET6;
+			memset(&Broadcast->sin6_addr, 0xff, sizeof(IN6_ADDR));
 			for (int i = pAddr->OnLinkPrefixLength, j = 0; i > 0; i-=16, j++)
 			{
 				if (i > 16)
 				{
-					((struct sockaddr_in6*)Subnet)->sin6_addr.u.Word[j] = 0xffff;
-					((struct sockaddr_in6*)Broadcast)->sin6_addr.u.Word[j] = ((struct sockaddr_in6*)IfAddr)->sin6_addr.u.Word[j];
+					Subnet->sin6_addr.u.Word[j] = 0xffff;
+					Broadcast->sin6_addr.u.Word[j] = IfAddr->sin6_addr.u.Word[j];
 				}
 				else
 				{
 					const WORD mask = htons(0xffff << (16 - i));
-					((struct sockaddr_in6*)Subnet)->sin6_addr.u.Word[j] = mask;
-					((struct sockaddr_in6*)Broadcast)->sin6_addr.u.Word[j] = ~mask | ((struct sockaddr_in6*)IfAddr)->sin6_addr.u.Word[j];
+					Subnet->sin6_addr.u.Word[j] = mask;
+					Broadcast->sin6_addr.u.Word[j] = ~mask | IfAddr->sin6_addr.u.Word[j];
 				}
 			}
 		}
-		else
-		{
-			// else unsupported address family, no broadcast or netmask
-			Subnet->ss_family = Broadcast->ss_family = 0;
-		}
+		// else unsupported address family, no broadcast or netmask
+		// Buffer is zeroed, so ss_family will be 0
 		numEntries++;
 		pAddr = pAddr->Next;
 	}
