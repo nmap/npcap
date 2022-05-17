@@ -3195,8 +3195,6 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	PCHAR Tname = NULL;
 	BOOLEAN Res = FALSE;
 	DWORD err = ERROR_SUCCESS;
-	static npf_if_addr loopback_addrs[2] = {0};
-	static BOOLEAN loopback_addrs_init = FALSE;
 
 	TRACE_ENTER();
 
@@ -3231,41 +3229,39 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 
 	if (PacketIsLoopbackAdapter(AdapterName))
 	{
-		if (!loopback_addrs_init) {
-			struct sockaddr_in *pV4 = (struct sockaddr_in *)&loopback_addrs[0].IPAddress;
-			pV4->sin_family = AF_INET;
-			if (1 > InetPtonA(AF_INET, "127.0.0.1", &pV4->sin_addr)) {
-				assert(FALSE);
-				goto END_PacketGetNetInfoEx;
-			}
+		ADDRINFOA hints = {0};
+		PADDRINFOA pAI = NULL;
+		hints.ai_flags = AI_NUMERICHOST;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
 
-			pV4 = (struct sockaddr_in*)&loopback_addrs[0].SubnetMask;
-			pV4->sin_family = AF_INET;
-			if (1 > InetPtonA(AF_INET, "255.0.0.0", &pV4->sin_addr)) {
-				assert(FALSE);
-				goto END_PacketGetNetInfoEx;
-			}
-
-			struct sockaddr_in6 *pV6 = (struct sockaddr_in6 *)&loopback_addrs[1].IPAddress;
-			pV6->sin6_family = AF_INET6;
-			pV6->sin6_scope_struct.Level = ScopeLevelLink;
-			if (1 > InetPtonA(AF_INET6, "::1", &pV6->sin6_addr)) {
-				assert(FALSE);
-				goto END_PacketGetNetInfoEx;
-			}
-
-			pV6 = (struct sockaddr_in6*)&loopback_addrs[1].SubnetMask;
-			pV6->sin6_family = AF_INET6;
-			pV6->sin6_scope_struct.Level = ScopeLevelLink;
-			memset(&pV6->sin6_addr, 0xff, sizeof(IN6_ADDR));
-
-			loopback_addrs_init = TRUE;
-		}
 		*NEntries = min(2, *NEntries);
-		for (int i=0; i < *NEntries; i++) {
-			buffer[i] = loopback_addrs[i];
+		switch (*NEntries) {
+			case 2:
+				// buffer[1] = ipv6;
+				hints.ai_family = AF_INET6;
+				if (0 != getaddrinfo("::1", NULL, &hints, &pAI))
+					break;
+				memcpy(&buffer[1].IPAddress, pAI->ai_addr, sizeof(struct sockaddr_in6));
+				if (0 != getaddrinfo("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", NULL, &hints, &pAI))
+					break;
+				memcpy(&buffer[1].SubnetMask, pAI->ai_addr, sizeof(struct sockaddr_in6));
+			case 1:
+				// buffer[0] = ipv4;
+				hints.ai_family = AF_INET;
+				if (0 != getaddrinfo("127.0.0.1", NULL, &hints, &pAI))
+					break;
+				memcpy(&buffer[0].IPAddress, pAI->ai_addr, sizeof(struct sockaddr_in));
+				if (0 != getaddrinfo("255.0.0.0", NULL, &hints, &pAI))
+					break;
+				memcpy(&buffer[0].SubnetMask, pAI->ai_addr, sizeof(struct sockaddr_in));
+			default:
+				Res = TRUE;
+				break;
 		}
-		Res = TRUE;
+		if (!Res) {
+			err = WSAGetLastError();
+		}
 		goto END_PacketGetNetInfoEx;
 	}
 
