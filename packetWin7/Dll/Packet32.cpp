@@ -3200,6 +3200,14 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 
 	TRACE_ENTER();
 
+	if (!AdapterName || !buffer || NEntries <= 0) {
+		TRACE_EXIT();
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	ZeroMemory(buffer, *NEntries * sizeof(npf_if_addr));
+
 	// Provide conversion for backward compatibility
 	if(AdapterName[1] == 0)
 	{
