@@ -46,7 +46,7 @@
 	#include <sys/socket.h>
 	#include <netinet/in.h>
 #else
-	#include <winsock.h>
+	#include <winsock2.h>
 #endif
 
 #ifdef _WIN32
@@ -67,13 +67,13 @@ BOOL LoadNpcapDlls()
 	}
 	return TRUE;
 }
+
 #endif
 
 
 // Function prototypes
 void ifprint(pcap_if_t *d);
-char *iptos(u_long in);
-char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen);
+const char* iptos(struct sockaddr *sockaddr);
 
 
 int main()
@@ -83,10 +83,18 @@ int main()
 	char errbuf[PCAP_ERRBUF_SIZE+1];
 	
 #ifdef _WIN32
+	WSADATA wsadata;
+	int err = WSAStartup(MAKEWORD(2,2), &wsadata);
+
+	if (err != 0) {
+		fprintf(stderr, "WSAStartup failed: %d\n", err);
+		exit(1);
+	}
 	/* Load Npcap and its functions. */
 	if (!LoadNpcapDlls())
 	{
 		fprintf(stderr, "Couldn't load Npcap\n");
+		WSACleanup();
 		exit(1);
 	}
 #endif
@@ -95,6 +103,7 @@ int main()
 	if(pcap_findalldevs(&alldevs, errbuf) == -1)
 	{
 		fprintf(stderr,"Error in pcap_findalldevs: %s\n", errbuf);
+		WSACleanup();
 		exit(1);
 	}
 	
@@ -107,6 +116,7 @@ int main()
 	/* Free the device list */
 	pcap_freealldevs(alldevs);
 
+	WSACleanup();
 	return 0;
 }
 
@@ -116,7 +126,6 @@ int main()
 void ifprint(pcap_if_t *d)
 {
   pcap_addr_t *a;
-  char ip6str[128];
 
   /* Name */
   printf("%s\n",d->name);
@@ -131,72 +140,51 @@ void ifprint(pcap_if_t *d)
   /* IP addresses */
   for(a=d->addresses;a;a=a->next) {
     printf("\tAddress Family: #%d\n",a->addr->sa_family);
-  
+
     switch(a->addr->sa_family)
     {
       case AF_INET:
         printf("\tAddress Family Name: AF_INET\n");
-        if (a->addr)
-          printf("\tAddress: %s\n",iptos(((struct sockaddr_in *)a->addr)->sin_addr.s_addr));
-        if (a->netmask)
-          printf("\tNetmask: %s\n",iptos(((struct sockaddr_in *)a->netmask)->sin_addr.s_addr));
-        if (a->broadaddr)
-          printf("\tBroadcast Address: %s\n",iptos(((struct sockaddr_in *)a->broadaddr)->sin_addr.s_addr));
-        if (a->dstaddr)
-          printf("\tDestination Address: %s\n",iptos(((struct sockaddr_in *)a->dstaddr)->sin_addr.s_addr));
         break;
 
-	  case AF_INET6:
-       printf("\tAddress Family Name: AF_INET6\n");
-#ifndef __MINGW32__ /* Cygnus doesn't have IPv6 */
-        if (a->addr)
-          printf("\tAddress: %s\n", ip6tos(a->addr, ip6str, sizeof(ip6str)));
-#endif
-		break;
+      case AF_INET6:
+        printf("\tAddress Family Name: AF_INET6\n");
+        break;
 
-	  default:
+      default:
         printf("\tAddress Family Name: Unknown\n");
         break;
     }
+    if (a->addr && a->addr->sa_family > 0)
+      printf("\tAddress: %s\n",iptos(a->addr));
+    if (a->netmask && a->netmask->sa_family > 0)
+      printf("\tNetmask: %s\n",iptos(a->netmask));
+    if (a->broadaddr && a->broadaddr->sa_family > 0)
+      printf("\tBroadcast Address: %s\n",iptos(a->broadaddr));
+    if (a->dstaddr && a->dstaddr->sa_family > 0)
+      printf("\tDestination Address: %s\n",iptos(a->dstaddr));
   }
   printf("\n");
 }
 
-/* From tcptraceroute, convert a numeric IP address to a string */
-#define IPTOSBUFFERS	12
-char *iptos(u_long in)
+#define ADDR_STR_MAX 128
+const char* iptos(struct sockaddr *sockaddr)
 {
-	static char output[IPTOSBUFFERS][3*4+3+1];
-	static short which;
-	u_char *p;
+  static char address[ADDR_STR_MAX] = {0};
+  int gni_error = 0;
 
-	p = (u_char *)&in;
-	which = (which + 1 == IPTOSBUFFERS ? 0 : which + 1);
-	sprintf(output[which], "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
-	return output[which];
+  gni_error = getnameinfo(sockaddr,
+      sizeof(struct sockaddr_storage),
+      address,
+      ADDR_STR_MAX,
+      NULL,
+      0,
+      NI_NUMERICHOST);
+  if (gni_error != 0)
+  {
+    fprintf(stderr, "getnameinfo: %s\n", gai_strerror(gni_error));
+    return "ERROR!";
+  }
+
+  return address;
 }
-
-#ifndef __MINGW32__ /* Cygnus doesn't have IPv6 */
-char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen)
-{
-	socklen_t sockaddrlen;
-
-	#ifdef _WIN32
-	sockaddrlen = sizeof(struct sockaddr_in6);
-	#else
-	sockaddrlen = sizeof(struct sockaddr_storage);
-	#endif
-
-
-	if(getnameinfo(sockaddr, 
-		sockaddrlen, 
-		address, 
-		addrlen, 
-		NULL, 
-		0, 
-		NI_NUMERICHOST) != 0) address = NULL;
-
-	return address;
-}
-#endif /* __MINGW32__ */
-
