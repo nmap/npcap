@@ -140,9 +140,6 @@ typedef struct ADAPTERS_INFO_LIST
 _Success_(return == ERROR_SUCCESS)
 DWORD PacketPopulateAdaptersInfoList();
 
-_Success_(return != 0)
-BOOL PacketGetFileVersion(_In_ LPCTSTR FileName, _Out_writes_(VersionBuffLen) PCHAR VersionBuff, _In_ UINT VersionBuffLen);
-
 #define NPF_OPEN_FLAG_WIFI 0x1
 _Success_(return != INVALID_HANDLE_VALUE)
 _Must_inspect_result_
@@ -159,14 +156,6 @@ static inline VOID InterlockedMax(PULONG Location, ULONG NewValue)
 			return;
 	} while (InterlockedCompareExchange((PLONG)Location, NewValue, prev) != (LONG)prev); 
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-HMODULE LoadLibrarySafe(LPCTSTR lpFileName);
-#ifdef __cplusplus
-}
-#endif
 
 // 
 // Definitions and functions specific to the CACETech airpcap API

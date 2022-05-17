@@ -204,6 +204,9 @@ __declspec (dllexport) VOID PacketRegWoemLeaveHandler(PVOID Handler)
 
 //---------------------------------------------------------------------------
 
+_Success_(return != 0)
+static BOOL PacketGetFileVersion(_In_ LPCTSTR FileName, _Out_writes_(VersionBuffLen) PCHAR VersionBuff, _In_ UINT VersionBuffLen);
+
 //
 // This wrapper around loadlibrary appends the system folder (usually c:\windows\system32)
 // to the relative path of the DLL, so that the DLL is always loaded from an absolute path
@@ -211,7 +214,7 @@ __declspec (dllexport) VOID PacketRegWoemLeaveHandler(PVOID Handler)
 // This solves the DLL Hijacking issue discovered in August 2010
 // http://blog.metasploit.com/2010/08/exploiting-dll-hijacking-flaws.html
 //
-HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
+static HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
 {
   TRACE_ENTER();
 
@@ -1025,7 +1028,7 @@ BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
   \note uses the GetFileVersionInfoSize() and GetFileVersionInfo() WIN32 API functions
 */
 _Use_decl_annotations_
-BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLen)
+static BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT VersionBuffLen)
 {
     DWORD   dwVerInfoSize;  // Size of version information block
     DWORD   dwVerHnd=0;   // An 'ignored' parameter, always '0'
