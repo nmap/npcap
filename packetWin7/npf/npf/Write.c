@@ -828,7 +828,6 @@ NPF_FreePackets(
 {
 	BOOLEAN				FreeBufAfterWrite;
 	PNET_BUFFER_LIST    pNetBufList = NetBufferLists;
-	POPEN_INSTANCE pOpen = NULL;
 	PNET_BUFFER         Currbuff;
 	PMDL                pMdl;
 	PVOID npBuff;
@@ -836,7 +835,6 @@ NPF_FreePackets(
 /*	TRACE_ENTER();*/
 
 	FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
-	pOpen = RESERVED(pNetBufList)->ChildOpen;
 
 	if (FreeBufAfterWrite)
 	{
@@ -859,9 +857,12 @@ NPF_FreePackets(
 	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pOpen && pOpen->pFiltMod && pOpen->pFiltMod->Loopback)
+	POPEN_INSTANCE pOpen = RESERVED(pNetBufList)->ChildOpen;
+	if (NT_VERIFY(NPF_IsOpenInstance(pOpen)) && pOpen->pFiltMod && pOpen->pFiltMod->Loopback)
 	{
 		FwpsFreeNetBufferList(pNetBufList);
+		// FwpsFreeNetBufferList lacks the __drv_freesMem SAL annotation needed
+		NPF_AnalysisAssumeFreed(pNetBufList);
 	}
 	else
 #endif

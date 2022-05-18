@@ -525,6 +525,17 @@ NPF_AnalysisAssumeAliased(_In_ __drv_aliasesMem PVOID p)
 	return;
 }
 
+// This function exists only to suppress C6014 regarding memory leak.
+// Be very suspicious of any use of it!
+// MUST be accompanied by a well-researched justification.
+inline VOID
+#pragma warning(suppress: 6014)
+NPF_AnalysisAssumeFreed(_In_ __drv_freesMem(mem) PVOID p)
+{
+	UNREFERENCED_PARAMETER(p);
+	return;
+}
+
 /*!
 \brief Context information for originated sent packets
 */
