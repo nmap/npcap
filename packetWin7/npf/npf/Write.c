@@ -100,21 +100,6 @@ extern ULONG g_DltNullMode;
 extern HANDLE g_InjectionHandle_IPv4;
 extern HANDLE g_InjectionHandle_IPv6;
 
-/*!
-  \brief Ends a send operation.
-  \param pFiltMod Pointer to filter module context structure
-  \param FreeBufAfterWrite Whether the buffer should be freed.
-
-  Callback function associated with the NdisFSend() NDIS function. It is invoked by NPF_SendCompleteEx() when the NIC
-  driver has finished an OID request operation that was previously started by NPF_Write().
-*/
-_IRQL_requires_min_(DISPATCH_LEVEL)
-VOID
-NPF_SendCompleteExForEachOpen(
-	_In_ POPEN_INSTANCE Open,
-	_In_ BOOLEAN FreeBufAfterWrite
-	);
-
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
   \brief Send a loopback NBL.
@@ -925,8 +910,8 @@ Return Value:
 	POPEN_INSTANCE		TempOpen;
 	LOCK_STATE_EX lockState;
 	BOOLEAN				FreeBufAfterWrite;
-	PNET_BUFFER_LIST    pNetBufList;
-	PNET_BUFFER_LIST    pNextNetBufList;
+	PNET_BUFFER_LIST    pNetBufList = NULL;
+	PNET_BUFFER_LIST    pPrevNetBufList = NULL;
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 
 	TRACE_ENTER();
@@ -939,108 +924,93 @@ Return Value:
 	//
 
 	pNetBufList = NetBufferLists;
-
 	while (pNetBufList != NULL)
 	{
-		pNextNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
-		NET_BUFFER_LIST_NEXT_NBL(pNetBufList) = NULL;
+		// Keep track of this one
+		PNET_BUFFER_LIST pNBL = pNetBufList;
+		// Point to the next one
+		pNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
 
-		if (pNetBufList->SourceHandle == pFiltMod->AdapterHandle) //this is our self-sent packets
+		if (pNBL->SourceHandle != pFiltMod->AdapterHandle)
 		{
-			ChildOpen = RESERVED(pNetBufList)->ChildOpen; //get the child open object that sends these packets
-			FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
+			// No match, just move down.
+			pPrevNetBufList = pNetBufList;
+			continue;
+		}
 
-			NPF_FreePackets(pNetBufList);
+		// else this is our self-sent packets
 
-			/* Lock the group */
-			NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState, 
-				NDIS_TEST_SEND_COMPLETE_AT_DISPATCH_LEVEL(SendCompleteFlags)
-			       	? NDIS_RWL_AT_DISPATCH_LEVEL
-			       	: 0);
+		// Remove this one from the chain and move down.
+		if (pPrevNetBufList == NULL) {
+			// head of list, repoint NetBufferLists
+			NetBufferLists = pNetBufList;
+		}
+		else {
+			NET_BUFFER_LIST_NEXT_NBL(pPrevNetBufList) = pNetBufList;
+		}
 
-			for (Curr = pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-			{
-				TempOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-				if (ChildOpen == TempOpen) //only indicate the specific child open object
-				{
-					NPF_SendCompleteExForEachOpen(TempOpen, FreeBufAfterWrite);
-					break;
-				}
+		ChildOpen = RESERVED(pNBL)->ChildOpen; //get the child open object that sends these packets
+		// Verify that the context was set properly
+		if (!NT_VERIFY(NPF_IsOpenInstance(ChildOpen))) {
+			continue;
+		}
 
-			}
-			/* Release the spin lock no matter what. */
-			NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
+		FreeBufAfterWrite = RESERVED(pNBL)->FreeBufAfterWrite;
+
+		NPF_FreePackets(pNBL);
+
+		FILTER_ACQUIRE_LOCK(&ChildOpen->OpenInUseLock,
+				SendCompleteFlags & NDIS_SEND_COMPLETE_FLAGS_DISPATCH_LEVEL);
+
+		if (FreeBufAfterWrite)
+		{
+			// Increment the number of pending sends
+			NpfInterlockedDecrement(&(LONG)ChildOpen->Multiple_Write_Counter);
+
+			NdisSetEvent(&ChildOpen->WriteEvent);
 		}
 		else
 		{
-			// Send complete the NBLs.  If you removed any NBLs from the chain, make
-			// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
-			NdisFSendNetBufferListsComplete(pFiltMod->AdapterHandle, pNetBufList, SendCompleteFlags);
+			//
+			// Packet sent by NPF_Write()
+			//
+
+			ULONG stillPendingPackets = NpfInterlockedDecrement(&(LONG)ChildOpen->TransmitPendingPackets);
+
+			//
+			// if the number of packets submitted to NdisSend and not acknoledged is less than half the
+			// packets in the TX pool, wake up any transmitter waiting for available packets in the TX
+			// packet pool
+			//
+			if (stillPendingPackets < TRANSMIT_PACKETS/2)
+			{
+				NdisSetEvent(&ChildOpen->WriteEvent);
+			}
+			else
+			{
+				//
+				// otherwise, reset the event, so that we are sure that the NPF_Write will eventually block to
+				// wait for availability of packets in the TX packet pool
+				//
+				NdisResetEvent(&ChildOpen->WriteEvent);
+			}
+
+			if (stillPendingPackets == 0)
+			{
+				NdisSetEvent(&ChildOpen->NdisWriteCompleteEvent);
+			}
 		}
 
-		pNetBufList = pNextNetBufList;
+		FILTER_RELEASE_LOCK(&ChildOpen->OpenInUseLock,
+				SendCompleteFlags & NDIS_SEND_COMPLETE_FLAGS_DISPATCH_LEVEL);
+	}
+
+	// Send complete any NBLS that are left (didn't originate with us)
+	if (NetBufferLists != NULL) {
+		NdisFSendNetBufferListsComplete(pFiltMod->AdapterHandle, NetBufferLists, SendCompleteFlags);
 	}
 
 	TRACE_EXIT();
-}
-
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-VOID
-NPF_SendCompleteExForEachOpen(
-	POPEN_INSTANCE Open,
-	BOOLEAN FreeBufAfterWrite
-	)
-{
-	//TRACE_ENTER();
-
-	FILTER_ACQUIRE_LOCK(&Open->OpenInUseLock, TRUE);
-
-	if (FreeBufAfterWrite)
-	{
-		// Increment the number of pending sends
-		NpfInterlockedDecrement(&(LONG)Open->Multiple_Write_Counter);
-
-		NdisSetEvent(&Open->WriteEvent);
-
-		//TRACE_EXIT();
-	}
-	else
-	{
-		//
-		// Packet sent by NPF_Write()
-		//
-
-		ULONG stillPendingPackets = NpfInterlockedDecrement(&(LONG)Open->TransmitPendingPackets);
-
-		//
-		// if the number of packets submitted to NdisSend and not acknoledged is less than half the
-		// packets in the TX pool, wake up any transmitter waiting for available packets in the TX
-		// packet pool
-		//
-		if (stillPendingPackets < TRANSMIT_PACKETS/2)
-		{
-			NdisSetEvent(&Open->WriteEvent);
-		}
-		else
-		{
-			//
-			// otherwise, reset the event, so that we are sure that the NPF_Write will eventually block to
-			// wait for availability of packets in the TX packet pool
-			//
-			NdisResetEvent(&Open->WriteEvent);
-		}
-
-		if (stillPendingPackets == 0)
-		{
-			NdisSetEvent(&Open->NdisWriteCompleteEvent);
-		}
-
-		//TRACE_EXIT();
-	}
-
-	FILTER_RELEASE_LOCK(&Open->OpenInUseLock, TRUE);
 }
 
 //-------------------------------------------------------------------
