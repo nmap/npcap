@@ -278,13 +278,6 @@ NPF_Write(
 		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 	}
 
-	//
-	// reset the number of packets pending the SendComplete
-	//
-	Open->TransmitPendingPackets = 0;
-
-	NdisResetEvent(&Open->WriteEvent);
-
 	numSentPackets = 0;
 
 	while (numSentPackets < NumSends)
@@ -297,34 +290,30 @@ NPF_Write(
 				buflen,
 				&pNetBufferList);
 
-		if (NT_SUCCESS(Status) && NT_VERIFY(pNetBufferList != NULL))
+		if (!NT_SUCCESS(Status) || !NT_VERIFY(pNetBufferList != NULL))
 		{
-			//
-			// packet is available, prepare it and send it with NdisSend.
-			//
+			// Alloc failure, abandon ship
+			break;
+		}
 
-			// The packet hasn't a buffer that needs not to be freed after every single write
-			RESERVED(pNetBufferList)->FreeBufAfterWrite = FALSE;
+		// The packet hasn't a buffer that needs not to be freed after every single write
+		RESERVED(pNetBufferList)->FreeBufAfterWrite = FALSE;
 
-			// Attach the writes buffer to the packet
+		// Attach the writes buffer to the packet
 
-			NT_ASSERT(Open->pFiltMod != NULL);
+		NT_ASSERT(Open->pFiltMod != NULL);
 
-			NpfInterlockedIncrement(&(LONG)Open->TransmitPendingPackets);
+		//receive the packets before sending them
 
-			NdisResetEvent(&Open->NdisWriteCompleteEvent);
+		// Used to avoid capturing loopback injected traffic here because it's captured later, but now I do it here and avoid capturing it later.
+		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
 
-			//receive the packets before sending them
+		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
+		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
 
-			// Used to avoid capturing loopback injected traffic here because it's captured later, but now I do it here and avoid capturing it later.
-			NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
-
-			pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
-			RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
-
-			// Recognize IEEE802.1Q tagged packet, as no many adapters support VLAN tag packet sending, no much use for end users,
-			// and this code examines the data which lacks efficiency, so I left it commented, the sending part is also unfinished.
-			// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
+		// Recognize IEEE802.1Q tagged packet, as no many adapters support VLAN tag packet sending, no much use for end users,
+		// and this code examines the data which lacks efficiency, so I left it commented, the sending part is also unfinished.
+		// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
 // 			if (Open->pFiltMod->Loopback == FALSE)
 // 			{
 // 				PUCHAR pHeaderBuffer;
@@ -363,86 +352,52 @@ NPF_Write(
 // 				}
 // 			}
 
-			//
-			//  Call the MAC
-			//
+		//
+		//  Call the MAC
+		//
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-			if (Open->pFiltMod->Loopback == TRUE)
+		if (Open->pFiltMod->Loopback == TRUE)
+		{
+			Status = NPF_LoopbackSendNetBufferLists(Open->pFiltMod,
+				pNetBufferList);
+			if (!NT_SUCCESS(Status))
 			{
-				Status = NPF_LoopbackSendNetBufferLists(Open->pFiltMod,
-					pNetBufferList);
-				if (!NT_SUCCESS(Status))
-				{
-					// Couldn't send this one. Don't wait for it!
-					NpfInterlockedDecrement(&(LONG)Open->TransmitPendingPackets);
-					NPF_FreePackets(pNetBufferList);
-					break;
-				}
+				NPF_FreePackets(pNetBufferList);
+				break;
+			}
+		}
+		else
+#endif
+#ifdef HAVE_RX_SUPPORT
+			if (Open->pFiltMod->SendToRxPath == TRUE)
+			{
+				IF_LOUD(DbgPrint("NPF_Write::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);)
+				// pretend to receive these packets from network and indicate them to upper layers
+				NdisFIndicateReceiveNetBufferLists(
+					Open->pFiltMod->AdapterHandle,
+					pNetBufferList,
+					NDIS_DEFAULT_PORT_NUMBER,
+					1,
+					0); // If NDIS_RECEIVE_FLAGS_RESOURCES, would need to free pNetBufferList after this.
+				// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the annotations for
+				// NdisFIndicateReceiveNetBufferLists do not use __drv_aliasesMem for the 2nd parameter.
+				// When Flags (5th parameter) do *not* have NDIS_RECEIVE_FLAGS_RESOURCES set, the NBL is
+				// owned by NDIS until it is returned via NPF_ReturnEx (FilterReturnNetBufferLists handler)
+				// Therefore we must not free it, and it is not leaking here.
+				NPF_AnalysisAssumeAliased(pNetBufferList);
 			}
 			else
 #endif
-#ifdef HAVE_RX_SUPPORT
-				if (Open->pFiltMod->SendToRxPath == TRUE)
-				{
-					IF_LOUD(DbgPrint("NPF_Write::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);)
-					// pretend to receive these packets from network and indicate them to upper layers
-					NdisFIndicateReceiveNetBufferLists(
-						Open->pFiltMod->AdapterHandle,
-						pNetBufferList,
-						NDIS_DEFAULT_PORT_NUMBER,
-						1,
-						0); // If NDIS_RECEIVE_FLAGS_RESOURCES, would need to free pNetBufferList after this.
-					// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the annotations for
-					// NdisFIndicateReceiveNetBufferLists do not use __drv_aliasesMem for the 2nd parameter.
-					// When Flags (5th parameter) do *not* have NDIS_RECEIVE_FLAGS_RESOURCES set, the NBL is
-					// owned by NDIS until it is returned via NPF_ReturnEx (FilterReturnNetBufferLists handler)
-					// Therefore we must not free it, and it is not leaking here.
-					NPF_AnalysisAssumeAliased(pNetBufferList);
-				}
-				else
-#endif
-				{
-					NdisFSendNetBufferLists(Open->pFiltMod->AdapterHandle,
-						pNetBufferList,
-						NDIS_DEFAULT_PORT_NUMBER,
-						SendFlags);
-				}
+			{
+				NdisFSendNetBufferLists(Open->pFiltMod->AdapterHandle,
+					pNetBufferList,
+					NDIS_DEFAULT_PORT_NUMBER,
+					SendFlags);
+			}
 
-			numSentPackets ++;
-		}
-		else
-		{
-			//
-			// no packets are available in the Transmit pool, wait some time. The 
-			// event gets signalled when at least half of the TX packet pool packets
-			// are available
-			//
-			NdisWaitEvent(&Open->WriteEvent, 1);
-		}
+		numSentPackets ++;
 	}
 
-	//
-	// when we reach this point, all the packets have been enqueued to NdisSend,
-	// we just need to wait for all the packets to be completed by the SendComplete
-	// (if any of the NdisSend requests returned STATUS_PENDING)
-	//
-	
-	if (
-#ifdef HAVE_RX_SUPPORT
-		// SendToRxPath receive indications do not block or set an event when they are done.
-		// Maybe they should, or maybe Send indications should not.
-		// Either way, need to avoid waiting for something that won't happen.
-		!Open->pFiltMod->SendToRxPath &&
-#endif
-		NT_SUCCESS(Status))
-	{
-		// TODO: Don't wait forever? Some sort of error would be good.
-		NdisWaitEvent(&Open->NdisWriteCompleteEvent, 0);
-	}
-
-	//
-	// no more writes are in progress
-	//
 	InterlockedExchange(&Open->WriteInProgress, 0);
 
 	NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
@@ -458,36 +413,6 @@ NPF_Write_End:
 	TRACE_EXIT();
 
 	return Status;
-}
-
-//-------------------------------------------------------------------
-
-/*!
-  \brief Waits the completion of all the sends performed by NPF_BufferedWrite.
-  \param Open Pointer to open context structure.
-
-  This function is used by NPF_BufferedWrite to wait the completion of
-  all the sends before returning the control to the user.
-*/
-_IRQL_requires_(PASSIVE_LEVEL)
-VOID
-NPF_WaitEndOfBufferedWrite(
-	_In_ POPEN_INSTANCE Open
-	)
-{
-	UINT i;
-
-	TRACE_ENTER();
-
-	NdisResetEvent(&Open->WriteEvent);
-
-	for (i = 0; Open->Multiple_Write_Counter > 0 && i < TRANSMIT_PACKETS; i++)
-	{
-		NdisWaitEvent(&Open->WriteEvent, 100);  
-		NdisResetEvent(&Open->WriteEvent);
-	}
-
-	TRACE_EXIT();
 }
 
 //-------------------------------------------------------------------
@@ -560,12 +485,6 @@ NTSTATUS NPF_BufferedWrite(
 		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 	}
 
-
-	// Reset the event used to synchronize packet allocation
-	NdisResetEvent(&Open->WriteEvent);
-
-	// Reset the pending packets counter
-	Open->Multiple_Write_Counter = 0;
 
 	pHdr = (struct dump_bpf_hdr *)(UserBuff);
 
@@ -651,26 +570,12 @@ NTSTATUS NPF_BufferedWrite(
 		{
 			//  No more free packets
 			
-			NdisResetEvent(&Open->WriteEvent);
+			IF_LOUD(DbgPrint("NPF_BufferedWrite: no more free packets, returning.\n");)
 
-			NdisWaitEvent(&Open->WriteEvent, 1000);  
+			NdisFreeMdl(TmpMdl);
+			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 
-			// Try again to allocate a packet
-			Status = NPF_AllocateNBL(Open->pFiltMod,
-					TmpMdl,
-					pHdr->caplen,
-					&pNetBufferList);
-
-			if (!NT_SUCCESS(Status))
-			{
-				// Second failure, report an error
-				IF_LOUD(DbgPrint("NPF_BufferedWrite: no more free packets, returning.\n");)
-
-				NdisFreeMdl(TmpMdl);
-				ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
-
-				break;
-			}
+			break;
 		}
 		NT_ASSERT(pNetBufferList != NULL);
 
@@ -680,9 +585,6 @@ NTSTATUS NPF_BufferedWrite(
 		TmpMdl->Next = NULL;
 
 		NT_ASSERT(Open->pFiltMod != NULL);
-
-		// Increment the number of pending sends
-		NpfInterlockedIncrement(&(LONG)Open->Multiple_Write_Counter);
 
 		if (Sync)
 		{
@@ -744,7 +646,6 @@ NTSTATUS NPF_BufferedWrite(
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
-				NpfInterlockedDecrement(&(LONG)Open->Multiple_Write_Counter);
 				NPF_FreePackets(pNetBufferList);
 				break;
 			}
@@ -783,15 +684,6 @@ NTSTATUS NPF_BufferedWrite(
 
 		Pos = ulDataOffset + pHdr->caplen;
 	}
-
-	// Wait the completion of pending sends
-#ifdef HAVE_RX_SUPPORT
-	// SendToRxPath receive indications do not block or set an event when they are done.
-	// Maybe they should, or maybe Send indications should not.
-	// Either way, need to avoid waiting for something that won't happen.
-	if (!Open->pFiltMod->SendToRxPath)
-#endif
-		NPF_WaitEndOfBufferedWrite(Open);
 
 	*Written = Pos;
 
@@ -936,74 +828,22 @@ Return Value:
 		{
 			// No match, just move down.
 			pPrevNetBufList = pNetBufList;
-			continue;
-		}
-
-		// else this is our self-sent packets
-
-		// Remove this one from the chain and move down.
-		if (pPrevNetBufList == NULL) {
-			// head of list, repoint NetBufferLists
-			NetBufferLists = pNetBufList;
-		}
-		else {
-			NET_BUFFER_LIST_NEXT_NBL(pPrevNetBufList) = pNetBufList;
-		}
-
-		ChildOpen = RESERVED(pNBL)->ChildOpen; //get the child open object that sends these packets
-		// Verify that the context was set properly
-		if (!NT_VERIFY(NPF_IsOpenInstance(ChildOpen))) {
-			continue;
-		}
-
-		FreeBufAfterWrite = RESERVED(pNBL)->FreeBufAfterWrite;
-
-		NPF_FreePackets(pNBL);
-
-		FILTER_ACQUIRE_LOCK(&ChildOpen->OpenInUseLock,
-				SendCompleteFlags & NDIS_SEND_COMPLETE_FLAGS_DISPATCH_LEVEL);
-
-		if (FreeBufAfterWrite)
-		{
-			// Increment the number of pending sends
-			NpfInterlockedDecrement(&(LONG)ChildOpen->Multiple_Write_Counter);
-
-			NdisSetEvent(&ChildOpen->WriteEvent);
 		}
 		else
 		{
-			//
-			// Packet sent by NPF_Write()
-			//
+			// this is our self-sent packets
 
-			ULONG stillPendingPackets = NpfInterlockedDecrement(&(LONG)ChildOpen->TransmitPendingPackets);
-
-			//
-			// if the number of packets submitted to NdisSend and not acknoledged is less than half the
-			// packets in the TX pool, wake up any transmitter waiting for available packets in the TX
-			// packet pool
-			//
-			if (stillPendingPackets < TRANSMIT_PACKETS/2)
-			{
-				NdisSetEvent(&ChildOpen->WriteEvent);
+			// Remove this one from the chain and move down.
+			if (pPrevNetBufList == NULL) {
+				// head of list, repoint NetBufferLists
+				NetBufferLists = pNetBufList;
 			}
-			else
-			{
-				//
-				// otherwise, reset the event, so that we are sure that the NPF_Write will eventually block to
-				// wait for availability of packets in the TX packet pool
-				//
-				NdisResetEvent(&ChildOpen->WriteEvent);
+			else {
+				NET_BUFFER_LIST_NEXT_NBL(pPrevNetBufList) = pNetBufList;
 			}
 
-			if (stillPendingPackets == 0)
-			{
-				NdisSetEvent(&ChildOpen->NdisWriteCompleteEvent);
-			}
+			NPF_FreePackets(pNBL);
 		}
-
-		FILTER_RELEASE_LOCK(&ChildOpen->OpenInUseLock,
-				SendCompleteFlags & NDIS_SEND_COMPLETE_FLAGS_DISPATCH_LEVEL);
 	}
 
 	// Send complete any NBLS that are left (didn't originate with us)

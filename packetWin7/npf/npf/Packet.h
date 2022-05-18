@@ -366,8 +366,6 @@ typedef struct _OPEN_INSTANCE
 	NDIS_SPIN_LOCK			CountersLock;	///< SpinLock that protects the statistical mode counters.
 	UINT					Nwrites;		///< Number of times a single write must be physically repeated. See \ref NPF for an
 											///< explanation
-	ULONG					Multiple_Write_Counter;	///< Counts the number of times a single write has already physically repeated.
-	NDIS_EVENT				WriteEvent;		///< Event used to synchronize the multiple write process.
 	LONG WriteInProgress; ///< 1 if a write is currently in progress. NPF currently allows a single write on
 											///< the same open instance.
 
@@ -401,8 +399,6 @@ typedef struct _OPEN_INSTANCE
 	ULONG ResourceDropped; /// A packet is resource-dropped if there is
 		       //  insufficient memory to allocate a copy.
 
-	NDIS_EVENT				NdisWriteCompleteEvent;	///< Event that is signalled when all the packets have been successfully sent by NdisSend (and corresponfing sendComplete has been called)
-	ULONG					TransmitPendingPackets;	///< Specifies the number of packets that are pending to be transmitted, i.e. have been submitted to NdisSendXXX but the SendComplete has not been called yet.
 	ULONG PendingIrps[OpenClosed]; //Counters for pending IRPs at each state. No IRPs are accepted at OpenClosed and greater.
 
 	OPEN_STATE OpenStatus;
@@ -546,9 +542,6 @@ typedef struct _PACKET_RESERVED
 }  PACKET_RESERVED, *PPACKET_RESERVED;
 
 #define RESERVED(_p) ((PPACKET_RESERVED)((_p)->Context->ContextData + (_p)->Context->Offset)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
-
-#define TRANSMIT_PACKETS 256	///< Maximum number of packets in the transmit packet pool. This value is an upper bound to the number
-///< of packets that can be transmitted at the same time or with a single call to NdisSendPackets.
 
 
 /// Macro used in the I/O routines to return the control to user-mode with a success status.

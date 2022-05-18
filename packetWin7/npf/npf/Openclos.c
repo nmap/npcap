@@ -1890,8 +1890,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->OpenSignature = OPEN_SIGNATURE;
 	Open->OpenStatus = OpenClosed;
 
-	NdisInitializeEvent(&Open->WriteEvent);
-	NdisInitializeEvent(&Open->NdisWriteCompleteEvent);
 	Open->MachineLock = NdisAllocateRWLock(NdisHandle);
 	if (Open->MachineLock == NULL)
 	{
@@ -1913,7 +1911,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->Nbytes.QuadPart = 0;
 	Open->Npackets.QuadPart = 0;
 	Open->Nwrites = 1;
-	Open->Multiple_Write_Counter = 0;
 	Open->MinToCopy = 0;
 	Open->Size = 0;
 	Open->SkipSentPackets = FALSE;
