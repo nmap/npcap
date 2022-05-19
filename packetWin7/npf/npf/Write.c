@@ -452,6 +452,7 @@ NTSTATUS NPF_BufferedWrite(
 					? STATUS_DEVICE_REMOVED
 					: STATUS_CANCELLED);
 	}
+	NT_ASSERT(Open->pFiltMod != NULL);
 
 	if (InterlockedExchange(&Open->WriteInProgress, 1) == 1)
 	{
@@ -581,10 +582,10 @@ NTSTATUS NPF_BufferedWrite(
 
 		// The packet has a buffer that needs to be freed after every single write
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
+		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
+		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
 
 		TmpMdl->Next = NULL;
-
-		NT_ASSERT(Open->pFiltMod != NULL);
 
 		if (Sync)
 		{
@@ -632,9 +633,6 @@ NTSTATUS NPF_BufferedWrite(
 
 		//receive the packets before sending them
 		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
-
-		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
-		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
 
 		//
 		// Call the MAC
