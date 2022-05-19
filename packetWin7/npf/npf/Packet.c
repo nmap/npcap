@@ -1755,12 +1755,11 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		{
 			// Set the filter module's packet filter to the union of all instances' filters
 			NdisAcquireRWLockRead(pOpen->pFiltMod->OpenInstancesLock, &lockState, 0);
-			// Stash the old filter
-			ulTmp = pOpen->pFiltMod->MyPacketFilter;
-			pOpen->pFiltMod->MyPacketFilter = 0;
+			// Start clean
+			ulTmp = 0;
 			for (PSINGLE_LIST_ENTRY Curr = pOpen->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 			{
-				pOpen->pFiltMod->MyPacketFilter |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
+				ulTmp |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
 			}
 			NdisReleaseRWLock(pOpen->pFiltMod->OpenInstancesLock, &lockState);
 			// If the new packet filter is the same as the old one...
@@ -1770,19 +1769,22 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 				Status = STATUS_SUCCESS;
 				goto OID_REQUEST_DONE;
 			}
+			// Otherwise, save it
+			pOpen->pFiltMod->MyPacketFilter = ulTmp;
 		}
+		// Calculate the new effective filter
+		ulTmp = pOpen->pFiltMod->SupportedPacketFilters & pOpen->pFiltMod->MyPacketFilter;
+
 		// If the new packet filter wouldn't change the upper one
-		if ((pOpen->pFiltMod->MyPacketFilter & (~pOpen->pFiltMod->HigherPacketFilter)) == 0)
+		if ((ulTmp & (~pOpen->pFiltMod->HigherPacketFilter)) == 0)
 		{
 			// Nothing left to do!
 			Status = STATUS_SUCCESS;
 			goto OID_REQUEST_DONE;
 		}
 
-		ulTmp = pOpen->pFiltMod->SupportedPacketFilters & (pOpen->pFiltMod->HigherPacketFilter | pOpen->pFiltMod->MyPacketFilter);
-
-		// Overwrite the input value in the buffer with our calculated value
-		*(PULONG) OidData->Data = ulTmp;
+		// Overwrite the input value in the buffer with our calculated value plus the higher filter's value.
+		*(PULONG) OidData->Data = ulTmp | pOpen->pFiltMod->HigherPacketFilter;
 	}
 	else if (bSetOid && OidData->Oid == OID_GEN_CURRENT_LOOKAHEAD)
 	{
