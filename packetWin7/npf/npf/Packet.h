@@ -550,7 +550,7 @@ NPF_AnalysisAssumeFreed(_In_ __drv_freesMem(mem) PVOID p)
 /*!
 \brief Context information for originated sent packets
 */
-typedef struct _PACKET_RESERVED
+typedef __declspec(align(MEMORY_ALLOCATION_ALIGNMENT)) struct _PACKET_RESERVED
 {
 	BOOLEAN		FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
 }  PACKET_RESERVED, *PPACKET_RESERVED;
