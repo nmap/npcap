@@ -1,5 +1,5 @@
 ﻿
-## Upcoming changes for the next release
+## Npcap 1.70 [2022-05-23]
 
 * Major overhaul of Packet.dll to improve performance of `PacketGetAdapterNames()`, used by
   `pcap_findalldevs()`, and `PacketOpenAdapter()`, used in all libpcap functions that return a
@@ -11,6 +11,11 @@
   that was being used to get the link speed, and libpcap (Npcap's published API) does not pass this
   information through, so there should be no impact on the majority of software. Software that needs
   link speed may use `pcap_oid_get_request()` or `GetAdaptersAddresses()` to get the information.
+
+* Packet injection operations (`pcap_inject()`, `PacketSendPacket()`, `pcap_sendqueue_transmit()`,
+  and `PacketSendPackets()`) no longer block in the driver until the data structures (NBLs) have
+  been returned by NDIS. This will speed up packet injection. If an application starts receiving
+  errors from these functions, it may need to introduce throttling.
 
 * Npcap is only supported on Windows 7 SP1 and later, and requires KB4474419 to support SHA-2
   signature validation. The installer will now check these specific requirements, rather than
