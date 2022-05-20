@@ -323,7 +323,6 @@ NPF_Write(
 		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
 
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
-		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
 
 		// Recognize IEEE802.1Q tagged packet, as no many adapters support VLAN tag packet sending, no much use for end users,
 		// and this code examines the data which lacks efficiency, so I left it commented, the sending part is also unfinished.
@@ -376,7 +375,7 @@ NPF_Write(
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
-				NPF_FreePackets(pNetBufferList);
+				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 				break;
 			}
 		}
@@ -597,7 +596,6 @@ NTSTATUS NPF_BufferedWrite(
 		// The packet has a buffer that needs to be freed after every single write
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
-		RESERVED(pNetBufferList)->ChildOpen = Open; //save the child open object in the packets
 
 		TmpMdl->Next = NULL;
 
@@ -610,7 +608,7 @@ NTSTATUS NPF_BufferedWrite(
 				+ pHdr->ts.tv_usec - BufStartTime.tv_usec;
 			if (usec_diff < prev_usec_diff) {
 				IF_LOUD(DbgPrint("NPF_BufferedWrite: timestamp out of order!\n");)
-				NPF_FreePackets(pNetBufferList);
+				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 				Status = RPC_NT_INVALID_TIMEOUT;
 				break;
 			}
@@ -620,7 +618,7 @@ NTSTATUS NPF_BufferedWrite(
 			{
 				IF_LOUD(DbgPrint("NPF_BufferedWrite: timestamp elapsed, returning.\n");)
 
-				NPF_FreePackets(pNetBufferList);
+				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 				break;
 			}
 
@@ -658,7 +656,7 @@ NTSTATUS NPF_BufferedWrite(
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
-				NPF_FreePackets(pNetBufferList);
+				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 				break;
 			}
 		}
@@ -712,6 +710,7 @@ NPF_BufferedWrite_End:
 _Use_decl_annotations_
 VOID
 NPF_FreePackets(
+	PNPCAP_FILTER_MODULE pFiltMod,
 	PNET_BUFFER_LIST    NetBufferLists
 	)
 	/*++
@@ -761,8 +760,7 @@ NPF_FreePackets(
 	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	POPEN_INSTANCE pOpen = RESERVED(pNetBufList)->ChildOpen;
-	if (NT_VERIFY(NPF_IsOpenInstance(pOpen)) && pOpen->pFiltMod && pOpen->pFiltMod->Loopback)
+	if (pFiltMod->Loopback)
 	{
 		FwpsFreeNetBufferList(pNetBufList);
 		// FwpsFreeNetBufferList lacks the __drv_freesMem SAL annotation needed
@@ -810,11 +808,6 @@ Return Value:
 
 --*/
 {
-	POPEN_INSTANCE		ChildOpen;
-	PSINGLE_LIST_ENTRY Curr;
-	POPEN_INSTANCE		TempOpen;
-	LOCK_STATE_EX lockState;
-	BOOLEAN				FreeBufAfterWrite;
 	PNET_BUFFER_LIST    pNetBufList = NULL;
 	PNET_BUFFER_LIST    pPrevNetBufList = NULL;
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
@@ -854,7 +847,7 @@ Return Value:
 				NET_BUFFER_LIST_NEXT_NBL(pPrevNetBufList) = pNetBufList;
 			}
 
-			NPF_FreePackets(pNBL);
+			NPF_FreePackets(pFiltMod, pNBL);
 		}
 	}
 

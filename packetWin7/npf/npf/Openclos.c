@@ -3113,7 +3113,7 @@ Arguments:
 	if (NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
 	{
 		// This is one of ours; free it.
-		NPF_FreePackets(NetBufferLists);
+		NPF_FreePackets(pFiltMod, NetBufferLists);
 	}
 	else
 	{

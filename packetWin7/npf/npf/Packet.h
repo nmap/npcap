@@ -521,6 +521,7 @@ VOID NPF_ReturnCapData(
 */
 VOID
 NPF_FreePackets(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ __drv_freesMem(mem) PNET_BUFFER_LIST    NetBufferLists
 	);
 
@@ -552,7 +553,6 @@ NPF_AnalysisAssumeFreed(_In_ __drv_freesMem(mem) PVOID p)
 typedef struct _PACKET_RESERVED
 {
 	BOOLEAN		FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
-	POPEN_INSTANCE		ChildOpen;			///< The child open pointer that binded the group head open.
 }  PACKET_RESERVED, *PPACKET_RESERVED;
 
 #define RESERVED(_p) ((PPACKET_RESERVED)((_p)->Context->ContextData + (_p)->Context->Offset)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
