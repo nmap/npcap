@@ -144,29 +144,6 @@ NPF_GetPacketFilter(
 	);
 
 /*!
-  \brief Set the packet filter of the adapter.
-  \param FilterModuleContext Pointer to the filter context structure.
-  \param packet filter The packet filter
-  \return Status of the set/query request.
-
-This function is used to get the original adapter packet filter with
-a NPF_AttachAdapter(), it is stored in the HigherPacketFilter, the combination
-of HigherPacketFilter and MyPacketFilter will be the final packet filter
-the low-level adapter sees.
-*/
-_IRQL_requires_(PASSIVE_LEVEL)
-NDIS_STATUS
-NPF_SetPacketFilter(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ ULONG PacketFilter
-);
-_IRQL_requires_(PASSIVE_LEVEL)
-NDIS_STATUS
-NPF_SetLookaheadSize(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ ULONG LookaheadSize
-);
-/*!
   \brief Utility routine that forms and sends an NDIS_OID_REQUEST to the miniport adapter.
   \param FilterModuleContext Pointer to the filter context structure.
   \param RequestType NdisRequest[Set|Query|method]Information.
@@ -3263,6 +3240,7 @@ NPF_SetPacketFilter(
 	NDIS_STATUS Status = STATUS_SUCCESS;
 	ULONG BytesProcessed = 0;
 	LOCK_STATE_EX lockState;
+	ULONG NewPF = 0, OldPF = 0;
 	BOOLEAN bail_early = FALSE;
 
 	TRACE_ENTER();
@@ -3276,17 +3254,15 @@ NPF_SetPacketFilter(
 
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
-	// If the new packet filter is the same as the old one...
-	if (PacketFilter == pFiltMod->MyPacketFilter
-			// ...or it wouldn't add to the upper one
-			|| (PacketFilter & (~pFiltMod->HigherPacketFilter)) == 0)
-	{
-		// Nothing left to do!
-		bail_early = TRUE;
-	}
+	// Calculate old and new effective filters
+	OldPF = pFiltMod->SupportedPacketFilters & (pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter);
+	NewPF = pFiltMod->SupportedPacketFilters & (pFiltMod->HigherPacketFilter | PacketFilter);
 
+	// If the new effective filter is the same as the old one, nothing left to do.
+	bail_early = (OldPF == NewPF);
+
+	// Regardless, track our current preferred packet filter.
 	pFiltMod->MyPacketFilter = PacketFilter;
-	PacketFilter |= pFiltMod->HigherPacketFilter;
 
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
@@ -3302,8 +3278,8 @@ NPF_SetPacketFilter(
 			TRACE_EXIT();
 		return NDIS_STATUS_RESOURCES;
 	}
-	// Avoid setting unsupported packet filter types
-	*(PULONG) pBuffer = PacketFilter & pFiltMod->SupportedPacketFilters;
+	// Init the buffer
+	*(PULONG) pBuffer = NewPF;
 
 	// set the PacketFilter
 	Status = NPF_DoInternalRequest(pFiltMod,

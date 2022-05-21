@@ -1747,58 +1747,28 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 			pOpen->MyPacketFilter |= NDIS_PACKET_TYPE_DIRECTED | NDIS_PACKET_TYPE_MULTICAST | NDIS_PACKET_TYPE_BROADCAST;
 		}
 
-		// If the new packet filter is the same as the old one, or
-		if (pOpen->MyPacketFilter == ulTmp ||
-			// if it only adds bits and
-			((~pOpen->MyPacketFilter & ulTmp) == 0 &&
-			// doesn't add any that aren't already set, then
-			(pOpen->MyPacketFilter & ~pOpen->pFiltMod->MyPacketFilter) == 0))
-		{
-			// Nothing left to do!
-			Status = STATUS_SUCCESS;
-			goto OID_REQUEST_DONE;
-		}
-		// Remaining possibilities:
-		// 1. new filter only adds bits, so simple OR will work,
-		if ((~pOpen->MyPacketFilter & ulTmp) == 0)
-		{
-			pOpen->pFiltMod->MyPacketFilter |= pOpen->MyPacketFilter;
-		}
-		// 2. some bits were removed, so MAY remove bits from the combined filter
-		else
-		{
-			// Set the filter module's packet filter to the union of all instances' filters
-			NdisAcquireRWLockRead(pOpen->pFiltMod->OpenInstancesLock, &lockState, 0);
-			// Start clean
-			ulTmp = 0;
-			for (PSINGLE_LIST_ENTRY Curr = pOpen->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
-			{
-				ulTmp |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
-			}
-			NdisReleaseRWLock(pOpen->pFiltMod->OpenInstancesLock, &lockState);
-			// If the new packet filter is the same as the old one...
-			if (pOpen->pFiltMod->MyPacketFilter == ulTmp)
-			{
-				// Nothing left to do!
-				Status = STATUS_SUCCESS;
-				goto OID_REQUEST_DONE;
-			}
-			// Otherwise, save it
-			pOpen->pFiltMod->MyPacketFilter = ulTmp;
-		}
-		// Calculate the new effective filter
-		ulTmp = pOpen->pFiltMod->SupportedPacketFilters & pOpen->pFiltMod->MyPacketFilter;
-
-		// If the new packet filter wouldn't change the upper one
-		if ((ulTmp & (~pOpen->pFiltMod->HigherPacketFilter)) == 0)
+		// If the new packet filter is the same as the old one
+		if (pOpen->MyPacketFilter == ulTmp)
 		{
 			// Nothing left to do!
 			Status = STATUS_SUCCESS;
 			goto OID_REQUEST_DONE;
 		}
 
-		// Overwrite the input value in the buffer with our calculated value plus the higher filter's value.
-		*(PULONG) OidData->Data = ulTmp | pOpen->pFiltMod->HigherPacketFilter;
+		// Start clean
+		ulTmp = 0;
+		// Set the filter module's packet filter to the union of all instances' filters
+		NdisAcquireRWLockRead(pOpen->pFiltMod->OpenInstancesLock, &lockState, 0);
+		for (PSINGLE_LIST_ENTRY Curr = pOpen->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
+		{
+			ulTmp |= CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyPacketFilter;
+		}
+		NdisReleaseRWLock(pOpen->pFiltMod->OpenInstancesLock, &lockState);
+
+		// Now ulTmp is the new effective filter
+		// NPF_SetPacketFilter will take care of any short-circuits and all the request stuff
+		Status = NPF_SetPacketFilter(pOpen->pFiltMod, ulTmp);
+		goto OID_REQUEST_DONE;
 	}
 	else if (bSetOid && OidData->Oid == OID_GEN_CURRENT_LOOKAHEAD)
 	{
@@ -1807,46 +1777,36 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		pOpen->MyLookaheadSize = *(PULONG) OidData->Data;
 		// If it didn't change, or
 		if (pOpen->MyLookaheadSize == ulTmp ||
-			// if it got bigger but would not increase the current value,
-			(pOpen->MyLookaheadSize > ulTmp && pOpen->MyLookaheadSize <= pOpen->pFiltMod->MyLookaheadSize))
+			// if it got bigger but would not increase the current value, or
+			(pOpen->MyLookaheadSize > ulTmp && pOpen->MyLookaheadSize <= pOpen->pFiltMod->MyLookaheadSize) ||
+			// if it got smaller, but the old value was smaller than the current max,
+			(pOpen->MyLookaheadSize < ulTmp && ulTmp < pOpen->pFiltMod->MyLookaheadSize))
 		{
 			// Nothing left to do!
 			Status = STATUS_SUCCESS;
 			goto OID_REQUEST_DONE;
 		}
 		// Remaining possibilities:
-		// 1. It got smaller, so MAY decrease the current value,
+		// 1. It got smaller and will decrease the current value
 		if (pOpen->MyLookaheadSize < ulTmp) {
 			// Figure out the max of all open instances' lookaheads
 			NdisAcquireRWLockRead(pOpen->pFiltMod->OpenInstancesLock, &lockState, 0);
-			// Stash the old value
-			ulTmp = pOpen->pFiltMod->MyLookaheadSize;
-			pOpen->pFiltMod->MyLookaheadSize = 0;
+			// Start clean
+			ulTmp = 0;
 			for (PSINGLE_LIST_ENTRY Curr = pOpen->pFiltMod->OpenInstances.Next; Curr != NULL; Curr = Curr->Next)
 			{
-				pOpen->pFiltMod->MyLookaheadSize = max(pOpen->pFiltMod->MyLookaheadSize,
+				ulTmp = max(pOpen->pFiltMod->MyLookaheadSize,
 						CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry)->MyLookaheadSize);
 			}
 			NdisReleaseRWLock(pOpen->pFiltMod->OpenInstancesLock, &lockState);
-			// If the new max is the same as the old one, no need to set it.
-			if (pOpen->pFiltMod->MyLookaheadSize == ulTmp) {
-				// Nothing left to do!
-				Status = STATUS_SUCCESS;
-				goto OID_REQUEST_DONE;
-			}
 		}
 		// 2. It got bigger and will increase the current value.
 		else {
-			pOpen->pFiltMod->MyLookaheadSize = pOpen->MyLookaheadSize;
+			ulTmp = pOpen->MyLookaheadSize;
 		}
-		// If the max lookahead is smaller than or same as that already set by the protocols...
-		if (pOpen->pFiltMod->MyLookaheadSize <= pOpen->pFiltMod->HigherLookaheadSize) {
-			// Nothing left to do!
-			Status = STATUS_SUCCESS;
-			goto OID_REQUEST_DONE;
-		}
-		// Finally, set the value to the new max and send the OID
-		*(PULONG) OidData->Data = pOpen->pFiltMod->MyLookaheadSize;
+		// Now ulTmp is the new max value. Let NPF_SetLookaheadSize handle request if needed
+		Status = NPF_SetLookaheadSize(pOpen->pFiltMod, ulTmp);
+		goto OID_REQUEST_DONE;
 	}
 
 	//  The buffer is valid
