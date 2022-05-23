@@ -59,7 +59,7 @@ BOOL LoadNpcapDlls()
 
 void usage();
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	pcap_t *indesc,*outdesc;
 	char errbuf[PCAP_ERRBUF_SIZE];
@@ -73,6 +73,7 @@ void main(int argc, char **argv)
 	float cpu_time;
 	u_int npacks = 0;
 	errno_t fopen_error;
+	int rval = 0;
 
 #ifdef _WIN32
 	/* Load Npcap and its functions. */
@@ -87,14 +88,14 @@ void main(int argc, char **argv)
 	if (argc <= 2 || argc >= 5)
 	{
 		usage();
-		return;
+		return 1;
 	}
 		
 	/* Retrieve the length of the capture file */
 	fopen_error = fopen_s(&capfile, argv[1],"rb");
 	if(fopen_error != 0){
 		printf("Error opening the file, errno %d.\n", fopen_error);
-		return;
+		return 1;
 	}
 	
 	fseek(capfile , 0, SEEK_END);
@@ -118,21 +119,21 @@ void main(int argc, char **argv)
 							) != 0)
 	{
 		fprintf(stderr,"\nError creating a source string\n");
-		return;
+		return 1;
 	}
 	
 	/* Open the capture file */
 	if ( (indesc= pcap_open(source, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf) ) == NULL)
 	{
 		fprintf(stderr,"\nUnable to open the file %s.\n", source);
-		return;
+		return 1;
 	}
 
 	/* Open the output adapter */
 	if ( (outdesc= pcap_open(argv[2], 100, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf) ) == NULL)
 	{
 		fprintf(stderr,"\nUnable to open adapter %s.\n", source);
-		return;
+		return 1;
 	}
 
 	/* Check the MAC type */
@@ -162,7 +163,7 @@ void main(int argc, char **argv)
 	{
 		printf("Corrupted input file.\n");
 		pcap_sendqueue_destroy(squeue);
-		return;
+		return 1;
 	}
 
 	/* Transmit the queue */
@@ -172,6 +173,7 @@ void main(int argc, char **argv)
 	if ((res = pcap_sendqueue_transmit(outdesc, squeue, sync)) < squeue->len)
 	{
 		printf("An error occurred sending the packets: %s. Only %d bytes were sent\n", pcap_geterr(outdesc), res);
+		rval = 1;
 	}
 	
 	cpu_time = (clock() - cpu_time)/CLOCKS_PER_SEC;
@@ -195,7 +197,7 @@ void main(int argc, char **argv)
 	pcap_close(outdesc);
 
 
-	return;
+	return rval;
 }
 
 
