@@ -38,14 +38,15 @@ goto :quit
 :DO_TEST
 
 echo Testing iflist...
+set devname=""
 for /f "TOKENS=1,2" %%a in ('nmap --iflist') do @if %%a==lo0 set devname=%%b
 if not "%devname%"=="\Device\NPF_Loopback" goto :error
 .\%1\iflist.exe || goto :error
 
 echo Testing Loopback operations...
 echo Testing pcap_filter...
-del loopback.pcap
-start .\%1\pcap_filter.exe -o loopback.pcap -s %devname% -f tcp
+del loopback-%1.pcap
+start .\%1\pcap_filter.exe -o loopback-%1.pcap -s %devname% -f tcp
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq pcap_filter.exe"') do set SAVEPID=%%b
 if "%SAVEPID%" == "" goto :error
 
@@ -61,21 +62,23 @@ taskkill /PID %SAVEPID% || goto :error
 SET SAVEPID=0
 
 echo Reading dump file...
-.\%1\readfile.exe loopback.pcap || goto :error
+.\%1\readfile.exe loopback-%1.pcap || goto :error
 
 echo Replaying dump file...
-.\%1\sendcap.exe loopback.pcap %devname% || goto :error
+.\%1\sendcap.exe loopback-%1.pcap %devname% || goto :error
 
 
 echo Checking for Internet...
+set devname=""
 for /f "TOKENS=1,3" %%a in ('nmap --route-dst scanme.nmap.org') do @if %%b==srcaddr set ifname=%%a
 if %ifname%=="" goto :error
+if %ifname%=="No" goto :error
 for /f "TOKENS=1,2" %%a in ('nmap --iflist') do @if %%a==%ifname% set devname=%%b
 if not %devname:~0,12%==\Device\NPF_ goto :error
 
 echo Testing pcap_filter...
-del scanme.pcap
-start .\%1\pcap_filter.exe -o scanme.pcap -s %devname% -f tcp
+del scanme-%1.pcap
+start .\%1\pcap_filter.exe -o scanme-%1.pcap -s %devname% -f tcp
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq pcap_filter.exe"') do set SAVEPID=%%b
 
 echo Running nmap...
@@ -91,9 +94,9 @@ taskkill /PID %SAVEPID% || goto :error
 SET SAVEPID=0
 
 echo Reading dump file...
-.\%1\readfile.exe scanme.pcap || goto :error
+.\%1\readfile.exe scanme-%1.pcap || goto :error
 
 echo Replaying dump file...
-.\%1\sendcap.exe scanme.pcap %devname% || goto :error
+.\%1\sendcap.exe scanme-%1.pcap %devname% || goto :error
 
 goto :EOF
