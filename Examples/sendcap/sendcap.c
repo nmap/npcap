@@ -125,14 +125,14 @@ int main(int argc, char **argv)
 	/* Open the capture file */
 	if ( (indesc= pcap_open(source, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf) ) == NULL)
 	{
-		fprintf(stderr,"\nUnable to open the file %s.\n", source);
+		fprintf(stderr,"\nUnable to open the file %s: %s.\n", source, errbuf);
 		return 1;
 	}
 
 	/* Open the output adapter */
 	if ( (outdesc= pcap_open(argv[2], 100, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf) ) == NULL)
 	{
-		fprintf(stderr,"\nUnable to open adapter %s.\n", source);
+		fprintf(stderr,"\nUnable to open adapter %s: %s.\n", argv[2], errbuf);
 		return 1;
 	}
 
@@ -175,13 +175,15 @@ int main(int argc, char **argv)
 		printf("An error occurred sending the packets: %s. Only %d bytes were sent\n", pcap_geterr(outdesc), res);
 		rval = 1;
 	}
-	
-	cpu_time = (clock() - cpu_time)/CLOCKS_PER_SEC;
-	
-	printf ("\n\nElapsed time: %5.3f\n", cpu_time);
-	printf ("\nTotal packets generated = %d", npacks);
-	printf ("\nAverage packets per second = %d", (int)((double)npacks/cpu_time));
-	printf ("\n");
+	else
+	{
+		cpu_time = (clock() - cpu_time)/CLOCKS_PER_SEC;
+
+		printf ("\n\nElapsed time: %5.3f\n", cpu_time);
+		printf ("\nTotal packets generated = %d", npacks);
+		printf ("\nAverage packets per second = %d", (int)((double)npacks/cpu_time));
+		printf ("\n");
+	}
 
 	/* free the send queue */
 	pcap_sendqueue_destroy(squeue);
