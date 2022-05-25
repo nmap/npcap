@@ -61,7 +61,7 @@ BOOL LoadNpcapDlls()
 #endif
 
 
-void usage();
+int usage(int ret);
 
 
 int main(int argc, char **argv)
@@ -78,6 +78,7 @@ int main(int argc, char **argv)
 	int res;
 	struct pcap_pkthdr *header;
 	const u_char *pkt_data;
+	int snaplen = 65536;
 	
 #ifdef _WIN32
 	/* Load Npcap and its functions. */
@@ -88,34 +89,41 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	if (argc == 1)
+	if (argc <= 1)
 	{
-		usage();
-		return -1;
+		return usage(-1);
 	}
 
 	/* Parse parameters */
-	for(i=1;i < argc; i+= 2)
+	for(i=1;i < argc - 1; i+= 2)
 	{
+		if (argv[i][0] != '-') {
+			fprintf(stderr, "Invalid option '%s'\n", argv[i]);
+			return usage(1);
+		}
 		switch (argv[i] [1])
 		{
 			case 's':
-			{
 				source=argv[i+1];
-			};
-			break;
+				break;
 			
 			case 'o':
-			{
 				ofilename=argv[i+1];
-			};
-			break;
+				break;
 
 			case 'f':
-			{
 				filter=argv[i+1];
-			};
-			break;
+				break;
+			case 'l':
+				snaplen = atoi(argv[i+1]);
+				if (snaplen <= 0 || snaplen == INT_MAX) {
+					fprintf(stderr, "Invalid snaplen; must be positive integer smaller than INT_MAX\n");
+					return usage(1);
+				}
+				break;
+			default:
+				fprintf(stderr, "Invalid option '%s'\n", argv[i]);
+				return usage(1);
 		}
 	}
 	
@@ -127,7 +135,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "pcap_create error: %s\n", errbuf);
 			return -2;
 		}
-		res = pcap_set_snaplen(fp, 65536);
+		res = pcap_set_snaplen(fp, snaplen);
 		if (res < 0) {
 			fprintf(stderr, "pcap_set_snaplen error: %s\n", pcap_statustostr(res));
 			return -2;
@@ -148,7 +156,7 @@ int main(int argc, char **argv)
 			return -2;
 		}
 	}
-	else usage();
+	else return usage(1);
 
 	if (filter != NULL)
 	{
@@ -191,7 +199,7 @@ int main(int argc, char **argv)
 			return -5;
 		}
 	}
-	else usage();
+	else return usage(1);
 
 	//start the capture
  	while((res = pcap_next_ex( fp, &header, &pkt_data)) >= 0)
@@ -213,10 +221,10 @@ int main(int argc, char **argv)
 }
 
 
-void usage()
+int usage(int ret)
 {
 
 	printf("\npf - Generic Packet Filter.\n");
-	printf("\nUsage:\npf -s source -o output_file_name [-f filter_string]\n\n");
-	exit(0);
+	printf("\nUsage:\npf -s source -o output_file_name [-f filter_string] [-l snaplen]\n\n");
+	return ret;
 }
