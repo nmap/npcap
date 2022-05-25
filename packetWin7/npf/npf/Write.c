@@ -533,14 +533,18 @@ NTSTATUS NPF_BufferedWrite(
 		pHdr = (struct dump_bpf_hdr *)(UserBuff + Pos);
 		ULONG ulDataOffset = Pos + sizeof(*pHdr);
 
-		if (pHdr->caplen == 0
-				|| pHdr->caplen > Open->pFiltMod->MaxFrameSize
-				|| pHdr->caplen > (UserBuffSize - ulDataOffset))
+		if (pHdr->caplen == 0)
 		{
 			// Malformed header
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: invalid caplen, aborting write.\n");)
 
 			Status = STATUS_INVALID_PARAMETER;
+			break;
+		}
+		if (pHdr->caplen > Open->pFiltMod->MaxFrameSize
+			|| pHdr->caplen > (UserBuffSize - ulDataOffset))
+		{
+			Status = STATUS_PORT_MESSAGE_TOO_LONG;
 			break;
 		}
 
