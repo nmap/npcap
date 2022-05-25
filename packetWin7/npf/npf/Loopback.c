@@ -744,6 +744,12 @@ NPF_AddFilter(
 	return status;
 }
 
+#define EXIT_IF_ERR(_Func) \
+	if (!NT_SUCCESS(status)) { \
+		IF_LOUD(DbgPrint(#_Func "failed: %08x\n", status);) \
+		goto Exit; \
+	}
+
 NTSTATUS
 NPF_RegisterCallout(
 	_In_ const GUID* layerKey,
@@ -782,13 +788,7 @@ traffic at the layers defined in NPF_RegisterCallouts
 		&sCallout,
 		calloutId
 		);
-	if (!NT_SUCCESS(status))
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_RegisterCallout: FwpsCalloutRegister() [status: %#x]\n",
-			status);
-		goto Exit;
-	}
+	EXIT_IF_ERR(FwpsCalloutRegister);
 	calloutRegistered = TRUE;
 
 	displayData.name = L"Npcap Network Callout";
@@ -805,47 +805,19 @@ traffic at the layers defined in NPF_RegisterCallouts
 		NULL,
 		NULL
 		);
-	if (!NT_SUCCESS(status))
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_RegisterCallout: FwpmCalloutAdd() [status: %#x]\n",
-			status);
-		goto Exit;
-	}
+	EXIT_IF_ERR(FwpmCalloutAdd);
 
 	status = NPF_AddFilter(layerKey, calloutKey, 0);
-	if (!NT_SUCCESS(status))
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_RegisterCallout: NPF_AddFilter() [status: %#x]\n",
-			status);
-		goto Exit;
-	}
+	EXIT_IF_ERR(NPF_AddFilter);
 
 	status = NPF_AddFilter(layerKey, calloutKey, 1);
-	if (!NT_SUCCESS(status))
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_RegisterCallout: NPF_AddFilter() [status: %#x]\n",
-			status);
-		goto Exit;
-	}
+	EXIT_IF_ERR(NPF_AddFilter);
+
 	status = NPF_AddFilter(layerKey, calloutKey, 2);
-	if (!NT_SUCCESS(status))
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_RegisterCallout: NPF_AddFilter() [status: %#x]\n",
-			status);
-		goto Exit;
-	}
+	EXIT_IF_ERR(NPF_AddFilter);
+
 	status = NPF_AddFilter(layerKey, calloutKey, 3);
-	if (!NT_SUCCESS(status))
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_RegisterCallout: NPF_AddFilter() [status: %#x]\n",
-			status);
-		goto Exit;
-	}
+	EXIT_IF_ERR(NPF_AddFilter);
 
 Exit:
 
@@ -879,11 +851,8 @@ Callouts and filters will be removed during DriverUnload.
 -- */
 {
 	TRACE_ENTER();
-	DWORD status = STATUS_SUCCESS;
+	NTSTATUS status = STATUS_SUCCESS;
 	FWPM_SUBLAYER NPFSubLayer;
-
-	BOOLEAN engineOpened = FALSE;
-	BOOLEAN inTransaction = FALSE;
 
 	FWPM_SESSION session = { 0 };
 	FWPM_PROVIDER provider = { 0 };
@@ -893,25 +862,15 @@ Callouts and filters will be removed during DriverUnload.
 
 	status = FwpmEngineOpen(
 		NULL,
-		RPC_C_AUTHN_WINNT,
+		RPC_C_AUTHN_DEFAULT,
 		NULL,
 		&session,
 		&g_WFPEngineHandle
 		);
-
-	if (!NT_SUCCESS(status) || !g_WFPEngineHandle || g_WFPEngineHandle == INVALID_HANDLE_VALUE)
-	{
-		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
-		goto Exit;
-	}
-	engineOpened = TRUE;
+	EXIT_IF_ERR(FwpmEngineOpen);
 
 	status = FwpmTransactionBegin(g_WFPEngineHandle, 0);
-	if (!NT_SUCCESS(status))
-	{
-		goto Exit;
-	}
-	inTransaction = TRUE;
+	EXIT_IF_ERR(FwpmTransactionBegin);
 
 #define _WIDE(X) _WIDE2(X)
 #define _WIDE2(X) L ## X
@@ -922,10 +881,7 @@ Callouts and filters will be removed during DriverUnload.
 	provider.displayData.description = NPF_DRIVER_NAME_NORMAL_WIDECHAR;
 	provider.serviceName = NPF_DRIVER_NAME_SMALL_WIDECHAR;
 	status = FwpmProviderAdd(g_WFPEngineHandle, &provider, NULL);
-	if (!NT_SUCCESS(status))
-	{
-		goto Exit;
-	}
+	EXIT_IF_ERR(FwpmProviderAdd);
 
 	RtlZeroMemory(&NPFSubLayer, sizeof(FWPM_SUBLAYER));
 
@@ -940,10 +896,7 @@ Callouts and filters will be removed during DriverUnload.
 	// implementation.
 
 	status = FwpmSubLayerAdd(g_WFPEngineHandle, &NPFSubLayer, NULL);
-	if (!NT_SUCCESS(status))
-	{
-		goto Exit;
-	}
+	EXIT_IF_ERR(FwpmSubLayerAdd);
 
 	//if (isV4)
 	{
@@ -954,10 +907,7 @@ Callouts and filters will be removed during DriverUnload.
 			deviceObject,
 			&g_OutboundIPPacketV4
 			);
-		if (!NT_SUCCESS(status))
-		{
-			goto Exit;
-		}
+		EXIT_IF_ERR(NPF_RegisterCallout);
 
 		status = NPF_RegisterCallout(
 			&FWPM_LAYER_INBOUND_IPPACKET_V4,
@@ -966,10 +916,7 @@ Callouts and filters will be removed during DriverUnload.
 			deviceObject,
 			&g_InboundIPPacketV4
 			);
-		if (!NT_SUCCESS(status))
-		{
-			goto Exit;
-		}
+		EXIT_IF_ERR(NPF_RegisterCallout);
 	}
 	//else
 	{
@@ -980,10 +927,7 @@ Callouts and filters will be removed during DriverUnload.
 			deviceObject,
 			&g_OutboundIPPacketV6
 			);
-		if (!NT_SUCCESS(status))
-		{
-			goto Exit;
-		}
+		EXIT_IF_ERR(NPF_RegisterCallout);
 
 		status = NPF_RegisterCallout(
 			&FWPM_LAYER_INBOUND_IPPACKET_V6,
@@ -992,33 +936,19 @@ Callouts and filters will be removed during DriverUnload.
 			deviceObject,
 			&g_InboundIPPacketV6
 			);
-		if (!NT_SUCCESS(status))
-		{
-			goto Exit;
-		}
+		EXIT_IF_ERR(NPF_RegisterCallout);
 	}
 
 	status = FwpmTransactionCommit(g_WFPEngineHandle);
-	if (!NT_SUCCESS(status))
-	{
-		goto Exit;
-	}
-	inTransaction = FALSE;
+	EXIT_IF_ERR(FwpmTransactionCommit);
 
 Exit:
 	if (!NT_SUCCESS(status))
 	{
 		IF_LOUD(DbgPrint("NPF_RegisterCallouts: failed to register callouts\n");)
-		if (inTransaction)
-		{
-			FwpmTransactionAbort(g_WFPEngineHandle);
-			_Analysis_assume_lock_not_held_(g_WFPEngineHandle); // Potential leak if "FwpmTransactionAbort" fails
-		}
-		if (engineOpened)
-		{
-			FwpmEngineClose(g_WFPEngineHandle);
-			g_WFPEngineHandle = INVALID_HANDLE_VALUE;
-		}
+		FwpmEngineClose(g_WFPEngineHandle);
+		_Analysis_assume_lock_not_held_(g_WFPEngineHandle);
+		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
 	}
 
 	TRACE_EXIT();
