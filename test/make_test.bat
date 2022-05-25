@@ -46,7 +46,7 @@ if not "%devname%"=="\Device\NPF_Loopback" goto :error
 echo Testing Loopback operations...
 echo Testing pcap_filter...
 del loopback-%1.pcap
-start .\%1\pcap_filter.exe -o loopback-%1.pcap -s %devname% -f tcp
+start .\%1\pcap_filter.exe -o loopback-%1.pcap -s %devname% -f tcp -l 1450
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq pcap_filter.exe"') do set SAVEPID=%%b
 if "%SAVEPID%" == "" goto :error
 
@@ -78,7 +78,7 @@ if not %devname:~0,12%==\Device\NPF_ goto :error
 
 echo Testing pcap_filter...
 del scanme-%1.pcap
-start .\%1\pcap_filter.exe -o scanme-%1.pcap -s %devname% -f tcp
+start .\%1\pcap_filter.exe -o scanme-%1.pcap -s %devname% -f tcp -l 1450
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq pcap_filter.exe"') do set SAVEPID=%%b
 
 echo Running nmap...
