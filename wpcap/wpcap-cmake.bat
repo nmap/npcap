@@ -1,6 +1,6 @@
 set CMAKE="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
 set GENERATOR=Visual Studio 16 2019
-set NPCAP_SDK=..\npcap-sdk
+set NPCAP_SDK=..\..\npcap-sdk-1.13
 set AIRPCAP_SDK=..\..\Airpcap_Devpack
 
 mkdir build-win32
