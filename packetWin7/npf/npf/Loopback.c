@@ -87,9 +87,15 @@
 #include "stdafx.h"
 
 #include "Loopback.h"
-#include "packet.h"
+#include "Packet.h"
 #include "..\..\..\Common\WpcapNames.h"
 #include "..\..\..\version.h"
+
+#include <fwpsk.h>
+#include <fwpmk.h>
+
+#define INITGUID
+#include <guiddef.h>
 
 // 
 // Global variables

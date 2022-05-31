@@ -108,12 +108,14 @@
 #include "stdafx.h"
 
 #include "Loopback.h"
-#include "packet.h"
+#include "Packet.h"
 #include "win_bpf.h"
 #include "ioctls.h"
 
 #include "..\..\..\version.h"
 #include "..\..\..\Common\WpcapNames.h"
+
+#include <windef.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma NDIS_INIT_FUNCTION(DriverEntry)
