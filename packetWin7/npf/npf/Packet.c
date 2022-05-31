@@ -578,7 +578,7 @@ DriverEntry(
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init injection handles and register callouts");
 
 			// Use Windows Filtering Platform (WFP) to capture loopback packets
-			Status = NPF_InitWFP(devExtP);
+			Status = NPF_InitWFP(devObjP);
 			if (!NT_VERIFY(NT_SUCCESS(Status)))
 			{
 				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_InitWFP failed, Status = %x", Status);
@@ -963,7 +963,7 @@ Return Value:
 	}
 
 	// Release WFP resources.
-	NPF_ReleaseWFP(pNpcapDeviceObject->DeviceExtension);
+	NPF_ReleaseWFP(pNpcapDeviceObject);
 #endif
 
 #ifdef HAVE_RX_SUPPORT

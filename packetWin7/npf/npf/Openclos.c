@@ -692,7 +692,7 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod)
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (pFiltMod->Loopback)
 		{
-			Status = NPF_InitWFP(pNpcapDeviceObject->DeviceExtension);
+			Status = NPF_InitWFP(pNpcapDeviceObject);
 			if (!NT_SUCCESS(Status)) {
 				break;
 			}
@@ -839,7 +839,7 @@ NPF_DecrementLoopbackInstances(
 		// No more loopback handles open. Release WFP resources
 		if (!g_TestMode)
 		{
-			NPF_ReleaseWFP(pNpcapDeviceObject->DeviceExtension);
+			NPF_ReleaseWFP(pNpcapDeviceObject);
 		}
 
 		// Set OpsState so we re-enable these if necessary

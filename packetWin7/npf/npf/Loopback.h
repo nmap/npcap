@@ -85,18 +85,18 @@
 #define __LOOPBACK
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-#include "Packet.h"
+#include <wdm.h>
 
 // Shared function prototypes
 //
 
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
-NPF_InitWFP(_In_ PDEVICE_EXTENSION pDevExt);
+NPF_InitWFP(_In_ PDEVICE_OBJECT pDevObj);
 
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID
-NPF_ReleaseWFP(_In_ PDEVICE_EXTENSION pDevExt);
+NPF_ReleaseWFP(_In_ PDEVICE_OBJECT pDevObj);
 #endif // HAVE_WFP_LOOPBACK_SUPPORT
 
 #endif // __LOOPBACK

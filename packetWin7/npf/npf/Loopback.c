@@ -186,7 +186,7 @@ HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 NPF_RegisterCallouts(
-_Inout_ void* deviceObject
+_Inout_ PDEVICE_OBJECT deviceObject
 	);
 
 _IRQL_requires_(PASSIVE_LEVEL)
@@ -865,7 +865,7 @@ Exit:
 _Use_decl_annotations_
 NTSTATUS
 NPF_RegisterCallouts(
-void* deviceObject
+PDEVICE_OBJECT deviceObject
 )
 /* ++
 
@@ -1118,8 +1118,9 @@ Free injection handles (IPv4 and IPv6).
 
 _Use_decl_annotations_
 NTSTATUS
-NPF_InitWFP(PDEVICE_EXTENSION pDevExt)
+NPF_InitWFP(PDEVICE_OBJECT pDevObj)
 {
+	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
 	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, 0);
 	if (status != STATUS_SUCCESS)
 	{
@@ -1135,7 +1136,7 @@ NPF_InitWFP(PDEVICE_EXTENSION pDevExt)
 	status = NPF_InitInjectionHandles();
 	EXIT_IF_ERR(NPF_InitInjectionHandles);
 
-	status = NPF_RegisterCallouts(pDevExt);
+	status = NPF_RegisterCallouts(pDevObj);
 	EXIT_IF_ERR(NPF_RegisterCallouts);
 
 	pDevExt->bWFPInit = 1;
@@ -1153,8 +1154,9 @@ Exit:
 
 _Use_decl_annotations_
 VOID
-NPF_ReleaseWFP(PDEVICE_EXTENSION pDevExt)
+NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj)
 {
+	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
 	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, 0);
 	if (status != STATUS_SUCCESS)
 	{
