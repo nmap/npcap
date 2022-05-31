@@ -889,7 +889,7 @@ Callouts and filters will be removed during DriverUnload.
 
 	status = FwpmEngineOpen(
 		NULL,
-		RPC_C_AUTHN_DEFAULT,
+		RPC_C_AUTHN_WINNT,
 		NULL,
 		&session,
 		&g_WFPEngineHandle
