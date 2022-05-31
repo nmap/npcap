@@ -183,6 +183,27 @@ HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 // Callout driver functions
 //
 
+_IRQL_requires_(PASSIVE_LEVEL)
+NTSTATUS
+NPF_RegisterCallouts(
+_Inout_ void* deviceObject
+	);
+
+_IRQL_requires_(PASSIVE_LEVEL)
+void
+NPF_UnregisterCallouts(
+	);
+
+_IRQL_requires_(PASSIVE_LEVEL)
+NTSTATUS
+NPF_InitInjectionHandles(
+	);
+
+_IRQL_requires_(PASSIVE_LEVEL)
+NTSTATUS
+NPF_FreeInjectionHandles(
+	);
+
 
 // Send the loopback packets data to the user-mode code.
 VOID
@@ -1093,6 +1114,68 @@ Free injection handles (IPv4 and IPv6).
 
 	TRACE_EXIT();
 	return status;
+}
+
+_Use_decl_annotations_
+NTSTATUS
+NPF_InitWFP(PDEVICE_EXTENSION pDevExt)
+{
+	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, 0);
+	if (status != STATUS_SUCCESS)
+	{
+		// Failed to get the mutex. Report exact error unless it's a "success" value
+		_Analysis_assume_lock_not_held_(pDevExt->WFPInitMutex);
+		return NT_SUCCESS(status) ? STATUS_LOCK_NOT_GRANTED : status;
+	}
+	if (pDevExt->bWFPInit)
+	{
+		goto Exit;
+	}
+
+	status = NPF_InitInjectionHandles();
+	EXIT_IF_ERR(NPF_InitInjectionHandles);
+
+	status = NPF_RegisterCallouts(pDevExt);
+	EXIT_IF_ERR(NPF_RegisterCallouts);
+
+	pDevExt->bWFPInit = 1;
+
+Exit:
+	KeReleaseMutex(&pDevExt->WFPInitMutex, FALSE);
+
+	if (!NT_SUCCESS(status))
+	{
+		NPF_FreeInjectionHandles();
+		NPF_UnregisterCallouts();
+	}
+	return status;
+}
+
+_Use_decl_annotations_
+VOID
+NPF_ReleaseWFP(PDEVICE_EXTENSION pDevExt)
+{
+	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, 0);
+	if (status != STATUS_SUCCESS)
+	{
+		// Failed to get the mutex.
+		_Analysis_assume_lock_not_held_(pDevExt->WFPInitMutex);
+		return;
+	}
+	if (!pDevExt->bWFPInit)
+	{
+		goto Exit;
+	}
+
+	NPF_FreeInjectionHandles();
+	NPF_UnregisterCallouts();
+
+	pDevExt->bWFPInit = 0;
+
+Exit:
+	KeReleaseMutex(&pDevExt->WFPInitMutex, FALSE);
+
+	return;
 }
 
 #endif // HAVE_WFP_LOOPBACK_SUPPORT

@@ -692,30 +692,9 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod)
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (pFiltMod->Loopback)
 		{
-			if (g_WFPEngineHandle == INVALID_HANDLE_VALUE)
-			{
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init injection handles and register callouts");
-				// Use Windows Filtering Platform (WFP) to capture loopback packets
-				Status = NPF_InitInjectionHandles();
-				if (!NT_SUCCESS(Status))
-				{
-					break;
-				}
-
-				Status = NPF_RegisterCallouts(pNpcapDeviceObject);
-				if (!NT_SUCCESS(Status))
-				{
-					if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
-					{
-						NPF_UnregisterCallouts();
-					}
-					break;
-				}
-			}
-			else
-
-			{
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "g_WFPEngineHandle already initialized");
+			Status = NPF_InitWFP(pNpcapDeviceObject->DeviceExtension);
+			if (!NT_SUCCESS(Status)) {
+				break;
 			}
 		}
 #endif
@@ -860,8 +839,7 @@ NPF_DecrementLoopbackInstances(
 		// No more loopback handles open. Release WFP resources
 		if (!g_TestMode)
 		{
-			NPF_UnregisterCallouts();
-			NPF_FreeInjectionHandles();
+			NPF_ReleaseWFP(pNpcapDeviceObject->DeviceExtension);
 		}
 
 		// Set OpsState so we re-enable these if necessary

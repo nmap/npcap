@@ -273,6 +273,9 @@ typedef struct _DEVICE_EXTENSION
 	UCHAR bInternalRequestPoolInit:1;
 	UCHAR bCapturePoolInit:1;
 	UCHAR bDot11HeaderPoolInit:1;
+	// WFP Init
+	UCHAR bWFPInit:1;
+	KMUTEX WFPInitMutex;
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 typedef enum _FILTER_STATE

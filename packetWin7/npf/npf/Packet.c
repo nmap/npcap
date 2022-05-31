@@ -571,26 +571,17 @@ DriverEntry(
 #endif
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		KeInitializeMutex(&devExtP->WFPInitMutex, 0);
 		// Test mode: register callouts and injection handles regardless
 		// In test mode, failures here are fatal.
 		if (g_TestMode) {
 			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init injection handles and register callouts");
-			// Use Windows Filtering Platform (WFP) to capture loopback packets
-			Status = NPF_InitInjectionHandles();
-			if (!NT_VERIFY(NT_SUCCESS(Status)))
-			{
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_InitInjectionHandles failed, Status = %x", Status);
-				break;
-			}
 
-			Status = NPF_RegisterCallouts(devObjP);
+			// Use Windows Filtering Platform (WFP) to capture loopback packets
+			Status = NPF_InitWFP(devExtP);
 			if (!NT_VERIFY(NT_SUCCESS(Status)))
 			{
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_RegisterCallouts failed, Status = %x", Status);
-				if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
-				{
-					NPF_UnregisterCallouts();
-				}
+				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_InitWFP failed, Status = %x", Status);
 				break;
 			}
 		}
@@ -971,9 +962,8 @@ Return Value:
 		g_LoopbackAdapterName.Buffer = NULL;
 	}
 
-	// Release WFP resources
-	NPF_UnregisterCallouts();
-	NPF_FreeInjectionHandles();
+	// Release WFP resources.
+	NPF_ReleaseWFP(pNpcapDeviceObject->DeviceExtension);
 #endif
 
 #ifdef HAVE_RX_SUPPORT

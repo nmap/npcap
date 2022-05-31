@@ -92,25 +92,11 @@
 
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
-NPF_RegisterCallouts(
-_Inout_ void* deviceObject
-	);
+NPF_InitWFP(_In_ PDEVICE_EXTENSION pDevExt);
 
 _IRQL_requires_(PASSIVE_LEVEL)
-void
-NPF_UnregisterCallouts(
-	);
-
-_IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS
-NPF_InitInjectionHandles(
-	);
-
-_IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS
-NPF_FreeInjectionHandles(
-	);
-
+VOID
+NPF_ReleaseWFP(_In_ PDEVICE_EXTENSION pDevExt);
 #endif // HAVE_WFP_LOOPBACK_SUPPORT
 
 #endif // __LOOPBACK
