@@ -596,6 +596,13 @@ NPF_OpenAdapter(
 	{
 		// Initializes pFiltMod, AdapterID, bDot11, bLoopback, OpenStatus
 		NPF_AddToGroupOpenArray(Open, pFiltMod, FALSE);
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		if (Open->bLoopback)
+		{
+			// Keep track of how many active loopback captures there are
+			NpfInterlockedIncrement(&(LONG)g_NumLoopbackInstances);
+		}
+#endif
 #ifdef HAVE_DOT11_SUPPORT
 		if (Open->bDot11)
 		{
@@ -758,14 +765,6 @@ NPF_StartUsingOpenInstance(
 				// Get the absolute value of the system boot time.
 				// This is used for timestamp conversion.
 				TIME_SYNCHRONIZE(&pOpen->start);
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-				if (pOpen->pFiltMod->Loopback)
-				{
-					// Keep track of how many active loopback captures there are
-					NpfInterlockedIncrement(&(LONG)g_NumLoopbackInstances);
-				}
-#endif
 
 				pOpen->OpenStatus = OpenRunning;
 			}
@@ -1397,7 +1396,7 @@ NPF_Cleanup(
 	NPF_OpenWaitPendingIrps(Open);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (OldState < OpenAttached && Open->pFiltMod && Open->bLoopback)
+	if (Open->bLoopback)
 	{
 		NPF_DecrementLoopbackInstances(Open->pFiltMod);
 	}
@@ -2517,15 +2516,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		pOpen->pFiltMod = NULL;
 		Curr = PopEntryList(&DetachedOpens);
 	}
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pFiltMod->Loopback)
-	{
-		for(; numOpensRunning > 0; numOpensRunning--)
-		{
-			NPF_DecrementLoopbackInstances(pFiltMod);
-		}
-	}
-#endif
+
 	NPF_CloseBinding(pFiltMod); // sets AdapterBindingStatus to FilterDetached
 
 	NPF_RemoveFromFilterModuleArray(pFiltMod); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
