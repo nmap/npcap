@@ -259,19 +259,6 @@ NPF_Write(
 			break;
 		}
 
-		if (InterlockedExchange(&Open->WriteInProgress, 1) == 1)
-		{
-			// Another write operation is currently in progress
-
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Another Send operation is in progress, aborting.");
-
-			NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
-
-			Status = STATUS_DEVICE_BUSY;
-			break;
-		}
-
-
 	} while (FALSE);
 
 	if (Status != STATUS_SUCCESS)
@@ -411,8 +398,6 @@ NPF_Write(
 		numSentPackets ++;
 	}
 
-	InterlockedExchange(&Open->WriteInProgress, 0);
-
 	NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
 NPF_Write_End:
@@ -466,16 +451,6 @@ NTSTATUS NPF_BufferedWrite(
 					: STATUS_CANCELLED);
 	}
 	NT_ASSERT(Open->pFiltMod != NULL);
-
-	if (InterlockedExchange(&Open->WriteInProgress, 1) == 1)
-	{
-		//
-		// Another write operation is currently in progress
-		//
-		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
-		TRACE_EXIT();
-		return STATUS_DEVICE_BUSY;
-	}
 
 	// Sanity check on the user buffer
 	if (!NT_VERIFY(UserBuff != NULL) || UserBuffSize < sizeof(struct dump_bpf_hdr))
@@ -702,7 +677,6 @@ NTSTATUS NPF_BufferedWrite(
 	*Written = Pos;
 
 NPF_BufferedWrite_End:
-	InterlockedExchange(&Open->WriteInProgress, 0);
 	NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
 	TRACE_EXIT();

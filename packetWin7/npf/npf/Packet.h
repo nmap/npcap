@@ -383,8 +383,6 @@ typedef struct _OPEN_INSTANCE
 	NDIS_SPIN_LOCK			CountersLock;	///< SpinLock that protects the statistical mode counters.
 	UINT					Nwrites;		///< Number of times a single write must be physically repeated. See \ref NPF for an
 											///< explanation
-	LONG WriteInProgress; ///< 1 if a write is currently in progress. NPF currently allows a single write on
-											///< the same open instance.
 
 	/* Config booleans as a bitfield */
 	// working modes, see PacketSetMode():

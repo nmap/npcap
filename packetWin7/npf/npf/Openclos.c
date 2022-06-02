@@ -1867,7 +1867,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 		TRACE_EXIT();
 		return NULL;
 	}
-	Open->WriteInProgress = 0;
 
 	//
 	// Initialize the open instance
