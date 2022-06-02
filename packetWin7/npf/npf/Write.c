@@ -139,6 +139,54 @@ NPF_AnalysisAssumeAllocated(_In_ PVOID *p)
 	return *p;
 }
 
+_Result_nullonfailure_
+_Success_(return != NULL)
+__drv_allocatesMem(mem)
+PMDL
+NPF_CloneBufferToMdl(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PVOID pBuf,
+	_In_ ULONG uDataLen
+       )
+{
+	PVOID npBuff = ExAllocatePoolWithTag(NPF_NONPAGED, uDataLen, NPF_BUFFERED_WRITE_TAG);
+	if (npBuff == NULL)
+	{
+		IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
+		return NULL;
+	}
+
+	RtlCopyMemory(npBuff, pBuf, uDataLen);
+
+	// Allocate an MDL to map the packet data
+	PMDL TmpMdl = NdisAllocateMdl(pFiltMod->AdapterHandle, npBuff, uDataLen);
+
+	if (TmpMdl == NULL)
+	{
+		// Unable to map the memory: packet lost
+		IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate the MDL.\n");)
+
+		ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+		return NULL;
+	}
+
+	// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
+	// is stored in the MDL and we retrieve it (via NdisQueryMdl) in NPF_FreePackets called from NPF_ReturnEx.
+	// Therefore, it is not leaking after this point.
+	NPF_AnalysisAssumeAliased(npBuff);
+	return TmpMdl;
+}
+
+VOID
+NPF_FreeMdlAndBuffer(_In_ __drv_freesMem(mem) PMDL pMdl)
+{
+	PVOID npBuff = MmGetSystemAddressForMdlSafe(pMdl, HighPagePriority|MdlMappingNoExecute);
+	if (npBuff != NULL) {
+		ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+	}
+	NdisFreeMdl(pMdl); //Free MDL
+}
+
 NTSTATUS
 _At_(*ppNBL, __drv_allocatesMem(mem))
 NPF_AllocateNBL(
@@ -283,11 +331,24 @@ NPF_Write(
 
 	while (numSentPackets < NumSends)
 	{
-		/* Unlike NPF_BufferedWrite, we can directly allocate NBLs
-		 * using the MDL in the IRP because the device was created with
-		 * DO_DIRECT_IO. */
+		PMDL TmpMdl = NULL;
+		BOOLEAN bCopy = numSentPackets > 0;
+
+		if (bCopy) {
+			TmpMdl = NPF_CloneBufferToMdl(Open->pFiltMod, pBuf, buflen);
+			if (TmpMdl == NULL)
+			{
+				Status = STATUS_INSUFFICIENT_RESOURCES;
+				break;
+			}
+		}
+		else
+		{
+			TmpMdl = Irp->MdlAddress;
+		}
+
 		Status = NPF_AllocateNBL(Open->pFiltMod,
-				Irp->MdlAddress,
+				TmpMdl,
 				buflen,
 				&pNetBufferList);
 
@@ -297,12 +358,7 @@ NPF_Write(
 			break;
 		}
 
-		// The packet hasn't a buffer that needs not to be freed after every single write
-		RESERVED(pNetBufferList)->FreeBufAfterWrite = FALSE;
-
-		// Attach the writes buffer to the packet
-
-		NT_ASSERT(Open->pFiltMod != NULL);
+		RESERVED(pNetBufferList)->FreeBufAfterWrite = bCopy;
 
 		//receive the packets before sending them
 
@@ -435,7 +491,6 @@ NTSTATUS NPF_BufferedWrite(
 	PMDL					TmpMdl;
 	//	PCHAR				CurPos;
 	//	PCHAR				EndOfUserBuff = UserBuff + UserBuffSize;
-	PVOID npBuff = NULL;
 
 	TRACE_ENTER();
 
@@ -525,34 +580,17 @@ NTSTATUS NPF_BufferedWrite(
 
 		/* Copy packet data to non-paged memory, otherwise we induce
 		 * page faults in NIC drivers: http://issues.nmap.org/1398
-		 * Alternately, we could possibly use Direct I/O for the BIOCSENDPACKETS IoCtl? */
-		npBuff = ExAllocatePoolWithTag(NPF_NONPAGED, pHdr->caplen, NPF_BUFFERED_WRITE_TAG);
-		if (npBuff == NULL)
-		{
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
-			Status = STATUS_INSUFFICIENT_RESOURCES;
-			break;
-		}
-		RtlCopyMemory(npBuff, UserBuff + ulDataOffset, pHdr->caplen);
-
-		// Allocate an MDL to map the packet data
-		TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, npBuff, pHdr->caplen);
+		 * TODO: Try mapping the data without copying; system buffer ought to be nonpaged already with Buffered IO. */
+		TmpMdl = NPF_CloneBufferToMdl(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen);
 
 		if (TmpMdl == NULL)
 		{
 			// Unable to map the memory: packet lost
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate the MDL.\n");)
 
-			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
-
 			Status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
-
-		// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
-		// is stored in the MDL and we retrieve it (via NdisQueryMdl) in NPF_FreePackets called from NPF_ReturnEx.
-		// Therefore, it is not leaking after this point.
-		NPF_AnalysisAssumeAliased(npBuff);
 
 		// Allocate a packet from our free list
 		Status = NPF_AllocateNBL(Open->pFiltMod,
@@ -565,8 +603,7 @@ NTSTATUS NPF_BufferedWrite(
 			
 			IF_LOUD(DbgPrint("NPF_BufferedWrite: no more free packets, returning.\n");)
 
-			NdisFreeMdl(TmpMdl);
-			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+			NPF_FreeMdlAndBuffer(TmpMdl);
 
 			break;
 		}
@@ -668,9 +705,6 @@ NTSTATUS NPF_BufferedWrite(
 					SendFlags);
 			}
 
-		// We've sent the packet, so leave it up to SendComplete to free the buffer
-		npBuff = NULL;
-
 		Pos = ulDataOffset + pHdr->caplen;
 	}
 
@@ -710,8 +744,6 @@ NPF_FreePackets(
 	BOOLEAN				FreeBufAfterWrite;
 	PNET_BUFFER_LIST    pNetBufList = NetBufferLists;
 	PNET_BUFFER         Currbuff;
-	PMDL                pMdl;
-	PVOID npBuff;
 
 /*	TRACE_ENTER();*/
 
@@ -727,12 +759,7 @@ NPF_FreePackets(
 		Currbuff = NET_BUFFER_LIST_FIRST_NB(pNetBufList);
 		while (Currbuff)
 		{
-			pMdl = NET_BUFFER_FIRST_MDL(Currbuff);
-			npBuff = MmGetSystemAddressForMdlSafe(pMdl, HighPagePriority|MdlMappingNoExecute);
-			if (npBuff != NULL) {
-				ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
-			}
-			NdisFreeMdl(pMdl); //Free MDL
+			NPF_FreeMdlAndBuffer(NET_BUFFER_FIRST_MDL(Currbuff));
 			Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
 		}
 	}
