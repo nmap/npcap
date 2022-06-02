@@ -866,7 +866,9 @@ FILTER_SET_MODULE_OPTIONS NPF_SetModuleOptions;
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS NPF_ValidateIoIrp(
 	_In_ PIRP pIrp,
-	_Outptr_result_nullonfailure_ POPEN_INSTANCE* ppOpen
+	_Outptr_result_nullonfailure_ POPEN_INSTANCE* ppOpen,
+	_Outptr_result_nullonfailure_ PVOID* ppBuf,
+	_Out_ PULONG pBufLen
 );
 
 /*!

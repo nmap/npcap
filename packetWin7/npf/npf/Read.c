@@ -173,7 +173,7 @@ NPF_Read(
 	TRACE_ENTER();
 
 	/* Validate */
-	Status = NPF_ValidateIoIrp(Irp, &Open);
+	Status = NPF_ValidateIoIrp(Irp, &Open, &packp, &available);
 	if (Status != STATUS_SUCCESS)
 	{
 		goto NPF_Read_End;
@@ -196,7 +196,6 @@ NPF_Read(
 			break;
 		}
 
-		NdisQueryMdl(Irp->MdlAddress, &packp, &available, NormalPagePriority | MdlMappingNoExecute);
 		if (packp == NULL)
 		{
 			Status = STATUS_INSUFFICIENT_RESOURCES;

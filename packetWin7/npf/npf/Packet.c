@@ -1122,10 +1122,14 @@ Return Value:
 _Use_decl_annotations_
 NTSTATUS NPF_ValidateIoIrp(
 		PIRP pIrp,
-		POPEN_INSTANCE *ppOpen)
+		POPEN_INSTANCE *ppOpen,
+		PVOID* ppBuf,
+		PULONG pBufLen)
 {
 	PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(pIrp);
 	POPEN_INSTANCE pOpen = IrpSp->FileObject->FsContext;
+	PVOID pBuf = NULL;
+	ULONG BufLen = 0;
 	NTSTATUS Status = STATUS_UNSUCCESSFUL;
 
 	TRACE_ENTER();
@@ -1156,6 +1160,13 @@ NTSTATUS NPF_ValidateIoIrp(
 			break;
 		}
 
+		NdisQueryMdl(pIrp->MdlAddress, &pBuf, &BufLen, NormalPagePriority | MdlMappingNoExecute);
+		if (pBuf == NULL)
+		{
+			Status = STATUS_INSUFFICIENT_RESOURCES;
+			break;
+		}
+
 		// The subsequent assertions only make sense for both Read and Write if
 		// the Length field is in the same place in the Parameters union.
 		// We'll verify that with a compile-time assertion here.
@@ -1163,21 +1174,27 @@ NTSTATUS NPF_ValidateIoIrp(
 
 		// Make sure the buffer length is correct.
 		// This should be guaranteed by the I/O manager, but it'd be bad if we're wrong about that.
-		NT_ASSERT(MmGetMdlByteCount(pIrp->MdlAddress) == IrpSp->Parameters.Read.Length);
-		NT_ASSERT(MmGetMdlByteCount(pIrp->MdlAddress) == IrpSp->Parameters.Write.Length);
+		NT_ASSERT(BufLen == IrpSp->Parameters.Read.Length);
+		NT_ASSERT(BufLen == IrpSp->Parameters.Write.Length);
 
 		// Success! Fill out the output parameters.
 		Status = STATUS_SUCCESS;
-		if (ppOpen)
-			*ppOpen = pOpen;
 	} while (FALSE);
 
 	if (Status != STATUS_SUCCESS)
 	{
 		// Ensure output param is NULL on failure
-		if (ppOpen)
-			*ppOpen = NULL;
+		pOpen = NULL;
+		pBuf = NULL;
+		BufLen = 0;
 	}
+
+	if (ppOpen)
+		*ppOpen = pOpen;
+	if (ppBuf)
+		*ppBuf = pBuf;
+	if (pBufLen)
+		*pBufLen = BufLen;
 
 	TRACE_EXIT();
 	return Status;

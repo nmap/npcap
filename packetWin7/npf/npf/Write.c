@@ -204,13 +204,14 @@ NPF_Write(
 	ULONG				NumSends;
 	ULONG numSentPackets = 0;
 	ULONG buflen = 0;
+	PVOID pBuf = NULL;
 	NTSTATUS Status = STATUS_SUCCESS;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
 
 	/* Validate */
-	Status = NPF_ValidateIoIrp(Irp, &Open);
+	Status = NPF_ValidateIoIrp(Irp, &Open, &pBuf, &buflen);
 	if (Status != STATUS_SUCCESS)
 	{
 		goto NPF_Write_End;
@@ -236,7 +237,6 @@ NPF_Write(
 	// Failures after this point must call NPF_StopUsingOpenInstance
 	do
 	{
-		buflen = MmGetMdlByteCount(Irp->MdlAddress);
 		if (buflen == 0)
 		{
 			Status = STATUS_INVALID_PARAMETER;
