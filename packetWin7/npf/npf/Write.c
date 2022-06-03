@@ -139,7 +139,7 @@ NPF_AnalysisAssumeAllocated(_In_ PVOID *p)
 	return *p;
 }
 
-_Result_nullonfailure_
+_Must_inspect_result_
 _Success_(return != NULL)
 __drv_allocatesMem(mem)
 PMDL
@@ -254,6 +254,8 @@ NPF_Write(
 	ULONG buflen = 0;
 	PVOID pBuf = NULL;
 	NTSTATUS Status = STATUS_SUCCESS;
+	PMDL TmpMdl = NULL;
+	BOOLEAN IrpWasPended = FALSE;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
@@ -262,6 +264,7 @@ NPF_Write(
 	Status = NPF_ValidateIoIrp(Irp, &Open, &pBuf, &buflen);
 	if (Status != STATUS_SUCCESS)
 	{
+		Open = NULL;
 		goto NPF_Write_End;
 	}
 
@@ -271,47 +274,37 @@ NPF_Write(
 		Status = (Open->OpenStatus <= OpenDetached
 					? STATUS_DEVICE_REMOVED
 					: STATUS_CANCELLED);
-		goto NPF_Write_End;
-	}
-
-	NumSends = Open->Nwrites;
-	if (NumSends == 0)
-	{
-		Status = STATUS_SUCCESS;
-		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
+		Open = NULL;
 		goto NPF_Write_End;
 	}
 
 	// Failures after this point must call NPF_StopUsingOpenInstance
-	do
+	NumSends = Open->Nwrites;
+	if (NumSends == 0)
 	{
-		if (buflen == 0)
-		{
-			Status = STATUS_INVALID_PARAMETER;
-			break;
-		}
+		Status = STATUS_SUCCESS;
+		goto NPF_Write_End;
+	}
 
-		// Check that the MaxFrameSize is correctly initialized
-		if (Open->pFiltMod->MaxFrameSize == 0)
-		{
-			// TODO: better status code
-			Status = STATUS_UNSUCCESSFUL;
-			break;
-		}
-
-		// Check that the frame size is smaller than the MTU
-		if (buflen > Open->pFiltMod->MaxFrameSize)
-		{
-			// TODO: better status code
-			Status = STATUS_UNSUCCESSFUL;
-			break;
-		}
-
-	} while (FALSE);
-
-	if (Status != STATUS_SUCCESS)
+	if (buflen == 0)
 	{
-		NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
+		Status = STATUS_INVALID_PARAMETER;
+		goto NPF_Write_End;
+	}
+
+	// Check that the MaxFrameSize is correctly initialized
+	if (Open->pFiltMod->MaxFrameSize == 0)
+	{
+		// TODO: better status code
+		Status = STATUS_UNSUCCESSFUL;
+		goto NPF_Write_End;
+	}
+
+	// Check that the frame size is smaller than the MTU
+	if (buflen > Open->pFiltMod->MaxFrameSize)
+	{
+		// TODO: better status code
+		Status = STATUS_UNSUCCESSFUL;
 		goto NPF_Write_End;
 	}
 
@@ -331,10 +324,16 @@ NPF_Write(
 
 	while (numSentPackets < NumSends)
 	{
-		PMDL TmpMdl = NULL;
-		BOOLEAN bCopy = numSentPackets > 0;
-
-		if (bCopy) {
+		if (NumSends - numSentPackets == 1) 
+		{
+			// Last packet; use the IRP's buffer and pend it.
+			TmpMdl = Irp->MdlAddress;
+			IoMarkIrpPending(Irp);
+			IrpWasPended = TRUE;
+		}
+		else
+		{
+			// We will need to make a copy of the buffer for each additional send
 			TmpMdl = NPF_CloneBufferToMdl(Open->pFiltMod, pBuf, buflen);
 			if (TmpMdl == NULL)
 			{
@@ -342,23 +341,33 @@ NPF_Write(
 				break;
 			}
 		}
-		else
-		{
-			TmpMdl = Irp->MdlAddress;
-		}
 
 		Status = NPF_AllocateNBL(Open->pFiltMod,
 				TmpMdl,
 				buflen,
 				&pNetBufferList);
 
-		if (!NT_SUCCESS(Status) || !NT_VERIFY(pNetBufferList != NULL))
+		if (!NT_SUCCESS(Status))
 		{
 			// Alloc failure, abandon ship
 			break;
 		}
+		// Otherwise, TmpMdl is aliased via pNetBufferList
+		TmpMdl = NULL;
 
-		RESERVED(pNetBufferList)->FreeBufAfterWrite = bCopy;
+		RESERVED(pNetBufferList)->pState = NULL;
+		if (IrpWasPended)
+		{
+			// This is the only NBL that uses the IRP's buffer. Let SendComplete know it should complete the IRP, too.
+			RESERVED(pNetBufferList)->pIrp = Irp;
+			RESERVED(pNetBufferList)->FreeBufAfterWrite = FALSE;
+		}
+		else
+		{
+			// This NBL uses our own buffer copy. SendComplete should free it, but not complete the IRP until we're done sending.
+			RESERVED(pNetBufferList)->pIrp = NULL;
+			RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
+		}
 
 		//receive the packets before sending them
 
@@ -418,7 +427,6 @@ NPF_Write(
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
-				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 				break;
 			}
 		}
@@ -451,22 +459,38 @@ NPF_Write(
 					SendFlags);
 			}
 
+		pNetBufferList = NULL;
 		numSentPackets ++;
 	}
 
-	NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 
 NPF_Write_End:
-	//
-	// Complete the Irp and return success
-	//
-	Irp->IoStatus.Status = Status;
-	Irp->IoStatus.Information = numSentPackets > 0 ? MmGetMdlByteOffset(Irp->MdlAddress) : 0;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+	if (!NT_SUCCESS(Status))
+	{
+		// Failed somehow. Clean up.
+		// If pNetBufferList is not NULL, we need to free it, which will also free TmpMdl
+		if (pNetBufferList)
+		{
+			NPF_FreePackets(Open->pFiltMod, pNetBufferList);
+		}
+		// Otherwise, clean up TmpMdl directly
+		else if (TmpMdl && !IrpWasPended)
+		{
+			NPF_FreeMdlAndBuffer(TmpMdl);
+		}
+
+		if (Open)
+		{
+			NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
+		}
+		Irp->IoStatus.Status = Status;
+		Irp->IoStatus.Information = numSentPackets > 0 ? buflen : 0;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+	}
 
 	TRACE_EXIT();
 
-	return Status;
+	return (IrpWasPended ? STATUS_PENDING : Status);
 }
 
 //-------------------------------------------------------------------
@@ -489,8 +513,6 @@ NTSTATUS NPF_BufferedWrite(
 	LONGLONG prev_usec_diff = 0;
 	struct dump_bpf_hdr* pHdr = NULL;
 	PMDL					TmpMdl;
-	//	PCHAR				CurPos;
-	//	PCHAR				EndOfUserBuff = UserBuff + UserBuffSize;
 
 	TRACE_ENTER();
 
@@ -521,6 +543,16 @@ NTSTATUS NPF_BufferedWrite(
 		Status = STATUS_UNSUCCESSFUL;
 		goto NPF_BufferedWrite_End;
 	}
+
+	PNPF_BUFFERED_WRITE_STATE pState = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(NPF_BUFFERED_WRITE_STATE), NPF_BUFFERED_WRITE_TAG);
+	if (!pState)
+	{
+		Status = STATUS_INSUFFICIENT_RESOURCES;
+		goto NPF_BufferedWrite_End;
+	}
+	pState->PacketsPending = 0;
+	NdisInitializeEvent(&pState->WriteCompleteEvent);
+	NdisResetEvent(&pState->WriteCompleteEvent);
 
 	// WinPcap emulation: loop back injected packets if anyone's listening.
 	// Except when NPF_DISABLE_LOOPBACK is chosen, then don't loop back.
@@ -611,6 +643,8 @@ NTSTATUS NPF_BufferedWrite(
 
 		// The packet has a buffer that needs to be freed after every single write
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
+		RESERVED(pNetBufferList)->pIrp = NULL;
+		RESERVED(pNetBufferList)->pState = pState;
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 
 		TmpMdl->Next = NULL;
@@ -662,6 +696,8 @@ NTSTATUS NPF_BufferedWrite(
 		//receive the packets before sending them
 		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
 
+		NpfInterlockedIncrement(&pState->PacketsPending);
+		NdisResetEvent(&pState->WriteCompleteEvent);
 		//
 		// Call the MAC
 		//
@@ -672,6 +708,7 @@ NTSTATUS NPF_BufferedWrite(
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
+				NpfInterlockedDecrement(&pState->PacketsPending);
 				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 				break;
 			}
@@ -707,6 +744,11 @@ NTSTATUS NPF_BufferedWrite(
 
 		Pos = ulDataOffset + pHdr->caplen;
 	}
+
+	while (pState->PacketsPending > 0) {
+		NdisWaitEvent(&pState->WriteCompleteEvent, 0);
+	}
+	ExFreePoolWithTag(pState, NPF_BUFFERED_WRITE_TAG);
 
 	*Written = Pos;
 
@@ -816,6 +858,7 @@ Return Value:
 	PNET_BUFFER_LIST    pNetBufList = NULL;
 	PNET_BUFFER_LIST    pPrevNetBufList = NULL;
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
+	BOOLEAN bAtDispatchLevel = NDIS_TEST_SEND_AT_DISPATCH_LEVEL(SendCompleteFlags);
 
 	TRACE_ENTER();
 	/* This callback is used for NDIS LWF as well as WFP/loopback */
@@ -838,22 +881,50 @@ Return Value:
 		{
 			// No match, just move down.
 			pPrevNetBufList = pNetBufList;
+			continue;
 		}
-		else
+		// this is our self-sent packets
+
+		// Remove this one from the chain and move down.
+		if (pPrevNetBufList == NULL) {
+			// head of list, repoint NetBufferLists
+			NetBufferLists = pNetBufList;
+		}
+		else {
+			NET_BUFFER_LIST_NEXT_NBL(pPrevNetBufList) = pNetBufList;
+		}
+
+		PIRP pIrp = RESERVED(pNBL)->pIrp;
+		if (pIrp != NULL)
 		{
-			// this is our self-sent packets
+			PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(pIrp);
+			POPEN_INSTANCE pOpen = IrpSp->FileObject->FsContext;
+			NT_ASSERT(pOpen->pFiltMod == pFiltMod);
 
-			// Remove this one from the chain and move down.
-			if (pPrevNetBufList == NULL) {
-				// head of list, repoint NetBufferLists
-				NetBufferLists = pNetBufList;
-			}
-			else {
-				NET_BUFFER_LIST_NEXT_NBL(pPrevNetBufList) = pNetBufList;
-			}
+			NPF_StopUsingOpenInstance(pOpen, OpenRunning, bAtDispatchLevel);
 
-			NPF_FreePackets(pFiltMod, pNBL);
+			if (NDIS_STATUS_SUCCESS == NET_BUFFER_LIST_STATUS(pNBL))
+			{
+				pIrp->IoStatus.Status = STATUS_SUCCESS;
+				pIrp->IoStatus.Information = IrpSp->Parameters.Write.Length;
+			}
+			else
+			{
+				pIrp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+				pIrp->IoStatus.Information = 0;
+			}
+			IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 		}
+		PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNBL)->pState;
+		if (pState != NULL)
+		{
+			if (0 == NpfInterlockedDecrement(&pState->PacketsPending))
+			{
+				NdisSetEvent(&pState->WriteCompleteEvent);
+			}
+		}
+
+		NPF_FreePackets(pFiltMod, pNBL);
 	}
 
 	// Send complete any NBLS that are left (didn't originate with us)
@@ -881,13 +952,6 @@ void NTAPI NPF_NetworkInjectionComplete(
 
 	/* This method should only be used for Loopback (for now, though see #516) */
 	NT_ASSERT(((PNPCAP_FILTER_MODULE) pContext)->Loopback);
-
-	if (pNetBufferList->Status != STATUS_SUCCESS)
-	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
-			"NPF_NetworkInjectionComplete: pNetBufferList->Status [status: %#x]\n",
-			pNetBufferList->Status);
-	}
 
 	// Don't need to Retreat the data offset since the completion/free functions ignore CurrentMdl
 	// Call complete function manually just like NDIS callback.

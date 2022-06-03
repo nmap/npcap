@@ -548,12 +548,21 @@ NPF_AnalysisAssumeFreed(_In_ __drv_freesMem(mem) PVOID p)
 	return;
 }
 
+typedef __declspec(align(4)) struct _NPF_BUFFERED_WRITE_STATE
+{
+	LONG PacketsPending;
+	NDIS_EVENT WriteCompleteEvent;
+}
+NPF_BUFFERED_WRITE_STATE, *PNPF_BUFFERED_WRITE_STATE;
+
 /*!
 \brief Context information for originated sent packets
 */
 typedef __declspec(align(MEMORY_ALLOCATION_ALIGNMENT)) struct _PACKET_RESERVED
 {
+	PIRP pIrp;
 	BOOLEAN		FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
+	PNPF_BUFFERED_WRITE_STATE pState;
 }  PACKET_RESERVED, *PPACKET_RESERVED;
 
 #define RESERVED(_p) ((PPACKET_RESERVED)((_p)->Context->ContextData + (_p)->Context->Offset)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
