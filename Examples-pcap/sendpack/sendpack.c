@@ -65,7 +65,9 @@ int main(int argc, char **argv)
 		"\x00\x08\x00\x00" /* length 8 (no body), cksum 0 (unset) */
 	;
 	u_char *sendme = packet;
-	size_t packet_len = sizeof(packet);
+	/* packet is null-terminated by the compiler, so account for that here. */
+#define ORIG_PACKET_LEN (sizeof(packet) - 1)
+	size_t packet_len = ORIG_PACKET_LEN;
 	pcap_if_t *ifaces = NULL;
 	pcap_if_t *dev = NULL;
 	pcap_addr_t *addr = NULL;
@@ -122,12 +124,12 @@ int main(int argc, char **argv)
 	}
 
 	/* Fill in the length and source addr and calculate checksum */
-	packet[14 + 2] = 0xff & ((sizeof(packet) - 14) >> 8);
-	packet[14 + 3] = 0xff & (sizeof(packet) - 14);
+	packet[14 + 2] = 0xff & ((ORIG_PACKET_LEN - 14) >> 8);
+	packet[14 + 3] = 0xff & (ORIG_PACKET_LEN - 14);
 	*(u_long *)(packet + 14 + 12) = ((struct sockaddr_in *)(addr->addr))->sin_addr.S_un.S_addr;
 
 	uint32_t cksum = 0;
-	for (int i=14; i < sizeof(packet); i += 2)
+	for (int i=14; i < 14 + 4 * (packet[14] & 0xf); i += 2)
 	{
 		cksum += *(uint16_t *)(packet + i);
 	}
