@@ -45,13 +45,14 @@ int close_enough(char *one, char *two)
 	return 1;
 }
 
+#define ORIG_PACKET_LEN 64
 int main(int argc, char **argv)
 {
 	pcap_t *fp;
 	char errbuf[PCAP_ERRBUF_SIZE] = {0};
-	u_char packet[] = 
+	u_char packet[ORIG_PACKET_LEN] = 
 		/* Ethernet frame header */
-		"\x01\x01\x01\x01\x01\x01" /* dst mac */
+		"\xff\xff\xff\xff\xff\xff" /* dst mac */
 		"\x02\x02\x02\x02\x02\x02" /* src mac */
 		"\x08\x00" /* ethertype IPv4 */
 		/* IPv4 packet header */
@@ -62,11 +63,9 @@ int main(int argc, char **argv)
 		"\xff\xff\xff\xff" /* dst IP (broadcast) */
 		/* UDP header */
 		"\x00\x07\x00\x07" /* src port 7, dst port 7 (echo) */
-		"\x00\x08\x00\x00" /* length 8 (no body), cksum 0 (unset) */
+		"\x00\x00\x00\x00" /* length TBD, cksum 0 (unset) */
 	;
 	u_char *sendme = packet;
-	/* packet is null-terminated by the compiler, so account for that here. */
-#define ORIG_PACKET_LEN (sizeof(packet) - 1)
 	size_t packet_len = ORIG_PACKET_LEN;
 	pcap_if_t *ifaces = NULL;
 	pcap_if_t *dev = NULL;
@@ -126,6 +125,9 @@ int main(int argc, char **argv)
 	/* Fill in the length and source addr and calculate checksum */
 	packet[14 + 2] = 0xff & ((ORIG_PACKET_LEN - 14) >> 8);
 	packet[14 + 3] = 0xff & (ORIG_PACKET_LEN - 14);
+	/* UDP length */
+	packet[14 + 20 + 4] = 0xff & ((ORIG_PACKET_LEN - 14 - 20) >> 8);
+	packet[14 + 20 + 5] = 0xff & (ORIG_PACKET_LEN - 14 - 20);
 	*(u_long *)(packet + 14 + 12) = ((struct sockaddr_in *)(addr->addr))->sin_addr.S_un.S_addr;
 
 	uint32_t cksum = 0;
