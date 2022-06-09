@@ -118,12 +118,6 @@ extern ULONG g_Dot11SupportMode;
 extern ULONG g_TestMode;
 extern PDEVICE_OBJECT pNpcapDeviceObject;
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	extern HANDLE g_WFPEngineHandle;
-#endif
-
-ULONG g_NumLoopbackInstances = 0;
-
 extern SINGLE_LIST_ENTRY g_arrFiltMod; //Adapter filter module list head, each list item is a group head.
 extern NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
 
@@ -596,13 +590,6 @@ NPF_OpenAdapter(
 	{
 		// Initializes pFiltMod, AdapterID, bDot11, bLoopback, OpenStatus
 		NPF_AddToGroupOpenArray(Open, pFiltMod, FALSE);
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		if (Open->bLoopback)
-		{
-			// Keep track of how many active loopback captures there are
-			NpfInterlockedIncrement(&(LONG)g_NumLoopbackInstances);
-		}
-#endif
 #ifdef HAVE_DOT11_SUPPORT
 		if (Open->bDot11)
 		{
@@ -822,33 +809,6 @@ NPF_DemoteOpenStatus(
 }
 
 //-------------------------------------------------------------------
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-_IRQL_requires_(PASSIVE_LEVEL)
-VOID
-NPF_DecrementLoopbackInstances(
-		_Inout_ PNPCAP_FILTER_MODULE pFiltMod)
-{
-	NT_ASSERT(pFiltMod->Loopback);
-	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	if (NpfInterlockedDecrement(&(LONG)g_NumLoopbackInstances) == 0)
-	{
-		pFiltMod->OpsState = OpsDisabling;
-		NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
-
-		// No more loopback handles open. Release WFP resources
-		if (!g_TestMode)
-		{
-			NPF_ReleaseWFP(pNpcapDeviceObject);
-		}
-
-		// Set OpsState so we re-enable these if necessary
-		NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-		pFiltMod->OpsState = OpsDisabled;
-	}
-	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
-}
-#endif
 
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID NPF_OpenWaitPendingIrps(
@@ -1373,13 +1333,6 @@ NPF_Cleanup(
 		KeSetEvent(Open->ReadEvent, 0, FALSE);
 	NPF_OpenWaitPendingIrps(Open);
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (Open->bLoopback)
-	{
-		NPF_DecrementLoopbackInstances(Open->pFiltMod);
-	}
-#endif
-
 	NPF_RemoveFromGroupOpenArray(Open); //Remove the Open from the filter module's list
 
 
@@ -1508,6 +1461,7 @@ NPF_RemoveFromGroupOpenArray(
 	ULONG BytesProcessed;
 	PVOID pBuffer = NULL;
 	BOOLEAN found = FALSE;
+	BOOLEAN last = FALSE;
 	LOCK_STATE_EX lockState;
 
 	TRACE_ENTER();
@@ -1518,12 +1472,15 @@ NPF_RemoveFromGroupOpenArray(
 		/* This adapter was already removed, so no filter module exists.
 		 * Nothing left to do!
 		 */
-		NT_ASSERT(pOpen->OpenStatus >= OpenDetached);
+		if (!NT_VERIFY(pOpen->OpenStatus >= OpenDetached)) {
+			pOpen->OpenStatus = OpenDetached;
+		}
 		NT_ASSERT(pOpen->OpenInstancesEntry.Next == NULL);
 		NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 		return;
 	}
 	pOpen->OpenStatus = max(pOpen->OpenStatus, OpenDetached);
+	pOpen->pFiltMod = NULL;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
 	// Acquire lock for writing (modify list)
@@ -1555,7 +1512,39 @@ NPF_RemoveFromGroupOpenArray(
 		Curr = Prev->Next;
 	}
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// If this was the last loopback instance, get ready to release WFP resources.
+	// Have to release all locks first so IRQL is PASSIVE_LEVEL
+	if (found && pFiltMod->Loopback && pFiltMod->OpenInstances.Next == NULL)
+	{
+		FILTER_ACQUIRE_LOCK(&pFiltMod->AdapterHandleLock, TRUE);
+		if(pFiltMod->OpsState == OpsEnabled)
+		{
+			// Ops enabled. Signal intent to disable.
+			pFiltMod->OpsState = OpsDisabling;
+			last = TRUE;
+		}
+		else {
+			// Either someone else is disabling or it's already disabled
+			NT_ASSERT(pFiltMod->OpsState == OpsDisabling || pFiltMod->OpsState == OpsDisabled);
+		}
+		FILTER_RELEASE_LOCK(&pFiltMod->AdapterHandleLock, TRUE);
+	}
+#endif
+
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// No more loopback handles open, and it's our responsibility to clean up. Release WFP resources.
+	if (last && !g_TestMode) {
+		NPF_ReleaseWFP(pNpcapDeviceObject);
+
+		FILTER_ACQUIRE_LOCK(&pFiltMod->AdapterHandleLock, FALSE);
+		NT_ASSERT(pFiltMod->OpsState == OpsDisabling);
+		pFiltMod->OpsState = OpsDisabled;
+		FILTER_RELEASE_LOCK(&pFiltMod->AdapterHandleLock, FALSE);
+	}
+#endif
 
 	/* If the packet filter has changed, originate an OID Request to set it to the new value */
 	if (STATUS_SUCCESS != NPF_SetPacketFilter(pFiltMod, NewPacketFilter))
@@ -2259,14 +2248,12 @@ NPF_AttachAdapter(
 			{
 				POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, AllOpensEntry);
 				// If it doesn't already have a filter module and it's not Loopback (since this is for NDIS only)
-				if (pOpen->pFiltMod == NULL && !pOpen->bLoopback
+				if (pOpen->OpenStatus == OpenDetached && pOpen->pFiltMod == NULL && !pOpen->bLoopback
 						// and its Dot11 status matches
 						&& pOpen->bDot11 == pFiltMod->Dot11
 						// and the AdapterID matches
 					       	&& pOpen->AdapterID.Value == pFiltMod->AdapterID.Value)
 				{
-					// Verify OpenStatus
-					NT_ASSERT(pOpen->OpenStatus == OpenDetached);
 					// add it to this filter module's list.
 					NPF_AddToGroupOpenArray(pOpen, pFiltMod, TRUE);
 					// 'OR' in the open's filter
