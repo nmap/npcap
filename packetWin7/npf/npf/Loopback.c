@@ -998,18 +998,22 @@ NPF_UnregisterCallouts(
 		if (g_OutboundIPPacketV4)
 		{
 			FwpsCalloutUnregisterById(g_OutboundIPPacketV4);
+			g_OutboundIPPacketV4 = 0;
 		}
 		if (g_OutboundIPPacketV6)
 		{
 			FwpsCalloutUnregisterById(g_OutboundIPPacketV6);
+			g_OutboundIPPacketV6 = 0;
 		}
 		if (g_InboundIPPacketV4)
 		{
 			FwpsCalloutUnregisterById(g_InboundIPPacketV4);
+			g_InboundIPPacketV4 = 0;
 		}
 		if (g_InboundIPPacketV6)
 		{
 			FwpsCalloutUnregisterById(g_InboundIPPacketV6);
+			g_InboundIPPacketV6 = 0;
 		}
 	}
 
@@ -1121,7 +1125,7 @@ NTSTATUS
 NPF_InitWFP(PDEVICE_OBJECT pDevObj)
 {
 	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
-	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, 0);
+	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 	{
 		// Failed to get the mutex. Report exact error unless it's a "success" value
@@ -1157,7 +1161,7 @@ VOID
 NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj)
 {
 	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
-	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, 0);
+	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 	{
 		// Failed to get the mutex.
