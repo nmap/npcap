@@ -21,9 +21,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DEBUG.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ieee80211_radiotap.h">
       <Filter>Header Files</Filter>
     </ClInclude>

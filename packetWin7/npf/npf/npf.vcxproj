@@ -1511,7 +1511,6 @@
     <ClCompile Include="Write.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DEBUG.H" />
     <ClInclude Include="ieee80211_radiotap.h" />
     <ClInclude Include="ioctls.h" />
     <ClInclude Include="Loopback.h" />

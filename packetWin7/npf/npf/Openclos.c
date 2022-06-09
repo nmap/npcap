@@ -521,7 +521,7 @@ NPF_OpenAdapter(
 		if (pFiltMod == NULL)
 		{
 			// Can't find the adapter from the global open array.
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			INFO_DBG(
 				"NPF_GetFilterModuleByAdapterName error, pFiltMod=NULL, AdapterName=%ws",
 				IrpSp->FileObject->FileName.Buffer);
 
@@ -534,7 +534,7 @@ NPF_OpenAdapter(
 
 		if (NPF_StartUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN) == FALSE)
 		{
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			INFO_DBG(
 				"NPF_StartUsingBinding error, AdapterName=%ws",
 				IrpSp->FileObject->FileName.Buffer);
 
@@ -565,13 +565,13 @@ NPF_OpenAdapter(
 	Open->DeviceExtension = DeviceObject->DeviceExtension;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+	INFO_DBG(
 		"Opening the device %ws, BindingContext=%p, Loopback=%u",
 		IrpSp->FileObject->FileName.Buffer,
 		Open,
 		pFiltMod ? pFiltMod->Loopback : 0);
 #else
-	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+	INFO_DBG(
 		"Opening the device %ws, BindingContext=%p, Loopback=<Not supported>",
 		IrpSp->FileObject->FileName.Buffer,
 		Open);
@@ -584,7 +584,7 @@ NPF_OpenAdapter(
 	//
 	// complete the open
 	//
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
+	INFO_DBG("Open = %p\n", Open);
 
 	if (pFiltMod)
 	{
@@ -851,7 +851,7 @@ NPF_ReleaseOpenInstanceResources(
 	NT_ASSERT(pOpen != NULL);
 	NT_ASSERT(pOpen->OpenStatus == OpenClosed);
 
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open= %p", pOpen);
+	INFO_DBG("Open= %p", pOpen);
 
 
 	//
@@ -944,7 +944,7 @@ NPF_GetDeviceMTU(
     pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(Mtu), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
-        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+        INFO_DBG("Allocate pBuffer failed\n");
             TRACE_EXIT();
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -1025,7 +1025,7 @@ NPF_LookUpDataRateMappingTable(
 
 	if (!pFiltMod->HasDataRateMappingTable)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Data rate mapping table not found, Open = %p\n", pFiltMod);
+		INFO_DBG("Data rate mapping table not found, Open = %p\n", pFiltMod);
 		TRACE_EXIT();
 		return usRetDataRateValue;
 	}
@@ -1063,7 +1063,7 @@ NPF_GetCurrentOperationMode(
     pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentOperationMode), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
-        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+        INFO_DBG("Allocate pBuffer failed\n");
             TRACE_EXIT();
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -1137,7 +1137,7 @@ NPF_GetCurrentChannel(
     pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentChannel), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
-        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+        INFO_DBG("Allocate pBuffer failed\n");
             TRACE_EXIT();
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -1208,7 +1208,7 @@ NPF_GetCurrentFrequency(
     pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentFrequency), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
-        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+        INFO_DBG("Allocate pBuffer failed\n");
             TRACE_EXIT();
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -1324,7 +1324,7 @@ NPF_Cleanup(
 		return STATUS_INVALID_HANDLE;
 	}
 
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Open = %p\n", Open);
+	INFO_DBG("Open = %p\n", Open);
 
 	NT_ASSERT(Open != NULL);
 
@@ -1549,17 +1549,17 @@ NPF_RemoveFromGroupOpenArray(
 	/* If the packet filter has changed, originate an OID Request to set it to the new value */
 	if (STATUS_SUCCESS != NPF_SetPacketFilter(pFiltMod, NewPacketFilter))
 	{
-		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");)
+		INFO_DBG("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");
 	}
 	// If the new lookahead value is different than the old one, originate an OID request to set to the new value
 	if (STATUS_SUCCESS != NPF_SetLookaheadSize(pFiltMod, NewLookaheadSize))
 	{
-		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: Failed to set resulting lookahead.\n");)
+		INFO_DBG("NPF_RemoveFromGroupOpenArray: Failed to set resulting lookahead.\n");
 	}
 
 	if (!found)
 	{
-		IF_LOUD(DbgPrint("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");)
+		INFO_DBG("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");
 	}
 
 	TRACE_EXIT();
@@ -1591,7 +1591,7 @@ NPF_EqualAdapterName(
 	// TRACE_ENTER();
 
 	if (s1->Buffer == NULL || s2->Buffer == NULL) {
-		IF_LOUD(DbgPrint("NPF_EqualAdapterName: null buffer\n");)
+		INFO_DBG("NPF_EqualAdapterName: null buffer\n");
 		return FALSE;
 	}
 
@@ -1604,7 +1604,7 @@ NPF_EqualAdapterName(
 
 	if (BYTES2CCH(s2->Length) - compare_len < cchOffset)
 	{
-		IF_LOUD(DbgPrint("NPF_EqualAdapterName: length too short\n");)
+		INFO_DBG("NPF_EqualAdapterName: length too short\n");
 		return FALSE;
 	}
 
@@ -1639,10 +1639,10 @@ NPF_EqualAdapterName(
 		);
 
 	// Print unicode strings using %ws will cause page fault blue screen with IRQL = DISPATCH_LEVEL, so we disable the string print for now.
-	// IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);)
+	// INFO_DBG("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);
 	if (bResult)
 	{
-		IF_LOUD(DbgPrint("NPF_EqualAdapterName: bResult == TRUE\n");)
+		INFO_DBG("NPF_EqualAdapterName: bResult == TRUE\n");
 	}
 	// TRACE_EXIT();
 	return bResult;
@@ -1658,7 +1658,7 @@ NPF_ContainsAdapterName(
 	USHORT i = 0;
 
 	if (AdSet->Buffer == NULL || AdName->Buffer == NULL) {
-		IF_LOUD(DbgPrint("NPF_ContainsAdapterName: null buffer\n");)
+		INFO_DBG("NPF_ContainsAdapterName: null buffer\n");
 		return FALSE;
 	}
 	while (i < BYTES2CCH(AdSet->Length))
@@ -1711,7 +1711,7 @@ NPF_GetFilterModuleByAdapterName(
 	BaseName.MaximumLength = max(sizeof(L"Loopback"), pAdapterName->MaximumLength);
 	BaseName.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, BaseName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (BaseName.Buffer == NULL) {
-		IF_LOUD(DbgPrint("NPF_GetFilterModuleByAdapterName: failed to allocate BaseName.Buffer\n");)
+		INFO_DBG("NPF_GetFilterModuleByAdapterName: failed to allocate BaseName.Buffer\n");
 		TRACE_EXIT();
 		return NULL;
 	}
@@ -1821,7 +1821,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	if (Open == NULL)
 	{
 		// no memory
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate memory pool");
+		INFO_DBG("Failed to allocate memory pool");
 		TRACE_EXIT();
 		return NULL;
 	}
@@ -1832,7 +1832,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->BufferLock = NdisAllocateRWLock(NdisHandle);
 	if (Open->BufferLock == NULL)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferLock");
+		INFO_DBG("Failed to allocate BufferLock");
 		ExFreePool(Open);
 		TRACE_EXIT();
 		return NULL;
@@ -1850,7 +1850,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->MachineLock = NdisAllocateRWLock(NdisHandle);
 	if (Open->MachineLock == NULL)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate MachineLock");
+		INFO_DBG("Failed to allocate MachineLock");
 		NdisFreeRWLock(Open->BufferLock);
 		ExFreePool(Open);
 		TRACE_EXIT();
@@ -1917,7 +1917,7 @@ NPF_CreateFilterModule(
 	if (pFiltMod == NULL)
 	{
 		// no memory
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate memory pool");
+		INFO_DBG("Failed to allocate memory pool");
 		TRACE_EXIT();
 		return NULL;
 	}
@@ -1945,7 +1945,7 @@ NPF_CreateFilterModule(
 		pFiltMod->OpenInstancesLock = NdisAllocateRWLock(NdisFilterHandle);
 		if (pFiltMod->OpenInstancesLock == NULL)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OpenInstancesLock");
+			INFO_DBG("Failed to allocate OpenInstancesLock");
 			bAllocFailed = TRUE;
 			break;
 		}
@@ -1963,7 +1963,7 @@ NPF_CreateFilterModule(
 		pFiltMod->PacketPool = NdisAllocateNetBufferListPool(NdisFilterHandle, &PoolParameters);
 		if (pFiltMod->PacketPool == NULL)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate packet pool");
+			INFO_DBG("Failed to allocate packet pool");
 			bAllocFailed = TRUE;
 			break;
 		}
@@ -2048,7 +2048,7 @@ Return Value:
 
 	if (!NT_VERIFY(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject))
 	{
-		IF_LOUD(DbgPrint("NPF_RegisterOptions: driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);)
+		INFO_DBG("NPF_RegisterOptions: driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);
 		return NDIS_STATUS_INVALID_PARAMETER;
 	}
 
@@ -2075,7 +2075,7 @@ static NDIS_STATUS NPF_ValidateParameters(
 	{
 		if (MiniportMediaType != NdisMediumNative802_11)
 		{
-			IF_LOUD(DbgPrint("Unsupported media type for the WiFi filter: MiniportMediaType = %d, expected = 16 (NdisMediumNative802_11).\n", MiniportMediaType);)
+			INFO_DBG("Unsupported media type for the WiFi filter: MiniportMediaType = %d, expected = 16 (NdisMediumNative802_11).\n", MiniportMediaType);
 
 			return NDIS_STATUS_INVALID_PARAMETER;
 		}
@@ -2112,7 +2112,7 @@ NPF_AttachAdapter(
 		// An example:
 		// AdapterName = "\DEVICE\{4F4B4BD7-340D-45D3-8F59-8A1E167BC75D}"
 		// FilterModuleGuidName = "{4F4B4BD7-340D-45D3-8F59-8A1E167BC75D}-{7DAF2AC8-E9F6-4765-A842-F1F5D2501351}-0000"
-		IF_LOUD(DbgPrint("NPF_AttachAdapter: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
+		INFO_DBG("NPF_AttachAdapter: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
 			AttachParameters->BaseMiniportName->Buffer,
 			AttachParameters->CurrentMacAddress[0],
 			AttachParameters->CurrentMacAddress[1],
@@ -2121,29 +2121,27 @@ NPF_AttachAdapter(
 			AttachParameters->CurrentMacAddress[4],
 			AttachParameters->CurrentMacAddress[5],
 			AttachParameters->MiniportMediaType);
-		);
 
-		IF_LOUD(DbgPrint("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%u]=%x\n",
+		INFO_DBG("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%u]=%x\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
 			(UINT) SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME,
 			AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME]);
-		);
 
 		if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'4')
 		{
-			IF_LOUD(DbgPrint("NPF_AttachAdapter: This is the standard filter binding!\n");)
+			INFO_DBG("NPF_AttachAdapter: This is the standard filter binding!\n");
 			bDot11 = FALSE;
 		}
 #ifdef HAVE_DOT11_SUPPORT
 		else if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'5')
 		{
-			IF_LOUD(DbgPrint("NPF_AttachAdapter: This is the WiFi filter binding!\n");)
+			INFO_DBG("NPF_AttachAdapter: This is the WiFi filter binding!\n");
 			bDot11 = TRUE;
 		}
 #endif
 		else
 		{
-			IF_LOUD(DbgPrint("NPF_AttachAdapter: error, unrecognized filter binding!\n");)
+			INFO_DBG("NPF_AttachAdapter: error, unrecognized filter binding!\n");
 
 			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
 			break;
@@ -2156,7 +2154,7 @@ NPF_AttachAdapter(
 		// Disable this code for now, because it invalidates most adapters to be bound, reason needs to be clarified.
 // 		if (AttachParameters->LowerIfIndex != AttachParameters->BaseMiniportIfIndex)
 // 		{
-// 			IF_LOUD(DbgPrint("Don't bind to other altitudes than exactly over the miniport: LowerIfIndex = %d, BaseMiniportIfIndex = %d.\n", AttachParameters->LowerIfIndex, AttachParameters->BaseMiniportIfIndex);)
+// 			INFO_DBG("Don't bind to other altitudes than exactly over the miniport: LowerIfIndex = %d, BaseMiniportIfIndex = %d.\n", AttachParameters->LowerIfIndex, AttachParameters->BaseMiniportIfIndex);
 // 
 // 			returnStatus = NDIS_STATUS_NOT_SUPPORTED;
 // 			break;
@@ -2212,23 +2210,23 @@ NPF_AttachAdapter(
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
 			returnStatus = Status;
-			IF_LOUD(DbgPrint("NdisFSetAttributes: error, Status=%x.\n", Status);)
+			INFO_DBG("NdisFSetAttributes: error, Status=%x.\n", Status);
 			break;
 		}
 
 		pFiltMod->HigherPacketFilter = NPF_GetPacketFilter(pFiltMod);
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 			"HigherPacketFilter=%x",
 			pFiltMod->HigherPacketFilter);
 
 		pFiltMod->PhysicalMedium = AttachParameters->MiniportPhysicalMediaType;
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 			"PhysicalMedium=%x",
 			pFiltMod->PhysicalMedium);
 
 		pFiltMod->Dot11 = g_Dot11SupportMode && bDot11;
 
-		TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 			"Opened the device %ws, BindingContext=%p, dot11=%u",
 			AttachParameters->BaseMiniportName->Buffer,
 			pFiltMod,
@@ -2265,12 +2263,12 @@ NPF_AttachAdapter(
 			returnStatus = NPF_SetPacketFilter(pFiltMod, NewPacketFilter);
 			if (!NT_SUCCESS(returnStatus))
 			{
-				IF_LOUD(DbgPrint("NPF_SetPacketFilter: error, Status=%x.\n", returnStatus);)
+				INFO_DBG("NPF_SetPacketFilter: error, Status=%x.\n", returnStatus);
 			}
 			returnStatus = NPF_SetLookaheadSize(pFiltMod, NewLookaheadSize);
 			if (!NT_SUCCESS(returnStatus))
 			{
-				IF_LOUD(DbgPrint("NPF_SetLookaheadSize: error, Status=%x.\n", returnStatus);)
+				INFO_DBG("NPF_SetLookaheadSize: error, Status=%x.\n", returnStatus);
 			}
 		}
 
@@ -2288,7 +2286,7 @@ NPF_AttachAdapter(
 		ExFreePool(pFiltMod);
 		pFiltMod = NULL;
 	}
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "returnStatus=%x", returnStatus);
+	INFO_DBG("returnStatus=%x", returnStatus);
 	TRACE_EXIT();
 	return returnStatus;
 }
@@ -2577,7 +2575,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 											&ClonedRequest);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "FilterOidRequest: Cannot Clone Request\n");
+			INFO_DBG("FilterOidRequest: Cannot Clone Request\n");
 			break;
 		}
 
@@ -2590,7 +2588,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 			pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_CLONE_OID_TAG);
 			if (pBuffer == NULL)
 			{
-				IF_LOUD(DbgPrint("Allocate pBuffer failed, cannot modify OID value.\n");)
+				INFO_DBG("Allocate pBuffer failed, cannot modify OID value.\n");
 			}
 			else
 			{
@@ -2783,7 +2781,7 @@ Arguments:
 	//
 	if (OriginalRequest == NULL)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %#x", Status);
+		INFO_DBG("Status = %#x", Status);
 		NPF_InternalRequestComplete(pFiltMod, Request, Status);
 		TRACE_EXIT();
 		return;
@@ -2873,9 +2871,9 @@ NOTE: called at <= DISPATCH_LEVEL
 #endif
 
 // 	TRACE_ENTER();
-// 	IF_LOUD(DbgPrint("NPF: Status Indication\n");)
+// 	INFO_DBG("NPF: Status Indication\n");
 
-	IF_LOUD(DbgPrint("status %x\n", StatusIndication->StatusCode);)
+	INFO_DBG("status %x\n", StatusIndication->StatusCode);
 
 	//
 	// The filter may do processing on the status indication here, including
@@ -2947,7 +2945,7 @@ NOTE: called at PASSIVE_LEVEL
 			break;
 
 		default:
-			IF_LOUD(DbgPrint("FilterDevicePnPEventNotify: Invalid event.\n");)
+			INFO_DBG("FilterDevicePnPEventNotify: Invalid event.\n");
 			break;
 	}
 
@@ -3149,7 +3147,7 @@ NPF_GetPacketFilter(
 	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
-        IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+        INFO_DBG("Allocate pBuffer failed\n");
             TRACE_EXIT();
         return 0;
     }
@@ -3171,7 +3169,7 @@ NPF_GetPacketFilter(
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
-		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));)
+		INFO_DBG("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));
 		TRACE_EXIT();
 		return 0;
 	}
@@ -3229,7 +3227,7 @@ NPF_SetPacketFilter(
 	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
 	if (pBuffer == NULL)
 	{
-		IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+		INFO_DBG("Allocate pBuffer failed\n");
 			TRACE_EXIT();
 		return NDIS_STATUS_RESOURCES;
 	}
@@ -3251,7 +3249,7 @@ NPF_SetPacketFilter(
 
 	if (BytesProcessed != sizeof(PacketFilter))
 	{
-		IF_LOUD(DbgPrint("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));)
+		INFO_DBG("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));
 		Status = NDIS_STATUS_FAILURE;
 	}
 	TRACE_EXIT();
@@ -3295,7 +3293,7 @@ NPF_SetLookaheadSize(
 	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
 	if (pBuffer == NULL)
 	{
-		IF_LOUD(DbgPrint("Allocate pBuffer failed\n");)
+		INFO_DBG("Allocate pBuffer failed\n");
 			TRACE_EXIT();
 		return NDIS_STATUS_RESOURCES;
 	}
@@ -3316,7 +3314,7 @@ NPF_SetLookaheadSize(
 
 	if (Status != STATUS_SUCCESS || BytesProcessed != sizeof(ULONG))
 	{
-		IF_LOUD(DbgPrint("NPF_DoInternalRequest error %#x, BytesProcessed = %#lx, sizeof(ULONG) = %#zx\n", Status, BytesProcessed, sizeof(ULONG));)
+		INFO_DBG("NPF_DoInternalRequest error %#x, BytesProcessed = %#lx, sizeof(ULONG) = %#zx\n", Status, BytesProcessed, sizeof(ULONG));
 		Status = NDIS_STATUS_FAILURE;
 	}
 	TRACE_EXIT();
@@ -3385,8 +3383,8 @@ NDIS_STATUS NPF_DoInternalRequest(
 			break;
 
 		default:
-			IF_LOUD(DbgPrint("Unsupported RequestType: %d\n", RequestType);)
-			IF_LOUD(DbgPrint("Status = %x\n", Status);)
+			INFO_DBG("Unsupported RequestType: %d\n", RequestType);
+			INFO_DBG("Status = %x\n", Status);
 			TRACE_EXIT();
 			return Status;
 			// break;
@@ -3441,7 +3439,7 @@ NDIS_STATUS NPF_DoInternalRequest(
 		}
 	}
 
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %#x", Status);
+	INFO_DBG("Status = %#x", Status);
 	TRACE_EXIT();
 	return Status;
 }
@@ -3485,7 +3483,7 @@ Return Value:
 	// Set the request result
 	//
 	pRequest->RequestStatus = Status;
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "pRequest->RequestStatus = Status = %x", Status);
+	INFO_DBG("pRequest->RequestStatus = Status = %x", Status);
 
 	//
 	// and awake the caller

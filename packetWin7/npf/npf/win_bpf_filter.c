@@ -124,8 +124,6 @@
 
 #include "win_bpf.h"
 
-#include "debug.h"
-
 #include "valid_insns.h"
 
 #define EXTRACT_SHORT(p)\
@@ -536,7 +534,7 @@ int len;
 	{
 		p = &f[i];
 
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Validating program");
+		INFO_DBG("Validating program");
 
 		flag = 0;
 		for (j = 0; j < VALID_INSTRUCTIONS_LEN; j++)
@@ -545,7 +543,7 @@ int len;
 		if (flag == 0)
 			return 0;
 
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Validating program: no unknown instructions");
+		INFO_DBG("Validating program: no unknown instructions");
 
 		switch (BPF_CLASS(p->code))
 		{
@@ -572,7 +570,7 @@ int len;
 				return 0;
 			}
 
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Validating program: no wrong LD memory locations");
+			INFO_DBG("Validating program: no wrong LD memory locations");
 			break;
 
 		case BPF_ST:
@@ -580,7 +578,7 @@ int len;
 			if (p->k >= BPF_MEMWORDS)
 				return 0;
 
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Validating program: no wrong ST memory locations");
+			INFO_DBG("Validating program: no wrong ST memory locations");
 			break;
 
 		case BPF_ALU:
@@ -640,7 +638,7 @@ int len;
 			default:
 				return 0;
 			}
-			IF_LOUD(DbgPrint("Validating program: no wrong JUMPS");)
+			INFO_DBG("Validating program: no wrong JUMPS");
 			break;
 		case BPF_RET:
 			break;

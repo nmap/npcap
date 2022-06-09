@@ -109,7 +109,6 @@
 
 #ifdef WIN_NT_DRIVER
 
-#include "debug.h"
 #include "ndis.h"
 #define DEFAULT_TIMESTAMPMODE 0
 

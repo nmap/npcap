@@ -121,12 +121,6 @@
 #pragma NDIS_INIT_FUNCTION(DriverEntry)
 #endif // ALLOC_PRAGMA
 
-#if DBG
-// Declare the global debug flag for this driver.
-ULONG PacketDebugFlag = PACKET_DEBUG_LOUD;
-
-#endif
-
 SINGLE_LIST_ENTRY g_arrFiltMod = {0}; //Adapter filter module list head
 NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
 
@@ -321,6 +315,8 @@ DriverEntry(
 	parametersPath.MaximumLength=RegistryPath->Length+sizeof(L"\\Parameters");
 	parametersPath.Buffer=ExAllocatePoolWithTag(PagedPool, parametersPath.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (!parametersPath.Buffer) {
+		ERROR_DBG("Paged alloc of parametersPath failed.\n");
+		TRACE_EXIT();
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	RtlZeroMemory(parametersPath.Buffer, parametersPath.MaximumLength);
@@ -333,27 +329,34 @@ DriverEntry(
 		// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
 		// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
 		g_AdminOnlyMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_AdminOnlyRegValueName);
+		INFO_DBG("g_AdminOnlyMode = %lu\n", g_AdminOnlyMode);
 		// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
 		// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
 		g_DltNullMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_DltNullRegValueName);
+		INFO_DBG("g_DltNullMode = %lu\n", g_DltNullMode);
 		// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
 		// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
 		g_Dot11SupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_Dot11SupportRegValueName);
+		INFO_DBG("g_Dot11SupportMode = %lu\n", g_Dot11SupportMode);
 		// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
 		// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
 		g_VlanSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_VlanSupportRegValueName);
+		INFO_DBG("g_VlanSupportMode = %lu\n", g_VlanSupportMode);
 		// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
 		// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
 		g_TimestampMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_TimestampRegValueName);
+		INFO_DBG("g_TimestampMode = %lu\n", g_TimestampMode);
 		if (!NPF_TimestampModeSupported(g_TimestampMode)) {
 			g_TimestampMode = DEFAULT_TIMESTAMPMODE;
 		}
 		// Get the TestMode option, if TestMode!=0, WFP callbacks will be registered regardless of whether any open instance needs it.
 		// This is for WHQL testing.
 		g_TestMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_TestModeRegValueName);
+		INFO_DBG("g_TestMode = %lu\n", g_TestMode);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		g_LoopbackSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_LoopbackSupportRegValueName);
+		INFO_DBG("g_LoopbackSupportMode = %lu\n", g_LoopbackSupportMode);
 		if (g_LoopbackSupportMode) {
 			NPF_GetRegistryOption_AdapterName(&parametersPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
 		}
@@ -367,23 +370,6 @@ DriverEntry(
 	if (g_AdminOnlyMode) {
 		NdisInitUnicodeString(&sddl, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)");
 	}
-
-	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap" for standard driver
-	// RegistryPath = "\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\npcap_wifi" for WiFi driver
-
-	//
-	// The Dot11 support is determined by whether the service is "npcap" or "npcap_wifi"
-	//
-// 	g_Dot11SupportMode = 0;
-// 	for (USHORT i = 0; i < RegistryPath->Length / 2; i ++)
-// 	{
-// 		if (RegistryPath->Buffer[i] == L'_')
-// 		{
-// 			g_Dot11SupportMode = 1;
-// 			break;
-// 		}
-// 	}
-// 	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "g_Dot11SupportMode (based on RegistryPath) = %d\n", g_Dot11SupportMode);
 
 	//
 	// Initialize system-time function pointer.
@@ -425,7 +411,6 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
 	// Create the "NPCAP" device itself:
-	// TODO: handle wifi. suffix to file name?
 	RtlInitUnicodeString(&AdapterName, DEVICE_PATH_PREFIX NPF_DRIVER_NAME_WIDECHAR);
 	deviceSymLink.Length = 0;
 	deviceSymLink.MaximumLength = AdapterName.Length - DEVICE_PATH_BYTES + symbolicLinkPrefix.Length + (USHORT)sizeof(UNICODE_NULL);
@@ -433,6 +418,7 @@ DriverEntry(
 	deviceSymLink.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, deviceSymLink.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (deviceSymLink.Buffer == NULL)
 	{
+		ERROR_DBG("Nonpaged alloc of deviceSymLink.Buffer failed.\n");
 		TRACE_EXIT();
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
@@ -443,7 +429,7 @@ DriverEntry(
 			FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID)&guidClassNPF, &devObjP);
 	if (!NT_SUCCESS(Status))
 	{
-		IF_LOUD(DbgPrint("\n\nIoCreateDevice status = %x\n", Status););
+		ERROR_DBG("IoCreateDevice failed: %#08x\n", Status);
 
 		ExFreePool(deviceSymLink.Buffer);
 
@@ -455,12 +441,10 @@ DriverEntry(
 
 	devObjP->Flags |= DO_DIRECT_IO;
 
-	IF_LOUD(DbgPrint("Trying to create SymLink %ws\n", deviceSymLink.Buffer););
-
 	Status = IoCreateSymbolicLink(&deviceSymLink, &AdapterName);
 	if (!NT_SUCCESS(Status))
 	{
-		IF_LOUD(DbgPrint("\n\nError creating SymLink %ws\nn", deviceSymLink.Buffer););
+		ERROR_DBG("IoCreateSymbolicLink(%ws) failed: %#08x\n", deviceSymLink.Buffer, Status);
 
 		IoDeleteDevice(devObjP);
 		ExFreePool(deviceSymLink.Buffer);
@@ -483,7 +467,7 @@ DriverEntry(
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
 		NdisFreeSpinLock(&g_FilterArrayLock);
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter with NDIS, Status = %x", Status);
+		ERROR_DBG("NdisFRegisterFilterDriver failed: %#08x\n", Status);
 		IoDeleteSymbolicLink(&deviceSymLink);
 		IoDeleteDevice(devObjP);
 		ExFreePool(deviceSymLink.Buffer);
@@ -492,10 +476,7 @@ DriverEntry(
 		TRACE_EXIT();
 		return Status;
 	}
-	else
-	{
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter with NDIS, Status = %x, FilterDriverHandle = %p", Status, FilterDriverHandle);
-	}
+	INFO_DBG("FilterDriverHandle = %p\n", FilterDriverHandle);
 
 	// Initialize DEVICE_EXTENSION
 	do {
@@ -505,14 +486,14 @@ DriverEntry(
 		devExtP->AllOpensLock = NdisAllocateRWLock(FilterDriverHandle);
 		if (devExtP->AllOpensLock == NULL)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate AllOpensLock");
+			ERROR_DBG("Failed to allocate AllOpensLock\n");
 			break;
 		}
 
 		Status = ExInitializeLookasideListEx(&devExtP->BufferPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(BUFCHAIN_ELEM), NPF_PACKET_DATA_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate BufferPool");
+			ERROR_DBG("Failed to allocate BufferPool\n");
 			break;
 		}
 		devExtP->bBufferPoolInit = 1;
@@ -520,7 +501,7 @@ DriverEntry(
 		Status = ExInitializeLookasideListEx(&devExtP->NBLCopyPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NBL_COPY), NPF_NBLC_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBLCopyPool");
+			ERROR_DBG("Failed to allocate NBLCopyPool\n");
 			break;
 		}
 		devExtP->bNBLCopyPoolInit = 1;
@@ -528,7 +509,7 @@ DriverEntry(
 		Status = ExInitializeLookasideListEx(&devExtP->NBCopiesPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NB_COPIES), NPF_NBC_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate NBCopiesPool");
+			ERROR_DBG("Failed to allocate NBCopiesPool\n");
 			break;
 		}
 		devExtP->bNBCopiesPoolInit = 1;
@@ -536,7 +517,7 @@ DriverEntry(
 		Status = ExInitializeLookasideListEx(&devExtP->SrcNBPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_SRC_NB), NPF_SRCNB_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate SrcNBPool");
+			ERROR_DBG("Failed to allocate SrcNBPool\n");
 			break;
 		}
 		devExtP->bSrcNBPoolInit = 1;
@@ -544,7 +525,7 @@ DriverEntry(
 		Status = ExInitializeLookasideListEx(&devExtP->InternalRequestPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(INTERNAL_REQUEST), NPF_REQ_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate InternalRequestPool");
+			ERROR_DBG("Failed to allocate InternalRequestPool\n");
 			break;
 		}
 		devExtP->bInternalRequestPoolInit = 1;
@@ -552,7 +533,7 @@ DriverEntry(
 		Status = ExInitializeLookasideListEx(&devExtP->CapturePool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_CAP_DATA), NPF_CAP_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate CapturePool");
+			ERROR_DBG("Failed to allocate CapturePool\n");
 			break;
 		}
 		devExtP->bCapturePoolInit = 1;
@@ -563,7 +544,7 @@ DriverEntry(
 			Status = ExInitializeLookasideListEx(&devExtP->Dot11HeaderPool, NULL, NULL, NPF_NONPAGED, 0, SIZEOF_RADIOTAP_BUFFER, NPF_DOT11_POOL_TAG, 0);
 			if (Status != STATUS_SUCCESS)
 			{
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate Dot11HeaderPool");
+				ERROR_DBG("Failed to allocate Dot11HeaderPool\n");
 				break;
 			}
 			devExtP->bDot11HeaderPoolInit = 1;
@@ -575,13 +556,11 @@ DriverEntry(
 		// Test mode: register callouts and injection handles regardless
 		// In test mode, failures here are fatal.
 		if (g_TestMode) {
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "init injection handles and register callouts");
-
 			// Use Windows Filtering Platform (WFP) to capture loopback packets
 			Status = NPF_InitWFP(devObjP);
 			if (!NT_VERIFY(NT_SUCCESS(Status)))
 			{
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_InitWFP failed, Status = %x", Status);
+				ERROR_DBG("NPF_InitWFP failed: %#08x\n", Status);
 				break;
 			}
 		}
@@ -631,6 +610,7 @@ DriverEntry(
 			PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(FilterDriverHandle, &LoopbackDeviceName, NdisMediumLoopback);
 			if (pFiltMod == NULL)
 			{
+				WARNING_DBG("Could not create filter module for loopback.\n");
 				break;
 			}
 			pFiltMod->Loopback = TRUE;
@@ -653,20 +633,11 @@ DriverEntry(
 			&FilterDriverHandle_WiFi);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: failed to register filter (WiFi) with NDIS, Status = %x", Status);
+			ERROR_DBG("NdisFRegisterFilterDriver(WiFi) failed: %#08x\n", Status);
 
 			// We still run the driver even with the 2nd filter doesn't work.
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "We only use the 1st Filter Handle now, FilterDriverHandle_WiFi = %p.", FilterDriverHandle_WiFi);
-			// NdisFDeregisterFilterDriver(FilterDriverHandle);
-			// TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting the 1st Filter Handle = %p", FilterDriverHandle);
-
-			// TRACE_EXIT();
-			// return Status;
 		}
-		else
-		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "NdisFRegisterFilterDriver: succeed to register filter (WiFi) with NDIS, Status = %x, FilterDriverHandle_WiFi = %p", Status, FilterDriverHandle_WiFi);
-		}
+		INFO_DBG("FilterDriverHandle_WiFi = %p\n", FilterDriverHandle);
 	}
 
 	pNpcapDeviceObject = devObjP;
@@ -776,13 +747,13 @@ NPF_GetRegistryOption(
 	SHORT retries = 2;
 
 	TRACE_ENTER();
-	IF_LOUD(DbgPrint("\nRegistryPath: %ws, RegValueName: %ws\n", RegistryPath->Buffer, RegValueName->Buffer);)
+	INFO_DBG("\nRegistryPath: %ws, RegValueName: %ws\n", RegistryPath->Buffer, RegValueName->Buffer);
 
 	InitializeObjectAttributes(&objAttrs, RegistryPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
 	status = ZwOpenKey(&keyHandle, KEY_READ, &objAttrs);
 	if (!NT_SUCCESS(status))
 	{
-		IF_LOUD(DbgPrint("\nStatus of %x opening %ws\n", status, RegistryPath->Buffer);)
+		WARNING_DBG("ZwOpenKey failed: %#08x\n", status);
 	}
 	else //OK
 	{
@@ -810,7 +781,7 @@ NPF_GetRegistryOption(
 						&resultLength);
 					if (!NT_SUCCESS(status))
 					{
-						IF_LOUD(DbgPrint("Status of %x querying key value\n", status);)
+						WARNING_DBG("ZwQueryValueKey failed: %#08x\n", status);
 					}
 					else
 					{
@@ -821,12 +792,12 @@ NPF_GetRegistryOption(
 				}
 				else
 				{
-					IF_LOUD(DbgPrint("Error Allocating the buffer for the NPF_GetRegistryOption_String function\n");)
+					WARNING_DBG("Paged alloc of valueInfoP failed.\n");
 				}
 			}
 			else
 			{
-				IF_LOUD(DbgPrint("\nStatus of %x querying key value for size\n", status);)
+				WARNING_DBG("ZwQueryValueKey(NULL buffer) failed: %#08x\n", status);
 				break;
 			}
 		} while (--retries > 0 && (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_BUFFER_OVERFLOW));
@@ -858,11 +829,11 @@ NPF_GetRegistryOption_Integer(
 		if (valueInfoP->Type == REG_DWORD && valueInfoP->DataLength == 4)
 		{
 			returnValue = *((ULONG *) valueInfoP->Data);
-			IF_LOUD(DbgPrint("\"%ws\" Key = %08X\n", RegValueName->Buffer, *((ULONG *)valueInfoP->Data));)
+			INFO_DBG("\"%ws\" Key = %08x\n", RegValueName->Buffer, *((ULONG *)valueInfoP->Data));
 		}
 		else
 		{
-			IF_LOUD(DbgPrint("\"%ws\" Key invalid type or length\n", RegValueName->Buffer);)
+			WARNING_DBG("\"%ws\" Key invalid type (%lu) or length (%lu)\n", RegValueName->Buffer, valueInfoP->Type, valueInfoP->DataLength);
 		}
 		ExFreePool(valueInfoP);
 	}
@@ -890,7 +861,7 @@ NPF_GetRegistryOption_String(
 	{
 		if (valueInfoP->Type == REG_SZ && valueInfoP->DataLength > 1)
 		{
-			IF_LOUD(DbgPrint("\"%ws\" Key = %ws\n", RegValueName->Buffer, (PWSTR)valueInfoP->Data);)
+			INFO_DBG("\"%ws\" Key = %ws\n", RegValueName->Buffer, (PWSTR)valueInfoP->Data);
 
 			g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
 			g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
@@ -902,12 +873,13 @@ NPF_GetRegistryOption_String(
 			}
 			else
 			{
+				WARNING_DBG("Nonpaged alloc of g_OutputString failed\n");
 				g_OutputString->Length = g_OutputString->MaximumLength = 0;
 			}
 		}
 		else
 		{
-			IF_LOUD(DbgPrint("\"%ws\" Key invalid type or length\n", RegValueName->Buffer);)
+			WARNING_DBG("\"%ws\" Key invalid type (%lu) or length (%lu)\n", RegValueName->Buffer, valueInfoP->Type, valueInfoP->DataLength);
 		}
 		ExFreePool(valueInfoP);
 	}
@@ -990,9 +962,6 @@ Return Value:
 
 		DeviceExtension = OldDeviceObject->DeviceExtension;
 
-		TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Deleting Adapter, Device Obj=%p (%p)",
-				DeviceObject, OldDeviceObject);
-
 		// Not sure if we need to acquire this lock, since no new IRPs can be issued during unload,
 		// but better safe than sorry.
 		InitializeListHead(&ClosedOpens);
@@ -1025,8 +994,6 @@ Return Value:
 		{
 			RtlInitUnicodeString(&SymLink, DeviceExtension->ExportString);
 
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Deleting SymLink at %p", SymLink.Buffer);
-
 			IoDeleteSymbolicLink(&SymLink);
 			ExFreePool(DeviceExtension->ExportString);
 			DeviceExtension->ExportString = NULL;
@@ -1049,24 +1016,24 @@ Return Value:
 
 	if (FilterDriverHandle)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Deleting Filter Handle = %p", FilterDriverHandle);
+		INFO_DBG("NdisFDeregisterFilterDriver: Deleting Filter Handle = %p\n", FilterDriverHandle);
 		NdisFDeregisterFilterDriver(FilterDriverHandle);
 		FilterDriverHandle = NULL;
 	}
 	else
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Filter Handle = NULL, no need to delete.");
+		INFO_DBG("NdisFDeregisterFilterDriver: Filter Handle = NULL, no need to delete.\n");
 	}
 
 	if (FilterDriverHandle_WiFi)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Deleting Filter Handle (WiFi) = %p", FilterDriverHandle_WiFi);
+		INFO_DBG("NdisFDeregisterFilterDriver: Deleting Filter Handle (WiFi) = %p\n", FilterDriverHandle_WiFi);
 		NdisFDeregisterFilterDriver(FilterDriverHandle_WiFi);
 		FilterDriverHandle_WiFi = NULL;
 	}
 	else
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NdisFDeregisterFilterDriver: Filter Handle (WiFi) = NULL, no need to delete.");
+		INFO_DBG("NdisFDeregisterFilterDriver: Filter Handle (WiFi) = NULL, no need to delete.\n");
 	}
 	// NdisFDeregisterFilterDriver ought to have called FilterDetach, but something is leaking. Let's force a wait:
 	NdisAcquireSpinLock(&g_FilterArrayLock);
@@ -1251,7 +1218,7 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	// Validate the new program (valid instructions, only forward jumps, etc.)
 	if (!bpf_validate(NewBpfProgram, insns))
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BPF filter invalid.");
+		WARNING_DBG("BPF filter invalid.\n");
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
 
@@ -1259,7 +1226,7 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	PUCHAR TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NPF_NONPAGED, ulBufLen, NPF_BPF_TAG);
 	if (TmpBPFProgram == NULL)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Error - No memory for filter");
+		WARNING_DBG("Failed to alloc TmpBPFProgram.\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -1586,7 +1553,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	TRACE_MESSAGE3(PACKET_DEBUG_LOUD, "%s Request: Oid=%08lx, Length=%08lx", bSetOid ? "BIOCSETOID" : "BIOCQUERYOID", OidData->Oid, OidData->Length);
+	INFO_DBG("%s Request: Oid=%08lx, Length=%08lx\n", bSetOid ? "BIOCSETOID" : "BIOCQUERYOID", OidData->Oid, OidData->Length);
 
 	if (!NPF_StartUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN))
 	{
@@ -1608,7 +1575,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 					Status = STATUS_SUCCESS;
 					break;
 				default:
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "BIOCSETOID not supported for Loopback");
+					INFO_DBG("BIOCSETOID not supported for Loopback\n");
 					Status = STATUS_INVALID_DEVICE_REQUEST;
 					break;
 			}
@@ -1620,7 +1587,6 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 				case OID_GEN_MAXIMUM_TOTAL_SIZE:
 				case OID_GEN_TRANSMIT_BUFFER_SPACE:
 				case OID_GEN_RECEIVE_BUFFER_SPACE:
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MAXIMUM_TOTAL_SIZE & BIOCGETOID, OidData->Data = %u", pOpen->pFiltMod->AdapterName.Buffer, pOpen->pFiltMod->MaxFrameSize);
 					if (OidData->Length < sizeof(UINT))
 					{
 						Status = STATUS_BUFFER_TOO_SMALL;
@@ -1629,12 +1595,12 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
 					*((PUINT)OidData->Data) = pOpen->pFiltMod->MaxFrameSize;
 					OidData->Length = sizeof(UINT);
+					INFO_DBG("Loopback: get MTU = %u\n", *((PUINT)OidData->Data));
 					Status = STATUS_SUCCESS;
 					break;
 
 				case OID_GEN_TRANSMIT_BLOCK_SIZE:
 				case OID_GEN_RECEIVE_BLOCK_SIZE:
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_TRANSMIT_BLOCK_SIZE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, 1);
 					if (OidData->Length < sizeof(UINT))
 					{
 						Status = STATUS_BUFFER_TOO_SMALL;
@@ -1643,11 +1609,11 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
 					*((PUINT)OidData->Data) = 1;
 					OidData->Length = sizeof(UINT);
+					INFO_DBG("Loopback: get OID_GEN_*_BLOCK_SIZE = %u\n", *((PUINT)OidData->Data));
 					Status = STATUS_SUCCESS;
 					break;
 				case OID_GEN_MEDIA_IN_USE:
 				case OID_GEN_MEDIA_SUPPORTED:
-					TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Loopback: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumNull);
 					if (OidData->Length < sizeof(UINT))
 					{
 						Status = STATUS_BUFFER_TOO_SMALL;
@@ -1656,6 +1622,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
 					*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
 					OidData->Length = sizeof(UINT);
+					INFO_DBG("Loopback: get OID_GEN_MEDIA_IN_USE = %u\n", *((PUINT)OidData->Data));
 					Status = STATUS_SUCCESS;
 					break;
 				case OID_GEN_LINK_STATE:
@@ -1675,7 +1642,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 					Status = STATUS_SUCCESS;
 					break;
 				default:
-					TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unsupported BIOCQUERYOID for Loopback");
+					WARNING_DBG("Unsupported BIOCQUERYOID for Loopback\n");
 					Status = STATUS_INVALID_DEVICE_REQUEST;
 					break;
 			}
@@ -1690,12 +1657,12 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	{
 		if (bSetOid)
 		{
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", pOpen->pFiltMod->AdapterName.Buffer);
+			INFO_DBG("Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", pOpen->pFiltMod->AdapterName.Buffer);
 			Status = STATUS_UNSUCCESSFUL;
 		}
 		else
 		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
+			INFO_DBG("Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
 			if (OidData->Length < sizeof(UINT))
 			{
 				Status = STATUS_BUFFER_TOO_SMALL;
@@ -1728,7 +1695,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
 		if (pOpen->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
 		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %#lx",
+			INFO_DBG("Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %#lx",
 					*(ULONG*)OidData->Data, pOpen->pFiltMod->MyPacketFilter);
 			Status = STATUS_SUCCESS;
 			goto OID_REQUEST_DONE;
@@ -1824,7 +1791,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	pRequest = (PINTERNAL_REQUEST) ExAllocateFromLookasideListEx(&pOpen->DeviceExtension->InternalRequestPool);
 	if (pRequest == NULL)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "pRequest=NULL");
+		INFO_DBG("pRequest=NULL");
 		Status = STATUS_INSUFFICIENT_RESOURCES;
 		goto OID_REQUEST_DONE;
 	}
@@ -1842,7 +1809,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	OidBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, OidData->Length, NPF_USER_OID_TAG);
 	if (OidBuffer == NULL)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Failed to allocate OidBuffer");
+		INFO_DBG("Failed to allocate OidBuffer");
 		Status = STATUS_INSUFFICIENT_RESOURCES;
 		goto OID_REQUEST_DONE;
 	}
@@ -1894,7 +1861,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	if (bSetOid)
 	{
 		OidData->Length = pRequest->Request.DATA.SET_INFORMATION.BytesRead;
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCSETOID completed, BytesRead = %u", OidData->Length);
+		INFO_DBG("BIOCSETOID completed, BytesRead = %u", OidData->Length);
 		*Info = FIELD_OFFSET(PACKET_OID_DATA, Data);
 	}
 	else
@@ -1910,7 +1877,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		//if (pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten > pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength)
 		if (ulTmp > OidData->Length)
 		{
-			TRACE_MESSAGE2(PACKET_DEBUG_LOUD, "Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!",
+			INFO_DBG("Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!",
 					pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten, pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength);
 			ulTmp = OidData->Length; // truncate
 			Status = NDIS_STATUS_INVALID_DATA;
@@ -1925,7 +1892,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		RtlCopyMemory(OidData->Data, OidBuffer, ulTmp);
 		OidData->Length = ulTmp;
 
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
+		INFO_DBG("BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
 		*Info = (ULONG_PTR) FIELD_OFFSET(PACKET_OID_DATA, Data) + ulTmp;
 	}
 
@@ -1937,10 +1904,10 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	else
 	{
 		// Return the error code of NdisFOidRequest() to the application.
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Original NdisFOidRequest() Status = %#x", Status);
+		INFO_DBG("Original NdisFOidRequest() Status = %#x", Status);
 		// Why do we set this custom bit? Unfortunately now libpcap relies on it.
 		Status = (1 << 29) | Status;
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Custom NdisFOidRequest() Status = %#x", Status);
+		INFO_DBG("Custom NdisFOidRequest() Status = %#x", Status);
 	}
 
 OID_REQUEST_DONE:
@@ -2148,7 +2115,7 @@ NPF_IoControl(
 		goto NPF_IoControl_End;
 	}
 
-	TRACE_MESSAGE3(PACKET_DEBUG_LOUD,
+	INFO_DBG(
 		"Function code is %08lx Input size=%08lx Output size %08lx",
 		FunctionCode,
 		InputBufferLength,
@@ -2229,7 +2196,7 @@ NPF_IoControl(
 		case BIOCSRTIMEOUT:
 #endif
 		default:
-			TRACE_MESSAGE(PACKET_DEBUG_LOUD, "Unknown IOCTL code");
+			WARNING_DBG("Unknown IOCTL code: %#08x\n", FunctionCode);
 			Status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
 	}
@@ -2242,7 +2209,7 @@ NPF_IoControl_End:
 	Irp->IoStatus.Status = Status;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-	TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "Status = %#x", Status);
+	INFO_DBG("Status = %#08x\n", Status);
 	TRACE_EXIT();
 	return Status;
 }

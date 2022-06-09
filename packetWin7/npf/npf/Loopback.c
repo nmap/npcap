@@ -249,7 +249,7 @@ NPF_TapLoopback(
 					pLoopbackFilter->AdapterHandle, numBytes, NPF_LOOPBACK_COPY_TAG, NormalPoolPriority);
 			if (npBuff == NULL)
 			{
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+				INFO_DBG(
 						"NPF_TapLoopback: Failed to allocate buffer.");
 				break;
 			}
@@ -259,7 +259,7 @@ NPF_TapLoopback(
 					pLoopbackFilter->PacketPool, 0, 0, NULL, 0, 0);
 			if (pFakeNbl == NULL)
 			{
-				TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+				INFO_DBG(
 						"NPF_TapLoopback: Failed to allocate NBL.");
 				break;
 			}
@@ -275,7 +275,7 @@ NPF_TapLoopback(
 							&OrigLen,
 							NormalPagePriority);
 					if (pOrigBuf == NULL) {
-						TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_TapLoopback: Failed to query MDL");
+						INFO_DBG("NPF_TapLoopback: Failed to query MDL");
 						break;
 					}
 					RtlCopyMemory(pOrigBuf + Offset - numBytes, pPacketData, numBytes);
@@ -295,7 +295,7 @@ NPF_TapLoopback(
 								&OrigLen,
 								NormalPagePriority);
 						if (pOrigBuf == NULL) {
-							TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_TapLoopback: Failed to query MDL");
+							INFO_DBG("NPF_TapLoopback: Failed to query MDL");
 							break;
 						}
 						/* Make a buffer big enough for our fake DLT header plus used
@@ -305,7 +305,7 @@ NPF_TapLoopback(
 								pLoopbackFilter->AdapterHandle, FirstMDLLen, NPF_LOOPBACK_COPY_TAG, NormalPoolPriority);
 						if (pTmpBuf == NULL)
 						{
-							TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+							INFO_DBG(
 									"NPF_TapLoopback: Failed to allocate buffer.");
 							break;
 						}
@@ -314,7 +314,7 @@ NPF_TapLoopback(
 						pMdl = NdisAllocateMdl(pLoopbackFilter->AdapterHandle, pTmpBuf, FirstMDLLen);
 						if (pMdl == NULL) {
 							NdisFreeMemory(pTmpBuf, FirstMDLLen, 0);
-							TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+							INFO_DBG(
 									"NPF_TapLoopback: Failed to allocate MDL.");
 							break;
 						}
@@ -330,7 +330,7 @@ NPF_TapLoopback(
 						pMdl = NdisAllocateMdl(pLoopbackFilter->AdapterHandle, npBuff, numBytes);
 						if (pMdl == NULL)
 						{
-							TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+							INFO_DBG(
 									"NPF_TapLoopback: Failed to allocate MDL.");
 							break;
 						}
@@ -354,7 +354,7 @@ NPF_TapLoopback(
 					pFakeNetBuffer = NET_BUFFER_NEXT_NB(pFakeNetBuffer);
 					if (pFakeNetBuffer == NULL)
 					{
-						TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+						INFO_DBG(
 								"NPF_TapLoopback: Failed to allocate NB.");
 						break;
 					}
@@ -446,7 +446,7 @@ BOOL NPF_ShouldProcess(
 	else
 	{
 		// This is not our layer! Bail.
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 				"NPF_NetworkClassifyOutbound: bIPv4 cannot be determined, inFixedValues->layerId = %u\n", inFixedValues->layerId);
 		*pbIPv4 = FALSE;
 		return FALSE;
@@ -524,14 +524,14 @@ NPF_NetworkClassifyOutbound(
 	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
 		injectionState == FWPS_PACKET_PREVIOUSLY_INJECTED_BY_SELF)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 			"NPF_NetworkClassifyOutbound: this packet is injected by ourself, let it go\n");
 
 		TRACE_EXIT();
 		return;
 	}
 
-	TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "NPF_NetworkClassifyOutbound: inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
+	INFO_DBG("NPF_NetworkClassifyOutbound: inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
 		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
 
 	// Outbound: Initial offset is already at the IP Header
@@ -609,14 +609,14 @@ NPF_NetworkClassifyInbound(
 	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
 		injectionState == FWPS_PACKET_PREVIOUSLY_INJECTED_BY_SELF)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 			"NPF_NetworkClassifyInbound: this packet is injected by ourself, let it go\n");
 
 		TRACE_EXIT();
 		return;
 	}
 
-	TRACE_MESSAGE4(PACKET_DEBUG_LOUD, "NPF_NetworkClassifyInbound: inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
+	INFO_DBG("NPF_NetworkClassifyInbound: inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
 		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
 
 	// Inbound: Initial offset is at the Transport Header, so retreat the size of the IP Header.
@@ -630,7 +630,7 @@ NPF_NetworkClassifyInbound(
 
 	if (status != NDIS_STATUS_SUCCESS)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 				"NPF_NetworkClassifyInbound: NdisRetreatNetBufferListDataStart(bytesRetreated) [status: %#x]\n",
 				status);
 
@@ -752,7 +752,7 @@ NPF_AddFilter(
 	// 	}
 	else
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 			"NPF_AddFilter: invalid iFlag, iFlag = %d\n",
 			iFlag);
 		TRACE_EXIT();
@@ -773,7 +773,7 @@ NPF_AddFilter(
 
 #define EXIT_IF_ERR(_Func) \
 	if (!NT_SUCCESS(status)) { \
-		IF_LOUD(DbgPrint(#_Func "failed: %08x\n", status);) \
+		ERROR_DBG(#_Func "failed: %08x\n", status); \
 		goto Exit; \
 	}
 
@@ -850,7 +850,7 @@ Exit:
 
 	if (!NT_SUCCESS(status))
 	{
-		IF_LOUD(DbgPrint("NPF_RegisterCallout: failed to register callout\n");)
+		INFO_DBG("NPF_RegisterCallout: failed to register callout\n");
 			if (calloutRegistered)
 			{
 				FwpsCalloutUnregisterById(*calloutId);
@@ -972,7 +972,7 @@ Callouts and filters will be removed during DriverUnload.
 Exit:
 	if (!NT_SUCCESS(status))
 	{
-		IF_LOUD(DbgPrint("NPF_RegisterCallouts: failed to register callouts\n");)
+		INFO_DBG("NPF_RegisterCallouts: failed to register callouts\n");
 		FwpmEngineClose(g_WFPEngineHandle);
 		_Analysis_assume_lock_not_held_(g_WFPEngineHandle);
 		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
@@ -1042,7 +1042,7 @@ injection handles will be removed during DriverUnload.
 
 	if (status != STATUS_SUCCESS)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 			"NPF_InitInjectionHandles: FwpsInjectionHandleCreate(AF_INET) [status: %#x]\n",
 			status);
 
@@ -1056,7 +1056,7 @@ injection handles will be removed during DriverUnload.
 
 	if (status != STATUS_SUCCESS)
 	{
-		TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+		INFO_DBG(
 			"NPF_InitInjectionHandles: FwpsInjectionHandleCreate(AF_INET6) [status: %#x]\n",
 			status);
 
@@ -1088,7 +1088,7 @@ Free injection handles (IPv4 and IPv6).
 
 		if (status != STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			INFO_DBG(
 				"NPF_InitInjectionHandles: FwpsInjectionHandleDestroy(AF_INET) [status: %#x]\n",
 				status);
 
@@ -1105,7 +1105,7 @@ Free injection handles (IPv4 and IPv6).
 
 		if (status != STATUS_SUCCESS)
 		{
-			TRACE_MESSAGE1(PACKET_DEBUG_LOUD,
+			INFO_DBG(
 				"NPF_InitInjectionHandles: FwpsInjectionHandleDestroy(AF_INET6) [status: %#x]\n",
 				status);
 

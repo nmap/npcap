@@ -74,6 +74,26 @@
 #ifndef __MACRO
 #define __MACRO
 
+/* Trace messages for debug build */
+#ifdef DBG
+#define PRINT_DBG
+#endif
+
+#ifdef PRINT_DBG
+#define ERROR_DBG(Fmt, ...)   DbgPrintEx( DPFLTR_IHVNETWORK_ID, DPFLTR_ERROR_LEVEL,   __FUNCTION__ ": " Fmt, __VA_ARGS__ )
+#define WARNING_DBG(Fmt, ...) DbgPrintEx( DPFLTR_IHVNETWORK_ID, DPFLTR_WARNING_LEVEL, __FUNCTION__ ": " Fmt, __VA_ARGS__ )
+#define TRACE_DBG(Fmt, ...)   DbgPrintEx( DPFLTR_IHVNETWORK_ID, DPFLTR_TRACE_LEVEL,   __FUNCTION__ ": " Fmt, __VA_ARGS__ )
+#define INFO_DBG(Fmt, ...)    DbgPrintEx( DPFLTR_IHVNETWORK_ID, DPFLTR_INFO_LEVEL,    __FUNCTION__ ": " Fmt, __VA_ARGS__ )
+#else
+#define ERROR_DBG(Fmt, ...)
+#define WARNING_DBG(Fmt, ...)
+#define TRACE_DBG(Fmt, ...)
+#define INFO_DBG(Fmt, ...)
+#endif
+
+#define TRACE_ENTER() TRACE_DBG("ENTER\n")
+#define TRACE_EXIT()  TRACE_DBG("EXIT\n")
+
 #pragma pack(push)
 #pragma pack (1)
 

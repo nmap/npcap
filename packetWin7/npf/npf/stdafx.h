@@ -81,6 +81,5 @@
 #include <ndis.h>
 #include <wdmsec.h>
 #include <wdmguid.h>
-#include "debug.h"
 #include "macros.h"
 #include "memory_tags.h"

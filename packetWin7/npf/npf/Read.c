@@ -331,7 +331,7 @@ NPF_Read(
 
 		ULONG ulCopied = NPF_CopyFromNBCopyToBuffer(pCapData->pNBCopy, packp + copied, plen);
 		if (ulCopied < plen) {
-			IF_LOUD(DbgPrint("NetBuffer missing %lu bytes", plen - ulCopied);)
+			INFO_DBG("NetBuffer missing %lu bytes", plen - ulCopied);
 		}
 		header->bh_caplen += ulCopied;
 
@@ -639,7 +639,7 @@ NPF_CopyFromNetBufferToNBCopy(
 		if (!NT_VERIFY(pMdl != NULL))
 		{
 			// Something went terribly wrong
-			IF_LOUD(DbgPrint("MDL chain too short; bailing.");)
+			INFO_DBG("MDL chain too short; bailing.");
 			return FALSE;
 		}
 
@@ -651,7 +651,7 @@ NPF_CopyFromNetBufferToNBCopy(
 			NdisQueryMdl(pMdl, &pSrcBuf, &ulSrcBufLen, NormalPagePriority);
 			if (pSrcBuf == NULL)
 			{
-				IF_LOUD(DbgPrint("Unable to query MDL; bailing.");)
+				INFO_DBG("Unable to query MDL; bailing.");
 				return FALSE;
 			}
 		}
@@ -668,7 +668,7 @@ NPF_CopyFromNetBufferToNBCopy(
 				pElem->Next = (PBUFCHAIN_ELEM) ExAllocateFromLookasideListEx(BufchainPool);
 				if (pElem->Next == NULL)
 				{
-					IF_LOUD(DbgPrint("Failed to allocate Bufchain Elem");)
+					INFO_DBG("Failed to allocate Bufchain Elem");
 					return FALSE;
 				}
 				RtlZeroMemory(pElem->Next, sizeof(BUFCHAIN_ELEM));
@@ -858,7 +858,7 @@ NPF_TapExForEachOpen(
 				// Size: 1 byte, Alignment: 1 byte.
 				// Looking up the ucDataRate field's value in the data rate mapping table.
 				// If not found, return 0.
-				IF_LOUD(DbgPrint("pwInfo->ucDataRate = %u\n", pwInfo->ucDataRate);)
+				INFO_DBG("pwInfo->ucDataRate = %u\n", pwInfo->ucDataRate);
 				USHORT usDataRateValue = NPF_LookUpDataRateMappingTable(Open->pFiltMod, pwInfo->ucDataRate);
 				if (usDataRateValue != 0) {
 					pRadiotapHeader->it_present |= BIT(IEEE80211_RADIOTAP_RATE);
@@ -878,7 +878,7 @@ NPF_TapExForEachOpen(
 					NPF_AlignProtocolField(2, &cur);
 					// [Radiotap] "Channel" field.
 					// Size: 2 bytes + 2 bytes, Alignment: 2 bytes.
-					IF_LOUD(DbgPrint("pwInfo->uPhyId = %x\n", pwInfo->uPhyId);)
+					INFO_DBG("pwInfo->uPhyId = %x\n", pwInfo->uPhyId);
 					if (pwInfo->uPhyId == dot11_phy_type_fhss)
 					{
 						flags = IEEE80211_CHAN_GFSK; // 0x0800
@@ -909,7 +909,7 @@ NPF_TapExForEachOpen(
 					}
 
 					// If the frequency is higher than 65535, radiotap can't hold this value because "Frequency" field is only 16 bits, we just leave it the maximum value 65535.
-					IF_LOUD(DbgPrint("pwInfo->uChCenterFrequency = %lu\n", pwInfo->uChCenterFrequency);)
+					INFO_DBG("pwInfo->uChCenterFrequency = %lu\n", pwInfo->uChCenterFrequency);
 					if (pwInfo->uChCenterFrequency <= 65535)
 					{
 						*((USHORT*)pRadiotapHeader + cur) = (USHORT) pwInfo->uChCenterFrequency;
@@ -1019,7 +1019,7 @@ NPF_TapExForEachOpen(
 
 			NdisReleaseRWLock(Open->MachineLock, &lockState);
 
-			IF_LOUD(DbgPrint("\nCurrent MDL length = %lu, Packet Size = %lu, fres = %u\n", MmGetMdlByteCount(NET_BUFFER_CURRENT_MDL(pNetBuf)), TotalPacketSize, fres);)
+			INFO_DBG("\nCurrent MDL length = %lu, Packet Size = %lu, fres = %u\n", MmGetMdlByteCount(NET_BUFFER_CURRENT_MDL(pNetBuf)), TotalPacketSize, fres);
 
 			if (fres == 0)
 			{
@@ -1090,7 +1090,7 @@ NPF_TapExForEachOpen(
 			if (0 > NpfInterlockedExchangeAdd(&Open->Free, -lCapSize))
 			{
 				dropped++;
-				IF_LOUD(DbgPrint("Dropped++, fres = %lu, Open->Free = %d\n", fres, Open->Free);)
+				INFO_DBG("Dropped++, fres = %lu, Open->Free = %d\n", fres, Open->Free);
 				// May as well tell the application, even if MinToCopy is not met,
 				// to avoid dropping further packets
 				if (Open->ReadEvent != NULL)

@@ -152,7 +152,7 @@ NPF_CloneBufferToMdl(
 	PVOID npBuff = ExAllocatePoolWithTag(NPF_NONPAGED, uDataLen, NPF_BUFFERED_WRITE_TAG);
 	if (npBuff == NULL)
 	{
-		IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");)
+		INFO_DBG("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");
 		return NULL;
 	}
 
@@ -164,7 +164,7 @@ NPF_CloneBufferToMdl(
 	if (TmpMdl == NULL)
 	{
 		// Unable to map the memory: packet lost
-		IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate the MDL.\n");)
+		INFO_DBG("NPF_BufferedWrite: unable to allocate the MDL.\n");
 
 		ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
 		return NULL;
@@ -308,7 +308,7 @@ NPF_Write(
 		goto NPF_Write_End;
 	}
 
-	TRACE_MESSAGE2(PACKET_DEBUG_LOUD,
+	INFO_DBG(
 		"Max frame size = %u, packet size = %u",
 		Open->pFiltMod->MaxFrameSize,
 		buflen);
@@ -435,7 +435,7 @@ NPF_Write(
 #ifdef HAVE_RX_SUPPORT
 			if (Open->pFiltMod->SendToRxPath == TRUE)
 			{
-				IF_LOUD(DbgPrint("NPF_Write::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);)
+				INFO_DBG("NPF_Write::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);
 				// pretend to receive these packets from network and indicate them to upper layers
 				NdisFIndicateReceiveNetBufferLists(
 					Open->pFiltMod->AdapterHandle,
@@ -516,7 +516,7 @@ NTSTATUS NPF_BufferedWrite(
 
 	TRACE_ENTER();
 
-	IF_LOUD(DbgPrint("NPF: BufferedWrite, UserBuff=%p, Size=%u\n", UserBuff, UserBuffSize);)
+	INFO_DBG("NPF: BufferedWrite, UserBuff=%p, Size=%u\n", UserBuff, UserBuffSize);
 
 	*Written = 0;
 
@@ -539,7 +539,7 @@ NTSTATUS NPF_BufferedWrite(
 	// Check that the MaxFrameSize is correctly initialized
 	if (Open->pFiltMod->MaxFrameSize == 0)
 	{
-		IF_LOUD(DbgPrint("NPF_BufferedWrite: Open->MaxFrameSize not initialized, probably because of a problem in the OID query\n");)
+		INFO_DBG("NPF_BufferedWrite: Open->MaxFrameSize not initialized, probably because of a problem in the OID query\n");
 		Status = STATUS_UNSUCCESSFUL;
 		goto NPF_BufferedWrite_End;
 	}
@@ -587,7 +587,7 @@ NTSTATUS NPF_BufferedWrite(
 		if (UserBuffSize - Pos < sizeof(*pHdr))
 		{
 			// Missing header
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: not enough data for a dump_bpf_hdr, aborting write.\n");)
+			INFO_DBG("NPF_BufferedWrite: not enough data for a dump_bpf_hdr, aborting write.\n");
 
 			Status = STATUS_INVALID_USER_BUFFER;
 			break;
@@ -598,7 +598,7 @@ NTSTATUS NPF_BufferedWrite(
 		if (pHdr->caplen == 0)
 		{
 			// Malformed header
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: invalid caplen, aborting write.\n");)
+			INFO_DBG("NPF_BufferedWrite: invalid caplen, aborting write.\n");
 
 			Status = STATUS_INVALID_PARAMETER;
 			break;
@@ -618,7 +618,7 @@ NTSTATUS NPF_BufferedWrite(
 		if (TmpMdl == NULL)
 		{
 			// Unable to map the memory: packet lost
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: unable to allocate the MDL.\n");)
+			INFO_DBG("NPF_BufferedWrite: unable to allocate the MDL.\n");
 
 			Status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
@@ -633,7 +633,7 @@ NTSTATUS NPF_BufferedWrite(
 		{
 			//  No more free packets
 			
-			IF_LOUD(DbgPrint("NPF_BufferedWrite: no more free packets, returning.\n");)
+			INFO_DBG("NPF_BufferedWrite: no more free packets, returning.\n");
 
 			NPF_FreeMdlAndBuffer(TmpMdl);
 
@@ -657,7 +657,7 @@ NTSTATUS NPF_BufferedWrite(
 			LONGLONG usec_diff = ((LONGLONG)pHdr->ts.tv_sec - BufStartTime.tv_sec) * 1000000
 				+ pHdr->ts.tv_usec - BufStartTime.tv_usec;
 			if (usec_diff < prev_usec_diff) {
-				IF_LOUD(DbgPrint("NPF_BufferedWrite: timestamp out of order!\n");)
+				INFO_DBG("NPF_BufferedWrite: timestamp out of order!\n");
 				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 				Status = RPC_NT_INVALID_TIMEOUT;
 				break;
@@ -666,7 +666,7 @@ NTSTATUS NPF_BufferedWrite(
 			// Release the application if it has been or would be blocked for more than 1 second
 			if (usec_diff > 1000000)
 			{
-				IF_LOUD(DbgPrint("NPF_BufferedWrite: timestamp elapsed, returning.\n");)
+				INFO_DBG("NPF_BufferedWrite: timestamp elapsed, returning.\n");
 
 				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 				break;
@@ -718,7 +718,7 @@ NTSTATUS NPF_BufferedWrite(
 #ifdef HAVE_RX_SUPPORT
 			if (Open->pFiltMod->SendToRxPath == TRUE)
 			{
-				IF_LOUD(DbgPrint("NPF_BufferedWrite::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);)
+				INFO_DBG("NPF_BufferedWrite::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);
 				// pretend to receive these packets from network and indicate them to upper layers
 				NdisFIndicateReceiveNetBufferLists(
 					Open->pFiltMod->AdapterHandle,
@@ -986,7 +986,7 @@ NPF_LoopbackSendNetBufferLists(
 	if (pEthernetHdr == NULL)
 	{
 		// allocation failed
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Failed to query MDL\n");
+		INFO_DBG("NPF_LoopbackSendNetBufferLists: Failed to query MDL\n");
 		TRACE_EXIT();
 		return status;
 	}
@@ -1004,7 +1004,7 @@ NPF_LoopbackSendNetBufferLists(
 				hInjectionHandle = g_InjectionHandle_IPv6;
 				break;
 			default:
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Invalid DLTNULLTYPE %u\n", pDltNullHdr->null_type);
+				INFO_DBG("NPF_LoopbackSendNetBufferLists: Invalid DLTNULLTYPE %u\n", pDltNullHdr->null_type);
 				status = STATUS_PROTOCOL_NOT_SUPPORTED;
 				break;
 		}
@@ -1021,7 +1021,7 @@ NPF_LoopbackSendNetBufferLists(
 				hInjectionHandle = g_InjectionHandle_IPv6;
 				break;
 			default:
-				TRACE_MESSAGE1(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: Invalid ETHERTYPE %u\n", RtlUshortByteSwap(pEthernetHdr->ether_type));
+				INFO_DBG("NPF_LoopbackSendNetBufferLists: Invalid ETHERTYPE %u\n", RtlUshortByteSwap(pEthernetHdr->ether_type));
 				status = STATUS_PROTOCOL_NOT_SUPPORTED;
 				break;
 		}
@@ -1029,7 +1029,7 @@ NPF_LoopbackSendNetBufferLists(
 
 	if (hInjectionHandle == INVALID_HANDLE_VALUE)
 	{
-		TRACE_MESSAGE(PACKET_DEBUG_LOUD, "NPF_LoopbackSendNetBufferLists: invalid injection handle");
+		INFO_DBG("NPF_LoopbackSendNetBufferLists: invalid injection handle");
 		TRACE_EXIT();
 		return status;
 	}
