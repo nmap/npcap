@@ -420,6 +420,7 @@ NPF_Write(
 		//
 		//  Call the MAC
 		//
+		INFO_DBG("NBL %p send: Open = %p, Irp = %p\n", pNetBufferList, Open, Irp);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
@@ -467,6 +468,7 @@ NPF_Write(
 NPF_Write_End:
 	if (!NT_SUCCESS(Status))
 	{
+		WARNING_DBG("NBL %p failed: %#08x; IrpWasPended = %d\n", pNetBufferList, Status, IrpWasPended);
 		// Failed somehow. Clean up.
 		// If pNetBufferList is not NULL, we need to free it, which will also free TmpMdl
 		if (pNetBufferList)
@@ -701,6 +703,7 @@ NTSTATUS NPF_BufferedWrite(
 		//
 		// Call the MAC
 		//
+		INFO_DBG("NBL %p Buffered send: Open = %p, pState = %p\n", pNetBufferList, Open, pState);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
@@ -895,6 +898,8 @@ Return Value:
 		}
 
 		PIRP pIrp = RESERVED(pNBL)->pIrp;
+		PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNBL)->pState;
+		INFO_DBG("NBL %p complete: pIrp = %p, pState = %p\n", pNBL, pIrp, pState);
 		if (pIrp != NULL)
 		{
 			PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(pIrp);
@@ -915,11 +920,11 @@ Return Value:
 			}
 			IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 		}
-		PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNBL)->pState;
 		if (pState != NULL)
 		{
 			if (0 == NpfInterlockedDecrement(&pState->PacketsPending))
 			{
+				INFO_DBG("Buffered Write complete\n");
 				NdisSetEvent(&pState->WriteCompleteEvent);
 			}
 		}
@@ -1029,7 +1034,7 @@ NPF_LoopbackSendNetBufferLists(
 
 	if (hInjectionHandle == INVALID_HANDLE_VALUE)
 	{
-		INFO_DBG("NPF_LoopbackSendNetBufferLists: invalid injection handle");
+		INFO_DBG("NPF_LoopbackSendNetBufferLists: invalid injection handle\n");
 		TRACE_EXIT();
 		return status;
 	}
@@ -1045,6 +1050,7 @@ NPF_LoopbackSendNetBufferLists(
 			FilterModuleContext);
 	if (NT_SUCCESS(status))
 	{
+		WARNING_DBG("FwpsInjectNetworkSendAsync failed: %#08x; NBL = %p\n", status, NetBufferList);
 		// Fwps* functions don't have annotations about aliasing or freeing memory. Have to do it ourselves.
 		NPF_AnalysisAssumeAliased(NetBufferList);
 	}

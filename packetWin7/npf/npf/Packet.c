@@ -1148,6 +1148,7 @@ NTSTATUS NPF_ValidateIoIrp(
 		Status = STATUS_SUCCESS;
 	} while (FALSE);
 
+	INFO_DBG("IRP %p status %#08x; pOpen = %p, pBuf = %p, BufLen = %lu\n", pIrp, Status, pOpen, pBuf, BufLen);
 	if (Status != STATUS_SUCCESS)
 	{
 		// Ensure output param is NULL on failure
@@ -1657,12 +1658,12 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	{
 		if (bSetOid)
 		{
-			INFO_DBG("Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it", pOpen->pFiltMod->AdapterName.Buffer);
+			INFO_DBG("Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it\n", pOpen->pFiltMod->AdapterName.Buffer);
 			Status = STATUS_UNSUCCESSFUL;
 		}
 		else
 		{
-			INFO_DBG("Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
+			INFO_DBG("Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCGETOID, OidData->Data = %d\n", pOpen->pFiltMod->AdapterName.Buffer, NdisMediumRadio80211);
 			if (OidData->Length < sizeof(UINT))
 			{
 				Status = STATUS_BUFFER_TOO_SMALL;
@@ -1695,7 +1696,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
 		if (pOpen->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
 		{
-			INFO_DBG("Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %#lx",
+			INFO_DBG("Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %#lx\n",
 					*(ULONG*)OidData->Data, pOpen->pFiltMod->MyPacketFilter);
 			Status = STATUS_SUCCESS;
 			goto OID_REQUEST_DONE;
@@ -1791,7 +1792,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	pRequest = (PINTERNAL_REQUEST) ExAllocateFromLookasideListEx(&pOpen->DeviceExtension->InternalRequestPool);
 	if (pRequest == NULL)
 	{
-		INFO_DBG("pRequest=NULL");
+		INFO_DBG("pRequest=NULL\n");
 		Status = STATUS_INSUFFICIENT_RESOURCES;
 		goto OID_REQUEST_DONE;
 	}
@@ -1809,7 +1810,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	OidBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, OidData->Length, NPF_USER_OID_TAG);
 	if (OidBuffer == NULL)
 	{
-		INFO_DBG("Failed to allocate OidBuffer");
+		INFO_DBG("Failed to allocate OidBuffer\n");
 		Status = STATUS_INSUFFICIENT_RESOURCES;
 		goto OID_REQUEST_DONE;
 	}
@@ -1861,7 +1862,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	if (bSetOid)
 	{
 		OidData->Length = pRequest->Request.DATA.SET_INFORMATION.BytesRead;
-		INFO_DBG("BIOCSETOID completed, BytesRead = %u", OidData->Length);
+		INFO_DBG("BIOCSETOID completed, BytesRead = %u\n", OidData->Length);
 		*Info = FIELD_OFFSET(PACKET_OID_DATA, Data);
 	}
 	else
@@ -1877,7 +1878,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		//if (pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten > pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength)
 		if (ulTmp > OidData->Length)
 		{
-			INFO_DBG("Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!",
+			INFO_DBG("Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!\n",
 					pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten, pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength);
 			ulTmp = OidData->Length; // truncate
 			Status = NDIS_STATUS_INVALID_DATA;
@@ -1892,7 +1893,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		RtlCopyMemory(OidData->Data, OidBuffer, ulTmp);
 		OidData->Length = ulTmp;
 
-		INFO_DBG("BIOCQUERYOID completed, BytesWritten = %u", OidData->Length);
+		INFO_DBG("BIOCQUERYOID completed, BytesWritten = %u\n", OidData->Length);
 		*Info = (ULONG_PTR) FIELD_OFFSET(PACKET_OID_DATA, Data) + ulTmp;
 	}
 
@@ -1904,10 +1905,10 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	else
 	{
 		// Return the error code of NdisFOidRequest() to the application.
-		INFO_DBG("Original NdisFOidRequest() Status = %#x", Status);
+		INFO_DBG("Original NdisFOidRequest() Status = %#x\n", Status);
 		// Why do we set this custom bit? Unfortunately now libpcap relies on it.
 		Status = (1 << 29) | Status;
-		INFO_DBG("Custom NdisFOidRequest() Status = %#x", Status);
+		INFO_DBG("Custom NdisFOidRequest() Status = %#x\n", Status);
 	}
 
 OID_REQUEST_DONE:

@@ -331,7 +331,7 @@ NPF_Read(
 
 		ULONG ulCopied = NPF_CopyFromNBCopyToBuffer(pCapData->pNBCopy, packp + copied, plen);
 		if (ulCopied < plen) {
-			INFO_DBG("NetBuffer missing %lu bytes", plen - ulCopied);
+			INFO_DBG("NetBuffer missing %lu bytes\n", plen - ulCopied);
 		}
 		header->bh_caplen += ulCopied;
 
@@ -639,7 +639,7 @@ NPF_CopyFromNetBufferToNBCopy(
 		if (!NT_VERIFY(pMdl != NULL))
 		{
 			// Something went terribly wrong
-			INFO_DBG("MDL chain too short; bailing.");
+			INFO_DBG("MDL chain too short; bailing.\n");
 			return FALSE;
 		}
 
@@ -651,7 +651,7 @@ NPF_CopyFromNetBufferToNBCopy(
 			NdisQueryMdl(pMdl, &pSrcBuf, &ulSrcBufLen, NormalPagePriority);
 			if (pSrcBuf == NULL)
 			{
-				INFO_DBG("Unable to query MDL; bailing.");
+				INFO_DBG("Unable to query MDL; bailing.\n");
 				return FALSE;
 			}
 		}
@@ -668,7 +668,7 @@ NPF_CopyFromNetBufferToNBCopy(
 				pElem->Next = (PBUFCHAIN_ELEM) ExAllocateFromLookasideListEx(BufchainPool);
 				if (pElem->Next == NULL)
 				{
-					INFO_DBG("Failed to allocate Bufchain Elem");
+					INFO_DBG("Failed to allocate Bufchain Elem\n");
 					return FALSE;
 				}
 				RtlZeroMemory(pElem->Next, sizeof(BUFCHAIN_ELEM));

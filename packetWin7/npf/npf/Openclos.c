@@ -701,12 +701,14 @@ NPF_StartUsingOpenInstance(
 
 	if (!NT_VERIFY(MaxState < OpenInvalidStateMax))
 	{
+		ERROR_DBG("Invalid MaxState: %d\n", MaxState);
 		return FALSE;
 	}
 
 	if (MaxState <= OpenAttached && (pOpen->pFiltMod == NULL || !NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel)))
 	{
 		// Not attached, but need to be.
+		WARNING_DBG("Not attached: pFiltMod = %p\n", pOpen->pFiltMod);
 		return FALSE;
 	}
 
@@ -717,6 +719,7 @@ NPF_StartUsingOpenInstance(
 		NT_ASSERT(!AtDispatchLevel);
 		if (AtDispatchLevel) {
 			// This is really bad! We should never be able to get here.
+			ERROR_DBG("CRITICAL ERROR: called at DISPATCH_LEVEL\n");
 			returnStatus = FALSE;
 		}
 		else if (pOpen->OpenStatus == OpenAttached)
@@ -748,12 +751,14 @@ NPF_StartUsingOpenInstance(
 			while (pOpen->OpenStatus == OpenInitializing)
 			{
 				FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+				INFO_DBG("Waiting, OpenStatus = %d\n", pOpen->OpenStatus);
 				NdisWaitEvent(&Event, 1);
 				FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 			}
 		}
 	}
 
+	INFO_DBG("OpenStatus = %d; MaxState = %d\n", pOpen->OpenStatus, MaxState);
 	returnStatus = (pOpen->OpenStatus <= MaxState);
 	if (returnStatus)
 	{
@@ -851,7 +856,7 @@ NPF_ReleaseOpenInstanceResources(
 	NT_ASSERT(pOpen != NULL);
 	NT_ASSERT(pOpen->OpenStatus == OpenClosed);
 
-	INFO_DBG("Open= %p", pOpen);
+	INFO_DBG("Open= %p\n", pOpen);
 
 
 	//
@@ -1821,7 +1826,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	if (Open == NULL)
 	{
 		// no memory
-		INFO_DBG("Failed to allocate memory pool");
+		INFO_DBG("Failed to allocate memory pool\n");
 		TRACE_EXIT();
 		return NULL;
 	}
@@ -1832,7 +1837,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->BufferLock = NdisAllocateRWLock(NdisHandle);
 	if (Open->BufferLock == NULL)
 	{
-		INFO_DBG("Failed to allocate BufferLock");
+		INFO_DBG("Failed to allocate BufferLock\n");
 		ExFreePool(Open);
 		TRACE_EXIT();
 		return NULL;
@@ -1850,7 +1855,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->MachineLock = NdisAllocateRWLock(NdisHandle);
 	if (Open->MachineLock == NULL)
 	{
-		INFO_DBG("Failed to allocate MachineLock");
+		INFO_DBG("Failed to allocate MachineLock\n");
 		NdisFreeRWLock(Open->BufferLock);
 		ExFreePool(Open);
 		TRACE_EXIT();
@@ -1917,7 +1922,7 @@ NPF_CreateFilterModule(
 	if (pFiltMod == NULL)
 	{
 		// no memory
-		INFO_DBG("Failed to allocate memory pool");
+		INFO_DBG("Failed to allocate memory pool\n");
 		TRACE_EXIT();
 		return NULL;
 	}
@@ -1945,7 +1950,7 @@ NPF_CreateFilterModule(
 		pFiltMod->OpenInstancesLock = NdisAllocateRWLock(NdisFilterHandle);
 		if (pFiltMod->OpenInstancesLock == NULL)
 		{
-			INFO_DBG("Failed to allocate OpenInstancesLock");
+			INFO_DBG("Failed to allocate OpenInstancesLock\n");
 			bAllocFailed = TRUE;
 			break;
 		}
@@ -1963,7 +1968,7 @@ NPF_CreateFilterModule(
 		pFiltMod->PacketPool = NdisAllocateNetBufferListPool(NdisFilterHandle, &PoolParameters);
 		if (pFiltMod->PacketPool == NULL)
 		{
-			INFO_DBG("Failed to allocate packet pool");
+			INFO_DBG("Failed to allocate packet pool\n");
 			bAllocFailed = TRUE;
 			break;
 		}
@@ -2286,7 +2291,7 @@ NPF_AttachAdapter(
 		ExFreePool(pFiltMod);
 		pFiltMod = NULL;
 	}
-	INFO_DBG("returnStatus=%x", returnStatus);
+	INFO_DBG("returnStatus=%x\n", returnStatus);
 	TRACE_EXIT();
 	return returnStatus;
 }
@@ -2781,7 +2786,7 @@ Arguments:
 	//
 	if (OriginalRequest == NULL)
 	{
-		INFO_DBG("Status = %#x", Status);
+		INFO_DBG("Status = %#x\n", Status);
 		NPF_InternalRequestComplete(pFiltMod, Request, Status);
 		TRACE_EXIT();
 		return;
@@ -3439,7 +3444,7 @@ NDIS_STATUS NPF_DoInternalRequest(
 		}
 	}
 
-	INFO_DBG("Status = %#x", Status);
+	INFO_DBG("Status = %#x\n", Status);
 	TRACE_EXIT();
 	return Status;
 }
@@ -3483,7 +3488,7 @@ Return Value:
 	// Set the request result
 	//
 	pRequest->RequestStatus = Status;
-	INFO_DBG("pRequest->RequestStatus = Status = %x", Status);
+	INFO_DBG("pRequest->RequestStatus = Status = %x\n", Status);
 
 	//
 	// and awake the caller

@@ -534,7 +534,7 @@ int len;
 	{
 		p = &f[i];
 
-		INFO_DBG("Validating program");
+		INFO_DBG("Validating program\n");
 
 		flag = 0;
 		for (j = 0; j < VALID_INSTRUCTIONS_LEN; j++)
@@ -543,7 +543,7 @@ int len;
 		if (flag == 0)
 			return 0;
 
-		INFO_DBG("Validating program: no unknown instructions");
+		INFO_DBG("Validating program: no unknown instructions\n");
 
 		switch (BPF_CLASS(p->code))
 		{
@@ -570,7 +570,7 @@ int len;
 				return 0;
 			}
 
-			INFO_DBG("Validating program: no wrong LD memory locations");
+			INFO_DBG("Validating program: no wrong LD memory locations\n");
 			break;
 
 		case BPF_ST:
@@ -578,7 +578,7 @@ int len;
 			if (p->k >= BPF_MEMWORDS)
 				return 0;
 
-			INFO_DBG("Validating program: no wrong ST memory locations");
+			INFO_DBG("Validating program: no wrong ST memory locations\n");
 			break;
 
 		case BPF_ALU:
@@ -638,7 +638,7 @@ int len;
 			default:
 				return 0;
 			}
-			INFO_DBG("Validating program: no wrong JUMPS");
+			INFO_DBG("Validating program: no wrong JUMPS\n");
 			break;
 		case BPF_RET:
 			break;

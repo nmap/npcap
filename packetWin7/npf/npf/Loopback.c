@@ -249,8 +249,7 @@ NPF_TapLoopback(
 					pLoopbackFilter->AdapterHandle, numBytes, NPF_LOOPBACK_COPY_TAG, NormalPoolPriority);
 			if (npBuff == NULL)
 			{
-				INFO_DBG(
-						"NPF_TapLoopback: Failed to allocate buffer.");
+				WARNING_DBG("Failed to allocate buffer.\n");
 				break;
 			}
 			RtlCopyMemory(npBuff, pPacketData, numBytes);
@@ -259,8 +258,7 @@ NPF_TapLoopback(
 					pLoopbackFilter->PacketPool, 0, 0, NULL, 0, 0);
 			if (pFakeNbl == NULL)
 			{
-				INFO_DBG(
-						"NPF_TapLoopback: Failed to allocate NBL.");
+				WARNING_DBG("Failed to allocate NBL.\n");
 				break;
 			}
 			pFakeNetBuffer = NET_BUFFER_LIST_FIRST_NB(pFakeNbl);
@@ -275,7 +273,7 @@ NPF_TapLoopback(
 							&OrigLen,
 							NormalPagePriority);
 					if (pOrigBuf == NULL) {
-						INFO_DBG("NPF_TapLoopback: Failed to query MDL");
+						WARNING_DBG("Failed to query MDL\n");
 						break;
 					}
 					RtlCopyMemory(pOrigBuf + Offset - numBytes, pPacketData, numBytes);
@@ -295,7 +293,7 @@ NPF_TapLoopback(
 								&OrigLen,
 								NormalPagePriority);
 						if (pOrigBuf == NULL) {
-							INFO_DBG("NPF_TapLoopback: Failed to query MDL");
+							WARNING_DBG("Failed to query MDL\n");
 							break;
 						}
 						/* Make a buffer big enough for our fake DLT header plus used
@@ -305,8 +303,7 @@ NPF_TapLoopback(
 								pLoopbackFilter->AdapterHandle, FirstMDLLen, NPF_LOOPBACK_COPY_TAG, NormalPoolPriority);
 						if (pTmpBuf == NULL)
 						{
-							INFO_DBG(
-									"NPF_TapLoopback: Failed to allocate buffer.");
+							WARNING_DBG("Failed to allocate buffer.\n");
 							break;
 						}
 						RtlCopyMemory(pTmpBuf, pPacketData, numBytes);
@@ -314,8 +311,7 @@ NPF_TapLoopback(
 						pMdl = NdisAllocateMdl(pLoopbackFilter->AdapterHandle, pTmpBuf, FirstMDLLen);
 						if (pMdl == NULL) {
 							NdisFreeMemory(pTmpBuf, FirstMDLLen, 0);
-							INFO_DBG(
-									"NPF_TapLoopback: Failed to allocate MDL.");
+							WARNING_DBG("Failed to allocate MDL.\n");
 							break;
 						}
 						// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
@@ -330,8 +326,7 @@ NPF_TapLoopback(
 						pMdl = NdisAllocateMdl(pLoopbackFilter->AdapterHandle, npBuff, numBytes);
 						if (pMdl == NULL)
 						{
-							INFO_DBG(
-									"NPF_TapLoopback: Failed to allocate MDL.");
+							WARNING_DBG("Failed to allocate MDL.\n");
 							break;
 						}
 						// No NPF_AnalysisAssumeAliased here because there is only one npBuff, and we keep it around until we free it below.
@@ -354,8 +349,7 @@ NPF_TapLoopback(
 					pFakeNetBuffer = NET_BUFFER_NEXT_NB(pFakeNetBuffer);
 					if (pFakeNetBuffer == NULL)
 					{
-						INFO_DBG(
-								"NPF_TapLoopback: Failed to allocate NB.");
+						WARNING_DBG("Failed to allocate NB.\n");
 						break;
 					}
 				}
@@ -524,14 +518,13 @@ NPF_NetworkClassifyOutbound(
 	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
 		injectionState == FWPS_PACKET_PREVIOUSLY_INJECTED_BY_SELF)
 	{
-		INFO_DBG(
-			"NPF_NetworkClassifyOutbound: this packet is injected by ourself, let it go\n");
+		INFO_DBG("this packet is injected by ourself, let it go\n");
 
 		TRACE_EXIT();
 		return;
 	}
 
-	INFO_DBG("NPF_NetworkClassifyOutbound: inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
+	INFO_DBG("inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
 		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
 
 	// Outbound: Initial offset is already at the IP Header
@@ -609,14 +602,13 @@ NPF_NetworkClassifyInbound(
 	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
 		injectionState == FWPS_PACKET_PREVIOUSLY_INJECTED_BY_SELF)
 	{
-		INFO_DBG(
-			"NPF_NetworkClassifyInbound: this packet is injected by ourself, let it go\n");
+		INFO_DBG("this packet is injected by ourself, let it go\n");
 
 		TRACE_EXIT();
 		return;
 	}
 
-	INFO_DBG("NPF_NetworkClassifyInbound: inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
+	INFO_DBG("inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
 		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
 
 	// Inbound: Initial offset is at the Transport Header, so retreat the size of the IP Header.
@@ -630,9 +622,7 @@ NPF_NetworkClassifyInbound(
 
 	if (status != NDIS_STATUS_SUCCESS)
 	{
-		INFO_DBG(
-				"NPF_NetworkClassifyInbound: NdisRetreatNetBufferListDataStart(bytesRetreated) [status: %#x]\n",
-				status);
+		INFO_DBG("NdisRetreatNetBufferListDataStart(bytesRetreated) [status: %#x]\n", status);
 
 		TRACE_EXIT();
 		return;
@@ -752,9 +742,7 @@ NPF_AddFilter(
 	// 	}
 	else
 	{
-		INFO_DBG(
-			"NPF_AddFilter: invalid iFlag, iFlag = %d\n",
-			iFlag);
+		ERROR_DBG("invalid iFlag, iFlag = %d\n", iFlag);
 		TRACE_EXIT();
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -850,12 +838,12 @@ Exit:
 
 	if (!NT_SUCCESS(status))
 	{
-		INFO_DBG("NPF_RegisterCallout: failed to register callout\n");
-			if (calloutRegistered)
-			{
-				FwpsCalloutUnregisterById(*calloutId);
-				*calloutId = 0;
-			}
+		WARNING_DBG("failed to register callout\n");
+		if (calloutRegistered)
+		{
+			FwpsCalloutUnregisterById(*calloutId);
+			*calloutId = 0;
+		}
 	}
 
 	TRACE_EXIT();
@@ -895,6 +883,7 @@ Callouts and filters will be removed during DriverUnload.
 		&g_WFPEngineHandle
 		);
 	EXIT_IF_ERR(FwpmEngineOpen);
+	INFO_DBG("g_WFPEngineHandle = %p\n", g_WFPEngineHandle);
 
 	status = FwpmTransactionBegin(g_WFPEngineHandle, 0);
 	EXIT_IF_ERR(FwpmTransactionBegin);
@@ -972,8 +961,8 @@ Callouts and filters will be removed during DriverUnload.
 Exit:
 	if (!NT_SUCCESS(status))
 	{
-		INFO_DBG("NPF_RegisterCallouts: failed to register callouts\n");
-		FwpmEngineClose(g_WFPEngineHandle);
+		NTSTATUS err = FwpmEngineClose(g_WFPEngineHandle);
+		INFO_DBG("FwpmEngineClose: %#08x\n", err);
 		_Analysis_assume_lock_not_held_(g_WFPEngineHandle);
 		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
 	}
@@ -988,31 +977,40 @@ void
 NPF_UnregisterCallouts(
 	)
 {
+	NTSTATUS Status = STATUS_SUCCESS;
 	TRACE_ENTER();
 
+	INFO_DBG("g_WFPEngineHandle = %p; out-v4 = %u, out-v6 = %u, in-v4 = %u, in-v6 = %u\n",
+			g_WFPEngineHandle, g_OutboundIPPacketV4, g_OutboundIPPacketV6,
+			g_InboundIPPacketV4, g_InboundIPPacketV6);
 	if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
 	{
-		FwpmEngineClose(g_WFPEngineHandle);
+		Status = FwpmEngineClose(g_WFPEngineHandle);
+		INFO_DBG("FwpmEngineClose: %#08x\n", Status);
 		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
 
 		if (g_OutboundIPPacketV4)
 		{
-			FwpsCalloutUnregisterById(g_OutboundIPPacketV4);
+			Status = FwpsCalloutUnregisterById(g_OutboundIPPacketV4);
+			INFO_DBG("FwpsCalloutUnregisterById(g_OutboundIPPacketV4): %#08x\n", Status);
 			g_OutboundIPPacketV4 = 0;
 		}
 		if (g_OutboundIPPacketV6)
 		{
-			FwpsCalloutUnregisterById(g_OutboundIPPacketV6);
+			Status = FwpsCalloutUnregisterById(g_OutboundIPPacketV6);
+			INFO_DBG("FwpsCalloutUnregisterById(g_OutboundIPPacketV6): %#08x\n", Status);
 			g_OutboundIPPacketV6 = 0;
 		}
 		if (g_InboundIPPacketV4)
 		{
-			FwpsCalloutUnregisterById(g_InboundIPPacketV4);
+			Status = FwpsCalloutUnregisterById(g_InboundIPPacketV4);
+			INFO_DBG("FwpsCalloutUnregisterById(g_InboundIPPacketV4): %#08x\n", Status);
 			g_InboundIPPacketV4 = 0;
 		}
 		if (g_InboundIPPacketV6)
 		{
-			FwpsCalloutUnregisterById(g_InboundIPPacketV6);
+			Status = FwpsCalloutUnregisterById(g_InboundIPPacketV6);
+			INFO_DBG("FwpsCalloutUnregisterById(g_InboundIPPacketV6): %#08x\n", Status);
 			g_InboundIPPacketV6 = 0;
 		}
 	}
@@ -1128,10 +1126,12 @@ NPF_InitWFP(PDEVICE_OBJECT pDevObj)
 	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 	{
+		ERROR_DBG("Failed to get WFPInitMutex: %#08x\n", status);
 		// Failed to get the mutex. Report exact error unless it's a "success" value
 		_Analysis_assume_lock_not_held_(pDevExt->WFPInitMutex);
 		return NT_SUCCESS(status) ? STATUS_LOCK_NOT_GRANTED : status;
 	}
+	INFO_DBG("bWFPInit %d -> 1\n", pDevExt->bWFPInit);
 	if (pDevExt->bWFPInit)
 	{
 		goto Exit;
@@ -1164,10 +1164,12 @@ NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj)
 	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 	{
+		ERROR_DBG("Failed to get WFPInitMutex: %#08x\n", status);
 		// Failed to get the mutex.
 		_Analysis_assume_lock_not_held_(pDevExt->WFPInitMutex);
 		return;
 	}
+	INFO_DBG("bWFPInit %d -> 0\n", pDevExt->bWFPInit);
 	if (!pDevExt->bWFPInit)
 	{
 		goto Exit;
