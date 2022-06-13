@@ -1030,34 +1030,35 @@ injection handles will be removed during DriverUnload.
 
 	TRACE_ENTER();
 
-	status = FwpsInjectionHandleCreate(AF_INET,
-		FWPS_INJECTION_TYPE_NETWORK,
-		&g_InjectionHandle_IPv4);
+	if (NT_VERIFY(g_InjectionHandle_IPv4 == INVALID_HANDLE_VALUE)) {
+		status = FwpsInjectionHandleCreate(AF_INET,
+				FWPS_INJECTION_TYPE_NETWORK,
+				&g_InjectionHandle_IPv4);
 
-	if (status != STATUS_SUCCESS)
-	{
-		INFO_DBG(
-			"NPF_InitInjectionHandles: FwpsInjectionHandleCreate(AF_INET) [status: %#x]\n",
-			status);
-
-		TRACE_EXIT();
-		return status;
+		if (status != STATUS_SUCCESS)
+		{
+			WARNING_DBG("FwpsInjectionHandleCreate(AF_INET) [status: %#x]\n", status);
+			g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
+			goto Exit;
+		}
 	}
 
-	status = FwpsInjectionHandleCreate(AF_INET6,
-		FWPS_INJECTION_TYPE_NETWORK,
-		&g_InjectionHandle_IPv6);
+	if (NT_VERIFY(g_InjectionHandle_IPv6 == INVALID_HANDLE_VALUE)) {
+		status = FwpsInjectionHandleCreate(AF_INET6,
+				FWPS_INJECTION_TYPE_NETWORK,
+				&g_InjectionHandle_IPv6);
 
-	if (status != STATUS_SUCCESS)
-	{
-		INFO_DBG(
-			"NPF_InitInjectionHandles: FwpsInjectionHandleCreate(AF_INET6) [status: %#x]\n",
-			status);
-
-		TRACE_EXIT();
-		return status;
+		if (status != STATUS_SUCCESS)
+		{
+			WARNING_DBG("FwpsInjectionHandleCreate(AF_INET6) [status: %#x]\n", status);
+			FwpsInjectionHandleDestroy(g_InjectionHandle_IPv4);
+			g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
+			g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
+			goto Exit;
+		}
 	}
 
+Exit:
 	TRACE_EXIT();
 	return status;
 }
