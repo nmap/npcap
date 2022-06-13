@@ -417,33 +417,29 @@ BOOL NPF_ShouldProcess(
 	UINT32 layerFlags = 0;
 
 	// Get the packet protocol (IPv4 or IPv6)
-	if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V4)
-	{
-		*pbIPv4 = TRUE;
-		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V4_FLAGS].value.uint32;
-	}
-	else if (inFixedValues->layerId == FWPS_LAYER_OUTBOUND_IPPACKET_V6)
-	{
-		*pbIPv4 = FALSE;
-		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V6_FLAGS].value.uint32;
-	}
-	if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V4)
-	{
-		*pbIPv4 = TRUE;
-		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V4_FLAGS].value.uint32;
-	}
-	else if (inFixedValues->layerId == FWPS_LAYER_INBOUND_IPPACKET_V6)
-	{
-		*pbIPv4 = FALSE;
-		layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V6_FLAGS].value.uint32;
-	}
-	else
-	{
-		// This is not our layer! Bail.
-		INFO_DBG(
-				"NPF_NetworkClassifyOutbound: bIPv4 cannot be determined, inFixedValues->layerId = %u\n", inFixedValues->layerId);
-		*pbIPv4 = FALSE;
-		return FALSE;
+	switch (inFixedValues->layerId) {
+		case FWPS_LAYER_OUTBOUND_IPPACKET_V4:
+			*pbIPv4 = TRUE;
+			layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V4_FLAGS].value.uint32;
+			break;
+		case FWPS_LAYER_OUTBOUND_IPPACKET_V6:
+			*pbIPv4 = FALSE;
+			layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V6_FLAGS].value.uint32;
+			break;
+		case FWPS_LAYER_INBOUND_IPPACKET_V4:
+			*pbIPv4 = TRUE;
+			layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V4_FLAGS].value.uint32;
+			break;
+		case FWPS_LAYER_INBOUND_IPPACKET_V6:
+			*pbIPv4 = FALSE;
+			layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V6_FLAGS].value.uint32;
+			break;
+		default:
+			// This is not our layer! Bail.
+			ERROR_DBG("bIPv4 cannot be determined, inFixedValues->layerId = %u\n", inFixedValues->layerId);
+			*pbIPv4 = FALSE;
+			return FALSE;
+			break;
 	}
 
 	// Filter out fragment packets and reassembled packets.
