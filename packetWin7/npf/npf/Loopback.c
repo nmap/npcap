@@ -200,7 +200,7 @@ NPF_InitInjectionHandles(
 	);
 
 _IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS
+VOID
 NPF_FreeInjectionHandles(
 	);
 
@@ -1067,7 +1067,7 @@ injection handles will be removed during DriverUnload.
 }
 
 _Use_decl_annotations_
-NTSTATUS
+VOID
 NPF_FreeInjectionHandles(
 	)
 /* ++
@@ -1086,14 +1086,8 @@ Free injection handles (IPv4 and IPv6).
 
 		if (status != STATUS_SUCCESS)
 		{
-			INFO_DBG(
-				"NPF_InitInjectionHandles: FwpsInjectionHandleDestroy(AF_INET) [status: %#x]\n",
-				status);
-
-			TRACE_EXIT();
-			return status;
+			INFO_DBG("FwpsInjectionHandleDestroy(AF_INET) [status: %#x]\n", status);
 		}
-
 		g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
 	}
 
@@ -1103,19 +1097,12 @@ Free injection handles (IPv4 and IPv6).
 
 		if (status != STATUS_SUCCESS)
 		{
-			INFO_DBG(
-				"NPF_InitInjectionHandles: FwpsInjectionHandleDestroy(AF_INET6) [status: %#x]\n",
-				status);
-
-			TRACE_EXIT();
-			return status;
+			INFO_DBG("FwpsInjectionHandleDestroy(AF_INET6) [status: %#x]\n", status);
 		}
-
 		g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
 	}
 
 	TRACE_EXIT();
-	return status;
 }
 
 _Use_decl_annotations_
