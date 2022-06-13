@@ -908,14 +908,15 @@ Return Value:
 
 			NPF_StopUsingOpenInstance(pOpen, OpenRunning, bAtDispatchLevel);
 
-			if (NDIS_STATUS_SUCCESS == NET_BUFFER_LIST_STATUS(pNBL))
+			NDIS_STATUS Status = NET_BUFFER_LIST_STATUS(pNBL);
+			pIrp->IoStatus.Status = Status;
+			if (NDIS_STATUS_SUCCESS == Status)
 			{
-				pIrp->IoStatus.Status = STATUS_SUCCESS;
 				pIrp->IoStatus.Information = IrpSp->Parameters.Write.Length;
 			}
 			else
 			{
-				pIrp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+				WARNING_DBG("NBL status = %#08x\n", Status);
 				pIrp->IoStatus.Information = 0;
 			}
 			IoCompleteRequest(pIrp, IO_NO_INCREMENT);
