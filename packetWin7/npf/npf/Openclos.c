@@ -559,9 +559,6 @@ NPF_OpenAdapter(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	Open->UserPID = IoGetRequestorProcessId(Irp);
-	if (pFiltMod)
-	{
-	}
 	Open->DeviceExtension = DeviceObject->DeviceExtension;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
@@ -834,6 +831,7 @@ VOID NPF_OpenWaitPendingIrps(
 	{
 		while (pOpen->PendingIrps[state] > 0)
 		{
+			INFO_DBG("Open %p: %d pending IRPS at %d\n", pOpen, pOpen->PendingIrps[state], state);
 			NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 			NdisWaitEvent(&Event, 1);
 			NdisAcquireSpinLock(&pOpen->OpenInUseLock);
