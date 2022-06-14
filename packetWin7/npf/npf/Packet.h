@@ -1150,12 +1150,10 @@ BOOLEAN NPF_StartUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(Open
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
 
-_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 OPEN_STATE
 NPF_DemoteOpenStatus(
 	_Inout_ POPEN_INSTANCE pOpen,
-	_In_range_(OpenDetached,OpenClosed) OPEN_STATE NewState,
-	_In_ BOOLEAN AtDispatchLevel
+	_In_range_(OpenDetached,OpenClosed) OPEN_STATE NewState
 	);
 
 _IRQL_requires_(PASSIVE_LEVEL)

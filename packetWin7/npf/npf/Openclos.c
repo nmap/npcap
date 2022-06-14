@@ -795,18 +795,14 @@ _Use_decl_annotations_
 OPEN_STATE
 NPF_DemoteOpenStatus(
 	POPEN_INSTANCE pOpen,
-	OPEN_STATE NewState,
-	BOOLEAN AtDispatchLevel
+	OPEN_STATE NewState
 	)
 {
-	OPEN_STATE OldState;
+	OPEN_STATE OldState = InterlockedExchange((LONG *)&pOpen->OpenStatus, (LONG) NewState);
 
-	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
-	NT_ASSERT(NewState > pOpen->OpenStatus);
-	OldState = pOpen->OpenStatus;
-	pOpen->OpenStatus = NewState;
+	NT_ASSERT(NewState > OldState);
+	INFO_DBG("Open %p: %d -> %d\n", pOpen, OldState, NewState);
 
-	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 	return OldState;
 }
 
@@ -1331,7 +1327,7 @@ NPF_Cleanup(
 
 	NT_ASSERT(Open != NULL);
 
-	OPEN_STATE OldState = NPF_DemoteOpenStatus(Open, OpenClosed, FALSE);
+	OPEN_STATE OldState = NPF_DemoteOpenStatus(Open, OpenClosed);
 	if (Open->ReadEvent != NULL)
 		KeSetEvent(Open->ReadEvent, 0, FALSE);
 	NPF_OpenWaitPendingIrps(Open);
@@ -2459,7 +2455,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	{
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
 		PushEntryList(&DetachedOpens, Curr);
-		OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenDetached, TRUE);
+		OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenDetached);
 		if (OldState == OpenRunning)
 		{
 			numOpensRunning++;
@@ -2471,6 +2467,9 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		Curr = PopEntryList(&pFiltMod->OpenInstances);
 	}
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
+
+	// Ensure demotions complete before we wait for pending irps
+	KeMemoryBarrier();
 
 	// for each of the instances, wait for pending irps
 	Curr = PopEntryList(&DetachedOpens);

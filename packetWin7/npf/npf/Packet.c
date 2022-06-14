@@ -972,7 +972,7 @@ Return Value:
 			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
 			InsertTailList(&ClosedOpens, CurrEntry);
 			// Pretty sure we don't get here unless all this is already closed up, but better to be thorough.
-			OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenClosed, TRUE);
+			OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenClosed);
 
 			CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
 		}
