@@ -101,19 +101,11 @@
 // Global variables
 //
 extern ULONG g_DltNullMode;
+extern PDEVICE_OBJECT pNpcapDeviceObject;
 
 // 
 // Callout and sublayer GUIDs
 //
-
-// f99c911e-90ce-41a3-8022-c3e078b8f7a2
-DEFINE_GUID(
-	NPF_FWPM_SESSION_GUID,
-	0xf99c911e,
-	0x90ce,
-	0x41a3,
-	0x80, 0x22, 0xc3, 0xe0, 0x78, 0xb8, 0xf7, 0xa2
-);
 
 // af617412-ce10-4058-8996-abc79fd805ff
 DEFINE_GUID(
@@ -167,44 +159,6 @@ DEFINE_GUID(
 );
 
 
-// 
-// Callout driver global variables
-//
-
-HANDLE g_WFPEngineHandle = INVALID_HANDLE_VALUE;
-UINT32 g_OutboundIPPacketV4 = 0;
-UINT32 g_OutboundIPPacketV6 = 0;
-UINT32 g_InboundIPPacketV4 = 0;
-UINT32 g_InboundIPPacketV6 = 0;
-HANDLE g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
-HANDLE g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
-
-// 
-// Callout driver functions
-//
-
-_IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS
-NPF_RegisterCallouts(
-_Inout_ PDEVICE_OBJECT deviceObject
-	);
-
-_IRQL_requires_(PASSIVE_LEVEL)
-void
-NPF_UnregisterCallouts(
-	);
-
-_IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS
-NPF_InitInjectionHandles(
-	);
-
-_IRQL_requires_(PASSIVE_LEVEL)
-VOID
-NPF_FreeInjectionHandles(
-	);
-
-
 // Send the loopback packets data to the user-mode code.
 VOID
 NPF_TapLoopback(
@@ -244,6 +198,7 @@ NPF_TapLoopback(
 			((PETHER_HEADER) pPacketData)->ether_type = bIPv4 ? RtlUshortByteSwap(ETHERTYPE_IP) : RtlUshortByteSwap(ETHERTYPE_IPV6);
 			numBytes = ETHER_HDR_LEN;
 		}
+		// TODO: use a lookahead list for npBuffs
 		npBuff = (PUCHAR) NdisAllocateMemoryWithTagPriority(
 				pLoopbackFilter->AdapterHandle, numBytes, NPF_LOOPBACK_COPY_TAG, NormalPoolPriority);
 		if (npBuff == NULL)
@@ -406,7 +361,7 @@ _Must_inspect_result_
 BOOL NPF_ShouldProcess(
 		_In_ const FWPS_INCOMING_VALUES* inFixedValues,
 		_In_ const FWPS_INCOMING_METADATA_VALUES* inMetaValues,
-		_Out_ PBOOLEAN pbIPv4
+		_Out_ PUCHAR puIPv4
 		)
 {
 	UNREFERENCED_PARAMETER(inMetaValues);
@@ -415,25 +370,25 @@ BOOL NPF_ShouldProcess(
 	// Get the packet protocol (IPv4 or IPv6)
 	switch (inFixedValues->layerId) {
 		case FWPS_LAYER_OUTBOUND_IPPACKET_V4:
-			*pbIPv4 = TRUE;
+			*puIPv4 = NPF_INJECT_IPV4;
 			layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V4_FLAGS].value.uint32;
 			break;
 		case FWPS_LAYER_OUTBOUND_IPPACKET_V6:
-			*pbIPv4 = FALSE;
+			*puIPv4 = NPF_INJECT_IPV6;
 			layerFlags = inFixedValues->incomingValue[FWPS_FIELD_OUTBOUND_IPPACKET_V6_FLAGS].value.uint32;
 			break;
 		case FWPS_LAYER_INBOUND_IPPACKET_V4:
-			*pbIPv4 = TRUE;
+			*puIPv4 = NPF_INJECT_IPV4;
 			layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V4_FLAGS].value.uint32;
 			break;
 		case FWPS_LAYER_INBOUND_IPPACKET_V6:
-			*pbIPv4 = FALSE;
+			*puIPv4 = NPF_INJECT_IPV6;
 			layerFlags = inFixedValues->incomingValue[FWPS_FIELD_INBOUND_IPPACKET_V6_FLAGS].value.uint32;
 			break;
 		default:
 			// This is not our layer! Bail.
-			ERROR_DBG("bIPv4 cannot be determined, inFixedValues->layerId = %u\n", inFixedValues->layerId);
-			*pbIPv4 = FALSE;
+			ERROR_DBG("uIPv4 cannot be determined, inFixedValues->layerId = %u\n", inFixedValues->layerId);
+			*puIPv4 = 0;
 			return FALSE;
 			break;
 	}
@@ -485,8 +440,9 @@ NPF_NetworkClassifyOutbound(
 	)
 #endif
 {
-	PNPCAP_FILTER_MODULE pLoopbackFilter = (PNPCAP_FILTER_MODULE)filter->context;
-	BOOLEAN				bIPv4;
+	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION)filter->context;
+	PNPCAP_FILTER_MODULE pLoopbackFilter = pDevExt->pLoopbackFilter;
+	UCHAR uIPv4;
 	PNET_BUFFER_LIST	pNetBufferList = (NET_BUFFER_LIST*) layerData;
 	FWPS_PACKET_INJECTION_STATE injectionState = FWPS_PACKET_INJECTION_STATE_MAX;
 
@@ -506,12 +462,12 @@ NPF_NetworkClassifyOutbound(
 		return;
 	}
 
-	if (pNetBufferList == NULL || !NPF_ShouldProcess(inFixedValues, inMetaValues, &bIPv4))
+	if (pNetBufferList == NULL || !NPF_ShouldProcess(inFixedValues, inMetaValues, &uIPv4))
 	{
 		return;
 	}
 
-	injectionState = FwpsQueryPacketInjectionState(bIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+	injectionState = FwpsQueryPacketInjectionState(pDevExt->hInject[uIPv4],
 		pNetBufferList,
 		NULL);
 	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
@@ -528,7 +484,7 @@ NPF_NetworkClassifyOutbound(
 
 	// Outbound: Initial offset is already at the IP Header
 
-	NPF_TapLoopback(pLoopbackFilter, bIPv4, pNetBufferList);
+	NPF_TapLoopback(pLoopbackFilter, uIPv4 == NPF_INJECT_IPV4, pNetBufferList);
 
 	TRACE_EXIT();
 	return;
@@ -568,11 +524,12 @@ NPF_NetworkClassifyInbound(
 	)
 #endif
 {
-	PNPCAP_FILTER_MODULE pLoopbackFilter = (PNPCAP_FILTER_MODULE)filter->context;
+	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION)filter->context;
+	PNPCAP_FILTER_MODULE pLoopbackFilter = pDevExt->pLoopbackFilter;
 	NDIS_STATUS status = NDIS_STATUS_SUCCESS;
 	UINT32				ipHeaderSize = 0;
 	UINT32				bytesRetreated = 0;
-	BOOLEAN				bIPv4;
+	UCHAR uIPv4;
 	PNET_BUFFER_LIST	pNetBufferList = (NET_BUFFER_LIST*) layerData;
 	FWPS_PACKET_INJECTION_STATE injectionState = FWPS_PACKET_INJECTION_STATE_MAX;
 
@@ -585,7 +542,7 @@ NPF_NetworkClassifyInbound(
 
 	TRACE_ENTER();
 
-	if (pNetBufferList == NULL || !NPF_ShouldProcess(inFixedValues, inMetaValues, &bIPv4))
+	if (pNetBufferList == NULL || !NPF_ShouldProcess(inFixedValues, inMetaValues, &uIPv4))
 	{
 		return;
 	}
@@ -595,7 +552,7 @@ NPF_NetworkClassifyInbound(
 		ipHeaderSize = inMetaValues->ipHeaderSize;
 	}
 
-	injectionState = FwpsQueryPacketInjectionState(bIPv4 ? g_InjectionHandle_IPv4 : g_InjectionHandle_IPv6,
+	injectionState = FwpsQueryPacketInjectionState(pDevExt->hInject[uIPv4],
 		pNetBufferList,
 		NULL);
 	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
@@ -627,7 +584,7 @@ NPF_NetworkClassifyInbound(
 		return;
 	}
 
-	NPF_TapLoopback(pLoopbackFilter, bIPv4, pNetBufferList);
+	NPF_TapLoopback(pLoopbackFilter, uIPv4 == NPF_INJECT_IPV4, pNetBufferList);
 
 	if (bytesRetreated > 0)
 	{
@@ -656,7 +613,7 @@ NPF_NetworkNotify(
 	switch (notifyType)
 	{
 		case FWPS_CALLOUT_NOTIFY_ADD_FILTER:
-			filter->context = (UINT64)NPF_GetLoopbackFilterModule();
+			filter->context = (UINT64)(pNpcapDeviceObject->DeviceExtension);
 			INFO_DBG("ADD filter, context: %p\n", (PVOID)filter->context);
 			break;
 		case FWPS_CALLOUT_NOTIFY_DELETE_FILTER:
@@ -677,6 +634,7 @@ NPF_NetworkNotify(
 
 NTSTATUS
 NPF_AddFilter(
+	_In_ HANDLE WFPEngineHandle,
 	_In_ const GUID* layerKey,
 	_In_ const GUID* calloutKey,
 	_In_ const int iFlag
@@ -761,7 +719,7 @@ NPF_AddFilter(
 	filter.numFilterConditions = conditionIndex;
 
 	status = FwpmFilterAdd(
-		g_WFPEngineHandle,
+		WFPEngineHandle,
 		&filter,
 		NULL,
 		NULL);
@@ -776,46 +734,24 @@ NPF_AddFilter(
 		goto Exit; \
 	}
 
-NTSTATUS
-NPF_RegisterCallout(
-	_In_ const GUID* layerKey,
-	_In_ const GUID* calloutKey,
-    _In_ FWPS_CALLOUT_CLASSIFY_FN classifyFn,
-	_Inout_ void* deviceObject,
-	_Out_ UINT32* calloutId
-	)
-/* ++
+#define EXISTS_OR_EXIT_IF_ERR(_Func) \
+	if (status == STATUS_FWP_ALREADY_EXISTS) { \
+		WARNING_DBG(#_Func " returned STATUS_FWP_ALREADY_EXISTS\n"); \
+	} else EXIT_IF_ERR(_Func)
 
-This function registers callouts and filters that intercept transport
-traffic at the layers defined in NPF_RegisterCallouts
+/*
+This function adds callout objects and filters that reference the callout driver
 */
+NTSTATUS
+NPF_AddCallout(
+	_In_ HANDLE WFPEngineHandle,
+	_In_ const GUID* layerKey,
+	_In_ const GUID* calloutKey
+	)
 {
-	TRACE_ENTER();
 	NTSTATUS status = STATUS_SUCCESS;
-
-	FWPS_CALLOUT sCallout = { 0 };
 	FWPM_CALLOUT mCallout = { 0 };
-
 	FWPM_DISPLAY_DATA displayData = { 0 };
-
-	BOOLEAN calloutRegistered = FALSE;
-
-	sCallout.calloutKey = *calloutKey;
-	sCallout.classifyFn = classifyFn;
-	sCallout.notifyFn = NPF_NetworkNotify;
-	sCallout.flags = FWP_CALLOUT_FLAG_ALLOW_OFFLOAD
-#if(NTDDI_VERSION >= NTDDI_WIN8)
-		| FWP_CALLOUT_FLAG_ALLOW_RSC
-#endif
-		;
-
-	status = FwpsCalloutRegister(
-		deviceObject,
-		&sCallout,
-		calloutId
-		);
-	EXIT_IF_ERR(FwpsCalloutRegister);
-	calloutRegistered = TRUE;
 
 	displayData.name = L"Npcap Network Callout";
 	displayData.description = L"Npcap inbound/outbound network traffic";
@@ -826,46 +762,35 @@ traffic at the layers defined in NPF_RegisterCallouts
 	mCallout.applicableLayer = *layerKey;
 
 	status = FwpmCalloutAdd(
-		g_WFPEngineHandle,
+		WFPEngineHandle,
 		&mCallout,
 		NULL,
 		NULL
 		);
-	EXIT_IF_ERR(FwpmCalloutAdd);
+	EXISTS_OR_EXIT_IF_ERR(FwpmCalloutAdd);
 
-	status = NPF_AddFilter(layerKey, calloutKey, 0);
-	EXIT_IF_ERR(NPF_AddFilter);
+	status = NPF_AddFilter(WFPEngineHandle, layerKey, calloutKey, 0);
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddFilter);
 
-	status = NPF_AddFilter(layerKey, calloutKey, 1);
-	EXIT_IF_ERR(NPF_AddFilter);
+	status = NPF_AddFilter(WFPEngineHandle, layerKey, calloutKey, 1);
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddFilter);
 
-	status = NPF_AddFilter(layerKey, calloutKey, 2);
-	EXIT_IF_ERR(NPF_AddFilter);
+	status = NPF_AddFilter(WFPEngineHandle, layerKey, calloutKey, 2);
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddFilter);
 
-	status = NPF_AddFilter(layerKey, calloutKey, 3);
-	EXIT_IF_ERR(NPF_AddFilter);
+	status = NPF_AddFilter(WFPEngineHandle, layerKey, calloutKey, 3);
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddFilter);
 
 Exit:
-
-	if (!NT_SUCCESS(status))
-	{
-		WARNING_DBG("failed to register callout\n");
-		if (calloutRegistered)
-		{
-			FwpsCalloutUnregisterById(*calloutId);
-			*calloutId = 0;
-		}
-	}
-
 	TRACE_EXIT();
 	return status;
 }
 
-_Use_decl_annotations_
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
-NPF_RegisterCallouts(
-PDEVICE_OBJECT deviceObject
-)
+NPF_AddCalloutsAndFilters(
+_Inout_ PDEVICE_OBJECT deviceObject
+	)
 /* ++
 
 This function registers dynamic callouts and filters that intercept
@@ -878,39 +803,36 @@ Callouts and filters will be removed during DriverUnload.
 {
 	TRACE_ENTER();
 	NTSTATUS status = STATUS_SUCCESS;
-	FWPM_SUBLAYER NPFSubLayer;
+	NTSTATUS err = STATUS_SUCCESS;
+	HANDLE WFPEngineHandle = NULL;
+	FWPM_SUBLAYER NPFSubLayer = {0};
 
 	FWPM_SESSION session = { 0 };
 	FWPM_PROVIDER provider = { 0 };
 
-	session.flags = FWPM_SESSION_FLAG_DYNAMIC;
-	session.displayData.name = L"Npcap RegisterCallouts session";
+	session.displayData.name = L"Npcap AddCalloutsAndFilters session";
 
 	status = FwpmEngineOpen(
 		NULL,
 		RPC_C_AUTHN_WINNT,
 		NULL,
 		&session,
-		&g_WFPEngineHandle
+		&WFPEngineHandle
 		);
 	EXIT_IF_ERR(FwpmEngineOpen);
-	INFO_DBG("g_WFPEngineHandle = %p\n", g_WFPEngineHandle);
 
-	status = FwpmTransactionBegin(g_WFPEngineHandle, 0);
+	status = FwpmTransactionBegin(WFPEngineHandle, 0);
 	EXIT_IF_ERR(FwpmTransactionBegin);
 
 #define _WIDE(X) _WIDE2(X)
 #define _WIDE2(X) L ## X
 #define NPCAP_COMPANY_NAME_W _WIDE(WINPCAP_COMPANY_NAME)
-	RtlZeroMemory(&provider, sizeof(FWPM_PROVIDER));
 	provider.providerKey = NPF_FWPM_PROVIDER_GUID;
 	provider.displayData.name = NPCAP_COMPANY_NAME_W;
 	provider.displayData.description = NPF_DRIVER_NAME_NORMAL_WIDECHAR;
 	provider.serviceName = NPF_DRIVER_NAME_SMALL_WIDECHAR;
-	status = FwpmProviderAdd(g_WFPEngineHandle, &provider, NULL);
-	EXIT_IF_ERR(FwpmProviderAdd);
-
-	RtlZeroMemory(&NPFSubLayer, sizeof(FWPM_SUBLAYER));
+	status = FwpmProviderAdd(WFPEngineHandle, &provider, NULL);
+	EXISTS_OR_EXIT_IF_ERR(FwpmProviderAdd);
 
 	NPFSubLayer.subLayerKey = NPF_SUBLAYER;
 	NPFSubLayer.displayData.name = L"Npcap Loopback Sub-Layer";
@@ -922,117 +844,156 @@ Callouts and filters will be removed during DriverUnload.
 	// compatible with Vista's IpSec
 	// implementation.
 
-	status = FwpmSubLayerAdd(g_WFPEngineHandle, &NPFSubLayer, NULL);
-	EXIT_IF_ERR(FwpmSubLayerAdd);
+	status = FwpmSubLayerAdd(WFPEngineHandle, &NPFSubLayer, NULL);
+	EXISTS_OR_EXIT_IF_ERR(FwpmSubLayerAdd);
 
-	//if (isV4)
-	{
-		status = NPF_RegisterCallout(
+	status = NPF_AddCallout( WFPEngineHandle,
 			&FWPM_LAYER_OUTBOUND_IPPACKET_V4,
-			&NPF_OUTBOUND_IPPACKET_CALLOUT_V4,
-            NPF_NetworkClassifyOutbound,
-			deviceObject,
-			&g_OutboundIPPacketV4
+			&NPF_OUTBOUND_IPPACKET_CALLOUT_V4
 			);
-		EXIT_IF_ERR(NPF_RegisterCallout);
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddCallout);
 
-		status = NPF_RegisterCallout(
+	status = NPF_AddCallout( WFPEngineHandle,
 			&FWPM_LAYER_INBOUND_IPPACKET_V4,
-			&NPF_INBOUND_IPPACKET_CALLOUT_V4,
-            NPF_NetworkClassifyInbound,
-			deviceObject,
-			&g_InboundIPPacketV4
+			&NPF_INBOUND_IPPACKET_CALLOUT_V4
 			);
-		EXIT_IF_ERR(NPF_RegisterCallout);
-	}
-	//else
-	{
-		status = NPF_RegisterCallout(
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddCallout);
+
+	status = NPF_AddCallout( WFPEngineHandle,
 			&FWPM_LAYER_OUTBOUND_IPPACKET_V6,
-			&NPF_OUTBOUND_IPPACKET_CALLOUT_V6,
-            NPF_NetworkClassifyOutbound,
-			deviceObject,
-			&g_OutboundIPPacketV6
+			&NPF_OUTBOUND_IPPACKET_CALLOUT_V6
 			);
-		EXIT_IF_ERR(NPF_RegisterCallout);
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddCallout);
 
-		status = NPF_RegisterCallout(
+	status = NPF_AddCallout( WFPEngineHandle,
 			&FWPM_LAYER_INBOUND_IPPACKET_V6,
-			&NPF_INBOUND_IPPACKET_CALLOUT_V6,
-            NPF_NetworkClassifyInbound,
-			deviceObject,
-			&g_InboundIPPacketV6
+			&NPF_INBOUND_IPPACKET_CALLOUT_V6
 			);
-		EXIT_IF_ERR(NPF_RegisterCallout);
-	}
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddCallout);
 
-	status = FwpmTransactionCommit(g_WFPEngineHandle);
+	status = FwpmTransactionCommit(WFPEngineHandle);
 	EXIT_IF_ERR(FwpmTransactionCommit);
 
 Exit:
-	if (!NT_SUCCESS(status))
-	{
-		NTSTATUS err = FwpmEngineClose(g_WFPEngineHandle);
-		INFO_DBG("FwpmEngineClose: %#08x\n", err);
-		_Analysis_assume_lock_not_held_(g_WFPEngineHandle);
-		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
+	/* "If this function is called with a transaction in progress, the transaction will be aborted."
+	 */
+	err = FwpmEngineClose(WFPEngineHandle);
+	if (!NT_SUCCESS(err)) {
+		ERROR_DBG("FwpmEngineClose: %#08x\n", err);
 	}
+	_Analysis_assume_lock_not_held_(WFPEngineHandle);
 
 	TRACE_EXIT();
 	return status;
 }
 
 
-_Use_decl_annotations_
+// Unlike other functions, this one needs to continue even if it gets an error, in order to clean up any remaining items.
+#define IF_ERR_LOG_AND_DO(_Func, _Do) \
+	if (!NT_SUCCESS(status)) { \
+		ERROR_DBG(#_Func "failed: %08x\n", status); \
+		_Do; \
+	}
+#define IF_ERR_LOG_AND_SKIP(_Func, _Label) IF_ERR_LOG_AND_DO(_Func, goto _Label)
+#define IF_ERR_LOG(_Func) IF_ERR_LOG_AND_DO(_Func, do {} while(0))
+_IRQL_requires_max_(PASSIVE_LEVEL)
 void
-NPF_UnregisterCallouts(
+NPF_DeleteCalloutsAndFilters(
+	_In_ BOOLEAN bUnload
 	)
 {
-	NTSTATUS Status = STATUS_SUCCESS;
+	NTSTATUS status = STATUS_SUCCESS;
+	NTSTATUS err = STATUS_SUCCESS;
+	HANDLE WFPEngineHandle;
 	TRACE_ENTER();
 
-	INFO_DBG("g_WFPEngineHandle = %p; out-v4 = %u, out-v6 = %u, in-v4 = %u, in-v6 = %u\n",
-			g_WFPEngineHandle, g_OutboundIPPacketV4, g_OutboundIPPacketV6,
-			g_InboundIPPacketV4, g_InboundIPPacketV6);
-	if (g_WFPEngineHandle != INVALID_HANDLE_VALUE)
-	{
-		Status = FwpmEngineClose(g_WFPEngineHandle);
-		INFO_DBG("FwpmEngineClose: %#08x\n", Status);
-		g_WFPEngineHandle = INVALID_HANDLE_VALUE;
+	FWPM_SESSION session = { 0 };
+	session.displayData.name = L"Npcap DeleteCalloutsAndFilters session";
+	status = FwpmEngineOpen(
+		NULL,
+		RPC_C_AUTHN_WINNT,
+		NULL,
+		&session,
+		&WFPEngineHandle
+		);
+	EXIT_IF_ERR(FwpmEngineOpen);
 
-		if (g_OutboundIPPacketV4)
+	status = FwpmTransactionBegin(WFPEngineHandle, 0);
+	EXIT_IF_ERR(FwpmTransactionBegin);
+
+	// Enumerate and delete all filters
+	HANDLE hFilterEnum;
+	FWPM_FILTER_ENUM_TEMPLATE tmplEnum = {0};
+	tmplEnum.providerKey = (GUID *)&NPF_FWPM_PROVIDER_GUID;
+	tmplEnum.actionMask = 0xffffffff;
+	status = FwpmFilterCreateEnumHandle(WFPEngineHandle, &tmplEnum, &hFilterEnum);
+	IF_ERR_LOG_AND_SKIP(FwpmFilterCreateEnumHandle, FiltersDeleted);
+
+#define NUM_FILTERS_REQ 16
+	UINT32 numFilters = 0;
+	FWPM_FILTER **filterEntries = NULL;
+	do {
+		status = FwpmFilterEnum(WFPEngineHandle, hFilterEnum, NUM_FILTERS_REQ, &filterEntries, &numFilters);
+		IF_ERR_LOG_AND_DO(FwpmFilterEnum, break);
+
+		for (UINT32 i=0; i < numFilters; i++)
 		{
-			Status = FwpsCalloutUnregisterById(g_OutboundIPPacketV4);
-			INFO_DBG("FwpsCalloutUnregisterById(g_OutboundIPPacketV4): %#08x\n", Status);
-			g_OutboundIPPacketV4 = 0;
+			status = FwpmFilterDeleteByKey(WFPEngineHandle, &filterEntries[i]->filterKey);
+			IF_ERR_LOG_AND_DO(FwpmFilterDeleteByKey, continue);
 		}
-		if (g_OutboundIPPacketV6)
-		{
-			Status = FwpsCalloutUnregisterById(g_OutboundIPPacketV6);
-			INFO_DBG("FwpsCalloutUnregisterById(g_OutboundIPPacketV6): %#08x\n", Status);
-			g_OutboundIPPacketV6 = 0;
-		}
-		if (g_InboundIPPacketV4)
-		{
-			Status = FwpsCalloutUnregisterById(g_InboundIPPacketV4);
-			INFO_DBG("FwpsCalloutUnregisterById(g_InboundIPPacketV4): %#08x\n", Status);
-			g_InboundIPPacketV4 = 0;
-		}
-		if (g_InboundIPPacketV6)
-		{
-			Status = FwpsCalloutUnregisterById(g_InboundIPPacketV6);
-			INFO_DBG("FwpsCalloutUnregisterById(g_InboundIPPacketV6): %#08x\n", Status);
-			g_InboundIPPacketV6 = 0;
-		}
+
+		FwpmFreeMemory(filterEntries);
+	} while (numFilters == NUM_FILTERS_REQ);
+
+	status = FwpmFilterDestroyEnumHandle(WFPEngineHandle, hFilterEnum);
+	IF_ERR_LOG(FwpmFilterDestroyEnumHandle);
+
+FiltersDeleted:
+	// Now all the filters are gone, we can delete the callouts
+	status = FwpmCalloutDeleteByKey(WFPEngineHandle,
+			&NPF_OUTBOUND_IPPACKET_CALLOUT_V4);
+	IF_ERR_LOG(FwpmCalloutDeleteByKey);
+
+	status = FwpmCalloutDeleteByKey(WFPEngineHandle,
+			&NPF_INBOUND_IPPACKET_CALLOUT_V4);
+	IF_ERR_LOG(FwpmCalloutDeleteByKey);
+
+	status = FwpmCalloutDeleteByKey(WFPEngineHandle,
+			&NPF_OUTBOUND_IPPACKET_CALLOUT_V6);
+	IF_ERR_LOG(FwpmCalloutDeleteByKey);
+
+	status = FwpmCalloutDeleteByKey(WFPEngineHandle,
+			&NPF_INBOUND_IPPACKET_CALLOUT_V6);
+	IF_ERR_LOG(FwpmCalloutDeleteByKey);
+
+	// Provider and sublayer can persist and only have to be cleaned up at driver unload.
+	if (bUnload)
+	{
+		status = FwpmSubLayerDeleteByKey(WFPEngineHandle, &NPF_SUBLAYER);
+		IF_ERR_LOG(FwpmSubLayerDeleteByKey);
+
+		status = FwpmProviderDeleteByKey(WFPEngineHandle, &NPF_FWPM_PROVIDER_GUID);
+		IF_ERR_LOG(FwpmProviderDeleteByKey);
 	}
+
+	status = FwpmTransactionCommit(WFPEngineHandle);
+	EXIT_IF_ERR(FwpmTransactionCommit);
+
+Exit:
+	err = FwpmEngineClose(WFPEngineHandle);
+	if (!NT_SUCCESS(err)) {
+		ERROR_DBG("FwpmEngineClose: %#08x\n", err);
+	}
+	_Analysis_assume_lock_not_held_(WFPEngineHandle);
 
 	TRACE_EXIT();
 }
 
 _Use_decl_annotations_
 NTSTATUS
-NPF_InitInjectionHandles(
-)
+NPF_WFPCalloutRegister(
+		PDEVICE_OBJECT pDevObj
+		)
 /* ++
 
 Open injection handles (IPv4 and IPv6) for use with the various injection APIs.
@@ -1041,78 +1002,100 @@ injection handles will be removed during DriverUnload.
 
 -- */
 {
+	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
 	NTSTATUS status = STATUS_SUCCESS;
+	FWPS_CALLOUT sCallout = { 0 };
 
 	TRACE_ENTER();
 
-	if (NT_VERIFY(g_InjectionHandle_IPv4 == INVALID_HANDLE_VALUE)) {
-		status = FwpsInjectionHandleCreate(AF_INET,
-				FWPS_INJECTION_TYPE_NETWORK,
-				&g_InjectionHandle_IPv4);
+	status = FwpsInjectionHandleCreate(AF_INET,
+			FWPS_INJECTION_TYPE_NETWORK,
+			&pDevExt->hInject[NPF_INJECT_IPV4]);
+	EXIT_IF_ERR(FwpsInjectionHandleCreate_V4);
 
-		if (status != STATUS_SUCCESS)
-		{
-			WARNING_DBG("FwpsInjectionHandleCreate(AF_INET) [status: %#x]\n", status);
-			g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
-			goto Exit;
-		}
-	}
+	status = FwpsInjectionHandleCreate(AF_INET6,
+			FWPS_INJECTION_TYPE_NETWORK,
+			&pDevExt->hInject[NPF_INJECT_IPV6]);
+	EXIT_IF_ERR(FwpsInjectionHandleCreate_V6);
 
-	if (NT_VERIFY(g_InjectionHandle_IPv6 == INVALID_HANDLE_VALUE)) {
-		status = FwpsInjectionHandleCreate(AF_INET6,
-				FWPS_INJECTION_TYPE_NETWORK,
-				&g_InjectionHandle_IPv6);
+	// These are the same for all callouts
+	sCallout.notifyFn = NPF_NetworkNotify;
+	sCallout.flags = FWP_CALLOUT_FLAG_ALLOW_OFFLOAD
+#if(NTDDI_VERSION >= NTDDI_WIN8)
+		| FWP_CALLOUT_FLAG_ALLOW_RSC
+#endif
+		;
 
-		if (status != STATUS_SUCCESS)
-		{
-			WARNING_DBG("FwpsInjectionHandleCreate(AF_INET6) [status: %#x]\n", status);
-			FwpsInjectionHandleDestroy(g_InjectionHandle_IPv4);
-			g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
-			g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
-			goto Exit;
-		}
-	}
+	// Outbound
+	sCallout.classifyFn = NPF_NetworkClassifyOutbound;
+	// - IPv4
+	sCallout.calloutKey = NPF_OUTBOUND_IPPACKET_CALLOUT_V4;
+	status = FwpsCalloutRegister(
+		pDevObj,
+		&sCallout,
+		&pDevExt->uCalloutOutboundV4
+		);
+	EXISTS_OR_EXIT_IF_ERR(FwpsCalloutRegister);
+	// - IPv6
+	sCallout.calloutKey = NPF_OUTBOUND_IPPACKET_CALLOUT_V6;
+	status = FwpsCalloutRegister(
+		pDevObj,
+		&sCallout,
+		&pDevExt->uCalloutOutboundV6
+		);
+	EXISTS_OR_EXIT_IF_ERR(FwpsCalloutRegister);
+
+	// Inbound
+	sCallout.classifyFn = NPF_NetworkClassifyInbound;
+	// - IPv4
+	sCallout.calloutKey = NPF_INBOUND_IPPACKET_CALLOUT_V4;
+	status = FwpsCalloutRegister(
+		pDevObj,
+		&sCallout,
+		&pDevExt->uCalloutInboundV4
+		);
+	EXISTS_OR_EXIT_IF_ERR(FwpsCalloutRegister);
+	// - IPv6
+	sCallout.calloutKey = NPF_INBOUND_IPPACKET_CALLOUT_V6;
+	status = FwpsCalloutRegister(
+		pDevObj,
+		&sCallout,
+		&pDevExt->uCalloutInboundV6
+		);
+	EXISTS_OR_EXIT_IF_ERR(FwpsCalloutRegister);
 
 Exit:
+	if (!NT_SUCCESS(status) && status != STATUS_FWP_ALREADY_EXISTS) {
+		NPF_WFPCalloutUnregister(pDevObj);
+	}
+
 	TRACE_EXIT();
 	return status;
 }
 
 _Use_decl_annotations_
 VOID
-NPF_FreeInjectionHandles(
-	)
-/* ++
-
-Free injection handles (IPv4 and IPv6).
-
--- */
+NPF_WFPCalloutUnregister(
+		PDEVICE_OBJECT pDevObj
+		)
 {
+	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
 	NTSTATUS status = STATUS_SUCCESS;
 
 	TRACE_ENTER();
-
-	if (g_InjectionHandle_IPv4 != INVALID_HANDLE_VALUE)
-	{
-		status = FwpsInjectionHandleDestroy(g_InjectionHandle_IPv4);
-
-		if (status != STATUS_SUCCESS)
-		{
-			INFO_DBG("FwpsInjectionHandleDestroy(AF_INET) [status: %#x]\n", status);
-		}
-		g_InjectionHandle_IPv4 = INVALID_HANDLE_VALUE;
+#define _DESTROY_FWPS_OBJ(_Obj, _Dtor) \
+	if (_Obj) { \
+		status = _Dtor(_Obj); \
+		INFO_DBG(#_Dtor "(" #_Obj "): %#08x\n", status); \
+		_Obj = 0; \
 	}
 
-	if (g_InjectionHandle_IPv6 != INVALID_HANDLE_VALUE)
-	{
-		status = FwpsInjectionHandleDestroy(g_InjectionHandle_IPv6);
-
-		if (status != STATUS_SUCCESS)
-		{
-			INFO_DBG("FwpsInjectionHandleDestroy(AF_INET6) [status: %#x]\n", status);
-		}
-		g_InjectionHandle_IPv6 = INVALID_HANDLE_VALUE;
-	}
+	_DESTROY_FWPS_OBJ(pDevExt->hInject[NPF_INJECT_IPV6], FwpsInjectionHandleDestroy);
+	_DESTROY_FWPS_OBJ(pDevExt->hInject[NPF_INJECT_IPV4], FwpsInjectionHandleDestroy);
+	_DESTROY_FWPS_OBJ(pDevExt->uCalloutOutboundV4, FwpsCalloutUnregisterById);
+	_DESTROY_FWPS_OBJ(pDevExt->uCalloutOutboundV6, FwpsCalloutUnregisterById);
+	_DESTROY_FWPS_OBJ(pDevExt->uCalloutInboundV4, FwpsCalloutUnregisterById);
+	_DESTROY_FWPS_OBJ(pDevExt->uCalloutInboundV6, FwpsCalloutUnregisterById);
 
 	TRACE_EXIT();
 }
@@ -1130,34 +1113,26 @@ NPF_InitWFP(PDEVICE_OBJECT pDevObj)
 		_Analysis_assume_lock_not_held_(pDevExt->WFPInitMutex);
 		return NT_SUCCESS(status) ? STATUS_LOCK_NOT_GRANTED : status;
 	}
-	INFO_DBG("bWFPInit %d -> 1\n", pDevExt->bWFPInit);
+	INFO_DBG("bWFPInit %u -> 1\n", pDevExt->bWFPInit);
 	if (pDevExt->bWFPInit)
 	{
 		goto Exit;
 	}
 
-	status = NPF_InitInjectionHandles();
-	EXIT_IF_ERR(NPF_InitInjectionHandles);
-
-	status = NPF_RegisterCallouts(pDevObj);
-	EXIT_IF_ERR(NPF_RegisterCallouts);
+	status = NPF_AddCalloutsAndFilters(pDevObj);
+	EXISTS_OR_EXIT_IF_ERR(NPF_AddCalloutsAndFilters);
 
 	pDevExt->bWFPInit = 1;
 
 Exit:
 	KeReleaseMutex(&pDevExt->WFPInitMutex, FALSE);
 
-	if (!NT_SUCCESS(status))
-	{
-		NPF_FreeInjectionHandles();
-		NPF_UnregisterCallouts();
-	}
 	return status;
 }
 
 _Use_decl_annotations_
 VOID
-NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj)
+NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj, BOOLEAN bUnload)
 {
 	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
 	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
@@ -1168,14 +1143,13 @@ NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj)
 		_Analysis_assume_lock_not_held_(pDevExt->WFPInitMutex);
 		return;
 	}
-	INFO_DBG("bWFPInit %d -> 0\n", pDevExt->bWFPInit);
+	INFO_DBG("bWFPInit %u -> 0\n", pDevExt->bWFPInit);
 	if (!pDevExt->bWFPInit)
 	{
 		goto Exit;
 	}
 
-	NPF_FreeInjectionHandles();
-	NPF_UnregisterCallouts();
+	NPF_DeleteCalloutsAndFilters(bUnload);
 
 	pDevExt->bWFPInit = 0;
 

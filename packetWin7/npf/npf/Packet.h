@@ -119,6 +119,7 @@
 
 #include "win_bpf.h"
 #include <wdm.h>
+#include "Loopback.h"
 
 /* If DISPATCH_LEVEL can be determined, use that in the FILTER_*_LOCK macros
  * Otherwise, use NPF_IRQL_UNKNOWN so we can find and update them as we add more tracking
@@ -244,6 +245,7 @@ typedef struct _INTERNAL_REQUEST
 	NDIS_STATUS			RequestStatus;
 } INTERNAL_REQUEST, *PINTERNAL_REQUEST;
 
+typedef struct _NPCAP_FILTER_MODULE NPCAP_FILTER_MODULE, * PNPCAP_FILTER_MODULE;
 /*!
   \brief Port device extension.
 
@@ -273,9 +275,18 @@ typedef struct _DEVICE_EXTENSION
 	UCHAR bInternalRequestPoolInit:1;
 	UCHAR bCapturePoolInit:1;
 	UCHAR bDot11HeaderPoolInit:1;
-	// WFP Init
+	// WFP context
 	UCHAR bWFPInit:1;
 	KMUTEX WFPInitMutex;
+	PNPCAP_FILTER_MODULE pLoopbackFilter;
+#define NPF_INJECT_IPV6 0
+#define NPF_INJECT_IPV4 1
+	HANDLE hInject[2];
+	UINT32 uCalloutOutboundV4;
+	UINT32 uCalloutOutboundV6;
+	UINT32 uCalloutInboundV4;
+	UINT32 uCalloutInboundV6;
+
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 typedef enum _FILTER_STATE

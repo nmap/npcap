@@ -111,8 +111,6 @@
 #include <fwpsk.h>
 
 extern ULONG g_DltNullMode;
-extern HANDLE g_InjectionHandle_IPv4;
-extern HANDLE g_InjectionHandle_IPv6;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
@@ -124,7 +122,7 @@ extern HANDLE g_InjectionHandle_IPv6;
 */
 NTSTATUS
 NPF_LoopbackSendNetBufferLists(
-	_In_ NDIS_HANDLE FilterModuleContext,
+	_In_ POPEN_INSTANCE pOpen,
 	_In_ __drv_aliasesMem PNET_BUFFER_LIST NetBufferList
 	);
 
@@ -424,7 +422,7 @@ NPF_Write(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
-			Status = NPF_LoopbackSendNetBufferLists(Open->pFiltMod,
+			Status = NPF_LoopbackSendNetBufferLists(Open,
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
@@ -468,7 +466,7 @@ NPF_Write(
 NPF_Write_End:
 	if (!NT_SUCCESS(Status))
 	{
-		WARNING_DBG("NBL %p failed: %#08x; IrpWasPended = %d\n", pNetBufferList, Status, IrpWasPended);
+		WARNING_DBG("NBL %p failed: %#08x; IrpWasPended = %u\n", pNetBufferList, Status, IrpWasPended);
 		// Failed somehow. Clean up.
 		// If pNetBufferList is not NULL, we need to free it, which will also free TmpMdl
 		if (pNetBufferList)
@@ -707,7 +705,7 @@ NTSTATUS NPF_BufferedWrite(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
-			Status = NPF_LoopbackSendNetBufferLists(Open->pFiltMod,
+			Status = NPF_LoopbackSendNetBufferLists(Open,
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
@@ -970,7 +968,7 @@ void NTAPI NPF_NetworkInjectionComplete(
 _Use_decl_annotations_
 NTSTATUS
 NPF_LoopbackSendNetBufferLists(
-	NDIS_HANDLE FilterModuleContext,
+	POPEN_INSTANCE pOpen,
 	PNET_BUFFER_LIST NetBufferList
 	)
 {
@@ -978,10 +976,11 @@ NPF_LoopbackSendNetBufferLists(
 	ULONG BuffSize = 0;
 	PETHER_HEADER pEthernetHdr = NULL;
 	PDLT_NULL_HEADER pDltNullHdr;
-	HANDLE hInjectionHandle = INVALID_HANDLE_VALUE;
+	HANDLE hInjectionHandle = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 
 	TRACE_ENTER();
+	NT_ASSERT(pOpen->bLoopback);
 
 	NdisQueryMdl(
 		NET_BUFFER_CURRENT_MDL(NET_BUFFER_LIST_FIRST_NB(NetBufferList)),
@@ -1004,10 +1003,10 @@ NPF_LoopbackSendNetBufferLists(
 		switch(pDltNullHdr->null_type)
 		{
 			case DLTNULLTYPE_IP:
-				hInjectionHandle = g_InjectionHandle_IPv4;
+				hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV4];
 				break;
 			case DLTNULLTYPE_IPV6:
-				hInjectionHandle = g_InjectionHandle_IPv6;
+				hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV6];
 				break;
 			default:
 				INFO_DBG("NPF_LoopbackSendNetBufferLists: Invalid DLTNULLTYPE %u\n", pDltNullHdr->null_type);
@@ -1021,10 +1020,10 @@ NPF_LoopbackSendNetBufferLists(
 		switch(RtlUshortByteSwap(pEthernetHdr->ether_type))
 		{
 			case ETHERTYPE_IP:
-				hInjectionHandle = g_InjectionHandle_IPv4;
+				hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV4];
 				break;
 			case ETHERTYPE_IPV6:
-				hInjectionHandle = g_InjectionHandle_IPv6;
+				hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV6];
 				break;
 			default:
 				INFO_DBG("NPF_LoopbackSendNetBufferLists: Invalid ETHERTYPE %u\n", RtlUshortByteSwap(pEthernetHdr->ether_type));
@@ -1033,7 +1032,7 @@ NPF_LoopbackSendNetBufferLists(
 		}
 	}
 
-	if (hInjectionHandle == INVALID_HANDLE_VALUE)
+	if (hInjectionHandle == NULL)
 	{
 		INFO_DBG("NPF_LoopbackSendNetBufferLists: invalid injection handle\n");
 		TRACE_EXIT();
@@ -1048,7 +1047,7 @@ NPF_LoopbackSendNetBufferLists(
 			UNSPECIFIED_COMPARTMENT_ID,
 			NetBufferList,
 			NPF_NetworkInjectionComplete,
-			FilterModuleContext);
+			pOpen->pFiltMod);
 	if (NT_SUCCESS(status))
 	{
 		WARNING_DBG("FwpsInjectNetworkSendAsync failed: %#08x; NBL = %p\n", status, NetBufferList);

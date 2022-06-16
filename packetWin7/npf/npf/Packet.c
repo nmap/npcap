@@ -166,7 +166,6 @@ NDIS_HANDLE         FilterDriverHandle = NULL;			// NDIS handle for filter drive
 NDIS_HANDLE         FilterDriverHandle_WiFi = NULL;		// NDIS handle for WiFi filter driver
 NDIS_HANDLE         FilterDriverObject;					// Driver object for filter driver
 PDEVICE_OBJECT pNpcapDeviceObject = NULL;
-extern HANDLE g_WFPEngineHandle;
 
 #ifdef KeQuerySystemTime
 // On Win x64, KeQuerySystemTime is defined as a macro,
@@ -553,16 +552,11 @@ DriverEntry(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		KeInitializeMutex(&devExtP->WFPInitMutex, 0);
-		// Test mode: register callouts and injection handles regardless
-		// In test mode, failures here are fatal.
-		if (g_TestMode) {
-			// Use Windows Filtering Platform (WFP) to capture loopback packets
-			Status = NPF_InitWFP(devObjP);
-			if (!NT_VERIFY(NT_SUCCESS(Status)))
-			{
-				ERROR_DBG("NPF_InitWFP failed: %#08x\n", Status);
-				break;
-			}
+		Status = NPF_WFPCalloutRegister(devObjP);
+		if (!NT_SUCCESS(Status))
+		{
+			ERROR_DBG("NPF_WFPCalloutRegister failed: %#08x\n", Status);
+			break;
 		}
 #endif
 
@@ -616,6 +610,7 @@ DriverEntry(
 			pFiltMod->Loopback = TRUE;
 			pFiltMod->AdapterBindingStatus = FilterRunning;
 			pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
+			devExtP->pLoopbackFilter = pFiltMod;
 
 			// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
 			NPF_AddToFilterModuleArray(pFiltMod);
@@ -935,7 +930,8 @@ Return Value:
 	}
 
 	// Release WFP resources.
-	NPF_ReleaseWFP(pNpcapDeviceObject);
+	NPF_ReleaseWFP(pNpcapDeviceObject, TRUE);
+	NPF_WFPCalloutUnregister(pNpcapDeviceObject);
 #endif
 
 #ifdef HAVE_RX_SUPPORT

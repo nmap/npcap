@@ -827,7 +827,7 @@ VOID NPF_OpenWaitPendingIrps(
 	{
 		while (pOpen->PendingIrps[state] > 0)
 		{
-			INFO_DBG("Open %p: %d pending IRPS at %d\n", pOpen, pOpen->PendingIrps[state], state);
+			INFO_DBG("Open %p: %lu pending IRPS at %d\n", pOpen, pOpen->PendingIrps[state], state);
 			NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 			NdisWaitEvent(&Event, 1);
 			NdisAcquireSpinLock(&pOpen->OpenInUseLock);
@@ -1536,7 +1536,7 @@ NPF_RemoveFromGroupOpenArray(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// No more loopback handles open, and it's our responsibility to clean up. Release WFP resources.
 	if (last && !g_TestMode) {
-		NPF_ReleaseWFP(pNpcapDeviceObject);
+		NPF_ReleaseWFP(pNpcapDeviceObject, FALSE);
 
 		FILTER_ACQUIRE_LOCK(&pFiltMod->AdapterHandleLock, FALSE);
 		NT_ASSERT(pFiltMod->OpsState == OpsDisabling);

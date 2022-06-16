@@ -88,15 +88,23 @@
 #include <wdm.h>
 
 // Shared function prototypes
-//
 
+// Register callout driver callouts and init injection handles, once at driver load
+NTSTATUS
+NPF_WFPCalloutRegister(_In_ PDEVICE_OBJECT pDevObj);
+// Unregister callout driver and free injection handles, once at driver unload
+VOID
+NPF_WFPCalloutUnregister(_In_ PDEVICE_OBJECT pDevObj);
+
+// Add callout object and filter for loopback
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 NPF_InitWFP(_In_ PDEVICE_OBJECT pDevObj);
 
+// Remove callout object and filter for loopback
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID
-NPF_ReleaseWFP(_In_ PDEVICE_OBJECT pDevObj);
+NPF_ReleaseWFP(_In_ PDEVICE_OBJECT pDevObj, _In_ BOOLEAN bUnload);
 #endif // HAVE_WFP_LOOPBACK_SUPPORT
 
 #endif // __LOOPBACK
