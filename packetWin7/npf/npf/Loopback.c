@@ -899,7 +899,7 @@ Exit:
 // Unlike other functions, this one needs to continue even if it gets an error, in order to clean up any remaining items.
 void NPF_DeleteFiltersForLayer(
 		_In_ HANDLE WFPEngineHandle,
-		_In_ GUID *pLayerKey
+		_In_ const GUID *pLayerKey
 		)
 {
 	// Enumerate and delete all filters
@@ -927,7 +927,7 @@ void NPF_DeleteFiltersForLayer(
 			IF_ERR_LOG_AND_DO(FwpmFilterDeleteByKey, continue);
 		}
 
-		FwpmFreeMemory(filterEntries);
+		FwpmFreeMemory((VOID **)&filterEntries);
 	} while (numFilters == NUM_FILTERS_REQ);
 
 	status = FwpmFilterDestroyEnumHandle(WFPEngineHandle, hFilterEnum);
