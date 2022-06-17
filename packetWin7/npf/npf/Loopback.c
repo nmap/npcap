@@ -897,6 +897,45 @@ Exit:
 
 
 // Unlike other functions, this one needs to continue even if it gets an error, in order to clean up any remaining items.
+void NPF_DeleteFiltersForLayer(
+		_In_ HANDLE WFPEngineHandle,
+		_In_ GUID *pLayerKey
+		)
+{
+	// Enumerate and delete all filters
+	NTSTATUS status = STATUS_SUCCESS;
+	HANDLE hFilterEnum;
+	FWPM_FILTER_ENUM_TEMPLATE tmplEnum = {0};
+#define NUM_FILTERS_REQ 16
+	UINT32 numFilters = 0;
+	FWPM_FILTER **filterEntries = NULL;
+
+	tmplEnum.providerKey = (GUID *)&NPF_FWPM_PROVIDER_GUID;
+	tmplEnum.actionMask = 0xffffffff;
+	tmplEnum.layerKey = *pLayerKey;
+
+	status = FwpmFilterCreateEnumHandle(WFPEngineHandle, &tmplEnum, &hFilterEnum);
+	EXIT_IF_ERR(FwpmFilterCreateEnumHandle);
+
+	do {
+		status = FwpmFilterEnum(WFPEngineHandle, hFilterEnum, NUM_FILTERS_REQ, &filterEntries, &numFilters);
+		IF_ERR_LOG_AND_DO(FwpmFilterEnum, break);
+
+		for (UINT32 i=0; i < numFilters; i++)
+		{
+			status = FwpmFilterDeleteByKey(WFPEngineHandle, &filterEntries[i]->filterKey);
+			IF_ERR_LOG_AND_DO(FwpmFilterDeleteByKey, continue);
+		}
+
+		FwpmFreeMemory(filterEntries);
+	} while (numFilters == NUM_FILTERS_REQ);
+
+	status = FwpmFilterDestroyEnumHandle(WFPEngineHandle, hFilterEnum);
+	IF_ERR_LOG(FwpmFilterDestroyEnumHandle);
+Exit:
+	return;
+}
+
 _IRQL_requires_max_(PASSIVE_LEVEL)
 void
 NPF_DeleteCalloutsAndFilters(
@@ -922,34 +961,11 @@ NPF_DeleteCalloutsAndFilters(
 	status = FwpmTransactionBegin(WFPEngineHandle, 0);
 	EXIT_IF_ERR(FwpmTransactionBegin);
 
-	// Enumerate and delete all filters
-	HANDLE hFilterEnum;
-	FWPM_FILTER_ENUM_TEMPLATE tmplEnum = {0};
-	tmplEnum.providerKey = (GUID *)&NPF_FWPM_PROVIDER_GUID;
-	tmplEnum.actionMask = 0xffffffff;
-	status = FwpmFilterCreateEnumHandle(WFPEngineHandle, &tmplEnum, &hFilterEnum);
-	IF_ERR_LOG_AND_SKIP(FwpmFilterCreateEnumHandle, FiltersDeleted);
+	NPF_DeleteFiltersForLayer(WFPEngineHandle, &FWPM_LAYER_OUTBOUND_IPPACKET_V4);
+	NPF_DeleteFiltersForLayer(WFPEngineHandle, &FWPM_LAYER_INBOUND_IPPACKET_V4);
+	NPF_DeleteFiltersForLayer(WFPEngineHandle, &FWPM_LAYER_OUTBOUND_IPPACKET_V6);
+	NPF_DeleteFiltersForLayer(WFPEngineHandle, &FWPM_LAYER_INBOUND_IPPACKET_V6);
 
-#define NUM_FILTERS_REQ 16
-	UINT32 numFilters = 0;
-	FWPM_FILTER **filterEntries = NULL;
-	do {
-		status = FwpmFilterEnum(WFPEngineHandle, hFilterEnum, NUM_FILTERS_REQ, &filterEntries, &numFilters);
-		IF_ERR_LOG_AND_DO(FwpmFilterEnum, break);
-
-		for (UINT32 i=0; i < numFilters; i++)
-		{
-			status = FwpmFilterDeleteByKey(WFPEngineHandle, &filterEntries[i]->filterKey);
-			IF_ERR_LOG_AND_DO(FwpmFilterDeleteByKey, continue);
-		}
-
-		FwpmFreeMemory(filterEntries);
-	} while (numFilters == NUM_FILTERS_REQ);
-
-	status = FwpmFilterDestroyEnumHandle(WFPEngineHandle, hFilterEnum);
-	IF_ERR_LOG(FwpmFilterDestroyEnumHandle);
-
-FiltersDeleted:
 	// Now all the filters are gone, we can delete the callouts
 	status = FwpmCalloutDeleteByKey(WFPEngineHandle,
 			&NPF_OUTBOUND_IPPACKET_CALLOUT_V4);
