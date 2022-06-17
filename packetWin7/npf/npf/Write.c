@@ -1050,9 +1050,12 @@ NPF_LoopbackSendNetBufferLists(
 			pOpen->pFiltMod);
 	if (NT_SUCCESS(status))
 	{
-		WARNING_DBG("FwpsInjectNetworkSendAsync failed: %#08x; NBL = %p\n", status, NetBufferList);
 		// Fwps* functions don't have annotations about aliasing or freeing memory. Have to do it ourselves.
 		NPF_AnalysisAssumeAliased(NetBufferList);
+	}
+	else
+	{
+		WARNING_DBG("FwpsInjectNetworkSendAsync failed: %#08x; NBL = %p\n", status, NetBufferList);
 	}
 
 	TRACE_EXIT();
