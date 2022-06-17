@@ -657,38 +657,50 @@ NTSTATUS NPF_BufferedWrite(
 			LONGLONG usec_diff = ((LONGLONG)pHdr->ts.tv_sec - BufStartTime.tv_sec) * 1000000
 				+ pHdr->ts.tv_usec - BufStartTime.tv_usec;
 			if (usec_diff < prev_usec_diff) {
-				INFO_DBG("NPF_BufferedWrite: timestamp out of order!\n");
-				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
-				Status = RPC_NT_INVALID_TIMEOUT;
-				break;
-			}
-			prev_usec_diff = usec_diff;
-			// Release the application if it has been or would be blocked for more than 1 second
-			if (usec_diff > 1000000)
-			{
-				INFO_DBG("NPF_BufferedWrite: timestamp elapsed, returning.\n");
-
-				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
-				break;
-			}
-
-			// Calculate the target QPC ticks to send the next packet
-			TargetTicks.QuadPart = StartTicks.QuadPart + usec_diff * TimeFreq.QuadPart / 1000000;
-
-			// If we need to wait, do so
-			if (CurTicks.QuadPart < TargetTicks.QuadPart)
-			{
-				// whole microseconds remaining.
-				// Explicit cast ok since condition above ensures this will be at most 1000000ms.
-				i = (UINT)(((TargetTicks.QuadPart - CurTicks.QuadPart) * 1000000) / TimeFreq.QuadPart);
-				NT_ASSERT(i < 1000000);
-				if (i >= 50)
-				{
-					NdisMSleep(i);
+				// Parallel processing of packets can result in minor timestamp jitter.
+				// If the difference is <1ms, warn in debug mode but just proceed with sending.
+				// If the difference is >1ms, produce an error.
+				WARNING_DBG("timestamp %08x.%08x out of order by %d usecs!\n",
+						pHdr->ts.tv_sec, pHdr->ts.tv_usec, prev_usec_diff - usec_diff);
+				if (prev_usec_diff - usec_diff > 1000) {
+					NPF_FreePackets(Open->pFiltMod, pNetBufferList);
+					Status = RPC_NT_INVALID_TIMEOUT;
+					break;
 				}
-				else
+				// else continue to send.
+				// Do not overwrite prev_usec_diff, since we've already waited to sync with that timestamp.
+			}
+			else
+			{
+				// packet is in order; check if we should delay or return.
+				prev_usec_diff = usec_diff;
+				// Release the application if it has been or would be blocked for more than 1 second
+				if (usec_diff > 1000000)
 				{
-					NdisStallExecution(i);
+					INFO_DBG("timestamp elapsed, returning.\n");
+
+					NPF_FreePackets(Open->pFiltMod, pNetBufferList);
+					break;
+				}
+
+				// Calculate the target QPC ticks to send the next packet
+				TargetTicks.QuadPart = StartTicks.QuadPart + usec_diff * TimeFreq.QuadPart / 1000000;
+
+				// If we need to wait, do so
+				if (CurTicks.QuadPart < TargetTicks.QuadPart)
+				{
+					// whole microseconds remaining.
+					// Explicit cast ok since condition above ensures this will be at most 1000000ms.
+					i = (UINT)(((TargetTicks.QuadPart - CurTicks.QuadPart) * 1000000) / TimeFreq.QuadPart);
+					NT_ASSERT(i < 1000000);
+					if (i >= 50)
+					{
+						NdisMSleep(i);
+					}
+					else
+					{
+						NdisStallExecution(i);
+					}
 				}
 			}
 		}
