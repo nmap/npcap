@@ -527,14 +527,14 @@ int len;
 	register struct bpf_insn* p;
 	int flag;
 
+	INFO_DBG("Validating program\n");
+
 	if (len < 1)
 		return 0;
 
 	for (i = 0; i < (u_int32)len; ++i)
 	{
 		p = &f[i];
-
-		INFO_DBG("Validating program\n");
 
 		flag = 0;
 		for (j = 0; j < VALID_INSTRUCTIONS_LEN; j++)
