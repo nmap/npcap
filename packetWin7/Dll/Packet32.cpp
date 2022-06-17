@@ -2124,6 +2124,8 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 				&BytesTransfered,
 				NULL);
 
+			TotBytesTransfered += BytesTransfered;
+
 			// Exit from the loop on error
 			if(Res != TRUE) {
 				err = GetLastError();
@@ -2132,8 +2134,6 @@ INT PacketSendPackets(LPADAPTER AdapterObject, PVOID PacketBuff, ULONG Size, BOO
 				}
 				break;
 			}
-
-			TotBytesTransfered += BytesTransfered;
 
 			// Exit from the loop if we have transferred everything
 			if(TotBytesTransfered >= Size)
