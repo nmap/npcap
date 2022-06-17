@@ -631,6 +631,23 @@ NPF_NetworkNotify(
 // 
 // Callout driver implementation
 //
+#define IF_ERR_LOG_AND_DO(_Func, _Do) \
+	if (!NT_SUCCESS(status)) { \
+		ERROR_DBG(#_Func "failed: %08x\n", status); \
+		_Do; \
+	}
+
+#define IF_ERR_LOG_AND_SKIP(_Func, _Label) IF_ERR_LOG_AND_DO(_Func, goto _Label)
+
+#define IF_ERR_LOG(_Func) IF_ERR_LOG_AND_DO(_Func, do {} while(0))
+
+#define EXIT_IF_ERR(_Func) IF_ERR_LOG_AND_SKIP(_Func, Exit)
+
+#define EXISTS_OR_EXIT_IF_ERR(_Func) \
+	if (status == STATUS_FWP_ALREADY_EXISTS) { \
+		WARNING_DBG(#_Func " returned STATUS_FWP_ALREADY_EXISTS\n"); \
+	} else EXIT_IF_ERR(_Func)
+
 
 NTSTATUS
 NPF_AddFilter(
@@ -723,21 +740,12 @@ NPF_AddFilter(
 		&filter,
 		NULL,
 		NULL);
+	EXISTS_OR_EXIT_IF_ERR(FwpmFilterAdd);
 
+Exit:
 	TRACE_EXIT();
 	return status;
 }
-
-#define EXIT_IF_ERR(_Func) \
-	if (!NT_SUCCESS(status)) { \
-		ERROR_DBG(#_Func "failed: %08x\n", status); \
-		goto Exit; \
-	}
-
-#define EXISTS_OR_EXIT_IF_ERR(_Func) \
-	if (status == STATUS_FWP_ALREADY_EXISTS) { \
-		WARNING_DBG(#_Func " returned STATUS_FWP_ALREADY_EXISTS\n"); \
-	} else EXIT_IF_ERR(_Func)
 
 /*
 This function adds callout objects and filters that reference the callout driver
@@ -889,13 +897,6 @@ Exit:
 
 
 // Unlike other functions, this one needs to continue even if it gets an error, in order to clean up any remaining items.
-#define IF_ERR_LOG_AND_DO(_Func, _Do) \
-	if (!NT_SUCCESS(status)) { \
-		ERROR_DBG(#_Func "failed: %08x\n", status); \
-		_Do; \
-	}
-#define IF_ERR_LOG_AND_SKIP(_Func, _Label) IF_ERR_LOG_AND_DO(_Func, goto _Label)
-#define IF_ERR_LOG(_Func) IF_ERR_LOG_AND_DO(_Func, do {} while(0))
 _IRQL_requires_max_(PASSIVE_LEVEL)
 void
 NPF_DeleteCalloutsAndFilters(
