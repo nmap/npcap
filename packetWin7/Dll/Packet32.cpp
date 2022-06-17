@@ -221,65 +221,6 @@ __declspec (dllexport) VOID PacketRegWoemLeaveHandler(PVOID Handler)
 _Success_(return != 0)
 static BOOL PacketGetFileVersion(_In_ LPCTSTR FileName, _Out_writes_(VersionBuffLen) PCHAR VersionBuff, _In_ UINT VersionBuffLen);
 
-//
-// This wrapper around loadlibrary appends the system folder (usually c:\windows\system32)
-// to the relative path of the DLL, so that the DLL is always loaded from an absolute path
-// (It's no longer possible to load airpcap.dll from the application folder).
-// This solves the DLL Hijacking issue discovered in August 2010
-// http://blog.metasploit.com/2010/08/exploiting-dll-hijacking-flaws.html
-//
-static HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
-{
-  TRACE_ENTER();
-
-  TCHAR path[MAX_PATH+1] = { 0 };
-  TCHAR fullFileName[MAX_PATH+1];
-  UINT res;
-  HMODULE hModule = NULL;
-  DWORD err = ERROR_SUCCESS;
-  do
-  {
-	res = GetSystemDirectory(path, MAX_PATH);
-
-	if (res == 0)
-	{
-		//
-		// some bad failure occurred;
-		//
-		err = GetLastError();
-		break;
-	}
-	
-	if (res > MAX_PATH)
-	{
-		//
-		// the buffer was not big enough
-		//
-		err = (ERROR_INSUFFICIENT_BUFFER);
-		break;
-	}
-
-	if (_tcslen(lpFileName) + 1 + res + 1 < MAX_PATH)
-	{
-		memcpy(fullFileName, path, res * sizeof(TCHAR));
-		fullFileName[res] = _T('\\');
-		memcpy(&fullFileName[res + 1], lpFileName, (_tcslen(lpFileName) + 1) * sizeof(TCHAR));
-
-		hModule = LoadLibrary(fullFileName);
-		err = GetLastError();
-	}
-	else
-	{
-		err = (ERROR_INSUFFICIENT_BUFFER);
-	}
-
-  }while(FALSE);
-
-  TRACE_EXIT();
-  SetLastError(err);
-  return hModule;
-}
-
 static BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 {
 	const int pid = GetCurrentProcessId();
@@ -800,6 +741,65 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 
 
 #ifdef LOAD_OPTIONAL_LIBRARIES
+//
+// This wrapper around loadlibrary appends the system folder (usually c:\windows\system32)
+// to the relative path of the DLL, so that the DLL is always loaded from an absolute path
+// (It's no longer possible to load airpcap.dll from the application folder).
+// This solves the DLL Hijacking issue discovered in August 2010
+// http://blog.metasploit.com/2010/08/exploiting-dll-hijacking-flaws.html
+//
+static HMODULE LoadLibrarySafe(LPCTSTR lpFileName)
+{
+  TRACE_ENTER();
+
+  TCHAR path[MAX_PATH+1] = { 0 };
+  TCHAR fullFileName[MAX_PATH+1];
+  UINT res;
+  HMODULE hModule = NULL;
+  DWORD err = ERROR_SUCCESS;
+  do
+  {
+	res = GetSystemDirectory(path, MAX_PATH);
+
+	if (res == 0)
+	{
+		//
+		// some bad failure occurred;
+		//
+		err = GetLastError();
+		break;
+	}
+	
+	if (res > MAX_PATH)
+	{
+		//
+		// the buffer was not big enough
+		//
+		err = (ERROR_INSUFFICIENT_BUFFER);
+		break;
+	}
+
+	if (_tcslen(lpFileName) + 1 + res + 1 < MAX_PATH)
+	{
+		memcpy(fullFileName, path, res * sizeof(TCHAR));
+		fullFileName[res] = _T('\\');
+		memcpy(&fullFileName[res + 1], lpFileName, (_tcslen(lpFileName) + 1) * sizeof(TCHAR));
+
+		hModule = LoadLibrary(fullFileName);
+		err = GetLastError();
+	}
+	else
+	{
+		err = (ERROR_INSUFFICIENT_BUFFER);
+	}
+
+  }while(FALSE);
+
+  TRACE_EXIT();
+  SetLastError(err);
+  return hModule;
+}
+
 /*! 
   \brief This function is used to dynamically load some of the libraries winpcap depends on, 
    and that are not guaranteed to be in the system
