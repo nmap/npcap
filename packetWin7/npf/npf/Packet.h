@@ -282,8 +282,6 @@ typedef struct _DEVICE_EXTENSION
 #define NPF_INJECT_IPV6 0
 #define NPF_INJECT_IPV4 1
 	HANDLE hInject[2];
-	UINT32 uCalloutOutboundV4;
-	UINT32 uCalloutOutboundV6;
 	UINT32 uCalloutInboundV4;
 	UINT32 uCalloutInboundV6;
 
