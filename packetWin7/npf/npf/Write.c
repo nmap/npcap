@@ -660,7 +660,7 @@ NTSTATUS NPF_BufferedWrite(
 				// Parallel processing of packets can result in minor timestamp jitter.
 				// If the difference is <1ms, warn in debug mode but just proceed with sending.
 				// If the difference is >1ms, produce an error.
-				WARNING_DBG("timestamp %08x.%08x out of order by %d usecs!\n",
+				WARNING_DBG("timestamp %08x.%08x out of order by %lld usecs!\n",
 						pHdr->ts.tv_sec, pHdr->ts.tv_usec, prev_usec_diff - usec_diff);
 				if (prev_usec_diff - usec_diff > 1000) {
 					NPF_FreePackets(Open->pFiltMod, pNetBufferList);
