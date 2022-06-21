@@ -143,7 +143,7 @@
             <term><option>/S</option> (Silent install, Npcap OEM only)</term>
             <listitem><para>
                 Installs Npcap without showing any graphical windows or
-                prompts. Silent install is available only for Npcap OEM.
+                prompts. This option is case-sensitive. Silent install is available only for Npcap OEM.
             </para></listitem>
           </varlistentry>
 
@@ -212,7 +212,7 @@
                 The driver and DLLs will always be installed into the appropriate
                 directories below <command>%SYSTEMROOT%\System32\</command>. Second, the
                 <option>/D</option> must be the last option in the command, and the path
-                must not contain quotes. For example, to change the installation directory
+                must not contain quotes. This option is case-sensitive. For example, to change the installation directory
                 to <filename>C:\Path With Spaces\</filename>, the invocation would be:
                 <command>npcap-<replaceable>version</replaceable>.exe /D=C:\Path With Spaces</command>
             </para></listitem>
@@ -257,7 +257,7 @@
               prompts. Silent uninstall is available in all editions of Npcap,
               not just Npcap OEM. If Npcap OEM installer in silent mode needs
               to uninstall an older Npcap installation, it passes the
-              <option>/S</option> option to the existing uninstaller.</para>
+              <option>/S</option> option to the existing uninstaller. This option is case-sensitive.</para>
           </listitem>
         </varlistentry>
 
