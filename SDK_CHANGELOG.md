@@ -1,3 +1,19 @@
+## Npcap SDK 1.13 [2022-06-21]
+
+* Added SAL annotations to most function prototypes and several struct fields
+  in `Packet32.h`
+
+* The undocumented `char PacketLibraryVersion[]` export has been removed from
+  Npcap 1.70 and later. The `PacketGetVersion()` function is the documented way
+  to get the runtime version of the Packet.dll library.
+
+* PacketGetNetType() now always sets the LinkSpeed field to 0. Many adapters
+  did not support the OID that was being used to get the link speed, and
+  libpcap (Npcap's published API) does not pass this information through, so
+  there should be no impact on the majority of software. Software that needs
+  link speed may use `pcap_oid_get_request()` or `GetAdaptersAddresses()` to
+  get the information.
+
 ## Npcap SDK 1.12 [2021-12-06]
 
 * Added this changelog.
