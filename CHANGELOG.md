@@ -12,9 +12,23 @@
   information through, so there should be no impact on the majority of software. Software that needs
   link speed may use `pcap_oid_get_request()` or `GetAdaptersAddresses()` to get the information.
 
+* The undocumented `char PacketLibraryVersion[]` export has been removed. The `PacketGetVersion()`
+  function is the documented way to get the runtime version of the Packet.dll library.
+
 * Packet injection operations (`pcap_inject()`, `PacketSendPacket()`, `pcap_sendqueue_transmit()`,
   and `PacketSendPackets()`) now properly pend the related Write IRP until the NBLs have
   been returned by NDIS. This may make packet injection more efficient.
+
+* Packet injection operations are no longer limited to one at a time. Multiple threads can issue
+  multiple send operations concurrently on the same capture handle without issue, unless system
+  resource limits result in allocation failures. Additionally, WinPcap's limit of 256 concurrent
+  sends on each adapter has been removed. Each Write call is still synchronous, however.
+
+* Loopback packet capture and injection now uses fewer WFP filters and callbacks, avoids duplicate
+  packet processing, uses inspection rather than blocking filters, and persists callout driver
+  objects while still removing callout filters when captures are not using them. These and other
+  improvements increase loopback capture efficiency and reduce interference with other network
+  components.
 
 * Npcap is only supported on Windows 7 SP1 and later, and requires KB4474419 to support SHA-2
   signature validation. The installer will now check these specific requirements, rather than
@@ -32,15 +46,12 @@
   microseconds. Time difference calculations have been revised to avoid integer overflows
   and loss of precision. Fixes [#580](http://issues.npcap.org/580).
 
-* Packet sendqueue operations now strictly check timestamp order. If an out-of-order
+* Packet sendqueue operations now more strictly check timestamp order. If an out-of-order
   timestamp is encountered, the packet will not be transmitted. `PacketSendPackets()` will
-  set the last error value to `ERROR_INVALID_TIME`.
-
-* Getting a list of supported network adapters (`pcap_findalldevs()`,
-  `PacketGetAdapterNames()`) is now faster and less disruptive to the network stack.
-  Each adapter is still opened once to verify support, but the operations needed to make
-  it ready for capture are not performed and a full ADAPTER object is not allocated.
-  Adapters known to be not supported (e.g. down) are not attempted.
+  set the last error value to `ERROR_INVALID_TIME`. Since packets may be
+  reported slightly out-of-timestamp-order on multiprocessor machines due to
+  processing delays, only timestamps that are more than 1ms earlier than the
+  preceding timestamp will generate the error.
 
 * Npcap is now built with the Win11 SDK and WDK (10.0.22000). We look forward to
   implementing support for the exciting new features of NDIS and WFP.
