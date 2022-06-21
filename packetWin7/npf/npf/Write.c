@@ -893,7 +893,7 @@ Return Value:
 		if (pNBL->SourceHandle != pFiltMod->AdapterHandle)
 		{
 			// No match, just move down.
-			pPrevNetBufList = pNetBufList;
+			pPrevNetBufList = pNBL;
 			continue;
 		}
 		// this is our self-sent packets
@@ -906,6 +906,7 @@ Return Value:
 		else {
 			NET_BUFFER_LIST_NEXT_NBL(pPrevNetBufList) = pNetBufList;
 		}
+		NET_BUFFER_LIST_NEXT_NBL(pNBL) = NULL;
 
 		PIRP pIrp = RESERVED(pNBL)->pIrp;
 		PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNBL)->pState;
