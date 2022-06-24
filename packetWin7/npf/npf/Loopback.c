@@ -562,6 +562,11 @@ NPF_AddFilter(
 	FWPM_FILTER_CONDITION filterConditions[1] = { 0 };
 	UINT conditionIndex;
 
+	// Identify this filter so we don't add it multiple times.
+	// At the moment, each FWPM callout has only 1 filter. If we add more, make each one unique.
+	filter.filterKey = *calloutKey; // GUID matches our callout, but...
+	filter.filterKey.Data4[7] = 1; // ...last byte is the ordinal number for this filter.
+
 	filter.layerKey = *layerKey;
 	filter.displayData.name = L"Network Npcap Filter (Loopback)";
 
