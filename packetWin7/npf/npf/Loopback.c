@@ -770,7 +770,7 @@ Exit:
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
-void
+NTSTATUS
 NPF_DeleteCalloutsAndFilters(
 	_In_ BOOLEAN bUnload
 	)
@@ -828,6 +828,7 @@ Exit:
 	_Analysis_assume_lock_not_held_(WFPEngineHandle);
 
 	TRACE_EXIT();
+	return status;
 }
 
 _Use_decl_annotations_
@@ -969,7 +970,8 @@ NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj, BOOLEAN bUnload)
 		goto Exit;
 	}
 
-	NPF_DeleteCalloutsAndFilters(bUnload);
+	status = NPF_DeleteCalloutsAndFilters(bUnload);
+	EXIT_IF_ERR(NPF_DeleteCalloutsAndFilters);
 
 	pDevExt->bWFPInit = 0;
 
