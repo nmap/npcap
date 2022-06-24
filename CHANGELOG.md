@@ -1,5 +1,5 @@
 ﻿
-## Npcap 1.70 [TBD]
+## Npcap 1.70 [2022-06-24]
 
 * Major overhaul of Packet.dll to improve performance of `PacketGetAdapterNames()`, used by
   `pcap_findalldevs()`, and `PacketOpenAdapter()`, used in all libpcap functions that return a
