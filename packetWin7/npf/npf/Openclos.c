@@ -688,25 +688,48 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod)
 	return Status;
 }
 
+/* State table. SUCCESS = PendingIrps[MaxState]++
+ *               \  MaxState
+ *                \ --------
+ * OpenStatus      \  OpenRunning | OpenInitializing | OpenAttached | OpenDetached | OpenClosed
+ * -----------------|-------------|------------------|--------------|--------------|-----------
+ * OpenRunning      | SUCCESS     | BUG              | SUCCESS      | SUCCESS      | BUG
+ * OpenInitializing | Wait        | BUG              | SUCCESS      | SUCCESS      | BUG
+ * OpenAttached     | EnableOps   | BUG              | SUCCESS      | SUCCESS      | BUG
+ * OpenDetached     | FAIL        | BUG              | FAIL         | SUCCESS      | BUG
+ * OpenClosed       | FAIL        | BUG              | FAIL         | FAIL         | BUG
+ */
 _Use_decl_annotations_
 BOOLEAN
 NPF_StartUsingOpenInstance(
 	POPEN_INSTANCE pOpen, OPEN_STATE MaxState, BOOLEAN AtDispatchLevel)
 {
-	BOOLEAN returnStatus;
+	BOOLEAN returnStatus = TRUE;
+	BOOLEAN bAttached = FALSE;
 	NDIS_EVENT Event;
 
-	if (!NT_VERIFY(MaxState < OpenInvalidStateMax))
+	if (!NT_VERIFY(MaxState < OpenClosed && MaxState != OpenInitializing))
 	{
 		ERROR_DBG("Invalid MaxState: %d\n", MaxState);
 		return FALSE;
 	}
 
-	if (MaxState <= OpenAttached && (pOpen->pFiltMod == NULL || !NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel)))
+	// Check if it's closing; no need to lock for this, since aligned reads are atomic
+	if (pOpen->OpenStatus >= OpenClosed)
 	{
-		// Not attached, but need to be.
-		WARNING_DBG("Not attached: pFiltMod = %p\n", pOpen->pFiltMod);
+		WARNING_DBG("pOpen %p is closing (OpenStatus: %d)\n", pOpen, pOpen->OpenStatus);
 		return FALSE;
+	}
+
+	// Do we need an attached adapter?
+	if (MaxState <= OpenAttached)
+	{	bAttached = (pOpen->pFiltMod != NULL && NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel));
+		if (!bAttached)
+		{
+			// Not attached, but need to be.
+			WARNING_DBG("Not attached: pFiltMod = %p\n", pOpen->pFiltMod);
+			return FALSE;
+		}
 	}
 
 	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
@@ -756,11 +779,16 @@ NPF_StartUsingOpenInstance(
 	}
 
 	INFO_DBG("OpenStatus = %d; MaxState = %d\n", pOpen->OpenStatus, MaxState);
-	returnStatus = (pOpen->OpenStatus <= MaxState);
+	returnStatus = returnStatus && (pOpen->OpenStatus <= MaxState);
 	if (returnStatus)
 	{
 		NT_ASSERT(MaxState < OpenClosed); // No IRPs can be pending for OpenClosed or higher state.
 		pOpen->PendingIrps[MaxState]++;
+	}
+	else if (bAttached)
+	{
+		// Failed to change OpenStatus, so have to release/deref the adapter binding, too.
+		NPF_StopUsingBinding(pOpen->pFiltMod, TRUE);
 	}
 	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 
