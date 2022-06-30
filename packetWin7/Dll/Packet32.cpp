@@ -342,20 +342,19 @@ static HANDLE NpcapConnect(const char *pipeName)
 
 static HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 {
+	HANDLE hd = INVALID_HANDLE_VALUE;
 	LPCSTR lpvMessage = sMsg;
 	char  chBuf[BUFSIZE] = { 0 };
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
 	HANDLE hPipe = g_hNpcapHelperPipe;
-	DWORD err = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
 	if (hPipe == INVALID_HANDLE_VALUE)
 	{
-		TRACE_EXIT();
-		SetLastError(ERROR_PIPE_NOT_CONNECTED);
-		return INVALID_HANDLE_VALUE;
+		*pdwError = ERROR_PIPE_NOT_CONNECTED;
+		goto Exit;
 	}
 
 	// The pipe connected; change to message-read mode.
@@ -367,11 +366,9 @@ static HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 		NULL);    // don't set maximum time
 	if (!fSuccess)
 	{
-		err = GetLastError();
-		TRACE_PRINT1("SetNamedPipeHandleState failed. GLE=%d\n", err);
-		TRACE_EXIT();
-		SetLastError(err);
-		return INVALID_HANDLE_VALUE;
+		*pdwError = GetLastError();
+		TRACE_PRINT1("SetNamedPipeHandleState failed. GLE=%d\n", *pdwError);
+		goto Exit;
 	}
 
 	// Send a message to the pipe server.
@@ -388,56 +385,44 @@ static HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 
 	if (!fSuccess)
 	{
-		err = GetLastError();
-		TRACE_PRINT1("WriteFile to pipe failed. GLE=%d\n", GetLastError());
-		TRACE_EXIT();
-		SetLastError(err);
-		return INVALID_HANDLE_VALUE;
+		*pdwError = GetLastError();
+		TRACE_PRINT1("WriteFile to pipe failed. GLE=%d\n", *pdwError);
+		goto Exit;
 	}
 
-	TRACE_PRINT("Message sent to server, receiving reply as follows:\n");
+	// Read from the pipe.
 
-	do
-	{
-		// Read from the pipe.
-
-		fSuccess = ReadFile(
+	fSuccess = ReadFile(
 			hPipe,    // pipe handle
 			chBuf,    // buffer to receive reply
 			BUFSIZE*sizeof(char),  // size of buffer
 			&cbRead,  // number of bytes read
 			NULL);    // not overlapped
 
-		if (!fSuccess && (err = GetLastError()) != ERROR_MORE_DATA)
-			break;
-
-		//printf("\"%s\"\n", chBuf );
-	} while (!fSuccess);  // repeat loop if ERROR_MORE_DATA
-
 	if (!fSuccess)
 	{
-		TRACE_PRINT1("ReadFile from pipe failed. GLE=%d\n", err);
-		TRACE_EXIT();
-		SetLastError(err);
-		return INVALID_HANDLE_VALUE;
+		*pdwError = GetLastError();
+		TRACE_PRINT1("ReadFile from pipe failed. GLE=%d\n", *pdwError);
+		goto Exit;
 	}
 
-	//printf("\n<End of message, press ENTER to terminate connection and exit\n>");
-	if (cbRead != 0)
+	if (cbRead == 0)
 	{
-		HANDLE hd;
-		_snscanf_s(chBuf, cbRead, "%p,%lu", &hd, pdwError);
-		TRACE_PRINT1("Received Driver Handle: %0p\n", hd);
-		TRACE_EXIT();
-		SetLastError(ERROR_SUCCESS);
-		return hd;
+		*pdwError = ERROR_NO_DATA;
+		goto Exit;
 	}
-	else
+
+	int nFields = _snscanf_s(chBuf, cbRead, "%p,%lu", &hd, pdwError);
+	if (nFields != 2)
 	{
-		TRACE_EXIT();
-		SetLastError(ERROR_NO_DATA);
-		return INVALID_HANDLE_VALUE;
+		*pdwError = ERROR_OPEN_FAILED;
+		hd = INVALID_HANDLE_VALUE;
+		goto Exit;
 	}
+	TRACE_PRINT1("Received Driver Handle: %0p\n", hd);
+Exit:
+	TRACE_EXIT();
+	return hd;
 }
 
 static void NpcapGetLoopbackInterfaceName()
