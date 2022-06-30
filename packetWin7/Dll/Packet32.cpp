@@ -482,6 +482,7 @@ static BOOL NpcapIsAdminOnlyMode()
 
 static BOOL NpcapIsRunByAdmin()
 {
+	static BOOLEAN cached = FALSE;
 	BOOL bIsRunAsAdmin = FALSE;
 	DWORD dwError = ERROR_SUCCESS;
 	PSID pAdministratorsGroup = NULL;
@@ -489,6 +490,10 @@ static BOOL NpcapIsRunByAdmin()
 	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
 
 	TRACE_ENTER();
+
+	if (cached) {
+		return bIsRunAsAdmin;
+	}
 
 	if (!AllocateAndInitializeSid(
 		&NtAuthority,
@@ -509,6 +514,7 @@ static BOOL NpcapIsRunByAdmin()
 		dwError = GetLastError();
 		goto Cleanup;
 	}
+	cached = TRUE;
 
 Cleanup:
 	// Centralized cleanup for all allocated resources.
