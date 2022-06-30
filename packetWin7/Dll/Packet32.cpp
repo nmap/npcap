@@ -1327,30 +1327,17 @@ HANDLE PacketGetAdapterHandle(PCCH AdapterNameA, ULONG NpfOpenFlags)
 	// Start the driver service and/or Helper if needed
 	PacketStartService();
 
-	// Try NpcapHelper to request handle if we are in Non-Admin mode.
-	if (NpcapIsAdminOnlyMode())
+	if (NpcapIsAdminOnlyMode() && g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
 	{
-		if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
-		{
-			// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
-			NpcapStartHelper();
-			if (g_hNpcapHelperPipe == INVALID_HANDLE_VALUE)
-			{
-				err = GetLastError();
-				TRACE_PRINT("Could not contact NpcapHelper");
-				TRACE_EXIT();
-				SetLastError(err);
-				return INVALID_HANDLE_VALUE;
-			}
-		}
+		// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
+		NpcapStartHelper();
+	}
+
+	// Try NpcapHelper to request handle if we have a valid pipe.
+	if (g_hNpcapHelperPipe != INVALID_HANDLE_VALUE)
+	{
+		// err receives error code from NpcapHelper only if NpcapRequestHandle succeeds.
 		hFile = NpcapRequestHandle(SymbolicLinkA, &err);
-		TRACE_PRINT1("Driver handle from NpcapHelper = %08x", hFile);
-		if (hFile == INVALID_HANDLE_VALUE)
-		{
-			TRACE_PRINT1("ErrorCode = %d", err);
-			SetLastError(err);
-			return INVALID_HANDLE_VALUE;
-		}
 	}
 	else
 	{
@@ -1360,6 +1347,7 @@ HANDLE PacketGetAdapterHandle(PCCH AdapterNameA, ULONG NpfOpenFlags)
 		err = GetLastError();
 		TRACE_PRINT2("SymbolicLinkA = %hs, hFile = %08x", SymbolicLinkA, hFile);
 	}
+
 	TRACE_EXIT();
 	SetLastError(err);
 	return hFile;
