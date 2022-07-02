@@ -1711,6 +1711,12 @@ LPADAPTER PacketOpenAdapter(PCCH AdapterNameWA)
 
 	}while(FALSE);
 
+	if (lpAdapter && FAILED(StringCchCopyA(lpAdapter->Name, ADAPTER_NAME_LENGTH, AdapterNameWA)))
+	{
+		TRACE_PRINT("PacketOpenAdapter: Unable to copy adapter name");
+		// Do not report error: this member is unused.
+	}
+
 	if (NULL != AdapterNameA) HeapFree(GetProcessHeap(), 0, AdapterNameA);
 	if (NULL != AdapterID) HeapFree(GetProcessHeap(), 0, AdapterID);
 
