@@ -1203,8 +1203,6 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	LOCK_STATE_EX lockState;
 	static const ULONG uNeeded = sizeof(struct bpf_insn);
 	struct bpf_insn *NewBpfProgram = (struct bpf_insn *) pBuf;
-	ULONG insns = ulBufLen / sizeof(struct bpf_insn);
-
 	*Info = 0;
 
 	if (ulBufLen < uNeeded)
@@ -1213,11 +1211,15 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	}
 
 	// Validate the new program (valid instructions, only forward jumps, etc.)
-	if (!bpf_validate(NewBpfProgram, insns))
+	ULONG insns = ulBufLen / sizeof(struct bpf_insn);
+	if (insns > BPF_MAXINSNS || !bpf_validate(NewBpfProgram, insns))
 	{
 		WARNING_DBG("BPF filter invalid.\n");
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
+
+	// Truncate buf to last entire instruction
+	ulBufLen = insns * sizeof(struct bpf_insn);
 
 	// Allocate the memory to contain the new filter program
 	PUCHAR TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NPF_NONPAGED, ulBufLen, NPF_BPF_TAG);
