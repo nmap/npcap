@@ -104,19 +104,10 @@
  *
  */
 
-#ifndef _WINDLL
 #include "stdafx.h"
-#endif
 
-#ifndef WIN_NT_DRIVER 
-#include <windows.h>
-#else
 #include <ndis.h>
-#endif
-
-#pragma warning(disable : 4131) //old style function declaration
-#pragma warning(disable : 4127) // conditional expr is constant (used for while(1) loops)
-#pragma warning(disable : 4213) //cast on l-value
+#include <limits.h>
 
 #ifndef UNUSED
 #define UNUSED(_x) (_x)
@@ -136,7 +127,6 @@
 		 (((u_int32)(((u_char*)p)[2])) << 8 ) |\
 		 (((u_int32)(((u_char*)p)[3])) << 0 ))
 
-#ifdef WIN_NT_DRIVER
 #define MDLIDX(len, p, k, buf) \
 { \
 	NdisQueryMdl(p, &buf, &len, NormalPagePriority); \
@@ -220,26 +210,18 @@ u_int32 xbyte(PMDL p, u_int32 k, int *err)
 	return CurBuf[k];
 }
 
+_Use_decl_annotations_
 u_int bpf_filter(const struct bpf_insn *pc, const PMDL p, u_int data_offset, u_int wirelen)
-#else
-u_int bpf_filter(pc, p, wirelen, buflen)
-register struct bpf_insn *pc;
-register u_char *p;
-u_int wirelen;
-register u_int buflen;
-#endif //WIN_NT_DRIVER
 {
 	register u_int32 A, X;
 	register bpf_u_int32 k;
 
-#ifdef WIN_NT_DRIVER
 	int merr = 0;
-#endif
 	int mem[BPF_MEMWORDS];
 
 	RtlZeroMemory(mem, sizeof(mem));
 
-	if (pc == 0)
+	if (pc == NULL)
 	/*
 	* No filter means accept all.
 	*/
@@ -263,47 +245,26 @@ register u_int buflen;
 
 		case BPF_LD|BPF_W|BPF_ABS:
 			k = pc->k;
-#ifndef WIN_NT_DRIVER
-			if (k >= buflen || k + sizeof(int) > buflen) {
-				return 0;
-			}
-			A = EXTRACT_LONG(&p[k]);
-#else
 			A = xword(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
-#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_H|BPF_ABS:
 			k = pc->k;
-#ifndef WIN_NT_DRIVER
-			if (k >= buflen || k + sizeof(short) > buflen) {
-				return 0;
-			}
-			A = EXTRACT_SHORT(&p[k]);
-#else
 			A = xhalf(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
-#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_B|BPF_ABS:
 			k = pc->k;
-#ifndef WIN_NT_DRIVER
-			if (k >= buflen) {
-				return 0;
-			}
-			A = p[k];
-#else
 			A = xbyte(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
-#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_W|BPF_LEN:
@@ -316,62 +277,34 @@ register u_int buflen;
 
 		case BPF_LD|BPF_W|BPF_IND:
 			k = X + pc->k;
-#ifndef WIN_NT_DRIVER
-			if (k >= buflen || k + sizeof(int) > buflen) {
-				return 0;
-			}
-			A = EXTRACT_LONG(&p[k]);
-#else
 			A = xword(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
-#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-#ifndef WIN_NT_DRIVER
-			if (k >= buflen || k + sizeof(short) > buflen) {
-				return 0;
-			}
-			A = EXTRACT_SHORT(&p[k]);
-#else
 			A = xhalf(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
-#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LD|BPF_B|BPF_IND:
 			k = X + pc->k;
-#ifndef WIN_NT_DRIVER
-			if (k >= buflen) {
-				return 0;
-			}
-			A = p[k];
-#else
 			A = xbyte(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
-#endif //WIN_NT_DRIVER
 			continue;
 
 		case BPF_LDX|BPF_MSH|BPF_B:
 			k = pc->k;
-#ifndef WIN_NT_DRIVER
-			if (k >= buflen) {
-				return 0;
-			}
-			X = p[k];
-#else
 			X = xbyte(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
-#endif //WIN_NT_DRIVER
 			X = (X & 0xf) << 2;
 			continue;
 
@@ -518,9 +451,8 @@ register u_int buflen;
 
 //-------------------------------------------------------------------
 
-int bpf_validate(f, len)
-struct bpf_insn * f;
-int len;
+_Use_decl_annotations_
+int bpf_validate(struct bpf_insn * f, int len)
 {
 	register u_int32 i, from;
 	register int j;
@@ -610,6 +542,7 @@ int len;
 			}
 			break;
 		case BPF_JMP:
+			from = i + 1;
 			/*
 			 * Check that jumps are within the code block,
 			 * and that unconditional branches don't go
@@ -628,7 +561,6 @@ int len;
 			 */
 			/* Never assume; check instead. */
 			C_ASSERT(BPF_MAXINSNS < UINT_MAX - UCHAR_MAX);
-			from = i + 1;
 			switch (BPF_OP(p->code))
 			{
 			case BPF_JA:

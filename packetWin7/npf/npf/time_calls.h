@@ -107,9 +107,7 @@
 #ifndef _time_calls
 #define _time_calls
 
-#ifdef WIN_NT_DRIVER
-
-#include "ndis.h"
+#include <ndis.h>
 #define DEFAULT_TIMESTAMPMODE 0
 
 #define TIMESTAMPMODE_SINGLE_SYNCHRONIZATION 0
@@ -143,10 +141,6 @@ struct timeval
 	long tv_sec;		 ///< seconds
 	long tv_usec;   	 ///< microseconds
 };
-
-#endif /*WIN_NT_DRIVER*/
-
-#ifdef WIN_NT_DRIVER
 
 /* KeQueryPerformanceCounter TimeStamps */
 __inline void TIME_SYNCHRONIZE(
@@ -242,25 +236,6 @@ __inline void GET_TIME(
 			break;
 	}
 }
-
-
-#else /*WIN_NT_DRIVER*/
-
-__inline void FORCE_TIME(
-		_In_ struct timeval* src,
-		_Out_ struct timeval* dest)
-{
-	*dest = *src;
-}
-
-__inline void GET_TIME(
-		_Out_ struct timeval* dst,
-		_In_ struct timeval* data)
-{
-	*dst = *data;
-}
-
-#endif /*WIN_NT_DRIVER*/
 
 
 #endif /*_time_calls*/

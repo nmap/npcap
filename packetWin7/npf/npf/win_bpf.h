@@ -117,17 +117,12 @@
 /* BSD style release date */
 #define BPF_RELEASE 199606
 
-#ifdef WIN_NT_DRIVER
 #include <ndis.h>
 #include "time_calls.h"
-#endif
 
 typedef	UCHAR u_char;
 typedef	USHORT u_short;
-
-#ifdef WIN_NT_DRIVER
 typedef	ULONG u_int;
-#endif
 
 typedef	LONG bpf_int32;
 typedef	ULONG bpf_u_int32;
@@ -445,7 +440,8 @@ extern "C"
 	  This function returns true if f is a valid filter program. The constraints are that each jump be forward and 
 	  to a valid code.  The code must terminate with either an accept or reject. 
 	*/
-	int bpf_validate(struct bpf_insn* f, int len);
+	_Success_(return != 0)
+	int bpf_validate(_In_reads_(len) struct bpf_insn* f, _In_range_(0, BPF_MAXINSNS) int len);
 
 	/*!
 	  \brief The filtering pseudo-machine interpreter.
@@ -456,14 +452,10 @@ extern "C"
 	  \return The portion of the packet to keep, in bytes. 0 means that the packet must be rejected, -1 means that
 	   the whole packet must be kept.
 	*/
-#ifdef WIN_NT_DRIVER
-	u_int bpf_filter(const struct bpf_insn* pc, const PMDL p, u_int data_offset, u_int wirelen);
-#else
-	u_int bpf_filter(register struct bpf_insn *pc,
-		register UCHAR *p,
-		u_int wirelen,
-		register u_int buflen);
-#endif //WIN_NT_DRIVER
+	u_int bpf_filter( _In_opt_ const struct bpf_insn* pc,
+			_In_ const PMDL p,
+			_In_ u_int data_offset,
+			_In_ u_int wirelen);
 
 #ifdef __cplusplus
 }
