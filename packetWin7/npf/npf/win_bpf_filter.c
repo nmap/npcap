@@ -538,8 +538,13 @@ int len;
 
 		flag = 0;
 		for (j = 0; j < VALID_INSTRUCTIONS_LEN; j++)
+		{
 			if (p->code == valid_instructions[j])
+			{
 				flag = 1;
+				break;
+			}
+		}
 		if (flag == 0)
 			return 0;
 
@@ -606,21 +611,23 @@ int len;
 			break;
 		case BPF_JMP:
 			/*
-											 * Check that jumps are within the code block,
-											 * and that unconditional branches don't go
-											 * backwards as a result of an overflow.
-											 * Unconditional branches have a 32-bit offset,
-											 * so they could overflow; we check to make
-											 * sure they don't.  Conditional branches have
-											 * an 8-bit offset, and the from address is <=
-											 * BPF_MAXINSNS, and we assume that BPF_MAXINSNS
-											 * is sufficiently small that adding 255 to it
-											 * won't overflow.
-											 *
-											 * We know that len is <= BPF_MAXINSNS, and we
-											 * assume that BPF_MAXINSNS is < the maximum size
-											 * of a u_int, so that i + 1 doesn't overflow.
-											 */
+			 * Check that jumps are within the code block,
+			 * and that unconditional branches don't go
+			 * backwards as a result of an overflow.
+			 * Unconditional branches have a 32-bit offset,
+			 * so they could overflow; we check to make
+			 * sure they don't.  Conditional branches have
+			 * an 8-bit offset, and the from address is <=
+			 * BPF_MAXINSNS, and we assume that BPF_MAXINSNS
+			 * is sufficiently small that adding 255 to it
+			 * won't overflow.
+			 *
+			 * We know that len is <= BPF_MAXINSNS, and we
+			 * assume that BPF_MAXINSNS is < the maximum size
+			 * of a u_int, so that i + 1 doesn't overflow.
+			 */
+			/* Never assume; check instead. */
+			C_ASSERT(BPF_MAXINSNS < UINT_MAX - UCHAR_MAX);
 			from = i + 1;
 			switch (BPF_OP(p->code))
 			{

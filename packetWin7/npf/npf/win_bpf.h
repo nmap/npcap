@@ -133,9 +133,7 @@ typedef	LONG bpf_int32;
 typedef	ULONG bpf_u_int32;
 typedef	ULONG u_int32;
 
-#define BPF_MAXINSNS 512
-#define BPF_MAXBUFSIZE 0x8000
-#define BPF_MINBUFSIZE 32
+#define BPF_MAXINSNS 4096
 
 /*
  * The instruction data structure.
