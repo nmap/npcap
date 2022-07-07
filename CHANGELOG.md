@@ -56,9 +56,10 @@
 * Npcap is now built with the Win11 SDK and WDK (10.0.22000). We look forward to
   implementing support for the exciting new features of NDIS and WFP.
 
-* Improve capture handle state transitions within the Npcap driver. State mismatches led
-  to issues like [#584](http://issues.npcap.org/584), where the wrong error code was
-  reported when the adapter was detached and reattached.
+* Improve capture handle state transitions within the Npcap driver. Fixes BSoD
+  [#601](http://issues.npcap.org/601) as well as
+  [#584](http://issues.npcap.org/584), where the wrong error code was reported
+  when the adapter was detached and reattached.
 
 * Fix an issue where raw WiFi capture handles (`/dot11_support` install option) would not
   reattach after a network disconnect and reconnect. Normal handles got this ability in
