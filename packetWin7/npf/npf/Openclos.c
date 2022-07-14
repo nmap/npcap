@@ -2422,6 +2422,28 @@ NPF_Restart(
 		pFiltMod->MaxFrameSize = Mtu;
 	}
 
+	// If we didn't get realistic values for these items, we'll end up "restoring" fake values instead.
+	if (pFiltMod->SupportedPacketFilters == 0) {
+		NPF_DoInternalRequest(pFiltMod,
+				NdisRequestQueryInformation,
+				OID_GEN_SUPPORTED_PACKET_FILTERS,
+				pFiltMod->SupportedPacketFilters,
+				sizeof(pFiltMod->SupportedPacketFilters),
+				0,
+				0,
+				&BytesProcessed);
+	}
+	if (pFiltMod->HigherLookaheadSize == 0) {
+		NPF_DoInternalRequest(pFiltMod,
+				NdisRequestQueryInformation,
+				OID_GEN_CURRENT_LOOKAHEAD,
+				pFiltMod->HigherLookaheadSize,
+				sizeof(pFiltMod->HigherLookaheadSize),
+				0,
+				0,
+				&BytesProcessed);
+	}
+
 
 NPF_Restart_End:
 	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
