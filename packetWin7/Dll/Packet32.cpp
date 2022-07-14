@@ -1844,10 +1844,9 @@ VOID PacketInitPacket(LPPACKET lpPacket,PVOID Buffer,UINT Length)
 {
 	TRACE_ENTER();
 
+	memset(lpPacket, 0, sizeof(PACKET));
     lpPacket->Buffer = Buffer;
     lpPacket->Length = Length;
-	lpPacket->ulBytesReceived = 0;
-	lpPacket->bIoComplete = FALSE;
 
 	TRACE_EXIT();
 }

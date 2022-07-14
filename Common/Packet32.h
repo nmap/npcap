@@ -132,6 +132,15 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 // Libpcap/wpcap recognizes this macro and knows Npcap Packet API is provided for compilation.
 #define HAVE_NPCAP_PACKET_API
 
+// These items were deprecated/unused in WinPcap and remain deprecated in Npcap
+#define PACKET_WINPCAP_DEPRECATED __declspec(deprecated("Deprecated prior to WinPcap 4"))
+// Internal struct members should not be addressed directly; use Packet API functions instead.
+#ifndef PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITIONS_OK
+#define PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION __declspec(deprecated("Packet API internal-only struct member access is deprecated."))
+#else
+#define PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION
+#endif
+
 // Working modes, a bitfield
 // 0b00000000
 //      |  ||_ STAT or CAPT
@@ -312,11 +321,11 @@ typedef WAN_ADAPTER* PWAN_ADAPTER; ///< Describes an opened wan (dialup, VPN...)
 */
 typedef struct _ADAPTER
 {
-	HANDLE hFile;				///< \internal Handle to an open instance of the NPF driver.
-	CHAR SymbolicLink[MAX_LINK_NAME_LENGTH]; ///< \internal A string containing the name of the network adapter currently opened.
-	int NumWrites;				///< \internal Number of times a packets written on this adapter will be repeated 
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION HANDLE hFile;				///< \internal Handle to an open instance of the NPF driver.
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION CHAR SymbolicLink[MAX_LINK_NAME_LENGTH]; ///< \internal A string containing the name of the network adapter currently opened.
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION int NumWrites;				///< \internal Number of times a packets written on this adapter will be repeated 
 	///< on the wire.
-	HANDLE ReadEvent;			///< A notification event associated with the read calls on the adapter.
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION HANDLE ReadEvent;			///< A notification event associated with the read calls on the adapter.
 	///< It can be passed to standard Win32 functions (like WaitForSingleObject
 	///< or WaitForMultipleObjects) to wait until the driver's buffer contains some 
 	///< data. It is particularly useful in GUI applications that need to wait 
@@ -324,13 +333,13 @@ typedef struct _ADAPTER
 	///< function can be used to define the minimum amount of data in the kernel buffer
 	///< that will cause the event to be signalled. 
 
-	UINT ReadTimeOut;  ///< \internal The amount of time PacketReceivePacket will wait for the ReadEvent to be signalled before issuing a ReadFile.
-	CHAR Name[ADAPTER_NAME_LENGTH];
-	PWAN_ADAPTER pWanAdapter;
-	UINT Flags;					///< Adapter's flags. Tell if this adapter must be treated in a different way.
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION UINT ReadTimeOut;  ///< \internal The amount of time PacketReceivePacket will wait for the ReadEvent to be signalled before issuing a ReadFile.
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION CHAR Name[ADAPTER_NAME_LENGTH];
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION PWAN_ADAPTER pWanAdapter;
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION UINT Flags;					///< Adapter's flags. Tell if this adapter must be treated in a different way.
 
 #ifdef HAVE_AIRPCAP_API
-	PAirpcapHandle AirpcapAd;
+	PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION PAirpcapHandle AirpcapAd;
 #endif // HAVE_AIRPCAP_API
 }  ADAPTER, * LPADAPTER;
 
@@ -341,15 +350,15 @@ typedef struct _ADAPTER
 */
 typedef struct _PACKET
 {
-	HANDLE hEvent;		///< \deprecated Still present for compatibility with old applications.
-	OVERLAPPED OverLapped;	///< \deprecated Still present for compatibility with old applications.
+	PACKET_WINPCAP_DEPRECATED HANDLE hEvent;		///< \deprecated Still present for compatibility with old applications.
+	PACKET_WINPCAP_DEPRECATED OVERLAPPED OverLapped;	///< \deprecated Still present for compatibility with old applications.
 	_Field_size_bytes_part_(Length, ulBytesReceived)
 	PVOID Buffer;		///< Buffer with containing the packets. See the PacketReceivePacket() for
 	///< details about the organization of the data in this buffer
 	UINT Length;		///< Length of the buffer
 	DWORD ulBytesReceived;	///< Number of valid bytes present in the buffer, i.e. amount of data
 	///< received by the last call to PacketReceivePacket()
-	BOOLEAN bIoComplete;	///< \deprecated Still present for compatibility with old applications.
+	PACKET_WINPCAP_DEPRECATED BOOLEAN bIoComplete;	///< \deprecated Still present for compatibility with old applications.
 }  PACKET, * LPPACKET;
 
 /*!
@@ -378,17 +387,6 @@ extern "C"
 	/**
 	 *  @}
 	 */
-
-	/*
-	BOOLEAN QueryWinPcapRegistryStringA(CHAR *SubKeyName,
-									 CHAR *Value,
-									 UINT *pValueLen,
-									 CHAR *DefaultVal);
-	BOOLEAN QueryWinPcapRegistryStringW(WCHAR *SubKeyName,
-									 WCHAR *Value,
-									 UINT *pValueLen,
-									 WCHAR *DefaultVal);
-	*/
 
 	//---------------------------------------------------------------------------
 	// EXPORTED FUNCTIONS

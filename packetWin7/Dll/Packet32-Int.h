@@ -106,6 +106,7 @@
 //
 // Internal constants
 //
+#define PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITIONS_OK
 #include <Packet32.h>
 #include "debug.h"
 
