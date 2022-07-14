@@ -2528,6 +2528,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
 		NPF_OpenWaitPendingIrps(pOpen);
 		pOpen->pFiltMod = NULL;
+		pOpen->OpenInstancesEntry.Next = NULL;
 		Curr = PopEntryList(&DetachedOpens);
 	}
 
