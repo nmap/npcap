@@ -3319,8 +3319,10 @@ NPF_SetLookaheadSize(
 	PVOID pBuffer = NULL;
 	NDIS_STATUS Status = STATUS_SUCCESS;
 	ULONG BytesProcessed = 0;
+	ULONG OldValue = pFiltMod->MyLookaheadSize;
 
 	TRACE_ENTER();
+	pFiltMod->MyLookaheadSize = LookaheadSize;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (pFiltMod->Loopback)
@@ -3329,19 +3331,20 @@ NPF_SetLookaheadSize(
 		return NDIS_STATUS_SUCCESS;
 	}
 #endif
-	// If the new size is the same as the old one...
-	if (LookaheadSize == pFiltMod->MyLookaheadSize)
+	// If neither the new or the old value is greater than the upper value,
+	if (LookaheadSize <= pFiltMod->HigherLookaheadSize
+			&& OldValue <= pFiltMod->HigherLookaheadSize)
 	{
 		// Nothing left to do!
 		return NDIS_STATUS_SUCCESS;
 	}
-	pFiltMod->MyLookaheadSize = LookaheadSize;
-	// ...or it's less than the one already set by the protocols,
-	if (LookaheadSize < pFiltMod->HigherLookaheadSize)
+	// If the new value is the same as the old one,
+	if (LookaheadSize == OldValue)
 	{
 		// Nothing left to do!
 		return NDIS_STATUS_SUCCESS;
 	}
+	// Otherwise, we have to update the stack with our new max value.
 
 	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
 	if (pBuffer == NULL)
@@ -3350,7 +3353,7 @@ NPF_SetLookaheadSize(
 			TRACE_EXIT();
 		return NDIS_STATUS_RESOURCES;
 	}
-	*(PULONG) pBuffer = pFiltMod->MyLookaheadSize;
+	*(PULONG) pBuffer = max(pFiltMod->HigherLookaheadSize, LookaheadSize);
 
 	// set the LookaheadSize
 	Status = NPF_DoInternalRequest(pFiltMod,
