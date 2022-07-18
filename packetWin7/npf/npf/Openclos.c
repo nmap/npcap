@@ -2517,6 +2517,9 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	}
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
+	// Restore original filter and lookahead value
+	NPF_SetPacketFilter(pFiltMod, 0);
+	NPF_SetLookaheadSize(pFiltMod, 0);
 	// Ensure demotions complete before we wait for pending irps
 	KeMemoryBarrier();
 
