@@ -587,12 +587,6 @@ NPF_OpenAdapter(
 	{
 		// Initializes pFiltMod, AdapterID, bDot11, bLoopback, OpenStatus
 		NPF_AddToGroupOpenArray(Open, pFiltMod, FALSE);
-#ifdef HAVE_DOT11_SUPPORT
-		if (Open->bDot11)
-		{
-			Open->MyPacketFilter = NPCAP_DOT11_RAW_PACKET_FILTER;
-		}
-#endif
 		NPF_StopUsingBinding(pFiltMod, NPF_IRQL_UNKNOWN);
 	}
 
@@ -1424,6 +1418,16 @@ NPF_AddToGroupOpenArray(
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, NDIS_RWL_AT_DISPATCH_LEVEL);
 
 	PushEntryList(&pFiltMod->OpenInstances, &pOpen->OpenInstancesEntry);
+
+	// 'OR' in the open's filter
+#ifdef HAVE_DOT11_SUPPORT
+	if (pFiltMod->Dot11)
+	{
+		pOpen->MyPacketFilter |= NPCAP_DOT11_RAW_PACKET_FILTER;
+	}
+#endif
+	pFiltMod->MyPacketFilter |= pOpen->MyPacketFilter;
+	pFiltMod->MyLookaheadSize = max(pFiltMod->MyLookaheadSize, pOpen->MyLookaheadSize);
 
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
 
@@ -2281,22 +2285,9 @@ NPF_AttachAdapter(
 				{
 					// add it to this filter module's list.
 					NPF_AddToGroupOpenArray(pOpen, pFiltMod, TRUE);
-					// 'OR' in the open's filter
-					NewPacketFilter |= pOpen->MyPacketFilter;
-					NewLookaheadSize = max(NewLookaheadSize, pOpen->MyLookaheadSize);
 				}
 			}
 			NdisReleaseRWLock(pDevExt->AllOpensLock, &lockState);
-			returnStatus = NPF_SetPacketFilter(pFiltMod, NewPacketFilter);
-			if (!NT_SUCCESS(returnStatus))
-			{
-				INFO_DBG("NPF_SetPacketFilter: error, Status=%x.\n", returnStatus);
-			}
-			returnStatus = NPF_SetLookaheadSize(pFiltMod, NewLookaheadSize);
-			if (!NT_SUCCESS(returnStatus))
-			{
-				INFO_DBG("NPF_SetLookaheadSize: error, Status=%x.\n", returnStatus);
-			}
 		}
 
 		returnStatus = STATUS_SUCCESS;
@@ -2375,7 +2366,7 @@ NPF_Restart(
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE)FilterModuleContext;
 	NDIS_STATUS		Status;
 	NTSTATUS ntStatus;
-	UINT Mtu;
+	ULONG ulTmp;
 	PNDIS_RESTART_ATTRIBUTES Curr = RestartParameters->RestartAttributes;
 	PNDIS_RESTART_GENERAL_ATTRIBUTES GenAttr = NULL;
 
@@ -2414,34 +2405,41 @@ NPF_Restart(
 		}
 		Curr = Curr->Next;
 	}
-	// Now try OID_GEN_MAXIMUM_TOTAL_SIZE, including link header
-	// If it fails, no big deal; we have the MTU at least.
-	ntStatus = NPF_GetDeviceMTU(pFiltMod, &Mtu);
-	if (NT_SUCCESS(ntStatus))
+	if (!NT_VERIFY(GenAttr != NULL))
 	{
-		pFiltMod->MaxFrameSize = Mtu;
+		ERROR_DBG("Did not find OID_GEN_MINIPORT_RESTART_ATTRIBUTES in RestartAttributes!");
 	}
 
-	// If we didn't get realistic values for these items, we'll end up "restoring" fake values instead.
-	if (pFiltMod->SupportedPacketFilters == 0) {
-		NPF_DoInternalRequest(pFiltMod,
-				NdisRequestQueryInformation,
-				OID_GEN_SUPPORTED_PACKET_FILTERS,
-				pFiltMod->SupportedPacketFilters,
-				sizeof(pFiltMod->SupportedPacketFilters),
-				0,
-				0,
-				&BytesProcessed);
+	// Now try OID_GEN_MAXIMUM_TOTAL_SIZE, including link header
+	// If it fails, no big deal; we have the MTU at least.
+	ntStatus = NPF_GetDeviceMTU(pFiltMod, &ulTmp);
+	if (NT_SUCCESS(ntStatus))
+	{
+		pFiltMod->MaxFrameSize = ulTmp;
 	}
-	if (pFiltMod->HigherLookaheadSize == 0) {
-		NPF_DoInternalRequest(pFiltMod,
-				NdisRequestQueryInformation,
-				OID_GEN_CURRENT_LOOKAHEAD,
-				pFiltMod->HigherLookaheadSize,
-				sizeof(pFiltMod->HigherLookaheadSize),
-				0,
-				0,
-				&BytesProcessed);
+
+	// Now that we have SupportedPacketFilters, we can set our own PacketFilter if necessary
+	if (pFiltMod->MyPacketFilter != 0)
+	{
+		ulTmp = pFiltMod->MyPacketFilter;
+		pFiltMod->MyPacketFilter = 0;
+		ntStatus = NPF_SetPacketFilter(pFiltMod, ulTmp);
+		if (!NT_SUCCESS(ntStatus))
+		{
+			WARNING_DBG("NPF_SetPacketFilter: error, Status=%x.\n", ntStatus);
+		}
+	}
+
+	// And we may have to set the lookahead size if this is a reattach
+	if (pFiltMod->MyLookaheadSize != 0)
+	{
+		ulTmp = pFiltMod->MyLookaheadSize;
+		pFiltMod->MyLookaheadSize = 0;
+		ntStatus = NPF_SetLookaheadSize(pFiltMod, ulTmp);
+		if (!NT_SUCCESS(ntStatus))
+		{
+			WARNING_DBG("NPF_SetLookaheadSize: error, Status=%x.\n", ntStatus);
+		}
 	}
 
 
