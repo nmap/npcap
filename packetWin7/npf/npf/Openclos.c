@@ -1541,10 +1541,18 @@ NPF_RemoveFromGroupOpenArray(
 		Curr = Prev->Next;
 	}
 
+	if (!NT_VERIFY(found))
+	{
+		ERROR_DBG("the open isn't in the group open list.\n");
+		NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
+		TRACE_EXIT();
+		return;
+	}
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	// If this was the last loopback instance, get ready to release WFP resources.
 	// Have to release all locks first so IRQL is PASSIVE_LEVEL
-	if (found && pFiltMod->Loopback && pFiltMod->OpenInstances.Next == NULL)
+	if (pFiltMod->Loopback && pFiltMod->OpenInstances.Next == NULL)
 	{
 		FILTER_ACQUIRE_LOCK(&pFiltMod->AdapterHandleLock, TRUE);
 		if(pFiltMod->OpsState == OpsEnabled)
@@ -1584,11 +1592,6 @@ NPF_RemoveFromGroupOpenArray(
 	if (STATUS_SUCCESS != NPF_SetLookaheadSize(pFiltMod, NewLookaheadSize))
 	{
 		INFO_DBG("NPF_RemoveFromGroupOpenArray: Failed to set resulting lookahead.\n");
-	}
-
-	if (!found)
-	{
-		INFO_DBG("NPF_RemoveFromGroupOpenArray: error, the open isn't in the group open list.\n");
 	}
 
 	TRACE_EXIT();
