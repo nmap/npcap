@@ -908,13 +908,15 @@ Return Value:
 --*/
 {
 	PLIST_ENTRY CurrEntry = NULL;
-	LIST_ENTRY ClosedOpens;
 	PDEVICE_OBJECT DeviceObject;
 	PDEVICE_OBJECT OldDeviceObject;
 	PDEVICE_EXTENSION DeviceExtension;
+	PNPCAP_FILTER_MODULE pFiltMod = NULL;
+	PSINGLE_LIST_ENTRY Prev = NULL;
+	PSINGLE_LIST_ENTRY Curr = NULL;
 	NDIS_STRING SymLink;
 	NDIS_EVENT Event;
-	LOCK_STATE_EX lockState;
+	LOCK_STATE_EX lockState, lockState2;
 
 	TRACE_ENTER();
 
@@ -958,33 +960,39 @@ Return Value:
 
 		DeviceExtension = OldDeviceObject->DeviceExtension;
 
-		// Not sure if we need to acquire this lock, since no new IRPs can be issued during unload,
-		// but better safe than sorry.
-		InitializeListHead(&ClosedOpens);
+		// Must still acquire this lock because NDIS could still be doing things with filter modules
+		// Specifically, NPF_AttachAdapter acquires this for Read.
 		NdisAcquireRWLockWrite(DeviceExtension->AllOpensLock, &lockState, 0);
 		CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
 		while (CurrEntry != &DeviceExtension->AllOpens)
 		{
 			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
-			InsertTailList(&ClosedOpens, CurrEntry);
 			// Pretty sure we don't get here unless all this is already closed up, but better to be thorough.
 			OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenClosed);
-
+			// Just unlink it; other cleanup is handled already.
+			if (NULL != (pFiltMod = pOpen->pFiltMod))
+			{
+				NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState2, NDIS_RWL_AT_DISPATCH_LEVEL);
+				Prev = &(pFiltMod->OpenInstances);
+				Curr = Prev->Next;
+				while (Curr != NULL)
+				{
+					if (Curr == &(pOpen->OpenInstancesEntry)) {
+						Prev->Next = Curr->Next;
+						Curr->Next = NULL;
+						break;
+					}
+					Prev = Curr;
+					Curr = Prev->Next;
+				}
+				NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState2);
+			}
+			NPF_ReleaseOpenInstanceResources(pOpen);
+			ExFreePool(pOpen);
 			CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
 		}
 
-		// NPF_RemoveFromGroupOpenArray needs PASSIVE_LEVEL
 		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
-		CurrEntry = RemoveHeadList(&ClosedOpens);
-		while (CurrEntry != &ClosedOpens)
-		{
-			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
-			NPF_RemoveFromGroupOpenArray(pOpen);
-			NPF_ReleaseOpenInstanceResources(pOpen);
-			ExFreePool(pOpen);
-
-			CurrEntry = RemoveHeadList(&ClosedOpens);
-		}
 
 		if (DeviceExtension->ExportString)
 		{
