@@ -291,13 +291,16 @@ DriverEntry(
 	UNICODE_STRING parametersPath;
 	NTSTATUS Status = STATUS_SUCCESS;
 	PDEVICE_OBJECT devObjP;
+	// https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/sddl-for-device-objects
+#define SDDL_ALLOW_ALL_SYSTEM_ADMIN L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"
 #ifndef NPCAP_READ_ONLY
-	UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;WD)"); // this SDDL means only permits System and Administrator to modify the device.
+	UNICODE_STRING sddl = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN L"(A;;GRGW;;;WD)");
 #else
-	// For convenience and clarity, deny write access here. In reality, we
+	// For convenience and clarity, deny write access (GW) here. In reality, we
 	// remove any code that injects packets in this configuration
-	UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GR;;;WD)"); // this SDDL means only permits System and Administrator to modify the device.
+	UNICODE_STRING sddl = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN L"(A;;GR;;;WD)");
 #endif
+	UNICODE_STRING sddl_admin_only = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN);
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
 	UNICODE_STRING deviceSymLink = { 0 };
 	
@@ -366,9 +369,6 @@ DriverEntry(
 #endif
 	}
 	if (parametersPath.Buffer) ExFreePool(parametersPath.Buffer);
-	if (g_AdminOnlyMode) {
-		NdisInitUnicodeString(&sddl, L"D:P(A;;GA;;;SY)(A;;GA;;;BA)");
-	}
 
 	//
 	// Initialize system-time function pointer.
@@ -425,7 +425,7 @@ DriverEntry(
 	RtlAppendUnicodeToString(&deviceSymLink, AdapterName.Buffer + DEVICE_PATH_CCH);
 
 	Status = IoCreateDeviceSecure(DriverObject, sizeof(DEVICE_EXTENSION), &AdapterName, FILE_DEVICE_UNKNOWN,
-			FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, (LPCGUID)&guidClassNPF, &devObjP);
+			FILE_DEVICE_SECURE_OPEN, FALSE, (g_AdminOnlyMode ? &sddl_admin_only : &sddl), (LPCGUID)&guidClassNPF, &devObjP);
 	if (!NT_SUCCESS(Status))
 	{
 		ERROR_DBG("IoCreateDevice failed: %#08x\n", Status);
