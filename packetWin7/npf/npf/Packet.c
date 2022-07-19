@@ -465,6 +465,7 @@ DriverEntry(
 		&FilterDriverHandle);
 	if (Status != NDIS_STATUS_SUCCESS)
 	{
+		FilterDriverHandle = NULL;
 		NdisFreeSpinLock(&g_FilterArrayLock);
 		ERROR_DBG("NdisFRegisterFilterDriver failed: %#08x\n", Status);
 		IoDeleteSymbolicLink(&deviceSymLink);
@@ -629,10 +630,10 @@ DriverEntry(
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
 			ERROR_DBG("NdisFRegisterFilterDriver(WiFi) failed: %#08x\n", Status);
-
+			FilterDriverHandle_WiFi = NULL;
 			// We still run the driver even with the 2nd filter doesn't work.
 		}
-		INFO_DBG("FilterDriverHandle_WiFi = %p\n", FilterDriverHandle);
+		INFO_DBG("FilterDriverHandle_WiFi = %p\n", FilterDriverHandle_WiFi);
 	}
 
 	pNpcapDeviceObject = devObjP;
