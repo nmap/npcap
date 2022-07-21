@@ -200,10 +200,10 @@ HKR, Parameters, Dot11Support, 0x00010001, 0
 ; To prevent binding this filter to the TNic(s):
 ;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,1 ; Do not bind to TNic
 ; To prevent unbinding this filter from underlying members:
-;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,2 ; Do not unbind from Members
+HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,2 ; Do not unbind from Members
 ; To prevent both binding to TNic and unbinding from members:
 ;   HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,3 ; Do not bind to TNic or unbind from Members
-HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to default behavior
+; HKR, Parameters, NdisImPlatformBindingOptions,0x00010001,0 ; Subscribe to default behavior
 
 [Strings]
 NPF_DriverName = "npcap"
