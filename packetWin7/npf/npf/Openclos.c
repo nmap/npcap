@@ -1295,7 +1295,7 @@ NPF_CloseAdapter(
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	pOpen = IrpSp->FileObject->FsContext;
-	if (!NPF_IsOpenInstance(pOpen) || !NT_VERIFY(pOpen->DeviceExtension == DeviceObject->DeviceExtension)
+	if (!NPF_IsOpenInstance(pOpen) || !NT_VERIFY(pOpen->DeviceExtension == DeviceObject->DeviceExtension))
 	{
 		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
 		Irp->IoStatus.Information = 0;
@@ -1334,7 +1334,7 @@ NPF_Cleanup(
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
 	Open = IrpSp->FileObject->FsContext;
-	if (!NPF_IsOpenInstance(Open) || !NT_VERIFY(Open->DeviceExtension == DeviceObject->DeviceExtension)
+	if (!NPF_IsOpenInstance(Open) || !NT_VERIFY(Open->DeviceExtension == DeviceObject->DeviceExtension))
 	{
 		Irp->IoStatus.Status = STATUS_INVALID_HANDLE;
 		Irp->IoStatus.Information = 0;
