@@ -159,7 +159,7 @@ HKR, Ndi,FilterRunType,0x00010001, 2 ; Optional filter
 AddService=%NPF_Filter_Name_Standard%,,FilterStandard.svc
 
 [FilterWiFi.Services]
-AddService=,2
+AddService=%NPF_Filter_Name_WiFi%,,FilterWiFi.svc
 
 [FilterStandard.svc]
 DisplayName     = %NPF_Desc_Standard%
@@ -171,11 +171,15 @@ LoadOrderGroup  = NDIS
 Description     = %NPF_Desc_Standard%
 AddReg          = NpcapConfig.reg, Common.Params.reg, NdisImPlatformBindingOptions.reg
 
-[FilterStandard.Remove.Services]
-DelService=%NPF_Filter_Name_Standard%,0x200 ; SPSVCINST_STOPSERVICE
-
-[FilterWiFi.Remove.Services]
-DelService=%NPF_Filter_Name_WiFi%,0x200 ; SPSVCINST_STOPSERVICE
+[FilterWiFi.svc]
+DisplayName     = %NPF_Desc_WiFi%
+ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
+StartType       = 4 ;SERVICE_DISABLED
+ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
+ServiceBinary   = %12%\%NPF_DriverName%.sys
+LoadOrderGroup  = NDIS
+Description     = %NPF_Desc_WiFi%
+AddReg          = Common.Params.reg, NdisImPlatformBindingOptions.reg
 
 [NpcapConfig.reg]
 HKR, Parameters, LoopbackSupport, 0x00010001, 1

@@ -61,7 +61,6 @@ HKR, Ndi,HelpText,,%NPF_HelpText%
 ;-------------------------------------------------------------------------
 [Install.Services]
 AddService=%NPF_DriverName%,,NPF_Service_Inst
-AddService=,2
 
 [NPF_Service_Inst]
 DisplayName     = %NPF_Desc%
