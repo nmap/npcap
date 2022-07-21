@@ -143,7 +143,7 @@ NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRxAdapters");
 
 #endif
 
-NDIS_STRING symbolicLinkPrefix = NDIS_STRING_CONST("\\DosDevices\\");
+UNICODE_STRING deviceSymLink = RTL_CONSTANT_STRING(L"\\DosDevices\\" NPF_DRIVER_NAME_WIDECHAR);
 
 NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
 NDIS_STRING g_DltNullRegValueName = NDIS_STRING_CONST("DltNull");
@@ -302,9 +302,7 @@ DriverEntry(
 #endif
 	UNICODE_STRING sddl_admin_only = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN);
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
-	UNICODE_STRING deviceSymLink = { 0 };
-	
-	UNICODE_STRING AdapterName;
+	UNICODE_STRING AdapterName = RTL_CONSTANT_STRING(DEVICE_PATH_PREFIX NPF_DRIVER_NAME_WIDECHAR);
 
 	NDIS_STRING strKeQuerySystemTimePrecise;
 
@@ -410,27 +408,11 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
 	// Create the "NPCAP" device itself:
-	RtlInitUnicodeString(&AdapterName, DEVICE_PATH_PREFIX NPF_DRIVER_NAME_WIDECHAR);
-	deviceSymLink.Length = 0;
-	deviceSymLink.MaximumLength = AdapterName.Length - DEVICE_PATH_BYTES + symbolicLinkPrefix.Length + (USHORT)sizeof(UNICODE_NULL);
-
-	deviceSymLink.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, deviceSymLink.MaximumLength, NPF_UNICODE_BUFFER_TAG);
-	if (deviceSymLink.Buffer == NULL)
-	{
-		ERROR_DBG("Nonpaged alloc of deviceSymLink.Buffer failed.\n");
-		TRACE_EXIT();
-		return STATUS_INSUFFICIENT_RESOURCES;
-	}
-	RtlAppendUnicodeStringToString(&deviceSymLink, &symbolicLinkPrefix);
-	RtlAppendUnicodeToString(&deviceSymLink, AdapterName.Buffer + DEVICE_PATH_CCH);
-
 	Status = IoCreateDeviceSecure(DriverObject, sizeof(DEVICE_EXTENSION), &AdapterName, FILE_DEVICE_UNKNOWN,
 			FILE_DEVICE_SECURE_OPEN, FALSE, (g_AdminOnlyMode ? &sddl_admin_only : &sddl), (LPCGUID)&guidClassNPF, &devObjP);
 	if (!NT_SUCCESS(Status))
 	{
 		ERROR_DBG("IoCreateDevice failed: %#08x\n", Status);
-
-		ExFreePool(deviceSymLink.Buffer);
 
 		TRACE_EXIT();
 		return Status;
@@ -446,14 +428,10 @@ DriverEntry(
 		ERROR_DBG("IoCreateSymbolicLink(%ws) failed: %#08x\n", deviceSymLink.Buffer, Status);
 
 		IoDeleteDevice(devObjP);
-		ExFreePool(deviceSymLink.Buffer);
-		devExtP->ExportString = NULL;
 
 		TRACE_EXIT();
 		return Status;
 	}
-
-	devExtP->ExportString = deviceSymLink.Buffer;
 
 	/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */
 	NdisAllocateSpinLock(&g_FilterArrayLock);
@@ -470,8 +448,6 @@ DriverEntry(
 		ERROR_DBG("NdisFRegisterFilterDriver failed: %#08x\n", Status);
 		IoDeleteSymbolicLink(&deviceSymLink);
 		IoDeleteDevice(devObjP);
-		ExFreePool(deviceSymLink.Buffer);
-		devExtP->ExportString = NULL;
 
 		TRACE_EXIT();
 		return Status;
@@ -588,8 +564,6 @@ DriverEntry(
 		NdisFreeSpinLock(&g_FilterArrayLock);
 		IoDeleteSymbolicLink(&deviceSymLink);
 		IoDeleteDevice(devObjP);
-		ExFreePool(deviceSymLink.Buffer);
-		devExtP->ExportString = NULL;
 
 		TRACE_EXIT();
 		return Status;
@@ -915,7 +889,6 @@ Return Value:
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
 	PSINGLE_LIST_ENTRY Prev = NULL;
 	PSINGLE_LIST_ENTRY Curr = NULL;
-	NDIS_STRING SymLink;
 	NDIS_EVENT Event;
 	LOCK_STATE_EX lockState, lockState2;
 
@@ -995,14 +968,7 @@ Return Value:
 
 		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
 
-		if (DeviceExtension->ExportString)
-		{
-			RtlInitUnicodeString(&SymLink, DeviceExtension->ExportString);
-
-			IoDeleteSymbolicLink(&SymLink);
-			ExFreePool(DeviceExtension->ExportString);
-			DeviceExtension->ExportString = NULL;
-		}
+		IoDeleteSymbolicLink(&deviceSymLink);
 
 		ExDeleteLookasideListEx(&DeviceExtension->BufferPool);
 		ExDeleteLookasideListEx(&DeviceExtension->NBLCopyPool);
@@ -1044,7 +1010,7 @@ Return Value:
 	NdisAcquireSpinLock(&g_FilterArrayLock);
 	while (g_arrFiltMod.Next != NULL) {
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		PNPCAP_FILTER_MODULE pFiltMod = CONTAINING_RECORD(g_arrFiltMod.Next, NPCAP_FILTER_MODULE, FilterModulesEntry);
+		pFiltMod = CONTAINING_RECORD(g_arrFiltMod.Next, NPCAP_FILTER_MODULE, FilterModulesEntry);
 		if (pFiltMod->Loopback) {
 			// NDIS doesn't manage this, so we "detach" it ourselves.
 			NdisReleaseSpinLock(&g_FilterArrayLock);
