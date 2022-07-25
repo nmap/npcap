@@ -174,7 +174,8 @@ AddReg          = NpcapConfig.reg, Common.Params.reg, NdisImPlatformBindingOptio
 [FilterWiFi.svc]
 DisplayName     = %NPF_Desc_WiFi%
 ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
-StartType       = 4 ;SERVICE_DISABLED
+; We will disable this in installer; InfVerif does not permit StartType=4 here.
+StartType       = 3 ;SERVICE_DEMAND_START
 ErrorControl    = 1 ;SERVICE_ERROR_NORMAL
 ServiceBinary   = %12%\%NPF_DriverName%.sys
 LoadOrderGroup  = NDIS
