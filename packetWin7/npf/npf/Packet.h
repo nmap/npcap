@@ -342,7 +342,6 @@ typedef struct _NPCAP_FILTER_MODULE
 	ULONG					HigherPacketFilter;
 	ULONG MyLookaheadSize;
 	ULONG HigherLookaheadSize;
-	ULONG					PhysicalMedium;
 #ifdef HAVE_DOT11_SUPPORT
 	DOT11_DATA_RATE_MAPPING_TABLE	DataRateMappingTable;
 #endif

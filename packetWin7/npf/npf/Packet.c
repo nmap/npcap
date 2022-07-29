@@ -1666,25 +1666,20 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		}
 		*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(ULONG);
 
+#ifdef HAVE_DOT11_SUPPORT
 		// Disable setting Packet Filter for wireless adapters, because this will cause limited connectivity.
-		if (pOpen->pFiltMod->PhysicalMedium == NdisPhysicalMediumNative802_11)
+		if (pOpen->bDot11)
 		{
-			INFO_DBG("Wireless adapter can't set packet filter, will bypass this request, *(ULONG*)OidData->Data = %#lx, MyPacketFilter = %#lx\n",
-					*(ULONG*)OidData->Data, pOpen->pFiltMod->MyPacketFilter);
+			INFO_DBG("pFiltMod(%p) (Dot11) does not support OID_GEN_CURRENT_PACKET_FILTER\n", pOpen->pFiltMod);
 			Status = STATUS_SUCCESS;
 			goto OID_REQUEST_DONE;
 		}
+#endif
 
 		// Stash the old packet filter...
 		ulTmp = pOpen->MyPacketFilter;
 		// Store the requested packet filter for *this* Open instance
 		pOpen->MyPacketFilter = *(ULONG*)OidData->Data;
-#ifdef HAVE_DOT11_SUPPORT
-		if (pOpen->bDot11)
-		{
-			pOpen->MyPacketFilter |= NPCAP_DOT11_RAW_PACKET_FILTER;
-		}
-#endif
 
 		/* We don't want NDIS_PACKET_TYPE_ALL_LOCAL, since that may cause NDIS to loop
 		 * packets back that shouldn't be. WinPcap had to do this as a protocol driver,

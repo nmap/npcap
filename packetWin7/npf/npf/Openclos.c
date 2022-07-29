@@ -2216,10 +2216,6 @@ NPF_AttachAdapter(
 			"HigherPacketFilter=%x",
 			pFiltMod->HigherPacketFilter);
 
-		pFiltMod->PhysicalMedium = AttachParameters->MiniportPhysicalMediaType;
-		INFO_DBG("pFiltMod(%p)->PhysicalMedium=%#lx\n", pFiltMod,
-			pFiltMod->PhysicalMedium);
-
 		pFiltMod->Dot11 = g_Dot11SupportMode && bDot11;
 
 		INFO_DBG(
