@@ -1554,12 +1554,12 @@ NPF_RemoveFromGroupOpenArray(
 	/* If the packet filter has changed, originate an OID Request to set it to the new value */
 	if (STATUS_SUCCESS != NPF_SetPacketFilter(pFiltMod, NewPacketFilter))
 	{
-		INFO_DBG("NPF_RemoveFromGroupOpenArray: Failed to set resulting packet filter.\n");
+		INFO_DBG("Failed to set resulting packet filter.\n");
 	}
 	// If the new lookahead value is different than the old one, originate an OID request to set to the new value
 	if (STATUS_SUCCESS != NPF_SetLookaheadSize(pFiltMod, NewLookaheadSize))
 	{
-		INFO_DBG("NPF_RemoveFromGroupOpenArray: Failed to set resulting lookahead.\n");
+		INFO_DBG("Failed to set resulting lookahead.\n");
 	}
 
 	TRACE_EXIT();
@@ -1591,7 +1591,7 @@ NPF_EqualAdapterName(
 	// TRACE_ENTER();
 
 	if (s1->Buffer == NULL || s2->Buffer == NULL) {
-		INFO_DBG("NPF_EqualAdapterName: null buffer\n");
+		INFO_DBG("null buffer\n");
 		return FALSE;
 	}
 
@@ -1604,7 +1604,7 @@ NPF_EqualAdapterName(
 
 	if (BYTES2CCH(s2->Length) - compare_len < cchOffset)
 	{
-		INFO_DBG("NPF_EqualAdapterName: length too short\n");
+		INFO_DBG("length too short\n");
 		return FALSE;
 	}
 
@@ -1639,11 +1639,8 @@ NPF_EqualAdapterName(
 		);
 
 	// Print unicode strings using %ws will cause page fault blue screen with IRQL = DISPATCH_LEVEL, so we disable the string print for now.
-	// INFO_DBG("NPF_EqualAdapterName: bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);
-	if (bResult)
-	{
-		INFO_DBG("NPF_EqualAdapterName: bResult == TRUE\n");
-	}
+	// INFO_DBG("bResult = %d, s1 = %ws, s2 = %ws\n", i, bResult, s1->Buffer, s2->Buffer);
+	INFO_DBG("bResult == %u\n", bResult);
 	// TRACE_EXIT();
 	return bResult;
 }
@@ -1658,7 +1655,7 @@ NPF_ContainsAdapterName(
 	USHORT i = 0;
 
 	if (AdSet->Buffer == NULL || AdName->Buffer == NULL) {
-		INFO_DBG("NPF_ContainsAdapterName: null buffer\n");
+		INFO_DBG("null buffer\n");
 		return FALSE;
 	}
 	while (i < BYTES2CCH(AdSet->Length))
@@ -1711,7 +1708,7 @@ NPF_GetFilterModuleByAdapterName(
 	BaseName.MaximumLength = max(sizeof(L"Loopback"), pAdapterName->MaximumLength);
 	BaseName.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, BaseName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (BaseName.Buffer == NULL) {
-		INFO_DBG("NPF_GetFilterModuleByAdapterName: failed to allocate BaseName.Buffer\n");
+		INFO_DBG("failed to allocate BaseName.Buffer\n");
 		TRACE_EXIT();
 		return NULL;
 	}
@@ -2048,7 +2045,7 @@ Return Value:
 
 	if (!NT_VERIFY(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject))
 	{
-		INFO_DBG("NPF_RegisterOptions: driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);
+		INFO_DBG("driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);
 		return NDIS_STATUS_INVALID_PARAMETER;
 	}
 
@@ -2112,7 +2109,7 @@ NPF_AttachAdapter(
 		// An example:
 		// AdapterName = "\DEVICE\{4F4B4BD7-340D-45D3-8F59-8A1E167BC75D}"
 		// FilterModuleGuidName = "{4F4B4BD7-340D-45D3-8F59-8A1E167BC75D}-{7DAF2AC8-E9F6-4765-A842-F1F5D2501351}-0000"
-		INFO_DBG("NPF_AttachAdapter: AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
+		INFO_DBG("AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
 			AttachParameters->BaseMiniportName->Buffer,
 			AttachParameters->CurrentMacAddress[0],
 			AttachParameters->CurrentMacAddress[1],
@@ -2122,26 +2119,26 @@ NPF_AttachAdapter(
 			AttachParameters->CurrentMacAddress[5],
 			AttachParameters->MiniportMediaType);
 
-		INFO_DBG("NPF_AttachAdapter: FilterModuleGuidName=%ws, FilterModuleGuidName[%u]=%x\n",
+		INFO_DBG("FilterModuleGuidName=%ws, FilterModuleGuidName[%u]=%x\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
 			(UINT) SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME,
 			AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME]);
 
 		if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'4')
 		{
-			INFO_DBG("NPF_AttachAdapter: This is the standard filter binding!\n");
+			INFO_DBG("This is the standard filter binding!\n");
 			bDot11 = FALSE;
 		}
 #ifdef HAVE_DOT11_SUPPORT
 		else if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'5')
 		{
-			INFO_DBG("NPF_AttachAdapter: This is the WiFi filter binding!\n");
+			INFO_DBG("This is the WiFi filter binding!\n");
 			bDot11 = TRUE;
 		}
 #endif
 		else
 		{
-			INFO_DBG("NPF_AttachAdapter: error, unrecognized filter binding!\n");
+			INFO_DBG("error, unrecognized filter binding!\n");
 
 			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
 			break;
@@ -2220,8 +2217,7 @@ NPF_AttachAdapter(
 			pFiltMod->HigherPacketFilter);
 
 		pFiltMod->PhysicalMedium = AttachParameters->MiniportPhysicalMediaType;
-		INFO_DBG(
-			"PhysicalMedium=%x",
+		INFO_DBG("pFiltMod(%p)->PhysicalMedium=%#lx\n", pFiltMod,
 			pFiltMod->PhysicalMedium);
 
 		pFiltMod->Dot11 = g_Dot11SupportMode && bDot11;
@@ -2363,13 +2359,17 @@ NPF_Restart(
 	}
 
 	while (Curr) {
+		INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES Oid = %#x\n", pFiltMod, Curr->Oid);
 		if (Curr->Oid == OID_GEN_MINIPORT_RESTART_ATTRIBUTES) {
 			GenAttr = (PNDIS_RESTART_GENERAL_ATTRIBUTES) Curr->Data;
 			// MtuSize is actually OID_GEN_MAXIMUM_FRAME_SIZE and does not include link header
 			// We'll grab it because it's available, but we'll try to get something better
 			pFiltMod->MaxFrameSize = GenAttr->MtuSize;
+			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES MtuSize = %lu\n", pFiltMod, GenAttr->MtuSize);
 			pFiltMod->SupportedPacketFilters = GenAttr->SupportedPacketFilters;
+			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES SupportedPacketFilters = %#x\n", pFiltMod, GenAttr->SupportedPacketFilters);
 			pFiltMod->HigherLookaheadSize = GenAttr->LookaheadSize;
+			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES LookaheadSize = %lu\n", pFiltMod, GenAttr->LookaheadSize);
 			break;
 		}
 		Curr = Curr->Next;
@@ -3217,14 +3217,13 @@ NPF_SetPacketFilter(
 	ULONG NewPF = 0, OldPF = 0;
 	BOOLEAN bail_early = FALSE;
 
-	TRACE_ENTER();
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	TRACE_DBG("pFiltMod=%p, PacketFilter=%#lx\n", pFiltMod, PacketFilter);
+
 	if (pFiltMod->Loopback)
 	{
 		// Fake it
 		return NDIS_STATUS_SUCCESS;
 	}
-#endif
 
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
@@ -3254,6 +3253,7 @@ NPF_SetPacketFilter(
 	}
 	// Init the buffer
 	*(PULONG) pBuffer = NewPF;
+	INFO_DBG("New packet filter: %#lx\n", NewPF);
 
 	// set the PacketFilter
 	Status = NPF_DoInternalRequest(pFiltMod,
@@ -3463,7 +3463,7 @@ NDIS_STATUS NPF_DoInternalRequest(
 		}
 	}
 
-	INFO_DBG("Status = %#x\n", Status);
+	INFO_DBG("pFiltMod(%p) OID %s %#x: Status = %#x\n", pFiltMod, RequestType == NdisRequestQueryInformation ? "GET" : "SET", Oid, Status);
 	TRACE_EXIT();
 	return Status;
 }
