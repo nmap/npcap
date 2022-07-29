@@ -1172,7 +1172,6 @@
   <ItemGroup>
     <ClInclude Include="..\debug.h" />
     <ClInclude Include="..\Packet32-Int.h" />
-    <ClInclude Include="..\strsafe.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\version.rc" />

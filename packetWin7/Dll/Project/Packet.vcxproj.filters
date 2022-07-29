@@ -29,9 +29,6 @@
     <ClInclude Include="..\Packet32-Int.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\strsafe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\version.rc">
