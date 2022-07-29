@@ -2564,6 +2564,9 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 		switch (Request->DATA.SET_INFORMATION.Oid)
 		{
 			case OID_GEN_CURRENT_PACKET_FILTER:
+				if (*(PULONG) pBuffer & ~pFiltMod->SupportedPacketFilters)
+					WARNING_DBG("Upper driver setting unsupported packet filter: %#x\n", *(PULONG) pBuffer);
+
 				// If new combined filter is the same as existing
 				if ((*(PULONG) pBuffer | pFiltMod->MyPacketFilter) == (pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter))
 				{
@@ -2618,6 +2621,8 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 				{
 					case OID_GEN_CURRENT_PACKET_FILTER:
 						pFiltMod->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
+						if (*(PULONG) pBuffer & ~pFiltMod->SupportedPacketFilters)
+							WARNING_DBG("Upper driver setting unsupported packet filter: %#x\n", *(PULONG) pBuffer);
 						*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
 						break;
 					case OID_GEN_CURRENT_LOOKAHEAD:
