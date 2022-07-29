@@ -347,38 +347,6 @@ NPF_StopUsingBinding(
 }
 
 //-------------------------------------------------------------------
-_IRQL_requires_(PASSIVE_LEVEL)
-VOID
-NPF_CloseBinding(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod
-	)
-{
-	NDIS_EVENT Event;
-
-	NT_ASSERT(pFiltMod != NULL);
-
-	NdisInitializeEvent(&Event);
-	NdisResetEvent(&Event);
-
-	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterDetaching);
-
-	while (pFiltMod->AdapterHandleUsageCounter > 0)
-	{
-		NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
-		NdisWaitEvent(&Event, 1);
-		NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-	}
-
-	//
-	// now the UsageCounter is 0
-	//
-
-	pFiltMod->AdapterBindingStatus = FilterDetached;
-	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
-}
-
-//-------------------------------------------------------------------
 
 _Use_decl_annotations_
 VOID
@@ -2488,15 +2456,8 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 
 	TRACE_ENTER();
 
-	NdisAcquireSpinLock(&pFiltMod->AdapterHandleLock);
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	/* This callback is called for loopback module by NPF_Unload. */
 	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused || pFiltMod->Loopback);
-#else
-	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterPaused);
-#endif
-	pFiltMod->AdapterBindingStatus = FilterDetaching;
-	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 	Curr = PopEntryList(&pFiltMod->OpenInstances);
@@ -2534,7 +2495,12 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		Curr = PopEntryList(&DetachedOpens);
 	}
 
-	NPF_CloseBinding(pFiltMod); // sets AdapterBindingStatus to FilterDetached
+	INFO_DBG("pFiltMod(%p)->AdapterHandleUsageCounter == %lu\n", pFiltMod->AdapterHandleUsageCounter);
+	while (pFiltMod->AdapterHandleUsageCounter > 0)
+	{
+		NdisMSleep(100);
+	}
+	pFiltMod->AdapterBindingStatus = FilterDetached;
 
 	NPF_RemoveFromFilterModuleArray(pFiltMod); // Must add this, if not, SYSTEM_SERVICE_EXCEPTION BSoD will occur.
 	NPF_ReleaseFilterModuleResources(pFiltMod);

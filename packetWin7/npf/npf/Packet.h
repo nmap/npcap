@@ -289,15 +289,12 @@ typedef struct _DEVICE_EXTENSION
 
 typedef enum _FILTER_STATE
 {
-    FilterStateUnspecified,
-    FilterInitialized,
+    FilterDetached,
     FilterAttaching,
     FilterPausing,
     FilterPaused,
     FilterRunning,
-    FilterRestarting,
-    FilterDetaching,
-    FilterDetached
+    FilterRestarting
 } FILTER_STATE;
 
 typedef enum _OPEN_STATE
