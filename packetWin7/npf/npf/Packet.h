@@ -1162,9 +1162,6 @@ NPF_DemoteOpenStatus(
 	);
 
 _IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS NPF_GetDeviceMTU(_In_ PNPCAP_FILTER_MODULE pFiltMod, _Out_ PUINT  pMtu);
-
-_IRQL_requires_(PASSIVE_LEVEL)
 NDIS_STATUS
 NPF_SetPacketFilter(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,

@@ -132,9 +132,9 @@ extern NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module li
   the low-level adapter sees.
 */
 _IRQL_requires_(PASSIVE_LEVEL)
-ULONG
+NDIS_STATUS
 NPF_GetPacketFilter(
-	_In_ NDIS_HANDLE FilterModuleContext
+	_In_ PNPCAP_FILTER_MODULE pFiltMod
 	);
 
 /*!
@@ -157,7 +157,8 @@ NPF_GetPacketFilter(
 _IRQL_requires_(PASSIVE_LEVEL)
 NDIS_STATUS
 NPF_DoInternalRequest(
-	_In_ NDIS_HANDLE					FilterModuleContext,
+		_At_(pFiltMod->AdapterBindingStatus, _In_range_(FilterPausing, FilterRestarting))
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ NDIS_REQUEST_TYPE				RequestType,
 	_In_ NDIS_OID						Oid,
 	_Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed)
@@ -915,53 +916,35 @@ NPF_ReleaseFilterModuleResources(
 
 //-------------------------------------------------------------------
 
-_Use_decl_annotations_
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 NPF_GetDeviceMTU(
-	PNPCAP_FILTER_MODULE pFiltMod,
-	PUINT pMtu
+	_In_ PNPCAP_FILTER_MODULE pFiltMod
 	)
 {
 	TRACE_ENTER();
-	NT_ASSERT(pFiltMod != NULL);
-	NT_ASSERT(pMtu != NULL);
+	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterRestarting);
 
 	UINT Mtu = 0;
 	ULONG BytesProcessed = 0;
-    PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(Mtu), NPF_INTERNAL_OID_TAG);
-    if (pBuffer == NULL)
-    {
-        INFO_DBG("Allocate pBuffer failed\n");
-            TRACE_EXIT();
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-	NPF_DoInternalRequest(pFiltMod,
+	NTSTATUS Status = NPF_DoInternalRequest(pFiltMod,
 		NdisRequestQueryInformation,
 		OID_GEN_MAXIMUM_TOTAL_SIZE,
-		pBuffer,
-		sizeof(Mtu),
+		&pFiltMod->MaxFrameSize,
+		sizeof(pFiltMod->MaxFrameSize),
 		0,
 		0,
 		&BytesProcessed
 	);
 
-    Mtu = *(UINT *)pBuffer;
-    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
-
-	if (BytesProcessed != sizeof(Mtu) || Mtu == 0)
+	if (Status == STATUS_SUCCESS && !NT_VERIFY(BytesProcessed == sizeof(pFiltMod->MaxFrameSize)))
 	{
-		TRACE_EXIT();
-		return STATUS_UNSUCCESSFUL;
+		ERROR_DBG("BytesProcessed = %#lx != sizeof(ULONG)\n", BytesProcessed);
+		Status = NDIS_STATUS_FAILURE;
 	}
-	else
-	{
-		*pMtu = Mtu;
-		TRACE_EXIT();
-		return STATUS_SUCCESS;
-	}
+	TRACE_EXIT();
+	return Status;
 }
 
 //-------------------------------------------------------------------
@@ -2211,11 +2194,6 @@ NPF_AttachAdapter(
 			break;
 		}
 
-		pFiltMod->HigherPacketFilter = NPF_GetPacketFilter(pFiltMod);
-		INFO_DBG(
-			"HigherPacketFilter=%x",
-			pFiltMod->HigherPacketFilter);
-
 		pFiltMod->Dot11 = g_Dot11SupportMode && bDot11;
 
 		INFO_DBG(
@@ -2377,8 +2355,9 @@ NPF_Restart(
 
 	// Now try OID_GEN_MAXIMUM_TOTAL_SIZE, including link header
 	// If it fails, no big deal; we have the MTU at least.
-	ntStatus = NPF_GetDeviceMTU(pFiltMod, &ulTmp);
-	if (NT_SUCCESS(ntStatus))
+	ulTmp = pFiltMod->MaxFrameSize;
+	ntStatus = NPF_GetDeviceMTU(pFiltMod);
+	if (!NT_SUCCESS(ntStatus))
 	{
 		pFiltMod->MaxFrameSize = ulTmp;
 	}
@@ -2387,6 +2366,7 @@ NPF_Restart(
 	if (pFiltMod->MyPacketFilter != 0)
 	{
 		ulTmp = pFiltMod->MyPacketFilter;
+		// Force NPF_SetPacketFilter to send the OID in case the filter was reset while we were detached.
 		pFiltMod->MyPacketFilter = 0;
 		ntStatus = NPF_SetPacketFilter(pFiltMod, ulTmp);
 		if (!NT_SUCCESS(ntStatus))
@@ -2394,12 +2374,22 @@ NPF_Restart(
 			WARNING_DBG("NPF_SetPacketFilter: error, Status=%x.\n", ntStatus);
 		}
 	}
+	else // If we haven't mucked with the packet filter, we need to get the original one in order to restore it.
+	{
+		ntStatus = NPF_GetPacketFilter(pFiltMod);
+		if (!NT_SUCCESS(ntStatus))
+		{
+			WARNING_DBG("NPF_GetPacketFilter: error, Status=%x.\n", ntStatus);
+		}
+		INFO_DBG("pFiltMod(%p)->HigherPacketFilter=%#lx\n", pFiltMod, pFiltMod->HigherPacketFilter);
+	}
 
 	// And we may have to set the lookahead size if this is a reattach
 	if (pFiltMod->MyLookaheadSize != 0)
 	{
 		ulTmp = pFiltMod->MyLookaheadSize;
 		pFiltMod->MyLookaheadSize = 0;
+		// Force NPF_SetPacketFilter to send the OID in case the lookahead was reset while we were detached.
 		ntStatus = NPF_SetLookaheadSize(pFiltMod, ulTmp);
 		if (!NT_SUCCESS(ntStatus))
 		{
@@ -3155,51 +3145,37 @@ Return Value:
 //-------------------------------------------------------------------
 
 _Use_decl_annotations_
-ULONG
+NDIS_STATUS
 NPF_GetPacketFilter(
-	NDIS_HANDLE FilterModuleContext
+	PNPCAP_FILTER_MODULE pFiltMod
 	)
 {
 	TRACE_ENTER();
 
+	NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
 	ULONG PacketFilter = 0;
 	ULONG BytesProcessed = 0;
-	PVOID pBuffer = NULL;
-	
-	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
-    if (pBuffer == NULL)
-    {
-        INFO_DBG("Allocate pBuffer failed\n");
-            TRACE_EXIT();
-        return 0;
-    }
 
-
-	// get the PacketFilter when filter driver loads
-	NPF_DoInternalRequest(FilterModuleContext,
+	// This can only be used before we start mucking with the packet filter.
+	NT_ASSERT(pFiltMod->MyPacketFilter == 0);
+	Status = NPF_DoInternalRequest(pFiltMod,
 		NdisRequestQueryInformation,
 		OID_GEN_CURRENT_PACKET_FILTER,
-		pBuffer,
-		sizeof(PacketFilter),
+		&pFiltMod->HigherPacketFilter,
+		sizeof(ULONG),
 		0,
 		0,
 		&BytesProcessed
 		);
 
-    PacketFilter = *(ULONG *)pBuffer;
-    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
-	if (BytesProcessed != sizeof(PacketFilter))
+	if (Status == NDIS_STATUS_SUCCESS && !NT_VERIFY(BytesProcessed == sizeof(ULONG)))
 	{
-		INFO_DBG("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));
-		TRACE_EXIT();
-		return 0;
+		ERROR_DBG("BytesProcessed = %#lx != sizeof(ULONG)\n", BytesProcessed);
+		Status = NDIS_STATUS_FAILURE;
 	}
-	else
-	{
-		TRACE_EXIT();
-		return PacketFilter;
-	}
+	TRACE_EXIT();
+	return Status;
 }
 
 //-------------------------------------------------------------------
@@ -3350,7 +3326,7 @@ NPF_SetLookaheadSize(
 
 _Use_decl_annotations_
 NDIS_STATUS NPF_DoInternalRequest(
-	NDIS_HANDLE FilterModuleContext,
+	PNPCAP_FILTER_MODULE pFiltMod,
 	NDIS_REQUEST_TYPE RequestType,
 	NDIS_OID Oid,
 	PVOID InformationBuffer,
@@ -3360,8 +3336,9 @@ NDIS_STATUS NPF_DoInternalRequest(
 	PULONG pBytesProcessed)
 {
 	TRACE_ENTER();
+	// NdisFOidRequest requires Restarting, Running, Pausing, or Paused state.
+	NT_ASSERT(pFiltMod->AdapterBindingStatus >= FilterPausing && pFiltMod->AdapterBindingStatus <= FilterRestarting);
 
-	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 	INTERNAL_REQUEST            FilterRequest = { 0 };
 	PNDIS_OID_REQUEST           NdisRequest = &FilterRequest.Request;
 	NDIS_STATUS                 Status = NDIS_STATUS_FAILURE;
