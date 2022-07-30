@@ -1905,7 +1905,7 @@ NPF_CreateFilterModule(
 	RtlZeroMemory(pFiltMod, sizeof(NPCAP_FILTER_MODULE));
 
 	pFiltMod->AdapterHandle = NdisFilterHandle;
-	pFiltMod->AdapterBindingStatus = FilterStateUnspecified;
+	pFiltMod->AdapterBindingStatus = FilterDetached;
 	pFiltMod->Loopback = FALSE;
 
 	pFiltMod->SendToRxPath = FALSE;
@@ -1976,7 +1976,6 @@ NPF_CreateFilterModule(
 	//
 	// set the proper binding flags before trying to open the MAC
 	//
-	pFiltMod->AdapterBindingStatus = FilterInitialized;
 	pFiltMod->AdapterHandleUsageCounter = 0;
 	NdisAllocateSpinLock(&pFiltMod->AdapterHandleLock);
 
@@ -2481,7 +2480,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		Curr = PopEntryList(&DetachedOpens);
 	}
 
-	INFO_DBG("pFiltMod(%p)->AdapterHandleUsageCounter == %lu\n", pFiltMod->AdapterHandleUsageCounter);
+	INFO_DBG("pFiltMod(%p)->AdapterHandleUsageCounter == %lu\n", pFiltMod, pFiltMod->AdapterHandleUsageCounter);
 	while (pFiltMod->AdapterHandleUsageCounter > 0)
 	{
 		NdisMSleep(100);
