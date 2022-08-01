@@ -336,6 +336,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	UINT BlockRxPath:1;
 	UINT Dot11:1;
 	UINT HasDataRateMappingTable:1;
+	UINT PacketFilterOK:1; // Have we correctly set HigherPacketFilter yet?
 
 	ULONG SupportedPacketFilters;
 	ULONG					MyPacketFilter;

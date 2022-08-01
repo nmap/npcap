@@ -2338,10 +2338,17 @@ NPF_Restart(
 			pFiltMod->MaxFrameSize = GenAttr->MtuSize;
 			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES MtuSize = %lu\n", pFiltMod, GenAttr->MtuSize);
 			pFiltMod->SupportedPacketFilters = GenAttr->SupportedPacketFilters;
+#ifdef HAVE_DOT11_SUPPORT
+			if (pFiltMod->Dot11)
+			{
+				// This is not reported in SupportedPacketFilters. Have to override it here.
+				pFiltMod->SupportedPacketFilters |= NPCAP_DOT11_RAW_PACKET_FILTER;
+			}
+#endif
 			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES SupportedPacketFilters = %#x\n", pFiltMod, GenAttr->SupportedPacketFilters);
 			pFiltMod->HigherLookaheadSize = GenAttr->LookaheadSize;
 			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES LookaheadSize = %lu\n", pFiltMod, GenAttr->LookaheadSize);
-			break;
+			//break;
 		}
 		Curr = Curr->Next;
 	}
@@ -3166,10 +3173,10 @@ NPF_GetPacketFilter(
 		);
 
 
-	if (Status == NDIS_STATUS_SUCCESS && !NT_VERIFY(BytesProcessed == sizeof(ULONG)))
+	if (Status == NDIS_STATUS_SUCCESS)
 	{
-		ERROR_DBG("BytesProcessed = %#lx != sizeof(ULONG)\n", BytesProcessed);
-		Status = NDIS_STATUS_FAILURE;
+	       NT_ASSERT(BytesProcessed == sizeof(ULONG));
+	       pFiltMod->PacketFilterOK = 1;
 	}
 	TRACE_EXIT();
 	return Status;
@@ -3197,6 +3204,16 @@ NPF_SetPacketFilter(
 	{
 		// Fake it
 		return NDIS_STATUS_SUCCESS;
+	}
+
+	if (!pFiltMod->PacketFilterOK)
+	{
+		Status = NPF_GetPacketFilter(pFiltMod);
+		if (Status != NDIS_STATUS_SUCCESS)
+		{
+			INFO_DBG("pFiltMod(%p) can't set PacketFilter; no valid HigherPacketFilter present.\n", pFiltMod);
+			return Status;
+		}
 	}
 
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
