@@ -1883,13 +1883,11 @@ _Use_decl_annotations_
 PNPCAP_FILTER_MODULE
 NPF_CreateFilterModule(
 	NDIS_HANDLE NdisFilterHandle,
-	PNDIS_STRING AdapterName,
-	UINT SelectedIndex)
+	PNDIS_STRING AdapterName)
 {
 	PNPCAP_FILTER_MODULE pFiltMod;
 	NET_BUFFER_LIST_POOL_PARAMETERS PoolParameters;
 	BOOLEAN bAllocFailed = FALSE;
-	UNREFERENCED_PARAMETER(SelectedIndex);
 
 	// allocate some memory for the filter module structure
 	pFiltMod = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(NPCAP_FILTER_MODULE), NPF_FILTMOD_TAG);
@@ -2152,7 +2150,7 @@ NPF_AttachAdapter(
 #endif
 
 		// create the adapter object
-		pFiltMod = NPF_CreateFilterModule(NdisFilterHandle, AttachParameters->BaseMiniportName, AttachParameters->MiniportMediaType);
+		pFiltMod = NPF_CreateFilterModule(NdisFilterHandle, AttachParameters->BaseMiniportName);
 		if (pFiltMod == NULL)
 		{
 			returnStatus = NDIS_STATUS_RESOURCES;

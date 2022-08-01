@@ -1125,8 +1125,7 @@ _Ret_maybenull_
 PNPCAP_FILTER_MODULE
 NPF_CreateFilterModule(
 	_In_ NDIS_HANDLE NdisFilterHandle,
-	_In_ PNDIS_STRING AdapterName,
-	_In_ UINT SelectedIndex
+	_In_ PNDIS_STRING AdapterName
 	);
 
 _IRQL_requires_(PASSIVE_LEVEL)
