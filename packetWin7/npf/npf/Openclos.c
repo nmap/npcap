@@ -3454,6 +3454,11 @@ NDIS_STATUS NPF_DoInternalRequest(
 			}
 		}
 	}
+	else if (Status == NDIS_STATUS_INDICATION_REQUIRED)
+	{
+		// We don't handle this currently
+		WARNING_DBG("pFiltMod(%p) OID %#x NDIS_STATUS_INDICATION_REQUIRED\n", pFiltMod, Oid);
+	}
 
 	INFO_DBG("pFiltMod(%p) OID %s %#x: Status = %#x\n", pFiltMod, RequestType == NdisRequestQueryInformation ? "GET" : "SET", Oid, Status);
 	TRACE_EXIT();
