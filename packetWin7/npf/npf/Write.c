@@ -237,6 +237,50 @@ NPF_AllocateNBL(
 }
 //-------------------------------------------------------------------
 
+_Ret_range_(-1, 1)
+static int NPF_GetIPVersion(
+		_In_ PNPCAP_FILTER_MODULE pFiltMod,
+		_In_reads_bytes_(buflen) PVOID pBuf,
+		_In_ ULONG buflen)
+{
+	int ret = NPF_INJECT_OTHER;
+	UINT uCmp = 0;
+
+	if (pFiltMod->RawIP && NT_VERIFY(buflen > 1))
+	{
+		uCmp = *(PUCHAR)pBuf & 0xf0;
+	}
+	else if (pFiltMod->Loopback)
+	{
+		if (g_DltNullMode)
+		{
+			uCmp = ((PDLT_NULL_HEADER)pBuf)->null_type;
+		}
+		else
+		{
+			uCmp = RtlUshortByteSwap(((PETHER_HEADER)pBuf)->ether_type);
+		}
+	}
+
+	switch(uCmp)
+	{
+		case 0x40:
+		case DLTNULLTYPE_IP:
+		case ETHERTYPE_IP:
+			ret = NPF_INJECT_IPV4;
+			break;
+		case 0x60:
+		case DLTNULLTYPE_IPV6:
+		case ETHERTYPE_IPV6:
+			ret = NPF_INJECT_IPV6;
+			break;
+		default:
+			ret = NPF_INJECT_OTHER;
+			break;
+	}
+	return ret;
+}
+
 _Use_decl_annotations_
 NTSTATUS
 NPF_Write(
@@ -254,6 +298,7 @@ NPF_Write(
 	NTSTATUS Status = STATUS_SUCCESS;
 	PMDL TmpMdl = NULL;
 	BOOLEAN IrpWasPended = FALSE;
+	int npf_inject_type = NPF_INJECT_OTHER;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
@@ -318,6 +363,7 @@ NPF_Write(
 		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 	}
 
+	npf_inject_type = NPF_GetIPVersion(Open->pFiltMod, pBuf, buflen);
 	numSentPackets = 0;
 
 	while (numSentPackets < NumSends)
@@ -352,6 +398,18 @@ NPF_Write(
 		}
 		// Otherwise, TmpMdl is aliased via pNetBufferList
 		TmpMdl = NULL;
+
+		// Mark packet as necessary
+		if (npf_inject_type == NPF_INJECT_IPV4)
+		{
+			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV4);
+			NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(ETHERTYPE_IP);
+		}
+		else if (npf_inject_type == NPF_INJECT_IPV6)
+		{
+			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV6);
+			NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(ETHERTYPE_IPV6);
+		}
 
 		RESERVED(pNetBufferList)->pState = NULL;
 		if (IrpWasPended)
@@ -610,6 +668,8 @@ NTSTATUS NPF_BufferedWrite(
 			break;
 		}
 
+		int npf_inject_type = NPF_GetIPVersion(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen);
+
 		/* Copy packet data to non-paged memory, otherwise we induce
 		 * page faults in NIC drivers: http://issues.nmap.org/1398
 		 * TODO: Try mapping the data without copying; system buffer ought to be nonpaged already with Buffered IO. */
@@ -640,6 +700,18 @@ NTSTATUS NPF_BufferedWrite(
 			break;
 		}
 		NT_ASSERT(pNetBufferList != NULL);
+
+		// Mark packet as necessary
+		if (npf_inject_type == NPF_INJECT_IPV4)
+		{
+			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV4);
+			NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(ETHERTYPE_IP);
+		}
+		else if (npf_inject_type == NPF_INJECT_IPV6)
+		{
+			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV6);
+			NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(ETHERTYPE_IPV6);
+		}
 
 		// The packet has a buffer that needs to be freed after every single write
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
@@ -986,70 +1058,34 @@ NPF_LoopbackSendNetBufferLists(
 	)
 {
 	ULONG bytesAdvanced = 0;
-	ULONG BuffSize = 0;
-	PETHER_HEADER pEthernetHdr = NULL;
-	PDLT_NULL_HEADER pDltNullHdr;
 	HANDLE hInjectionHandle = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 
 	TRACE_ENTER();
 	NT_ASSERT(pOpen->bLoopback);
 
-	NdisQueryMdl(
-		NET_BUFFER_CURRENT_MDL(NET_BUFFER_LIST_FIRST_NB(NetBufferList)),
-		&pEthernetHdr,
-		&BuffSize,
-		NormalPagePriority);
-
-	if (pEthernetHdr == NULL)
+	if (NdisTestNblFlag(NetBufferList, NDIS_NBL_FLAGS_IS_IPV4))
 	{
-		// allocation failed
-		INFO_DBG("NPF_LoopbackSendNetBufferLists: Failed to query MDL\n");
-		TRACE_EXIT();
-		return status;
+		hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV4];
 	}
-
-	if (g_DltNullMode)
+	else if (NdisTestNblFlag(NetBufferList, NDIS_NBL_FLAGS_IS_IPV4))
 	{
-		pDltNullHdr = (PDLT_NULL_HEADER) pEthernetHdr;
-		bytesAdvanced = DLT_NULL_HDR_LEN;
-		switch(pDltNullHdr->null_type)
-		{
-			case DLTNULLTYPE_IP:
-				hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV4];
-				break;
-			case DLTNULLTYPE_IPV6:
-				hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV6];
-				break;
-			default:
-				INFO_DBG("NPF_LoopbackSendNetBufferLists: Invalid DLTNULLTYPE %u\n", pDltNullHdr->null_type);
-				status = STATUS_PROTOCOL_NOT_SUPPORTED;
-				break;
-		}
+		hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV6];
 	}
 	else
 	{
-		bytesAdvanced = ETHER_HDR_LEN;
-		switch(RtlUshortByteSwap(pEthernetHdr->ether_type))
-		{
-			case ETHERTYPE_IP:
-				hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV4];
-				break;
-			case ETHERTYPE_IPV6:
-				hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV6];
-				break;
-			default:
-				INFO_DBG("NPF_LoopbackSendNetBufferLists: Invalid ETHERTYPE %u\n", RtlUshortByteSwap(pEthernetHdr->ether_type));
-				status = STATUS_PROTOCOL_NOT_SUPPORTED;
-				break;
-		}
+		INFO_DBG("NPF_LoopbackSendNetBufferLists: invalid NBL (NblFlags not IPv4 or IPv6)\n");
+		TRACE_EXIT();
+		return STATUS_PROTOCOL_NOT_SUPPORTED;
 	}
 
-	if (hInjectionHandle == NULL)
+	bytesAdvanced = g_DltNullMode ? DLT_NULL_HDR_LEN : ETHER_HDR_LEN;
+
+	if (!NT_VERIFY(hInjectionHandle != NULL))
 	{
 		INFO_DBG("NPF_LoopbackSendNetBufferLists: invalid injection handle\n");
 		TRACE_EXIT();
-		return status;
+		return STATUS_INVALID_HANDLE;
 	}
 
 	NdisAdvanceNetBufferListDataStart(NetBufferList, bytesAdvanced, FALSE, NULL);

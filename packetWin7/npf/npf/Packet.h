@@ -279,6 +279,7 @@ typedef struct _DEVICE_EXTENSION
 	UCHAR bWFPInit:1;
 	KMUTEX WFPInitMutex;
 	PNPCAP_FILTER_MODULE pLoopbackFilter;
+#define NPF_INJECT_OTHER -1
 #define NPF_INJECT_IPV6 0
 #define NPF_INJECT_IPV4 1
 	HANDLE hInject[2];
@@ -332,6 +333,7 @@ typedef struct _NPCAP_FILTER_MODULE
 
 	/* Config booleans as a bitfield */
 	UINT Loopback:1;
+	UINT RawIP:1; // does this miniport require us to sniff the IP version of each packet?
 	UINT SendToRxPath:1;
 	UINT BlockRxPath:1;
 	UINT Dot11:1;
