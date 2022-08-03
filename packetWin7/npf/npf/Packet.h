@@ -339,6 +339,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	UINT Dot11:1;
 	UINT HasDataRateMappingTable:1;
 	UINT PacketFilterOK:1; // Have we correctly set HigherPacketFilter yet?
+	UINT Fragile:1; // Avoid OID set operations on these adapters
 
 	ULONG SupportedPacketFilters;
 	ULONG					MyPacketFilter;

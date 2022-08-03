@@ -2125,6 +2125,16 @@ NPF_AttachAdapter(
 		}
 		pFiltMod->AdapterID = AttachParameters->NetLuid;
 		pFiltMod->AdapterBindingStatus = FilterAttaching;
+		switch (AttachParameters->MiniportMediaType)
+		{
+			case NdisMedium802_3:
+			case NdisMediumNative802_11:
+				pFiltMod->Fragile = 0;
+				break;
+			default:
+				pFiltMod->Fragile = 1;
+				break;
+		}
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
@@ -2559,7 +2569,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 			break;
 		}
 
-		if (Request->RequestType == NdisRequestSetInformation &&
+		if (!pFiltMod->Fragile && Request->RequestType == NdisRequestSetInformation &&
 				(Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_PACKET_FILTER
 				 || Request->DATA.SET_INFORMATION.Oid == OID_GEN_CURRENT_LOOKAHEAD))
 		{
@@ -3166,7 +3176,7 @@ NPF_SetPacketFilter(
 
 	TRACE_DBG("pFiltMod=%p, PacketFilter=%#lx\n", pFiltMod, PacketFilter);
 
-	if (pFiltMod->Loopback)
+	if (pFiltMod->Fragile || pFiltMod->Loopback)
 	{
 		// Fake it
 		return NDIS_STATUS_SUCCESS;
@@ -3249,13 +3259,12 @@ NPF_SetLookaheadSize(
 	TRACE_ENTER();
 	pFiltMod->MyLookaheadSize = LookaheadSize;
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pFiltMod->Loopback)
+	if (pFiltMod->Fragile || pFiltMod->Loopback)
 	{
 		// Fake it
 		return NDIS_STATUS_SUCCESS;
 	}
-#endif
+
 	// If neither the new or the old value is greater than the upper value,
 	if (LookaheadSize <= pFiltMod->HigherLookaheadSize
 			&& OldValue <= pFiltMod->HigherLookaheadSize)

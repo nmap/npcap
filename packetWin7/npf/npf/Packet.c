@@ -1536,95 +1536,95 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 				: STATUS_CANCELLED);
 	}
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (pOpen->pFiltMod->Loopback)
-	{
 		// We don't really support OID requests on our fake loopback
 		// adapter, but we can pretend.
-		if (bSetOid) {
-			switch (OidData->Oid) {
-				// Using a switch instead of if/else in case there are
-				// other OIDs we should accept
-				case OID_GEN_CURRENT_PACKET_FILTER:
-					Status = STATUS_SUCCESS;
-					break;
-				default:
-					INFO_DBG("BIOCSETOID not supported for Loopback\n");
-					Status = STATUS_INVALID_DEVICE_REQUEST;
-					break;
-			}
+	if (bSetOid && (pOpen->pFiltMod->Loopback || pOpen->pFiltMod->Fragile))
+	{
+		switch (OidData->Oid) {
+			// Backwards compatibility: libpcap can't handle adapters that do not support setting packet filter.
+			case OID_GEN_CURRENT_PACKET_FILTER:
+				Status = STATUS_SUCCESS;
+				break;
+			default:
+				INFO_DBG("pFiltMod(%p) BIOCSETOID not supported. Loopback: %u, Fragile: %u\n",
+						pOpen->pFiltMod, pOpen->pFiltMod->Loopback, pOpen->pFiltMod->Fragile);
+				Status = STATUS_INVALID_DEVICE_REQUEST;
+				break;
 		}
-		else
+		goto OID_REQUEST_DONE;
+	}
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	if (!bSetOid && pOpen->pFiltMod->Loopback)
+	{
+		switch (OidData->Oid)
 		{
-			switch (OidData->Oid)
-			{
-				case OID_GEN_MAXIMUM_TOTAL_SIZE:
-				case OID_GEN_TRANSMIT_BUFFER_SPACE:
-				case OID_GEN_RECEIVE_BUFFER_SPACE:
-					if (OidData->Length < sizeof(UINT))
-					{
-						Status = STATUS_BUFFER_TOO_SMALL;
-						break;
-					}
-					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
-					*((PUINT)OidData->Data) = pOpen->pFiltMod->MaxFrameSize;
-					OidData->Length = sizeof(UINT);
-					INFO_DBG("Loopback: get MTU = %u\n", *((PUINT)OidData->Data));
-					Status = STATUS_SUCCESS;
+			case OID_GEN_MAXIMUM_TOTAL_SIZE:
+			case OID_GEN_TRANSMIT_BUFFER_SPACE:
+			case OID_GEN_RECEIVE_BUFFER_SPACE:
+				if (OidData->Length < sizeof(UINT))
+				{
+					Status = STATUS_BUFFER_TOO_SMALL;
 					break;
+				}
+				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
+				*((PUINT)OidData->Data) = pOpen->pFiltMod->MaxFrameSize;
+				OidData->Length = sizeof(UINT);
+				INFO_DBG("Loopback: get MTU = %u\n", *((PUINT)OidData->Data));
+				Status = STATUS_SUCCESS;
+				break;
 
-				case OID_GEN_TRANSMIT_BLOCK_SIZE:
-				case OID_GEN_RECEIVE_BLOCK_SIZE:
-					if (OidData->Length < sizeof(UINT))
-					{
-						Status = STATUS_BUFFER_TOO_SMALL;
-						break;
-					}
-					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
-					*((PUINT)OidData->Data) = 1;
-					OidData->Length = sizeof(UINT);
-					INFO_DBG("Loopback: get OID_GEN_*_BLOCK_SIZE = %u\n", *((PUINT)OidData->Data));
-					Status = STATUS_SUCCESS;
+			case OID_GEN_TRANSMIT_BLOCK_SIZE:
+			case OID_GEN_RECEIVE_BLOCK_SIZE:
+				if (OidData->Length < sizeof(UINT))
+				{
+					Status = STATUS_BUFFER_TOO_SMALL;
 					break;
-				case OID_GEN_MEDIA_IN_USE:
-				case OID_GEN_MEDIA_SUPPORTED:
-					if (OidData->Length < sizeof(UINT))
-					{
-						Status = STATUS_BUFFER_TOO_SMALL;
-						break;
-					}
-					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
-					*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
-					OidData->Length = sizeof(UINT);
-					INFO_DBG("Loopback: get OID_GEN_MEDIA_IN_USE = %u\n", *((PUINT)OidData->Data));
-					Status = STATUS_SUCCESS;
+				}
+				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
+				*((PUINT)OidData->Data) = 1;
+				OidData->Length = sizeof(UINT);
+				INFO_DBG("Loopback: get OID_GEN_*_BLOCK_SIZE = %u\n", *((PUINT)OidData->Data));
+				Status = STATUS_SUCCESS;
+				break;
+			case OID_GEN_MEDIA_IN_USE:
+			case OID_GEN_MEDIA_SUPPORTED:
+				if (OidData->Length < sizeof(UINT))
+				{
+					Status = STATUS_BUFFER_TOO_SMALL;
 					break;
-				case OID_GEN_LINK_STATE:
-					if (OidData->Length < sizeof(NDIS_LINK_STATE))
-					{
-						Status = STATUS_BUFFER_TOO_SMALL;
-						break;
-					}
-					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(NDIS_LINK_STATE);
-					PNDIS_LINK_STATE pLinkState = (PNDIS_LINK_STATE) OidData->Data;
-					pLinkState->MediaConnectState = MediaConnectStateConnected;
-					pLinkState->MediaDuplexState = MediaDuplexStateFull;
-					pLinkState->XmitLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
-					pLinkState->RcvLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
-					pLinkState->PauseFunctions = NdisPauseFunctionsUnsupported;
-					OidData->Length = sizeof(NDIS_LINK_STATE);
-					Status = STATUS_SUCCESS;
+				}
+				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
+				*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
+				OidData->Length = sizeof(UINT);
+				INFO_DBG("Loopback: get OID_GEN_MEDIA_IN_USE = %u\n", *((PUINT)OidData->Data));
+				Status = STATUS_SUCCESS;
+				break;
+			case OID_GEN_LINK_STATE:
+				if (OidData->Length < sizeof(NDIS_LINK_STATE))
+				{
+					Status = STATUS_BUFFER_TOO_SMALL;
 					break;
-				default:
-					WARNING_DBG("Unsupported BIOCQUERYOID for Loopback\n");
-					Status = STATUS_INVALID_DEVICE_REQUEST;
-					break;
-			}
+				}
+				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(NDIS_LINK_STATE);
+				PNDIS_LINK_STATE pLinkState = (PNDIS_LINK_STATE) OidData->Data;
+				pLinkState->MediaConnectState = MediaConnectStateConnected;
+				pLinkState->MediaDuplexState = MediaDuplexStateFull;
+				pLinkState->XmitLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
+				pLinkState->RcvLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
+				pLinkState->PauseFunctions = NdisPauseFunctionsUnsupported;
+				OidData->Length = sizeof(NDIS_LINK_STATE);
+				Status = STATUS_SUCCESS;
+				break;
+			default:
+				WARNING_DBG("Unsupported BIOCQUERYOID for Loopback\n");
+				Status = STATUS_INVALID_DEVICE_REQUEST;
+				break;
 		}
-
 		goto OID_REQUEST_DONE;
 	}
 #endif
+	NT_ASSERT(!pOpen->pFiltMod->Loopback);
+	NT_ASSERT(!(pOpen->pFiltMod->Fragile && bSetOid));
 
 #ifdef HAVE_DOT11_SUPPORT
 	if (pOpen->pFiltMod->Dot11 && (OidData->Oid == OID_GEN_MEDIA_IN_USE || OidData->Oid == OID_GEN_MEDIA_SUPPORTED))
