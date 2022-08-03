@@ -3149,10 +3149,19 @@ NPF_GetPacketFilter(
 		);
 
 
+	INFO_DBG("pFiltMod(%p) OID_GEN_CURRENT_PACKET_FILTER. Status %#x, read %lu\n",
+			pFiltMod, Status, BytesProcessed);
 	if (Status == NDIS_STATUS_SUCCESS)
 	{
-	       NT_ASSERT(BytesProcessed == sizeof(ULONG));
-	       pFiltMod->PacketFilterOK = 1;
+		// Sometimes we get SUCCESS but there's no real value there.
+		if (BytesProcessed == sizeof(ULONG))
+		{
+			pFiltMod->PacketFilterOK = 1;
+		}
+		else
+		{
+			Status = NDIS_STATUS_FAILURE;
+		}
 	}
 	TRACE_EXIT();
 	return Status;
