@@ -1896,7 +1896,6 @@ NPF_CreateFilterModule(
 	{
 		// no memory
 		INFO_DBG("Failed to allocate memory pool\n");
-		TRACE_EXIT();
 		return NULL;
 	}
 
@@ -1953,7 +1952,6 @@ NPF_CreateFilterModule(
 		if (pFiltMod->OpenInstancesLock)
 			NdisFreeRWLock(pFiltMod->OpenInstancesLock);
 		ExFreePool(pFiltMod);
-		TRACE_EXIT();
 		return NULL;
 	}
 	
@@ -1979,7 +1977,7 @@ NPF_CreateFilterModule(
 
 	pFiltMod->OpsState = OpsDisabled;
 
-	TRACE_EXIT();
+	INFO_DBG("pFiltMod(%p) created for %ws\n", pFiltMod, pFiltMod->AdapterName.Buffer);
 	return pFiltMod;
 }
 
@@ -2086,43 +2084,11 @@ NPF_AttachAdapter(
 			break;
 		}
 
-		// An example:
-		// AdapterName = "\DEVICE\{4F4B4BD7-340D-45D3-8F59-8A1E167BC75D}"
-		// FilterModuleGuidName = "{4F4B4BD7-340D-45D3-8F59-8A1E167BC75D}-{7DAF2AC8-E9F6-4765-A842-F1F5D2501351}-0000"
-		INFO_DBG("AdapterName=%ws, MacAddress=%02X-%02X-%02X-%02X-%02X-%02X, MiniportMediaType=%d\n",
-			AttachParameters->BaseMiniportName->Buffer,
-			AttachParameters->CurrentMacAddress[0],
-			AttachParameters->CurrentMacAddress[1],
-			AttachParameters->CurrentMacAddress[2],
-			AttachParameters->CurrentMacAddress[3],
-			AttachParameters->CurrentMacAddress[4],
-			AttachParameters->CurrentMacAddress[5],
-			AttachParameters->MiniportMediaType);
+		// FilterModuleGuidName = "{ADAPTER_GUID}-{FILTER_GUID}-0000"
 
-		INFO_DBG("FilterModuleGuidName=%ws, FilterModuleGuidName[%u]=%x\n",
+		INFO_DBG("FilterModuleGuidName=%ws, bDot11=%u, MediaType=%d\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
-			(UINT) SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME,
-			AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME]);
-
-		if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'4')
-		{
-			INFO_DBG("This is the standard filter binding!\n");
-			bDot11 = FALSE;
-		}
-#ifdef HAVE_DOT11_SUPPORT
-		else if (AttachParameters->FilterModuleGuidName->Buffer[SECOND_LAST_HEX_INDEX_OF_FILTER_UNIQUE_NAME] == L'5')
-		{
-			INFO_DBG("This is the WiFi filter binding!\n");
-			bDot11 = TRUE;
-		}
-#endif
-		else
-		{
-			INFO_DBG("error, unrecognized filter binding!\n");
-
-			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
-			break;
-		}
+			bDot11, AttachParameters->MiniportMediaType);
 
 		returnStatus = NPF_ValidateParameters(bDot11, AttachParameters->MiniportMediaType);
 		if (returnStatus != STATUS_SUCCESS)
