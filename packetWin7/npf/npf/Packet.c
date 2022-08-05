@@ -162,9 +162,6 @@ ULONG g_TestMode = 0;
 //
 // Global variables
 //
-NDIS_HANDLE         FilterDriverHandle = NULL;			// NDIS handle for filter driver
-NDIS_HANDLE         FilterDriverHandle_WiFi = NULL;		// NDIS handle for WiFi filter driver
-NDIS_HANDLE         FilterDriverObject;					// Driver object for filter driver
 PDEVICE_OBJECT pNpcapDeviceObject = NULL;
 
 #ifdef KeQuerySystemTime
@@ -303,13 +300,14 @@ DriverEntry(
 	UNICODE_STRING sddl_admin_only = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN);
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
 	UNICODE_STRING AdapterName = RTL_CONSTANT_STRING(DEVICE_PATH_PREFIX NPF_DRIVER_NAME_WIDECHAR);
+	NDIS_HANDLE FilterDriverHandle = NULL; // NDIS handle for filter driver
+	NDIS_HANDLE FilterDriverHandle_WiFi = NULL; // NDIS handle for WiFi filter driver
 
 	NDIS_STRING strKeQuerySystemTimePrecise;
 
 	UNREFERENCED_PARAMETER(RegistryPath);
 
 	TRACE_ENTER();
-	FilterDriverObject = DriverObject;
 
 	RtlInitUnicodeString(&parametersPath, NULL);
 	parametersPath.MaximumLength=RegistryPath->Length+sizeof(L"\\Parameters");
@@ -438,7 +436,7 @@ DriverEntry(
 
 	// Register the filter to NDIS.
 	Status = NdisFRegisterFilterDriver(DriverObject,
-		(NDIS_HANDLE) FilterDriverObject,
+		(NDIS_HANDLE) devExtP,
 		&FChars,
 		&FilterDriverHandle);
 	if (Status != NDIS_STATUS_SUCCESS)
@@ -598,7 +596,7 @@ DriverEntry(
 	{
 		// Register the WiFi filter to NDIS.
 		Status = NdisFRegisterFilterDriver(DriverObject,
-			(NDIS_HANDLE)FilterDriverObject,
+			(NDIS_HANDLE) devExtP,
 			&FChars_WiFi,
 			&FilterDriverHandle_WiFi);
 		if (Status != NDIS_STATUS_SUCCESS)
@@ -608,6 +606,7 @@ DriverEntry(
 			// We still run the driver even with the 2nd filter doesn't work.
 		}
 		INFO_DBG("FilterDriverHandle_WiFi = %p\n", FilterDriverHandle_WiFi);
+		devExtP->FilterDriverHandle_WiFi = FilterDriverHandle_WiFi;
 	}
 
 	pNpcapDeviceObject = devObjP;
@@ -886,6 +885,8 @@ Return Value:
 	PDEVICE_OBJECT DeviceObject;
 	PDEVICE_OBJECT OldDeviceObject;
 	PDEVICE_EXTENSION DeviceExtension;
+	NDIS_HANDLE FilterDriverHandle = NULL; // NDIS handle for filter driver
+	NDIS_HANDLE FilterDriverHandle_WiFi = NULL; // NDIS handle for WiFi filter driver
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
 	PSINGLE_LIST_ENTRY Prev = NULL;
 	PSINGLE_LIST_ENTRY Curr = NULL;
@@ -933,6 +934,10 @@ Return Value:
 		DeviceObject = DeviceObject->NextDevice;
 
 		DeviceExtension = OldDeviceObject->DeviceExtension;
+		if (FilterDriverHandle == NULL)
+			FilterDriverHandle = DeviceExtension->FilterDriverHandle;
+		if (FilterDriverHandle_WiFi == NULL)
+			FilterDriverHandle_WiFi = DeviceExtension->FilterDriverHandle_WiFi;
 
 		// Must still acquire this lock because NDIS could still be doing things with filter modules
 		// Specifically, NPF_AttachAdapter acquires this for Read.

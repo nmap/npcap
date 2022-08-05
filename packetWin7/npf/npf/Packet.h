@@ -138,10 +138,6 @@
 
 typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTEXT;
 
-//
-// Global variables
-//
-extern NDIS_HANDLE         FilterDriverObject;
 
 #define Packet_ALIGNMENT sizeof(int) ///< Alignment macro. Defines the alignment size.
 #define Packet_WORDALIGN(x) (((x)+(Packet_ALIGNMENT-1))&~(Packet_ALIGNMENT-1))	///< Alignment macro. Rounds up to the next
@@ -258,6 +254,7 @@ typedef struct _DEVICE_EXTENSION
 	LIST_ENTRY AllOpens;
 	PNDIS_RW_LOCK_EX AllOpensLock;
 	NDIS_HANDLE FilterDriverHandle;
+	NDIS_HANDLE FilterDriverHandle_WiFi;
 
 	LOOKASIDE_LIST_EX BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
 	LOOKASIDE_LIST_EX NBLCopyPool; // Pool of NPF_NBL_COPY, NPF_NB_COPIES, NPF_SRC_NB objects

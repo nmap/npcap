@@ -2020,13 +2020,6 @@ Return Value:
 	NT_ASSERT(!((PNPCAP_FILTER_MODULE) NdisFilterHandle)->Loopback);
 #endif
 
-
-	if (!NT_VERIFY(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject))
-	{
-		INFO_DBG("driver doesn't match error, FilterDriverContext = %p, FilterDriverObject = %p.\n", FilterDriverContext, FilterDriverObject);
-		return NDIS_STATUS_INVALID_PARAMETER;
-	}
-
 	TRACE_EXIT();
 
 	return NDIS_STATUS_SUCCESS;
@@ -2035,7 +2028,7 @@ Return Value:
 //-------------------------------------------------------------------
 
 static NDIS_STATUS NPF_ValidateParameters(
-	_In_ BOOLEAN bDot11,
+	_Out_ PBOOLEAN bDot11,
 	_In_ NDIS_MEDIUM MiniportMediaType
         )
 {
@@ -2046,15 +2039,7 @@ static NDIS_STATUS NPF_ValidateParameters(
     // here will leave the network adapter in an unusable state.
     //
 	// The WiFi filter will only bind to the 802.11 wireless adapters.
-	if (g_Dot11SupportMode && bDot11)
-	{
-		if (MiniportMediaType != NdisMediumNative802_11)
-		{
-			INFO_DBG("Unsupported media type for the WiFi filter: MiniportMediaType = %d, expected = 16 (NdisMediumNative802_11).\n", MiniportMediaType);
-
-			return NDIS_STATUS_INVALID_PARAMETER;
-		}
-	}
+	*bDot11 = (g_Dot11SupportMode && MiniportMediaType == NdisMediumNative802_11);
 	return NDIS_STATUS_SUCCESS;
 }
 
@@ -2078,19 +2063,13 @@ NPF_AttachAdapter(
 
 	do
 	{
-		if (!NT_VERIFY(FilterDriverContext == (NDIS_HANDLE)FilterDriverObject))
-		{
-			returnStatus = NDIS_STATUS_INVALID_PARAMETER;
-			break;
-		}
-
 		// FilterModuleGuidName = "{ADAPTER_GUID}-{FILTER_GUID}-0000"
 
+		returnStatus = NPF_ValidateParameters(&bDot11, AttachParameters->MiniportMediaType);
 		INFO_DBG("FilterModuleGuidName=%ws, bDot11=%u, MediaType=%d\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
 			bDot11, AttachParameters->MiniportMediaType);
 
-		returnStatus = NPF_ValidateParameters(bDot11, AttachParameters->MiniportMediaType);
 		if (returnStatus != STATUS_SUCCESS)
 			break;
 
@@ -2281,6 +2260,7 @@ NPF_Restart(
 	ULONG ulTmp;
 	PNDIS_RESTART_ATTRIBUTES Curr = RestartParameters->RestartAttributes;
 	PNDIS_RESTART_GENERAL_ATTRIBUTES GenAttr = NULL;
+	BOOLEAN bDot11 = FALSE;
 
 	TRACE_ENTER();
 
@@ -2300,7 +2280,8 @@ NPF_Restart(
 	pFiltMod->AdapterBindingStatus = FilterRestarting;
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
-	Status = NPF_ValidateParameters((BOOLEAN)pFiltMod->Dot11, RestartParameters->MiniportMediaType);
+	Status = NPF_ValidateParameters(&bDot11, RestartParameters->MiniportMediaType);
+	NT_ASSERT(!bDot11 == !pFiltMod->Dot11);
 	if (Status != NDIS_STATUS_SUCCESS) {
 		goto NPF_Restart_End;
 	}
