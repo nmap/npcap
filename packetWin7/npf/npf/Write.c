@@ -1068,7 +1068,7 @@ NPF_LoopbackSendNetBufferLists(
 	{
 		hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV4];
 	}
-	else if (NdisTestNblFlag(NetBufferList, NDIS_NBL_FLAGS_IS_IPV4))
+	else if (NdisTestNblFlag(NetBufferList, NDIS_NBL_FLAGS_IS_IPV6))
 	{
 		hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV6];
 	}
