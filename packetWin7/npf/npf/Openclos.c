@@ -122,22 +122,6 @@ extern SINGLE_LIST_ENTRY g_arrFiltMod; //Adapter filter module list head, each l
 extern NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
 
 /*!
-  \brief Get the packet filter of the adapter.
-  \param FilterModuleContext Pointer to the filter context structure.
-  \return the packet filter.
-
-  This function is used to get the original adapter packet filter with
-  a NPF_AttachAdapter(), it is stored in the HigherPacketFilter, the combination
-  of HigherPacketFilter and MyPacketFilter will be the final packet filter
-  the low-level adapter sees.
-*/
-_IRQL_requires_(PASSIVE_LEVEL)
-NDIS_STATUS
-NPF_GetPacketFilter(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod
-	);
-
-/*!
   \brief Utility routine that forms and sends an NDIS_OID_REQUEST to the miniport adapter.
   \param FilterModuleContext Pointer to the filter context structure.
   \param RequestType NdisRequest[Set|Query|method]Information.
@@ -161,7 +145,9 @@ NPF_DoInternalRequest(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ NDIS_REQUEST_TYPE				RequestType,
 	_In_ NDIS_OID						Oid,
-	_Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed)
+	_When_(RequestType == NdisRequestQueryInformation, _Out_writes_bytes_to_(InformationBufferLength, *pBytesProcessed))
+	_When_(RequestType == NdisRequestSetInformation, _In_reads_bytes_(InformationBufferLength))
+	_When_(RequestType == NdisRequestMethod, _Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed))
 	PVOID								InformationBuffer,
 	_In_ ULONG							InformationBufferLength,
 	_In_opt_ ULONG						OutputBufferLength,
@@ -258,23 +244,6 @@ _IRQL_requires_(PASSIVE_LEVEL)
 ULONG NPF_GetCurrentOperationMode_Wrapper(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod);
 
-_IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS NPF_GetCurrentChannel(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_Out_ PULONG pCurrentChannel);
-
-_IRQL_requires_(PASSIVE_LEVEL)
-ULONG NPF_GetCurrentChannel_Wrapper(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod);
-
-_IRQL_requires_(PASSIVE_LEVEL)
-NTSTATUS NPF_GetCurrentFrequency(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_Out_ PULONG pCurrentFrequency);
-
-_IRQL_requires_(PASSIVE_LEVEL)
-ULONG NPF_GetCurrentFrequency_Wrapper(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod);
 #endif
 //-------------------------------------------------------------------
 
@@ -916,34 +885,91 @@ NPF_ReleaseFilterModuleResources(
 
 //-------------------------------------------------------------------
 
+/* Issue an OID query for a 4-byte value (ULONG). Address must be allocated
+ * from nonpaged pool.
+ */
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
-NPF_GetDeviceMTU(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod
+NPF_OidGetUlongNonpagedPtr(
+		_At_(pFiltMod->AdapterBindingStatus, _In_range_(FilterPausing, FilterRestarting))
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ NDIS_OID Oid,
+	_Out_ PULONG pNonpagedUlong
 	)
 {
-	TRACE_ENTER();
-	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterRestarting);
-
-	UINT Mtu = 0;
+	if (!NT_VERIFY(pNonpagedUlong != NULL))
+	{
+		return STATUS_INVALID_PARAMETER;
+	}
 	ULONG BytesProcessed = 0;
 
 	NTSTATUS Status = NPF_DoInternalRequest(pFiltMod,
 		NdisRequestQueryInformation,
-		OID_GEN_MAXIMUM_TOTAL_SIZE,
-		&pFiltMod->MaxFrameSize,
-		sizeof(pFiltMod->MaxFrameSize),
+		Oid,
+		pNonpagedUlong,
+		sizeof(ULONG),
 		0,
 		0,
 		&BytesProcessed
 	);
 
-	if (Status == STATUS_SUCCESS && !NT_VERIFY(BytesProcessed == sizeof(pFiltMod->MaxFrameSize)))
+	INFO_DBG("pFiltMod(%p) Oid %#x, Status %#x, %lu bytes\n",
+			pFiltMod, Oid, Status, BytesProcessed);
+	if (Status == NDIS_STATUS_SUCCESS && BytesProcessed != sizeof(ULONG))
 	{
 		ERROR_DBG("BytesProcessed = %#lx != sizeof(ULONG)\n", BytesProcessed);
 		Status = NDIS_STATUS_FAILURE;
 	}
-	TRACE_EXIT();
+	return Status;
+}
+
+//-------------------------------------------------------------------
+_IRQL_requires_(PASSIVE_LEVEL)
+inline NTSTATUS
+NPF_GetDeviceMTU(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod
+	)
+{
+	NT_ASSERT(pFiltMod->AdapterBindingStatus == FilterRestarting);
+
+	INFO_DBG("pFiltMod(%p) OID_GEN_MAXIMUM_TOTAL_SIZE (%#x)\n",
+			pFiltMod, OID_GEN_MAXIMUM_TOTAL_SIZE);
+
+	return NPF_OidGetUlongNonpagedPtr(pFiltMod,
+		OID_GEN_MAXIMUM_TOTAL_SIZE,
+		&pFiltMod->MaxFrameSize
+	);
+}
+
+/*!
+  \brief Get the packet filter of the adapter.
+  \param FilterModuleContext Pointer to the filter context structure.
+  \return the packet filter.
+
+  This function is used to get the original adapter packet filter with
+  a NPF_AttachAdapter(), it is stored in the HigherPacketFilter, the combination
+  of HigherPacketFilter and MyPacketFilter will be the final packet filter
+  the low-level adapter sees.
+*/
+_IRQL_requires_(PASSIVE_LEVEL)
+inline NTSTATUS
+NPF_GetPacketFilter(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod
+	)
+{
+	// This can only be used before we start mucking with the packet filter.
+	NT_ASSERT(pFiltMod->MyPacketFilter == 0);
+	INFO_DBG("pFiltMod(%p) OID_GEN_CURRENT_PACKET_FILTER (%#x)\n",
+			pFiltMod, OID_GEN_CURRENT_PACKET_FILTER);
+	NTSTATUS Status = NPF_OidGetUlongNonpagedPtr(pFiltMod,
+		OID_GEN_CURRENT_PACKET_FILTER,
+		&pFiltMod->HigherPacketFilter
+	);
+
+	if (Status == STATUS_SUCCESS)
+	{
+		pFiltMod->PacketFilterOK = 1;
+	}
 	return Status;
 }
 
@@ -1091,145 +1117,36 @@ NPF_GetCurrentOperationMode_Wrapper(
 
 //-------------------------------------------------------------------
 
-_Use_decl_annotations_
-NTSTATUS
+// pCurrentChannel must point to nonpaged memory
+_IRQL_requires_(PASSIVE_LEVEL)
+inline NTSTATUS
 NPF_GetCurrentChannel(
-	PNPCAP_FILTER_MODULE pFiltMod,
-	PULONG pCurrentChannel
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_Out_ PULONG pCurrentChannel
 )
 {
-	TRACE_ENTER();
-	NT_ASSERT(pFiltMod != NULL);
-	NT_ASSERT(pCurrentChannel != NULL);
-
-	ULONG CurrentChannel = 0;
-	ULONG BytesProcessed = 0;
-    PVOID pBuffer = NULL;
-
-    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentChannel), NPF_INTERNAL_OID_TAG);
-    if (pBuffer == NULL)
-    {
-        INFO_DBG("Allocate pBuffer failed\n");
-            TRACE_EXIT();
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-	NPF_DoInternalRequest(pFiltMod,
-		NdisRequestQueryInformation,
+	return NPF_OidGetUlongNonpagedPtr(pFiltMod,
 		OID_DOT11_CURRENT_CHANNEL,
-		pBuffer,
-		sizeof(CurrentChannel),
-		0,
-		0,
-		&BytesProcessed
+		pCurrentChannel
 	);
-
-    CurrentChannel = *(ULONG *)pBuffer;
-    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
-
-	if (BytesProcessed != sizeof(CurrentChannel))
-	{
-		TRACE_EXIT();
-		return STATUS_UNSUCCESSFUL;
-	}
-	else
-	{
-		*pCurrentChannel = CurrentChannel;
-		TRACE_EXIT();
-		return STATUS_SUCCESS;
-	}
 }
 
 //-------------------------------------------------------------------
 
-_Use_decl_annotations_
-ULONG
-NPF_GetCurrentChannel_Wrapper(
-	PNPCAP_FILTER_MODULE pFiltMod
-)
-{
-	ULONG CurrentChannel;
-	if (NPF_GetCurrentChannel(pFiltMod, &CurrentChannel) != STATUS_SUCCESS)
-	{
-		return 0;
-	}
-	else
-	{
-		// Possible return values are: 1 - 14
-		return CurrentChannel;
-	}
-}
-
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-NTSTATUS
+// pCurrentFrequency must point to nonpaged memory
+_IRQL_requires_(PASSIVE_LEVEL)
+inline NTSTATUS
 NPF_GetCurrentFrequency(
-	PNPCAP_FILTER_MODULE pFiltMod,
-	PULONG pCurrentFrequency
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_Out_ PULONG pCurrentFrequency
 )
 {
-	TRACE_ENTER();
-	NT_ASSERT(pFiltMod != NULL);
-	NT_ASSERT(pCurrentFrequency != NULL);
-
-	ULONG CurrentFrequency = 0;
-	ULONG BytesProcessed = 0;
-    PVOID pBuffer = NULL;
-
-    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentFrequency), NPF_INTERNAL_OID_TAG);
-    if (pBuffer == NULL)
-    {
-        INFO_DBG("Allocate pBuffer failed\n");
-            TRACE_EXIT();
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-	NPF_DoInternalRequest(pFiltMod,
-		NdisRequestQueryInformation,
+	return NPF_OidGetUlongNonpagedPtr(pFiltMod,
 		OID_DOT11_CURRENT_FREQUENCY,
-		pBuffer,
-		sizeof(CurrentFrequency),
-		0,
-		0,
-		&BytesProcessed
+		pCurrentFrequency
 	);
-
-    CurrentFrequency = *(ULONG *)pBuffer;
-    ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
-
-	if (BytesProcessed != sizeof(CurrentFrequency))
-	{
-		TRACE_EXIT();
-		return STATUS_UNSUCCESSFUL;
-	}
-	else
-	{
-		*pCurrentFrequency = CurrentFrequency;
-		TRACE_EXIT();
-		return STATUS_SUCCESS;
-	}
 }
 
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-ULONG
-NPF_GetCurrentFrequency_Wrapper(
-	PNPCAP_FILTER_MODULE pFiltMod
-)
-{
-	ULONG CurrentFrequency;
-	if (NPF_GetCurrentFrequency(pFiltMod, &CurrentFrequency) != STATUS_SUCCESS)
-	{
-		return 0;
-	}
-	else
-	{
-		// Possible return values are: 0 - 200
-		return CurrentFrequency;
-	}
-}
 #endif
 //-------------------------------------------------------------------
 
@@ -3101,51 +3018,6 @@ Return Value:
 #endif
 
    return Status;
-}
-
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-NDIS_STATUS
-NPF_GetPacketFilter(
-	PNPCAP_FILTER_MODULE pFiltMod
-	)
-{
-	TRACE_ENTER();
-
-	NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
-	ULONG PacketFilter = 0;
-	ULONG BytesProcessed = 0;
-
-	// This can only be used before we start mucking with the packet filter.
-	NT_ASSERT(pFiltMod->MyPacketFilter == 0);
-	Status = NPF_DoInternalRequest(pFiltMod,
-		NdisRequestQueryInformation,
-		OID_GEN_CURRENT_PACKET_FILTER,
-		&pFiltMod->HigherPacketFilter,
-		sizeof(ULONG),
-		0,
-		0,
-		&BytesProcessed
-		);
-
-
-	INFO_DBG("pFiltMod(%p) OID_GEN_CURRENT_PACKET_FILTER. Status %#x, read %lu\n",
-			pFiltMod, Status, BytesProcessed);
-	if (Status == NDIS_STATUS_SUCCESS)
-	{
-		// Sometimes we get SUCCESS but there's no real value there.
-		if (BytesProcessed == sizeof(ULONG))
-		{
-			pFiltMod->PacketFilterOK = 1;
-		}
-		else
-		{
-			Status = NDIS_STATUS_FAILURE;
-		}
-	}
-	TRACE_EXIT();
-	return Status;
 }
 
 //-------------------------------------------------------------------
