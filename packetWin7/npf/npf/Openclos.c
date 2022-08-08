@@ -232,7 +232,7 @@ NPF_CreateOpenObject(
 #ifdef HAVE_DOT11_SUPPORT
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS NPF_GetDataRateMappingTable(
-	_Inout_ PNPCAP_FILTER_MODULE pFiltMod
+	_In_ PNPCAP_FILTER_MODULE pFiltMod
 	);
 
 _IRQL_requires_(PASSIVE_LEVEL)
@@ -600,8 +600,10 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod)
 		if (pFiltMod->Dot11)
 		{
 			// Fetch the device's data rate mapping table with the OID_DOT11_DATA_RATE_MAPPING_TABLE OID.
-			pFiltMod->HasDataRateMappingTable = NT_SUCCESS(
-					NPF_GetDataRateMappingTable(pFiltMod));
+			if (!NT_SUCCESS(NPF_GetDataRateMappingTable(pFiltMod)))
+			{
+				INFO_DBG("pFiltMod(%p) failed to fetch dot11 table.\n", pFiltMod);
+			}
 		}
 #endif
 
@@ -876,6 +878,14 @@ NPF_ReleaseFilterModuleResources(
 		pFiltMod->AdapterName.MaximumLength = 0;
 	}
 
+#ifdef HAVE_DOT11_SUPPORT
+	if (pFiltMod->DataRateMappingTable)
+	{
+		ExFreePoolWithTag(pFiltMod->DataRateMappingTable, NPF_DOT11_POOL_TAG);
+		pFiltMod->DataRateMappingTable = NULL;
+	}
+#endif
+
 	NdisFreeSpinLock(&pFiltMod->OIDLock);
 	NdisFreeRWLock(pFiltMod->OpenInstancesLock);
 	NdisFreeSpinLock(&pFiltMod->AdapterHandleLock);
@@ -984,12 +994,48 @@ NPF_GetDataRateMappingTable(
 	TRACE_ENTER();
 	NT_ASSERT(pFiltMod != NULL);
 
+	// Check if it's already set
+	if (pFiltMod->DataRateMappingTable != NULL)
+	{
+		TRACE_EXIT();
+		return STATUS_SUCCESS;
+	}
+
+	// Not set, allocate a new one
+	PDOT11_DATA_RATE_MAPPING_TABLE pDRMT = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(DOT11_DATA_RATE_MAPPING_TABLE), NPF_DOT11_POOL_TAG);
+	if (pDRMT == NULL)
+	{
+		WARNING_DBG("Failed to allocate DOT11_DATA_RATE_MAPPING_TABLE\n");
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	// Interlocked op to avoid race condition.
+	PDOT11_DATA_RATE_MAPPING_TABLE pOld = InterlockedCompareExchangePointer(&pFiltMod->DataRateMappingTable, pDRMT, NULL);
+	// If the old value was not null, we lost the race and will leave it to the other thread to complete.
+	if (pOld != NULL)
+	{
+		ExFreePoolWithTag(pDRMT, NPF_DOT11_POOL_TAG);
+		TRACE_EXIT();
+		return STATUS_SUCCESS;
+	}
+
+	// Otherwise we won the race and pFiltMod now points to our DRMT.
+	// Using NPF_AnalysisAssumeAliased since InterlockedCompareExchangePointer does not have SAL annotations to note that pFiltMod->DataRateMappingTable now points to pDRMT.
+	if (!NT_VERIFY(pFiltMod->DataRateMappingTable == pDRMT))
+	{
+		ExFreePoolWithTag(pDRMT, NPF_DOT11_POOL_TAG);
+		TRACE_EXIT();
+		return STATUS_INTERNAL_ERROR;
+	}
+	NPF_AnalysisAssumeAliased(pDRMT);
+
 	ULONG BytesProcessed = 0;
 
 	NDIS_STATUS Status = NPF_DoInternalRequest(pFiltMod,
 		NdisRequestQueryInformation,
 		OID_DOT11_DATA_RATE_MAPPING_TABLE,
-		&pFiltMod->DataRateMappingTable,
+		pDRMT,
 		sizeof(DOT11_DATA_RATE_MAPPING_TABLE),
 		0,
 		0,
@@ -998,10 +1044,16 @@ NPF_GetDataRateMappingTable(
 
 	if (Status == NDIS_STATUS_SUCCESS && (
 		BytesProcessed != sizeof(DOT11_DATA_RATE_MAPPING_TABLE)
-		|| pFiltMod->DataRateMappingTable.Header.Size != sizeof(DOT11_DATA_RATE_MAPPING_TABLE)
+		|| pDRMT->Header.Type != NDIS_OBJECT_TYPE_DEFAULT
+		|| pDRMT->Header.Revision != DOT11_DATA_RATE_MAPPING_TABLE_REVISION_1
+		|| pDRMT->Header.Size != sizeof(DOT11_DATA_RATE_MAPPING_TABLE)
 		))
 	{
+		WARNING_DBG("pFiltMod(%p) DOT11_DATA_RATE_MAPPING_TABLE Status %#x, read %lu, expected %zu\n",
+				pFiltMod, Status, BytesProcessed, sizeof(DOT11_DATA_RATE_MAPPING_TABLE));
 		Status = NDIS_STATUS_FAILURE;
+		pFiltMod->DataRateMappingTable = NULL;
+		ExFreePoolWithTag(pDRMT, NPF_DOT11_POOL_TAG);
 	}
 	TRACE_EXIT();
 	return Status;
@@ -1017,13 +1069,12 @@ NPF_LookUpDataRateMappingTable(
 )
 {
 	UINT i;
-	PDOT11_DATA_RATE_MAPPING_TABLE pTable = &pFiltMod->DataRateMappingTable;
+	PDOT11_DATA_RATE_MAPPING_TABLE pTable = pFiltMod->DataRateMappingTable;
 	USHORT usRetDataRateValue = 0;
 	TRACE_ENTER();
 
-	if (!pFiltMod->HasDataRateMappingTable)
+	if (!pTable)
 	{
-		INFO_DBG("Data rate mapping table not found, Open = %p\n", pFiltMod);
 		TRACE_EXIT();
 		return usRetDataRateValue;
 	}
@@ -1826,7 +1877,6 @@ NPF_CreateFilterModule(
 	pFiltMod->BlockRxPath = FALSE;
 
 	pFiltMod->Dot11 = FALSE;
-	pFiltMod->HasDataRateMappingTable = FALSE;
 
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;

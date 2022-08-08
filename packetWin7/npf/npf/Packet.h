@@ -334,7 +334,6 @@ typedef struct _NPCAP_FILTER_MODULE
 	UINT SendToRxPath:1;
 	UINT BlockRxPath:1;
 	UINT Dot11:1;
-	UINT HasDataRateMappingTable:1;
 	UINT PacketFilterOK:1; // Have we correctly set HigherPacketFilter yet?
 	UINT Fragile:1; // Avoid OID set operations on these adapters
 
@@ -344,7 +343,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	ULONG MyLookaheadSize;
 	ULONG HigherLookaheadSize;
 #ifdef HAVE_DOT11_SUPPORT
-	DOT11_DATA_RATE_MAPPING_TABLE	DataRateMappingTable;
+	PDOT11_DATA_RATE_MAPPING_TABLE DataRateMappingTable;
 #endif
 
 	NDIS_SPIN_LOCK			OIDLock;		///< Lock for protection of state and outstanding sends and recvs
