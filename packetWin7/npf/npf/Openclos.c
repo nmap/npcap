@@ -1995,19 +1995,35 @@ Return Value:
 //-------------------------------------------------------------------
 
 static NDIS_STATUS NPF_ValidateParameters(
-	_Out_ PBOOLEAN bDot11,
-	_In_ NDIS_MEDIUM MiniportMediaType
+	_Out_ PBOOLEAN pbDot11,
+	_In_ NDIS_MEDIUM MiniportMediaType,
+	_In_opt_ NDIS_HANDLE MiniportMediaSpecificAttributes
         )
 {
+	NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
     // Verify the media type is supported.  This is a last resort; the
     // the filter should never have been bound to an unsupported miniport
     // to begin with.  If this driver is marked as a Mandatory filter (which
     // is the default for this sample; see the INF file), failing to attach
     // here will leave the network adapter in an unusable state.
     //
-	// The WiFi filter will only bind to the 802.11 wireless adapters.
-	*bDot11 = (g_Dot11SupportMode && MiniportMediaType == NdisMediumNative802_11);
-	return NDIS_STATUS_SUCCESS;
+	// The WiFi filter will only bind to the 802.11 wireless adapters that support NetworkMonitor mode.
+	*pbDot11 = (g_Dot11SupportMode && MiniportMediaType == NdisMediumNative802_11);
+#ifdef HAVE_DOT11_SUPPORT
+	if (*pbDot11 && MiniportMediaSpecificAttributes)
+	{
+		PNDIS_MINIPORT_ADAPTER_NATIVE_802_11_ATTRIBUTES pDot11Attrs = MiniportMediaSpecificAttributes;
+		if (pDot11Attrs->Header.Type == NDIS_OBJECT_TYPE_MINIPORT_ADAPTER_NATIVE_802_11_ATTRIBUTES)
+		{
+			if (!(pDot11Attrs->OpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR))
+			{
+				INFO_DBG("Adapter does not support NetMon\n");
+				Status = NDIS_STATUS_INVALID_PARAMETER;
+			}
+		}
+	}
+#endif
+	return Status;
 }
 
 _Use_decl_annotations_
@@ -2032,7 +2048,7 @@ NPF_AttachAdapter(
 	{
 		// FilterModuleGuidName = "{ADAPTER_GUID}-{FILTER_GUID}-0000"
 
-		returnStatus = NPF_ValidateParameters(&bDot11, AttachParameters->MiniportMediaType);
+		returnStatus = NPF_ValidateParameters(&bDot11, AttachParameters->MiniportMediaType, AttachParameters->MiniportMediaSpecificAttributes);
 		INFO_DBG("FilterModuleGuidName=%ws, bDot11=%u, MediaType=%d\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
 			bDot11, AttachParameters->MiniportMediaType);
@@ -2247,7 +2263,7 @@ NPF_Restart(
 	pFiltMod->AdapterBindingStatus = FilterRestarting;
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
-	Status = NPF_ValidateParameters(&bDot11, RestartParameters->MiniportMediaType);
+	Status = NPF_ValidateParameters(&bDot11, RestartParameters->MiniportMediaType, NULL);
 	NT_ASSERT(!bDot11 == !pFiltMod->Dot11);
 	if (Status != NDIS_STATUS_SUCCESS) {
 		goto NPF_Restart_End;
