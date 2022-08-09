@@ -156,22 +156,6 @@ NPF_DoInternalRequest(
 	);
 
 /*!
-  \brief Self-sent request handler.
-  \param FilterModuleContext Pointer to the filter context structure.
-  \param NdisRequest Pointer to NDIS request.
-  \param Status Status of request completion.
-
-  NDIS entry point indicating completion of a pended self-sent NDIS_OID_REQUEST,
-  called by NPF_OidRequestComplete.
-*/
-VOID
-NPF_InternalRequestComplete(
-	_In_ NDIS_HANDLE                  FilterModuleContext,
-	_In_ PNDIS_OID_REQUEST            NdisRequest,
-	_In_ NDIS_STATUS                  Status
-	);
-
-/*!
   \brief Add the open context to the group open array of a filter module.
   \param pOpen Pointer to open context structure.
   \param pFiltMod Pointer to filter module context structure.
@@ -2737,8 +2721,13 @@ Arguments:
 	//
 	if (OriginalRequest == NULL)
 	{
-		INFO_DBG("Status = %#x\n", Status);
-		NPF_InternalRequestComplete(pFiltMod, Request, Status);
+		INFO_DBG("pFiltMod(%p) INTERNAL_REQUEST Oid %#x, Status %x\n", pFiltMod, Request->DATA.Oid, Status);
+		PINTERNAL_REQUEST pRequest = CONTAINING_RECORD(Request, INTERNAL_REQUEST, Request);
+		NT_ASSERT(pRequest->pFiltMod == pFiltMod);
+		// Set the request result
+		pRequest->RequestStatus = Status;
+		// and awake the caller
+		NdisSetEvent(&pRequest->InternalRequestCompletedEvent);
 		TRACE_EXIT();
 		return;
 	}
@@ -3260,6 +3249,7 @@ NDIS_STATUS NPF_DoInternalRequest(
 	PNDIS_OID_REQUEST           NdisRequest = &FilterRequest.Request;
 	NDIS_STATUS                 Status = NDIS_STATUS_FAILURE;
 
+	FilterRequest.pFiltMod = pFiltMod;
 	FilterRequest.RequestStatus = NDIS_STATUS_PENDING;
 
 	*pBytesProcessed = 0;
@@ -3315,7 +3305,7 @@ NDIS_STATUS NPF_DoInternalRequest(
 
 	if (Status == NDIS_STATUS_PENDING)
 	{
-		// Wait for this event which is signaled by NPF_InternalRequestComplete,
+		// Wait for this event which is signaled by NPF_OidRequestComplete,
 		// which also sets RequestStatus appropriately
 		NdisWaitEvent(&FilterRequest.InternalRequestCompletedEvent, 0);
 		Status = FilterRequest.RequestStatus;
@@ -3366,53 +3356,4 @@ NDIS_STATUS NPF_DoInternalRequest(
 	INFO_DBG("pFiltMod(%p) OID %s %#x: Status = %#x\n", pFiltMod, RequestType == NdisRequestQueryInformation ? "GET" : "SET", Oid, Status);
 	TRACE_EXIT();
 	return Status;
-}
-
-//-------------------------------------------------------------------
-
-_Use_decl_annotations_
-VOID
-NPF_InternalRequestComplete(
-	NDIS_HANDLE                  FilterModuleContext,
-	PNDIS_OID_REQUEST            NdisRequest,
-	NDIS_STATUS                  Status
-	)
-/*++
-
-Routine Description:
-
-	NDIS entry point indicating completion of a pended NDIS_OID_REQUEST.
-
-Arguments:
-
-	FilterModuleContext - pointer to filter module context
-	NdisRequest - pointer to NDIS request
-	Status - status of request completion
-
-Return Value:
-
-	None
-
---*/
-{
-	PINTERNAL_REQUEST pRequest;
-
-	UNREFERENCED_PARAMETER(FilterModuleContext);
-
-	TRACE_ENTER();
-
-	pRequest = CONTAINING_RECORD(NdisRequest, INTERNAL_REQUEST, Request);
-
-	//
-	// Set the request result
-	//
-	pRequest->RequestStatus = Status;
-	INFO_DBG("pRequest->RequestStatus = Status = %x\n", Status);
-
-	//
-	// and awake the caller
-	//
-	NdisSetEvent(&pRequest->InternalRequestCompletedEvent);
-
-	TRACE_EXIT();
 }

@@ -225,6 +225,8 @@ PACKET_OID_DATA, * PPACKET_OID_DATA;
 
 C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
 
+typedef struct _NPCAP_FILTER_MODULE NPCAP_FILTER_MODULE, * PNPCAP_FILTER_MODULE;
+
 /*!
   \brief Stores an OID request.
 
@@ -236,12 +238,12 @@ C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
 */
 typedef struct _INTERNAL_REQUEST
 {
+	PNPCAP_FILTER_MODULE pFiltMod;
 	NDIS_EVENT			InternalRequestCompletedEvent;
 	NDIS_OID_REQUEST	Request;			///< The structure with the actual request, that will be passed to NdisRequest().
 	NDIS_STATUS			RequestStatus;
 } INTERNAL_REQUEST, *PINTERNAL_REQUEST;
 
-typedef struct _NPCAP_FILTER_MODULE NPCAP_FILTER_MODULE, * PNPCAP_FILTER_MODULE;
 /*!
   \brief Port device extension.
 
