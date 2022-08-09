@@ -2067,7 +2067,7 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		// Determine whether this is the legacy loopback adapter
-		if (NPF_EqualAdapterName(&g_LoopbackAdapterName, AttachParameters->BaseMiniportName, 0))
+		if (NPF_EqualAdapterName(&g_LoopbackAdapterName, AttachParameters->BaseMiniportName, DEVICE_PATH_CCH))
 		{
 			// This request is for the legacy loopback adapter listed in the Registry.
 			// Since we now have a fake filter module for this, deny the binding.
@@ -2100,12 +2100,12 @@ NPF_AttachAdapter(
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
-		if (NPF_ContainsAdapterName(&g_SendToRxAdapterName, AttachParameters->BaseMiniportName))
+		if (NPF_ContainsAdapterName(&g_SendToRxAdapterName, &pFiltMod->AdapterName))
 		{
 			pFiltMod->SendToRxPath = TRUE;
 		}
 		// Determine whether this is our block-Rx adapter for the open_instance.
-		if (NPF_ContainsAdapterName(&g_BlockRxAdapterName, AttachParameters->BaseMiniportName))
+		if (NPF_ContainsAdapterName(&g_BlockRxAdapterName, &pFiltMod->AdapterName))
 		{
 			pFiltMod->BlockRxPath = TRUE;
 		}
@@ -2133,7 +2133,7 @@ NPF_AttachAdapter(
 
 		INFO_DBG(
 			"Opened the device %ws, BindingContext=%p, dot11=%u",
-			AttachParameters->BaseMiniportName->Buffer,
+			pFiltMod->AdapterName.Buffer,
 			pFiltMod,
 			pFiltMod->Dot11);
 
