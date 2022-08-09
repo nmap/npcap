@@ -3258,33 +3258,28 @@ NDIS_STATUS NPF_DoInternalRequest(
 	NdisInitializeEvent(&FilterRequest.InternalRequestCompletedEvent);
 	NdisResetEvent(&FilterRequest.InternalRequestCompletedEvent);
 
-	if (*((PVOID *) FilterRequest.Request.SourceReserved) != NULL)
-	{
-		*((PVOID *) FilterRequest.Request.SourceReserved) = NULL; //indicates this is a self-sent request
-	}
 
 	NdisRequest->Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
 	NdisRequest->Header.Revision = NDIS_OID_REQUEST_REVISION_1;
 	NdisRequest->Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
 	NdisRequest->RequestType = RequestType;
 	NdisRequest->RequestHandle = pFiltMod->AdapterHandle;
+	*(PVOID *)NdisRequest->SourceReserved = NULL; //indicates this is a self-sent request
+	NdisRequest->DATA.Oid = Oid;
 
 	switch (RequestType)
 	{
 		case NdisRequestQueryInformation:
-			NdisRequest->DATA.QUERY_INFORMATION.Oid = Oid;
 			NdisRequest->DATA.QUERY_INFORMATION.InformationBuffer = InformationBuffer;
 			NdisRequest->DATA.QUERY_INFORMATION.InformationBufferLength = InformationBufferLength;
 			break;
 
 		case NdisRequestSetInformation:
-			NdisRequest->DATA.SET_INFORMATION.Oid = Oid;
 			NdisRequest->DATA.SET_INFORMATION.InformationBuffer = InformationBuffer;
 			NdisRequest->DATA.SET_INFORMATION.InformationBufferLength = InformationBufferLength;
 			break;
 
 		case NdisRequestMethod:
-			NdisRequest->DATA.METHOD_INFORMATION.Oid = Oid;
 			NdisRequest->DATA.METHOD_INFORMATION.MethodId = MethodId;
 			NdisRequest->DATA.METHOD_INFORMATION.InformationBuffer = InformationBuffer;
 			NdisRequest->DATA.METHOD_INFORMATION.InputBufferLength = InformationBufferLength;
