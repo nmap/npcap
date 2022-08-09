@@ -631,14 +631,8 @@ NPF_registerLWF(
 
 	NdisZeroMemory(pFChars, sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS));
 	pFChars->Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
-	pFChars->Header.Size = sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS);
-#if NDIS_SUPPORT_NDIS680
-	pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_3;
-#elif NDIS_SUPPORT_NDIS61
-	pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_2;
-#else
-	pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
-#endif
+	pFChars->Header.Revision = NPCAP_REVISION_NDIS_FILTER_DRIVER_CHARACTERISTICS;
+	pFChars->Header.Size = NPCAP_SIZEOF_NDIS_FILTER_DRIVER_CHARACTERISTICS;
 
 	pFChars->MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION;
 	pFChars->MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
@@ -1773,8 +1767,8 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	RtlZeroMemory(pRequest, sizeof(INTERNAL_REQUEST));
 
 	pRequest->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
-	pRequest->Request.Header.Revision = NDIS_OID_REQUEST_REVISION_1;
-	pRequest->Request.Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
+	pRequest->Request.Header.Revision = NPCAP_REVISION_NDIS_OID_REQUEST;
+	pRequest->Request.Header.Size = NPCAP_SIZEOF_NDIS_OID_REQUEST;
 
 	/* NDIS_OID_REQUEST.InformationBuffer must be non-paged */
 	// TODO: Test whether this copy needs to happen. Buffered I/O ought to

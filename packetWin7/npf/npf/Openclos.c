@@ -1880,8 +1880,8 @@ NPF_CreateFilterModule(
 
 		NdisZeroMemory(&PoolParameters, sizeof(NET_BUFFER_LIST_POOL_PARAMETERS));
 		PoolParameters.Header.Type = NDIS_OBJECT_TYPE_DEFAULT;
-		PoolParameters.Header.Revision = NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
-		PoolParameters.Header.Size = NDIS_SIZEOF_NET_BUFFER_LIST_POOL_PARAMETERS_REVISION_1;
+		PoolParameters.Header.Revision = NPCAP_REVISION_NET_BUFFER_LIST_POOL_PARAMETERS;
+		PoolParameters.Header.Size = NPCAP_SIZEOF_NET_BUFFER_LIST_POOL_PARAMETERS;
 		PoolParameters.ProtocolId = NDIS_PROTOCOL_ID_DEFAULT;
 		PoolParameters.fAllocateNetBuffer = TRUE;
 		PoolParameters.ContextSize = sizeof(PACKET_RESERVED);
@@ -2096,9 +2096,9 @@ NPF_AttachAdapter(
 #endif
 
 		NdisZeroMemory(&FilterAttributes, sizeof(NDIS_FILTER_ATTRIBUTES));
-		FilterAttributes.Header.Revision = NDIS_FILTER_ATTRIBUTES_REVISION_1;
-		FilterAttributes.Header.Size = sizeof(NDIS_FILTER_ATTRIBUTES);
 		FilterAttributes.Header.Type = NDIS_OBJECT_TYPE_FILTER_ATTRIBUTES;
+		FilterAttributes.Header.Revision = NPCAP_REVISION_NDIS_FILTER_ATTRIBUTES;
+		FilterAttributes.Header.Size = NPCAP_SIZEOF_NDIS_FILTER_ATTRIBUTES;
 		FilterAttributes.Flags = 0;
 
 		NDIS_DECLARE_FILTER_MODULE_CONTEXT(NPCAP_FILTER_MODULE);
@@ -3260,8 +3260,8 @@ NDIS_STATUS NPF_DoInternalRequest(
 
 
 	NdisRequest->Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
-	NdisRequest->Header.Revision = NDIS_OID_REQUEST_REVISION_1;
-	NdisRequest->Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
+	NdisRequest->Header.Revision = NPCAP_REVISION_NDIS_OID_REQUEST;
+	NdisRequest->Header.Size = NPCAP_SIZEOF_NDIS_OID_REQUEST;
 	NdisRequest->RequestType = RequestType;
 	NdisRequest->RequestHandle = pFiltMod->AdapterHandle;
 	*(PVOID *)NdisRequest->SourceReserved = NULL; //indicates this is a self-sent request
