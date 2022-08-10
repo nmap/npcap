@@ -390,11 +390,22 @@ NPF_OpenAdapter(
 	PIO_STACK_LOCATION		IrpSp;
 	ULONG idx;
 	PUNICODE_STRING FileName;
-	NDIS_HANDLE NdisFilterHandle = ((PDEVICE_EXTENSION)(DeviceObject->DeviceExtension))->FilterDriverHandle;
+	PDEVICE_EXTENSION pDevExt = DeviceObject->DeviceExtension;
+	NDIS_HANDLE NdisFilterHandle = pDevExt->FilterDriverHandle;
 
 	TRACE_ENTER();
 
 	IrpSp = IoGetCurrentIrpStackLocation(Irp);
+
+	// I/O manager should not be handing us IRPs until DriverEntry returns,
+	// but we can exercise healthy paranoia
+	if (!NT_VERIFY(NdisFilterHandle) || !NT_VERIFY(pDevExt->AllOpensLock))
+	{
+		Irp->IoStatus.Status = STATUS_DEVICE_NOT_READY;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		TRACE_EXIT();
+		return STATUS_DEVICE_NOT_READY;
+	}
 
 	FileName = &IrpSp->FileObject->FileName;
 	// Skip leading slashes
@@ -447,7 +458,7 @@ NPF_OpenAdapter(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 	Open->UserPID = IoGetRequestorProcessId(Irp);
-	Open->DeviceExtension = DeviceObject->DeviceExtension;
+	Open->DeviceExtension = pDevExt;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	INFO_DBG(
@@ -2089,10 +2100,12 @@ NPF_AttachAdapter(
 
 
 		// Initial attach may be done before driver has finished loading and device is created, so be safe.
-		if (pNpcapDeviceObject && pNpcapDeviceObject->DeviceExtension
+		PDEVICE_EXTENSION pDevExt = NULL;
+		if (pNpcapDeviceObject && NULL != (pDevExt = pNpcapDeviceObject->DeviceExtension)
+				// When this runs during DriverEntry, this lock may not be set up yet.
+				&& NULL != pDevExt->AllOpensLock
 				// Pretty sure this can't happen, but it'd be bad to proceed here if it did.
 				&& pFiltMod->AdapterID.Value != 0) {
-			PDEVICE_EXTENSION pDevExt = pNpcapDeviceObject->DeviceExtension;
 			ULONG NewPacketFilter = 0;
 			ULONG NewLookaheadSize = 0;
 			// Traverse the AllOpens list looking for detached instances.

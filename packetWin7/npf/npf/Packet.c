@@ -300,8 +300,6 @@ DriverEntry(
 	UNICODE_STRING sddl_admin_only = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN);
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
 	UNICODE_STRING AdapterName = RTL_CONSTANT_STRING(DEVICE_PATH_PREFIX NPF_DRIVER_NAME_WIDECHAR);
-	NDIS_HANDLE FilterDriverHandle = NULL; // NDIS handle for filter driver
-	NDIS_HANDLE FilterDriverHandle_WiFi = NULL; // NDIS handle for WiFi filter driver
 
 	NDIS_STRING strKeQuerySystemTimePrecise;
 
@@ -431,38 +429,10 @@ DriverEntry(
 		return Status;
 	}
 
-	/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */
-	NdisAllocateSpinLock(&g_FilterArrayLock);
-
-	// Register the filter to NDIS.
-	Status = NdisFRegisterFilterDriver(DriverObject,
-		(NDIS_HANDLE) devExtP,
-		&FChars,
-		&FilterDriverHandle);
-	if (Status != NDIS_STATUS_SUCCESS)
-	{
-		FilterDriverHandle = NULL;
-		NdisFreeSpinLock(&g_FilterArrayLock);
-		ERROR_DBG("NdisFRegisterFilterDriver failed: %#08x\n", Status);
-		IoDeleteSymbolicLink(&deviceSymLink);
-		IoDeleteDevice(devObjP);
-
-		TRACE_EXIT();
-		return Status;
-	}
-	INFO_DBG("FilterDriverHandle = %p\n", FilterDriverHandle);
-
 	// Initialize DEVICE_EXTENSION
 	do {
 		Status = STATUS_INSUFFICIENT_RESOURCES; // Status for any of the below failures
-		devExtP->FilterDriverHandle = FilterDriverHandle;
 		InitializeListHead(&devExtP->AllOpens);
-		devExtP->AllOpensLock = NdisAllocateRWLock(FilterDriverHandle);
-		if (devExtP->AllOpensLock == NULL)
-		{
-			ERROR_DBG("Failed to allocate AllOpensLock\n");
-			break;
-		}
 
 		Status = ExInitializeLookasideListEx(&devExtP->BufferPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(BUFCHAIN_ELEM), NPF_PACKET_DATA_TAG, 0);
 		if (Status != STATUS_SUCCESS)
@@ -535,11 +505,43 @@ DriverEntry(
 		}
 #endif
 
+		/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */
+		NdisAllocateSpinLock(&g_FilterArrayLock);
+		pNpcapDeviceObject = devObjP;
+		KeMemoryBarrier();
+
+		// Register the filter to NDIS.
+		Status = NdisFRegisterFilterDriver(DriverObject,
+				(NDIS_HANDLE) devExtP,
+				&FChars,
+				&devExtP->FilterDriverHandle);
+		if (Status != NDIS_STATUS_SUCCESS)
+		{
+			ERROR_DBG("NdisFRegisterFilterDriver failed: %#08x\n", Status);
+			break;
+		}
+		INFO_DBG("FilterDriverHandle = %p\n", devExtP->FilterDriverHandle);
+
+		// Now that we have a NDIS handle, we can allocate this lock.
+		// Win8 and up allow NULL instead, but Win7 does not, and SAL complains anyway.
+		devExtP->AllOpensLock = NdisAllocateRWLock(devExtP->FilterDriverHandle);
+		if (devExtP->AllOpensLock == NULL)
+		{
+			ERROR_DBG("Failed to allocate AllOpensLock\n");
+			break;
+		}
 		Status = STATUS_SUCCESS;
 	} while (0);
 
 	if (!NT_SUCCESS(Status))
 	{
+		if (devExtP->FilterDriverHandle)
+			NdisFDeregisterFilterDriver(devExtP->FilterDriverHandle);
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		NPF_WFPCalloutUnregister(devObjP);
+#endif
+
 #ifdef HAVE_DOT11_SUPPORT
 		if (devExtP->bDot11HeaderPoolInit)
 			ExDeleteLookasideListEx(&devExtP->Dot11HeaderPool);
@@ -558,10 +560,25 @@ DriverEntry(
 			ExDeleteLookasideListEx(&devExtP->BufferPool);
 		if (devExtP->AllOpensLock)
 			NdisFreeRWLock(devExtP->AllOpensLock);
-		NdisFDeregisterFilterDriver(FilterDriverHandle);
 		NdisFreeSpinLock(&g_FilterArrayLock);
 		IoDeleteSymbolicLink(&deviceSymLink);
 		IoDeleteDevice(devObjP);
+
+		if (g_LoopbackAdapterName.Buffer != NULL)
+		{
+			ExFreePool(g_LoopbackAdapterName.Buffer);
+			g_LoopbackAdapterName.Buffer = NULL;
+		}
+		if (g_SendToRxAdapterName.Buffer != NULL)
+		{
+			ExFreePool(g_SendToRxAdapterName.Buffer);
+			g_SendToRxAdapterName.Buffer = NULL;
+		}
+		if (g_BlockRxAdapterName.Buffer != NULL)
+		{
+			ExFreePool(g_BlockRxAdapterName.Buffer);
+			g_BlockRxAdapterName.Buffer = NULL;
+		}
 
 		TRACE_EXIT();
 		return Status;
@@ -574,7 +591,7 @@ DriverEntry(
 			// Create the fake "filter module" for loopback capture
 			// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
 			NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
-			PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(FilterDriverHandle, &LoopbackDeviceName);
+			PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(devExtP->FilterDriverHandle, &LoopbackDeviceName);
 			if (pFiltMod == NULL)
 			{
 				WARNING_DBG("Could not create filter module for loopback.\n");
@@ -598,18 +615,15 @@ DriverEntry(
 		Status = NdisFRegisterFilterDriver(DriverObject,
 			(NDIS_HANDLE) devExtP,
 			&FChars_WiFi,
-			&FilterDriverHandle_WiFi);
+			&devExtP->FilterDriverHandle_WiFi);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
 			ERROR_DBG("NdisFRegisterFilterDriver(WiFi) failed: %#08x\n", Status);
-			FilterDriverHandle_WiFi = NULL;
 			// We still run the driver even with the 2nd filter doesn't work.
 		}
-		INFO_DBG("FilterDriverHandle_WiFi = %p\n", FilterDriverHandle_WiFi);
-		devExtP->FilterDriverHandle_WiFi = FilterDriverHandle_WiFi;
+		INFO_DBG("FilterDriverHandle_WiFi = %p\n", devExtP->FilterDriverHandle_WiFi);
 	}
 
-	pNpcapDeviceObject = devObjP;
 	TRACE_EXIT();
 	return STATUS_SUCCESS;
 }
