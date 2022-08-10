@@ -625,6 +625,40 @@ typedef __declspec(align(MEMORY_ALLOCATION_ALIGNMENT)) struct _PACKET_RESERVED
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);\
 	return STATUS_UNSUCCESSFUL;\
 
+/*!
+  \brief Utility routine that forms and sends an NDIS_OID_REQUEST to the miniport adapter.
+  \param FilterModuleContext Pointer to the filter context structure.
+  \param RequestType NdisRequest[Set|Query|method]Information.
+  \param Oid The object being set/queried.
+  \param InformationBuffer Data for the request.
+  \param InformationBufferLength Length of the above.
+  \param OutputBufferLength Valid only for method request.
+  \param MethodId Valid only for method request.
+  \param pBytesProcessed Place to return bytes read/written.
+  \return Status of the set/query request.
+
+  Utility routine that forms and sends an NDIS_OID_REQUEST to the miniport,
+  waits for it to complete, and returns status to the caller.
+  NOTE: this assumes that the calling routine ensures validity
+  of the filter handle until this returns.
+*/
+_IRQL_requires_(PASSIVE_LEVEL)
+NDIS_STATUS
+NPF_DoInternalRequest(
+		_At_(pFiltMod->AdapterBindingStatus, _In_range_(FilterPausing, FilterRestarting))
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ NDIS_REQUEST_TYPE				RequestType,
+	_In_ NDIS_OID						Oid,
+	_When_(RequestType == NdisRequestQueryInformation, _Out_writes_bytes_to_(InformationBufferLength, *pBytesProcessed))
+	_When_(RequestType == NdisRequestSetInformation, _In_reads_bytes_(InformationBufferLength))
+	_When_(RequestType == NdisRequestMethod, _Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed))
+	PVOID								InformationBuffer,
+	_In_ ULONG							InformationBufferLength,
+	_In_opt_ ULONG						OutputBufferLength,
+	_In_ ULONG							MethodId,
+	_Out_ PULONG						pBytesProcessed
+	);
+
 /**
  *  @}
  */

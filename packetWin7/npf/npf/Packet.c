@@ -1509,7 +1509,6 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	       _In_ BOOLEAN bSetOid,
 	       _Out_ PULONG_PTR Info)
 {
-	PINTERNAL_REQUEST pRequest = NULL;
 	PVOID OidBuffer = NULL;
 	LOCK_STATE_EX lockState;
 	ULONG ulTmp = 0;
@@ -1755,21 +1754,6 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 
 	//  The buffer is valid
 
-	// Extract a request from the list of free ones
-	pRequest = (PINTERNAL_REQUEST) ExAllocateFromLookasideListEx(&pOpen->DeviceExtension->InternalRequestPool);
-	if (pRequest == NULL)
-	{
-		INFO_DBG("pRequest=NULL\n");
-		Status = STATUS_INSUFFICIENT_RESOURCES;
-		goto OID_REQUEST_DONE;
-	}
-	// This also zeroes the NDIS_OID_REQUEST structure.
-	RtlZeroMemory(pRequest, sizeof(INTERNAL_REQUEST));
-
-	pRequest->Request.Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
-	pRequest->Request.Header.Revision = NPCAP_REVISION_NDIS_OID_REQUEST;
-	pRequest->Request.Header.Size = NPCAP_SIZEOF_NDIS_OID_REQUEST;
-
 	/* NDIS_OID_REQUEST.InformationBuffer must be non-paged */
 	// TODO: Test whether this copy needs to happen. Buffered I/O ought to
 	// mean AssociatedIrp.SystemBuffer is non-paged already and is not
@@ -1783,70 +1767,36 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	}
 	RtlCopyMemory(OidBuffer, OidData->Data, OidData->Length);
 
-	if (bSetOid)
-	{
-		pRequest->Request.RequestType = NdisRequestSetInformation;
-		pRequest->Request.DATA.SET_INFORMATION.Oid = OidData->Oid;
+	Status = NPF_DoInternalRequest(pOpen->pFiltMod,
+			bSetOid ? NdisRequestSetInformation : NdisRequestQueryInformation,
+			OidData->Oid,
+			OidBuffer,
+			OidData->Length,
+			0, 0,
+			&ulTmp);
 
-		pRequest->Request.DATA.SET_INFORMATION.InformationBuffer = OidBuffer;
-		pRequest->Request.DATA.SET_INFORMATION.InformationBufferLength = OidData->Length;
-	}
-	else
-	{
-		pRequest->Request.RequestType = NdisRequestQueryInformation;
-		pRequest->Request.DATA.QUERY_INFORMATION.Oid = OidData->Oid;
-
-		pRequest->Request.DATA.QUERY_INFORMATION.InformationBuffer = OidBuffer;
-		pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength = OidData->Length;
-	}
-
-	NdisInitializeEvent(&pRequest->InternalRequestCompletedEvent);
-	NdisResetEvent(&pRequest->InternalRequestCompletedEvent);
-
-	if (*((PVOID *) pRequest->Request.SourceReserved) != NULL)
-	{
-		*((PVOID *) pRequest->Request.SourceReserved) = NULL;
-	}
-
-	//
-	//  submit the request
-	//
-	pRequest->Request.RequestId = (PVOID) NPF_REQUEST_ID;
-	pRequest->Request.RequestHandle = pOpen->pFiltMod->AdapterHandle;
-	// ASSERT(pOpen->pFiltMod->AdapterHandle != NULL);
-
-	Status = NdisFOidRequest(pOpen->pFiltMod->AdapterHandle, &pRequest->Request);
-
-	if (Status == NDIS_STATUS_PENDING)
-	{
-		NdisWaitEvent(&pRequest->InternalRequestCompletedEvent, 0);
-		Status = pRequest->RequestStatus;
-	}
 
 	//
 	// Complete the request
 	//
 	if (bSetOid)
 	{
-		OidData->Length = pRequest->Request.DATA.SET_INFORMATION.BytesRead;
+		OidData->Length = ulTmp;
 		INFO_DBG("BIOCSETOID completed, BytesRead = %u\n", OidData->Length);
 		*Info = FIELD_OFFSET(PACKET_OID_DATA, Data);
 	}
 	else
 	{
-		ulTmp = pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten;
-
 		// check for the stupid bug of the Nortel driver ipsecw2k.sys v. 4.10.0.0 that doesn't set the BytesWritten correctly
 		// The driver is the one shipped with Nortel client Contivity VPN Client V04_65.18, and the MD5 for the buggy (unsigned) driver
 		// is 3c2ff8886976214959db7d7ffaefe724 *ipsecw2k.sys (there are multiple copies of this binary with the same exact version info!)
 		//
 		// The (certified) driver shipped with Nortel client Contivity VPN Client V04_65.320 doesn't seem affected by the bug.
 		//
-		//if (pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten > pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength)
 		if (ulTmp > OidData->Length)
 		{
 			INFO_DBG("Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!\n",
-					pRequest->Request.DATA.QUERY_INFORMATION.BytesWritten, pRequest->Request.DATA.QUERY_INFORMATION.InformationBufferLength);
+					ulTmp, OidData->Length);
 			ulTmp = OidData->Length; // truncate
 			Status = NDIS_STATUS_INVALID_DATA;
 		}
@@ -1883,12 +1833,6 @@ OID_REQUEST_DONE:
 	if (OidBuffer != NULL)
 	{
 		ExFreePoolWithTag(OidBuffer, NPF_USER_OID_TAG);
-	}
-
-	if (pRequest)
-	{
-		ExFreeToLookasideListEx(&pOpen->DeviceExtension->InternalRequestPool, pRequest);
-		pRequest = NULL;
 	}
 
 	NPF_StopUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN);
