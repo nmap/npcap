@@ -3211,19 +3211,27 @@ NDIS_STATUS NPF_DoInternalRequest(
 	// NdisFOidRequest requires Restarting, Running, Pausing, or Paused state.
 	NT_ASSERT(pFiltMod->AdapterBindingStatus >= FilterPausing && pFiltMod->AdapterBindingStatus <= FilterRestarting);
 
-	INTERNAL_REQUEST            FilterRequest = { 0 };
-	PNDIS_OID_REQUEST           NdisRequest = &FilterRequest.Request;
 	NDIS_STATUS                 Status = NDIS_STATUS_FAILURE;
 
-	FilterRequest.pFiltMod = pFiltMod;
-	FilterRequest.RequestStatus = NDIS_STATUS_PENDING;
-
 	*pBytesProcessed = 0;
-	NdisZeroMemory(NdisRequest, sizeof(NDIS_OID_REQUEST));
 
-	NdisInitializeEvent(&FilterRequest.InternalRequestCompletedEvent);
-	NdisResetEvent(&FilterRequest.InternalRequestCompletedEvent);
+	PDEVICE_EXTENSION pDevExt = pNpcapDeviceObject->DeviceExtension;
+	PINTERNAL_REQUEST pInternalRequest = ExAllocateFromLookasideListEx(&pDevExt->InternalRequestPool);
+	if (pInternalRequest == NULL)
+	{
+		ERROR_DBG("Failed to allocate pInternalRequest\n");
+		Status = NDIS_STATUS_RESOURCES;
+		goto InternalRequestExit;
+	}
+	RtlZeroMemory(pInternalRequest, sizeof(INTERNAL_REQUEST));
 
+	PNDIS_OID_REQUEST NdisRequest = &pInternalRequest->Request;
+
+	pInternalRequest->pFiltMod = pFiltMod;
+	pInternalRequest->RequestStatus = NDIS_STATUS_PENDING;
+
+	NdisInitializeEvent(&pInternalRequest->InternalRequestCompletedEvent);
+	NdisResetEvent(&pInternalRequest->InternalRequestCompletedEvent);
 
 	NdisRequest->Header.Type = NDIS_OBJECT_TYPE_OID_REQUEST;
 	NdisRequest->Header.Revision = NPCAP_REVISION_NDIS_OID_REQUEST;
@@ -3254,10 +3262,10 @@ NDIS_STATUS NPF_DoInternalRequest(
 
 		default:
 			INFO_DBG("Unsupported RequestType: %d\n", RequestType);
-			INFO_DBG("Status = %x\n", Status);
 			TRACE_EXIT();
-			return Status;
-			// break;
+			Status = NDIS_STATUS_INVALID_PARAMETER;
+			goto InternalRequestExit;
+			break;
 	}
 
 	NdisRequest->RequestId = (PVOID)NPF_REQUEST_ID;
@@ -3268,44 +3276,34 @@ NDIS_STATUS NPF_DoInternalRequest(
 	{
 		// Wait for this event which is signaled by NPF_OidRequestComplete,
 		// which also sets RequestStatus appropriately
-		NdisWaitEvent(&FilterRequest.InternalRequestCompletedEvent, 0);
-		Status = FilterRequest.RequestStatus;
+		NdisWaitEvent(&pInternalRequest->InternalRequestCompletedEvent, 0);
+		Status = pInternalRequest->RequestStatus;
 	}
 
 	if (Status == NDIS_STATUS_SUCCESS)
 	{
-		if (RequestType == NdisRequestSetInformation)
-		{
-			*pBytesProcessed = NdisRequest->DATA.SET_INFORMATION.BytesRead;
-		}
-
-		if (RequestType == NdisRequestQueryInformation)
-		{
-			*pBytesProcessed = NdisRequest->DATA.QUERY_INFORMATION.BytesWritten;
-		}
-
-		if (RequestType == NdisRequestMethod)
-		{
-			*pBytesProcessed = NdisRequest->DATA.METHOD_INFORMATION.BytesWritten;
-		}
-
-		//
 		// The driver below should set the correct value to BytesWritten
 		// or BytesRead. But now, we just truncate the value to InformationBufferLength
-		//
-		if (RequestType == NdisRequestMethod)
+		// due to bug in Nortel driver ipsecw2k.sys v. 4.10.0.0 that doesn't set the BytesWritten correctly
+		// The driver is the one shipped with Nortel client Contivity VPN Client V04_65.18, and the MD5 for the buggy (unsigned) driver
+		// is 3c2ff8886976214959db7d7ffaefe724 *ipsecw2k.sys (there are multiple copies of this binary with the same exact version info!)
+		// The (certified) driver shipped with Nortel client Contivity VPN Client V04_65.320 doesn't seem affected by the bug.
+		switch (RequestType)
 		{
-			if (*pBytesProcessed > OutputBufferLength)
-			{
-				*pBytesProcessed = OutputBufferLength;
-			}
-		}
-		else
-		{
-			if (*pBytesProcessed > InformationBufferLength)
-			{
-				*pBytesProcessed = InformationBufferLength;
-			}
+			case NdisRequestSetInformation:
+				*pBytesProcessed = min(NdisRequest->DATA.SET_INFORMATION.BytesRead, InformationBufferLength);
+				break;
+			case NdisRequestQueryInformation:
+				*pBytesProcessed = min(NdisRequest->DATA.QUERY_INFORMATION.BytesWritten, InformationBufferLength);
+				break;
+			case NdisRequestMethod:
+				*pBytesProcessed = min(NdisRequest->DATA.METHOD_INFORMATION.BytesWritten, OutputBufferLength);
+				break;
+			default:
+				NT_ASSERT(RequestType && FALSE);
+				Status = NDIS_STATUS_FAILURE;
+				goto InternalRequestExit;
+				break;
 		}
 	}
 	else if (Status == NDIS_STATUS_INDICATION_REQUIRED)
@@ -3314,6 +3312,12 @@ NDIS_STATUS NPF_DoInternalRequest(
 		WARNING_DBG("pFiltMod(%p) OID %#x NDIS_STATUS_INDICATION_REQUIRED\n", pFiltMod, Oid);
 	}
 
+InternalRequestExit:
+
+	if (pInternalRequest)
+	{
+		ExFreeToLookasideListEx(&pDevExt->InternalRequestPool, pInternalRequest);
+	}
 	INFO_DBG("pFiltMod(%p) OID %s %#x: Status = %#x\n", pFiltMod, RequestType == NdisRequestQueryInformation ? "GET" : "SET", Oid, Status);
 	TRACE_EXIT();
 	return Status;

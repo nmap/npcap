@@ -1787,20 +1787,6 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	}
 	else
 	{
-		// check for the stupid bug of the Nortel driver ipsecw2k.sys v. 4.10.0.0 that doesn't set the BytesWritten correctly
-		// The driver is the one shipped with Nortel client Contivity VPN Client V04_65.18, and the MD5 for the buggy (unsigned) driver
-		// is 3c2ff8886976214959db7d7ffaefe724 *ipsecw2k.sys (there are multiple copies of this binary with the same exact version info!)
-		//
-		// The (certified) driver shipped with Nortel client Contivity VPN Client V04_65.320 doesn't seem affected by the bug.
-		//
-		if (ulTmp > OidData->Length)
-		{
-			INFO_DBG("Bogus return from NdisRequest (query): Bytes Written (%u) > InfoBufferLength (%u)!!\n",
-					ulTmp, OidData->Length);
-			ulTmp = OidData->Length; // truncate
-			Status = NDIS_STATUS_INVALID_DATA;
-		}
-
 		// Don't trust that the length fits in the output buffer
 		if (FIELD_OFFSET(PACKET_OID_DATA, Data) + ulTmp > ulBufLenOut)
 		{
