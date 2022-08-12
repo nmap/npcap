@@ -287,14 +287,16 @@ typedef struct _INTERNAL_REQUEST
 
   Structure containing some data relative to every device NPF exposes
 */
-typedef struct _DEVICE_EXTENSION
+typedef struct _NPCAP_DRIVER_EXTENSION
 {
-	PWSTR		ExportString;			///< Name of the exported device, i.e. name that the applications will use
-										///< to open this adapter through Packet.dll.
-	LIST_ENTRY AllOpens;
-	PNDIS_RW_LOCK_EX AllOpensLock;
+	PDEVICE_OBJECT pNpcapDeviceObject;
 	NDIS_HANDLE FilterDriverHandle;
 	NDIS_HANDLE FilterDriverHandle_WiFi;
+
+	SINGLE_LIST_ENTRY arrFiltMod; //Adapter filter module list head
+	NDIS_SPIN_LOCK FilterArrayLock; //The lock for adapter filter module list.
+	LIST_ENTRY AllOpens;
+	PNDIS_RW_LOCK_EX AllOpensLock;
 
 	LOOKASIDE_LIST_EX BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
 	LOOKASIDE_LIST_EX NBLCopyPool; // Pool of NPF_NBL_COPY, NPF_NB_COPIES, NPF_SRC_NB objects
@@ -323,7 +325,26 @@ typedef struct _DEVICE_EXTENSION
 	UINT32 uCalloutInboundV4;
 	UINT32 uCalloutInboundV6;
 
-} DEVICE_EXTENSION, *PDEVICE_EXTENSION;
+	// Registry config variables
+	BOOLEAN bLoopbackSupportMode:1;
+	BOOLEAN bAdminOnlyMode:1;
+	BOOLEAN bDltNullMode:1;
+	BOOLEAN bDot11SupportMode:1;
+	BOOLEAN bVlanSupportMode:1;
+	BOOLEAN bTestMode:1;
+
+	ULONG TimestampMode;
+
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	NDIS_STRING LoopbackAdapterName;
+#endif
+
+#ifdef HAVE_RX_SUPPORT
+	NDIS_STRING SendToRxAdapterName;
+	NDIS_STRING BlockRxAdapterName;
+#endif
+
+} NPCAP_DRIVER_EXTENSION, *PNPCAP_DRIVER_EXTENSION;
 
 typedef enum _FILTER_STATE
 {
@@ -412,7 +433,6 @@ typedef struct _OPEN_INSTANCE
     PNPCAP_FILTER_MODULE pFiltMod;
 	NET_LUID AdapterID;
 
-	PDEVICE_EXTENSION DeviceExtension;
 	ULONG					MyPacketFilter;
 	ULONG					MyLookaheadSize;
 	PKEVENT					ReadEvent;		///< Pointer to the event on which the read calls on this instance must wait.
@@ -551,16 +571,16 @@ NPF_ResetBufferContents(
 );
 
 VOID NPF_ReturnNBCopies(
-	_In_ PNPF_NB_COPIES pNBCopy,
-	_In_ PDEVICE_EXTENSION pDevExt);
+	_In_ PNPF_NB_COPIES pNBCopy
+	);
 
 VOID NPF_ReturnNBLCopy(
-	_In_ PNPF_NBL_COPY pNBLCopy,
-	_In_ PDEVICE_EXTENSION pDevExt);
+	_In_ PNPF_NBL_COPY pNBLCopy
+	);
 
 VOID NPF_ReturnCapData(
-	_In_ PNPF_CAP_DATA pCapData,
-	_In_ PDEVICE_EXTENSION pDevExt);
+	_In_ PNPF_CAP_DATA pCapData
+	);
 
 /*!
   \brief Function to free the Net Buffer Lists initiated by ourself.

@@ -84,6 +84,8 @@
 #define NPF_NONPAGED NonPagedPool
 #endif
 
+// NPCAP_DRIVER_EXTENSION
+#define NPF_DRIVER_EXTENSION_TAG 'EDpN'
 // UNICODE_STRING::Buffer
 #define NPF_UNICODE_BUFFER_TAG 'BUpN'
 // Things that are freed within the same function they are allocated in.

@@ -110,7 +110,7 @@
 #include "packet.h"
 #include <fwpsk.h>
 
-extern ULONG g_DltNullMode;
+extern PNPCAP_DRIVER_EXTENSION g_pDriverExtension;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
@@ -252,7 +252,7 @@ static int NPF_GetIPVersion(
 	}
 	else if (pFiltMod->Loopback)
 	{
-		if (g_DltNullMode)
+		if (g_pDriverExtension->bDltNullMode)
 		{
 			uCmp = ((PDLT_NULL_HEADER)pBuf)->null_type;
 		}
@@ -1066,11 +1066,11 @@ NPF_LoopbackSendNetBufferLists(
 
 	if (NdisTestNblFlag(NetBufferList, NDIS_NBL_FLAGS_IS_IPV4))
 	{
-		hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV4];
+		hInjectionHandle = g_pDriverExtension->hInject[NPF_INJECT_IPV4];
 	}
 	else if (NdisTestNblFlag(NetBufferList, NDIS_NBL_FLAGS_IS_IPV6))
 	{
-		hInjectionHandle = pOpen->DeviceExtension->hInject[NPF_INJECT_IPV6];
+		hInjectionHandle = g_pDriverExtension->hInject[NPF_INJECT_IPV6];
 	}
 	else
 	{
@@ -1079,7 +1079,7 @@ NPF_LoopbackSendNetBufferLists(
 		return STATUS_PROTOCOL_NOT_SUPPORTED;
 	}
 
-	bytesAdvanced = g_DltNullMode ? DLT_NULL_HDR_LEN : ETHER_HDR_LEN;
+	bytesAdvanced = g_pDriverExtension->bDltNullMode ? DLT_NULL_HDR_LEN : ETHER_HDR_LEN;
 
 	if (!NT_VERIFY(hInjectionHandle != NULL))
 	{

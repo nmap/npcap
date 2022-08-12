@@ -100,8 +100,7 @@
 // 
 // Global variables
 //
-extern ULONG g_DltNullMode;
-extern PDEVICE_OBJECT pNpcapDeviceObject;
+extern PNPCAP_DRIVER_EXTENSION g_pDriverExtension;
 
 // 
 // Callout and sublayer GUIDs
@@ -171,7 +170,7 @@ NPF_TapLoopback(
 		if (NULL == pLoopbackFilter->OpenInstances.Next) {
 			break;
 		}
-		if (g_DltNullMode)
+		if (g_pDriverExtension->bDltNullMode)
 		{
 			((PDLT_NULL_HEADER) pPacketData)->null_type = bIPv4 ? DLTNULLTYPE_IP : DLTNULLTYPE_IPV6;
 			numBytes = DLT_NULL_HDR_LEN;
@@ -416,8 +415,8 @@ NPF_NetworkClassifyInbound(
 	)
 #endif
 {
-	PDEVICE_EXTENSION pDevExt = (PDEVICE_EXTENSION)filter->context;
-	PNPCAP_FILTER_MODULE pLoopbackFilter = pDevExt->pLoopbackFilter;
+	PNPCAP_DRIVER_EXTENSION pDrvExt = (PNPCAP_DRIVER_EXTENSION)filter->context;
+	PNPCAP_FILTER_MODULE pLoopbackFilter = pDrvExt->pLoopbackFilter;
 	NDIS_STATUS status = NDIS_STATUS_SUCCESS;
 	UINT32				ipHeaderSize = 0;
 	UINT32				bytesRetreated = 0;
@@ -451,7 +450,7 @@ NPF_NetworkClassifyInbound(
 		ipHeaderSize = inMetaValues->ipHeaderSize;
 	}
 
-	injectionState = FwpsQueryPacketInjectionState(pDevExt->hInject[uIPv4],
+	injectionState = FwpsQueryPacketInjectionState(pDrvExt->hInject[uIPv4],
 		pNetBufferList,
 		NULL);
 	if (injectionState == FWPS_PACKET_INJECTED_BY_SELF ||
@@ -512,7 +511,7 @@ NPF_NetworkNotify(
 	switch (notifyType)
 	{
 		case FWPS_CALLOUT_NOTIFY_ADD_FILTER:
-			filter->context = (UINT64)(pNpcapDeviceObject->DeviceExtension);
+			filter->context = (UINT64)g_pDriverExtension;
 			INFO_DBG("ADD filter, context: %p\n", (PVOID)filter->context);
 			break;
 		case FWPS_CALLOUT_NOTIFY_DELETE_FILTER:
@@ -639,9 +638,7 @@ Exit:
 
 _IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
-NPF_AddCalloutsAndFilters(
-_Inout_ PDEVICE_OBJECT deviceObject
-	)
+NPF_AddCalloutsAndFilters()
 /* ++
 
 This function registers dynamic callouts and filters that intercept
@@ -831,11 +828,8 @@ Exit:
 	return status;
 }
 
-_Use_decl_annotations_
 NTSTATUS
-NPF_WFPCalloutRegister(
-		PDEVICE_OBJECT pDevObj
-		)
+NPF_WFPCalloutRegister()
 /* ++
 
 Open injection handles (IPv4 and IPv6) for use with the various injection APIs.
@@ -844,7 +838,6 @@ injection handles will be removed during DriverUnload.
 
 -- */
 {
-	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
 	NTSTATUS status = STATUS_SUCCESS;
 	FWPS_CALLOUT sCallout = { 0 };
 
@@ -852,12 +845,12 @@ injection handles will be removed during DriverUnload.
 
 	status = FwpsInjectionHandleCreate(AF_INET,
 			FWPS_INJECTION_TYPE_NETWORK,
-			&pDevExt->hInject[NPF_INJECT_IPV4]);
+			&g_pDriverExtension->hInject[NPF_INJECT_IPV4]);
 	EXIT_IF_ERR(FwpsInjectionHandleCreate_V4);
 
 	status = FwpsInjectionHandleCreate(AF_INET6,
 			FWPS_INJECTION_TYPE_NETWORK,
-			&pDevExt->hInject[NPF_INJECT_IPV6]);
+			&g_pDriverExtension->hInject[NPF_INJECT_IPV6]);
 	EXIT_IF_ERR(FwpsInjectionHandleCreate_V6);
 
 	// These are the same for all callouts
@@ -873,36 +866,32 @@ injection handles will be removed during DriverUnload.
 	// - IPv4
 	sCallout.calloutKey = NPF_INBOUND_IPPACKET_CALLOUT_V4;
 	status = FwpsCalloutRegister(
-		pDevObj,
+		g_pDriverExtension->pNpcapDeviceObject,
 		&sCallout,
-		&pDevExt->uCalloutInboundV4
+		&g_pDriverExtension->uCalloutInboundV4
 		);
 	EXISTS_OR_EXIT_IF_ERR(FwpsCalloutRegister);
 	// - IPv6
 	sCallout.calloutKey = NPF_INBOUND_IPPACKET_CALLOUT_V6;
 	status = FwpsCalloutRegister(
-		pDevObj,
+		g_pDriverExtension->pNpcapDeviceObject,
 		&sCallout,
-		&pDevExt->uCalloutInboundV6
+		&g_pDriverExtension->uCalloutInboundV6
 		);
 	EXISTS_OR_EXIT_IF_ERR(FwpsCalloutRegister);
 
 Exit:
 	if (!NT_SUCCESS(status) && status != STATUS_FWP_ALREADY_EXISTS) {
-		NPF_WFPCalloutUnregister(pDevObj);
+		NPF_WFPCalloutUnregister();
 	}
 
 	TRACE_EXIT();
 	return status;
 }
 
-_Use_decl_annotations_
 VOID
-NPF_WFPCalloutUnregister(
-		PDEVICE_OBJECT pDevObj
-		)
+NPF_WFPCalloutUnregister()
 {
-	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
 	NTSTATUS status = STATUS_SUCCESS;
 
 	TRACE_ENTER();
@@ -913,59 +902,57 @@ NPF_WFPCalloutUnregister(
 		_Obj = 0; \
 	}
 
-	_DESTROY_FWPS_OBJ(pDevExt->hInject[NPF_INJECT_IPV6], FwpsInjectionHandleDestroy);
-	_DESTROY_FWPS_OBJ(pDevExt->hInject[NPF_INJECT_IPV4], FwpsInjectionHandleDestroy);
-	_DESTROY_FWPS_OBJ(pDevExt->uCalloutInboundV4, FwpsCalloutUnregisterById);
-	_DESTROY_FWPS_OBJ(pDevExt->uCalloutInboundV6, FwpsCalloutUnregisterById);
+	_DESTROY_FWPS_OBJ(g_pDriverExtension->hInject[NPF_INJECT_IPV6], FwpsInjectionHandleDestroy);
+	_DESTROY_FWPS_OBJ(g_pDriverExtension->hInject[NPF_INJECT_IPV4], FwpsInjectionHandleDestroy);
+	_DESTROY_FWPS_OBJ(g_pDriverExtension->uCalloutInboundV4, FwpsCalloutUnregisterById);
+	_DESTROY_FWPS_OBJ(g_pDriverExtension->uCalloutInboundV6, FwpsCalloutUnregisterById);
 
 	TRACE_EXIT();
 }
 
 _Use_decl_annotations_
 NTSTATUS
-NPF_InitWFP(PDEVICE_OBJECT pDevObj)
+NPF_InitWFP()
 {
-	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
-	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
+	NTSTATUS status = KeWaitForMutexObject(&g_pDriverExtension->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 	{
 		ERROR_DBG("Failed to get WFPInitMutex: %#08x\n", status);
 		// Failed to get the mutex. Report exact error unless it's a "success" value
-		_Analysis_assume_lock_not_held_(pDevExt->WFPInitMutex);
+		_Analysis_assume_lock_not_held_(g_pDriverExtension->WFPInitMutex);
 		return NT_SUCCESS(status) ? STATUS_LOCK_NOT_GRANTED : status;
 	}
-	INFO_DBG("bWFPInit %u -> 1\n", pDevExt->bWFPInit);
-	if (pDevExt->bWFPInit)
+	INFO_DBG("bWFPInit %u -> 1\n", g_pDriverExtension->bWFPInit);
+	if (g_pDriverExtension->bWFPInit)
 	{
 		goto Exit;
 	}
 
-	status = NPF_AddCalloutsAndFilters(pDevObj);
+	status = NPF_AddCalloutsAndFilters();
 	EXISTS_OR_EXIT_IF_ERR(NPF_AddCalloutsAndFilters);
 
-	pDevExt->bWFPInit = 1;
+	g_pDriverExtension->bWFPInit = 1;
 
 Exit:
-	KeReleaseMutex(&pDevExt->WFPInitMutex, FALSE);
+	KeReleaseMutex(&g_pDriverExtension->WFPInitMutex, FALSE);
 
 	return status;
 }
 
 _Use_decl_annotations_
 VOID
-NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj, BOOLEAN bUnload)
+NPF_ReleaseWFP(BOOLEAN bUnload)
 {
-	PDEVICE_EXTENSION pDevExt = pDevObj->DeviceExtension;
-	NTSTATUS status = KeWaitForMutexObject(&pDevExt->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
+	NTSTATUS status = KeWaitForMutexObject(&g_pDriverExtension->WFPInitMutex, Executive, KernelMode, FALSE, NULL);
 	if (status != STATUS_SUCCESS)
 	{
 		ERROR_DBG("Failed to get WFPInitMutex: %#08x\n", status);
 		// Failed to get the mutex.
-		_Analysis_assume_lock_not_held_(pDevExt->WFPInitMutex);
+		_Analysis_assume_lock_not_held_(g_pDriverExtension->WFPInitMutex);
 		return;
 	}
-	INFO_DBG("bWFPInit %u -> 0\n", pDevExt->bWFPInit);
-	if (!pDevExt->bWFPInit)
+	INFO_DBG("bWFPInit %u -> 0\n", g_pDriverExtension->bWFPInit);
+	if (!g_pDriverExtension->bWFPInit)
 	{
 		goto Exit;
 	}
@@ -973,10 +960,10 @@ NPF_ReleaseWFP(PDEVICE_OBJECT pDevObj, BOOLEAN bUnload)
 	status = NPF_DeleteCalloutsAndFilters(bUnload);
 	EXIT_IF_ERR(NPF_DeleteCalloutsAndFilters);
 
-	pDevExt->bWFPInit = 0;
+	g_pDriverExtension->bWFPInit = 0;
 
 Exit:
-	KeReleaseMutex(&pDevExt->WFPInitMutex, FALSE);
+	KeReleaseMutex(&g_pDriverExtension->WFPInitMutex, FALSE);
 
 	return;
 }

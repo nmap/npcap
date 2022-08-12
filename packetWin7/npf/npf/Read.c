@@ -117,8 +117,7 @@
  //
  // Global variables
  //
-extern ULONG	g_VlanSupportMode;
-extern ULONG	g_DltNullMode;
+extern PNPCAP_DRIVER_EXTENSION g_pDriverExtension;
 
 _Must_inspect_result_
 _Success_(return == ulDesiredLen)
@@ -341,7 +340,7 @@ NPF_Read(
 
 		// Return this capture data
 		// MUST be done BEFORE incrementing free space, otherwise we risk runaway allocations while this is stalled.
-		NPF_ReturnCapData(pCapData, Open->DeviceExtension);
+		NPF_ReturnCapData(pCapData);
 
 		// Increase free space by the amount that it was reduced before
 		NpfInterlockedExchangeAdd(&Open->Free, ulCapSize);
@@ -398,7 +397,6 @@ NPF_DoTap(
 	NBLCopiesHead.Next = NULL;
 	PNPF_SRC_NB pSrcNB = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
-	PDEVICE_EXTENSION pDevExt = NULL;
 
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
@@ -417,7 +415,6 @@ NPF_DoTap(
 				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, &tstamp, TRUE);
 			}
 		}
-		pDevExt = TempOpen->DeviceExtension;
 	}
 	/* Release the spin lock no matter what. */
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
@@ -436,12 +433,12 @@ NPF_DoTap(
 
 			if (pSrcNB->pNBCopy)
 			{
-				NPF_ReturnNBCopies(pSrcNB->pNBCopy, pDevExt);
+				NPF_ReturnNBCopies(pSrcNB->pNBCopy);
 			}
-			ExFreeToLookasideListEx(&pDevExt->SrcNBPool, pSrcNB);
+			ExFreeToLookasideListEx(&g_pDriverExtension->SrcNBPool, pSrcNB);
 		}
 
-		NPF_ReturnNBLCopy(pNBLCopy, pDevExt);
+		NPF_ReturnNBLCopy(pNBLCopy);
 	}
 
 	return;
@@ -744,7 +741,7 @@ NPF_TapExForEachOpen(
 		if (pNBLCopyPrev->Next == NULL)
 		{
 			// Add another NBL copy to the chain
-			pNBLCopy = (PNPF_NBL_COPY) ExAllocateFromLookasideListEx(&Open->DeviceExtension->NBLCopyPool);
+			pNBLCopy = (PNPF_NBL_COPY) ExAllocateFromLookasideListEx(&g_pDriverExtension->NBLCopyPool);
 			if (pNBLCopy == NULL)
 			{
 				//Insufficient resources.
@@ -775,7 +772,7 @@ NPF_TapExForEachOpen(
 		{
 			// Handle IEEE802.1Q VLAN tag here, the tag in OOB field will be copied to the packet data, currently only Ethernet supported.
 			// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
-			if (g_VlanSupportMode && (NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo) != 0))
+			if (g_pDriverExtension->bVlanSupportMode && (NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo) != 0))
 			{
 				NDIS_NET_BUFFER_LIST_8021Q_INFO qInfo;
 				qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
@@ -810,7 +807,7 @@ NPF_TapExForEachOpen(
 					goto RadiotapDone;
 				}
 
-				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) ExAllocateFromLookasideListEx(&Open->DeviceExtension->Dot11HeaderPool);
+				pNBLCopy->Dot11RadiotapHeader = (PUCHAR) ExAllocateFromLookasideListEx(&g_pDriverExtension->Dot11HeaderPool);
 				if (pNBLCopy->Dot11RadiotapHeader == NULL)
 				{
 					// Insufficient memory
@@ -989,7 +986,7 @@ NPF_TapExForEachOpen(
 			if (pSrcNBPrev->Next == NULL)
 			{
 				// Add another copy to the chain
-				pSrcNB = (PNPF_SRC_NB) ExAllocateFromLookasideListEx(&Open->DeviceExtension->SrcNBPool);
+				pSrcNB = (PNPF_SRC_NB) ExAllocateFromLookasideListEx(&g_pDriverExtension->SrcNBPool);
 				if (pSrcNB == NULL)
 				{
 					//Insufficient resources.
@@ -1102,7 +1099,7 @@ NPF_TapExForEachOpen(
 			// Packet accepted and must be written to buffer.
 			if (pSrcNB->pNBCopy == NULL)
 			{
-				pSrcNB->pNBCopy = (PNPF_NB_COPIES) ExAllocateFromLookasideListEx(&Open->DeviceExtension->NBCopiesPool);
+				pSrcNB->pNBCopy = (PNPF_NB_COPIES) ExAllocateFromLookasideListEx(&g_pDriverExtension->NBCopiesPool);
 				if (pSrcNB->pNBCopy == NULL)
 				{
 					// Out of resources
@@ -1117,14 +1114,14 @@ NPF_TapExForEachOpen(
 			}
 
 			// Make a copy of the data so we can return the original quickly,
-			if (!NPF_CopyFromNetBufferToNBCopy(pSrcNB, fres, &Open->DeviceExtension->BufferPool))
+			if (!NPF_CopyFromNetBufferToNBCopy(pSrcNB, fres, &g_pDriverExtension->BufferPool))
 			{
 				// Out of resources
 				resdropped++;
 				goto TEFEO_release_BufferLock;
 			}
 
-			PNPF_CAP_DATA pCapData = NPF_GetCapData(&Open->DeviceExtension->CapturePool, pSrcNB->pNBCopy, pNBLCopy, fres);
+			PNPF_CAP_DATA pCapData = NPF_GetCapData(&g_pDriverExtension->CapturePool, pSrcNB->pNBCopy, pNBLCopy, fres);
 			if (pCapData == NULL)
 			{
 				// Insufficient memory

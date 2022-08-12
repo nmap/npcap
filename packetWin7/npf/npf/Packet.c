@@ -121,48 +121,11 @@
 #pragma NDIS_INIT_FUNCTION(DriverEntry)
 #endif // ALLOC_PRAGMA
 
-SINGLE_LIST_ENTRY g_arrFiltMod = {0}; //Adapter filter module list head
-NDIS_SPIN_LOCK g_FilterArrayLock; //The lock for adapter filter module list.
+PNPCAP_DRIVER_EXTENSION g_pDriverExtension = NULL;
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-//
-// Global variables used by WFP
-//
-NDIS_STRING g_LoopbackAdapterName;
-NDIS_STRING g_LoopbackRegValueName = NDIS_STRING_CONST("LoopbackAdapter");
-NDIS_STRING g_LoopbackSupportRegValueName = NDIS_STRING_CONST("LoopbackSupport");
-ULONG g_LoopbackSupportMode = 0;
-#endif
-
-#ifdef HAVE_RX_SUPPORT
-
-NDIS_STRING g_SendToRxAdapterName;
-NDIS_STRING g_SendToRxRegValueName = NDIS_STRING_CONST("SendToRxAdapters");
-NDIS_STRING g_BlockRxAdapterName;
-NDIS_STRING g_BlockRxRegValueName = NDIS_STRING_CONST("BlockRxAdapters");
-
-#endif
 
 UNICODE_STRING deviceSymLink = RTL_CONSTANT_STRING(L"\\DosDevices\\" NPF_DRIVER_NAME_WIDECHAR);
 
-NDIS_STRING g_AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
-NDIS_STRING g_DltNullRegValueName = NDIS_STRING_CONST("DltNull");
-NDIS_STRING g_Dot11SupportRegValueName = NDIS_STRING_CONST("Dot11Support");
-NDIS_STRING g_VlanSupportRegValueName = NDIS_STRING_CONST("VlanSupport");
-NDIS_STRING g_TimestampRegValueName = NDIS_STRING_CONST("TimestampMode");
-NDIS_STRING g_TestModeRegValueName = NDIS_STRING_CONST("TestMode");
-
-ULONG g_AdminOnlyMode = 0;
-ULONG g_DltNullMode = 0;
-ULONG g_Dot11SupportMode = 0;
-ULONG g_VlanSupportMode = 0;
-ULONG g_TimestampMode = DEFAULT_TIMESTAMPMODE;
-ULONG g_TestMode = 0;
-
-//
-// Global variables
-//
-PDEVICE_OBJECT pNpcapDeviceObject = NULL;
 
 #ifdef KeQuerySystemTime
 // On Win x64, KeQuerySystemTime is defined as a macro,
@@ -236,7 +199,7 @@ VOID
 NPF_GetRegistryOption_String(
 	_In_ PUNICODE_STRING RegistryPath,
 	_In_ PUNICODE_STRING RegValueName,
-	_Inout_ PNDIS_STRING g_OutputString
+	_Inout_ PNDIS_STRING OutputString
 	);
 
 // This will get a list of adapter names, strip out any \Device\ prefix.
@@ -287,7 +250,6 @@ DriverEntry(
 	NDIS_FILTER_DRIVER_CHARACTERISTICS FChars_WiFi; // The specification for the WiFi filter.
 	UNICODE_STRING parametersPath;
 	NTSTATUS Status = STATUS_SUCCESS;
-	PDEVICE_OBJECT devObjP;
 	// https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/sddl-for-device-objects
 #define SDDL_ALLOW_ALL_SYSTEM_ADMIN L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"
 #ifndef NPCAP_READ_ONLY
@@ -301,17 +263,24 @@ DriverEntry(
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
 	UNICODE_STRING AdapterName = RTL_CONSTANT_STRING(DEVICE_PATH_PREFIX NPF_DRIVER_NAME_WIDECHAR);
 
-	NDIS_STRING strKeQuerySystemTimePrecise;
-
-	UNREFERENCED_PARAMETER(RegistryPath);
-
 	TRACE_ENTER();
+	// global config info, could use IoAllocateDriverObjectExtension, but
+	// that would require access to DRIVER_OBJECT to retrieve.
+	g_pDriverExtension = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(NPCAP_DRIVER_EXTENSION), NPF_DRIVER_EXTENSION_TAG);
+	if (g_pDriverExtension == NULL)
+	{
+		ERROR_DBG("Failed to alloc g_pDriverExtension.\n");
+		TRACE_EXIT();
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+	RtlZeroMemory(g_pDriverExtension, sizeof(NPCAP_DRIVER_EXTENSION));
 
 	RtlInitUnicodeString(&parametersPath, NULL);
 	parametersPath.MaximumLength=RegistryPath->Length+sizeof(L"\\Parameters");
 	parametersPath.Buffer=ExAllocatePoolWithTag(PagedPool, parametersPath.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (!parametersPath.Buffer) {
 		ERROR_DBG("Paged alloc of parametersPath failed.\n");
+		ExFreePool(g_pDriverExtension);
 		TRACE_EXIT();
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
@@ -324,42 +293,57 @@ DriverEntry(
 	if (NT_SUCCESS(Status)) {
 		// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
 		// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
-		g_AdminOnlyMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_AdminOnlyRegValueName);
-		INFO_DBG("g_AdminOnlyMode = %lu\n", g_AdminOnlyMode);
+		NDIS_STRING AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
+		g_pDriverExtension->bAdminOnlyMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &AdminOnlyRegValueName);
+		INFO_DBG("g_AdminOnlyMode = %lu\n", g_pDriverExtension->bAdminOnlyMode);
+
 		// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
 		// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
-		g_DltNullMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_DltNullRegValueName);
-		INFO_DBG("g_DltNullMode = %lu\n", g_DltNullMode);
+		NDIS_STRING DltNullRegValueName = NDIS_STRING_CONST("DltNull");
+		g_pDriverExtension->bDltNullMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &DltNullRegValueName);
+		INFO_DBG("g_DltNullMode = %lu\n", g_pDriverExtension->bDltNullMode);
+
 		// Get the Dot11Support option, if Dot11Support=1, Npcap driver will enable the raw 802.11 functions.
-		// If the registry key doesn't exist, we view it as Dot11Support=1, so has raw 802.11 support.
-		g_Dot11SupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_Dot11SupportRegValueName);
-		INFO_DBG("g_Dot11SupportMode = %lu\n", g_Dot11SupportMode);
+		// If the registry key doesn't exist, we view it as Dot11Support=0, so no raw 802.11 support.
+		NDIS_STRING Dot11SupportRegValueName = NDIS_STRING_CONST("Dot11Support");
+		g_pDriverExtension->bDot11SupportMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &Dot11SupportRegValueName);
+		INFO_DBG("g_Dot11SupportMode = %lu\n", g_pDriverExtension->bDot11SupportMode);
+
 		// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
 		// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
-		g_VlanSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_VlanSupportRegValueName);
-		INFO_DBG("g_VlanSupportMode = %lu\n", g_VlanSupportMode);
+		NDIS_STRING VlanSupportRegValueName = NDIS_STRING_CONST("VlanSupport");
+		g_pDriverExtension->bVlanSupportMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &VlanSupportRegValueName);
+		INFO_DBG("g_VlanSupportMode = %lu\n", g_pDriverExtension->bVlanSupportMode);
+
 		// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
 		// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
-		g_TimestampMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_TimestampRegValueName);
-		INFO_DBG("g_TimestampMode = %lu\n", g_TimestampMode);
-		if (!NPF_TimestampModeSupported(g_TimestampMode)) {
-			g_TimestampMode = DEFAULT_TIMESTAMPMODE;
+		NDIS_STRING TimestampRegValueName = NDIS_STRING_CONST("TimestampMode");
+		g_pDriverExtension->TimestampMode = NPF_GetRegistryOption_Integer(&parametersPath, &TimestampRegValueName);
+		INFO_DBG("g_TimestampMode = %lu\n", g_pDriverExtension->TimestampMode);
+		if (!NPF_TimestampModeSupported(g_pDriverExtension->TimestampMode)) {
+			g_pDriverExtension->TimestampMode = DEFAULT_TIMESTAMPMODE;
 		}
+
 		// Get the TestMode option, if TestMode!=0, WFP callbacks will be registered regardless of whether any open instance needs it.
 		// This is for WHQL testing.
-		g_TestMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_TestModeRegValueName);
-		INFO_DBG("g_TestMode = %lu\n", g_TestMode);
+		NDIS_STRING TestModeRegValueName = NDIS_STRING_CONST("TestMode");
+		g_pDriverExtension->bTestMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &TestModeRegValueName);
+		INFO_DBG("g_TestMode = %lu\n", g_pDriverExtension->bTestMode);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		g_LoopbackSupportMode = NPF_GetRegistryOption_Integer(&parametersPath, &g_LoopbackSupportRegValueName);
-		INFO_DBG("g_LoopbackSupportMode = %lu\n", g_LoopbackSupportMode);
-		if (g_LoopbackSupportMode) {
-			NPF_GetRegistryOption_AdapterName(&parametersPath, &g_LoopbackRegValueName, &g_LoopbackAdapterName);
+		NDIS_STRING LoopbackSupportRegValueName = NDIS_STRING_CONST("LoopbackSupport");
+		g_pDriverExtension->bLoopbackSupportMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &LoopbackSupportRegValueName);
+		INFO_DBG("g_LoopbackSupportMode = %lu\n", g_pDriverExtension->bLoopbackSupportMode);
+		if (g_pDriverExtension->bLoopbackSupportMode) {
+			NDIS_STRING LoopbackRegValueName = NDIS_STRING_CONST("LoopbackAdapter");
+			NPF_GetRegistryOption_AdapterName(&parametersPath, &LoopbackRegValueName, &g_pDriverExtension->LoopbackAdapterName);
 		}
 #endif
 #ifdef HAVE_RX_SUPPORT
-		NPF_GetRegistryOption_AdapterName(&parametersPath, &g_SendToRxRegValueName, &g_SendToRxAdapterName);
-		NPF_GetRegistryOption_AdapterName(&parametersPath, &g_BlockRxRegValueName, &g_BlockRxAdapterName);
+		NDIS_STRING SendToRxRegValueName = NDIS_STRING_CONST("SendToRxAdapters");
+		NPF_GetRegistryOption_AdapterName(&parametersPath, &SendToRxRegValueName, &g_pDriverExtension->SendToRxAdapterName);
+		NDIS_STRING BlockRxRegValueName = NDIS_STRING_CONST("BlockRxAdapters");
+		NPF_GetRegistryOption_AdapterName(&parametersPath, &BlockRxRegValueName, &g_pDriverExtension->BlockRxAdapterName);
 #endif
 	}
 	if (parametersPath.Buffer) ExFreePool(parametersPath.Buffer);
@@ -367,7 +351,7 @@ DriverEntry(
 	//
 	// Initialize system-time function pointer.
 	//
-	RtlInitUnicodeString(&strKeQuerySystemTimePrecise, L"KeQuerySystemTimePrecise");
+	NDIS_STRING strKeQuerySystemTimePrecise = RTL_CONSTANT_STRING(L"KeQuerySystemTimePrecise");
 	g_ptrQuerySystemTime = (PQUERYSYSTEMTIME) MmGetSystemRoutineAddress(&strKeQuerySystemTimePrecise);
 	// If KeQuerySystemTimePrecise is not available,
 	// use KeQuerySystemTime function (Win32) or a wrapper to the KeQuerySystemTime macro (x64).
@@ -383,7 +367,7 @@ DriverEntry(
 	// Register as a service with NDIS
 	//
 	NPF_registerLWF(&FChars, FALSE);
-	if (g_Dot11SupportMode)
+	if (g_pDriverExtension->bDot11SupportMode)
 		NPF_registerLWF(&FChars_WiFi, TRUE);
 
 	DriverObject->DriverUnload = NPF_Unload;
@@ -404,27 +388,29 @@ DriverEntry(
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = NPF_IoControl;
 
 	// Create the "NPCAP" device itself:
-	Status = IoCreateDeviceSecure(DriverObject, sizeof(DEVICE_EXTENSION), &AdapterName, FILE_DEVICE_UNKNOWN,
-			FILE_DEVICE_SECURE_OPEN, FALSE, (g_AdminOnlyMode ? &sddl_admin_only : &sddl), (LPCGUID)&guidClassNPF, &devObjP);
+	Status = IoCreateDeviceSecure(DriverObject, sizeof(PVOID), &AdapterName, FILE_DEVICE_UNKNOWN,
+			FILE_DEVICE_SECURE_OPEN, FALSE, (g_pDriverExtension->bAdminOnlyMode ? &sddl_admin_only : &sddl), (LPCGUID)&guidClassNPF, &g_pDriverExtension->pNpcapDeviceObject);
 	if (!NT_SUCCESS(Status))
 	{
 		ERROR_DBG("IoCreateDevice failed: %#08x\n", Status);
 
+		ExFreePool(g_pDriverExtension);
 		TRACE_EXIT();
 		return Status;
 	}
 
-	PDEVICE_EXTENSION devExtP = (PDEVICE_EXTENSION)devObjP->DeviceExtension;
+	*(PNPCAP_DRIVER_EXTENSION *)g_pDriverExtension->pNpcapDeviceObject->DeviceExtension = g_pDriverExtension;
 
-	devObjP->Flags |= DO_DIRECT_IO;
+	g_pDriverExtension->pNpcapDeviceObject->Flags |= DO_DIRECT_IO;
 
 	Status = IoCreateSymbolicLink(&deviceSymLink, &AdapterName);
 	if (!NT_SUCCESS(Status))
 	{
 		ERROR_DBG("IoCreateSymbolicLink(%ws) failed: %#08x\n", deviceSymLink.Buffer, Status);
 
-		IoDeleteDevice(devObjP);
+		IoDeleteDevice(g_pDriverExtension->pNpcapDeviceObject);
 
+		ExFreePool(g_pDriverExtension);
 		TRACE_EXIT();
 		return Status;
 	}
@@ -432,72 +418,72 @@ DriverEntry(
 	// Initialize DEVICE_EXTENSION
 	do {
 		Status = STATUS_INSUFFICIENT_RESOURCES; // Status for any of the below failures
-		InitializeListHead(&devExtP->AllOpens);
+		InitializeListHead(&g_pDriverExtension->AllOpens);
 
-		Status = ExInitializeLookasideListEx(&devExtP->BufferPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(BUFCHAIN_ELEM), NPF_PACKET_DATA_TAG, 0);
+		Status = ExInitializeLookasideListEx(&g_pDriverExtension->BufferPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(BUFCHAIN_ELEM), NPF_PACKET_DATA_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			ERROR_DBG("Failed to allocate BufferPool\n");
 			break;
 		}
-		devExtP->bBufferPoolInit = 1;
+		g_pDriverExtension->bBufferPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->NBLCopyPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NBL_COPY), NPF_NBLC_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&g_pDriverExtension->NBLCopyPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NBL_COPY), NPF_NBLC_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			ERROR_DBG("Failed to allocate NBLCopyPool\n");
 			break;
 		}
-		devExtP->bNBLCopyPoolInit = 1;
+		g_pDriverExtension->bNBLCopyPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->NBCopiesPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NB_COPIES), NPF_NBC_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&g_pDriverExtension->NBCopiesPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NB_COPIES), NPF_NBC_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			ERROR_DBG("Failed to allocate NBCopiesPool\n");
 			break;
 		}
-		devExtP->bNBCopiesPoolInit = 1;
+		g_pDriverExtension->bNBCopiesPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->SrcNBPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_SRC_NB), NPF_SRCNB_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&g_pDriverExtension->SrcNBPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_SRC_NB), NPF_SRCNB_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			ERROR_DBG("Failed to allocate SrcNBPool\n");
 			break;
 		}
-		devExtP->bSrcNBPoolInit = 1;
+		g_pDriverExtension->bSrcNBPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->InternalRequestPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(INTERNAL_REQUEST), NPF_REQ_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&g_pDriverExtension->InternalRequestPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(INTERNAL_REQUEST), NPF_REQ_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			ERROR_DBG("Failed to allocate InternalRequestPool\n");
 			break;
 		}
-		devExtP->bInternalRequestPoolInit = 1;
+		g_pDriverExtension->bInternalRequestPoolInit = 1;
 
-		Status = ExInitializeLookasideListEx(&devExtP->CapturePool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_CAP_DATA), NPF_CAP_POOL_TAG, 0);
+		Status = ExInitializeLookasideListEx(&g_pDriverExtension->CapturePool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_CAP_DATA), NPF_CAP_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
 			ERROR_DBG("Failed to allocate CapturePool\n");
 			break;
 		}
-		devExtP->bCapturePoolInit = 1;
+		g_pDriverExtension->bCapturePoolInit = 1;
 
 #ifdef HAVE_DOT11_SUPPORT
-		if (g_Dot11SupportMode)
+		if (g_pDriverExtension->bDot11SupportMode)
 		{
-			Status = ExInitializeLookasideListEx(&devExtP->Dot11HeaderPool, NULL, NULL, NPF_NONPAGED, 0, SIZEOF_RADIOTAP_BUFFER, NPF_DOT11_POOL_TAG, 0);
+			Status = ExInitializeLookasideListEx(&g_pDriverExtension->Dot11HeaderPool, NULL, NULL, NPF_NONPAGED, 0, SIZEOF_RADIOTAP_BUFFER, NPF_DOT11_POOL_TAG, 0);
 			if (Status != STATUS_SUCCESS)
 			{
 				ERROR_DBG("Failed to allocate Dot11HeaderPool\n");
 				break;
 			}
-			devExtP->bDot11HeaderPoolInit = 1;
+			g_pDriverExtension->bDot11HeaderPoolInit = 1;
 		}
 #endif
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		KeInitializeMutex(&devExtP->WFPInitMutex, 0);
-		Status = NPF_WFPCalloutRegister(devObjP);
+		KeInitializeMutex(&g_pDriverExtension->WFPInitMutex, 0);
+		Status = NPF_WFPCalloutRegister();
 		if (!NT_SUCCESS(Status))
 		{
 			ERROR_DBG("NPF_WFPCalloutRegister failed: %#08x\n", Status);
@@ -506,26 +492,26 @@ DriverEntry(
 #endif
 
 		/* Have to set this up before NdisFRegisterFilterDriver, since we can get Attach calls immediately after that! */
-		NdisAllocateSpinLock(&g_FilterArrayLock);
-		pNpcapDeviceObject = devObjP;
+		NdisAllocateSpinLock(&g_pDriverExtension->FilterArrayLock);
+		g_pDriverExtension->pNpcapDeviceObject = g_pDriverExtension->pNpcapDeviceObject;
 		KeMemoryBarrier();
 
 		// Register the filter to NDIS.
 		Status = NdisFRegisterFilterDriver(DriverObject,
-				(NDIS_HANDLE) devExtP,
+				(NDIS_HANDLE) g_pDriverExtension,
 				&FChars,
-				&devExtP->FilterDriverHandle);
+				&g_pDriverExtension->FilterDriverHandle);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
 			ERROR_DBG("NdisFRegisterFilterDriver failed: %#08x\n", Status);
 			break;
 		}
-		INFO_DBG("FilterDriverHandle = %p\n", devExtP->FilterDriverHandle);
+		INFO_DBG("FilterDriverHandle = %p\n", g_pDriverExtension->FilterDriverHandle);
 
 		// Now that we have a NDIS handle, we can allocate this lock.
 		// Win8 and up allow NULL instead, but Win7 does not, and SAL complains anyway.
-		devExtP->AllOpensLock = NdisAllocateRWLock(devExtP->FilterDriverHandle);
-		if (devExtP->AllOpensLock == NULL)
+		g_pDriverExtension->AllOpensLock = NdisAllocateRWLock(g_pDriverExtension->FilterDriverHandle);
+		if (g_pDriverExtension->AllOpensLock == NULL)
 		{
 			ERROR_DBG("Failed to allocate AllOpensLock\n");
 			break;
@@ -535,63 +521,64 @@ DriverEntry(
 
 	if (!NT_SUCCESS(Status))
 	{
-		if (devExtP->FilterDriverHandle)
-			NdisFDeregisterFilterDriver(devExtP->FilterDriverHandle);
+		if (g_pDriverExtension->FilterDriverHandle)
+			NdisFDeregisterFilterDriver(g_pDriverExtension->FilterDriverHandle);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		NPF_WFPCalloutUnregister(devObjP);
+		NPF_WFPCalloutUnregister();
 #endif
 
 #ifdef HAVE_DOT11_SUPPORT
-		if (devExtP->bDot11HeaderPoolInit)
-			ExDeleteLookasideListEx(&devExtP->Dot11HeaderPool);
+		if (g_pDriverExtension->bDot11HeaderPoolInit)
+			ExDeleteLookasideListEx(&g_pDriverExtension->Dot11HeaderPool);
 #endif
-		if (devExtP->bCapturePoolInit)
-			ExDeleteLookasideListEx(&devExtP->CapturePool);
-		if (devExtP->bInternalRequestPoolInit)
-			ExDeleteLookasideListEx(&devExtP->InternalRequestPool);
-		if (devExtP->bNBCopiesPoolInit)
-			ExDeleteLookasideListEx(&devExtP->NBCopiesPool);
-		if (devExtP->bNBLCopyPoolInit)
-			ExDeleteLookasideListEx(&devExtP->NBLCopyPool);
-		if (devExtP->bSrcNBPoolInit)
-			ExDeleteLookasideListEx(&devExtP->SrcNBPool);
-		if (devExtP->bBufferPoolInit)
-			ExDeleteLookasideListEx(&devExtP->BufferPool);
-		if (devExtP->AllOpensLock)
-			NdisFreeRWLock(devExtP->AllOpensLock);
-		NdisFreeSpinLock(&g_FilterArrayLock);
+		if (g_pDriverExtension->bCapturePoolInit)
+			ExDeleteLookasideListEx(&g_pDriverExtension->CapturePool);
+		if (g_pDriverExtension->bInternalRequestPoolInit)
+			ExDeleteLookasideListEx(&g_pDriverExtension->InternalRequestPool);
+		if (g_pDriverExtension->bNBCopiesPoolInit)
+			ExDeleteLookasideListEx(&g_pDriverExtension->NBCopiesPool);
+		if (g_pDriverExtension->bNBLCopyPoolInit)
+			ExDeleteLookasideListEx(&g_pDriverExtension->NBLCopyPool);
+		if (g_pDriverExtension->bSrcNBPoolInit)
+			ExDeleteLookasideListEx(&g_pDriverExtension->SrcNBPool);
+		if (g_pDriverExtension->bBufferPoolInit)
+			ExDeleteLookasideListEx(&g_pDriverExtension->BufferPool);
+		if (g_pDriverExtension->AllOpensLock)
+			NdisFreeRWLock(g_pDriverExtension->AllOpensLock);
+		NdisFreeSpinLock(&g_pDriverExtension->FilterArrayLock);
 		IoDeleteSymbolicLink(&deviceSymLink);
-		IoDeleteDevice(devObjP);
+		IoDeleteDevice(g_pDriverExtension->pNpcapDeviceObject);
 
-		if (g_LoopbackAdapterName.Buffer != NULL)
+		if (g_pDriverExtension->LoopbackAdapterName.Buffer != NULL)
 		{
-			ExFreePool(g_LoopbackAdapterName.Buffer);
-			g_LoopbackAdapterName.Buffer = NULL;
+			ExFreePool(g_pDriverExtension->LoopbackAdapterName.Buffer);
+			g_pDriverExtension->LoopbackAdapterName.Buffer = NULL;
 		}
-		if (g_SendToRxAdapterName.Buffer != NULL)
+		if (g_pDriverExtension->SendToRxAdapterName.Buffer != NULL)
 		{
-			ExFreePool(g_SendToRxAdapterName.Buffer);
-			g_SendToRxAdapterName.Buffer = NULL;
+			ExFreePool(g_pDriverExtension->SendToRxAdapterName.Buffer);
+			g_pDriverExtension->SendToRxAdapterName.Buffer = NULL;
 		}
-		if (g_BlockRxAdapterName.Buffer != NULL)
+		if (g_pDriverExtension->BlockRxAdapterName.Buffer != NULL)
 		{
-			ExFreePool(g_BlockRxAdapterName.Buffer);
-			g_BlockRxAdapterName.Buffer = NULL;
+			ExFreePool(g_pDriverExtension->BlockRxAdapterName.Buffer);
+			g_pDriverExtension->BlockRxAdapterName.Buffer = NULL;
 		}
 
+		ExFreePool(g_pDriverExtension);
 		TRACE_EXIT();
 		return Status;
 	}
 
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	if (g_LoopbackSupportMode) {
+	if (g_pDriverExtension->bLoopbackSupportMode) {
 		do {
 			// Create the fake "filter module" for loopback capture
 			// This is a hack to let NPF_CreateFilterModule create "\Device\NPCAP\Loopback" just like it usually does with a GUID
 			NDIS_STRING LoopbackDeviceName = NDIS_STRING_CONST("\\Device\\Loopback");
-			PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(devExtP->FilterDriverHandle, &LoopbackDeviceName);
+			PNPCAP_FILTER_MODULE pFiltMod = NPF_CreateFilterModule(g_pDriverExtension->FilterDriverHandle, &LoopbackDeviceName);
 			if (pFiltMod == NULL)
 			{
 				WARNING_DBG("Could not create filter module for loopback.\n");
@@ -600,7 +587,7 @@ DriverEntry(
 			pFiltMod->Loopback = TRUE;
 			pFiltMod->AdapterBindingStatus = FilterRunning;
 			pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
-			devExtP->pLoopbackFilter = pFiltMod;
+			g_pDriverExtension->pLoopbackFilter = pFiltMod;
 
 			// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.
 			NPF_AddToFilterModuleArray(pFiltMod);
@@ -609,19 +596,19 @@ DriverEntry(
 	}
 #endif
 
-	if (g_Dot11SupportMode)
+	if (g_pDriverExtension->bDot11SupportMode)
 	{
 		// Register the WiFi filter to NDIS.
 		Status = NdisFRegisterFilterDriver(DriverObject,
-			(NDIS_HANDLE) devExtP,
+			(NDIS_HANDLE) g_pDriverExtension,
 			&FChars_WiFi,
-			&devExtP->FilterDriverHandle_WiFi);
+			&g_pDriverExtension->FilterDriverHandle_WiFi);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
 			ERROR_DBG("NdisFRegisterFilterDriver(WiFi) failed: %#08x\n", Status);
 			// We still run the driver even with the 2nd filter doesn't work.
 		}
-		INFO_DBG("FilterDriverHandle_WiFi = %p\n", devExtP->FilterDriverHandle_WiFi);
+		INFO_DBG("FilterDriverHandle_WiFi = %p\n", g_pDriverExtension->FilterDriverHandle_WiFi);
 	}
 
 	TRACE_EXIT();
@@ -825,7 +812,7 @@ VOID
 NPF_GetRegistryOption_String(
 	PUNICODE_STRING RegistryPath,
 	PUNICODE_STRING RegValueName,
-	PNDIS_STRING g_OutputString
+	PNDIS_STRING OutputString
 	)
 {
 	PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = NULL;
@@ -840,18 +827,18 @@ NPF_GetRegistryOption_String(
 		{
 			INFO_DBG("\"%ws\" Key = %ws\n", RegValueName->Buffer, (PWSTR)valueInfoP->Data);
 
-			g_OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
-			g_OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
-			g_OutputString->Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, g_OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
+			OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
+			OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
+			OutputString->Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
 
-			if (g_OutputString->Buffer)
+			if (OutputString->Buffer)
 			{
-				RtlCopyMemory(g_OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
+				RtlCopyMemory(OutputString->Buffer, valueInfoP->Data, valueInfoP->DataLength);
 			}
 			else
 			{
-				WARNING_DBG("Nonpaged alloc of g_OutputString failed\n");
-				g_OutputString->Length = g_OutputString->MaximumLength = 0;
+				WARNING_DBG("Nonpaged alloc of OutputString failed\n");
+				OutputString->Length = OutputString->MaximumLength = 0;
 			}
 		}
 		else
@@ -892,9 +879,6 @@ Return Value:
 	PLIST_ENTRY CurrEntry = NULL;
 	PDEVICE_OBJECT DeviceObject;
 	PDEVICE_OBJECT OldDeviceObject;
-	PDEVICE_EXTENSION DeviceExtension;
-	NDIS_HANDLE FilterDriverHandle = NULL; // NDIS handle for filter driver
-	NDIS_HANDLE FilterDriverHandle_WiFi = NULL; // NDIS handle for WiFi filter driver
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
 	PSINGLE_LIST_ENTRY Prev = NULL;
 	PSINGLE_LIST_ENTRY Curr = NULL;
@@ -906,143 +890,139 @@ Return Value:
 	NdisInitializeEvent(&Event);
 	NdisResetEvent(&Event);
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// Free the loopback adapter name
-	if (g_LoopbackAdapterName.Buffer != NULL)
+	// Undo all setup steps from DriverEntry in reverse order:
+	// Deregister filter drivers with NDIS
+	if (g_pDriverExtension->FilterDriverHandle_WiFi)
 	{
-		ExFreePool(g_LoopbackAdapterName.Buffer);
-		g_LoopbackAdapterName.Buffer = NULL;
+		INFO_DBG("NdisFDeregisterFilterDriver: Deleting Filter Handle (WiFi) = %p\n", g_pDriverExtension->FilterDriverHandle_WiFi);
+		NdisFDeregisterFilterDriver(g_pDriverExtension->FilterDriverHandle_WiFi);
+		g_pDriverExtension->FilterDriverHandle_WiFi = NULL;
+	}
+	else
+	{
+		INFO_DBG("NdisFDeregisterFilterDriver: Filter Handle (WiFi) = NULL, no need to delete.\n");
 	}
 
-	// Release WFP resources.
-	NPF_ReleaseWFP(pNpcapDeviceObject, TRUE);
-	NPF_WFPCalloutUnregister(pNpcapDeviceObject);
-#endif
-
-#ifdef HAVE_RX_SUPPORT
-	// Free the send-to-Rx adapter name
-	if (g_SendToRxAdapterName.Buffer != NULL)
+	if (g_pDriverExtension->FilterDriverHandle)
 	{
-		ExFreePool(g_SendToRxAdapterName.Buffer);
-		g_SendToRxAdapterName.Buffer = NULL;
-	}
-	if (g_BlockRxAdapterName.Buffer != NULL)
-	{
-		ExFreePool(g_BlockRxAdapterName.Buffer);
-		g_BlockRxAdapterName.Buffer = NULL;
-	}
-#endif
-
-	DeviceObject = DriverObject->DeviceObject;
-
-	while (DeviceObject != NULL)
-	{
-		OldDeviceObject = DeviceObject;
-
-		DeviceObject = DeviceObject->NextDevice;
-
-		DeviceExtension = OldDeviceObject->DeviceExtension;
-		if (FilterDriverHandle == NULL)
-			FilterDriverHandle = DeviceExtension->FilterDriverHandle;
-		if (FilterDriverHandle_WiFi == NULL)
-			FilterDriverHandle_WiFi = DeviceExtension->FilterDriverHandle_WiFi;
-
-		// Must still acquire this lock because NDIS could still be doing things with filter modules
-		// Specifically, NPF_AttachAdapter acquires this for Read.
-		NdisAcquireRWLockWrite(DeviceExtension->AllOpensLock, &lockState, 0);
-		CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
-		while (CurrEntry != &DeviceExtension->AllOpens)
-		{
-			POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
-			// Pretty sure we don't get here unless all this is already closed up, but better to be thorough.
-			OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenClosed);
-			// Just unlink it; other cleanup is handled already.
-			if (NULL != (pFiltMod = pOpen->pFiltMod))
-			{
-				NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState2, NDIS_RWL_AT_DISPATCH_LEVEL);
-				Prev = &(pFiltMod->OpenInstances);
-				Curr = Prev->Next;
-				while (Curr != NULL)
-				{
-					if (Curr == &(pOpen->OpenInstancesEntry)) {
-						Prev->Next = Curr->Next;
-						Curr->Next = NULL;
-						break;
-					}
-					Prev = Curr;
-					Curr = Prev->Next;
-				}
-				NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState2);
-			}
-			NPF_ReleaseOpenInstanceResources(pOpen);
-			ExFreePool(pOpen);
-			CurrEntry = RemoveHeadList(&DeviceExtension->AllOpens);
-		}
-
-		NdisReleaseRWLock(DeviceExtension->AllOpensLock, &lockState);
-
-		IoDeleteSymbolicLink(&deviceSymLink);
-
-		ExDeleteLookasideListEx(&DeviceExtension->BufferPool);
-		ExDeleteLookasideListEx(&DeviceExtension->NBLCopyPool);
-		ExDeleteLookasideListEx(&DeviceExtension->NBCopiesPool);
-		ExDeleteLookasideListEx(&DeviceExtension->SrcNBPool);
-		ExDeleteLookasideListEx(&DeviceExtension->InternalRequestPool);
-		ExDeleteLookasideListEx(&DeviceExtension->CapturePool);
-#ifdef HAVE_DOT11_SUPPORT
-		if (DeviceExtension->bDot11HeaderPoolInit)
-			ExDeleteLookasideListEx(&DeviceExtension->Dot11HeaderPool);
-#endif
-
-		NdisFreeRWLock(DeviceExtension->AllOpensLock);
-		IoDeleteDevice(OldDeviceObject);
-	}
-
-	if (FilterDriverHandle)
-	{
-		INFO_DBG("NdisFDeregisterFilterDriver: Deleting Filter Handle = %p\n", FilterDriverHandle);
-		NdisFDeregisterFilterDriver(FilterDriverHandle);
-		FilterDriverHandle = NULL;
+		INFO_DBG("NdisFDeregisterFilterDriver: Deleting Filter Handle = %p\n", g_pDriverExtension->FilterDriverHandle);
+		NdisFDeregisterFilterDriver(g_pDriverExtension->FilterDriverHandle);
+		g_pDriverExtension->FilterDriverHandle = NULL;
 	}
 	else
 	{
 		INFO_DBG("NdisFDeregisterFilterDriver: Filter Handle = NULL, no need to delete.\n");
 	}
 
-	if (FilterDriverHandle_WiFi)
-	{
-		INFO_DBG("NdisFDeregisterFilterDriver: Deleting Filter Handle (WiFi) = %p\n", FilterDriverHandle_WiFi);
-		NdisFDeregisterFilterDriver(FilterDriverHandle_WiFi);
-		FilterDriverHandle_WiFi = NULL;
-	}
-	else
-	{
-		INFO_DBG("NdisFDeregisterFilterDriver: Filter Handle (WiFi) = NULL, no need to delete.\n");
-	}
-	// NdisFDeregisterFilterDriver ought to have called FilterDetach, but something is leaking. Let's force a wait:
-	NdisAcquireSpinLock(&g_FilterArrayLock);
-	while (g_arrFiltMod.Next != NULL) {
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		pFiltMod = CONTAINING_RECORD(g_arrFiltMod.Next, NPCAP_FILTER_MODULE, FilterModulesEntry);
-		if (pFiltMod->Loopback) {
-			// NDIS doesn't manage this, so we "detach" it ourselves.
-			NdisReleaseSpinLock(&g_FilterArrayLock);
-			NPF_DetachAdapter(pFiltMod);
-		}
-		else
-#endif
-		{
-			// Wait for NDIS to release it
-			NdisReleaseSpinLock(&g_FilterArrayLock);
-			NdisWaitEvent(&Event, 1);
-		}
-		NdisAcquireSpinLock(&g_FilterArrayLock);
-		NdisResetEvent(&Event);
+	// Free Loopback filter module
+	if (g_pDriverExtension->pLoopbackFilter)
+	{
+		NPF_DetachAdapter(g_pDriverExtension->pLoopbackFilter);
+		g_pDriverExtension->pLoopbackFilter = NULL;
 	}
-	NdisReleaseSpinLock(&g_FilterArrayLock);
+#endif
 
-	NdisFreeSpinLock(&g_FilterArrayLock);
+	// NdisFDeregisterFilterDriver ought to have called FilterDetach, but something is leaking. Let's force a wait:
+	NdisAcquireSpinLock(&g_pDriverExtension->FilterArrayLock);
+	while (g_pDriverExtension->arrFiltMod.Next != NULL) {
+		// Wait for NDIS to release it
+		NdisReleaseSpinLock(&g_pDriverExtension->FilterArrayLock);
+		NdisWaitEvent(&Event, 1);
+		NdisAcquireSpinLock(&g_pDriverExtension->FilterArrayLock);
+	}
+	NdisReleaseSpinLock(&g_pDriverExtension->FilterArrayLock);
 
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// Release WFP resources.
+	NPF_ReleaseWFP(TRUE);
+	NPF_WFPCalloutUnregister();
+#endif
+
+	// Must still acquire this lock because NDIS could still be doing things with filter modules
+	// Specifically, NPF_AttachAdapter acquires this for Read.
+	NdisAcquireRWLockWrite(g_pDriverExtension->AllOpensLock, &lockState, 0);
+	CurrEntry = RemoveHeadList(&g_pDriverExtension->AllOpens);
+	while (CurrEntry != &g_pDriverExtension->AllOpens)
+	{
+		POPEN_INSTANCE pOpen = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
+		// Pretty sure we don't get here unless all this is already closed up, but better to be thorough.
+		OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenClosed);
+		// Just unlink it; other cleanup is handled already.
+		if (NULL != (pFiltMod = pOpen->pFiltMod))
+		{
+			NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState2, NDIS_RWL_AT_DISPATCH_LEVEL);
+			Prev = &(pFiltMod->OpenInstances);
+			Curr = Prev->Next;
+			while (Curr != NULL)
+			{
+				if (Curr == &(pOpen->OpenInstancesEntry)) {
+					Prev->Next = Curr->Next;
+					Curr->Next = NULL;
+					break;
+				}
+				Prev = Curr;
+				Curr = Prev->Next;
+			}
+			NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState2);
+		}
+		NPF_ReleaseOpenInstanceResources(pOpen);
+		ExFreePool(pOpen);
+		CurrEntry = RemoveHeadList(&g_pDriverExtension->AllOpens);
+	}
+	NdisReleaseRWLock(g_pDriverExtension->AllOpensLock, &lockState);
+
+	if (g_pDriverExtension->bCapturePoolInit)
+		ExDeleteLookasideListEx(&g_pDriverExtension->CapturePool);
+	if (g_pDriverExtension->bInternalRequestPoolInit)
+		ExDeleteLookasideListEx(&g_pDriverExtension->InternalRequestPool);
+	if (g_pDriverExtension->bNBCopiesPoolInit)
+		ExDeleteLookasideListEx(&g_pDriverExtension->NBCopiesPool);
+	if (g_pDriverExtension->bNBLCopyPoolInit)
+		ExDeleteLookasideListEx(&g_pDriverExtension->NBLCopyPool);
+	if (g_pDriverExtension->bSrcNBPoolInit)
+		ExDeleteLookasideListEx(&g_pDriverExtension->SrcNBPool);
+	if (g_pDriverExtension->bBufferPoolInit)
+		ExDeleteLookasideListEx(&g_pDriverExtension->BufferPool);
+#ifdef HAVE_DOT11_SUPPORT
+	if (g_pDriverExtension->bDot11HeaderPoolInit)
+		ExDeleteLookasideListEx(&g_pDriverExtension->Dot11HeaderPool);
+#endif
+
+	NdisFreeRWLock(g_pDriverExtension->AllOpensLock);
+	NdisFreeSpinLock(&g_pDriverExtension->FilterArrayLock);
+
+	IoDeleteSymbolicLink(&deviceSymLink);
+
+	DeviceObject = DriverObject->DeviceObject;
+
+	// We only have 1 device, but this loop is future-proof.
+	while (DeviceObject != NULL)
+	{
+		OldDeviceObject = DeviceObject;
+
+		DeviceObject = DeviceObject->NextDevice;
+
+		IoDeleteDevice(OldDeviceObject);
+	}
+
+	if (g_pDriverExtension->LoopbackAdapterName.Buffer != NULL)
+	{
+		ExFreePool(g_pDriverExtension->LoopbackAdapterName.Buffer);
+		g_pDriverExtension->LoopbackAdapterName.Buffer = NULL;
+	}
+	if (g_pDriverExtension->SendToRxAdapterName.Buffer != NULL)
+	{
+		ExFreePool(g_pDriverExtension->SendToRxAdapterName.Buffer);
+		g_pDriverExtension->SendToRxAdapterName.Buffer = NULL;
+	}
+	if (g_pDriverExtension->BlockRxAdapterName.Buffer != NULL)
+	{
+		ExFreePool(g_pDriverExtension->BlockRxAdapterName.Buffer);
+		g_pDriverExtension->BlockRxAdapterName.Buffer = NULL;
+	}
+
+	ExFreePool(g_pDriverExtension);
 	TRACE_EXIT();
 }
 
@@ -1606,7 +1586,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 					break;
 				}
 				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(UINT);
-				*((PUINT)OidData->Data) = g_DltNullMode ? NdisMediumNull : NdisMedium802_3;
+				*((PUINT)OidData->Data) = g_pDriverExtension->bDltNullMode ? NdisMediumNull : NdisMedium802_3;
 				OidData->Length = sizeof(UINT);
 				INFO_DBG("Loopback: get OID_GEN_MEDIA_IN_USE = %u\n", *((PUINT)OidData->Data));
 				Status = STATUS_SUCCESS;
@@ -1959,10 +1939,10 @@ static NTSTATUS funcBIOCGETPIDS(_In_ POPEN_INSTANCE pOpen,
 	}
 
 	ulWritten = sizeof(ULONG);
-	NdisAcquireRWLockRead(pOpen->DeviceExtension->AllOpensLock, &lockState, 0);
+	NdisAcquireRWLockRead(g_pDriverExtension->AllOpensLock, &lockState, 0);
 
-	for (PLIST_ENTRY CurrEntry = pOpen->DeviceExtension->AllOpens.Flink;
-			CurrEntry != &pOpen->DeviceExtension->AllOpens;
+	for (PLIST_ENTRY CurrEntry = g_pDriverExtension->AllOpens.Flink;
+			CurrEntry != &g_pDriverExtension->AllOpens;
 			CurrEntry = CurrEntry->Flink)
 	{
 		POPEN_INSTANCE pOpenTmp = CONTAINING_RECORD(CurrEntry, OPEN_INSTANCE, AllOpensEntry);
@@ -1973,7 +1953,7 @@ static NTSTATUS funcBIOCGETPIDS(_In_ POPEN_INSTANCE pOpen,
 			ulWritten += sizeof(ULONG);
 		}
 	}
-	NdisReleaseRWLock(pOpen->DeviceExtension->AllOpensLock, &lockState);
+	NdisReleaseRWLock(g_pDriverExtension->AllOpensLock, &lockState);
 
 	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
 	pBuf[0] = cnt;
