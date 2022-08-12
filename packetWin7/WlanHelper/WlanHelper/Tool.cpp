@@ -618,37 +618,43 @@ BOOL makeOIDRequest(tstring strAdapterGUID, ULONG iOid, BOOL bSet, PVOID pData, 
 		// Refer to: https://msdn.microsoft.com/en-us/library/windows/hardware/ff543026(v=vs.85).aspx
 		DWORD dwErrorCode = GetLastError() & ~(1 << 29);
 
-		LPTSTR strErrorText;
+		LPTSTR strErrorText = NULL;
 		HMODULE hModule = LoadLibrary(_T("NTDLL.DLL"));
-		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE,
-			hModule, dwErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&strErrorText, 0, NULL);
-		if (strErrorText != NULL && strErrorText[_tcslen(strErrorText) - 2] == _T('\r') && strErrorText[_tcslen(strErrorText) - 1] == _T('\n'))
+		if (hModule)
 		{
-			strErrorText[_tcslen(strErrorText) - 2] = 0x0;
-			strErrorText[_tcslen(strErrorText) - 1] = 0x0;
-		}
-		
-		if (strErrorText)
-		{
-			_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (%s)\n"), dwErrorCode, strErrorText);
-		}
-		else
-		{
-			tstring tstrErrorText = NdisStatus2Message(dwErrorCode);
-			if (tstrErrorText != _T(""))
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE,
+				hModule, dwErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&strErrorText, 0, NULL);
+			if (strErrorText != NULL)
 			{
-				_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (%s)\n"), dwErrorCode, tstrErrorText.c_str());
+				if (strErrorText[_tcslen(strErrorText) - 2] == _T('\r') && strErrorText[_tcslen(strErrorText) - 1] == _T('\n'))
+				{
+					strErrorText[_tcslen(strErrorText) - 2] = 0x0;
+					strErrorText[_tcslen(strErrorText) - 1] = 0x0;
+				}
+
+				_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (%s)\n"), dwErrorCode, strErrorText);
+				// Free the buffer allocated by the system.
+				LocalFree(strErrorText);
+				Status = TRUE;
 			}
 			else
 			{
-				_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (NULL)\n%s0x%x or find its definition in your ndis.h if you installed WDK.\n"), dwErrorCode,
-					_T("The error message can't be found, please google the error code: "), dwErrorCode);
+				tstring tstrErrorText = NdisStatus2Message(dwErrorCode);
+				if (tstrErrorText != _T(""))
+				{
+					_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (%s)\n"), dwErrorCode, tstrErrorText.c_str());
+					Status = TRUE;
+				}
 			}
+
+			FreeLibrary(hModule);
 		}
 
-		// Free the buffer allocated by the system.
-		LocalFree(strErrorText);
-		FreeLibrary(hModule);
+		if (!Status)
+		{
+			_tprintf(_T("Error: makeOIDRequest::My_PacketRequest error, NTSTATUS error code = 0x%x (NULL)\n%s0x%x or find its definition in your ndis.h if you installed WDK.\n"), dwErrorCode,
+				_T("The error message can't be found, please google the error code: "), dwErrorCode);
+		}
 	}
 	else
 	{
