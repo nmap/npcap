@@ -107,7 +107,7 @@
 #ifndef _time_calls
 #define _time_calls
 
-#include <ndis.h>
+#include <wdm.h>
 #define DEFAULT_TIMESTAMPMODE 0
 
 #define TIMESTAMPMODE_SINGLE_SYNCHRONIZATION 0
@@ -117,19 +117,23 @@
 #define TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE 4
 #define /* DEPRECATED */ TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
 
-__inline BOOLEAN NPF_TimestampModeSupported(_In_ ULONG mode)
+inline BOOLEAN NPF_TimestampModeSupported(_In_ ULONG mode)
 {
 	return mode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
 		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME
 		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE;
 }
 
-typedef void(*PQUERYSYSTEMTIME)(
+inline void BestQuerySystemTime(
 	PLARGE_INTEGER CurrentTime
-	);
-
-extern ULONG g_TimestampMode;
-extern PQUERYSYSTEMTIME g_ptrQuerySystemTime;
+	)
+{
+#if(NTDDI_VERSION <= NTDDI_WIN7)
+	KeQuerySystemTime(CurrentTime);
+#else
+	KeQuerySystemTimePrecise(CurrentTime);
+#endif
+}
 
 /*!
   \brief A microsecond precise timestamp.
@@ -143,7 +147,7 @@ struct timeval
 };
 
 /* KeQueryPerformanceCounter TimeStamps */
-__inline void TIME_SYNCHRONIZE(
+inline void TIME_SYNCHRONIZE(
 		_Out_ struct timeval* start)
 {
 	//	struct timeval *start = (struct timeval*)Data;
@@ -155,9 +159,8 @@ __inline void TIME_SYNCHRONIZE(
 	LARGE_INTEGER TimeFreq, PTime;
 
 	// get the absolute value of the system boot time.   
-	NT_ASSERT(g_ptrQuerySystemTime != NULL);
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
-	g_ptrQuerySystemTime(&SystemTime);
+	BestQuerySystemTime(&SystemTime);
 
 	start->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 
@@ -174,7 +177,7 @@ __inline void TIME_SYNCHRONIZE(
 	}
 }	
 
-__inline void GetTimeKQPC(
+inline void GetTimeKQPC(
 		_Out_ struct timeval* dst,
 		_In_ struct timeval* start)
 {
@@ -195,7 +198,7 @@ __inline void GetTimeKQPC(
 	}
 }
 
-__inline void GetTimeQST(
+inline void GetTimeQST(
 		_Out_ struct timeval* dst)
 {
 	LARGE_INTEGER SystemTime;
@@ -206,19 +209,19 @@ __inline void GetTimeQST(
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
 }
 
-__inline void GetTimeQST_precise(
+inline void GetTimeQST_precise(
 		_Out_ struct timeval* dst)
 {
 	LARGE_INTEGER SystemTime;
 
-	g_ptrQuerySystemTime(&SystemTime);
+	BestQuerySystemTime(&SystemTime);
 
 	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
 	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
 }
 
 
-__inline void GET_TIME(
+inline void GET_TIME(
 		_Out_ struct timeval* dst,
 		_In_ struct timeval* start,
 		_In_ ULONG TimestampMode)

@@ -127,21 +127,6 @@ PNPCAP_DRIVER_EXTENSION g_pDriverExtension = NULL;
 UNICODE_STRING deviceSymLink = RTL_CONSTANT_STRING(L"\\DosDevices\\" NPF_DRIVER_NAME_WIDECHAR);
 
 
-#ifdef KeQuerySystemTime
-// On Win x64, KeQuerySystemTime is defined as a macro,
-// this function wraps the macro execution.
-void
-KeQuerySystemTimeWrapper(
-	_Out_ PLARGE_INTEGER CurrentTime
-)
-{
-	KeQuerySystemTime(CurrentTime);
-}
-PQUERYSYSTEMTIME g_ptrQuerySystemTime = &KeQuerySystemTimeWrapper;
-#else
-PQUERYSYSTEMTIME g_ptrQuerySystemTime = &KeQuerySystemTime;
-#endif
-
 #ifdef NPCAP_READ_ONLY
 // For read-only Npcap, we want an explicit denial function for the Write call.
 // The IOCTLs will be rejected as "invalid request"
@@ -347,21 +332,6 @@ DriverEntry(
 #endif
 	}
 	if (parametersPath.Buffer) ExFreePool(parametersPath.Buffer);
-
-	//
-	// Initialize system-time function pointer.
-	//
-	NDIS_STRING strKeQuerySystemTimePrecise = RTL_CONSTANT_STRING(L"KeQuerySystemTimePrecise");
-	g_ptrQuerySystemTime = (PQUERYSYSTEMTIME) MmGetSystemRoutineAddress(&strKeQuerySystemTimePrecise);
-	// If KeQuerySystemTimePrecise is not available,
-	// use KeQuerySystemTime function (Win32) or a wrapper to the KeQuerySystemTime macro (x64).
-	if (g_ptrQuerySystemTime == NULL) {
-#ifdef KeQuerySystemTime
-		g_ptrQuerySystemTime = &KeQuerySystemTimeWrapper;
-#else
-		g_ptrQuerySystemTime = &KeQuerySystemTime;
-#endif
-	}
 
 	//
 	// Register as a service with NDIS
@@ -1869,29 +1839,17 @@ static NTSTATUS funcBIOCGTIMESTAMPMODES(_In_ POPEN_INSTANCE pOpen,
 		0, // count of modes, 0 means not initialized yet
 		TIMESTAMPMODE_SINGLE_SYNCHRONIZATION,
 		TIMESTAMPMODE_QUERYSYSTEMTIME,
+#if (NTDDI_VERSION >= NTDDI_WIN8)
 		// This is last and is not reported if not different than QST
 		TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
+#endif
 	};
 
 	// Initialize the count if not already done.
 	if (SupportedModes[0] == 0)
 	{
-		// If all modes are supported, Count is length minus 1 for the count element.
+		// Count is length minus 1 for the count element.
 		SupportedModes[0] = sizeof(SupportedModes) / sizeof(ULONG) - 1;
-
-		// If KeQuerySystemTimePrecise is available, g_ptrQuerySystemTime will point to it.
-		// If it points to KeQuerySystemTime instead, it's not available.
-		if (g_ptrQuerySystemTime ==
-#ifdef KeQuerySystemTime
-				&KeQuerySystemTimeWrapper
-#else
-				&KeQuerySystemTime
-#endif
-		   )
-		{
-			// Precise not supported. Count is as before, but minus 1 for QST Precise.
-			SupportedModes[0] -= 1;
-		}
 	}
 
 	*Info = 0;

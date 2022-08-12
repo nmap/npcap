@@ -119,7 +119,6 @@
 
 #include "win_bpf.h"
 #include <wdm.h>
-#include "Loopback.h"
 
 /* If DISPATCH_LEVEL can be determined, use that in the FILTER_*_LOCK macros
  * Otherwise, use NPF_IRQL_UNKNOWN so we can find and update them as we add more tracking
