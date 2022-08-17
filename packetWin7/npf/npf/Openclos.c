@@ -2431,7 +2431,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 
 	// Special case: if their OID doesn't change a value we already set
 	// then we don't pass it down but just return success.
-	if (Request->RequestType == NdisRequestSetInformation)
+	if (!pFiltMod->Fragile && Request->RequestType == NdisRequestSetInformation)
 	{
 		pBuffer = Request->DATA.SET_INFORMATION.InformationBuffer;
 		switch (Request->DATA.SET_INFORMATION.Oid)
