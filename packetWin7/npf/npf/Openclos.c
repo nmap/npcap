@@ -448,18 +448,11 @@ NPF_OpenAdapter(
 	}
 	Open->UserPID = IoGetRequestorProcessId(Irp);
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	INFO_DBG(
-		"Opening the device %ws, BindingContext=%p, Loopback=%u",
-		IrpSp->FileObject->FileName.Buffer,
+		"Open(%p) name=%ws, Loopback=%u\n",
 		Open,
-		pFiltMod ? pFiltMod->Loopback : 0);
-#else
-	INFO_DBG(
-		"Opening the device %ws, BindingContext=%p, Loopback=<Not supported>",
 		IrpSp->FileObject->FileName.Buffer,
-		Open);
-#endif
+		pFiltMod ? pFiltMod->Loopback : 0);
 
 	IrpSp->FileObject->FsContext = Open;
 
@@ -468,7 +461,6 @@ NPF_OpenAdapter(
 	//
 	// complete the open
 	//
-	INFO_DBG("Open = %p\n", Open);
 
 	if (pFiltMod)
 	{
@@ -2237,7 +2229,9 @@ NPF_Restart(
 			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES SupportedPacketFilters = %#x\n", pFiltMod, GenAttr->SupportedPacketFilters);
 			pFiltMod->HigherLookaheadSize = GenAttr->LookaheadSize;
 			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES LookaheadSize = %lu\n", pFiltMod, GenAttr->LookaheadSize);
-			//break;
+#if !(DBG)
+			break;
+#endif
 		}
 		Curr = Curr->Next;
 	}
