@@ -394,7 +394,8 @@ typedef struct _NPCAP_FILTER_MODULE
 	UINT SendToRxPath:1;
 	UINT BlockRxPath:1;
 	UINT Dot11:1;
-	UINT PacketFilterOK:1; // Have we correctly set HigherPacketFilter yet?
+	UINT PacketFilterGetOK:1; // Can we issue OID_GEN_CURRENT_PACKET_FILTER queries?
+	UINT HigherPacketFilterSet:1; // Have we correctly set HigherPacketFilter yet?
 	UINT Fragile:1; // Avoid OID set operations on these adapters
 
 	ULONG SupportedPacketFilters;

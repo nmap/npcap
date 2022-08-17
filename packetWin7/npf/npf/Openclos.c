@@ -909,9 +909,13 @@ NPF_GetPacketFilter(
 	)
 {
 	// This can only be used before we start mucking with the packet filter.
-	NT_ASSERT(pFiltMod->MyPacketFilter == 0);
 	INFO_DBG("pFiltMod(%p) OID_GEN_CURRENT_PACKET_FILTER (%#x)\n",
 			pFiltMod, OID_GEN_CURRENT_PACKET_FILTER);
+	if (!pFiltMod->PacketFilterGetOK)
+	{
+		INFO_DBG("pFiltMod(%p) OID_GEN_CURRENT_PACKET_FILTER query not supported\n", pFiltMod);
+		return STATUS_NOT_SUPPORTED;
+	}
 	NTSTATUS Status = NPF_OidGetUlongNonpagedPtr(pFiltMod,
 		OID_GEN_CURRENT_PACKET_FILTER,
 		&pFiltMod->HigherPacketFilter
@@ -919,8 +923,14 @@ NPF_GetPacketFilter(
 
 	if (Status == STATUS_SUCCESS)
 	{
-		pFiltMod->PacketFilterOK = 1;
+		pFiltMod->HigherPacketFilterSet = 1;
+		pFiltMod->PacketFilterGetOK = 1;
 	}
+	else if (Status == NDIS_STATUS_INVALID_OID)
+	{
+		pFiltMod->PacketFilterGetOK = 0;
+	}
+
 	return Status;
 }
 
@@ -2038,6 +2048,17 @@ NPF_AttachAdapter(
 				pFiltMod->Fragile = 1;
 				break;
 		}
+		switch (AttachParameters->MiniportPhysicalMediaType)
+		{
+			case NdisPhysicalMediumNative802_11:
+				// NDIS always answers OID_GEN_CURRENT_PACKET_FILTER queries for
+				// Wifi adapters with NDIS_STATUS_INVALID_OID
+				pFiltMod->PacketFilterGetOK = 0;
+				break;
+			default:
+				pFiltMod->PacketFilterGetOK = 1;
+				break;
+		}
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
@@ -2181,7 +2202,7 @@ NPF_Restart(
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE)FilterModuleContext;
 	NDIS_STATUS		Status;
 	NTSTATUS ntStatus;
-	ULONG ulTmp;
+	ULONG ulTmp = 0;
 	PNDIS_RESTART_ATTRIBUTES Curr = RestartParameters->RestartAttributes;
 	PNDIS_RESTART_GENERAL_ATTRIBUTES GenAttr = NULL;
 	BOOLEAN bDot11 = FALSE;
@@ -2494,7 +2515,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 				{
 					case OID_GEN_CURRENT_PACKET_FILTER:
 						pFiltMod->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
-						pFiltMod->PacketFilterOK = 1;
+						pFiltMod->HigherPacketFilterSet = 1;
 						if (*(PULONG) pBuffer & ~pFiltMod->SupportedPacketFilters)
 							WARNING_DBG("Upper driver setting unsupported packet filter: %#x\n", *(PULONG) pBuffer);
 						*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
@@ -3056,18 +3077,28 @@ NPF_SetPacketFilter(
 	if (pFiltMod->Fragile || pFiltMod->Loopback)
 	{
 		// Fake it
-		return NDIS_STATUS_SUCCESS;
+		bail_early = TRUE;
 	}
 
-	if (!pFiltMod->PacketFilterOK)
+	if (!pFiltMod->HigherPacketFilterSet)
 	{
 		Status = NPF_GetPacketFilter(pFiltMod);
 		if (Status != NDIS_STATUS_SUCCESS)
 		{
 			INFO_DBG("pFiltMod(%p) can't set PacketFilter; no valid HigherPacketFilter present.\n", pFiltMod);
-			return Status;
+			// Have to fake success; many miniport types don't like queries to OID_GEN_CURRENT_PACKET_FILTER.
+			bail_early = TRUE;
 		}
 	}
+
+	if (bail_early)
+	{
+		pFiltMod->MyPacketFilter = PacketFilter;
+		return Status;
+	}
+
+	// Only set packet filter if we know what it was previously and can revert to that.
+	NT_ASSERT(pFiltMod->HigherPacketFilterSet);
 
 	NdisAcquireRWLockWrite(pFiltMod->OpenInstancesLock, &lockState, 0);
 
