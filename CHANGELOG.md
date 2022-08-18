@@ -1,4 +1,28 @@
 ﻿
+## Npcap 1.71 [2022-08-18]
+* Increase strictness in checking for and restoring adapter parameters modified during capture:
+  hardware packet filter and lookahead will only be modified if the original value can be
+  determined. This fixes issues with connectivity on certain adapter types (WWAN and some WiFi
+  adapters) after a capture is closed.
+
+* Modify NDIS binding parameters so that Npcap will bind both above and below a NIC teaming or
+  network bridge IM driver. This may improve capture options in related situations, like [#115](http://issues.npcap.org/115).
+
+* Updated build configurations to enable DEP and ASLR for npcap.sys, which were missing from the
+  original configs inherited from WinPcap. Additionally, enabled Control Flow Guard for Packet.dll
+  and all helper EXEs.
+
+* Fix a BSoD issue on Windows 8.1 due to registering a service without a name. Fixes [#565](http://issues.npcap.org/565).
+
+* Fix an issue with admin-only mode where high-integrity processes (UAC not enforced) could not open
+  or list adapters. Fixes [#606](http://issues.npcap.org/606).
+
+* Restored an undocumented data member of the struct `ADAPTER` that is not used internally. Directly
+  accessing members of the `ADAPTER` struct from `Packet32.h` is highly discouraged, since the
+  API in `Packet32.h` is not intended for use apart from libpcap. Closes [#609](http://issues.npcap.org/609).
+
+* Extensive refactoring of driver code for performance and maintainability.
+
 ## Npcap 1.70 [2022-06-24]
 
 * Major overhaul of Packet.dll to improve performance of `PacketGetAdapterNames()`, used by
