@@ -3087,6 +3087,7 @@ NPF_SetPacketFilter(
 		{
 			INFO_DBG("pFiltMod(%p) can't set PacketFilter; no valid HigherPacketFilter present.\n", pFiltMod);
 			// Have to fake success; many miniport types don't like queries to OID_GEN_CURRENT_PACKET_FILTER.
+			Status = STATUS_SUCCESS;
 			bail_early = TRUE;
 		}
 	}
