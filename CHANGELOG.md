@@ -1,5 +1,6 @@
 ﻿
-## Npcap 1.71 [2022-08-18]
+## Npcap 1.71 [2022-08-19]
+
 * Increase strictness in checking for and restoring adapter parameters modified during capture:
   hardware packet filter and lookahead will only be modified if the original value can be
   determined. This fixes issues with connectivity on certain adapter types (WWAN and some WiFi
@@ -38,6 +39,10 @@
 
 * The undocumented `char PacketLibraryVersion[]` export has been removed. The `PacketGetVersion()`
   function is the documented way to get the runtime version of the Packet.dll library.
+
+* Concurrently released the Npcap SDK Version 1.13 to reflect removal of PacketLibraryVersion and to
+  add SAL annotations to most function prototypes and several struct fields. See SDK changelog at
+  https://github.com/nmap/npcap/blob/master/SDK_CHANGELOG.md
 
 * Packet injection operations (`pcap_inject()`, `PacketSendPacket()`, `pcap_sendqueue_transmit()`,
   and `PacketSendPackets()`) now properly pend the related Write IRP until the NBLs have
