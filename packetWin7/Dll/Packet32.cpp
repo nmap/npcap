@@ -159,12 +159,12 @@ VOID PacketLoadLibrariesDynamically();
 //
 // Current packet.dll version. It can be retrieved directly or through the PacketGetVersion() function.
 //
-static const char PacketLibraryVersion[] = WINPCAP_VER_STRING; 
+__declspec(dllexport) const char PacketLibraryVersion[] = WINPCAP_VER_STRING; 
 
 //
 // Current driver version. It can be retrieved directly or through the PacketGetDriverVersion() function.
 //
-char PacketDriverVersion[64]; 
+static char PacketDriverVersion[64]; 
 
 //
 // Current driver name ("NPF" or "NPCAP"). It can be retrieved directly or through the PacketGetDriverName() function.
