@@ -1043,7 +1043,6 @@ static BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT Versi
 	PVOID	lpBuffer;
 	PCHAR	TmpStr;
 	DWORD err = ERROR_SUCCESS;
-	PVOID OldRedir = NULL;
 	
 	// Structure used to store enumerated languages and code pages.
 	struct LANGANDCODEPAGE {
@@ -1052,7 +1051,9 @@ static BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT Versi
 	} *lpTranslate;
 
 	TRACE_ENTER();
-
+#ifndef _WIN64
+	PVOID OldRedir = NULL;
+#define PACKET_UNDO_WOW64FSREDIRECTION Wow64RevertWow64FsRedirection(OldRedir)
 	if (!Wow64DisableWow64FsRedirection(&OldRedir))
 	{
 		err = GetLastError();
@@ -1061,6 +1062,9 @@ static BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT Versi
 		SetLastError(err);
 		return FALSE;
 	}
+#else
+#define PACKET_UNDO_WOW64FSREDIRECTION
+#endif
 
 	// Now lets dive in and pull out the version information:
 	
@@ -1072,7 +1076,7 @@ static BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT Versi
 		if (lpstrVffInfo == NULL)
 		{
 			TRACE_PRINT("PacketGetFileVersion: failed to allocate memory");
-			Wow64RevertWow64FsRedirection(OldRedir);
+			PACKET_UNDO_WOW64FSREDIRECTION;
 			TRACE_EXIT();
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 			return FALSE;
@@ -1083,12 +1087,12 @@ static BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT Versi
 			err = GetLastError();
 			TRACE_PRINT1("PacketGetFileVersion: failed to call GetFileVersionInfo: %d", err);
 			HeapFree(GetProcessHeap(), 0, lpstrVffInfo);
-			Wow64RevertWow64FsRedirection(OldRedir);
+			PACKET_UNDO_WOW64FSREDIRECTION;
 			TRACE_EXIT();
 			SetLastError(err);
 			return FALSE;
 		}
-		Wow64RevertWow64FsRedirection(OldRedir);
+		PACKET_UNDO_WOW64FSREDIRECTION;
 
 		// Read the list of languages and code pages.
 		if(!VerQueryValue(lpstrVffInfo,	TEXT("\\VarFileInfo\\Translation"),	(LPVOID*)&lpTranslate, &cbTranslate))
@@ -1150,7 +1154,7 @@ static BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT Versi
 	{
 		err = GetLastError();
 		TRACE_PRINT1("PacketGetFileVersion: failed to call GetFileVersionInfoSize, LastError = %8.8x", err);
-		Wow64RevertWow64FsRedirection(OldRedir);
+		PACKET_UNDO_WOW64FSREDIRECTION;
 		TRACE_EXIT();
 		SetLastError(err);
 		return FALSE;
