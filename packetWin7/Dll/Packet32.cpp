@@ -3217,7 +3217,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 
 	TRACE_ENTER();
 
-	if (!AdapterName || !buffer || NEntries <= 0) {
+	if (!AdapterName || !buffer || *NEntries <= 0) {
 		TRACE_EXIT();
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -3663,7 +3663,7 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 #define NDIS_STATUS_INVALID_DATA                ((NDIS_STATUS)0xC0010015L)
 #define NDIS_STATUS_INVALID_OID                 ((NDIS_STATUS)0xC0010017L)
 #endif
-	switch (dwResult)
+	switch ((NDIS_STATUS)dwResult)
 	{
 		case ERROR_SUCCESS:
 			rval = 1;
