@@ -107,7 +107,7 @@
 
 #include "stdafx.h"
 
-#include "packet.h"
+#include "Packet.h"
 #include <fwpsk.h>
 
 extern PNPCAP_DRIVER_EXTENSION g_pDriverExtension;

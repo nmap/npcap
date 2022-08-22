@@ -1357,8 +1357,6 @@ NPF_RemoveFromGroupOpenArray(
 
 	ULONG NewPacketFilter;
 	ULONG NewLookaheadSize;
-	ULONG BytesProcessed;
-	PVOID pBuffer = NULL;
 	BOOLEAN found = FALSE;
 	BOOLEAN last = FALSE;
 	LOCK_STATE_EX lockState;
@@ -2105,8 +2103,6 @@ NPF_AttachAdapter(
 		if ( NULL != g_pDriverExtension->AllOpensLock
 				// Pretty sure this can't happen, but it'd be bad to proceed here if it did.
 				&& pFiltMod->AdapterID.Value != 0) {
-			ULONG NewPacketFilter = 0;
-			ULONG NewLookaheadSize = 0;
 			// Traverse the AllOpens list looking for detached instances.
 			NdisAcquireRWLockRead(g_pDriverExtension->AllOpensLock, &lockState, 0);
 			for (PLIST_ENTRY Curr = g_pDriverExtension->AllOpens.Flink; Curr != &(g_pDriverExtension->AllOpens); Curr = Curr->Flink)

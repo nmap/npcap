@@ -107,7 +107,7 @@
 
 #include "stdafx.h"
 
-#include "packet.h"
+#include "Packet.h"
 #include "win_bpf.h"
 #include "time_calls.h"
 #if DBG
