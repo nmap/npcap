@@ -1,11 +1,12 @@
 # Makefile for cygwin gcc
 # Loris Degioanni
 
-PCAP_PATH = ../../lib
-CFLAGS = -g -O -mno-cygwin -I ../../include
+CYGWIN_FLAGS = -mno-cygwin
+PCAP_PATH = ../../Lib$(LIBARCH)
+CFLAGS = -g -O $(CYGWIN_FLAGS) -I ../../Include
 
 OBJS = udpdump.o
-LIBS = -L ${PCAP_PATH} -lwpcap -lwsock32
+LIBS = -L ${PCAP_PATH} -lwpcap -lws2_32
 
 all: ${OBJS}
 	${CC} ${CFLAGS} -o udpdump.exe ${OBJS} ${LIBS}
