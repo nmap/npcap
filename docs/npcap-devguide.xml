@@ -291,7 +291,7 @@ printf("%s", pcap_version);
       libdnet.</para>
 
     <para><quote>Legacy loopback support</quote> installs a copy of the
-      Microsft KM-TEST loopback adapter named <quote>Npcap Loopback
+      Microsoft KM-TEST loopback adapter named <quote>Npcap Loopback
         Adapter</quote> for software that expects to find the loopback adapter
       via ordinary Windows API calls. The features and operation are no
       different from standard loopback support, but the
