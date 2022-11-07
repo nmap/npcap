@@ -142,7 +142,7 @@
   [#536](http://issues.npcap.org/536).
 
 * Simplified the code base by removing a bunch of unused or
-  unneccessary code. This includes "kernel dump mode" (`MODE_DUMP`)
+  unnecessary code. This includes "kernel dump mode" (`MODE_DUMP`)
   which was inherited from WinPcap 3.1 even though it had already been
   deactivated there in 2005.  Also removed legacy WinPcap code which allowed
   their (long discontinued) "Pro" version DLL to install the driver
@@ -176,7 +176,7 @@
   compatibility.  May fix [#226](http://issues.npcap.org/226).
 
 * While you won't see it in the code itself, we dramatically improved
-  our automated build and testing proceses.  We now run automated
+  our automated build and testing processes.  We now run automated
   native-arch builds and testing of multiple programs (particularly
   the SDK Examples) on all 3 architectures (x86, x64, and ARM). All
   tests are run with the debug build of the driver (assertions on) and
@@ -1211,7 +1211,7 @@
 
 ## Npcap 0.83 [2017-03-04]
 
-* Fix a crash caused by recieving loopback traffic after Windows starts to
+* Fix a crash caused by receiving loopback traffic after Windows starts to
   sleep. [#721](http://issues.nmap.org/721)
 
 * Don't override CLI installer options like `/wpcap_mode` when WinPcap is
