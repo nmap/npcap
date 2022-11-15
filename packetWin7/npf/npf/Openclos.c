@@ -1394,7 +1394,6 @@ NPF_RemoveFromGroupOpenArray(
 		if (Curr == &(pOpen->OpenInstancesEntry)) {
 			/* This is the one to remove. Ignore its parameters. */
 			Prev->Next = Curr->Next;
-			Curr->Next = NULL;
 			found = TRUE;
 		}
 		else if (!pFiltMod->Loopback)
@@ -1408,6 +1407,9 @@ NPF_RemoveFromGroupOpenArray(
 		Prev = Curr;
 		Curr = Prev->Next;
 	}
+
+	// Avoid multiple entry points to the list
+	pOpen->OpenInstancesEntry.Next = NULL;
 
 	if (!NT_VERIFY(found))
 	{
