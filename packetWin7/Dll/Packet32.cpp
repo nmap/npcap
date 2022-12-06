@@ -616,12 +616,17 @@ static PCHAR NpcapGetAdapterID(_In_ LPCSTR AdapterName, _Out_opt_ PULONG pNpfOpe
 	const char *src = NULL;
 	ULONG NpfOpenFlags = 0;
 
-	if (0 != _strnicmp(AdapterName, WINPCAP_COMPAT_DEVICE_PREFIX, sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1)) {
+	if (0 == _strnicmp(AdapterName, WINPCAP_COMPAT_DEVICE_PREFIX, sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1)) {
+		src = AdapterName + sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1;
+	}
+	else if (0 == _strnicmp(AdapterName, NPF_DRIVER_COMPLETE_DEVICE_PREFIX, sizeof(NPF_DRIVER_COMPLETE_DEVICE_PREFIX - 1))) {
+		src = AdapterName + sizeof(NPF_DRIVER_COMPLETE_DEVICE_PREFIX) - 1;
+	}
+	else {
 		// Not expected format
 		SetLastError(ERROR_INVALID_NAME);
 		return NULL;
 	}
-	src = AdapterName + sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1;
 
 	// Look for tags (case sensitive)
 	// First the most common case: no tag or it's loopback
