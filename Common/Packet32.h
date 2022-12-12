@@ -118,6 +118,7 @@
 #ifndef __PACKET32
 #define __PACKET32
 
+#include <sal.h>
 #include <winsock2.h>
 
 #ifdef HAVE_AIRPCAP_API
