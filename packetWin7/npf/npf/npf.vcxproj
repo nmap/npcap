@@ -858,6 +858,7 @@
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -876,6 +877,7 @@
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -893,6 +895,7 @@
       <PreprocessorDefinitions>WIN9X_COMPAT_SPINLOCK;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -927,6 +930,7 @@
       <PreprocessorDefinitions>NPCAP_OEM;WIN9X_COMPAT_SPINLOCK;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;DBG=1;%(PreprocessorDefinitions);NDIS620;WINVER=0x0601;_WIN32_WINNT=0x0601;NTDDI_VERSION=0x06010000</PreprocessorDefinitions>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -992,6 +996,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>DBG=1;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -1056,6 +1061,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -1072,6 +1078,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NPCAP_OEM;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;DBG=1;STD_CALL;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -1219,6 +1226,7 @@
       <PreprocessorDefinitions>DBG=1;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;NDIS630=1;WINVER=0x0602;_WIN32_WINNT=0x0602;NTDDI_VERSION=0x06020000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -1363,6 +1371,7 @@
       <PreprocessorDefinitions>HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -1395,6 +1404,7 @@
       <PreprocessorDefinitions>NPCAP_OEM;HAVE_WFP_LOOPBACK_SUPPORT;HAVE_RX_SUPPORT;HAVE_DOT11_SUPPORT;DBG=1;%(PreprocessorDefinitions);NDIS650;WINVER=0x0A00;_WIN32_WINNT=0x0A00;NTDDI_VERSION=0x0A000000</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wdmsec.lib;ndis.lib;$(DDK_LIB_PATH)\fwpkclnt.lib;$(SDK_LIB_PATH)\uuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
