@@ -1,3 +1,11 @@
+## Npcap 1.72 [2022-12-14]
+
+* Fixed an issue where promiscuous mode or other hardware packet filters are ignored after a second
+  handle is opened on the same adapter, including handles opened in the process of listing adapters
+  with `pcap_findalldevs()`. Fixes [#647](http://issues.npcap.org/647).
+
+* Fixed an issue with validation of parameters to `PacketGetNetInfoEx()`. The `NEntries` parameter
+  was not being checked for values less than or equal to 0. Fixes [#625](http://issues.npcap.org/625).
 ﻿
 ## Npcap 1.71 [2022-08-19]
 
