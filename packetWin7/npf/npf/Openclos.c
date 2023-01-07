@@ -2036,7 +2036,7 @@ NPF_AttachAdapter(
 			TRACE_EXIT();
 			return returnStatus;
 		}
-		pFiltMod->AdapterID = AttachParameters->NetLuid;
+		pFiltMod->AdapterID = AttachParameters->BaseMiniportNetLuid;
 		pFiltMod->AdapterBindingStatus = FilterAttaching;
 		switch (AttachParameters->MiniportMediaType)
 		{
