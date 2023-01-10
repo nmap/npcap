@@ -1676,7 +1676,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		// Now ulTmp is the new effective filter
 		// NPF_SetPacketFilter will take care of any short-circuits and all the request stuff
 		Status = NPF_SetPacketFilter(pOpen->pFiltMod, ulTmp);
-		goto OID_REQUEST_DONE;
+		goto OID_REQUEST_MAP_STATUS;
 	}
 	else if (bSetOid && OidData->Oid == OID_GEN_CURRENT_LOOKAHEAD)
 	{
@@ -1766,15 +1766,110 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	}
 
 
+OID_REQUEST_MAP_STATUS:
+
 	if (Status == NDIS_STATUS_SUCCESS)
 	{
+		// Note: NDIS_STATUS_SUCCESS is defined to be the
+		// same value as STATUS_SUCCESS in ndis.h.
 		Status = STATUS_SUCCESS;
 	}
 	else
 	{
 		// Return the error code of NdisFOidRequest() to the application.
 		INFO_DBG("Original NdisFOidRequest() Status = %#x\n", Status);
-		// Why do we set this custom bit? Unfortunately now libpcap relies on it.
+		//
+		// Set the custom bit to mark this status as customer-defined;
+		// that avoids NTSTATUS-to-Win32 error code translation.
+		//
+		// This is done because, as reported in issue #628, a
+		// number of users trying to capture, in Wireshark, on
+		// an Ethernet adapter get an error that appears to
+		// come from PacketSetHwFilter() returning ERROR_GEN_FAILURE.
+		//
+		// In commit 63439a733ec682ad64f517c74406a270e09d4431,
+		// the code was changed to, in NPF_IoControl(), set
+		// the "customer-defined" bit of the NT status returned
+		// by NdisFOidRequest().  The commit message was
+		// "Returned a customer-defined NTSTATUS in OID requests
+		// to avoid NTSTATUS-to-Win32 Error code translation."
+		//
+		// Wireshark and tcpdump both capture in promiscuous
+		// mode by default, so if the driver for an adapter
+		// rejects that attempt, and this causes PacketSetHwFilter()
+		// to return ERROR_GEN_FAILURE, that would cause the
+		// problem that users are seeing.
+		//
+		// In issue #303, a user reported attempts to capture
+		// on a Microsoft Surface Pro's broadband adapter to
+		// fail with an error code of 0xE00000BB, which is
+		// STATUS_NOT_SUPPORTED with the customer-defined
+		// bit added.
+		//
+		// This is probably due to the adapter driver returning
+		// STATUS_NOT_SUPPORTED for all attempts to set the
+		// hardware filter and the NPF driver setting the
+		// customer-defined bit as a result of the commit in
+		// question.
+		//
+		// That issue was fixed in libpcap by ignoring
+		// PacketSetHwFilter() errors of 0xE00000BB.
+		//
+		// The people reporting problems in issue #628 say that
+		// reverting from Npcap 1.70 or 1.71 to 1.60 makes
+		// the problem go away.
+		//
+		// In the 1.60 driver, funcBIOC_OID() handles
+		// OID_GEN_CURRENT_PACKET_FILTER the same way it handles
+		// all other OID_ values, setting the customer-defined
+		// bit on error status returns.
+		//
+		// In the 1.71 driver, it treats OID_GEN_CURRENT_PACKET_FILTER
+		// specially, and does not set the customer-defined bit.
+		//
+		// One possible explanation is that some code, whether in
+		// Windows or in Npcap, is causing STATUS_NOT_SUPPORTED
+		// to be reported to libpcap as ERROR_GEN_FAILURE, not
+		// ERROR_NOT_SUPPORTED, and that turning the customer-
+		// defined bit on causes STATUS_NOT_SUPPORTED to pass
+		// unchanged through whatever is doing that information-
+		// losing mapping, so that libpcap can then ignore the
+		// 0xE00000BB error.
+		//
+		// I don't know whether that mapping was the motivation
+		// for 63439a733ec682ad64f517c74406a270e09d4431, with
+		// acting as a workaround to prevent that mapping.
+		//
+		// However, reinstating the setting of the customer-defined
+		// bit for OID_GEN_CURRENT_PACKET_FILTER errors may prevent
+		// the failures in issue #628.
+		//
+		// This is done by adding the OID_REQUEST_MAP_STATUS
+		// label above and having the special code for
+		// OID_GEN_CURRENT_PACKET_FILTER go to OID_REQUEST_MAP_STATUS
+		// rather than to OID_REQUEST_DONE, so that the customer-
+		// defined bit gets set for OID_GEN_CURRENT_PACKET_FILTER
+		// errors.
+		//
+		// XXX - if STATUS_NOT_SUPPORTED is getting reported from
+		// PacketSetHwFilter() as ERROR_GEN_FAILURE, is this
+		// the result of STATUS_NOT_SUPPORTED (or
+		// NDIS_STATUS_NOT_SUPPORTED, which is defined by ndis.h
+		// to have the same value as STATUS_NOT_SUPPORTED) getting
+		// mapped to some other NT status, such as STATUS_UNSUCCESSFUL,
+		// and that then getting mapped to ERROR_GEN_FAILURE, or is
+		// it due to STATUS_NOT_SUPPORTED not getting modified
+		// but, when mapping NT statuses to Windows errors, getting
+		// mapped to ERROR_GEN_FAILURE?  If so, where is that being
+		// done, and can it be prevented, so that we needn't set
+		// the customer-defined bit any more?
+		//
+		// A quick test indicates that RtlNtStatusToDosError()
+		// in ntdll.dll maps STATUS_UNSUCCESSFUL to ERROR_GEN_FAILURE
+		// and STATUS_NOT_SUPPORTED to ERROR_NOT_SUPPORTED, so
+		// that routine does not appear to be responsible for
+		// ERROR_GEN_FAILURE being returned.
+		//
 		Status = (1 << 29) | Status;
 		INFO_DBG("Custom NdisFOidRequest() Status = %#x\n", Status);
 	}
