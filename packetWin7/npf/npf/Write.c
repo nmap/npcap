@@ -565,7 +565,7 @@ NTSTATUS NPF_BufferedWrite(
 	PNET_BUFFER_LIST		pNetBufferList = NULL;
 	ULONG					SendFlags = 0;
 	UINT					i;
-	LARGE_INTEGER			StartTicks = { 0 }, CurTicks, TargetTicks;
+	LARGE_INTEGER			StartTicks = { 0 };
 	LARGE_INTEGER			TimeFreq;
 	struct timeval			BufStartTime = { 0 };
 	LONGLONG prev_usec_diff = 0;
@@ -621,14 +621,6 @@ NTSTATUS NPF_BufferedWrite(
 
 
 	pHdr = (struct dump_bpf_hdr *)(UserBuff);
-
-	if (Sync)
-	{
-		// Retrieve the time references
-		StartTicks = KeQueryPerformanceCounter(&TimeFreq);
-		BufStartTime.tv_sec = pHdr->ts.tv_sec;
-		BufStartTime.tv_usec = pHdr->ts.tv_usec;
-	}
 
 	//
 	// Main loop: send the buffer to the wire
@@ -721,10 +713,16 @@ NTSTATUS NPF_BufferedWrite(
 
 		TmpMdl->Next = NULL;
 
-		if (Sync)
+		if (Sync && pHdr == UserBuff)
 		{
-			// Save the current time stamp counter
-			CurTicks = KeQueryPerformanceCounter(&TimeFreq);
+			// First packet
+			// Retrieve the time references
+			StartTicks = KeQueryPerformanceCounter(&TimeFreq);
+			BufStartTime.tv_sec = pHdr->ts.tv_sec;
+			BufStartTime.tv_usec = pHdr->ts.tv_usec;
+		}
+		else if (Sync)
+		{
 			// Time offset of this packet from the first one (usecs)
 			LONGLONG usec_diff = ((LONGLONG)pHdr->ts.tv_sec - BufStartTime.tv_sec) * 1000000
 				+ pHdr->ts.tv_usec - BufStartTime.tv_usec;
@@ -756,13 +754,16 @@ NTSTATUS NPF_BufferedWrite(
 				}
 
 				// Calculate the target QPC ticks to send the next packet
+				LARGE_INTEGER TargetTicks;
 				TargetTicks.QuadPart = StartTicks.QuadPart + usec_diff * TimeFreq.QuadPart / 1000000;
 
+				// Save the current time stamp counter
+				LARGE_INTEGER CurTicks = KeQueryPerformanceCounter(NULL);
 				// If we need to wait, do so
 				if (CurTicks.QuadPart < TargetTicks.QuadPart)
 				{
 					// whole microseconds remaining.
-					// Explicit cast ok since condition above ensures this will be at most 1000000ms.
+					// Explicit cast ok since condition above ensures this will be at most 1000000us.
 					i = (UINT)(((TargetTicks.QuadPart - CurTicks.QuadPart) * 1000000) / TimeFreq.QuadPart);
 					NT_ASSERT(i < 1000000);
 					if (i >= 50)
@@ -773,6 +774,12 @@ NTSTATUS NPF_BufferedWrite(
 					{
 						NdisStallExecution(i);
 					}
+#if DBG
+					// We want to be as accurate as possible.
+					// In debug mode, treat an error of more than 1ms as a catastrophic failure.
+					CurTicks = KeQueryPerformanceCounter(NULL);
+					NT_ASSERT(CurTicks.QuadPart - TargetTicks.QuadPart < TimeFreq.QuadPart / 1000);
+#endif
 				}
 			}
 		}
