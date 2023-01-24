@@ -171,6 +171,12 @@ LoadOrderGroup  = NDIS
 Description     = %NPF_Desc_Standard%
 AddReg          = NpcapConfig.reg, Common.Params.reg, NdisImPlatformBindingOptions.reg
 
+[FilterStandard.Remove.Services]
+DelService=%NPF_Filter_Name_Standard%,0x200 ; SPSVCINST_STOPSERVICE
+
+[FilterWiFi.Remove.Services]
+DelService=%NPF_Filter_Name_WiFi%,0x200 ; SPSVCINST_STOPSERVICE
+
 [FilterWiFi.svc]
 DisplayName     = %NPF_Desc_WiFi%
 ServiceType     = 1 ;SERVICE_KERNEL_DRIVER
