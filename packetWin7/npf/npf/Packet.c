@@ -1108,7 +1108,8 @@ static NTSTATUS funcBIOCGSTATS(_In_ POPEN_INSTANCE pOpen,
 	       	_In_ ULONG ulBufLen,
 	       	_Out_ PULONG_PTR Info)
 {
-	static const ULONG uNeeded = 4 * sizeof(UINT);
+	static const ULONG uNeeded = sizeof(struct bpf_stat);
+	struct bpf_stat *pStats = pBuf;
 
 	*Info = 0;
 	if (ulBufLen < uNeeded)
@@ -1121,10 +1122,10 @@ static NTSTATUS funcBIOCGSTATS(_In_ POPEN_INSTANCE pOpen,
 		return STATUS_CANCELLED;
 	}
 
-	((PUINT)pBuf)[0] = pOpen->Received;
-	((PUINT)pBuf)[1] = pOpen->Dropped + pOpen->ResourceDropped;
-	((PUINT)pBuf)[2] = 0;		// Not yet supported
-	((PUINT)pBuf)[3] = pOpen->Accepted;
+	pStats->bs_recv = pOpen->Received;
+	pStats->bs_drop = pOpen->Dropped + pOpen->ResourceDropped;
+	pStats->ps_ifdrop = 0; // Not yet supported
+	pStats->bs_capt = pOpen->Accepted;
 
 	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
 
