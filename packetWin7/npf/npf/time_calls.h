@@ -148,7 +148,7 @@ struct timeval
 
 /* KeQueryPerformanceCounter TimeStamps */
 inline void TIME_SYNCHRONIZE(
-		_InOut_ struct timeval* start)
+		_Inout_ struct timeval* start)
 {
 	if (start->tv_sec != 0 || start->tv_usec != 0) {
 		// We only synchronize once, as the timestamp mode name indicates (SINGLE_SYNCHRONIZATION)
