@@ -185,6 +185,8 @@ int _tmain(int argc, _TCHAR* argv[])
 				// -i or -i2
 				BOOL first_time = TRUE;
 				BOOL try_again = FALSE;
+				// Make sure NetCfg doesn't keep an old driver around
+				UninstallDriver(); // Don't care about return value
 				do {
 					try_again = FALSE;
 					if (InstallDriver())
