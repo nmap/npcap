@@ -713,7 +713,7 @@ NTSTATUS NPF_BufferedWrite(
 
 		TmpMdl->Next = NULL;
 
-		if (Sync && pHdr == UserBuff)
+		if (StartTicks.QuadPart == 0)
 		{
 			// First packet
 			// Retrieve the time references
