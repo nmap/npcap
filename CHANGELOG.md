@@ -1,3 +1,37 @@
+## Npcap 1.73 [2023-03-28]
+
+* Fixed an issue causing "failed to set hardware filter to promiscuous mode"
+  errors due to a new code path failing to return appropriate error codes. Fix
+  by Guy Harris in [PR #656](https://github.com/nmap/npcap/pull/656).
+  Fixes [#628](http://issues.npcap.org/628).
+
+* Fixed an issue with WlanHelper causing "error 0x7b" since Npcap 1.70.Fix by
+  Hauke Neitzel in [PR #652](https://github.com/nmap/npcap/pull/652).
+  Fixes [#649](http://issues.npcap.org/649).
+
+* Fixed an issue preventing capture handles from reattaching after NDIS stack
+  pause operations, resulting in persistent `ERROR_DEVICE_REMOVED` (1617)
+  errors. Fixes [#627](http://issues.npcap.org/627).
+
+* Restored original behavior of timestamps in the default case, 
+  `PCAP_TSTAMP_HOST_HIPREC_UNSYNCED`/`TIMESTAMPMODE_SINGLE_SYNCHRONIZATION`.
+  Since Npcap 0.9994, the timestamp was resynchronized after NDIS stack pause
+  operations, which reduced timestamp drift from wall clock time but made it no
+  longer monotonic, making packet interval calculations inaccurate. This
+  restores the default behavior of WinPcap.
+
+* Fixed an issue that prevented Npcap 1.71 and 1.72 from being completely
+  removed on uninstall. A misconfigured npcap driver service had persisted.
+  Fixes [#657](http://issues.npcap.org/657).
+
+* Fixed an issue where applications using Npcap 1.20 or later DLLs with a Npcap
+  1.00 driver would crash due to a stack buffer overrun when the driver returned
+  too many bytes in response to a request for timestamp modes. Additionally,
+  changed NPFInstall.exe to attempt to uninstall the Npcap NetCfg component
+  prior to installation, in case an improperly-uninstalled component persists.
+
+* Updated libpcap to 1.10.3.
+
 ## Npcap 1.72 [2022-12-14]
 
 * Fixed an issue where promiscuous mode or other hardware packet filters are ignored after a second
