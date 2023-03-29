@@ -766,6 +766,8 @@ NTSTATUS NPF_BufferedWrite(
 					// Explicit cast ok since condition above ensures this will be at most 1000000us.
 					i = (UINT)(((TargetTicks.QuadPart - CurTicks.QuadPart) * 1000000) / TimeFreq.QuadPart);
 					NT_ASSERT(i < 1000000);
+					// These are the NDIS-recommended routines for delaying execution.
+					// Note that both can fire up to 1 system clock tick (e.g. 15ms) later than requested.
 					if (i >= 50)
 					{
 						NdisMSleep(i);
@@ -774,12 +776,6 @@ NTSTATUS NPF_BufferedWrite(
 					{
 						NdisStallExecution(i);
 					}
-#if DBG
-					// We want to be as accurate as possible.
-					// In debug mode, treat an error of more than 1ms as a catastrophic failure.
-					CurTicks = KeQueryPerformanceCounter(NULL);
-					NT_ASSERT(CurTicks.QuadPart - TargetTicks.QuadPart < TimeFreq.QuadPart / 1000);
-#endif
 				}
 			}
 		}
