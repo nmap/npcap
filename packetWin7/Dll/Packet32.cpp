@@ -616,7 +616,7 @@ static PCHAR NpcapGetAdapterID(_In_ LPCSTR AdapterName, _Out_opt_ PULONG pNpfOpe
 	if (0 == _strnicmp(AdapterName, WINPCAP_COMPAT_DEVICE_PREFIX, sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1)) {
 		src = AdapterName + sizeof(WINPCAP_COMPAT_DEVICE_PREFIX) - 1;
 	}
-	else if (0 == _strnicmp(AdapterName, NPF_DRIVER_COMPLETE_DEVICE_PREFIX, sizeof(NPF_DRIVER_COMPLETE_DEVICE_PREFIX - 1))) {
+	else if (0 == _strnicmp(AdapterName, NPF_DRIVER_COMPLETE_DEVICE_PREFIX, sizeof(NPF_DRIVER_COMPLETE_DEVICE_PREFIX) - 1)) {
 		src = AdapterName + sizeof(NPF_DRIVER_COMPLETE_DEVICE_PREFIX) - 1;
 	}
 	else {
