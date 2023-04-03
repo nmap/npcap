@@ -863,10 +863,9 @@ NPF_OidGetUlongNonpagedPtr(
 
 	INFO_DBG("pFiltMod(%p) Oid %#x, Status %#x, %lu bytes\n",
 			pFiltMod, Oid, Status, BytesProcessed);
-	if (Status == NDIS_STATUS_SUCCESS && BytesProcessed != sizeof(ULONG))
+	if (Status == NDIS_STATUS_SUCCESS)
 	{
-		ERROR_DBG("BytesProcessed = %#lx != sizeof(ULONG)\n", BytesProcessed);
-		Status = NDIS_STATUS_FAILURE;
+		NT_ASSERT(BytesProcessed == sizeof(ULONG));
 	}
 	return Status;
 }
@@ -999,7 +998,7 @@ NPF_GetDataRateMappingTable(
 	{
 		WARNING_DBG("pFiltMod(%p) DOT11_DATA_RATE_MAPPING_TABLE Status %#x, read %lu, expected %zu\n",
 				pFiltMod, Status, BytesProcessed, sizeof(DOT11_DATA_RATE_MAPPING_TABLE));
-		Status = NDIS_STATUS_FAILURE;
+		Status = NDIS_STATUS_INVALID_DATA;
 		pFiltMod->DataRateMappingTable = NULL;
 		ExFreePoolWithTag(pDRMT, NPF_DOT11_POOL_TAG);
 	}
@@ -3139,10 +3138,9 @@ NPF_SetPacketFilter(
 
 	ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
-	if (BytesProcessed != sizeof(PacketFilter))
+	if (Status == NDIS_STATUS_SUCCESS)
 	{
-		INFO_DBG("BytesProcessed != sizeof(PacketFilter), BytesProcessed = %#lx, sizeof(PacketFilter) = %#zx\n", BytesProcessed, sizeof(PacketFilter));
-		Status = NDIS_STATUS_FAILURE;
+		NT_ASSERT(BytesProcessed == sizeof(PacketFilter));
 	}
 	TRACE_EXIT();
 	return Status;
@@ -3206,10 +3204,9 @@ NPF_SetLookaheadSize(
 
 	ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
-	if (Status != STATUS_SUCCESS || BytesProcessed != sizeof(ULONG))
+	if (Status == STATUS_SUCCESS)
 	{
-		INFO_DBG("NPF_DoInternalRequest error %#x, BytesProcessed = %#lx, sizeof(ULONG) = %#zx\n", Status, BytesProcessed, sizeof(ULONG));
-		Status = NDIS_STATUS_FAILURE;
+		NT_ASSERT(BytesProcessed != sizeof(ULONG));
 	}
 	TRACE_EXIT();
 	return Status;
@@ -3321,7 +3318,7 @@ NDIS_STATUS NPF_DoInternalRequest(
 				break;
 			default:
 				NT_ASSERT(RequestType && FALSE);
-				Status = NDIS_STATUS_FAILURE;
+				Status = NDIS_STATUS_INVALID_PARAMETER;
 				goto InternalRequestExit;
 				break;
 		}

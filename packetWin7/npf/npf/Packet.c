@@ -1592,7 +1592,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 		if (bSetOid)
 		{
 			INFO_DBG("Dot11: AdapterName=%ws, OID_GEN_MEDIA_IN_USE & BIOCSETOID, fail it\n", pOpen->pFiltMod->AdapterName.Buffer);
-			Status = STATUS_UNSUCCESSFUL;
+			Status = STATUS_NOT_SUPPORTED;
 		}
 		else
 		{
