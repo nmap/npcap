@@ -429,7 +429,6 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 {
 	CHAR Ebuf[AIRPCAP_ERRBUF_SIZE];
 	AirpcapDeviceDescription *Devs = NULL, *TmpDevs;
-	UINT i;
 	
 	TRACE_ENTER();
 
@@ -440,7 +439,7 @@ static BOOLEAN PacketGetAdaptersAirpcap()
 		TRACE_EXIT();
 		return FALSE;
 	}
-	for(TmpDevs = Devs, i = 0; TmpDevs != NULL; TmpDevs = TmpDevs->next)
+	for(TmpDevs = Devs; TmpDevs != NULL; TmpDevs = TmpDevs->next)
 	{
 		PADAPTER_INFO TmpAdInfo = NULL;
 		// If the adapter is valid, add it to the list.
