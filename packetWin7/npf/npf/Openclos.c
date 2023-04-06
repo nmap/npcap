@@ -3135,13 +3135,11 @@ NPF_SetPacketFilter(
 		0,
 		&BytesProcessed
 	);
+	// Some drivers do not set BytesRead for Set requests
+	UNREFERENCED_PARAMETER(BytesProcessed);
 
 	ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
-	if (Status == NDIS_STATUS_SUCCESS)
-	{
-		NT_ASSERT(BytesProcessed == sizeof(PacketFilter));
-	}
 	TRACE_EXIT();
 	return Status;
 }
@@ -3204,10 +3202,8 @@ NPF_SetLookaheadSize(
 
 	ExFreePoolWithTag(pBuffer, NPF_INTERNAL_OID_TAG);
 
-	if (Status == STATUS_SUCCESS)
-	{
-		NT_ASSERT(BytesProcessed != sizeof(ULONG));
-	}
+	// Some drivers do not set BytesRead for Set requests
+	UNREFERENCED_PARAMETER(BytesProcessed);
 	TRACE_EXIT();
 	return Status;
 }
@@ -3335,7 +3331,7 @@ InternalRequestExit:
 	{
 		ExFreeToLookasideListEx(&g_pDriverExtension->InternalRequestPool, pInternalRequest);
 	}
-	INFO_DBG("pFiltMod(%p) OID %s %#x: Status = %#x\n", pFiltMod, RequestType == NdisRequestQueryInformation ? "GET" : "SET", Oid, Status);
+	INFO_DBG("pFiltMod(%p) OID %s %#x: Status = %#x; Bytes = %lu\n", pFiltMod, RequestType == NdisRequestQueryInformation ? "GET" : "SET", Oid, Status, *pBytesProcessed);
 	TRACE_EXIT();
 	return Status;
 }
