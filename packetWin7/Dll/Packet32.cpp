@@ -3674,6 +3674,7 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 			rval = 1;
 			// Update the adapter's monitor mode in the global map.
 			g_nbAdapterMonitorModes[AdapterID] = mode;
+			break;
 		case NDIS_STATUS_INVALID_DATA:
 		case NDIS_STATUS_INVALID_OID:
 			// Monitor mode is not supported.
