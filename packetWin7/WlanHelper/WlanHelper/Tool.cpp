@@ -380,8 +380,8 @@ string tstring2string(tstring &str)
 
 tstring itos(int i)
 {
-	TCHAR buf[256];
-	_itot_s(i, buf, 10);
+	TCHAR buf[_MAX_ITOSTR_BASE10_COUNT];
+	_itot_s(i, buf, _countof(buf), 10);
 	tstring res = buf;
 	return res;
 }
