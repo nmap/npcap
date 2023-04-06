@@ -386,7 +386,7 @@ tstring itos(int i)
 	return res;
 }
 
-tstring executeCommand(TCHAR* cmd)
+tstring executeCommand(LPCTSTR cmd)
 {
 	TCHAR buffer[128];
 	tstring result;
