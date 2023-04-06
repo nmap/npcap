@@ -1410,7 +1410,7 @@ LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterID, ULONG NpfOpenFlags)
 		}
 
 		if (!PacketSetMaxLookaheadsize(lpAdapter)) {
-			error=GetLastError();
+			// error=GetLastError();
 			TRACE_PRINT("PacketOpenAdapterNPF: Unable to set lookahead");
 			// We do not consider this a failure. Would like to avoid it for loopback, though.
 			// break;
