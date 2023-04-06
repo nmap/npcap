@@ -1516,6 +1516,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	if (!bSetOid && pOpen->pFiltMod->Loopback)
 	{
+		PNDIS_LINK_STATE pLinkState = NULL;
 		switch (OidData->Oid)
 		{
 			case OID_GEN_MAXIMUM_TOTAL_SIZE:
@@ -1566,7 +1567,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 					break;
 				}
 				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(NDIS_LINK_STATE);
-				PNDIS_LINK_STATE pLinkState = (PNDIS_LINK_STATE) OidData->Data;
+				pLinkState = (PNDIS_LINK_STATE) OidData->Data;
 				pLinkState->MediaConnectState = MediaConnectStateConnected;
 				pLinkState->MediaDuplexState = MediaDuplexStateFull;
 				pLinkState->XmitLinkSpeed = NDIS_LINK_SPEED_UNKNOWN;
