@@ -131,8 +131,7 @@ typedef struct _ADAPTER_INFO
 	ULONG NameLen; // length of name
 	CHAR Description[ADAPTER_DESC_LENGTH + 1];	///< Human understandable description of the adapter
 	ULONG DescLen; // length of description
-}
-ADAPTER_INFO, *PADAPTER_INFO;
+} ADAPTER_INFO, *PADAPTER_INFO;
 
 typedef struct ADAPTERS_INFO_LIST
 {
