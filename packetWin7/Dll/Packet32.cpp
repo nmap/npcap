@@ -3252,6 +3252,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	{
 		ADDRINFOA hints = {0};
 		PADDRINFOA pAI = NULL;
+		npf_if_addr* pIfAddr = NULL;
 		hints.ai_flags = AI_NUMERICHOST;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = IPPROTO_TCP;
@@ -3260,22 +3261,24 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 		switch (*NEntries) {
 			case 2:
 				// buffer[1] = ipv6;
+				pIfAddr = &buffer[1];
 				hints.ai_family = AF_INET6;
 				if (0 != getaddrinfo("::1", NULL, &hints, &pAI))
 					break;
-				memcpy(&buffer[1].IPAddress, pAI->ai_addr, sizeof(struct sockaddr_in6));
+				memcpy(&pIfAddr->IPAddress, pAI->ai_addr, sizeof(struct sockaddr_in6));
 				if (0 != getaddrinfo("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", NULL, &hints, &pAI))
 					break;
-				memcpy(&buffer[1].SubnetMask, pAI->ai_addr, sizeof(struct sockaddr_in6));
+				memcpy(&pIfAddr->SubnetMask, pAI->ai_addr, sizeof(struct sockaddr_in6));
 			case 1:
 				// buffer[0] = ipv4;
+				pIfAddr = &buffer[0];
 				hints.ai_family = AF_INET;
 				if (0 != getaddrinfo("127.0.0.1", NULL, &hints, &pAI))
 					break;
-				memcpy(&buffer[0].IPAddress, pAI->ai_addr, sizeof(struct sockaddr_in));
+				memcpy(&pIfAddr->IPAddress, pAI->ai_addr, sizeof(struct sockaddr_in));
 				if (0 != getaddrinfo("255.0.0.0", NULL, &hints, &pAI))
 					break;
-				memcpy(&buffer[0].SubnetMask, pAI->ai_addr, sizeof(struct sockaddr_in));
+				memcpy(&pIfAddr->SubnetMask, pAI->ai_addr, sizeof(struct sockaddr_in));
 			default:
 				Res = TRUE;
 				break;
