@@ -266,23 +266,4 @@ inline void GET_TIMESTAMPS(
 		*pPerfCount = KeQueryPerformanceCounter(NULL);
 }
 
-inline void GET_TIMEVAL(
-		_Out_ struct timeval *tstamp,
-		_In_ struct timeval* start,
-		_In_ ULONG TimestampMode,
-		_In_ PNPF_NBL_COPY pNBLCopy)
-{
-	switch (TimestampMode)
-	{
-		case TIMESTAMPMODE_QUERYSYSTEMTIME:
-		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
-			GetTimevalFromSystemTime(tstamp, pNBLCopy->SystemTime);
-			break;
-		default:
-			GetTimevalFromPerfCount(tstamp, start, pNBLCopy->PerfCount);
-			break;
-	}
-}
-
-
 #endif /*_time_calls*/

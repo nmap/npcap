@@ -563,7 +563,6 @@ NTSTATUS NPF_BufferedWrite(
 	ULONG					SendFlags = 0;
 	UINT					i;
 	LARGE_INTEGER			StartTicks = { 0 };
-	LARGE_INTEGER			TimeFreq;
 	struct timeval			BufStartTime = { 0 };
 	LONGLONG prev_usec_diff = 0;
 	struct dump_bpf_hdr* pHdr = NULL;

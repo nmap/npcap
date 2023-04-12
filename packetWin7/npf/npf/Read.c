@@ -308,7 +308,16 @@ NPF_Read(
 		}
 
 		header = (struct bpf_hdr *) (packp + copied);
-		GET_TIMEVAL(&header->bh_tstamp, &Open->start, Open->TimestampMode, pCapData->pNBCopy->pNBLCopy);
+		switch (Open->TimestampMode)
+		{
+			case TIMESTAMPMODE_QUERYSYSTEMTIME:
+			case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
+				GetTimevalFromSystemTime(&header->bh_tstamp, pCapData->pNBCopy->pNBLCopy->SystemTime);
+				break;
+			default:
+				GetTimevalFromPerfCount(&header->bh_tstamp, &Open->start, pCapData->pNBCopy->pNBLCopy->PerfCount);
+				break;
+		}
 		header->bh_caplen = 0;
 		header->bh_datalen = pCapData->pNBCopy->ulPacketSize;
 		header->bh_hdrlen = sizeof(struct bpf_hdr);
