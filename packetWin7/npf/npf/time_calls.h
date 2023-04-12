@@ -114,6 +114,8 @@
 #define TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE 4
 #define /* DEPRECATED */ TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
 
+extern LARGE_INTEGER TimeFreq;
+
 inline BOOLEAN NPF_TimestampModeSupported(_In_ ULONG mode)
 {
 	return mode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
@@ -156,7 +158,7 @@ inline void TIME_SYNCHRONIZE(
 	LARGE_INTEGER SystemTime;
 	//LARGE_INTEGER i;
 	//ULONG tmp2;
-	LARGE_INTEGER TimeFreq, PTime;
+	LARGE_INTEGER PTime;
 
 	// get the absolute value of the system boot time.   
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
@@ -177,15 +179,13 @@ inline void TIME_SYNCHRONIZE(
 	}
 }	
 
-inline void GetTimeKQPC(
+inline void GetTimevalFromPerfCount(
 		_Out_ struct timeval* dst,
-		_In_ struct timeval* start)
+		_In_ struct timeval* start,
+		_In_ LARGE_INTEGER PTime)
 {
-	LARGE_INTEGER PTime, TimeFreq;
-	LONG tmp;
-
-	PTime = KeQueryPerformanceCounter(&TimeFreq);
-	tmp = (LONG)(PTime.QuadPart / TimeFreq.QuadPart);
+	NT_ASSERT(TimeFreq.QuadPart != 0);
+	LONG tmp = (LONG)(PTime.QuadPart / TimeFreq.QuadPart);
 
 	//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
 	dst->tv_sec = start->tv_sec + tmp;
@@ -198,6 +198,24 @@ inline void GetTimeKQPC(
 	}
 }
 
+inline void GetTimeKQPC(
+		_Out_ struct timeval* dst,
+		_In_ struct timeval* start)
+{
+	LARGE_INTEGER PTime;
+
+	PTime = KeQueryPerformanceCounter(NULL);
+	GetTimevalFromPerfCount(dst, start, PTime);
+}
+
+inline void GetTimevalFromSystemTime(
+		_Out_ struct timeval* dst,
+		_In_ LARGE_INTEGER SystemTime)
+{
+	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
+	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
+}
+
 inline void GetTimeQST(
 		_Out_ struct timeval* dst)
 {
@@ -205,8 +223,7 @@ inline void GetTimeQST(
 
 	KeQuerySystemTime(&SystemTime);
 
-	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
-	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
+	GetTimevalFromSystemTime(dst, SystemTime);
 }
 
 inline void GetTimeQST_precise(
@@ -216,8 +233,7 @@ inline void GetTimeQST_precise(
 
 	BestQuerySystemTime(&SystemTime);
 
-	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
-	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
+	GetTimevalFromSystemTime(dst, SystemTime);
 }
 
 
@@ -236,6 +252,34 @@ inline void GET_TIME(
 			break;
 		default:
 			GetTimeKQPC(dst, start);
+			break;
+	}
+}
+
+inline void GET_TIMESTAMPS(
+		_Out_opt_ PLARGE_INTEGER pSystemTime,
+		_Out_opt_ PLARGE_INTEGER pPerfCount)
+{
+	if (pSystemTime)
+		BestQuerySystemTime(pSystemTime);
+	if (pPerfCount)
+		*pPerfCount = KeQueryPerformanceCounter(NULL);
+}
+
+inline void GET_TIMEVAL(
+		_Out_ struct timeval *tstamp,
+		_In_ struct timeval* start,
+		_In_ ULONG TimestampMode,
+		_In_ PNPF_NBL_COPY pNBLCopy)
+{
+	switch (TimestampMode)
+	{
+		case TIMESTAMPMODE_QUERYSYSTEMTIME:
+		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
+			GetTimevalFromSystemTime(tstamp, pNBLCopy->SystemTime);
+			break;
+		default:
+			GetTimevalFromPerfCount(tstamp, start, pNBLCopy->PerfCount);
 			break;
 	}
 }

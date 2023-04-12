@@ -498,7 +498,8 @@ typedef struct _NPF_NBL_COPY
 {
 	SINGLE_LIST_ENTRY NBCopiesHead;
 	SINGLE_LIST_ENTRY NBLCopyEntry;
-	struct timeval tstamp;
+	LARGE_INTEGER PerfCount;
+	LARGE_INTEGER SystemTime;
 #ifdef HAVE_DOT11_SUPPORT
 	PUCHAR Dot11RadiotapHeader;
 #endif

@@ -308,7 +308,7 @@ NPF_Read(
 		}
 
 		header = (struct bpf_hdr *) (packp + copied);
-		header->bh_tstamp = pCapData->pNBCopy->pNBLCopy->tstamp;
+		GET_TIMEVAL(&header->bh_tstamp, &Open->start, Open->TimestampMode, pCapData->pNBCopy->pNBLCopy);
 		header->bh_caplen = 0;
 		header->bh_datalen = pCapData->pNBCopy->ulPacketSize;
 		header->bh_hdrlen = sizeof(struct bpf_hdr);
@@ -372,7 +372,8 @@ NPF_TapExForEachOpen(
 	_Inout_ POPEN_INSTANCE Open,
 	_In_ const PNET_BUFFER_LIST pNetBufferLists,
 	_Inout_ PSINGLE_LIST_ENTRY NBLCopyHead,
-	_Inout_ struct timeval *tstamp,
+	_In_ LARGE_INTEGER SystemTime,
+	_In_ LARGE_INTEGER PerfCount,
 	_In_ BOOLEAN AtDispatchLevel
 	);
 
@@ -390,11 +391,13 @@ NPF_DoTap(
 	LOCK_STATE_EX lockState;
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	SINGLE_LIST_ENTRY NBLCopiesHead;
-	struct timeval tstamp = {0, 0};
 	NBLCopiesHead.Next = NULL;
 	PNPF_SRC_NB pSrcNB = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
+	LARGE_INTEGER SystemTime, PerfCount;
 
+	// TODO: Keep track of which of these is needed and what precision
+	GET_TIMESTAMPS(&SystemTime, &PerfCount);
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
 	NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState,
@@ -409,7 +412,7 @@ NPF_DoTap(
 			if (!(TempOpen == pOpenOriginating && TempOpen->SkipSentPackets))
 			{
 				// NdisAcquireRWLockRead above raised to DISPATCH_LEVEL
-				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, &tstamp, TRUE);
+				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, SystemTime, PerfCount, TRUE);
 			}
 		}
 	}
@@ -697,7 +700,8 @@ NPF_TapExForEachOpen(
 	POPEN_INSTANCE Open,
 	PNET_BUFFER_LIST pNetBufferLists,
 	PSINGLE_LIST_ENTRY NBLCopyHead,
-	struct timeval *tstamp,
+	LARGE_INTEGER SystemTime,
+	LARGE_INTEGER PerfCount,
 	BOOLEAN AtDispatchLevel
 	)
 {
@@ -712,7 +716,6 @@ NPF_TapExForEachOpen(
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	PSINGLE_LIST_ENTRY pNBLCopyPrev = NULL;
 	PSINGLE_LIST_ENTRY pSrcNBPrev = NULL;
-	NT_ASSERT(tstamp != NULL);
 	
 	//TRACE_ENTER();
 
@@ -750,13 +753,8 @@ NPF_TapExForEachOpen(
 			pNBLCopy->refcount = 1;
 			NT_ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
 			pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
-			if (tstamp->tv_sec == 0)
-			{
-				// We only get the timestamp once for all packets in this set of NBLs
-				// since they were all delivered at the same time.
-				GET_TIME(tstamp, &Open->start, Open->TimestampMode);
-			}
-			pNBLCopy->tstamp = *tstamp;
+			pNBLCopy->SystemTime = SystemTime;
+			pNBLCopy->PerfCount = PerfCount;
 		}
 		else
 		{
