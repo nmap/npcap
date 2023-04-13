@@ -395,6 +395,10 @@ typedef struct _NPCAP_FILTER_MODULE
 	UINT HigherPacketFilterSet:1; // Have we correctly set HigherPacketFilter yet?
 	UINT Fragile:1; // Avoid OID set operations on these adapters
 
+	LONG nTimestampQPC; // Opens wanting TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
+	LONG nTimestampQST; // Opens wanting TIMESTAMPMODE_QUERYSYSTEMTIME
+	LONG nTimestampQST_Precise; // Opens wanting TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
+
 	ULONG SupportedPacketFilters;
 	ULONG					MyPacketFilter;
 	ULONG					HigherPacketFilter;
@@ -1272,6 +1276,11 @@ USHORT NPF_LookUpDataRateMappingTable(
 	       );
 #endif
 
+VOID NPF_UpdateTimestampModeCounts(
+		_Inout_opt_ PNPCAP_FILTER_MODULE pFiltMod,
+		_In_ ULONG newmode,
+		_In_ ULONG oldmode
+		);
 /**
  *  @}
  */

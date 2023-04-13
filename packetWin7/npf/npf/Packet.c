@@ -1814,7 +1814,7 @@ static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
 	       _Out_ PULONG_PTR Info)
 {
 	static const ULONG uNeeded = sizeof(ULONG);
-	ULONG mode = 0;
+	ULONG mode = 0, oldmode = 0;
 
 	*Info = 0;
 	if (ulBufLen < uNeeded)
@@ -1835,8 +1835,13 @@ static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
 		return STATUS_CANCELLED;
 	}
 
-	if (InterlockedExchange(&pOpen->TimestampMode, mode) != mode)
+	oldmode = InterlockedExchange(&pOpen->TimestampMode, mode);
+	if (oldmode != mode)
 	{
+		if (pOpen->OpenStatus >= OpenRunning)
+		{
+			NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, mode, oldmode);
+		}
 		/* Reset buffer, since contents have differing timestamps */
 		NPF_ResetBufferContents(pOpen, TRUE);
 	}

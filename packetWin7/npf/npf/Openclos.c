@@ -626,6 +626,7 @@ NPF_StartUsingOpenInstance(
 				// Get the absolute value of the system boot time.
 				// This is used for timestamp conversion.
 				TIME_SYNCHRONIZE(&pOpen->start);
+				NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
 
 				pOpen->OpenStatus = OpenRunning;
 			}
@@ -702,6 +703,10 @@ NPF_DemoteOpenStatus(
 
 	NT_ASSERT(NewState > OldState);
 	INFO_DBG("Open %p: %d -> %d\n", pOpen, OldState, NewState);
+	if (OldState >= OpenRunning)
+	{
+		NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
+	}
 
 	return OldState;
 }
@@ -3334,4 +3339,49 @@ InternalRequestExit:
 	INFO_DBG("pFiltMod(%p) OID %s %#x: Status = %#x; Bytes = %lu\n", pFiltMod, RequestType == NdisRequestQueryInformation ? "GET" : "SET", Oid, Status, *pBytesProcessed);
 	TRACE_EXIT();
 	return Status;
+}
+
+	_Use_decl_annotations_
+VOID NPF_UpdateTimestampModeCounts(
+		PNPCAP_FILTER_MODULE pFiltMod,
+		ULONG newmode,
+		ULONG oldmode)
+{
+	if (pFiltMod == NULL || newmode == oldmode)
+		return;
+
+	switch (newmode)
+	{
+		case TIMESTAMPMODE_UNSET:
+			break;
+		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION:
+			InterlockedIncrement(&pFiltMod->nTimestampQPC);
+			break;
+		case TIMESTAMPMODE_QUERYSYSTEMTIME:
+			InterlockedIncrement(&pFiltMod->nTimestampQST);
+			break;
+		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
+			InterlockedIncrement(&pFiltMod->nTimestampQST_Precise);
+			break;
+		default:
+			NT_ASSERT(FALSE);
+			break;
+	}
+	switch (oldmode)
+	{
+		case TIMESTAMPMODE_UNSET:
+			break;
+		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION:
+			InterlockedDecrement(&pFiltMod->nTimestampQPC);
+			break;
+		case TIMESTAMPMODE_QUERYSYSTEMTIME:
+			InterlockedDecrement(&pFiltMod->nTimestampQST);
+			break;
+		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
+			InterlockedDecrement(&pFiltMod->nTimestampQST_Precise);
+			break;
+		default:
+			NT_ASSERT(FALSE);
+			break;
+	}
 }

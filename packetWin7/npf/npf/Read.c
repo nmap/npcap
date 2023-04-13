@@ -403,10 +403,30 @@ NPF_DoTap(
 	NBLCopiesHead.Next = NULL;
 	PNPF_SRC_NB pSrcNB = NULL;
 	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
-	LARGE_INTEGER SystemTime, PerfCount;
+	LARGE_INTEGER SystemTime = { 0 }, PerfCount = { 0 };
 
-	// TODO: Keep track of which of these is needed and what precision
-	GET_TIMESTAMPS(&SystemTime, &PerfCount);
+	/* Get relevant timestamps */
+	if (pFiltMod->nTimestampQPC == 0 && pFiltMod->nTimestampQST == 0 && pFiltMod->nTimestampQST_Precise == 0)
+	{
+		// No instances at OpenRunning
+		return;
+	}
+	// Any instances need performance counter?
+	if (pFiltMod->nTimestampQPC > 0)
+	{
+		PerfCount = KeQueryPerformanceCounter(NULL);
+	}
+	// Any instances need system time? All can use precise if any need it.
+	if (pFiltMod->nTimestampQST_Precise > 0)
+	{
+		BestQuerySystemTime(&SystemTime);
+	}
+	else if (pFiltMod->nTimestampQST > 0)
+	{
+		// If none need QST_Precise, we can make do with just QST
+		KeQuerySystemTime(&SystemTime);
+	}
+
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
 	NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState,

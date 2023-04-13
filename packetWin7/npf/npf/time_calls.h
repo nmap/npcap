@@ -114,6 +114,8 @@
 #define TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE 4
 #define /* DEPRECATED */ TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
 
+#define TIMESTAMPMODE_UNSET ((ULONG) -1)
+
 extern LARGE_INTEGER TimeFreq;
 
 inline BOOLEAN NPF_TimestampModeSupported(_In_ ULONG mode)
@@ -254,16 +256,6 @@ inline void GET_TIME(
 			GetTimeKQPC(dst, start);
 			break;
 	}
-}
-
-inline void GET_TIMESTAMPS(
-		_Out_opt_ PLARGE_INTEGER pSystemTime,
-		_Out_opt_ PLARGE_INTEGER pPerfCount)
-{
-	if (pSystemTime)
-		BestQuerySystemTime(pSystemTime);
-	if (pPerfCount)
-		*pPerfCount = KeQueryPerformanceCounter(NULL);
 }
 
 #endif /*_time_calls*/
