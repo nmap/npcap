@@ -703,10 +703,11 @@ NPF_DemoteOpenStatus(
 
 	NT_ASSERT(NewState > OldState);
 	INFO_DBG("Open %p: %d -> %d\n", pOpen, OldState, NewState);
-	if (OldState >= OpenRunning)
+	if (OldState == OpenRunning)
 	{
 		NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 	}
+	pOpen->ReattachStatus = NewState;
 
 	return OldState;
 }
@@ -1746,6 +1747,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 
 	Open->OpenSignature = OPEN_SIGNATURE;
 	Open->OpenStatus = OpenClosed;
+	Open->ReattachStatus = OpenClosed;
 
 	Open->MachineLock = NdisAllocateRWLock(NdisHandle);
 	if (Open->MachineLock == NULL)
@@ -1991,6 +1993,7 @@ NPF_AttachAdapter(
 	NDIS_STATUS             Status;
 	NDIS_STATUS				returnStatus;
 	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
+	SINGLE_LIST_ENTRY ReattachOpens = {NULL};
 	BOOLEAN					bFalse = FALSE;
 	BOOLEAN					bDot11 = FALSE;
 
@@ -2119,15 +2122,33 @@ NPF_AttachAdapter(
 					       	&& pOpen->AdapterID.Value == pFiltMod->AdapterID.Value)
 				{
 					// add it to this filter module's list.
-					NPF_AddToGroupOpenArray(pOpen, pFiltMod, TRUE);
+					PushEntryList(&ReattachOpens, &pOpen->OpenInstancesEntry);
 				}
 			}
 			NdisReleaseRWLock(g_pDriverExtension->AllOpensLock, &lockState);
+			// For each of the discovered instances, start it up again
+			PSINGLE_LIST_ENTRY Curr = PopEntryList(&ReattachOpens);
+			while (Curr != NULL)
+			{
+				POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+				NPF_AddToGroupOpenArray(pOpen, pFiltMod, 0);
+				if (pOpen->ReattachStatus < OpenAttached)
+				{
+					NPF_UpdateTimestampModeCounts(pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
+					pOpen->OpenStatus = pOpen->ReattachStatus;
+				}
+				Curr = PopEntryList(&ReattachOpens);
+			}
 		}
 
 		returnStatus = STATUS_SUCCESS;
 		pFiltMod->AdapterBindingStatus = FilterPaused;
 		NPF_AddToFilterModuleArray(pFiltMod);
+		// If any handles are running, enable ops again.
+		if (pFiltMod->nTimestampQPC > 0 || pFiltMod->nTimestampQST > 0 || pFiltMod->nTimestampQST_Precise > 0)
+		{
+			NPF_EnableOps(pFiltMod);
+		}
 	}
 	while (bFalse);
 
@@ -2345,7 +2366,6 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	SINGLE_LIST_ENTRY DetachedOpens = {NULL};
 	POPEN_INSTANCE pOpen = NULL;
 	LOCK_STATE_EX lockState;
-	ULONG numOpensRunning = 0;
 
 	TRACE_ENTER();
 
@@ -2358,11 +2378,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	{
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
 		PushEntryList(&DetachedOpens, Curr);
-		OPEN_STATE OldState = NPF_DemoteOpenStatus(pOpen, OpenDetached);
-		if (OldState == OpenRunning)
-		{
-			numOpensRunning++;
-		}
+		pOpen->ReattachStatus = NPF_DemoteOpenStatus(pOpen, OpenDetached);
 
 		if (pOpen->ReadEvent != NULL)
 			KeSetEvent(pOpen->ReadEvent, 0, FALSE);

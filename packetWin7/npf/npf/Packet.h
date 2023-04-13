@@ -483,6 +483,7 @@ typedef struct _OPEN_INSTANCE
 	ULONG PendingIrps[OpenClosed]; //Counters for pending IRPs at each state. No IRPs are accepted at OpenClosed and greater.
 
 	OPEN_STATE OpenStatus;
+	OPEN_STATE ReattachStatus;
 	NDIS_SPIN_LOCK			OpenInUseLock;
 	ULONG TimestampMode;
 	struct timeval start; // Time synchronization of QPC with last boot
