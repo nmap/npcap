@@ -1,3 +1,23 @@
+## Npcap 1.74 [2023-04-19]
+
+* Updated libpcap to 1.10.4.
+
+* Fixed an issue ([#667](http://issues.npcap.org/667)) that prevented capture
+  handles from receiving packets after a NDIS stack pause operation.
+
+* Fixed an issue that could cause inaccurate timestamps when multiple handles
+  were open and using different timestamp modes. Fixes [#666](http://issues.npcap.org/666).
+
+* Fixed an issue preventing raw WiFi frame capture since Npcap 1.60.
+
+* Fixed an issue causing "failed to set hardware filter to promiscuous mode"
+  errors with NetAdapterCx-based Windows 11 miniport drivers. Npcap was
+  interpreting the NDIS spec too strictly; we have [opened an issue with Microsoft](https://github.com/microsoft/Network-Adapter-Class-Extension/issues/14)
+  to address the fault in netadaptercx.sys. Fixes [#628](http://issues.npcap.org/628).
+
+* Addressed several code readability and portability fixes in Packet.dll
+  discovered using clang-tidy via Visual Studio Code Analysis.
+
 ## Npcap 1.73 [2023-03-28]
 
 * Fixed an issue causing "failed to set hardware filter to promiscuous mode"
