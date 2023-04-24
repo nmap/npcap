@@ -626,7 +626,7 @@ NPF_StartUsingOpenInstance(
 				// Get the absolute value of the system boot time.
 				// This is used for timestamp conversion.
 				TIME_SYNCHRONIZE(&pOpen->start);
-				NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
+				NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 
 				pOpen->OpenStatus = OpenRunning;
 			}
@@ -705,7 +705,7 @@ NPF_DemoteOpenStatus(
 	INFO_DBG("Open %p: %d -> %d\n", pOpen, OldState, NewState);
 	if (OldState == OpenRunning)
 	{
-		NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
+		NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
 	}
 	pOpen->ReattachStatus = NewState;
 
@@ -2134,7 +2134,7 @@ NPF_AttachAdapter(
 				NPF_AddToGroupOpenArray(pOpen, pFiltMod, 0);
 				if (pOpen->ReattachStatus < OpenAttached)
 				{
-					NPF_UpdateTimestampModeCounts(pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
+					NPF_UpdateTimestampModeCounts(pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 					pOpen->OpenStatus = pOpen->ReattachStatus;
 				}
 				Curr = PopEntryList(&ReattachOpens);
@@ -3357,7 +3357,7 @@ InternalRequestExit:
 	return Status;
 }
 
-	_Use_decl_annotations_
+_Use_decl_annotations_
 VOID NPF_UpdateTimestampModeCounts(
 		PNPCAP_FILTER_MODULE pFiltMod,
 		ULONG newmode,

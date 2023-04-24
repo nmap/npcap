@@ -308,6 +308,7 @@ NPF_Read(
 		}
 
 		header = (struct bpf_hdr *) (packp + copied);
+		NT_ASSERT(header->bh_tstamp.tv_sec > 0 || header->bh_tstamp.tv_usec > 0);
 		switch (Open->TimestampMode)
 		{
 			case TIMESTAMPMODE_QUERYSYSTEMTIME:
