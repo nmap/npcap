@@ -797,7 +797,7 @@ NPF_TapExForEachOpen(
 		NT_ASSERT((Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION && pNBLCopy->PerfCount.QuadPart > 0)
 				|| ((Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME
 						|| Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE)
-					&& pNBLCopy->SYstemTime.QuadPart > 0));
+					&& pNBLCopy->SystemTime.QuadPart > 0));
 
 		// Informational headers
 		// Only bother with these if we are capturing, i.e. not MODE_STAT
