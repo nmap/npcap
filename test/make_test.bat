@@ -62,7 +62,7 @@ taskkill /PID %SAVEPID% || goto :error
 SET SAVEPID=0
 
 echo Reading dump file...
-.\%1\readfile.exe loopback-%1.pcap || goto :error
+.\%1\readfile.exe -v loopback-%1.pcap || goto :error
 
 echo Replaying dump file...
 .\%1\sendcap.exe loopback-%1.pcap %devname% s || goto :error
@@ -94,7 +94,7 @@ taskkill /PID %SAVEPID% || goto :error
 SET SAVEPID=0
 
 echo Reading dump file...
-.\%1\readfile.exe scanme-%1.pcap || goto :error
+.\%1\readfile.exe -v scanme-%1.pcap || goto :error
 
 echo Replaying dump file...
 .\%1\sendcap.exe scanme-%1.pcap %devname% || goto :error
