@@ -2386,6 +2386,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		Curr = PopEntryList(&pFiltMod->OpenInstances);
 	}
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
+	NT_ASSERT(pFiltMod->nTimestampQPC == 0 && pFiltMod->nTimestampQST == 0 && pFiltMod->nTimestampQST_Precise == 0);
 
 	// Restore original filter and lookahead value
 	NPF_SetPacketFilter(pFiltMod, 0);

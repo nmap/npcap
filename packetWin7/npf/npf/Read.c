@@ -308,17 +308,20 @@ NPF_Read(
 		}
 
 		header = (struct bpf_hdr *) (packp + copied);
-		NT_ASSERT(header->bh_tstamp.tv_sec > 0 || header->bh_tstamp.tv_usec > 0);
 		switch (Open->TimestampMode)
 		{
 			case TIMESTAMPMODE_QUERYSYSTEMTIME:
 			case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
+				NT_ASSERT(pCapData->pNBCopy->pNBLCopy->SystemTime.QuadPart > 0);
 				GetTimevalFromSystemTime(&header->bh_tstamp, pCapData->pNBCopy->pNBLCopy->SystemTime);
 				break;
 			default:
+				NT_ASSERT(Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION);
+				NT_ASSERT(pCapData->pNBCopy->pNBLCopy->PerfCount.QuadPart > 0);
 				GetTimevalFromPerfCount(&header->bh_tstamp, &Open->start, pCapData->pNBCopy->pNBLCopy->PerfCount);
 				break;
 		}
+		NT_ASSERT(header->bh_tstamp.tv_sec > 0 || header->bh_tstamp.tv_usec > 0);
 		header->bh_caplen = 0;
 		header->bh_datalen = pCapData->pNBCopy->ulPacketSize;
 		header->bh_hdrlen = sizeof(struct bpf_hdr);
@@ -790,6 +793,11 @@ NPF_TapExForEachOpen(
 		{
 			pNBLCopy = CONTAINING_RECORD(pNBLCopyPrev->Next, NPF_NBL_COPY, NBLCopyEntry);
 		}
+
+		NT_ASSERT((Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION && pNBLCopy->PerfCount.QuadPart > 0)
+				|| ((Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME
+						|| Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE)
+					&& pNBLCopy->SYstemTime.QuadPart > 0));
 
 		// Informational headers
 		// Only bother with these if we are capturing, i.e. not MODE_STAT
