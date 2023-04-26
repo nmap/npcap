@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdio.h>
 #include <pcap.h>
 
@@ -29,8 +30,8 @@ void dispatcher_handler(u_char *, const struct pcap_pkthdr *, const u_char *);
 
 struct state {
 	int verify;
-	const struct pcap_pkthdr *first;
-	const struct pcap_pkthdr *prev;
+	const struct timeval first;
+	const struct timeval prev;
 	pcap_t *p;
 };
 
@@ -40,9 +41,7 @@ int main(int argc, char **argv)
 	char *filename = NULL;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	struct state st;
-	st.verify = 0;
-	st.first = NULL;
-	st.prev = NULL;
+	memset(&st, 0, sizeof(st));
 	
 #ifdef _WIN32
 	/* Load Npcap and its functions. */
@@ -83,14 +82,14 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	if (st.prev == NULL || st.first == NULL) {
+	if (st.prev.tv_sec == 0 && st.prev.tv_usec == 0) {
 		fprintf(stderr, "No packets processed!\n");
 		pcap_close(fp);
 		return -1;
 	}
 
-	if (!TIMEVAL_AFTER(st.prev->ts, st.first->ts)) {
-		fprintf(stderr, "Timestamps do not increase: %lu.%06lu\n", st.prev->ts.tv_sec, st.prev->ts.tv_usec);
+	if (!TIMEVAL_AFTER(st.prev, st.first)) {
+		fprintf(stderr, "Timestamps do not increase: %lu.%06lu\n", st.prev.tv_sec, st.prev.tv_usec);
 		pcap_close(fp);
 		return -1;
 	}
@@ -107,13 +106,13 @@ void dispatcher_handler(u_char *temp1,
 	u_int i=0;
 	
 	struct state *st = (struct state *) temp1;
-	if (st->first == NULL) {
-		st->first = header;
+	if (st->first.tv_sec == 0 && st->first.tv_usec == 0) {
+		memcpy(&st->first, &header->ts, sizeof(struct timeval));
 	}
 
-	if (st->verify && st->prev != NULL) {
+	if (st->verify && (st->prev.tv_sec != 0 || st->prev.tv_usec != 0)) {
 		/* Default timestamp mode is monotonically increasing */
-		if (TIMEVAL_BEFORE(header->ts, st->prev->ts)) {
+		if (TIMEVAL_BEFORE(header->ts, st->prev)) {
 			fprintf(stderr, "Backwards timestamp!\n");
 			pcap_breakloop(st->p);
 		}
@@ -130,5 +129,5 @@ void dispatcher_handler(u_char *temp1,
 	}
 	
 	printf("\n\n");		
-	st->prev = header;
+	memcpy(&st->prev, &header->ts, sizeof(struct timeval));
 }
