@@ -1,3 +1,8 @@
+## Npcap 1.75 [2023-04-27]
+
+* Fix a critical regression in Npcap 1.74 which caused all captured packets to
+  have the same timestamp. Fixes [#668](http://issues.npcap.org/668).
+
 ## Npcap 1.74 [2023-04-19]
 
 * Updated libpcap to 1.10.4.
