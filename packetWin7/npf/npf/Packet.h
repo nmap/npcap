@@ -326,7 +326,6 @@ typedef struct _NPCAP_DRIVER_EXTENSION
 	BOOLEAN bAdminOnlyMode:1;
 	BOOLEAN bDltNullMode:1;
 	BOOLEAN bDot11SupportMode:1;
-	BOOLEAN bVlanSupportMode:1;
 	BOOLEAN bTestMode:1;
 
 	ULONG TimestampMode;

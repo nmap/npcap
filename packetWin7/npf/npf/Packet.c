@@ -291,12 +291,6 @@ DriverEntry(
 		g_pDriverExtension->bDot11SupportMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &Dot11SupportRegValueName);
 		INFO_DBG("g_Dot11SupportMode = %lu\n", g_pDriverExtension->bDot11SupportMode);
 
-		// Get the VlanSupport option, if VlanSupport=1, Npcap driver will try to recognize 802.1Q VLAN tag when capturing and sending data.
-		// If the registry key doesn't exist, we view it as VlanSupport=0, so no VLAN support.
-		NDIS_STRING VlanSupportRegValueName = NDIS_STRING_CONST("VlanSupport");
-		g_pDriverExtension->bVlanSupportMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &VlanSupportRegValueName);
-		INFO_DBG("g_VlanSupportMode = %lu\n", g_pDriverExtension->bVlanSupportMode);
-
 		// Get the TimestampMode option. The meanings of its values is described in time_calls.h.
 		// If the registry key doesn't exist, we view it as TimestampMode=0, so the default "QueryPerformanceCounter" timestamp gathering method.
 		NDIS_STRING TimestampRegValueName = NDIS_STRING_CONST("TimestampMode");

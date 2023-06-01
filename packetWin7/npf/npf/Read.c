@@ -401,8 +401,6 @@ BOOLEAN NPF_GetMetadata(
 	PSINGLE_LIST_ENTRY pNBLCopyPrev = NBLCopyHead;
 	while (pNetBufList != NULL)
 	{
-		BOOLEAN withVlanTag = FALSE;
-		UCHAR pVlanTag[2];
 #ifdef HAVE_DOT11_SUPPORT
 		PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = NULL;
 #else
@@ -432,26 +430,6 @@ BOOLEAN NPF_GetMetadata(
 		{
 			pNBLCopy = CONTAINING_RECORD(pNBLCopyPrev->Next, NPF_NBL_COPY, NBLCopyEntry);
 		}
-
-			// Handle IEEE802.1Q VLAN tag here, the tag in OOB field will be copied to the packet data, currently only Ethernet supported.
-			// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
-			if (g_pDriverExtension->bVlanSupportMode && (NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo) != 0))
-			{
-				NDIS_NET_BUFFER_LIST_8021Q_INFO qInfo;
-				qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
-				if (qInfo.TagHeader.VlanId != 0)
-				{
-					USHORT pTmpVlanTag;
-					withVlanTag = TRUE;
-
-					pTmpVlanTag = ((qInfo.TagHeader.UserPriority & 0x07) << 13) |
-						((qInfo.TagHeader.CanonicalFormatId & 0x01) << 12) |
-						(qInfo.TagHeader.VlanId & 0x0FFF);
-
-					pVlanTag[0] = ((UCHAR *)(&pTmpVlanTag))[1];
-					pVlanTag[1] = ((UCHAR *)(&pTmpVlanTag))[0];
-				}
-			}
 
 #ifdef HAVE_DOT11_SUPPORT
 			// Handle native 802.11 media specific OOB data here.

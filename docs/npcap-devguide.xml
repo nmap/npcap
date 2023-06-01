@@ -114,7 +114,7 @@ StrCpy $inst_ver "$R2.$R3.$R4.$R5"</screen>
         key: <filename>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\npcap\Parameters</filename>.
         The entries like <filename>AdminOnly</filename>,
         <filename>LoopbackSupport</filename>, <filename>DltNull</filename>,<filename>Dot11Support</filename>,
-        <filename>VlanSupport</filename>, <filename>WinPcapCompatible</filename>, etc. 
+        <filename>WinPcapCompatible</filename>, etc. 
         are <code>REG_DWORD</code> type. A 0x00000001 value
         indicates the installation option is <emphasis>CHECKED</emphasis>.
       </para>

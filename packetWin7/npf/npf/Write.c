@@ -429,47 +429,6 @@ NPF_Write(
 
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 
-		// Recognize IEEE802.1Q tagged packet, as no many adapters support VLAN tag packet sending, no much use for end users,
-		// and this code examines the data which lacks efficiency, so I left it commented, the sending part is also unfinished.
-		// This code refers to Win10Pcap at https://github.com/SoftEtherVPN/Win10Pcap.
-// 			if (Open->pFiltMod->Loopback == FALSE)
-// 			{
-// 				PUCHAR pHeaderBuffer;
-// 				UINT iFres;
-//
-// 				BOOLEAN withVlanTag = FALSE;
-// 				UINT VlanID = 0;
-// 				UINT VlanUserPriority = 0;
-// 				UINT VlanCanFormatID = 0;
-//
-// 				NdisQueryMdl(
-// 					Irp->MdlAddress,
-// 					&pHeaderBuffer,
-// 					&iFres,
-// 					NormalPagePriority);
-//
-// 				// Determine if the packet is IEEE802.1Q tagged packet.
-// 				if (iFres >= 18)
-// 				{
-// 					if (pHeaderBuffer[12] == 0x81 && pHeaderBuffer[13] == 0x00)
-// 					{
-// 						USHORT pTmpVlanTag = 0;
-//
-// 						((UCHAR *)(&pTmpVlanTag))[0] = pHeaderBuffer[15];
-// 						((UCHAR *)(&pTmpVlanTag))[1] = pHeaderBuffer[14];
-//
-// 						VlanID = pTmpVlanTag & 0x0FFF;
-// 						VlanUserPriority = (pTmpVlanTag >> 13) & 0x07;
-// 						VlanCanFormatID = (pTmpVlanTag >> 12) & 0x01;
-//
-// 						if (VlanID != 0)
-// 						{
-// 							withVlanTag = TRUE;
-// 						}
-// 					}
-// 				}
-// 			}
-
 		//
 		//  Call the MAC
 		//
