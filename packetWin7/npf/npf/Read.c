@@ -681,6 +681,10 @@ NPF_DoTap(
 		KeQuerySystemTime(&SystemTime);
 	}
 
+	/* If we got this far, there is at least 1 instance at OpenRunning,
+	 * so gather metadata before locking the list. */
+	bMetadataProcessed = NPF_GetMetadata(NetBufferLists, &NBLCopiesHead, pFiltMod, SystemTime, PerfCount);
+
 	/* Lock the group */
 	// Read-only lock since list is not being modified.
 	NdisAcquireRWLockRead(pFiltMod->OpenInstancesLock, &lockState,
@@ -694,9 +698,6 @@ NPF_DoTap(
 			// If this instance originated the packet and doesn't want to see it, don't capture.
 			if (!(TempOpen == pOpenOriginating && TempOpen->SkipSentPackets))
 			{
-				if (!bMetadataProcessed) {
-					bMetadataProcessed = NPF_GetMetadata(NetBufferLists, &NBLCopiesHead, pFiltMod, SystemTime, PerfCount);
-				}
 				// NdisAcquireRWLockRead above raised to DISPATCH_LEVEL
 				NPF_TapExForEachOpen(TempOpen, NetBufferLists, &NBLCopiesHead, TRUE);
 			}
