@@ -2135,8 +2135,8 @@ NPF_AttachAdapter(
 				if (pOpen->ReattachStatus < OpenAttached)
 				{
 					NPF_UpdateTimestampModeCounts(pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
-					pOpen->OpenStatus = pOpen->ReattachStatus;
 				}
+				pOpen->OpenStatus = pOpen->ReattachStatus;
 				Curr = PopEntryList(&ReattachOpens);
 			}
 		}
