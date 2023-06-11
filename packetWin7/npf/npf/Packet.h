@@ -380,6 +380,8 @@ typedef struct _NPCAP_FILTER_MODULE
 	// Ordinary traversal can use faster and concurrent read-lock.
 	SINGLE_LIST_ENTRY OpenInstances; //GroupHead
 	PNDIS_RW_LOCK_EX OpenInstancesLock; // Also protects MyPacketFilter and MyLookaheadSize
+	LIST_ENTRY BpfPrograms;
+	PNDIS_RW_LOCK_EX BpfProgramsLock;
 
 	NDIS_STRING				AdapterName;
 	NET_LUID AdapterID;
@@ -422,6 +424,14 @@ typedef struct _NPCAP_FILTER_MODULE
 } 
 NPCAP_FILTER_MODULE, *PNPCAP_FILTER_MODULE;
 
+typedef struct _OPEN_INSTANCE* POPEN_INSTANCE;
+typedef struct _NPCAP_BPF_PROGRAM
+{
+	LIST_ENTRY BpfProgramsEntry;
+	struct bpf_insn *bpf_program;
+}
+NPCAP_BPF_PROGRAM, *PNPCAP_BPF_PROGRAM;
+
 /* Open instance
  * Represents an open device handle by a process
  */
@@ -436,11 +446,7 @@ typedef struct _OPEN_INSTANCE
 	ULONG					MyPacketFilter;
 	ULONG					MyLookaheadSize;
 	PKEVENT					ReadEvent;		///< Pointer to the event on which the read calls on this instance must wait.
-	PUCHAR					bpfprogram;		///< Pointer to the filtering pseudo-code associated with current instance of the driver.
-											///< This code is used only in particular situations (for example when the packet received
-											///< from the NIC driver is stored in two non-consecutive buffers. In normal situations
-											///< the filtering routine created by the JIT compiler and pointed by the next field
-											///< is used. See \ref NPF for details on the filtering process.
+	NPCAP_BPF_PROGRAM BpfProgram; ///< Contains a pointer to the filtering pseudo-code associated with current handle.
 	UINT					MinToCopy;		///< Minimum amount of data in the circular buffer that unlocks a read. Set with the
 											///< BIOCSMINTOCOPY IOCTL.
 	LARGE_INTEGER			Nbytes;			///< Amount of bytes accepted by the filter when this instance is in statistical mode.
@@ -458,8 +464,6 @@ typedef struct _OPEN_INSTANCE
 	// Info used to match a FilterModule when reattaching:
 	UINT bDot11:1; // pFiltMod->Dot11
 	UINT bLoopback:1; // pFiltMod->Loopback
-
-	PNDIS_RW_LOCK_EX MachineLock; ///< Lock that protects the BPF filter while in use.
 
 	/* Buffer */
 	PNDIS_RW_LOCK_EX BufferLock; // Lock for modifying the buffer size/configuration
@@ -549,7 +553,13 @@ typedef union _NPF_NB_STORAGE
 /* Structure of a captured packet data description */
 typedef struct _NPF_CAP_DATA
 {
-	LIST_ENTRY PacketQueueEntry;
+	union {
+		LIST_ENTRY PacketQueueEntry;
+		struct {
+			struct _NPF_CAP_DATA *Next;
+			POPEN_INSTANCE pOpen;
+		};
+	};
 	PNPF_NB_COPIES pNBCopy;
 	ULONG ulCaplen;
 }

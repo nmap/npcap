@@ -560,6 +560,70 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod)
 	return Status;
 }
 
+VOID
+NPF_RegisterBpf(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PNPCAP_BPF_PROGRAM pBpfProgram)
+{
+	// Assert/verify pBpfProgram fields are set
+	LOCK_STATE_EX lockState;
+
+	// Lock the BpfPrograms list
+	NdisAcquireRWLockWrite(pFiltMod->BpfProgramsLock, &lockState, 0);
+	// Insert/update the bpf for this open instance
+	if (pBpfProgram->BpfProgramsEntry.Flink != NULL)
+	{
+		// This program is in the list already.
+#if DBG
+		// In debug mode, we can verify/assert this.
+		BOOLEAN bFound = FALSE;
+		NT_ASSERT(pBpfProgram->BpfProgramsEntry.Blink != NULL);
+		for (PLIST_ENTRY Curr = pFiltMod->BpfPrograms.Flink;
+				Curr != &pFiltMod->BpfPrograms;
+				Curr = Curr->Flink)
+		{
+			if (Curr == &pBpfProgram->BpfProgramsEntry)
+			{
+				NT_ASSERT(Curr->Flink->Blink == Curr);
+				bFound = TRUE;
+				break;
+			}
+		}
+		NT_ASSERT(bFound);
+#endif
+	}
+	else
+	{
+		NT_ASSERT(pBpfProgram->BpfProgramsEntry.Blink == NULL);
+		InsertTailList(&pFiltMod->BpfPrograms, &pBpfProgram->BpfProgramsEntry);
+	}
+	// Unlock the list
+	NdisReleaseRWLock(pFiltMod->BpfProgramsLock, &lockState);
+}
+VOID
+NPF_UnregisterBpf(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PNPCAP_BPF_PROGRAM pBpfProgram)
+{
+	LOCK_STATE_EX lockState;
+	if (pBpfProgram->BpfProgramsEntry.Flink == NULL &&
+			NT_VERIFY(pBpfProgram->BpfProgramsEntry.Blink == NULL))
+	{
+		return;
+	}
+	NT_ASSERT(pBpfProgram->BpfProgramsEntry.Blink != NULL);
+	// Lock the BpfPrograms list
+	NdisAcquireRWLockWrite(pFiltMod->BpfProgramsLock, &lockState, 0);
+	// remove the bpf for this open instance
+	RemoveEntryList(&pBpfProgram->BpfProgramsEntry);
+	// Unlock the list
+	NdisReleaseRWLock(pFiltMod->BpfProgramsLock, &lockState);
+
+	// Make sure we know this has been removed
+	pBpfProgram->BpfProgramsEntry.Flink = NULL;
+	pBpfProgram->BpfProgramsEntry.Blink = NULL;
+}
+
 /* State table. SUCCESS = PendingIrps[MaxState]++
  *               \  MaxState
  *                \ --------
@@ -628,6 +692,8 @@ NPF_StartUsingOpenInstance(
 				TIME_SYNCHRONIZE(&pOpen->start);
 				NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 
+				// Insert a null filter (accept all)
+				NPF_RegisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
 				pOpen->OpenStatus = OpenRunning;
 			}
 			else
@@ -706,6 +772,7 @@ NPF_DemoteOpenStatus(
 	if (OldState == OpenRunning)
 	{
 		NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
+		NPF_UnregisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
 	}
 	pOpen->ReattachStatus = NewState;
 
@@ -762,10 +829,10 @@ NPF_ReleaseOpenInstanceResources(
 	//
 	// Free the filter if it's present
 	//
-	if (pOpen->bpfprogram != NULL)
+	if (pOpen->BpfProgram.bpf_program != NULL)
 	{
-		ExFreePool(pOpen->bpfprogram);
-		pOpen->bpfprogram = NULL;
+		ExFreePool(pOpen->BpfProgram.bpf_program);
+		pOpen->BpfProgram.bpf_program = NULL;
 	}
 
 	//
@@ -788,7 +855,6 @@ NPF_ReleaseOpenInstanceResources(
 	}
 
 	NdisFreeRWLock(pOpen->BufferLock);
-	NdisFreeRWLock(pOpen->MachineLock);
 	NdisFreeSpinLock(&pOpen->CountersLock);
 	NdisFreeSpinLock(&pOpen->OpenInUseLock);
 
@@ -832,6 +898,7 @@ NPF_ReleaseFilterModuleResources(
 
 	NdisFreeSpinLock(&pFiltMod->OIDLock);
 	NdisFreeRWLock(pFiltMod->OpenInstancesLock);
+	NdisFreeRWLock(pFiltMod->BpfProgramsLock);
 	NdisFreeSpinLock(&pFiltMod->AdapterHandleLock);
 
 	TRACE_EXIT();
@@ -1379,6 +1446,7 @@ NPF_RemoveFromGroupOpenArray(
 		return;
 	}
 	pOpen->OpenStatus = max(pOpen->OpenStatus, OpenDetached);
+	NPF_UnregisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
 	pOpen->pFiltMod = NULL;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
@@ -1749,22 +1817,11 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	Open->OpenStatus = OpenClosed;
 	Open->ReattachStatus = OpenClosed;
 
-	Open->MachineLock = NdisAllocateRWLock(NdisHandle);
-	if (Open->MachineLock == NULL)
-	{
-		INFO_DBG("Failed to allocate MachineLock\n");
-		NdisFreeRWLock(Open->BufferLock);
-		ExFreePool(Open);
-		TRACE_EXIT();
-		return NULL;
-	}
-
 	//
 	// Initialize the open instance
 	//
 	//Open->BindContext = NULL;
 	Open->TimestampMode = g_pDriverExtension->TimestampMode;
-	Open->bpfprogram = NULL;	//reset the filter
 	Open->bModeCapt = 1;
 	Open->Nbytes.QuadPart = 0;
 	Open->Npackets.QuadPart = 0;
@@ -1834,6 +1891,7 @@ NPF_CreateFilterModule(
 
 	pFiltMod->FilterModulesEntry.Next = NULL;
 	pFiltMod->OpenInstances.Next = NULL;
+	InitializeListHead(&pFiltMod->BpfPrograms);
 
 	// Pool sizes based on observations on a single-core Hyper-V VM while
 	// running our test suite.
@@ -1844,6 +1902,14 @@ NPF_CreateFilterModule(
 		if (pFiltMod->OpenInstancesLock == NULL)
 		{
 			INFO_DBG("Failed to allocate OpenInstancesLock\n");
+			bAllocFailed = TRUE;
+			break;
+		}
+
+		pFiltMod->BpfProgramsLock = NdisAllocateRWLock(NdisFilterHandle);
+		if (pFiltMod->BpfProgramsLock == NULL)
+		{
+			INFO_DBG("Failed to allocate BpfProgramsLock\n");
 			bAllocFailed = TRUE;
 			break;
 		}
@@ -1872,6 +1938,8 @@ NPF_CreateFilterModule(
 			NdisFreeNetBufferListPool(pFiltMod->PacketPool);
 		if (pFiltMod->OpenInstancesLock)
 			NdisFreeRWLock(pFiltMod->OpenInstancesLock);
+		if (pFiltMod->BpfProgramsLock)
+			NdisFreeRWLock(pFiltMod->BpfProgramsLock);
 		ExFreePool(pFiltMod);
 		return NULL;
 	}
@@ -2135,6 +2203,7 @@ NPF_AttachAdapter(
 				if (pOpen->ReattachStatus < OpenAttached)
 				{
 					NPF_UpdateTimestampModeCounts(pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
+					NPF_RegisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
 				}
 				pOpen->OpenStatus = pOpen->ReattachStatus;
 				Curr = PopEntryList(&ReattachOpens);

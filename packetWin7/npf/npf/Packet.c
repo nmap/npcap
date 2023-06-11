@@ -1168,20 +1168,18 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 		return STATUS_CANCELLED;
 	}
 
-	// Lock the BPF engine for writing. 
-	NdisAcquireRWLockWrite(pOpen->MachineLock, &lockState, 0);
+	PVOID pOld = InterlockedExchangePointer(&pOpen->BpfProgram.bpf_program, TmpBPFProgram);
+	// After InterlockedExchangePointer above, the memory at TmpBPFProgram
+	// is pointed to by pOpen->BpfProgram.bpf_program, so there is no memory leak here.
+	NPF_AnalysisAssumeAliased(TmpBPFProgram);
 
 	// Free the previous buffer if it was present
-	if (pOpen->bpfprogram != NULL)
+	if (pOld != NULL)
 	{
-		ExFreePool(pOpen->bpfprogram);
-		pOpen->bpfprogram = NULL;
+		ExFreePool(pOld);
 	}
-	pOpen->bpfprogram = TmpBPFProgram;
 
 	// release the machine lock and then reset the buffer
-	NdisReleaseRWLock(pOpen->MachineLock, &lockState);
-
 	NPF_ResetBufferContents(pOpen, TRUE);
 
 	NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
