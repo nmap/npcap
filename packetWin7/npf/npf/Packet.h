@@ -540,6 +540,7 @@ typedef struct _NPF_SRC_NB
 	PBUFCHAIN_ELEM pLastElem; // Last elem in the chain
 	PMDL pSrcCurrMdl; // MDL where we left off copying from the source NET_BUFFER
 	ULONG ulCurrMdlOffset; // Position in that MDL.
+	ULONG ulDesired; // How much data we want from the packet
 } NPF_SRC_NB, *PNPF_SRC_NB;
 
 // so we can use the same lookaside list for all these things
@@ -554,10 +555,13 @@ typedef union _NPF_NB_STORAGE
 typedef struct _NPF_CAP_DATA
 {
 	union {
+		// When in the packet queue:
 		LIST_ENTRY PacketQueueEntry;
+		// When DoTap is waiting to dispatch this to an instance:
 		struct {
 			struct _NPF_CAP_DATA *Next;
 			POPEN_INSTANCE pOpen;
+			PNPF_SRC_NB pSrcNB;
 		};
 	};
 	PNPF_NB_COPIES pNBCopy;

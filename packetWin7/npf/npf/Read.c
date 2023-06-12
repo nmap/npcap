@@ -779,22 +779,10 @@ NPF_DoTap(
 				pCaptures = pCapData;
 				pCapData->Next = ptmp;
 				pCapData->pOpen = pOpen;
+				pCapData->pSrcNB = pSrcNB;
 			}
 			// Copy maxFres of data from the packet
-			// Make a copy of the data so we can return the original quickly,
-			// TODO: move this out of the BpfProgramLock
-			if (!NPF_CopyFromNetBufferToNBCopy(pSrcNB, maxFres, &g_pDriverExtension->BufferPool))
-			{
-				// Need to delete the associated NPF_CAP_DATA from pCaptures!
-				while (pCaptures != pCapPrev)
-				{
-					PNPF_CAP_DATA ptmp = pCaptures;
-					NpfInterlockedIncrement(&(LONG)ptmp->pOpen->ResourceDropped);
-					pCaptures = pCaptures->Next;
-					NPF_ReturnCapData(ptmp);
-				}
-				continue;
-			}
+			pSrcNB->ulDesired = maxFres;
 		}
 	}
 	/* Release the spin lock no matter what. */
@@ -802,8 +790,19 @@ NPF_DoTap(
 
 	// Now go through all the captures and dispatch them.
 	PNPF_CAP_DATA pCapData = NULL;
-	while (pCapData = pCaptures) {
+	while (NULL != (pCapData = pCaptures)) {
 		pCaptures = pCapData->Next;
+		if (pCapData->pSrcNB->pNBCopy->ulSize < pCapData->pSrcNB->ulDesired)
+		{
+			// The data hasn't been copied yet
+			if (!NPF_CopyFromNetBufferToNBCopy(pCapData->pSrcNB, pCapData->pSrcNB->ulDesired, &g_pDriverExtension->BufferPool))
+			{
+				// Failed to copy. Drop it!
+				NpfInterlockedIncrement(&(LONG)pCapData->pOpen->ResourceDropped);
+				NPF_ReturnCapData(pCapData);
+				continue;
+			}
+		}
 		NPF_TapExForEachOpen(pCapData->pOpen, pCapData, AtDispatchLevel);
 	}
 
