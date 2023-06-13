@@ -381,14 +381,6 @@ DriverEntry(
 		Status = STATUS_INSUFFICIENT_RESOURCES; // Status for any of the below failures
 		InitializeListHead(&g_pDriverExtension->AllOpens);
 
-		Status = ExInitializeLookasideListEx(&g_pDriverExtension->BufferPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(BUFCHAIN_ELEM), NPF_PACKET_DATA_TAG, 0);
-		if (Status != STATUS_SUCCESS)
-		{
-			ERROR_DBG("Failed to allocate BufferPool\n");
-			break;
-		}
-		g_pDriverExtension->bBufferPoolInit = 1;
-
 		Status = ExInitializeLookasideListEx(&g_pDriverExtension->NBLCopyPool, NULL, NULL, NPF_NONPAGED, 0, sizeof(NPF_NBL_COPY), NPF_NBLC_POOL_TAG, 0);
 		if (Status != STATUS_SUCCESS)
 		{
@@ -503,8 +495,6 @@ DriverEntry(
 			ExDeleteLookasideListEx(&g_pDriverExtension->NBLCopyPool);
 		if (g_pDriverExtension->bSrcNBPoolInit)
 			ExDeleteLookasideListEx(&g_pDriverExtension->SrcNBPool);
-		if (g_pDriverExtension->bBufferPoolInit)
-			ExDeleteLookasideListEx(&g_pDriverExtension->BufferPool);
 		if (g_pDriverExtension->AllOpensLock)
 			NdisFreeRWLock(g_pDriverExtension->AllOpensLock);
 		NdisFreeSpinLock(&g_pDriverExtension->FilterArrayLock);
@@ -943,8 +933,6 @@ Return Value:
 		ExDeleteLookasideListEx(&g_pDriverExtension->NBLCopyPool);
 	if (g_pDriverExtension->bSrcNBPoolInit)
 		ExDeleteLookasideListEx(&g_pDriverExtension->SrcNBPool);
-	if (g_pDriverExtension->bBufferPoolInit)
-		ExDeleteLookasideListEx(&g_pDriverExtension->BufferPool);
 #ifdef HAVE_DOT11_SUPPORT
 	if (g_pDriverExtension->bDot11HeaderPoolInit)
 		ExDeleteLookasideListEx(&g_pDriverExtension->Dot11HeaderPool);

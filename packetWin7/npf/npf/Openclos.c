@@ -295,20 +295,17 @@ NPF_ResetBufferContents(
 _Use_decl_annotations_
 VOID NPF_ReturnNBCopies(PNPF_NB_COPIES pNBCopy)
 {
-	PBUFCHAIN_ELEM pDeleteMe = NULL;
-	// FirstElem is not separately allocated
-	PBUFCHAIN_ELEM pElem = pNBCopy->FirstElem.Next;
+	PVOID pDeleteMe = pNBCopy->Buffer;
 	ULONG refcount = NpfInterlockedDecrement(&(LONG)pNBCopy->refcount);
 
 	if (refcount == 0)
 	{
-		ExFreeToLookasideListEx(&g_pDriverExtension->NBCopiesPool, pNBCopy);
-		while (pElem != NULL)
+		if (pDeleteMe != NULL)
 		{
-			pDeleteMe = pElem;
-			pElem = pElem->Next;
-			ExFreeToLookasideListEx(&g_pDriverExtension->BufferPool, pDeleteMe);
+			NT_ASSERT(pNBCopy->ulSize > 0);
+			ExFreePoolWithTag(pDeleteMe, NPF_PACKET_DATA_TAG);
 		}
+		ExFreeToLookasideListEx(&g_pDriverExtension->NBCopiesPool, pNBCopy);
 	}
 }
 

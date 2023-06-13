@@ -125,27 +125,13 @@ NPF_CopyFromNBCopyToBuffer(
 		_In_ ULONG ulDesiredLen
 		)
 {
-	PBUFCHAIN_ELEM pElem = &pNBCopy->FirstElem;
-	ULONG out = 0;
-	ULONG ulCopyLen = 0;
-
-	NT_ASSERT(ulDesiredLen <= pNBCopy->ulSize);
-	while (pElem && out < ulDesiredLen)
+	if (!NT_VERIFY(ulDesiredLen <= pNBCopy->ulSize))
 	{
-		ulCopyLen = min(ulDesiredLen - out, NPF_BUFCHAIN_SIZE);
-		if (!NT_VERIFY(ulCopyLen + out <= ulDesiredLen))
-		{
-			// This can never happen, but Code Analysis thinks otherwise.
-			break;
-		}
-		RtlCopyMemory(pDstBuf + out, pElem->Buffer, ulCopyLen);
-		out += ulCopyLen;
-		pElem = pElem->Next;
+		return 0;
 	}
+	RtlCopyMemory(pDstBuf, pNBCopy->Buffer, ulDesiredLen);
 
-	// Really no reason we should ever fail to get out what we put into it.
-	NT_ASSERT(out == ulDesiredLen);
-	return out;
+	return ulDesiredLen;
 }
 
 //-------------------------------------------------------------------
@@ -469,12 +455,10 @@ ULONG NPF_GetMetadata(
 			RtlZeroMemory(pSrcNB->pNBCopy, sizeof(NPF_NB_COPIES));
 			// OK, all allocations succeeded; now fill out the info.
 			pSrcNBPrev->Next = &pSrcNB->CopiesEntry;
-			pSrcNB->pSrcCurrMdl = NET_BUFFER_CURRENT_MDL(pNetBuf);
-			pSrcNB->ulCurrMdlOffset = NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuf);
+			pSrcNB->pNetBuffer = pNetBuf;
 			pSrcNB->pNBCopy->pNBLCopy = pNBLCopy;
 			pSrcNB->pNBCopy->ulPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 			pSrcNB->pNBCopy->refcount = 1;
-			pSrcNB->pLastElem = &pSrcNB->pNBCopy->FirstElem;
 #ifdef HAVE_DOT11_SUPPORT
 			// Handle native 802.11 media specific OOB data here.
 			// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
@@ -665,9 +649,7 @@ _Must_inspect_result_
 _Success_(return != 0)
 BOOLEAN
 NPF_CopyFromNetBufferToNBCopy(
-	_Inout_ PNPF_SRC_NB pSrcNB,
-	_In_ ULONG ulDesiredLen,
-	_Inout_ PLOOKASIDE_LIST_EX BufchainPool
+	_Inout_ PNPF_SRC_NB pSrcNB
 );
 
 _Must_inspect_result_
@@ -749,8 +731,10 @@ NPF_DoTap(
 					continue;
 				}
 				ULONG TotalPacketSize = pSrcNB->pNBCopy->ulPacketSize;
+				PMDL pSrcCurrMdl = NET_BUFFER_CURRENT_MDL(pSrcNB->pNetBuffer);
+				ULONG ulCurrMdlOffset = NET_BUFFER_CURRENT_MDL_OFFSET(pSrcNB->pNetBuffer);
 				UINT fres = bpf_filter(pBpf->bpf_program,
-						pSrcNB->pSrcCurrMdl, pSrcNB->ulCurrMdlOffset, TotalPacketSize);
+						pSrcCurrMdl, ulCurrMdlOffset, TotalPacketSize);
 				if (fres == 0)
 				{
 					// Packet not accepted by the filter, ignore it.
@@ -795,7 +779,7 @@ NPF_DoTap(
 		if (pCapData->pSrcNB->pNBCopy->ulSize < pCapData->pSrcNB->ulDesired)
 		{
 			// The data hasn't been copied yet
-			if (!NPF_CopyFromNetBufferToNBCopy(pCapData->pSrcNB, pCapData->pSrcNB->ulDesired, &g_pDriverExtension->BufferPool))
+			if (!NPF_CopyFromNetBufferToNBCopy(pCapData->pSrcNB))
 			{
 				// Failed to copy. Drop it!
 				NpfInterlockedIncrement(&(LONG)pCapData->pOpen->ResourceDropped);
@@ -968,104 +952,42 @@ PNPF_CAP_DATA NPF_GetCapData(
 _Use_decl_annotations_
 BOOLEAN
 NPF_CopyFromNetBufferToNBCopy(
-		PNPF_SRC_NB pSrcNB,
-		ULONG ulDesiredLen,
-		PLOOKASIDE_LIST_EX BufchainPool
+		PNPF_SRC_NB pSrcNB
 		)
 {
-	PUCHAR pSrcBuf = NULL;
-	ULONG ulSrcBufLen = 0;
-	ULONG ulCopyLenForMdl = 0;
-	ULONG ulCopyLen = 0;
+	PVOID pSrcBuf = NULL;
+	ULONG ulDesired = pSrcNB->ulDesired;
 
 	PNPF_NB_COPIES pNBCopy = pSrcNB->pNBCopy;
-	PMDL pMdl = pSrcNB->pSrcCurrMdl;
-	ULONG ulMdlOffset = pSrcNB->ulCurrMdlOffset;
-
-	PBUFCHAIN_ELEM pElem = pSrcNB->pLastElem;
-	ULONG ulBufIdx = pNBCopy->ulSize % NPF_BUFCHAIN_SIZE;
 
 	// pNBCopy must be set up correctly
-	NT_ASSERT(pMdl);
-	NT_ASSERT(pElem != NULL);
+	NT_ASSERT(pNBCopy->ulSize == 0);
+	NT_ASSERT(pNBCopy->Buffer == NULL);
+	NT_ASSERT(ulDesired > 0);
 
-	// If there's enough data here already, we're done.
-	if (ulDesiredLen <= pNBCopy->ulSize)
+	pNBCopy->Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, ulDesired, NPF_PACKET_DATA_TAG);
+	if (pNBCopy->Buffer == NULL)
 	{
-		return TRUE;
+		INFO_DBG("Failed to allocate Buffer\n");
+		return FALSE;
+	}
+	RtlZeroMemory(pNBCopy->Buffer, ulDesired);
+
+	// Map or copy a contiguous buffer
+	pSrcBuf = NdisGetDataBuffer(pSrcNB->pNetBuffer, ulDesired, pNBCopy->Buffer, 1, 0);
+	if (pSrcBuf == NULL)
+	{
+		INFO_DBG("Failed to map NET_BUFFER\n");
+		return FALSE;
+	}
+	else if (pSrcBuf != pNBCopy->Buffer)
+	{
+		// Data was contiguous; we are responsible for copying it
+		RtlCopyMemory(pNBCopy->Buffer, pSrcBuf, ulDesired);
 	}
 
-	if (pNBCopy->ulSize > 0 && ulBufIdx == 0)
-	{
-		// We don't leave empty elems at the end of the chain,
-		// so this must mean the last elem is actually full.
-		ulBufIdx = NPF_BUFCHAIN_SIZE;
-	}
-
-	// pLastElem must be the last in the chain.
-	NT_ASSERT(pElem->Next == NULL);
-
-	while (pNBCopy->ulSize < ulDesiredLen)
-	{
-		if (!NT_VERIFY(pMdl != NULL))
-		{
-			// Something went terribly wrong
-			INFO_DBG("MDL chain too short; bailing.\n");
-			return FALSE;
-		}
-
-		// Record our current place in the NB
-		pSrcNB->pSrcCurrMdl = pMdl;
-
-		if (pSrcBuf == NULL)
-		{
-			NdisQueryMdl(pMdl, &pSrcBuf, &ulSrcBufLen, NormalPagePriority);
-			if (pSrcBuf == NULL)
-			{
-				INFO_DBG("Unable to query MDL; bailing.\n");
-				return FALSE;
-			}
-		}
-
-		// How much of what we want can we get from this MDL?
-		ulCopyLenForMdl = min(ulDesiredLen - pNBCopy->ulSize, ulSrcBufLen - ulMdlOffset);
-
-		while (ulCopyLenForMdl > 0)
-		{
-			NT_ASSERT(ulBufIdx <= NPF_BUFCHAIN_SIZE);
-			// If the offset is past the end of the buffer, we need a new buffer.
-			if (ulBufIdx == NPF_BUFCHAIN_SIZE)
-			{
-				pElem->Next = (PBUFCHAIN_ELEM) ExAllocateFromLookasideListEx(BufchainPool);
-				if (pElem->Next == NULL)
-				{
-					INFO_DBG("Failed to allocate Bufchain Elem\n");
-					return FALSE;
-				}
-				RtlZeroMemory(pElem->Next, sizeof(BUFCHAIN_ELEM));
-				pElem = pElem->Next;
-				ulBufIdx = 0;
-				pSrcNB->pLastElem = pElem;
-			}
-			// How much of what we want from this MDL will fit in this elem?
-			ulCopyLen = min(ulCopyLenForMdl, NPF_BUFCHAIN_SIZE - ulBufIdx);
-			RtlCopyMemory(pElem->Buffer + ulBufIdx, pSrcBuf + ulMdlOffset, ulCopyLen);
-			ulMdlOffset += ulCopyLen;
-			pNBCopy->ulSize += ulCopyLen;
-			ulBufIdx += ulCopyLen;
-			ulCopyLenForMdl -= ulCopyLen;
-
-			// Record our current place in the MDL
-			pSrcNB->ulCurrMdlOffset = ulMdlOffset;
-		}
-
-		pSrcBuf = NULL;
-		ulSrcBufLen = 0;
-		ulMdlOffset = 0;
-		pMdl = pMdl->Next;
-	}
-
-	return NT_VERIFY(pNBCopy->ulSize == ulDesiredLen);
+	pNBCopy->ulSize = ulDesired;
+	return TRUE;
 }
 
 _Use_decl_annotations_

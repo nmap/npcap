@@ -294,7 +294,6 @@ typedef struct _NPCAP_DRIVER_EXTENSION
 	LIST_ENTRY AllOpens;
 	PNDIS_RW_LOCK_EX AllOpensLock;
 
-	LOOKASIDE_LIST_EX BufferPool; // Pool of BUFCHAIN_ELEM to hold capture data temporarily.
 	LOOKASIDE_LIST_EX NBLCopyPool; // Pool of NPF_NBL_COPY, NPF_NB_COPIES, NPF_SRC_NB objects
 	LOOKASIDE_LIST_EX NBCopiesPool; // Pool of NPF_NB_COPIES objects
 	LOOKASIDE_LIST_EX SrcNBPool; // Pool of NPF_SRC_NB objects
@@ -303,7 +302,6 @@ typedef struct _NPCAP_DRIVER_EXTENSION
 #ifdef HAVE_DOT11_SUPPORT
 	LOOKASIDE_LIST_EX Dot11HeaderPool; // Pool of Radiotap header buffers
 #endif
-	UCHAR bBufferPoolInit:1;
 	UCHAR bNBLCopyPoolInit:1;
 	UCHAR bNBCopiesPoolInit:1;
 	UCHAR bSrcNBPoolInit:1;
@@ -494,14 +492,6 @@ typedef struct _OPEN_INSTANCE
 }
 OPEN_INSTANCE, *POPEN_INSTANCE;
 
-/* This value should be sized to hold most packets processed by the driver. If
- * a packet (snaplen) exceeds this size, it will cost an additional BUFCHAIN_ELEM
- * allocation/free. On the other hand, every captured packet will use up at
- * least this much space in memory, so keep it small. Nmap uses 256 snaplen, so
- * we'll try that.
- */
-#define NPF_BUFCHAIN_SIZE 256
-
 typedef struct _NPF_NBL_COPY
 {
 	SINGLE_LIST_ENTRY NBCopiesHead;
@@ -514,32 +504,20 @@ typedef struct _NPF_NBL_COPY
 	ULONG refcount;
 } NPF_NBL_COPY, *PNPF_NBL_COPY;
 
-/* Fixed-size buffers for holding packet data. Fixed size makes math easier and
- * lets us use lookaside lists */
-typedef struct _BUFCHAIN_ELEM *PBUFCHAIN_ELEM;
-typedef struct _BUFCHAIN_ELEM
-{
-	PBUFCHAIN_ELEM Next;
-	UCHAR Buffer [NPF_BUFCHAIN_SIZE];
-} BUFCHAIN_ELEM;
-
-/* This is like a lower-overhead version of NET_BUFFER based on BUFCHAIN_ELEM instead of MDL */
 typedef struct _NPF_NB_COPIES
 {
 	PNPF_NBL_COPY pNBLCopy;
-	ULONG ulSize; //Size of all used space in the bufchain.
+	ULONG ulSize; // Size of data in Buffer
 	ULONG ulPacketSize; // Size of the original packet
 	ULONG refcount;
-	BUFCHAIN_ELEM FirstElem; // Bufchain of packet data
+	PUCHAR Buffer; // packet data
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
 typedef struct _NPF_SRC_NB
 {
 	SINGLE_LIST_ENTRY CopiesEntry;
 	PNPF_NB_COPIES pNBCopy;
-	PBUFCHAIN_ELEM pLastElem; // Last elem in the chain
-	PMDL pSrcCurrMdl; // MDL where we left off copying from the source NET_BUFFER
-	ULONG ulCurrMdlOffset; // Position in that MDL.
+	PNET_BUFFER pNetBuffer; // source NET_BUFFER
 	ULONG ulDesired; // How much data we want from the packet
 } NPF_SRC_NB, *PNPF_SRC_NB;
 

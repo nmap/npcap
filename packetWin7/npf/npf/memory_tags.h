@@ -102,7 +102,7 @@
 #define NPF_OPEN_TAG 'POpN'
 // NPCAP_FILTER_MODULE
 #define NPF_FILTMOD_TAG 'MFpN'
-// DEVICE_EXTENSION::BufferPool
+// NPCAP_NB_COPIES::Buffer packet data
 #define NPF_PACKET_DATA_TAG 'DPpN'
 // DEVICE_EXTENSION::NBLCopyPool
 #define NPF_NBLC_POOL_TAG 'LNpN'
