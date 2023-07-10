@@ -785,7 +785,7 @@ NPF_DemoteOpenStatus(
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID NPF_OpenWaitPendingIrps(
 		_At_(pOpen->OpenStatus, _In_range_(OpenDetached,OpenClosed))
-	_In_ POPEN_INSTANCE pOpen,
+	_In_ POPEN_INSTANCE pOpen
 	)
 {
 	NDIS_EVENT Event;
