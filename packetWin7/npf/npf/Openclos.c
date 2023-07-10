@@ -780,7 +780,8 @@ NPF_DemoteOpenStatus(
 
 _IRQL_requires_(PASSIVE_LEVEL)
 VOID NPF_OpenWaitPendingIrps(
-	_In_ POPEN_INSTANCE pOpen
+		_At_(pOpen->OpenStatus, _In_range_(OpenDetached,OpenClosed))
+	_In_ POPEN_INSTANCE pOpen,
 	)
 {
 	NDIS_EVENT Event;
@@ -791,9 +792,10 @@ VOID NPF_OpenWaitPendingIrps(
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 	NT_ASSERT(pOpen->OpenStatus <= OpenClosed);
+	NT_ASSERT(pOpen->OpenStatus >= OpenDetached);
 
 	// Wait for IRPs that require an attached adapter
-	for (state = pOpen->OpenStatus - 1; state < OpenClosed && state >= OpenRunning; state--)
+	for (state = pOpen->OpenStatus - 1; state < pOpen->OpenStatus && state >= OpenRunning; state--)
 	{
 		while (pOpen->PendingIrps[state] > 0)
 		{
