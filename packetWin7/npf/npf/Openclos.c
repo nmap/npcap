@@ -654,18 +654,22 @@ NPF_StartUsingOpenInstance(
 		return FALSE;
 	}
 
+	// Have to hold this lock before checking/using pOpen->pFiltMod
+	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
+
 	// Do we need an attached adapter?
 	if (MaxState <= OpenAttached)
-	{	bAttached = (pOpen->pFiltMod != NULL && NPF_StartUsingBinding(pOpen->pFiltMod, AtDispatchLevel));
+	{
+		bAttached = (pOpen->pFiltMod != NULL && NPF_StartUsingBinding(pOpen->pFiltMod, TRUE));
 		if (!bAttached)
 		{
 			// Not attached, but need to be.
+			FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 			WARNING_DBG("Not attached: pFiltMod = %p\n", pOpen->pFiltMod);
 			return FALSE;
 		}
 	}
 
-	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 	if (MaxState == OpenRunning)
 	{
 		// NPF_EnableOps must be called at PASSIVE_LEVEL. Release the lock first.
@@ -745,12 +749,12 @@ NPF_StopUsingOpenInstance(
 	NT_ASSERT(MaxState < OpenClosed);
 	NT_ASSERT(pOpen->PendingIrps[MaxState] > 0);
 	pOpen->PendingIrps[MaxState]--;
-	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 
 	if (MaxState <= OpenAttached)
 	{
 		NPF_StopUsingBinding(pOpen->pFiltMod, AtDispatchLevel);
 	}
+	FILTER_RELEASE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 }
 
 //-------------------------------------------------------------------
@@ -2468,8 +2472,10 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	{
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
 		NPF_OpenWaitPendingIrps(pOpen);
+		NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 		pOpen->pFiltMod = NULL;
 		pOpen->OpenInstancesEntry.Next = NULL;
+		NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 		Curr = PopEntryList(&DetachedOpens);
 	}
 
