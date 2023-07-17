@@ -517,9 +517,7 @@
         If there is an issue with the Npcap driver, you can open an
         <emphasis>Administrator</emphasis> command prompt,  enter <command>sc query
           npcap</command> to query the driver status and <command>net start
-          npcap</command> to start the driver (replace
-        <replaceable>npcap</replaceable> with <replaceable>npf</replaceable> if you
-        installed Npcap in <quote>WinPcap Compatible Mode</quote>).  The command
+          npcap</command> to start the driver. The command
         output will inform you whether there's an error. If the driver is running
         well, but the issue still exists, then you may need to check the driver's
         log. Normal Npcap releases don't switch on the driver log function for

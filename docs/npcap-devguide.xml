@@ -141,13 +141,8 @@ printf("%s", pcap_version);
 // Npcap output: "Npcap version 0.92, based on libpcap version 1.8.1"
 // WinPcap output: "WinPcap version 4.1.3"</screen>
 
-      <para>Npcap requires the <varname>npcap</varname> service to be running. If
-        installed in <quote>WinPcap Compatible Mode</quote>, the
-        <varname>npf</varname> service can be started instead.  Given that
-        <varname>npcap</varname> service is always installed
-        in both modes, a good practice is just trying the <varname>npcap</varname> service first.
-        If it fails, then try the <varname>npf</varname> service. This is also what most of our users
-        do in their software based on our investigation. A code sample from Nmap is
+      <para>Npcap requires the <varname>npcap</varname> service to be running.
+        A code sample from Nmap showing how to check the status of the service is
         <ulink role="hidepdf" url="https://github.com/nmap/nmap/blob/8c8e4a08c6c6b7abd2343e5921aafb6077bdb257/mswin32/winfix.cc#L322-L328">here</ulink>.
       </para>
     </sect3>
@@ -233,11 +228,11 @@ printf("%s", pcap_version);
         unlike WinPcap which was often installed in a demand-start
         configuration.</para> 
 
-      <para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote> with
-        <quote>WinPcap Compatible Mode</quote> OFF. So applications using
+      <para>Npcap uses service name <quote>npcap</quote> instead of WinPcap's <quote>npf</quote>,
+        so applications using
         <command>net start npf</command> for starting service must change to this:
-        run <command>net start npcap</command> first, if it fails, then try
-        <command>net start npf</command>.</para>
+        run <command>net start npcap</command>.
+        </para>
     </sect3>
   </sect2>
 
