@@ -1,3 +1,14 @@
+## Npcap 1.76 [2023-07-19]
+
+* Our code signing key has been reissued to "Nmap Software LLC" replacing the
+  old "Insecure.Com LLC" subject name.
+
+* Improve performance of the driver by reducing lock contention and
+  consolidating data copy operations. This may help address
+  [#663](http://issues.npcap.org/663).
+
+* Additional fixes to locking discipline to potentially address a BSoD issue, [#679](http://issues.npcap.org/679).
+
 ## Npcap 1.75 [2023-04-27]
 
 * Fix a critical regression in Npcap 1.74 which caused all captured packets to
