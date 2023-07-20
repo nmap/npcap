@@ -885,7 +885,7 @@
    <text:p text:style-name="P14"/>
    <text:p text:style-name="P13">the following acknowledgment/disclaimer statement in the </text:p>
    <text:p text:style-name="P6"/>
-   <text:p text:style-name="P7">Npcap is Copyright (c) 2013-2022 Nmap Software</text:p>
+   <text:p text:style-name="P7">Npcap is Copyright (c) 2013-2023 Nmap Software</text:p>
    <text:p text:style-name="P6"/>
    <text:p text:style-name="P6"><text:span text:style-name="T24"><text:s/>above</text:span>the <text:span text:style-name="T23">following </text:span>copyright/acknowledgment/disclaimer <text:span text:style-name="T23">text </text:span><text:s/><text:span text:style-name="T23">we use give fair attribution to the authors o</text:span>as required by the various open source licenses (see above). <text:s/>We’re including this both to fulfill the license agreements ourselves, and as a template that companies distributing Npcap (which is only allowed with the redistribution license described at <text:a xlink:type="simple" xlink:href="https://npcap.com/oem/redist.html" text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">https://npcap.com/oem/redist.html</text:a>) can use in their own documentation as well.</text:p>
    <text:p text:style-name="P15"/>
