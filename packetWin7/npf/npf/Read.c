@@ -978,6 +978,8 @@ NPF_CopyFromNetBufferToNBCopy(
 	if (pSrcBuf == NULL)
 	{
 		INFO_DBG("Failed to map NET_BUFFER\n");
+		ExFreePoolWithTag(pNBCopy->Buffer, NPF_PACKET_DATA_TAG);
+		pNBCopy->Buffer = NULL;
 		return FALSE;
 	}
 	else if (pSrcBuf != pNBCopy->Buffer)
