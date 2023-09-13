@@ -1818,7 +1818,7 @@ static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
 	oldmode = InterlockedExchange(&pOpen->TimestampMode, mode);
 	if (oldmode != mode)
 	{
-		if (pOpen->OpenStatus >= OpenRunning)
+		if (pOpen->OpenStatus <= OpenRunning)
 		{
 			NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, mode, oldmode);
 		}
