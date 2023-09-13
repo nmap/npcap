@@ -3438,41 +3438,46 @@ VOID NPF_UpdateTimestampModeCounts(
 		ULONG newmode,
 		ULONG oldmode)
 {
+	LONG result = 0;
 	if (pFiltMod == NULL || newmode == oldmode)
 		return;
 
 	switch (newmode)
 	{
 		case TIMESTAMPMODE_UNSET:
+			result = 1;
 			break;
 		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION:
-			InterlockedIncrement(&pFiltMod->nTimestampQPC);
+			result = InterlockedIncrement(&pFiltMod->nTimestampQPC);
 			break;
 		case TIMESTAMPMODE_QUERYSYSTEMTIME:
-			InterlockedIncrement(&pFiltMod->nTimestampQST);
+			result = InterlockedIncrement(&pFiltMod->nTimestampQST);
 			break;
 		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
-			InterlockedIncrement(&pFiltMod->nTimestampQST_Precise);
+			result = InterlockedIncrement(&pFiltMod->nTimestampQST_Precise);
 			break;
 		default:
 			NT_ASSERT(FALSE);
 			break;
 	}
+	NT_ASSERT(result > 0);
 	switch (oldmode)
 	{
 		case TIMESTAMPMODE_UNSET:
+			result = 0;
 			break;
 		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION:
-			InterlockedDecrement(&pFiltMod->nTimestampQPC);
+			result = InterlockedDecrement(&pFiltMod->nTimestampQPC);
 			break;
 		case TIMESTAMPMODE_QUERYSYSTEMTIME:
-			InterlockedDecrement(&pFiltMod->nTimestampQST);
+			result = InterlockedDecrement(&pFiltMod->nTimestampQST);
 			break;
 		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
-			InterlockedDecrement(&pFiltMod->nTimestampQST_Precise);
+			result = InterlockedDecrement(&pFiltMod->nTimestampQST_Precise);
 			break;
 		default:
 			NT_ASSERT(FALSE);
 			break;
 	}
+	NT_ASSERT(result >= 0);
 }
