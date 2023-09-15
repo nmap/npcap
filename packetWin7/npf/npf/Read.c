@@ -712,13 +712,13 @@ NPF_DoTap(
 	NdisAcquireRWLockRead(pFiltMod->BpfProgramsLock, &lockState,
 			AtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
 
+	PNPF_CAP_DATA pCapPrev = pCaptures;
 	for (Curr = NBLCopiesHead.Next; Curr != NULL; Curr = Curr->Next)
 	{
 		pNBLCopy = CONTAINING_RECORD(Curr, NPF_NBL_COPY, NBLCopyEntry);
 		PSINGLE_LIST_ENTRY CurrSrcNB = pNBLCopy->NBCopiesHead.Next;
 		for (; CurrSrcNB != NULL; CurrSrcNB = CurrSrcNB->Next)
 		{
-			PNPF_CAP_DATA pCapPrev = pCaptures;
 			pSrcNB = CONTAINING_RECORD(CurrSrcNB, NPF_SRC_NB, CopiesEntry);
 			ULONG maxFres = 0;
 			for (CurrFilter = pFiltMod->BpfPrograms.Flink; CurrFilter != &pFiltMod->BpfPrograms; CurrFilter = CurrFilter->Flink)
@@ -759,11 +759,11 @@ NPF_DoTap(
 					continue;
 				}
 				// Stash this cap data to process later
-				PNPF_CAP_DATA ptmp = pCaptures;
-				pCaptures = pCapData;
-				pCapData->Next = ptmp;
+				pCapPrev->Next = pCapData;
 				pCapData->pOpen = pOpen;
 				pCapData->pSrcNB = pSrcNB;
+				pCapData->Next = NULL;
+				pCapPrev = pCapData;
 			}
 			// Copy maxFres of data from the packet
 			pSrcNB->ulDesired = maxFres;
