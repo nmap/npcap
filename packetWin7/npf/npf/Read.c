@@ -759,7 +759,14 @@ NPF_DoTap(
 					continue;
 				}
 				// Stash this cap data to process later
-				pCapPrev->Next = pCapData;
+				if (pCaptures == NULL)
+				{
+					pCaptures = pCapData;
+				}
+				else
+				{
+					pCapPrev->Next = pCapData;
+				}
 				pCapData->pOpen = pOpen;
 				pCapData->pSrcNB = pSrcNB;
 				pCapData->Next = NULL;
