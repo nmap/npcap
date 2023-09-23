@@ -385,11 +385,12 @@ ULONG NPF_GetMetadata(
 	_In_ LARGE_INTEGER PerfCount
 	)
 {
-	PNET_BUFFER_LIST pNetBufList = pNetBufferLists;
 	PNPF_NBL_COPY pNBLCopy = NULL;
 	PSINGLE_LIST_ENTRY pNBLCopyPrev = NBLCopyHead;
 	ULONG resdropped = 0;
-	while (pNetBufList != NULL)
+	for (PNET_BUFFER_LIST pNetBufList = pNetBufferLists;
+			pNetBufList != NULL;
+			pNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList))
 	{
 #ifdef HAVE_DOT11_SUPPORT
 		PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = NULL;
@@ -416,6 +417,7 @@ ULONG NPF_GetMetadata(
 		pNBLCopy->refcount = 1;
 		NT_ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
 		pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
+		pNBLCopyPrev = pNBLCopyPrev->Next;
 		pNBLCopy->SystemTime = SystemTime;
 		pNBLCopy->PerfCount = PerfCount;
 		PSINGLE_LIST_ENTRY pSrcNBPrev = &pNBLCopy->NBCopiesHead;
@@ -630,8 +632,6 @@ ULONG NPF_GetMetadata(
 		RadiotapDone:;
 #endif
 		}
-		pNBLCopyPrev = pNBLCopyPrev->Next;
-		pNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
 	}
 	return TRUE;
 }
