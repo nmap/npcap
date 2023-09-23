@@ -677,7 +677,6 @@ NPF_DoTap(
 	SINGLE_LIST_ENTRY NBLCopiesHead;
 	NBLCopiesHead.Next = NULL;
 	PNPF_SRC_NB pSrcNB = NULL;
-	PSINGLE_LIST_ENTRY pNBCopiesEntry = NULL;
 	LARGE_INTEGER SystemTime = { 0 }, PerfCount = { 0 };
 	PLIST_ENTRY CurrFilter;
 	PNPF_CAP_DATA pCaptures = NULL;
@@ -804,7 +803,7 @@ NPF_DoTap(
 		pNBLCopy = CONTAINING_RECORD(Curr, NPF_NBL_COPY, NBLCopyEntry); 
 		Curr = Curr->Next;
 
-		pNBCopiesEntry = pNBLCopy->NBCopiesHead.Next;
+		PSINGLE_LIST_ENTRY pNBCopiesEntry = pNBLCopy->NBCopiesHead.Next;
 		while (pNBCopiesEntry != NULL)
 		{
 			pSrcNB = CONTAINING_RECORD(pNBCopiesEntry, NPF_SRC_NB, CopiesEntry);
