@@ -81,44 +81,44 @@
 #define NPF_NONPAGED NonPagedPool
 #endif
 
-// NPCAP_DRIVER_EXTENSION
+// NPCAP_DRIVER_EXTENSION "NpDE"
 #define NPF_DRIVER_EXTENSION_TAG 'EDpN'
-// UNICODE_STRING::Buffer
+// UNICODE_STRING::Buffer "NpUB"
 #define NPF_UNICODE_BUFFER_TAG 'BUpN'
 // Things that are freed within the same function they are allocated in.
-// This should probably be used for PagedPool only.
+// This should probably be used for PagedPool only. "NpST"
 #define NPF_SHORT_TERM_TAG 'TSpN'
-// BPF filter
+// BPF filter "NpPF"
 #define NPF_BPF_TAG 'FPpN'
-// User-submitted OID requests
+// User-submitted OID requests "NpoU"
 #define NPF_USER_OID_TAG 'UopN'
-// Internally-generated OID requests
+// Internally-generated OID requests "NpoI"
 #define NPF_INTERNAL_OID_TAG 'IopN'
-// Cloned OID requests
+// Cloned OID requests "NpoC"
 #define NPF_CLONE_OID_TAG 'CopN'
-// DEVICE_EXTENSION::InternalRequestPool
+// DEVICE_EXTENSION::InternalRequestPool "NpRP"
 #define NPF_REQ_POOL_TAG 'PRpN'
-// OPEN_INSTANCE
+// OPEN_INSTANCE "NpOP"
 #define NPF_OPEN_TAG 'POpN'
-// NPCAP_FILTER_MODULE
+// NPCAP_FILTER_MODULE "NpFM"
 #define NPF_FILTMOD_TAG 'MFpN'
-// NPCAP_NB_COPIES::Buffer packet data
+// NPCAP_NB_COPIES::Buffer packet data "NpPD"
 #define NPF_PACKET_DATA_TAG 'DPpN'
-// DEVICE_EXTENSION::NBLCopyPool
+// DEVICE_EXTENSION::NBLCopyPool "NpNL"
 #define NPF_NBLC_POOL_TAG 'LNpN'
-// DEVICE_EXTENSION::NBCopiesPool
+// DEVICE_EXTENSION::NBCopiesPool "NpNB"
 #define NPF_NBC_POOL_TAG 'BNpN'
-// DEVICE_EXTENSION::SrcNBPool
+// DEVICE_EXTENSION::SrcNBPool "NpSN"
 #define NPF_SRCNB_POOL_TAG 'NSpN'
-// DEVICE_EXTENSION::Dot11HeaderPool and NPCAP_FILTER_MODULE::DataRateMappingTable
+// DEVICE_EXTENSION::Dot11HeaderPool and NPCAP_FILTER_MODULE::DataRateMappingTable "Np11"
 #define NPF_DOT11_POOL_TAG '11pN'
-// DEVICE_EXTENSION::CapturePool
+// DEVICE_EXTENSION::CapturePool "NpCD"
 #define NPF_CAP_POOL_TAG 'DCpN'
-// NPF_BufferedWrite packet data
+// NPF_BufferedWrite packet data "NpBW"
 #define NPF_BUFFERED_WRITE_TAG 'WBpN'
-// Loopback capture packet copy
+// Loopback capture packet copy "NpBL"
 #define NPF_LOOPBACK_COPY_TAG 'LBpN'
-// NPCAP_FILTER_MODULE::PacketPool
+// NPCAP_FILTER_MODULE::PacketPool "NpPP"
 #define NPF_PACKET_POOL_TAG 'PPpN'
 
 #endif
