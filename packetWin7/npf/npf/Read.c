@@ -633,7 +633,7 @@ ULONG NPF_GetMetadata(
 #endif
 		}
 	}
-	return TRUE;
+	return resdropped;
 }
 
 //-------------------------------------------------------------------
