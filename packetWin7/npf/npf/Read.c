@@ -457,6 +457,7 @@ ULONG NPF_GetMetadata(
 			RtlZeroMemory(pSrcNB->pNBCopy, sizeof(NPF_NB_COPIES));
 			// OK, all allocations succeeded; now fill out the info.
 			pSrcNBPrev->Next = &pSrcNB->CopiesEntry;
+			pSrcNBPrev = pSrcNBPrev->Next;
 			pSrcNB->pNetBuffer = pNetBuf;
 			pSrcNB->pNBCopy->pNBLCopy = pNBLCopy;
 			pSrcNB->pNBCopy->ulPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
