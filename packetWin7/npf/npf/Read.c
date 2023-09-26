@@ -707,6 +707,7 @@ NPF_DoTap(
 	/* If we got this far, there is at least 1 instance at OpenRunning,
 	 * so gather metadata before locking the list. */
 	ULONG resdropped = NPF_GetMetadata(NetBufferLists, &NBLCopiesHead, pFiltMod, SystemTime, PerfCount);
+	BOOLEAN firstpass = TRUE;
 	/* Lock the filter programs */
 	// Read-only lock since list is not being modified.
 	NdisAcquireRWLockRead(pFiltMod->BpfProgramsLock, &lockState,
@@ -730,6 +731,12 @@ NPF_DoTap(
 				{
 					continue;
 				}
+				if (firstpass)
+				{
+					// Account for packets lost due to inadequate resources earlier
+					NpfInterlockedExchangeAdd(&(LONG)pOpen->ResourceDropped, resdropped);
+				}
+
 				ULONG TotalPacketSize = pSrcNB->pNBCopy->ulPacketSize;
 				PMDL pSrcCurrMdl = NET_BUFFER_CURRENT_MDL(pSrcNB->pNetBuffer);
 				ULONG ulCurrMdlOffset = NET_BUFFER_CURRENT_MDL_OFFSET(pSrcNB->pNetBuffer);
@@ -774,6 +781,7 @@ NPF_DoTap(
 			}
 			// Copy maxFres of data from the packet
 			pSrcNB->ulDesired = maxFres;
+			firstpass = FALSE;
 		}
 	}
 	/* Release the spin lock no matter what. */
