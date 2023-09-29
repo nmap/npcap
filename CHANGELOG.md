@@ -1,3 +1,19 @@
+## Npcap 1.77 [2023-09-29]
+
+* Fixed a memory leak in Npcap 1.76 only which occurs while capturing traffic
+  at high data rates. Fixes [#688](http://issues.npcap.org/688).
+
+* Fixed an issue in Npcap 1.76 where packets delivered to the driver by NDIS in
+  a single indication, having the same timestamp, would be placed in the packet
+  queue in reverse order. Fixes [#684](http://issues.npcap.org/684).
+
+* Fixed an issue with Npcap 1.75 and 1.76 where changing timestamp modes could
+  result in all packets being delivered with the same timestamp. Fixes [#695](http://issues.npcap.org/695).
+
+* Fixed an issue with the Npcap installer that caused it to install duplicate
+  certificates in the system's certificate store, which caused problems for
+  some software. The fixed installer will remove the duplicates. Fixes [#692](http://issues.npcap.org/692).
+
 ## Npcap 1.76 [2023-07-19]
 
 * Our code signing key has been reissued to "Nmap Software LLC" replacing the
