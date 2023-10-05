@@ -1934,6 +1934,17 @@ NPF_CreateFilterModule(
 			bAllocFailed = TRUE;
 			break;
 		}
+
+		pFiltMod->AdapterName.MaximumLength = AdapterName->MaximumLength - DEVICE_PATH_BYTES;
+		pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, pFiltMod->AdapterName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
+		if (pFiltMod->AdapterName.Buffer == NULL)
+		{
+			INFO_DBG("Failed to allocate AdapterName buffer\n");
+			bAllocFailed = TRUE;
+			break;
+		}
+		pFiltMod->AdapterName.Length = 0;
+		RtlAppendUnicodeToString(&pFiltMod->AdapterName, AdapterName->Buffer + DEVICE_PATH_CCH);
 	} while (0);
 
 	if (bAllocFailed) {
@@ -1950,11 +1961,6 @@ NPF_CreateFilterModule(
 	// Default; expect this will be overwritten in NPF_Restart,
 	// or for Loopback when creating the fake module.
 	pFiltMod->MaxFrameSize = 1514;
-
-	pFiltMod->AdapterName.MaximumLength = AdapterName->MaximumLength - DEVICE_PATH_BYTES;
-	pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, pFiltMod->AdapterName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
-	pFiltMod->AdapterName.Length = 0;
-	RtlAppendUnicodeToString(&pFiltMod->AdapterName, AdapterName->Buffer + DEVICE_PATH_CCH);
 
 	//
 	//allocate the spinlock for the OID requests
