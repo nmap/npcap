@@ -668,7 +668,7 @@ NPF_DoInternalRequest(
 	_When_(RequestType == NdisRequestMethod, _Inout_updates_bytes_to_(InformationBufferLength, *pBytesProcessed))
 	PVOID								InformationBuffer,
 	_In_ ULONG							InformationBufferLength,
-	_In_opt_ ULONG						OutputBufferLength,
+	_In_ ULONG							OutputBufferLength,
 	_In_ ULONG							MethodId,
 	_Out_ PULONG						pBytesProcessed
 	);
