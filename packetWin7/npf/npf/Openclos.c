@@ -296,8 +296,8 @@ _Use_decl_annotations_
 VOID NPF_ReturnNBCopies(PNPF_NB_COPIES pNBCopy)
 {
 	PVOID pDeleteMe = pNBCopy->Buffer;
-	ULONG refcount = NpfInterlockedDecrement(&(LONG)pNBCopy->refcount);
-
+	LONG refcount = NpfInterlockedDecrement(&pNBCopy->refcount);
+	NT_ASSERT(refcount >= 0);
 	if (refcount == 0)
 	{
 		if (pDeleteMe != NULL)
@@ -313,7 +313,8 @@ _Use_decl_annotations_
 VOID NPF_ReturnNBLCopy(PNPF_NBL_COPY pNBLCopy)
 {
 	PUCHAR pDot11RadiotapHeader = pNBLCopy->Dot11RadiotapHeader;
-	ULONG refcount = NpfInterlockedDecrement(&(LONG)pNBLCopy->refcount);
+	LONG refcount = NpfInterlockedDecrement(&pNBLCopy->refcount);
+	NT_ASSERT(refcount >= 0);
 	if (refcount == 0)
 	{
 		ExFreeToLookasideListEx(&g_pDriverExtension->NBLCopyPool, pNBLCopy);

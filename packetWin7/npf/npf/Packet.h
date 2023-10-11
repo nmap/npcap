@@ -501,7 +501,7 @@ typedef struct _NPF_NBL_COPY
 #ifdef HAVE_DOT11_SUPPORT
 	PUCHAR Dot11RadiotapHeader;
 #endif
-	ULONG refcount;
+	LONG refcount;
 } NPF_NBL_COPY, *PNPF_NBL_COPY;
 
 typedef struct _NPF_NB_COPIES
@@ -509,7 +509,7 @@ typedef struct _NPF_NB_COPIES
 	PNPF_NBL_COPY pNBLCopy;
 	ULONG ulSize; // Size of data in Buffer
 	ULONG ulPacketSize; // Size of the original packet
-	ULONG refcount;
+	LONG refcount;
 	PUCHAR Buffer; // packet data
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 

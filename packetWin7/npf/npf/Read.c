@@ -956,8 +956,8 @@ PNPF_CAP_DATA NPF_GetCapData(
 
 	// Increment refcounts on relevant structures
 	pCapData->pNBCopy = pNBCopy;
-	NpfInterlockedIncrement(&(LONG)pNBCopy->refcount);
-	NpfInterlockedIncrement(&(LONG)pNBLCopy->refcount);
+	NpfInterlockedIncrement(&pNBCopy->refcount);
+	NpfInterlockedIncrement(&pNBLCopy->refcount);
 
 	pCapData->ulCaplen = uCapLen;
 
