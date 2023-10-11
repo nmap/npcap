@@ -1026,7 +1026,7 @@ NPF_GetDataRateMappingTable(
 	}
 
 	// Not set, allocate a new one
-	PDOT11_DATA_RATE_MAPPING_TABLE pDRMT = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(DOT11_DATA_RATE_MAPPING_TABLE), NPF_DOT11_POOL_TAG);
+	PDOT11_DATA_RATE_MAPPING_TABLE pDRMT = NPF_AllocateZeroNonpaged(sizeof(DOT11_DATA_RATE_MAPPING_TABLE), NPF_DOT11_POOL_TAG);
 	if (pDRMT == NULL)
 	{
 		WARNING_DBG("Failed to allocate DOT11_DATA_RATE_MAPPING_TABLE\n");
@@ -1133,7 +1133,7 @@ NPF_GetCurrentOperationMode(
 	ULONG BytesProcessed = 0;
     PVOID pBuffer = NULL;
 
-    pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(CurrentOperationMode), NPF_INTERNAL_OID_TAG);
+    pBuffer = NPF_AllocateZeroNonpaged(sizeof(CurrentOperationMode), NPF_INTERNAL_OID_TAG);
     if (pBuffer == NULL)
     {
         INFO_DBG("Allocate pBuffer failed\n");
@@ -1682,7 +1682,7 @@ NPF_GetFilterModuleByAdapterName(
 
 	// Make sure we can hold at least as long a name as requested.
 	BaseName.MaximumLength = max(sizeof(L"Loopback"), pAdapterName->MaximumLength);
-	BaseName.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, BaseName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
+	BaseName.Buffer = NPF_AllocateZeroNonpaged(BaseName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (BaseName.Buffer == NULL) {
 		INFO_DBG("failed to allocate BaseName.Buffer\n");
 		TRACE_EXIT();
@@ -1789,7 +1789,7 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 	TRACE_ENTER();
 
 	// allocate some memory for the open structure
-	Open = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(OPEN_INSTANCE), NPF_OPEN_TAG);
+	Open = NPF_AllocateZeroNonpaged(sizeof(OPEN_INSTANCE), NPF_OPEN_TAG);
 
 	if (Open == NULL)
 	{
@@ -1798,8 +1798,6 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 		TRACE_EXIT();
 		return NULL;
 	}
-
-	RtlZeroMemory(Open, sizeof(OPEN_INSTANCE));
 
 	/* Buffer */
 	Open->BufferLock = NdisAllocateRWLock(NdisHandle);
@@ -1873,7 +1871,7 @@ NPF_CreateFilterModule(
 	BOOLEAN bAllocFailed = FALSE;
 
 	// allocate some memory for the filter module structure
-	pFiltMod = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(NPCAP_FILTER_MODULE), NPF_FILTMOD_TAG);
+	pFiltMod = NPF_AllocateZeroNonpaged(sizeof(NPCAP_FILTER_MODULE), NPF_FILTMOD_TAG);
 
 	if (pFiltMod == NULL)
 	{
@@ -1881,8 +1879,6 @@ NPF_CreateFilterModule(
 		INFO_DBG("Failed to allocate memory pool\n");
 		return NULL;
 	}
-
-	RtlZeroMemory(pFiltMod, sizeof(NPCAP_FILTER_MODULE));
 
 	pFiltMod->AdapterHandle = NdisFilterHandle;
 	pFiltMod->AdapterBindingStatus = FilterDetached;
@@ -1937,7 +1933,7 @@ NPF_CreateFilterModule(
 		}
 
 		pFiltMod->AdapterName.MaximumLength = AdapterName->MaximumLength - DEVICE_PATH_BYTES;
-		pFiltMod->AdapterName.Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, pFiltMod->AdapterName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
+		pFiltMod->AdapterName.Buffer = NPF_AllocateZeroNonpaged(pFiltMod->AdapterName.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 		if (pFiltMod->AdapterName.Buffer == NULL)
 		{
 			INFO_DBG("Failed to allocate AdapterName buffer\n");
@@ -2600,7 +2596,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 		{
 			// ExAllocatePoolWithTag is permitted to be used at DISPATCH_LEVEL iff allocating from NPF_NONPAGED
 #pragma warning(suppress: 28118)
-			pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_CLONE_OID_TAG);
+			pBuffer = NPF_AllocateZeroNonpaged(sizeof(ULONG), NPF_CLONE_OID_TAG);
 			if (pBuffer == NULL)
 			{
 				INFO_DBG("Allocate pBuffer failed, cannot modify OID value.\n");
@@ -3217,7 +3213,7 @@ NPF_SetPacketFilter(
 		return NDIS_STATUS_SUCCESS;
 	}
 
-	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
+	pBuffer = NPF_AllocateZeroNonpaged(sizeof(PacketFilter), NPF_INTERNAL_OID_TAG);
 	if (pBuffer == NULL)
 	{
 		INFO_DBG("Allocate pBuffer failed\n");
@@ -3283,7 +3279,7 @@ NPF_SetLookaheadSize(
 	}
 	// Otherwise, we have to update the stack with our new max value.
 
-	pBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(ULONG), NPF_INTERNAL_OID_TAG);
+	pBuffer = NPF_AllocateZeroNonpaged(sizeof(ULONG), NPF_INTERNAL_OID_TAG);
 	if (pBuffer == NULL)
 	{
 		INFO_DBG("Allocate pBuffer failed\n");

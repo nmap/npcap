@@ -248,25 +248,23 @@ DriverEntry(
 	TRACE_ENTER();
 	// global config info, could use IoAllocateDriverObjectExtension, but
 	// that would require access to DRIVER_OBJECT to retrieve.
-	g_pDriverExtension = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(NPCAP_DRIVER_EXTENSION), NPF_DRIVER_EXTENSION_TAG);
+	g_pDriverExtension = NPF_AllocateZeroNonpaged(sizeof(NPCAP_DRIVER_EXTENSION), NPF_DRIVER_EXTENSION_TAG);
 	if (g_pDriverExtension == NULL)
 	{
 		ERROR_DBG("Failed to alloc g_pDriverExtension.\n");
 		TRACE_EXIT();
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-	RtlZeroMemory(g_pDriverExtension, sizeof(NPCAP_DRIVER_EXTENSION));
 
 	RtlInitUnicodeString(&parametersPath, NULL);
 	parametersPath.MaximumLength=RegistryPath->Length+sizeof(L"\\Parameters");
-	parametersPath.Buffer=ExAllocatePoolWithTag(PagedPool, parametersPath.MaximumLength, NPF_UNICODE_BUFFER_TAG);
+	parametersPath.Buffer=NPF_AllocateZeroPaged(parametersPath.MaximumLength, NPF_UNICODE_BUFFER_TAG);
 	if (!parametersPath.Buffer) {
 		ERROR_DBG("Paged alloc of parametersPath failed.\n");
 		ExFreePool(g_pDriverExtension);
 		TRACE_EXIT();
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
-	RtlZeroMemory(parametersPath.Buffer, parametersPath.MaximumLength);
 	RtlCopyUnicodeString(&parametersPath, RegistryPath);
 	RtlAppendUnicodeToString(&parametersPath, L"\\Parameters");
 
@@ -685,7 +683,7 @@ NPF_GetRegistryOption(
 			if (NT_SUCCESS(status) || status == STATUS_BUFFER_OVERFLOW || status == STATUS_BUFFER_TOO_SMALL)
 			{
 
-				valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, resultLength, NPF_SHORT_TERM_TAG);
+				valueInfoP = (PKEY_VALUE_PARTIAL_INFORMATION)NPF_AllocateZeroPaged(resultLength, NPF_SHORT_TERM_TAG);
 				if (valueInfoP != NULL)
 				{
 					status = ZwQueryValueKey(keyHandle,
@@ -780,7 +778,7 @@ NPF_GetRegistryOption_String(
 
 			OutputString->Length = (USHORT)(valueInfoP->DataLength - sizeof(UNICODE_NULL));
 			OutputString->MaximumLength = (USHORT)(valueInfoP->DataLength);
-			OutputString->Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
+			OutputString->Buffer = NPF_AllocateZeroNonpaged(OutputString->MaximumLength, NPF_UNICODE_BUFFER_TAG);
 
 			if (OutputString->Buffer)
 			{
@@ -1140,7 +1138,7 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	ulBufLen = insns * sizeof(struct bpf_insn);
 
 	// Allocate the memory to contain the new filter program
-	PUCHAR TmpBPFProgram = (PUCHAR)ExAllocatePoolWithTag(NPF_NONPAGED, ulBufLen, NPF_BPF_TAG);
+	PUCHAR TmpBPFProgram = (PUCHAR)NPF_AllocateZeroNonpaged(ulBufLen, NPF_BPF_TAG);
 	if (TmpBPFProgram == NULL)
 	{
 		WARNING_DBG("Failed to alloc TmpBPFProgram.\n");
@@ -1701,7 +1699,7 @@ static NTSTATUS funcBIOC_OID(_In_ POPEN_INSTANCE pOpen,
 	// TODO: Test whether this copy needs to happen. Buffered I/O ought to
 	// mean AssociatedIrp.SystemBuffer is non-paged already and is not
 	// freed until we complete the IRP.
-	OidBuffer = ExAllocatePoolWithTag(NPF_NONPAGED, OidData->Length, NPF_USER_OID_TAG);
+	OidBuffer = NPF_AllocateZeroNonpaged(OidData->Length, NPF_USER_OID_TAG);
 	if (OidBuffer == NULL)
 	{
 		INFO_DBG("Failed to allocate OidBuffer\n");

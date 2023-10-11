@@ -80,6 +80,38 @@
 #pragma warning(disable: 30030)
 #define NPF_NONPAGED NonPagedPool
 #endif
+_Must_inspect_result_
+_Success_(return != NULL)
+__drv_allocatesMem(mem)
+inline DECLSPEC_RESTRICT PVOID NPF_AllocateZeroNonpaged(SIZE_T NumBytes, ULONG Tag)
+{
+#if(NTDDI_VERSION < NTDDI_WIN10_VB) // Windows 10 2004
+#pragma warning(suppress: 4996)
+	PVOID ret = ExAllocatePoolWithTag(NPF_NONPAGED, NumBytes, Tag);
+	if (ret != NULL)
+	{
+		RtlZeroMemory(ret, NumBytes);
+	}
+	return ret;
+#else
+	return ExAllocatePool2(POOL_FLAG_NON_PAGED, NumBytes, Tag);
+#endif
+}
+
+inline DECLSPEC_RESTRICT PVOID NPF_AllocateZeroPaged(SIZE_T NumBytes, ULONG Tag)
+{
+#if(NTDDI_VERSION < NTDDI_WIN10_VB) // Windows 10 2004
+#pragma warning(suppress: 4996)
+	PVOID ret = ExAllocatePoolWithTag(PagedPool, NumBytes, Tag);
+	if (ret != NULL)
+	{
+		RtlZeroMemory(ret, NumBytes);
+	}
+	return ret;
+#else
+	return ExAllocatePool2(POOL_FLAG_PAGED, NumBytes, Tag);
+#endif
+}
 
 // NPCAP_DRIVER_EXTENSION "NpDE"
 #define NPF_DRIVER_EXTENSION_TAG 'EDpN'

@@ -980,13 +980,12 @@ NPF_CopyFromNetBufferToNBCopy(
 	NT_ASSERT(pNBCopy->Buffer == NULL);
 	NT_ASSERT(ulDesired > 0);
 
-	pNBCopy->Buffer = ExAllocatePoolWithTag(NPF_NONPAGED, ulDesired, NPF_PACKET_DATA_TAG);
+	pNBCopy->Buffer = NPF_AllocateZeroNonpaged(ulDesired, NPF_PACKET_DATA_TAG);
 	if (pNBCopy->Buffer == NULL)
 	{
 		INFO_DBG("Failed to allocate Buffer\n");
 		return FALSE;
 	}
-	RtlZeroMemory(pNBCopy->Buffer, ulDesired);
 
 	// Map or copy a contiguous buffer
 	pSrcBuf = NdisGetDataBuffer(pSrcNB->pNetBuffer, ulDesired, pNBCopy->Buffer, 1, 0);

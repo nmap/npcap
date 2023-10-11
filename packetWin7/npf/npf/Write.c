@@ -144,7 +144,7 @@ NPF_CloneBufferToMdl(
 	_In_ ULONG uDataLen
        )
 {
-	PVOID npBuff = ExAllocatePoolWithTag(NPF_NONPAGED, uDataLen, NPF_BUFFERED_WRITE_TAG);
+	PVOID npBuff = NPF_AllocateZeroNonpaged(uDataLen, NPF_BUFFERED_WRITE_TAG);
 	if (npBuff == NULL)
 	{
 		INFO_DBG("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");
@@ -557,7 +557,7 @@ NTSTATUS NPF_BufferedWrite(
 		goto NPF_BufferedWrite_End;
 	}
 
-	PNPF_BUFFERED_WRITE_STATE pState = ExAllocatePoolWithTag(NPF_NONPAGED, sizeof(NPF_BUFFERED_WRITE_STATE), NPF_BUFFERED_WRITE_TAG);
+	PNPF_BUFFERED_WRITE_STATE pState = NPF_AllocateZeroNonpaged(sizeof(NPF_BUFFERED_WRITE_STATE), NPF_BUFFERED_WRITE_TAG);
 	if (!pState)
 	{
 		Status = STATUS_INSUFFICIENT_RESOURCES;
