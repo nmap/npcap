@@ -1,3 +1,11 @@
+## Npcap 1.78 [2023-10-18]
+
+* Fixed a memory leak in Npcap 1.77 which occurs when the kernel buffer is
+  full. Fixes [#701](http://issues.npcap.org/701).
+
+* Correctly handle an allocation failure during out-of-memory condition,
+  avoiding a null pointer dereference. Fixes [#698](http://issues.npcap.org/698).
+
 ## Npcap 1.77 [2023-09-29]
 
 * Fixed a memory leak in Npcap 1.76 only which occurs while capturing traffic
