@@ -639,7 +639,7 @@ ULONG NPF_GetMetadata(
 
 //-------------------------------------------------------------------
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
-VOID
+BOOLEAN
 NPF_TapExForEachOpen(
 	_Inout_ POPEN_INSTANCE Open,
 	_Inout_ PNPF_CAP_DATA pCapData,
@@ -802,7 +802,11 @@ NPF_DoTap(
 				continue;
 			}
 		}
-		NPF_TapExForEachOpen(pCapData->pOpen, pCapData, AtDispatchLevel);
+		if (!NPF_TapExForEachOpen(pCapData->pOpen, pCapData, AtDispatchLevel))
+		{
+			// Didn't accept it. Clean up!
+			NPF_ReturnCapData(pCapData);
+		}
 	}
 
 	// Now release/return the copies
@@ -1007,7 +1011,7 @@ NPF_CopyFromNetBufferToNBCopy(
 }
 
 _Use_decl_annotations_
-VOID
+BOOLEAN
 NPF_TapExForEachOpen(
 	POPEN_INSTANCE Open,
 	PNPF_CAP_DATA pCapData,
@@ -1020,11 +1024,12 @@ NPF_TapExForEachOpen(
 	PNPF_NBL_COPY pNBLCopy = pNBCopy->pNBLCopy;
 	ULONG TotalPacketSize = pNBCopy->ulPacketSize;
 	ULONG fres = pCapData->ulCaplen;
+	BOOLEAN bEnqueued = FALSE;
 
 	// We have a packet to record. OpenDetached is the highest needed level here.
 	if (!NPF_StartUsingOpenInstance(Open, OpenDetached, AtDispatchLevel))
  	{
- 		return;
+		return FALSE;
  	}
 
 	NT_ASSERT((Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION && pNBLCopy->PerfCount.QuadPart > 0)
@@ -1119,6 +1124,7 @@ NPF_TapExForEachOpen(
 		}
 		ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
 		// We successfully put this into the queue
+		bEnqueued = TRUE;
 		lCapSize = 0;
 		NpfInterlockedIncrement(&(LONG)Open->Accepted);
 
@@ -1129,7 +1135,7 @@ NPF_TapExForEachOpen(
 		}
 
 	} while (0);
-	if (lCapSize > 0)
+	if (!bEnqueued && lCapSize > 0)
 	{
 		// something went wrong and we didn't enqueue this, so reverse it.
 		NpfInterlockedExchangeAdd(&Open->Free, lCapSize);
@@ -1140,5 +1146,6 @@ TEFEO_next_NB:
 
 
 	NPF_StopUsingOpenInstance(Open, OpenDetached, AtDispatchLevel);
+	return bEnqueued;
 	//TRACE_EXIT();
 }
