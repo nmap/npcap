@@ -234,48 +234,42 @@ NPF_AllocateNBL(
 }
 //-------------------------------------------------------------------
 
-_Ret_range_(-1, 1)
-static int NPF_GetIPVersion(
+static USHORT NPF_GetIPVersion(
 		_In_ PNPCAP_FILTER_MODULE pFiltMod,
 		_In_reads_bytes_(buflen) PVOID pBuf,
 		_In_ ULONG buflen)
 {
-	int ret = NPF_INJECT_OTHER;
 	UINT uCmp = 0;
 
-	if (pFiltMod->RawIP && NT_VERIFY(buflen > 1))
+	if (pFiltMod->EtherHeader)
 	{
-		uCmp = *(PUCHAR)pBuf & 0xf0;
+		uCmp = RtlUshortByteSwap(((PETHER_HEADER)pBuf)->ether_type);
 	}
-	else if (pFiltMod->Loopback)
-	{
-		if (g_pDriverExtension->bDltNullMode)
+	else {
+		if (pFiltMod->RawIP && NT_VERIFY(buflen > 1))
+		{
+			uCmp = *(PUCHAR)pBuf & 0xf0;
+		}
+		else if (pFiltMod->Loopback && g_pDriverExtension->bDltNullMode)
 		{
 			uCmp = ((PDLT_NULL_HEADER)pBuf)->null_type;
 		}
-		else
+
+		switch(uCmp)
 		{
-			uCmp = RtlUshortByteSwap(((PETHER_HEADER)pBuf)->ether_type);
+			case 0x40:
+			case DLTNULLTYPE_IP:
+				uCmp = ETHERTYPE_IP;
+				break;
+			case 0x60:
+			case DLTNULLTYPE_IPV6:
+				uCmp = ETHERTYPE_IPV6;
+				break;
+			default:
+				break;
 		}
 	}
-
-	switch(uCmp)
-	{
-		case 0x40:
-		case DLTNULLTYPE_IP:
-		case ETHERTYPE_IP:
-			ret = NPF_INJECT_IPV4;
-			break;
-		case 0x60:
-		case DLTNULLTYPE_IPV6:
-		case ETHERTYPE_IPV6:
-			ret = NPF_INJECT_IPV6;
-			break;
-		default:
-			ret = NPF_INJECT_OTHER;
-			break;
-	}
-	return ret;
+	return (USHORT)uCmp;
 }
 
 _Use_decl_annotations_
@@ -295,7 +289,7 @@ NPF_Write(
 	NTSTATUS Status = STATUS_SUCCESS;
 	PMDL TmpMdl = NULL;
 	BOOLEAN IrpWasPended = FALSE;
-	int npf_inject_type = NPF_INJECT_OTHER;
+	USHORT EthType = 0;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
@@ -360,7 +354,7 @@ NPF_Write(
 		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 	}
 
-	npf_inject_type = NPF_GetIPVersion(Open->pFiltMod, pBuf, buflen);
+	EthType = NPF_GetIPVersion(Open->pFiltMod, pBuf, buflen);
 	numSentPackets = 0;
 
 	while (numSentPackets < NumSends)
@@ -397,16 +391,15 @@ NPF_Write(
 		TmpMdl = NULL;
 
 		// Mark packet as necessary
-		if (npf_inject_type == NPF_INJECT_IPV4)
+		if (EthType == ETHERTYPE_IP)
 		{
 			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV4);
-			NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(ETHERTYPE_IP);
 		}
-		else if (npf_inject_type == NPF_INJECT_IPV6)
+		else if (EthType == ETHERTYPE_IPV6)
 		{
 			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV6);
-			NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(ETHERTYPE_IPV6);
 		}
+		NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(EthType);
 
 		RESERVED(pNetBufferList)->pState = NULL;
 		if (IrpWasPended)
@@ -436,6 +429,7 @@ NPF_Write(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
+			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_LOOPBACK);
 			Status = NPF_LoopbackSendNetBufferLists(Open,
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
@@ -615,7 +609,7 @@ NTSTATUS NPF_BufferedWrite(
 			break;
 		}
 
-		int npf_inject_type = NPF_GetIPVersion(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen);
+		USHORT EthType = NPF_GetIPVersion(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen);
 
 		/* Copy packet data to non-paged memory, otherwise we induce
 		 * page faults in NIC drivers: http://issues.nmap.org/1398
@@ -649,16 +643,15 @@ NTSTATUS NPF_BufferedWrite(
 		NT_ASSERT(pNetBufferList != NULL);
 
 		// Mark packet as necessary
-		if (npf_inject_type == NPF_INJECT_IPV4)
+		if (EthType == ETHERTYPE_IP)
 		{
 			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV4);
-			NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(ETHERTYPE_IP);
 		}
-		else if (npf_inject_type == NPF_INJECT_IPV6)
+		else if (EthType == ETHERTYPE_IPV6)
 		{
 			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV6);
-			NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(ETHERTYPE_IPV6);
 		}
+		NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(EthType);
 
 		// The packet has a buffer that needs to be freed after every single write
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
@@ -747,6 +740,7 @@ NTSTATUS NPF_BufferedWrite(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
+			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_LOOPBACK);
 			Status = NPF_LoopbackSendNetBufferLists(Open,
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))

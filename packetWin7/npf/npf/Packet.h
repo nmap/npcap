@@ -387,6 +387,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	/* Config booleans as a bitfield */
 	UINT Loopback:1;
 	UINT RawIP:1; // does this miniport require us to sniff the IP version of each packet?
+	UINT EtherHeader:1; // Does this adapter use Ethernet headers?
 	UINT SendToRxPath:1;
 	UINT BlockRxPath:1;
 	UINT Dot11:1;
