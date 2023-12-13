@@ -2023,34 +2023,69 @@ Return Value:
 //-------------------------------------------------------------------
 
 static NDIS_STATUS NPF_ValidateParameters(
-	_Out_ PBOOLEAN pbDot11,
+	_Inout_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ NDIS_MEDIUM MiniportMediaType,
+	_In_ NDIS_PHYSICAL_MEDIUM MiniportPhysicalMediaType,
 	_In_opt_ NDIS_HANDLE MiniportMediaSpecificAttributes
         )
 {
 	NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
+	// Defaults
+	pFiltMod->Fragile = 1;
+	pFiltMod->RawIP = 0;
+	pFiltMod->EtherHeader = 0;
     // Verify the media type is supported.  This is a last resort; the
     // the filter should never have been bound to an unsupported miniport
     // to begin with.  If this driver is marked as a Mandatory filter (which
     // is the default for this sample; see the INF file), failing to attach
     // here will leave the network adapter in an unusable state.
     //
-	// The WiFi filter will only bind to the 802.11 wireless adapters that support NetworkMonitor mode.
-	*pbDot11 = (g_pDriverExtension->bDot11SupportMode && MiniportMediaType == NdisMediumNative802_11);
-#ifdef HAVE_DOT11_SUPPORT
-	if (*pbDot11 && MiniportMediaSpecificAttributes)
+	switch (MiniportMediaType)
 	{
-		PNDIS_MINIPORT_ADAPTER_NATIVE_802_11_ATTRIBUTES pDot11Attrs = MiniportMediaSpecificAttributes;
-		if (pDot11Attrs->Header.Type == NDIS_OBJECT_TYPE_MINIPORT_ADAPTER_NATIVE_802_11_ATTRIBUTES)
-		{
-			if (!(pDot11Attrs->OpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR))
+		case NdisMediumNative802_11:
+			// The WiFi filter will only bind to the 802.11
+			// wireless adapters that support NetworkMonitor mode.
+			pFiltMod->Dot11 = g_pDriverExtension->bDot11SupportMode;
+			pFiltMod->Fragile = 0;
+#ifdef HAVE_DOT11_SUPPORT
+			if (pFiltMod->Dot11 && MiniportMediaSpecificAttributes)
 			{
-				INFO_DBG("Adapter does not support NetMon\n");
-				Status = NDIS_STATUS_INVALID_PARAMETER;
+				PNDIS_MINIPORT_ADAPTER_NATIVE_802_11_ATTRIBUTES pDot11Attrs = MiniportMediaSpecificAttributes;
+				if (pDot11Attrs->Header.Type == NDIS_OBJECT_TYPE_MINIPORT_ADAPTER_NATIVE_802_11_ATTRIBUTES
+						&& !(pDot11Attrs->OpModeCapability & DOT11_OPERATION_MODE_NETWORK_MONITOR))
+				{
+					INFO_DBG("Adapter does not support NetMon\n");
+					Status = NDIS_STATUS_INVALID_PARAMETER;
+				}
 			}
-		}
-	}
 #endif
+			break;
+		case NdisMedium802_3:
+			pFiltMod->Fragile = 0;
+			pFiltMod->EtherHeader = 1;
+			break;
+		case NdisMediumWan:
+			pFiltMod->EtherHeader = 1;
+			pFiltMod->Fragile = 1;
+			break;
+		case NdisMediumWirelessWan:
+		case NdisMediumRawIP:
+			pFiltMod->RawIP = 1;
+		default:
+			pFiltMod->Fragile = 1;
+			break;
+	}
+	switch (MiniportPhysicalMediaType)
+	{
+		case NdisPhysicalMediumNative802_11:
+			// NDIS always answers OID_GEN_CURRENT_PACKET_FILTER queries for
+			// Wifi adapters with NDIS_STATUS_INVALID_OID
+			pFiltMod->PacketFilterGetOK = 0;
+			break;
+		default:
+			pFiltMod->PacketFilterGetOK = 1;
+			break;
+	}
 	return Status;
 }
 
@@ -2069,7 +2104,6 @@ NPF_AttachAdapter(
 	NDIS_FILTER_ATTRIBUTES	FilterAttributes;
 	SINGLE_LIST_ENTRY ReattachOpens = {NULL};
 	BOOLEAN					bFalse = FALSE;
-	BOOLEAN					bDot11 = FALSE;
 
 	TRACE_ENTER();
 
@@ -2077,10 +2111,10 @@ NPF_AttachAdapter(
 	{
 		// FilterModuleGuidName = "{ADAPTER_GUID}-{FILTER_GUID}-0000"
 
-		returnStatus = NPF_ValidateParameters(&bDot11, AttachParameters->MiniportMediaType, AttachParameters->MiniportMediaSpecificAttributes);
+		returnStatus = NPF_ValidateParameters(pFiltMod, AttachParameters->MiniportMediaType, AttachParameters->MiniportPhysicalMediaType, AttachParameters->MiniportMediaSpecificAttributes);
 		INFO_DBG("FilterModuleGuidName=%ws, bDot11=%u, MediaType=%d\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
-			bDot11, AttachParameters->MiniportMediaType);
+			pFiltMod->Dot11, AttachParameters->MiniportMediaType);
 
 		if (returnStatus != STATUS_SUCCESS)
 			break;
@@ -2116,27 +2150,6 @@ NPF_AttachAdapter(
 		}
 		pFiltMod->AdapterID = AttachParameters->BaseMiniportNetLuid;
 		pFiltMod->AdapterBindingStatus = FilterAttaching;
-		switch (AttachParameters->MiniportMediaType)
-		{
-			case NdisMedium802_3:
-			case NdisMediumNative802_11:
-				pFiltMod->Fragile = 0;
-				break;
-			default:
-				pFiltMod->Fragile = 1;
-				break;
-		}
-		switch (AttachParameters->MiniportPhysicalMediaType)
-		{
-			case NdisPhysicalMediumNative802_11:
-				// NDIS always answers OID_GEN_CURRENT_PACKET_FILTER queries for
-				// Wifi adapters with NDIS_STATUS_INVALID_OID
-				pFiltMod->PacketFilterGetOK = 0;
-				break;
-			default:
-				pFiltMod->PacketFilterGetOK = 1;
-				break;
-		}
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
@@ -2168,8 +2181,6 @@ NPF_AttachAdapter(
 			INFO_DBG("NdisFSetAttributes: error, Status=%x.\n", Status);
 			break;
 		}
-
-		pFiltMod->Dot11 = g_pDriverExtension->bDot11SupportMode && bDot11;
 
 		INFO_DBG(
 			"Opened the device %ws, BindingContext=%p, dot11=%u",
@@ -2300,7 +2311,6 @@ NPF_Restart(
 	ULONG ulTmp = 0;
 	PNDIS_RESTART_ATTRIBUTES Curr = RestartParameters->RestartAttributes;
 	PNDIS_RESTART_GENERAL_ATTRIBUTES GenAttr = NULL;
-	BOOLEAN bDot11 = FALSE;
 
 	TRACE_ENTER();
 
@@ -2320,8 +2330,7 @@ NPF_Restart(
 	pFiltMod->AdapterBindingStatus = FilterRestarting;
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
-	Status = NPF_ValidateParameters(&bDot11, RestartParameters->MiniportMediaType, NULL);
-	NT_ASSERT(!bDot11 == !pFiltMod->Dot11);
+	Status = NPF_ValidateParameters(pFiltMod, RestartParameters->MiniportMediaType, RestartParameters->MiniportPhysicalMediaType, NULL);
 	if (Status != NDIS_STATUS_SUCCESS) {
 		goto NPF_Restart_End;
 	}
