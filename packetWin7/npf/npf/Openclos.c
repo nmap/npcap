@@ -444,7 +444,7 @@ NPF_OpenAdapter(
 	Open->UserPID = IoGetRequestorProcessId(Irp);
 
 	INFO_DBG(
-		"Open(%p) name=%ws, Loopback=%u\n",
+		"Open(%p) name=%ws, Loopback=%d\n",
 		Open,
 		IrpSp->FileObject->FileName.Buffer,
 		pFiltMod ? pFiltMod->Loopback : 0);
@@ -2022,8 +2022,16 @@ Return Value:
 
 //-------------------------------------------------------------------
 
+struct MediaParams {
+	BOOLEAN RawIP:1;
+	BOOLEAN EtherHeader:1;
+	BOOLEAN Dot11:1;
+	BOOLEAN PacketFilterGetOK:1;
+	BOOLEAN Fragile:1;
+};
+
 static NDIS_STATUS NPF_ValidateParameters(
-	_Inout_ PNPCAP_FILTER_MODULE pFiltMod,
+	_Out_ struct MediaParams *pParams,
 	_In_ NDIS_MEDIUM MiniportMediaType,
 	_In_ NDIS_PHYSICAL_MEDIUM MiniportPhysicalMediaType,
 	_In_opt_ NDIS_HANDLE MiniportMediaSpecificAttributes
@@ -2031,9 +2039,9 @@ static NDIS_STATUS NPF_ValidateParameters(
 {
 	NDIS_STATUS Status = NDIS_STATUS_SUCCESS;
 	// Defaults
-	pFiltMod->Fragile = 1;
-	pFiltMod->RawIP = 0;
-	pFiltMod->EtherHeader = 0;
+	pParams->Fragile = 1;
+	pParams->RawIP = 0;
+	pParams->EtherHeader = 0;
     // Verify the media type is supported.  This is a last resort; the
     // the filter should never have been bound to an unsupported miniport
     // to begin with.  If this driver is marked as a Mandatory filter (which
@@ -2045,10 +2053,10 @@ static NDIS_STATUS NPF_ValidateParameters(
 		case NdisMediumNative802_11:
 			// The WiFi filter will only bind to the 802.11
 			// wireless adapters that support NetworkMonitor mode.
-			pFiltMod->Dot11 = g_pDriverExtension->bDot11SupportMode;
-			pFiltMod->Fragile = 0;
+			pParams->Dot11 = g_pDriverExtension->bDot11SupportMode;
+			pParams->Fragile = 0;
 #ifdef HAVE_DOT11_SUPPORT
-			if (pFiltMod->Dot11 && MiniportMediaSpecificAttributes)
+			if (pParams->Dot11 && MiniportMediaSpecificAttributes)
 			{
 				PNDIS_MINIPORT_ADAPTER_NATIVE_802_11_ATTRIBUTES pDot11Attrs = MiniportMediaSpecificAttributes;
 				if (pDot11Attrs->Header.Type == NDIS_OBJECT_TYPE_MINIPORT_ADAPTER_NATIVE_802_11_ATTRIBUTES
@@ -2061,18 +2069,18 @@ static NDIS_STATUS NPF_ValidateParameters(
 #endif
 			break;
 		case NdisMedium802_3:
-			pFiltMod->Fragile = 0;
-			pFiltMod->EtherHeader = 1;
+			pParams->Fragile = 0;
+			pParams->EtherHeader = 1;
 			break;
 		case NdisMediumWan:
-			pFiltMod->EtherHeader = 1;
-			pFiltMod->Fragile = 1;
+			pParams->EtherHeader = 1;
+			pParams->Fragile = 1;
 			break;
 		case NdisMediumWirelessWan:
-		case NdisMediumRawIP:
-			pFiltMod->RawIP = 1;
+		case NdisMediumIP:
+			pParams->RawIP = 1;
 		default:
-			pFiltMod->Fragile = 1;
+			pParams->Fragile = 1;
 			break;
 	}
 	switch (MiniportPhysicalMediaType)
@@ -2080,10 +2088,10 @@ static NDIS_STATUS NPF_ValidateParameters(
 		case NdisPhysicalMediumNative802_11:
 			// NDIS always answers OID_GEN_CURRENT_PACKET_FILTER queries for
 			// Wifi adapters with NDIS_STATUS_INVALID_OID
-			pFiltMod->PacketFilterGetOK = 0;
+			pParams->PacketFilterGetOK = 0;
 			break;
 		default:
-			pFiltMod->PacketFilterGetOK = 1;
+			pParams->PacketFilterGetOK = 1;
 			break;
 	}
 	return Status;
@@ -2098,6 +2106,7 @@ NPF_AttachAdapter(
 	)
 {
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
+	struct MediaParams params = {0};
 	LOCK_STATE_EX lockState;
 	NDIS_STATUS             Status;
 	NDIS_STATUS				returnStatus;
@@ -2111,10 +2120,10 @@ NPF_AttachAdapter(
 	{
 		// FilterModuleGuidName = "{ADAPTER_GUID}-{FILTER_GUID}-0000"
 
-		returnStatus = NPF_ValidateParameters(pFiltMod, AttachParameters->MiniportMediaType, AttachParameters->MiniportPhysicalMediaType, AttachParameters->MiniportMediaSpecificAttributes);
+		returnStatus = NPF_ValidateParameters(&params, AttachParameters->MiniportMediaType, AttachParameters->MiniportPhysicalMediaType, AttachParameters->MiniportMediaSpecificAttributes);
 		INFO_DBG("FilterModuleGuidName=%ws, bDot11=%u, MediaType=%d\n",
 			AttachParameters->FilterModuleGuidName->Buffer,
-			pFiltMod->Dot11, AttachParameters->MiniportMediaType);
+			params.Dot11, AttachParameters->MiniportMediaType);
 
 		if (returnStatus != STATUS_SUCCESS)
 			break;
@@ -2150,6 +2159,11 @@ NPF_AttachAdapter(
 		}
 		pFiltMod->AdapterID = AttachParameters->BaseMiniportNetLuid;
 		pFiltMod->AdapterBindingStatus = FilterAttaching;
+		pFiltMod->RawIP = params.RawIP;
+		pFiltMod->EtherHeader = params.EtherHeader;
+		pFiltMod->Dot11 = params.Dot11;
+		pFiltMod->PacketFilterGetOK = params.PacketFilterGetOK;
+		pFiltMod->Fragile = params.Fragile;
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.
@@ -2311,6 +2325,7 @@ NPF_Restart(
 	ULONG ulTmp = 0;
 	PNDIS_RESTART_ATTRIBUTES Curr = RestartParameters->RestartAttributes;
 	PNDIS_RESTART_GENERAL_ATTRIBUTES GenAttr = NULL;
+	struct MediaParams params = {0};
 
 	TRACE_ENTER();
 
@@ -2330,10 +2345,15 @@ NPF_Restart(
 	pFiltMod->AdapterBindingStatus = FilterRestarting;
 	NdisReleaseSpinLock(&pFiltMod->AdapterHandleLock);
 
-	Status = NPF_ValidateParameters(pFiltMod, RestartParameters->MiniportMediaType, RestartParameters->MiniportPhysicalMediaType, NULL);
+	Status = NPF_ValidateParameters(&params, RestartParameters->MiniportMediaType, RestartParameters->MiniportPhysicalMediaType, NULL);
 	if (Status != NDIS_STATUS_SUCCESS) {
 		goto NPF_Restart_End;
 	}
+	pFiltMod->RawIP = params.RawIP;
+	pFiltMod->EtherHeader = params.EtherHeader;
+	pFiltMod->Dot11 = params.Dot11;
+	pFiltMod->PacketFilterGetOK = params.PacketFilterGetOK;
+	pFiltMod->Fragile = params.Fragile;
 
 	while (Curr) {
 		INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES Oid = %#x\n", pFiltMod, Curr->Oid);

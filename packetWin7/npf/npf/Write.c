@@ -429,7 +429,7 @@ NPF_Write(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
-			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_LOOPBACK);
+			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET);
 			Status = NPF_LoopbackSendNetBufferLists(Open,
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
@@ -740,7 +740,7 @@ NTSTATUS NPF_BufferedWrite(
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 		if (Open->pFiltMod->Loopback == TRUE)
 		{
-			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_LOOPBACK);
+			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET);
 			Status = NPF_LoopbackSendNetBufferLists(Open,
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
