@@ -302,14 +302,14 @@ typedef struct _NPCAP_DRIVER_EXTENSION
 #ifdef HAVE_DOT11_SUPPORT
 	LOOKASIDE_LIST_EX Dot11HeaderPool; // Pool of Radiotap header buffers
 #endif
-	UCHAR bNBLCopyPoolInit:1;
-	UCHAR bNBCopiesPoolInit:1;
-	UCHAR bSrcNBPoolInit:1;
-	UCHAR bInternalRequestPoolInit:1;
-	UCHAR bCapturePoolInit:1;
-	UCHAR bDot11HeaderPoolInit:1;
+	BOOLEAN bNBLCopyPoolInit:1;
+	BOOLEAN bNBCopiesPoolInit:1;
+	BOOLEAN bSrcNBPoolInit:1;
+	BOOLEAN bInternalRequestPoolInit:1;
+	BOOLEAN bCapturePoolInit:1;
+	BOOLEAN bDot11HeaderPoolInit:1;
 	// WFP context
-	UCHAR bWFPInit:1;
+	BOOLEAN bWFPInit:1;
 	KMUTEX WFPInitMutex;
 	PNPCAP_FILTER_MODULE pLoopbackFilter;
 #define NPF_INJECT_OTHER -1
@@ -385,15 +385,15 @@ typedef struct _NPCAP_FILTER_MODULE
 	NET_LUID AdapterID;
 
 	/* Config booleans as a bitfield */
-	UINT Loopback:1;
-	UINT RawIP:1; // does this miniport require us to sniff the IP version of each packet?
-	UINT EtherHeader:1; // Does this adapter use Ethernet headers?
-	UINT SendToRxPath:1;
-	UINT BlockRxPath:1;
-	UINT Dot11:1;
-	UINT PacketFilterGetOK:1; // Can we issue OID_GEN_CURRENT_PACKET_FILTER queries?
-	UINT HigherPacketFilterSet:1; // Have we correctly set HigherPacketFilter yet?
-	UINT Fragile:1; // Avoid OID set operations on these adapters
+	BOOLEAN Loopback:1;
+	BOOLEAN RawIP:1; // does this miniport require us to sniff the IP version of each packet?
+	BOOLEAN EtherHeader:1; // Does this adapter use Ethernet headers?
+	BOOLEAN SendToRxPath:1;
+	BOOLEAN BlockRxPath:1;
+	BOOLEAN Dot11:1;
+	BOOLEAN PacketFilterGetOK:1; // Can we issue OID_GEN_CURRENT_PACKET_FILTER queries?
+	BOOLEAN HigherPacketFilterSet:1; // Have we correctly set HigherPacketFilter yet?
+	BOOLEAN Fragile:1; // Avoid OID set operations on these adapters
 
 	LONG nTimestampQPC; // Opens wanting TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
 	LONG nTimestampQST; // Opens wanting TIMESTAMPMODE_QUERYSYSTEMTIME
@@ -456,13 +456,13 @@ typedef struct _OPEN_INSTANCE
 
 	/* Config booleans as a bitfield */
 	// working modes, see PacketSetMode():
-	UINT bModeCapt:1; // MODE_CAPT (1) vs MODE_STAT (0)
-	// UINT bModeMon:1; // MODE_MON not supported
+	BOOLEAN bModeCapt:1; // MODE_CAPT (1) vs MODE_STAT (0)
+	// BOOLEAN bModeMon:1; // MODE_MON not supported
 	// Loopback Behavior:
-	UINT SkipSentPackets:1; ///< True if this instance should not capture back the packets that it transmits.
+	BOOLEAN SkipSentPackets:1; ///< True if this instance should not capture back the packets that it transmits.
 	// Info used to match a FilterModule when reattaching:
-	UINT bDot11:1; // pFiltMod->Dot11
-	UINT bLoopback:1; // pFiltMod->Loopback
+	BOOLEAN bDot11:1; // pFiltMod->Dot11
+	BOOLEAN bLoopback:1; // pFiltMod->Loopback
 
 	/* Buffer */
 	PNDIS_RW_LOCK_EX BufferLock; // Lock for modifying the buffer size/configuration
