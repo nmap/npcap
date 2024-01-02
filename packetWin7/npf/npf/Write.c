@@ -211,6 +211,7 @@ NPF_AllocateNBL(
 			// WORKAROUND: FwpsAllocateNetBufferAndNetBufferList also does not have annotations for
 			// allocating the NBL. This fake function will suppress the warning about it.
 			*ppNBL = NPF_AnalysisAssumeAllocated(ppNBL);
+			(*ppNBL)->ChildRefCount = 0;
 		}
 		else
 		{
@@ -228,7 +229,13 @@ NPF_AllocateNBL(
 			pMdl,
 			0,
 			uDataLen);
-		Status = *ppNBL ? STATUS_SUCCESS : STATUS_INSUFFICIENT_RESOURCES;
+		if (*ppNBL) {
+			Status = STATUS_SUCCESS;
+			(*ppNBL)->ChildRefCount = 0;
+		}
+		else {
+			Status = STATUS_INSUFFICIENT_RESOURCES;
+		}
 	}
 	return Status;
 }
