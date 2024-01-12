@@ -388,6 +388,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	BOOLEAN Loopback:1;
 	BOOLEAN RawIP:1; // does this miniport require us to sniff the IP version of each packet?
 	BOOLEAN EtherHeader:1; // Does this adapter use Ethernet headers?
+	BOOLEAN SplitMdls:1; // Do we need to split the L2 header into a separate MDL?
 	BOOLEAN SendToRxPath:1;
 	BOOLEAN BlockRxPath:1;
 	BOOLEAN Dot11:1;
@@ -621,7 +622,8 @@ NPF_BUFFERED_WRITE_STATE, *PNPF_BUFFERED_WRITE_STATE;
 typedef __declspec(align(MEMORY_ALLOCATION_ALIGNMENT)) struct _PACKET_RESERVED
 {
 	PIRP pIrp;
-	BOOLEAN		FreeBufAfterWrite;	///< True if the memory buffer associated with the packet must be freed.
+	BOOLEAN FreeBufAfterWrite; // True if the memory buffer associated with the packet must be freed.
+	BOOLEAN FreeMdlAfterWrite; // True if the MDL chain must be freed (always true if FreeBufAfterWrite is true)
 	PNPF_BUFFERED_WRITE_STATE pState;
 }  PACKET_RESERVED, *PPACKET_RESERVED;
 

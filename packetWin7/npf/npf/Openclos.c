@@ -2028,6 +2028,7 @@ struct MediaParams {
 	BOOLEAN Dot11:1;
 	BOOLEAN PacketFilterGetOK:1;
 	BOOLEAN Fragile:1;
+	BOOLEAN SplitMdls:1;
 };
 
 static NDIS_STATUS NPF_ValidateParameters(
@@ -2090,6 +2091,9 @@ static NDIS_STATUS NPF_ValidateParameters(
 			// Wifi adapters with NDIS_STATUS_INVALID_OID
 			pParams->PacketFilterGetOK = 0;
 			break;
+		case NdisPhysicalMediumBluetooth:
+			pParams->SplitMdls = 1;
+			// fall through
 		default:
 			pParams->PacketFilterGetOK = 1;
 			break;
@@ -2164,6 +2168,7 @@ NPF_AttachAdapter(
 		pFiltMod->Dot11 = params.Dot11;
 		pFiltMod->PacketFilterGetOK = params.PacketFilterGetOK;
 		pFiltMod->Fragile = params.Fragile;
+		pFiltMod->SplitMdls = params.SplitMdls;
 
 #ifdef HAVE_RX_SUPPORT
 		// Determine whether this is our send-to-Rx adapter for the open_instance.

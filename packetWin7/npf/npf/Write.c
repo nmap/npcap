@@ -145,6 +145,7 @@ NPF_CloneBufferToMdl(
        )
 {
 	PVOID npBuff = NPF_AllocateZeroNonpaged(uDataLen, NPF_BUFFERED_WRITE_TAG);
+	ULONG uMdlLen;
 	if (npBuff == NULL)
 	{
 		INFO_DBG("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");
@@ -154,7 +155,13 @@ NPF_CloneBufferToMdl(
 	RtlCopyMemory(npBuff, pBuf, uDataLen);
 
 	// Allocate an MDL to map the packet data
-	PMDL TmpMdl = NdisAllocateMdl(pFiltMod->AdapterHandle, npBuff, uDataLen);
+	if (pFiltMod->SplitMdls && uDataLen > ETHER_HDR_LEN) {
+		uMdlLen = ETHER_HDR_LEN;
+	}
+	else {
+		uMdlLen = uDataLen;
+	}
+	PMDL TmpMdl = NdisAllocateMdl(pFiltMod->AdapterHandle, npBuff, uMdlLen);
 
 	if (TmpMdl == NULL)
 	{
@@ -165,6 +172,22 @@ NPF_CloneBufferToMdl(
 		return NULL;
 	}
 
+	if (uMdlLen < uDataLen) {
+		TmpMdl->Next = NdisAllocateMdl(pFiltMod->AdapterHandle, (PUCHAR)npBuff + uMdlLen, uDataLen - uMdlLen);
+		if (TmpMdl == NULL)
+		{
+			// Unable to map the memory: packet lost
+			INFO_DBG("NPF_BufferedWrite: unable to allocate split MDL.\n");
+			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+			NdisFreeMdl(TmpMdl);
+			return NULL;
+		}
+		// The MDL is aliased because it is accessed via TmpMdl->Next.
+		// As long as TmpMdl doesn't leak, this is not a leak.
+		NPF_AnalysisAssumeAliased(TmpMdl->Next);
+
+	}
+
 	// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
 	// is stored in the MDL and we retrieve it (via NdisQueryMdl) in NPF_FreePackets called from NPF_ReturnEx.
 	// Therefore, it is not leaking after this point.
@@ -172,14 +195,23 @@ NPF_CloneBufferToMdl(
 	return TmpMdl;
 }
 
+// We may have a chain of MDLs, but they all refer to the same buffer.
 VOID
-NPF_FreeMdlAndBuffer(_In_ __drv_freesMem(mem) PMDL pMdl)
+NPF_FreeMdlAndBuffer(_In_ __drv_freesMem(mem) PMDL pMdl, _In_ BOOLEAN FreeBuf)
 {
-	PVOID npBuff = MmGetSystemAddressForMdlSafe(pMdl, HighPagePriority|MdlMappingNoExecute);
-	if (npBuff != NULL) {
-		ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+	PMDL pNext = NULL;
+	if (FreeBuf)
+	{
+		PVOID npBuff = MmGetSystemAddressForMdlSafe(pMdl, HighPagePriority|MdlMappingNoExecute);
+		if (npBuff != NULL) {
+			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+		}
 	}
-	NdisFreeMdl(pMdl); //Free MDL
+	while (pMdl != NULL) {
+		pNext = pMdl->Next;
+		NdisFreeMdl(pMdl); //Free MDL
+		pMdl = pNext;
+	}
 }
 
 NTSTATUS
@@ -296,6 +328,8 @@ NPF_Write(
 	NTSTATUS Status = STATUS_SUCCESS;
 	PMDL TmpMdl = NULL;
 	BOOLEAN IrpWasPended = FALSE;
+	BOOLEAN bFreeBuf = FALSE;
+	BOOLEAN bFreeMdl = FALSE;
 	USHORT EthType = 0;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
@@ -369,7 +403,37 @@ NPF_Write(
 		if (NumSends - numSentPackets == 1) 
 		{
 			// Last packet; use the IRP's buffer and pend it.
-			TmpMdl = Irp->MdlAddress;
+			if (Open->pFiltMod->SplitMdls) {
+				// As a workaround for a bug in bthpan.sys, we need to define
+				// separate MDLs for the Eth header and payload. See #708
+				ULONG uMdlLen = min(ETHER_HDR_LEN, buflen);
+				PVOID pVA = MmGetMdlVirtualAddress(Irp->MdlAddress);
+				TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, uMdlLen);
+				if (TmpMdl == NULL)
+				{
+					Status = STATUS_INSUFFICIENT_RESOURCES;
+					break;
+				}
+				IoBuildPartialMdl(Irp->MdlAddress, TmpMdl, pVA, uMdlLen);
+				if (uMdlLen < buflen) {
+					TmpMdl->Next = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, uMdlLen);
+					if (TmpMdl->Next == NULL)
+					{
+						NdisFreeMdl(TmpMdl);
+						TmpMdl = NULL;
+						Status = STATUS_INSUFFICIENT_RESOURCES;
+						break;
+					}
+					// The MDL is aliased because it is accessed via TmpMdl->Next.
+					// As long as TmpMdl doesn't leak, this is not a leak.
+					NPF_AnalysisAssumeAliased(TmpMdl->Next);
+					IoBuildPartialMdl(Irp->MdlAddress, TmpMdl->Next, (PUCHAR)pVA + uMdlLen, buflen - uMdlLen);
+				}
+				bFreeMdl = TRUE;
+			}
+			else {
+				TmpMdl = Irp->MdlAddress;
+			}
 			IoMarkIrpPending(Irp);
 			IrpWasPended = TRUE;
 		}
@@ -382,6 +446,8 @@ NPF_Write(
 				Status = STATUS_INSUFFICIENT_RESOURCES;
 				break;
 			}
+			bFreeBuf = TRUE;
+			bFreeMdl = TRUE;
 		}
 
 		Status = NPF_AllocateNBL(Open->pFiltMod,
@@ -409,17 +475,17 @@ NPF_Write(
 		NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(EthType);
 
 		RESERVED(pNetBufferList)->pState = NULL;
+		RESERVED(pNetBufferList)->FreeBufAfterWrite = bFreeBuf;
+		RESERVED(pNetBufferList)->FreeMdlAfterWrite = bFreeMdl;
 		if (IrpWasPended)
 		{
 			// This is the only NBL that uses the IRP's buffer. Let SendComplete know it should complete the IRP, too.
 			RESERVED(pNetBufferList)->pIrp = Irp;
-			RESERVED(pNetBufferList)->FreeBufAfterWrite = FALSE;
 		}
 		else
 		{
 			// This NBL uses our own buffer copy. SendComplete should free it, but not complete the IRP until we're done sending.
 			RESERVED(pNetBufferList)->pIrp = NULL;
-			RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
 		}
 
 		//receive the packets before sending them
@@ -489,9 +555,9 @@ NPF_Write_End:
 			NPF_FreePackets(Open->pFiltMod, pNetBufferList);
 		}
 		// Otherwise, clean up TmpMdl directly
-		else if (TmpMdl && !IrpWasPended)
+		else if (TmpMdl && bFreeMdl)
 		{
-			NPF_FreeMdlAndBuffer(TmpMdl);
+			NPF_FreeMdlAndBuffer(TmpMdl, bFreeBuf);
 		}
 
 		if (Open)
@@ -619,8 +685,7 @@ NTSTATUS NPF_BufferedWrite(
 		USHORT EthType = NPF_GetIPVersion(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen);
 
 		/* Copy packet data to non-paged memory, otherwise we induce
-		 * page faults in NIC drivers: http://issues.nmap.org/1398
-		 * TODO: Try mapping the data without copying; system buffer ought to be nonpaged already with Buffered IO. */
+		 * page faults in NIC drivers: http://issues.nmap.org/1398 */
 		TmpMdl = NPF_CloneBufferToMdl(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen);
 
 		if (TmpMdl == NULL)
@@ -643,7 +708,7 @@ NTSTATUS NPF_BufferedWrite(
 			
 			INFO_DBG("NPF_BufferedWrite: no more free packets, returning.\n");
 
-			NPF_FreeMdlAndBuffer(TmpMdl);
+			NPF_FreeMdlAndBuffer(TmpMdl, TRUE);
 
 			break;
 		}
@@ -827,15 +892,15 @@ NPF_FreePackets(
 
 	--*/
 {
-	BOOLEAN				FreeBufAfterWrite;
 	PNET_BUFFER_LIST    pNetBufList = NetBufferLists;
 	PNET_BUFFER         Currbuff;
 
 /*	TRACE_ENTER();*/
 
-	FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
+	BOOLEAN FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
+	BOOLEAN FreeMdlAfterWrite = RESERVED(pNetBufList)->FreeMdlAfterWrite;
 
-	if (FreeBufAfterWrite)
+	if (FreeBufAfterWrite || FreeMdlAfterWrite)
 	{
 		//
 		// Packet sent by NPF_BufferedWrite()
@@ -845,7 +910,7 @@ NPF_FreePackets(
 		Currbuff = NET_BUFFER_LIST_FIRST_NB(pNetBufList);
 		while (Currbuff)
 		{
-			NPF_FreeMdlAndBuffer(NET_BUFFER_FIRST_MDL(Currbuff));
+			NPF_FreeMdlAndBuffer(NET_BUFFER_FIRST_MDL(Currbuff), FreeBufAfterWrite);
 			Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
 		}
 	}
