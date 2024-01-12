@@ -2588,6 +2588,7 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 				{
 					// Note the new value and return success
 					pFiltMod->HigherPacketFilter = *(PULONG) pBuffer;
+					pFiltMod->HigherPacketFilterSet = 1;
 					Request->DATA.SET_INFORMATION.BytesRead = sizeof(ULONG);
 					return NDIS_STATUS_SUCCESS;
 				}
