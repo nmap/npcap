@@ -2377,7 +2377,7 @@ NPF_Restart(
 				break;
 			// These have not been seen before, but worth a shot to save an OID request later:
 			case OID_GEN_CURRENT_PACKET_FILTER:
-				pFiltMod->HigherPacketFilter = (ULONG) Curr->Data;
+				pFiltMod->HigherPacketFilter = *(PULONG) Curr->Data;
 				pFiltMod->HigherPacketFilterSet = 1;
 				break;
 		}
