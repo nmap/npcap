@@ -2043,6 +2043,7 @@ static NDIS_STATUS NPF_ValidateParameters(
 	pParams->Fragile = 1;
 	pParams->RawIP = 0;
 	pParams->EtherHeader = 0;
+	pParams->PacketFilterGetOK = 1;
     // Verify the media type is supported.  This is a last resort; the
     // the filter should never have been bound to an unsupported miniport
     // to begin with.  If this driver is marked as a Mandatory filter (which
@@ -2055,6 +2056,9 @@ static NDIS_STATUS NPF_ValidateParameters(
 			// The WiFi filter will only bind to the 802.11
 			// wireless adapters that support NetworkMonitor mode.
 			pParams->Dot11 = g_pDriverExtension->bDot11SupportMode;
+			// NDIS always answers OID_GEN_CURRENT_PACKET_FILTER queries for
+			// Wifi adapters with NDIS_STATUS_INVALID_OID
+			pParams->PacketFilterGetOK = 0;
 			pParams->Fragile = 0;
 #ifdef HAVE_DOT11_SUPPORT
 			if (pParams->Dot11 && MiniportMediaSpecificAttributes)
@@ -2084,19 +2088,9 @@ static NDIS_STATUS NPF_ValidateParameters(
 			pParams->Fragile = 1;
 			break;
 	}
-	switch (MiniportPhysicalMediaType)
+	if (MiniportPhysicalMediaType == NdisPhysicalMediumBluetooth)
 	{
-		case NdisPhysicalMediumNative802_11:
-			// NDIS always answers OID_GEN_CURRENT_PACKET_FILTER queries for
-			// Wifi adapters with NDIS_STATUS_INVALID_OID
-			pParams->PacketFilterGetOK = 0;
-			break;
-		case NdisPhysicalMediumBluetooth:
-			pParams->SplitMdls = 1;
-			// fall through
-		default:
-			pParams->PacketFilterGetOK = 1;
-			break;
+		pParams->SplitMdls = 1;
 	}
 	return Status;
 }
@@ -2362,26 +2356,30 @@ NPF_Restart(
 
 	while (Curr) {
 		INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES Oid = %#x\n", pFiltMod, Curr->Oid);
-		if (Curr->Oid == OID_GEN_MINIPORT_RESTART_ATTRIBUTES) {
-			GenAttr = (PNDIS_RESTART_GENERAL_ATTRIBUTES) Curr->Data;
-			// MtuSize is actually OID_GEN_MAXIMUM_FRAME_SIZE and does not include link header
-			// We'll grab it because it's available, but we'll try to get something better
-			pFiltMod->MaxFrameSize = GenAttr->MtuSize;
-			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES MtuSize = %lu\n", pFiltMod, GenAttr->MtuSize);
-			pFiltMod->SupportedPacketFilters = GenAttr->SupportedPacketFilters;
+		switch (Curr->Oid) {
+			case OID_GEN_MINIPORT_RESTART_ATTRIBUTES:
+				GenAttr = (PNDIS_RESTART_GENERAL_ATTRIBUTES) Curr->Data;
+				// MtuSize is actually OID_GEN_MAXIMUM_FRAME_SIZE and does not include link header
+				// We'll grab it because it's available, but we'll try to get something better
+				pFiltMod->MaxFrameSize = GenAttr->MtuSize;
+				INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES MtuSize = %lu\n", pFiltMod, GenAttr->MtuSize);
+				pFiltMod->SupportedPacketFilters = GenAttr->SupportedPacketFilters;
 #ifdef HAVE_DOT11_SUPPORT
-			if (pFiltMod->Dot11)
-			{
-				// This is not reported in SupportedPacketFilters. Have to override it here.
-				pFiltMod->SupportedPacketFilters |= NPCAP_DOT11_RAW_PACKET_FILTER;
-			}
+				if (pFiltMod->Dot11)
+				{
+					// This is not reported in SupportedPacketFilters. Have to override it here.
+					pFiltMod->SupportedPacketFilters |= NPCAP_DOT11_RAW_PACKET_FILTER;
+				}
 #endif
-			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES SupportedPacketFilters = %#x\n", pFiltMod, GenAttr->SupportedPacketFilters);
-			pFiltMod->HigherLookaheadSize = GenAttr->LookaheadSize;
-			INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES LookaheadSize = %lu\n", pFiltMod, GenAttr->LookaheadSize);
-#if !(DBG)
-			break;
-#endif
+				INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES SupportedPacketFilters = %#x\n", pFiltMod, GenAttr->SupportedPacketFilters);
+				pFiltMod->HigherLookaheadSize = GenAttr->LookaheadSize;
+				INFO_DBG("pFiltMod(%p) NDIS_RESTART_ATTRIBUTES LookaheadSize = %lu\n", pFiltMod, GenAttr->LookaheadSize);
+				break;
+			// These have not been seen before, but worth a shot to save an OID request later:
+			case OID_GEN_CURRENT_PACKET_FILTER:
+				pFiltMod->HigherPacketFilter = (ULONG) Curr->Data;
+				pFiltMod->HigherPacketFilterSet = 1;
+				break;
 		}
 		Curr = Curr->Next;
 	}
@@ -2411,8 +2409,9 @@ NPF_Restart(
 			WARNING_DBG("NPF_SetPacketFilter: error, Status=%x.\n", ntStatus);
 		}
 	}
-	else // If we haven't mucked with the packet filter, we need to get the original one in order to restore it.
+	else if (!pFiltMod->HigherPacketFilterSet)
 	{
+		// If we haven't mucked with the packet filter, we need to get the original one in order to restore it.
 		ntStatus = NPF_GetPacketFilter(pFiltMod);
 		if (!NT_SUCCESS(ntStatus))
 		{
