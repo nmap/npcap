@@ -776,7 +776,6 @@ NPF_DemoteOpenStatus(
 		NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
 		NPF_UnregisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
 	}
-	pOpen->ReattachStatus = NewState;
 
 	return OldState;
 }
@@ -2229,6 +2228,7 @@ NPF_AttachAdapter(
 			while (Curr != NULL)
 			{
 				POPEN_INSTANCE pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
+				// NPF_AddToGroupOpenArray handles updating MyPacketFilter and MyLookaheadSize
 				NPF_AddToGroupOpenArray(pOpen, pFiltMod, 0);
 				if (pOpen->ReattachStatus < OpenAttached)
 				{
@@ -2398,39 +2398,22 @@ NPF_Restart(
 	}
 
 	// Now that we have SupportedPacketFilters, we can set our own PacketFilter if necessary
-	if (pFiltMod->MyPacketFilter != 0)
+	ulTmp = pFiltMod->MyPacketFilter;
+	// Force NPF_SetPacketFilter to send the OID in case the filter was reset while we were detached.
+	pFiltMod->MyPacketFilter = 0;
+	ntStatus = NPF_SetPacketFilter(pFiltMod, ulTmp);
+	if (!NT_SUCCESS(ntStatus))
 	{
-		ulTmp = pFiltMod->MyPacketFilter;
-		// Force NPF_SetPacketFilter to send the OID in case the filter was reset while we were detached.
-		pFiltMod->MyPacketFilter = 0;
-		ntStatus = NPF_SetPacketFilter(pFiltMod, ulTmp);
-		if (!NT_SUCCESS(ntStatus))
-		{
-			WARNING_DBG("NPF_SetPacketFilter: error, Status=%x.\n", ntStatus);
-		}
-	}
-	else if (!pFiltMod->HigherPacketFilterSet)
-	{
-		// If we haven't mucked with the packet filter, we need to get the original one in order to restore it.
-		ntStatus = NPF_GetPacketFilter(pFiltMod);
-		if (!NT_SUCCESS(ntStatus))
-		{
-			WARNING_DBG("NPF_GetPacketFilter: error, Status=%x.\n", ntStatus);
-		}
-		INFO_DBG("pFiltMod(%p)->HigherPacketFilter=%#lx\n", pFiltMod, pFiltMod->HigherPacketFilter);
+		WARNING_DBG("NPF_SetPacketFilter: error, Status=%x.\n", ntStatus);
 	}
 
 	// And we may have to set the lookahead size if this is a reattach
-	if (pFiltMod->MyLookaheadSize != 0)
+	ulTmp = pFiltMod->MyLookaheadSize;
+	pFiltMod->MyLookaheadSize = 0;
+	ntStatus = NPF_SetLookaheadSize(pFiltMod, ulTmp);
+	if (!NT_SUCCESS(ntStatus))
 	{
-		ulTmp = pFiltMod->MyLookaheadSize;
-		pFiltMod->MyLookaheadSize = 0;
-		// Force NPF_SetPacketFilter to send the OID in case the lookahead was reset while we were detached.
-		ntStatus = NPF_SetLookaheadSize(pFiltMod, ulTmp);
-		if (!NT_SUCCESS(ntStatus))
-		{
-			WARNING_DBG("NPF_SetLookaheadSize: error, Status=%x.\n", ntStatus);
-		}
+		WARNING_DBG("NPF_SetLookaheadSize: error, Status=%x.\n", ntStatus);
 	}
 
 
