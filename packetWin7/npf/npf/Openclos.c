@@ -2928,14 +2928,21 @@ NOTE: called at <= DISPATCH_LEVEL
 
 	INFO_DBG("status %x\n", StatusIndication->StatusCode);
 
-	//
-	// The filter may do processing on the status indication here, including
-	// intercepting and dropping it entirely.  However, the sample does nothing
-	// with status indications except pass them up to the higher layer.  It is
-	// more efficient to omit the FilterStatus handler entirely if it does
-	// nothing, but it is included in this sample for illustrative purposes.
-	//
-	NdisFIndicateStatus(pFiltMod->AdapterHandle, StatusIndication);
+	// We can use this if we haven't mucked with it yet.
+	if (StatusIndication->StatusCode == NDIS_STATUS_PACKET_FILTER
+			&& pFiltMod->MyPacketFilter != 0
+			&& !pFiltMod->HigherPacketFilterSet)
+	{
+		NT_ASSERT(StatusIndication->StatusBufferSize >= sizeof(ULONG));
+		pFiltMod->HigherPacketFilter = *(PULONG)StatusIndication->StatusBuffer;
+		pFiltMod->HigherPacketFilterSet = 1;
+	}
+
+	// If it's ours, drop it here. Otherwise, pass it on.
+	if (StatusIndication->SourceHandle != pFiltMod->AdapterHandle)
+	{
+		NdisFIndicateStatus(pFiltMod->AdapterHandle, StatusIndication);
+	}
 
 /*	TRACE_EXIT();*/
 }
