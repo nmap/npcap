@@ -2559,42 +2559,6 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 	NT_ASSERT(!pFiltMod->Loopback);
 #endif
 
-	// Special case: if their OID doesn't change a value we already set
-	// then we don't pass it down but just return success.
-	if (!pFiltMod->Fragile && Request->RequestType == NdisRequestSetInformation)
-	{
-		pBuffer = Request->DATA.SET_INFORMATION.InformationBuffer;
-		switch (Request->DATA.SET_INFORMATION.Oid)
-		{
-			case OID_GEN_CURRENT_PACKET_FILTER:
-				if (*(PULONG) pBuffer & ~pFiltMod->SupportedPacketFilters)
-					WARNING_DBG("Upper driver setting unsupported packet filter: %#x\n", *(PULONG) pBuffer);
-
-				// If new combined filter is the same as existing
-				if ((*(PULONG) pBuffer | pFiltMod->MyPacketFilter) == (pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter))
-				{
-					// Note the new value and return success
-					pFiltMod->HigherPacketFilter = *(PULONG) pBuffer;
-					pFiltMod->HigherPacketFilterSet = 1;
-					Request->DATA.SET_INFORMATION.BytesRead = sizeof(ULONG);
-					return NDIS_STATUS_SUCCESS;
-				}
-				break;
-			case OID_GEN_CURRENT_LOOKAHEAD:
-				// If requested lookahead is less than or equal to ours
-				if (*(PULONG) pBuffer <= pFiltMod->MyLookaheadSize)
-				{
-					// Note the new value and return success
-					pFiltMod->HigherLookaheadSize = *(PULONG) pBuffer;
-					Request->DATA.SET_INFORMATION.BytesRead = sizeof(ULONG);
-					return NDIS_STATUS_SUCCESS;
-				}
-				break;
-			default:
-				break;
-		}
-	}
-
 	do
 	{
 		Status = NdisAllocateCloneOidRequest(pFiltMod->AdapterHandle,
@@ -2626,8 +2590,11 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 					case OID_GEN_CURRENT_PACKET_FILTER:
 						pFiltMod->HigherPacketFilter = *(ULONG *) Request->DATA.SET_INFORMATION.InformationBuffer;
 						pFiltMod->HigherPacketFilterSet = 1;
-						if (*(PULONG) pBuffer & ~pFiltMod->SupportedPacketFilters)
+#if DBG
+						if (pFiltMod->AdapterBindingStatus == FilterRunning
+								&& *(PULONG) pBuffer & ~pFiltMod->SupportedPacketFilters)
 							WARNING_DBG("Upper driver setting unsupported packet filter: %#x\n", *(PULONG) pBuffer);
+#endif
 						*(PULONG) pBuffer = pFiltMod->HigherPacketFilter | pFiltMod->MyPacketFilter;
 						break;
 					case OID_GEN_CURRENT_LOOKAHEAD:
