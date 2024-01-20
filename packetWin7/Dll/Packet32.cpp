@@ -345,6 +345,7 @@ static HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 	BOOL   fSuccess = FALSE;
 	DWORD  cbRead, cbToWrite, cbWritten, dwMode;
 	HANDLE hPipe = g_hNpcapHelperPipe;
+	int nFields = 0;
 
 	TRACE_ENTER();
 
@@ -409,7 +410,7 @@ static HANDLE NpcapRequestHandle(const char *sMsg, DWORD *pdwError)
 		goto Exit;
 	}
 
-	int nFields = _snscanf_s(chBuf, cbRead, "%p,%lu", &hd, pdwError);
+	nFields = _snscanf_s(chBuf, cbRead, "%p,%lu", &hd, pdwError);
 	if (nFields != 2)
 	{
 		*pdwError = ERROR_OPEN_FAILED;
@@ -3213,9 +3214,13 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	static ULONG MaxGAABufLen = ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE;
 	ULONG BufLen = MaxGAABufLen;
 	PIP_ADAPTER_ADDRESSES AdBuffer = NULL, TmpAddr = NULL;
+	PIP_ADAPTER_UNICAST_ADDRESS pAddr = NULL;
 	PCHAR Tname = NULL;
+	PCCH AdapterGuid = NULL;
 	BOOLEAN Res = FALSE;
 	DWORD err = ERROR_SUCCESS;
+	LONG numEntries = 0;
+	ULONG RetVal = ERROR_SUCCESS;
 
 	TRACE_ENTER();
 
@@ -3289,7 +3294,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 		goto END_PacketGetNetInfoEx;
 	}
 
-	PCCH AdapterGuid = strchr(AdapterName, '{');
+	AdapterGuid = strchr(AdapterName, '{');
 	if (AdapterGuid == NULL)
 	{
 		err = ERROR_INVALID_NAME;
@@ -3302,7 +3307,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 		err = ERROR_NOT_ENOUGH_MEMORY;
 		goto END_PacketGetNetInfoEx;
 	}
-	ULONG RetVal = ERROR_SUCCESS;
+
 	for (int i = 0; i < ADAPTERS_ADDRESSES_MAX_TRIES; i++)
 	{
 
@@ -3356,8 +3361,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 
 	// else found!
 	Res = TRUE;
-	PIP_ADAPTER_UNICAST_ADDRESS pAddr = TmpAddr->FirstUnicastAddress;
-	LONG numEntries = 0;
+	pAddr = TmpAddr->FirstUnicastAddress;
 	while (pAddr != NULL && numEntries < *NEntries)
 	{
 		ULONG ul = 0;
