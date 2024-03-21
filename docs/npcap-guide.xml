@@ -120,12 +120,18 @@
           <varlistentry>
             <term><option>/prior_driver</option></term>
             <listitem><para>
-		<emphasis>Install older driver</emphasis>.  Microsoft continues to tighten their policy on what
-		types of certificates and authorities may sign drivers. In cases where the current driver may
-		not strictly meet these requirements, the <option>/prior_driver</option> option may be used to
-		install the last version of the driver that meets these requirements.  In cases where no such
-		driver exists, this option is ignored.
-              </para>
+		<emphasis>Install older (version 1.30) Npcap driver on pre-Windows-10 systems</emphasis>.
+		Some, but not all, ancient Windows systems (so old that Microsoft no longer supports them)
+		refuse to install the latest Npcap drivers for signature validation reasons.  They don't
+		support the
+		<ulink url="https://learn.microsoft.com/en-us/windows-hardware/drivers/dashboard/code-signing-attestation"
+			>modern attestation signing method</ulink>, but also can't use drivers signed after
+		<ulink url="https://learn.microsoft.com/en-us/windows-hardware/drivers/install/deprecation-of-software-publisher-certificates-and-commercial-release-certificates"
+			>Microsoft let their cross-signing certificates for the old method expire in July
+			2021</ulink>.  If your Npcap install fails on a pre-Win10 OS (especially with error
+		code <varname>0xe0000247</varname>), try again with <option>/prior_driver=yes</option>. This
+		option isn't the default because many/most old Windows systems still accept the newest Npcap
+		drivers. They may be configured with less-strict codesigning requirements.
               <para>
             </para></listitem>
           </varlistentry>
