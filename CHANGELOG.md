@@ -1,3 +1,14 @@
+## Npcap 1.79 [2024-01-19]
+
+* Fixed a condition where disabling and re-enabling a network adapter while a
+  capture is active would prevent any packets from being received by the system
+  until the capture handle was closed. Fixes [#710](http://issues.npcap.org/710).
+
+* Introduced a workaround for a previously-unknown bug in Microsoft's bthpan.sys that was
+  causing BSoD crashes with `INVALID_MDL_RANGE` when Npcap or other drivers sent packets over
+  a Bluetooth-tethered connection. Microsoft intends to patch this Windows bug, but Npcap will
+  no longer trigger it regardless of patch status. Fixes [#708](http://issues.npcap.org/708).
+
 ## Npcap 1.78 [2023-10-18]
 
 * Fixed a memory leak in Npcap 1.77 which occurs when the kernel buffer is
