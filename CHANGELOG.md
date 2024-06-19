@@ -128,6 +128,10 @@
 
 * Fix a BSoD issue on Windows 8.1 due to registering a service without a name. Fixes [#565](http://issues.npcap.org/565).
 
+* The silent-install option (/S) in [Npcap OEM](https://npcap.com/oem/) is now case-insensitive so that /s works
+  as well.  All other Npcap installer options are already case-insensitive except for /D (destination directory)
+  which is handled by NSIS itself. Closes [#630](http://issues.npcap.org/630).
+
 * Fix an issue with admin-only mode where high-integrity processes (UAC not enforced) could not open
   or list adapters. Fixes [#606](http://issues.npcap.org/606).
 
