@@ -111,7 +111,9 @@
 
 #include "../npf/npf/ioctls.h"
 #include "../../version.h"
-#include <ws2tcpip.h>
+#include <ws2ipdef.h>
+#include <winternl.h>
+#include <ip2string.h>
 
 #include <map>
 using namespace std;
@@ -3250,41 +3252,48 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 
 	if (PacketIsLoopbackAdapter(AdapterName))
 	{
-		ADDRINFOA hints = {0};
-		PADDRINFOA pAI = NULL;
+		PCSTR end = NULL;
+		struct sockaddr_in *pIPv4 = NULL;
+		struct sockaddr_in6 *pIPv6 = NULL;
+		NTSTATUS Status = 0;
 		npf_if_addr* pIfAddr = NULL;
-		hints.ai_flags = AI_NUMERICHOST;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = IPPROTO_TCP;
 
 		*NEntries = min(2, *NEntries);
 		switch (*NEntries) {
 			case 2:
 				// buffer[1] = ipv6;
 				pIfAddr = &buffer[1];
-				hints.ai_family = AF_INET6;
-				if (0 != getaddrinfo("::1", NULL, &hints, &pAI))
+				memset(pIfAddr, 0, sizeof(npf_if_addr));
+				pIPv6 = (struct sockaddr_in6 *) &pIfAddr->IPAddress;
+				Status = RtlIpv6StringToAddressA("::1", &end, &pIPv6->sin6_addr);
+				if (!NT_SUCCESS(Status))
 					break;
-				memcpy(&pIfAddr->IPAddress, pAI->ai_addr, sizeof(struct sockaddr_in6));
-				if (0 != getaddrinfo("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", NULL, &hints, &pAI))
+				pIPv6->sin6_family = AF_INET6;
+				pIPv6 = (struct sockaddr_in6 *) &pIfAddr->SubnetMask;
+				Status = RtlIpv6StringToAddressA("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", &end, &pIPv6->sin6_addr);
+				if (!NT_SUCCESS(Status))
 					break;
-				memcpy(&pIfAddr->SubnetMask, pAI->ai_addr, sizeof(struct sockaddr_in6));
+				pIPv6->sin6_family = AF_INET6;
 			case 1:
 				// buffer[0] = ipv4;
 				pIfAddr = &buffer[0];
-				hints.ai_family = AF_INET;
-				if (0 != getaddrinfo("127.0.0.1", NULL, &hints, &pAI))
+				memset(pIfAddr, 0, sizeof(npf_if_addr));
+				pIPv4 = (struct sockaddr_in *) &pIfAddr->IPAddress;
+				Status = RtlIpv4StringToAddressA("127.0.0.1", TRUE, &end, &pIPv4->sin_addr);
+				if (!NT_SUCCESS(Status))
 					break;
-				memcpy(&pIfAddr->IPAddress, pAI->ai_addr, sizeof(struct sockaddr_in));
-				if (0 != getaddrinfo("255.0.0.0", NULL, &hints, &pAI))
+				pIPv4->sin_family = AF_INET;
+				pIPv4 = (struct sockaddr_in *) &pIfAddr->SubnetMask;
+				Status = RtlIpv4StringToAddressA("255.0.0.0", TRUE, &end, &pIPv4->sin_addr);
+				if (!NT_SUCCESS(Status))
 					break;
-				memcpy(&pIfAddr->SubnetMask, pAI->ai_addr, sizeof(struct sockaddr_in));
+				pIPv4->sin_family = AF_INET;
 			default:
 				Res = TRUE;
 				break;
 		}
 		if (!Res) {
-			err = WSAGetLastError();
+			err = RtlNtStatusToDosError(Status);
 		}
 		goto END_PacketGetNetInfoEx;
 	}
@@ -3373,7 +3382,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 			struct sockaddr_in* Subnet = (struct sockaddr_in *)&pItem->SubnetMask;
 			struct sockaddr_in* Broadcast = (struct sockaddr_in *)&pItem->Broadcast;
 			Subnet->sin_family = Broadcast->sin_family = AF_INET;
-			Subnet->sin_addr.S_un.S_addr = ul = htonl(0xffffffff << (32 - pAddr->OnLinkPrefixLength));
+			Subnet->sin_addr.S_un.S_addr = ul = _byteswap_ulong(0xffffffff << (32 - pAddr->OnLinkPrefixLength));
 			Broadcast->sin_addr.S_un.S_addr = ~ul | IfAddr->sin_addr.S_un.S_addr;
 		}
 		else if (pItem->IPAddress.ss_family == AF_INET6 && pAddr->OnLinkPrefixLength <= 128)
@@ -3392,7 +3401,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 				}
 				else
 				{
-					const WORD mask = htons(0xffff << (16 - i));
+					const WORD mask = _byteswap_ushort(0xffff << (16 - i));
 					Subnet->sin6_addr.u.Word[j] = mask;
 					Broadcast->sin6_addr.u.Word[j] = ~mask | IfAddr->sin6_addr.u.Word[j];
 				}
