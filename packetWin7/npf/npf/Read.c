@@ -747,6 +747,11 @@ NPF_DoTap(
 					// Packet not accepted by the filter, ignore it.
 					continue;
 				}
+				// We have a packet to record. OpenDetached is the highest needed level here.
+				if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, TRUE))
+				{
+					continue;
+				}
 
 				NpfInterlockedIncrement(&(LONG)pOpen->Received);
 
@@ -763,8 +768,10 @@ NPF_DoTap(
 					// Insufficient memory
 					// Don't free pNBCopy; that's done later
 					NpfInterlockedIncrement(&(LONG)pOpen->ResourceDropped);
+					NPF_StopUsingOpenInstance(pOpen, OpenDetached, TRUE);
 					continue;
 				}
+
 				// Stash this cap data to process later
 				if (pCaptures == NULL)
 				{
@@ -802,7 +809,10 @@ NPF_DoTap(
 				continue;
 			}
 		}
-		if (!NPF_TapExForEachOpen(pCapData->pOpen, pCapData, AtDispatchLevel))
+
+		BOOLEAN accepted = NPF_TapExForEachOpen(pCapData->pOpen, pCapData, AtDispatchLevel);
+		NPF_StopUsingOpenInstance(pCapData->pOpen, OpenDetached, AtDispatchLevel);
+		if (!accepted)
 		{
 			// Didn't accept it. Clean up!
 			NPF_ReturnCapData(pCapData);
@@ -1026,12 +1036,6 @@ NPF_TapExForEachOpen(
 	ULONG fres = pCapData->ulCaplen;
 	BOOLEAN bEnqueued = FALSE;
 
-	// We have a packet to record. OpenDetached is the highest needed level here.
-	if (!NPF_StartUsingOpenInstance(Open, OpenDetached, AtDispatchLevel))
- 	{
-		return FALSE;
- 	}
-
 	NT_ASSERT((Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION && pNBLCopy->PerfCount.QuadPart > 0)
 			|| ((Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME
 					|| Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE)
@@ -1145,7 +1149,6 @@ NPF_TapExForEachOpen(
 TEFEO_next_NB:
 
 
-	NPF_StopUsingOpenInstance(Open, OpenDetached, AtDispatchLevel);
 	return bEnqueued;
 	//TRACE_EXIT();
 }
