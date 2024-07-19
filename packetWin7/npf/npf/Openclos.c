@@ -767,6 +767,10 @@ NPF_DemoteOpenStatus(
 	OPEN_STATE NewState
 	)
 {
+	if (pOpen->OpenStatus == OpenClosed) {
+		// No change
+		return OpenClosed;
+	}
 	OPEN_STATE OldState = InterlockedExchange((LONG *)&pOpen->OpenStatus, (LONG) NewState);
 
 	NT_ASSERT(NewState > OldState);
@@ -1294,8 +1298,10 @@ NPF_Cleanup(
 		KeSetEvent(Open->ReadEvent, 0, FALSE);
 	NPF_OpenWaitPendingIrps(Open);
 
-	NPF_RemoveFromGroupOpenArray(Open); //Remove the Open from the filter module's list
-
+	// If it was already marked as detached, don't try to detach it twice.
+	if (OldState < OpenDetached) {
+		NPF_RemoveFromGroupOpenArray(Open); //Remove the Open from the filter module's list
+	}
 
 	//
 	// release all the resources
@@ -1437,7 +1443,7 @@ NPF_RemoveFromGroupOpenArray(
 
 	NdisAcquireSpinLock(&pOpen->OpenInUseLock);
 	pFiltMod = pOpen->pFiltMod;
-	if (!pFiltMod) {
+	if (!NT_VERIFY(pFiltMod)) {
 		/* This adapter was already removed, so no filter module exists.
 		 * Nothing left to do!
 		 */
@@ -2468,11 +2474,14 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 	while (Curr != NULL)
 	{
 		pOpen = CONTAINING_RECORD(Curr, OPEN_INSTANCE, OpenInstancesEntry);
-		PushEntryList(&DetachedOpens, Curr);
 		pOpen->ReattachStatus = NPF_DemoteOpenStatus(pOpen, OpenDetached);
+		// If it's closed, ignore it. Someone else will take it from here.
+		if (pOpen->ReattachStatus != OpenClosed) {
+			PushEntryList(&DetachedOpens, Curr);
 
-		if (pOpen->ReadEvent != NULL)
-			KeSetEvent(pOpen->ReadEvent, 0, FALSE);
+			if (pOpen->ReadEvent != NULL)
+				KeSetEvent(pOpen->ReadEvent, 0, FALSE);
+		}
 
 		Curr = PopEntryList(&pFiltMod->OpenInstances);
 	}
