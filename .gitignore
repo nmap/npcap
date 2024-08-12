@@ -42,6 +42,7 @@ Win* Release/
 Win* Debug/
 x64/
 ARM64/
+ARM64EC/
 /wpcap/build-win32/
 /wpcap/build-x64/
 /wpcap/build-ARM64/
