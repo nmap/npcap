@@ -2131,6 +2131,16 @@ NPF_AttachAdapter(
 		if (returnStatus != STATUS_SUCCESS)
 			break;
 
+#if NDIS_SUPPORT_NDIS630
+		// If it's a SR-IOV virtual function driver, we're bound at the iovvf layer, so don't go mucking with packet filters!
+		if (AttachParameters->Header.Revision >= NDIS_FILTER_ATTACH_PARAMETERS_REVISION_4
+			&& AttachParameters->SriovCapabilities
+			&& (AttachParameters->SriovCapabilities->SriovCapabilities & NDIS_SRIOV_CAPS_VF_MINIPORT) > 0
+			) {
+			params.Fragile = 1;
+		}
+#endif
+
 		// Disable this code for now, because it invalidates most adapters to be bound, reason needs to be clarified.
 // 		if (AttachParameters->LowerIfIndex != AttachParameters->BaseMiniportIfIndex)
 // 		{
