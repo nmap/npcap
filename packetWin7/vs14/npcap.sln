@@ -53,6 +53,9 @@ Global
 		OEM RO Release Win8 driver|ARM64 = OEM RO Release Win8 driver|ARM64
 		OEM RO Release Win8 driver|x64 = OEM RO Release Win8 driver|x64
 		OEM RO Release Win8 driver|x86 = OEM RO Release Win8 driver|x86
+		OEM RO Release Win7 driver|ARM64 = OEM RO Release Win7 driver|ARM64
+		OEM RO Release Win7 driver|x64 = OEM RO Release Win7 driver|x64
+		OEM RO Release Win7 driver|x86 = OEM RO Release Win7 driver|x86
 		OEM RO Release|ARM64 = OEM RO Release|ARM64
 		OEM RO Release|x64 = OEM RO Release|x64
 		OEM RO Release|x86 = OEM RO Release|x86
