@@ -810,8 +810,10 @@ NPF_DoTap(
 			}
 		}
 
-		BOOLEAN accepted = NPF_TapExForEachOpen(pCapData->pOpen, pCapData, AtDispatchLevel);
-		NPF_StopUsingOpenInstance(pCapData->pOpen, OpenDetached, AtDispatchLevel);
+		// Have to cache this value; it may be overwritten by NPF_TapExForEachOpen.
+		POPEN_INSTANCE pOpen = pCapData->pOpen;
+		BOOLEAN accepted = NPF_TapExForEachOpen(pOpen, pCapData, AtDispatchLevel);
+		NPF_StopUsingOpenInstance(pOpen, OpenDetached, AtDispatchLevel);
 		if (!accepted)
 		{
 			// Didn't accept it. Clean up!
