@@ -1,3 +1,30 @@
+## Npcap 1.80 [2024-09-16]
+
+* Due to Microsoft's deprecation of software publisher certificates with kernel-mode signing
+  capability, installations of Npcap on Windows 7, 8, and 8.1 will use the Npcap 1.79 driver by
+  default. The Npcap 1.80 driver can be chosen in the GUI and via the `/latest_driver=yes`
+  command-line option if driver signing is disabled in Windows. See [#751](http://issues.npcap.org/751).
+
+* Addressed faults found with Application Verifier: `WSACleanup()` was not being called in some
+  cases, and in other cases was called from the `DllMain()` function of `wpcap.dll`, which Microsoft
+  warns may cause deadlocks. Fixes [#742](http://issues.npcap.org/742).
+
+* On ARM64, Npcap now installs ARM64X pure-forwarder DLLs so that Npcap can be used by x86_64
+  processes running under emulation as well as x86 and ARM64 processes. Programmers do not need to
+  make any special changes to take advantage of this feature. Fixes [#585](http://issues.npcap.org/585).
+
+* Npcap now supports packet capture on SR-IOV virtual function adapters directly. Some
+  manufacturers, such as Intel, were already supported because they use a separate miniport driver
+  on top of the virtual function driver. Others that use a virtual function only, such as Broadcom,
+  are now supported. Fixes [#34](http://issues.npcap.org/34).
+
+* Fixed a BSoD crash due to a race condition between `NPF_DetachAdapter` and
+  `NPF_Cleanup` when closing a capture handle. Fixes [#746](http://issues.npcap.org/746).
+
+* Upgraded build system to Visual Studio 2022. This version prevents building drivers for earlier
+  Windows versions, so the npcap.sys driver for Windows 7 through 8.1 is still built on Visual
+  Studio 2019. See [#629](http://issues.npcap.org/629).
+
 ## Npcap 1.79 [2024-01-19]
 
 * Fixed a condition where disabling and re-enabling a network adapter while a
@@ -536,7 +563,7 @@
   prior to removing the existing installation. This resolves issues with the
   uninstallation process such as were common in Npcap 0.9991 through 0.9994.
 
-* Upgraded build system to VisualStudio 2019 and WDK 10.0.18362.0
+* Upgraded build system to Visual Studio 2019 and WDK 10.0.18362.0
 
 ## Npcap 0.9995 [2020-07-10]
 
