@@ -14,7 +14,7 @@ exit /b
 :BUILD_TEST
 set TOOLSET=%1
 if "%1" == "ARM64" set TOOLSET=amd64_arm64
-for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version 16 -property installationPath`) do call "%%a\VC\Auxiliary\Build\vcvarsall.bat" %TOOLSET%
+for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version 17 -property installationPath`) do call "%%a\VC\Auxiliary\Build\vcvarsall.bat" %TOOLSET%
 if %ERRORLEVEL% NEQ 0 goto :error
 
 msbuild /p:ForceImportBeforeCppTargets="%CD%\test\static.props" ".\Examples-pcap\MakeAll.sln" /m /t:%VERB% /p:Configuration=%MODE% /p:Platform="%1" || goto :error

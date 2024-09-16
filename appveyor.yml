@@ -24,7 +24,7 @@ skip_tags: true
 #    environment configuration    #
 #---------------------------------#
 
-image: Visual Studio 2019
+image: Visual Studio 2022
 
 # clone directory
 clone_folder: C:\Npcap
