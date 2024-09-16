@@ -1,14 +1,5 @@
 ## Npcap 1.80 [2024-09-16]
 
-* Due to Microsoft's deprecation of software publisher certificates with kernel-mode signing
-  capability, installations of Npcap on Windows 7, 8, and 8.1 will use the Npcap 1.79 driver by
-  default. The Npcap 1.80 driver can be chosen in the GUI and via the `/latest_driver=yes`
-  command-line option if driver signing is disabled in Windows. See [#751](http://issues.npcap.org/751).
-
-* Addressed faults found with Application Verifier: `WSACleanup()` was not being called in some
-  cases, and in other cases was called from the `DllMain()` function of `wpcap.dll`, which Microsoft
-  warns may cause deadlocks. Fixes [#742](http://issues.npcap.org/742).
-
 * On ARM64, Npcap now installs ARM64X pure-forwarder DLLs so that Npcap can be used by x86_64
   processes running under emulation as well as x86 and ARM64 processes. Programmers do not need to
   make any special changes to take advantage of this feature. Fixes [#585](http://issues.npcap.org/585).
@@ -17,6 +8,15 @@
   manufacturers, such as Intel, were already supported because they use a separate miniport driver
   on top of the virtual function driver. Others that use a virtual function only, such as Broadcom,
   are now supported. Fixes [#34](http://issues.npcap.org/34).
+
+* Due to Microsoft's deprecation of software publisher certificates with kernel-mode signing
+  capability, installations of Npcap on Windows 7, 8, and 8.1 will use the Npcap 1.79 driver by
+  default. The Npcap 1.80 driver can be chosen in the GUI and via the `/latest_driver=yes`
+  command-line option if driver signing is disabled in Windows. See [#751](http://issues.npcap.org/751).
+
+* Addressed faults found with Application Verifier: `WSACleanup()` was not being called in some
+  cases, and in other cases was called from the `DllMain()` function of `wpcap.dll`, which Microsoft
+  warns may cause deadlocks. Fixes [#742](http://issues.npcap.org/742).
 
 * Fixed a BSoD crash due to a race condition between `NPF_DetachAdapter` and
   `NPF_Cleanup` when closing a capture handle. Fixes [#746](http://issues.npcap.org/746).
