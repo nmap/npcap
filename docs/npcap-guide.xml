@@ -32,6 +32,29 @@
       <option>/S</option> parameter, available only with <ulink url="https://npcap.com/oem/">Npcap OEM</ulink>).
     </para>
 
+    <sect3 id="npcap-installation-exit">
+      <title>Installer exit codes</title>
+			<para>The Npcap installer provides information about its execution via the process exit code. The exit
+				codes defined are as follows:</para>
+			<itemizedlist>
+				<listitem><para><literal>0</literal>: Normal execution, no error.</para></listitem>
+				<listitem><para><literal>1</literal>: Installation aborted by user (cancel button).</para></listitem>
+				<listitem><para><literal>2</literal>: Installation aborted by script.</para></listitem>
+				<listitem><para><literal>350</literal> (<literal>ERROR_FAIL_NOACTION_REBOOT</literal>): Installation failed; reboot and try again.</para></listitem>
+				<listitem><para><literal>3010</literal> (<literal>ERROR_SUCCESS_REBOOT_REQUIRED</literal>): Installation succeeded; reboot required before Npcap is ready to use.</para></listitem>
+			</itemizedList>
+
+      <para>It is important to note that the installer is a backgrounded app (even in silent mode) and so to get
+        the correct process exit code, you need to launch and wait for it. Two ways to do this are using 
+        <command>start /wait</command> in <literal>cmd.exe</literal> or <command>Start-Process -Wait</command>
+				in PowerShell.</para>
+
+        <para>In the case of return code 2, and in general, it is best to verify a working Npcap installation
+          instead of relying on the installer exit code. This could include checking for the
+					<literal>npcap</literal> driver service or verifying the Npcap DLLs can be loaded and calling
+					<function>pcap_version</function>.</para>
+    </sect3>
+
     <sect3 id="npcap-installation-options">
       <title>Installer options</title>
       <para>
@@ -135,6 +158,20 @@
               <para>
             </para></listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term><option>/latest_driver</option></term>
+            <listitem><para>
+		<emphasis>Install the latest Npcap driver on pre-Windows-10 systems</emphasis>.
+		Depending on system configuration, many older Windows systems have been accepting our driver
+                signatures through Npcap 1.79 because our certificate still chained back to the Microsoft
+                cross-certificates. Since that certificate expired in June 2024, most of these Windows 7
+                through 8.1 systems will not accept Npcap drivers later than 1.79. These last compatible
+		drivers are installed by default, but users can override this using the
+		<option>/latest_driver=yes</option> option.
+              <para>
+            </para></listitem>
+          </varlistentry>
         </variablelist>
       </sect4>
 
@@ -149,7 +186,7 @@
             <term><option>/S</option> (Silent install, Npcap OEM only)</term>
             <listitem><para>
                 Installs Npcap without showing any graphical windows or
-                prompts. This option is case-sensitive. Silent install is available only for Npcap OEM.
+                prompts. Silent install is available only for Npcap OEM.
             </para></listitem>
           </varlistentry>
 
