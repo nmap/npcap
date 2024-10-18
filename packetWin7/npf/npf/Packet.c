@@ -112,7 +112,7 @@
 #include "..\..\..\version.h"
 #include "..\..\..\Common\WpcapNames.h"
 
-#include <windef.h>
+#include <minwindef.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma NDIS_INIT_FUNCTION(DriverEntry)
@@ -156,6 +156,7 @@ NTSTATUS NPF_Deny(
 VOID
 NPF_registerLWF(
 	_Out_ PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars,
+	_In_ UINT NdisVersion,
 	_In_ BOOLEAN bWiFiOrNot
 	);
 
@@ -256,6 +257,17 @@ DriverEntry(
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
+	g_pDriverExtension->NdisVersion = NdisGetVersion();
+	if (!NT_VERIFY(g_pDriverExtension->NdisVersion >= MAKELONG(
+					NDIS_FILTER_MINIMUM_MAJOR_VERSION, NDIS_FILTER_MINIMUM_MINOR_VERSION))) {
+		ERROR_DBG("Incompatible NDIS version (too low).\n");
+		TRACE_EXIT();
+		return STATUS_NDIS_BAD_VERSION;
+	}
+	if (g_pDriverExtension->NdisVersion > MAKELONG(NDIS_FILTER_MAJOR_VERSION, NDIS_FILTER_MINOR_VERSION)) {
+		g_pDriverExtension->NdisVersion = MAKELONG(NDIS_FILTER_MAJOR_VERSION, NDIS_FILTER_MINOR_VERSION);
+	}
+
 	RtlInitUnicodeString(&parametersPath, NULL);
 	parametersPath.MaximumLength=RegistryPath->Length+sizeof(L"\\Parameters");
 	parametersPath.Buffer=NPF_AllocateZeroPaged(parametersPath.MaximumLength, NPF_UNICODE_BUFFER_TAG);
@@ -325,9 +337,9 @@ DriverEntry(
 	//
 	// Register as a service with NDIS
 	//
-	NPF_registerLWF(&FChars, FALSE);
+	NPF_registerLWF(&FChars, g_pDriverExtension->NdisVersion, FALSE);
 	if (g_pDriverExtension->bDot11SupportMode)
-		NPF_registerLWF(&FChars_WiFi, TRUE);
+		NPF_registerLWF(&FChars_WiFi, g_pDriverExtension->NdisVersion, TRUE);
 
 	DriverObject->DriverUnload = NPF_Unload;
 
@@ -569,6 +581,7 @@ _Use_decl_annotations_
 VOID
 NPF_registerLWF(
 	PNDIS_FILTER_DRIVER_CHARACTERISTICS pFChars,
+	UINT NdisVersion,
 	BOOLEAN bWiFiOrNot
 	)
 {
@@ -581,11 +594,33 @@ NPF_registerLWF(
 
 	NdisZeroMemory(pFChars, sizeof(NDIS_FILTER_DRIVER_CHARACTERISTICS));
 	pFChars->Header.Type = NDIS_OBJECT_TYPE_FILTER_DRIVER_CHARACTERISTICS;
-	pFChars->Header.Revision = NPCAP_REVISION_NDIS_FILTER_DRIVER_CHARACTERISTICS;
-	pFChars->Header.Size = NPCAP_SIZEOF_NDIS_FILTER_DRIVER_CHARACTERISTICS;
 
-	pFChars->MajorNdisVersion = NDIS_FILTER_MAJOR_VERSION;
-	pFChars->MinorNdisVersion = NDIS_FILTER_MINOR_VERSION;
+#if NDIS_SUPPORT_NDIS61
+	pFChars->DirectOidRequestHandler = NULL;
+	pFChars->DirectOidRequestCompleteHandler = NULL;
+	pFChars->CancelDirectOidRequestHandler = NULL;
+#if NDIS_SUPPORT_NDIS680
+	pFChars->SynchronousOidRequestHandler = NULL;
+	pFChars->SynchronousOidRequestCompleteHandler = NULL;
+	if (NdisVersion >= NDIS_RUNTIME_VERSION_680) {
+		pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_3;
+		pFChars->Header.Size = NDIS_SIZEOF_FILTER_DRIVER_CHARACTERISTICS_REVISION_3;
+	} else
+#endif
+	if (NT_VERIFY(NdisVersion >= NDIS_RUNTIME_VERSION_61)) {
+		pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_2;
+		pFChars->Header.Size = NDIS_SIZEOF_FILTER_DRIVER_CHARACTERISTICS_REVISION_2;
+	} else
+#else
+# error NDIS 6.20 or later required
+#endif
+	{
+		pFChars->Header.Revision = NDIS_FILTER_CHARACTERISTICS_REVISION_1;
+		pFChars->Header.Size = NDIS_SIZEOF_FILTER_DRIVER_CHARACTERISTICS_REVISION_1;
+	}
+
+	pFChars->MajorNdisVersion = (UCHAR)((NdisVersion >> 16) & 0xff);
+	pFChars->MinorNdisVersion = (UCHAR)(NdisVersion & 0xff);
 	// WINPCAP_MAJOR is 5 for Npcap
 	pFChars->MajorDriverVersion = WINPCAP_MINOR;
 	pFChars->MinorDriverVersion = WINPCAP_REV;
@@ -624,16 +659,7 @@ NPF_registerLWF(
 	pFChars->StatusHandler = NPF_Status;
 	pFChars->CancelSendNetBufferListsHandler = NPF_CancelSendNetBufferLists;
 
-#if NDIS_SUPPORT_NDIS61
-	pFChars->DirectOidRequestHandler = NULL;
-	pFChars->DirectOidRequestCompleteHandler = NULL;
-	pFChars->CancelDirectOidRequestHandler = NULL;
-#endif
 
-#if NDIS_SUPPORT_NDIS680
-	pFChars->SynchronousOidRequestHandler = NULL;
-	pFChars->SynchronousOidRequestCompleteHandler = NULL;
-#endif
 }
 
 //-------------------------------------------------------------------
