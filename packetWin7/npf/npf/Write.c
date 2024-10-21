@@ -434,7 +434,6 @@ NPF_Write(
 			else {
 				TmpMdl = Irp->MdlAddress;
 			}
-			IoMarkIrpPending(Irp);
 			IrpWasPended = TRUE;
 		}
 		else
@@ -564,6 +563,9 @@ NPF_Write_End:
 		{
 			NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 		}
+
+		// Definitely not going to pend this
+		IrpWasPended = FALSE;
 		Irp->IoStatus.Status = Status;
 		Irp->IoStatus.Information = numSentPackets > 0 ? buflen : 0;
 		IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -571,7 +573,13 @@ NPF_Write_End:
 
 	TRACE_EXIT();
 
-	return (IrpWasPended ? STATUS_PENDING : Status);
+	if (IrpWasPended) {
+		IoMarkIrpPending(Irp);
+		return STATUS_PENDING;
+	}
+	else {
+		return Status;
+	}
 }
 
 //-------------------------------------------------------------------
