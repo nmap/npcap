@@ -106,17 +106,9 @@
 #include <ndis.h>
 #include <limits.h>
 
-#ifndef UNUSED
-#define UNUSED(_x) (_x)
-#endif
-
 #include "win_bpf.h"
 
 #include "valid_insns.h"
-
-#define EXTRACT_SHORT(p)\
-		((((u_short)(((u_char*)p)[0])) << 8) |\
-		 (((u_short)(((u_char*)p)[1])) << 0))
 
 #define EXTRACT_LONG(p)\
 		((((u_int32)(((u_char*)p)[0])) << 24) |\
@@ -124,88 +116,49 @@
 		 (((u_int32)(((u_char*)p)[2])) << 8 ) |\
 		 (((u_int32)(((u_char*)p)[3])) << 0 ))
 
-#define MDLIDX(len, p, k, buf) \
-{ \
-	NdisQueryMdl(p, &buf, &len, NormalPagePriority); \
-	if (buf == NULL) \
-		return 0; \
-	while (k >= len) { \
-		k -= len; \
-		p = p->Next; \
-		if (p == NULL) \
-			return 0; \
-		NdisQueryMdl(p, &buf, &len, NormalPagePriority); \
-		if (buf == NULL) \
-			return 0; \
-	} \
-}
-
-u_int32 xword(PMDL p, u_int32 k, int *err)
+static u_int32 xnum(
+	_Inout_ PMDL p,
+	_In_ u_int32 k,
+	_In_range_(1,4) const u_int32 size,
+	_Out_ int *err)
 {
-	u_int32 len, len0;
-	u_char *CurBuf, *NextBuf;
-	PMDL p0;
+	u_char bytes[4] = {0,0,0,0};
+	u_int32 len=0, limit=0;
+	u_int32 i = 0;
+	const u_char * CurBuf=NULL;
 
 	*err = 1;
-	MDLIDX(len, p, k, CurBuf);
-	CurBuf += k;
-	if (len - k >= 4) {
-		*err = 0;
-		return EXTRACT_LONG(CurBuf);
+	if (!NT_VERIFY(size <= 4))
+		return 0;
+	i = 4 - size;
+
+	while (p && (len = MmGetMdlByteCount(p)) < k) {
+		k -= len;
+		p = p->Next;
 	}
-	p0 = p->Next;
-	if (p0 == NULL)
-		return 0;
-	NdisQueryMdl(p0, &NextBuf, &len0, NormalPagePriority);
-	if (NextBuf == NULL || (len - k) + len0 < 4)
-		return 0;
-	*err = 0;
-
-	switch (len - k) {
-	case 1:
-		return (CurBuf[0] << 24) | (NextBuf[0] << 16) | (NextBuf[1] << 8) | NextBuf[2];
-	case 2:
-		return (CurBuf[0] << 24) | (CurBuf[1] << 16) | (NextBuf[0] << 8) | NextBuf[1];
-	default:
-		return (CurBuf[0] << 24) | (CurBuf[1] << 16) | (CurBuf[2] << 8) | NextBuf[0];
+	while (i < size) {
+		if (p == NULL)
+			return 0;
+		if (CurBuf == NULL) {
+			NdisQueryMdl(p, &CurBuf, &len, NormalPagePriority);
+			if (CurBuf == NULL)
+				return 0;
+		}
+		for (; i < size && k < len; i++, k++) {
+			/* VS2022 analysis can't see that since size <= 4 and i < size, then i < 4 */
+			NT_ASSERT_ASSUME(i < 4);
+			bytes[i] = CurBuf[k];
+		}
+		k = 0;
+		p = p->Next;
+		CurBuf = NULL;
 	}
-}
-
-u_int32 xhalf(PMDL p, u_int32 k, int *err)
-{
-	u_int32 len, len0;
-	u_char *CurBuf, *NextBuf;
-	PMDL p0;
-
-	*err = 1;
-	MDLIDX(len, p, k, CurBuf);
-	CurBuf += k;
-	if (len - k >= 2) {
-		*err = 0;
-		return EXTRACT_SHORT(CurBuf);
-	}
-	p0 = p->Next;
-	if (p0 == NULL)
-		return 0;
-	NdisQueryMdl(p0, &NextBuf, &len0, NormalPagePriority);
-	if (NextBuf == NULL || len0 < 1)
-		return 0;
 	*err = 0;
-
-	return (CurBuf[0] << 8) | NextBuf[0];
+	return EXTRACT_LONG(bytes);
 }
-
-u_int32 xbyte(PMDL p, u_int32 k, int *err)
-{
-	u_int32 len;
-	u_char *CurBuf;
-
-	*err = 1;
-	MDLIDX(len, p, k, CurBuf);
-	*err = 0;
-
-	return CurBuf[k];
-}
+#define xword(p, k, err) xnum(p, k, 4, err)
+#define xhalf(p, k, err) xnum(p, k, 2, err)
+#define xbyte(p, k, err) xnum(p, k, 1, err)
 
 _Use_decl_annotations_
 u_int bpf_filter(const struct bpf_insn *pc, const PMDL p, u_int data_offset, u_int wirelen)
