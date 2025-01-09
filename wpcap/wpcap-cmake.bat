@@ -1,4 +1,4 @@
-for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version 16 -property installationPath`) do set CMAKE="%%a\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
+for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version 17 -property installationPath`) do set CMAKE="%%a\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
 set GENERATOR=Visual Studio 17 2022
 set NPCAP_SDK=..\..\npcap-sdk-1.14
 set AIRPCAP_SDK=..\..\Airpcap_Devpack
