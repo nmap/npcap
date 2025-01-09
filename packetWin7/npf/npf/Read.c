@@ -656,7 +656,8 @@ NPF_CopyFromNetBufferToNBCopy(
 _Must_inspect_result_
 _Success_(return != NULL)
 __drv_allocatesMem(mem)
-PNPF_CAP_DATA NPF_GetCapData(
+__declspec(restrict) PNPF_CAP_DATA
+NPF_GetCapData(
 	_Inout_ PLOOKASIDE_LIST_EX pPool,
 	_Inout_ PNPF_NB_COPIES pNBCopy,
 	_In_ PNPF_NBL_COPY pNBLCopy,

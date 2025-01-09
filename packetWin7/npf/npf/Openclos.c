@@ -163,7 +163,7 @@ NPF_GetFilterModuleByAdapterName(
 _Must_inspect_result_
 _Success_(return != NULL)
 __drv_allocatesMem(mem)
-POPEN_INSTANCE
+__declspec(restrict) POPEN_INSTANCE
 NPF_CreateOpenObject(
 	_In_ NDIS_HANDLE NdisHandle
 	);

@@ -1180,7 +1180,7 @@ NPF_GetLoopbackFilterModule();
   This function is used to create a filter module context object
 */
 _Ret_maybenull_
-PNPCAP_FILTER_MODULE
+__declspec(restrict) PNPCAP_FILTER_MODULE
 NPF_CreateFilterModule(
 	_In_ NDIS_HANDLE NdisFilterHandle,
 	_In_ PNDIS_STRING AdapterName

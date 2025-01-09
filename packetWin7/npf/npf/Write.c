@@ -117,10 +117,11 @@ extern PNPCAP_DRIVER_EXTENSION g_pDriverExtension;
   Alternative to NdisFSendNetBufferLists, use the same NBL parameter, but it calls Winsock Kernel to send packet instead
   of NDIS functions.
 */
+_At_(NetBufferList, __drv_aliasesMem)
 NTSTATUS
 NPF_LoopbackSendNetBufferLists(
 	_In_ POPEN_INSTANCE pOpen,
-	_In_ __drv_aliasesMem PNET_BUFFER_LIST NetBufferList
+	_In_ PNET_BUFFER_LIST NetBufferList
 	);
 
 #endif
@@ -137,7 +138,7 @@ NPF_AnalysisAssumeAllocated(_In_ PVOID *p)
 _Must_inspect_result_
 _Success_(return != NULL)
 __drv_allocatesMem(mem)
-PMDL
+__declspec(restrict) PMDL
 NPF_CloneBufferToMdl(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
 	_In_ PVOID pBuf,
