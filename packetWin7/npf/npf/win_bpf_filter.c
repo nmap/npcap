@@ -156,9 +156,9 @@ static u_int32 xnum(
 	*err = 0;
 	return EXTRACT_LONG(bytes);
 }
-#define xword(p, k, err) xnum(p, k, 4, err)
-#define xhalf(p, k, err) xnum(p, k, 2, err)
-#define xbyte(p, k, err) xnum(p, k, 1, err)
+#define xnum_W(p, k, err) xnum(p, k, 4, err)
+#define xnum_H(p, k, err) xnum(p, k, 2, err)
+#define xnum_B(p, k, err) xnum(p, k, 1, err)
 
 _Use_decl_annotations_
 u_int bpf_filter(const struct bpf_insn *pc, const PMDL p, u_int data_offset, u_int wirelen)
@@ -187,92 +187,59 @@ u_int bpf_filter(const struct bpf_insn *pc, const PMDL p, u_int data_offset, u_i
 		default:
 			return 0;
 
-		case BPF_RET|BPF_K:
-			return (u_int)pc->k;
+#define VAL_K (pc->k)
+#define VAL_A (A)
+#define VAL_X (X)
+#define CASE_RET(_Val) \
+		case BPF_RET|BPF_##_Val: \
+			return (u_int)VAL_##_Val;
 
-		case BPF_RET|BPF_A:
-			return (u_int)A;
+		CASE_RET(K);
+		CASE_RET(A);
 
-		case BPF_LD|BPF_W|BPF_ABS:
-			k = pc->k;
-			A = xword(p, k + data_offset, &merr);
-			if (merr != 0) {
-				return 0;
-			}
+#define ADDR_MODE_ABS (pc->k)
+#define ADDR_MODE_IND (X + pc->k)
+#define CASE_LD_XNUM(_Size, _Mode) \
+		case BPF_LD|BPF_##_Size|BPF_##_Mode: \
+			A = xnum_##_Size(p, ADDR_MODE_##_Mode + data_offset, &merr); \
+			if (merr != 0) { \
+				return 0; \
+			} \
 			continue;
 
-		case BPF_LD|BPF_H|BPF_ABS:
-			k = pc->k;
-			A = xhalf(p, k + data_offset, &merr);
-			if (merr != 0) {
-				return 0;
-			}
-			continue;
+		CASE_LD_XNUM(W, ABS);
+		CASE_LD_XNUM(H, ABS);
+		CASE_LD_XNUM(B, ABS);
 
-		case BPF_LD|BPF_B|BPF_ABS:
-			k = pc->k;
-			A = xbyte(p, k + data_offset, &merr);
-			if (merr != 0) {
-				return 0;
-			}
-			continue;
-
-		case BPF_LD|BPF_W|BPF_LEN:
-			A = wirelen;
-			continue;
-
-		case BPF_LDX|BPF_W|BPF_LEN:
-			X = wirelen;
-			continue;
-
-		case BPF_LD|BPF_W|BPF_IND:
-			k = X + pc->k;
-			A = xword(p, k + data_offset, &merr);
-			if (merr != 0) {
-				return 0;
-			}
-			continue;
-
-		case BPF_LD|BPF_H|BPF_IND:
-			k = X + pc->k;
-			A = xhalf(p, k + data_offset, &merr);
-			if (merr != 0) {
-				return 0;
-			}
-			continue;
-
-		case BPF_LD|BPF_B|BPF_IND:
-			k = X + pc->k;
-			A = xbyte(p, k + data_offset, &merr);
-			if (merr != 0) {
-				return 0;
-			}
-			continue;
+		CASE_LD_XNUM(W, IND);
+		CASE_LD_XNUM(H, IND);
+		CASE_LD_XNUM(B, IND);
 
 		case BPF_LDX|BPF_MSH|BPF_B:
 			k = pc->k;
-			X = xbyte(p, k + data_offset, &merr);
+			X = xnum_B(p, k + data_offset, &merr);
 			if (merr != 0) {
 				return 0;
 			}
 			X = (X & 0xf) << 2;
 			continue;
 
-		case BPF_LD|BPF_IMM:
-			A = pc->k;
+#define DST_LD A
+#define DST_LDX X
+#define VAL_MODE_IMM (pc->k)
+#define VAL_MODE_MEM (mem[pc->k])
+#define VAL_MODE_LEN (wirelen)
+#define CASE_LD_OP(_Ld, _Mode) \
+		case BPF_##_Ld|BPF_##_Mode: \
+			DST_##_Ld = VAL_MODE_##_Mode; \
 			continue;
 
-		case BPF_LDX|BPF_IMM:
-			X = pc->k;
-			continue;
-
-		case BPF_LD|BPF_MEM:
-			A = mem[pc->k];
-			continue;
-
-		case BPF_LDX|BPF_MEM:
-			X = mem[pc->k];
-			continue;
+		CASE_LD_OP(LD, IMM);
+		CASE_LD_OP(LDX, IMM);
+		CASE_LD_OP(LD, MEM);
+		CASE_LD_OP(LDX, MEM);
+		CASE_LD_OP(LD, LEN);
+		CASE_LD_OP(LDX, LEN);
 
 		case BPF_ST:
 			mem[pc->k] = A;
@@ -286,103 +253,57 @@ u_int bpf_filter(const struct bpf_insn *pc, const PMDL p, u_int data_offset, u_i
 			pc += pc->k;
 			continue;
 
-		case BPF_JMP|BPF_JGT|BPF_K:
-			pc += ((int)A > (int)pc->k) ? pc->jt : pc->jf;
+#define TEST_JGT(_Val) ((int)A > (int)(_Val))
+#define TEST_JGE(_Val) ((int)A >= (int)(_Val))
+#define TEST_JEQ(_Val) ((int)A == (int)(_Val))
+#define TEST_JSET(_Val) (A & (_Val))
+
+#define CASE_JMP(_Test, _Val) \
+		case BPF_JMP|BPF_##_Test|BPF_##_Val: \
+			pc += TEST_##_Test(VAL_##_Val) ? pc->jt : pc->jf; \
 			continue;
 
-		case BPF_JMP|BPF_JGE|BPF_K:
-			pc += ((int)A >= (int)pc->k) ? pc->jt : pc->jf;
+		CASE_JMP(JGT, K);
+		CASE_JMP(JGE, K);
+		CASE_JMP(JEQ, K);
+		CASE_JMP(JSET, K);
+
+		CASE_JMP(JGT, X);
+		CASE_JMP(JGE, X);
+		CASE_JMP(JEQ, X);
+		CASE_JMP(JSET, X);
+
+#define ALU_OP_ADD(_Val) A += _Val;
+#define ALU_OP_SUB(_Val) A -= _Val;
+#define ALU_OP_MUL(_Val) A *= _Val;
+#define ALU_OP_DIV(_Val) if ((_Val) == 0) return 0; A /= _Val;
+#define ALU_OP_AND(_Val) A &= _Val;
+#define ALU_OP_OR(_Val)  A |= _Val;
+#define ALU_OP_LSH(_Val) A <<= _Val;
+#define ALU_OP_RSH(_Val) A >>= _Val;
+
+#define CASE_ALU(_Op, _Val) \
+		case BPF_ALU|BPF_##_Op|BPF_##_Val: \
+			ALU_OP_##_Op(VAL_##_Val); \
 			continue;
 
-		case BPF_JMP|BPF_JEQ|BPF_K:
-			pc += ((int)A == (int)pc->k) ? pc->jt : pc->jf;
-			continue;
+		CASE_ALU(ADD, X);
+		CASE_ALU(SUB, X);
+		CASE_ALU(MUL, X);
+		CASE_ALU(DIV, X);
+		CASE_ALU(AND, X);
+		CASE_ALU(OR,  X);
+		CASE_ALU(LSH, X);
+		CASE_ALU(RSH, X);
 
-		case BPF_JMP|BPF_JSET|BPF_K:
-			pc += (A & pc->k) ? pc->jt : pc->jf;
-			continue;
-
-		case BPF_JMP|BPF_JGT|BPF_X:
-			pc += (A > X) ? pc->jt : pc->jf;
-			continue;
-
-		case BPF_JMP|BPF_JGE|BPF_X:
-			pc += (A >= X) ? pc->jt : pc->jf;
-			continue;
-
-		case BPF_JMP|BPF_JEQ|BPF_X:
-			pc += (A == X) ? pc->jt : pc->jf;
-			continue;
-
-		case BPF_JMP|BPF_JSET|BPF_X:
-			pc += (A & X) ? pc->jt : pc->jf;
-			continue;
-
-		case BPF_ALU|BPF_ADD|BPF_X:
-			A += X;
-			continue;
-
-		case BPF_ALU|BPF_SUB|BPF_X:
-			A -= X;
-			continue;
-
-		case BPF_ALU|BPF_MUL|BPF_X:
-			A *= X;
-			continue;
-
-		case BPF_ALU|BPF_DIV|BPF_X:
-			if (X == 0)
-				return 0;
-			A /= X;
-			continue;
-
-		case BPF_ALU|BPF_AND|BPF_X:
-			A &= X;
-			continue;
-
-		case BPF_ALU|BPF_OR|BPF_X:
-			A |= X;
-			continue;
-
-		case BPF_ALU|BPF_LSH|BPF_X:
-			A <<= X;
-			continue;
-
-		case BPF_ALU|BPF_RSH|BPF_X:
-			A >>= X;
-			continue;
-
-		case BPF_ALU|BPF_ADD|BPF_K:
-			A += pc->k;
-			continue;
-
-		case BPF_ALU|BPF_SUB|BPF_K:
-			A -= pc->k;
-			continue;
-
-		case BPF_ALU|BPF_MUL|BPF_K:
-			A *= pc->k;
-			continue;
-
-		case BPF_ALU|BPF_DIV|BPF_K:
-			A /= pc->k;
-			continue;
-
-		case BPF_ALU|BPF_AND|BPF_K:
-			A &= pc->k;
-			continue;
-
-		case BPF_ALU|BPF_OR|BPF_K:
-			A |= pc->k;
-			continue;
-
-		case BPF_ALU|BPF_LSH|BPF_K:
-			A <<= pc->k;
-			continue;
-
-		case BPF_ALU|BPF_RSH|BPF_K:
-			A >>= pc->k;
-			continue;
+		CASE_ALU(ADD, K);
+		CASE_ALU(SUB, K);
+		CASE_ALU(MUL, K);
+		CASE_ALU(DIV, K);
+		CASE_ALU(AND, K);
+		CASE_ALU(OR,  K);
+		CASE_ALU(LSH, K);
+		CASE_ALU(RSH, K);
 
 		case BPF_ALU|BPF_NEG:
 			(int)A = -((int)A);
