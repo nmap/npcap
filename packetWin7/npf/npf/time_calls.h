@@ -182,8 +182,8 @@ inline void TIME_SYNCHRONIZE(
 }	
 
 inline void GetTimevalFromPerfCount(
-		_Out_ struct timeval* dst,
-		_In_ struct timeval* start,
+		_Out_ struct timeval* __restrict dst,
+		_In_ struct timeval* __restrict start,
 		_In_ LARGE_INTEGER PTime)
 {
 	NT_ASSERT(TimeFreq.QuadPart != 0);
@@ -201,8 +201,8 @@ inline void GetTimevalFromPerfCount(
 }
 
 inline void GetTimeKQPC(
-		_Out_ struct timeval* dst,
-		_In_ struct timeval* start)
+		_Out_ struct timeval* __restrict dst,
+		_In_ struct timeval* __restrict start)
 {
 	LARGE_INTEGER PTime;
 
@@ -240,8 +240,8 @@ inline void GetTimeQST_precise(
 
 
 inline void GET_TIME(
-		_Out_ struct timeval* dst,
-		_In_ struct timeval* start,
+		_Out_ struct timeval* __restrict dst,
+		_In_ struct timeval* __restrict start,
 		_In_ ULONG TimestampMode)
 {
 	switch (TimestampMode)

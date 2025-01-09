@@ -121,7 +121,7 @@ _Success_(return == ulDesiredLen)
 ULONG
 NPF_CopyFromNBCopyToBuffer(
 		_In_ PNPF_NB_COPIES pNBCopy,
-		_Out_writes_(ulDesiredLen) PUCHAR pDstBuf,
+		_Out_writes_(ulDesiredLen) PUCHAR __restrict pDstBuf,
 		_In_ ULONG ulDesiredLen
 		)
 {
