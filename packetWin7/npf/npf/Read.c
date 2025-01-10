@@ -739,10 +739,7 @@ NPF_DoTap(
 				}
 
 				ULONG TotalPacketSize = pSrcNB->pNBCopy->ulPacketSize;
-				PMDL pSrcCurrMdl = NET_BUFFER_CURRENT_MDL(pSrcNB->pNetBuffer);
-				ULONG ulCurrMdlOffset = NET_BUFFER_CURRENT_MDL_OFFSET(pSrcNB->pNetBuffer);
-				UINT fres = bpf_filter(pBpf->bpf_program,
-						pSrcCurrMdl, ulCurrMdlOffset, TotalPacketSize);
+				UINT fres = bpf_filter(pBpf->bpf_program, pSrcNB->pNetBuffer);
 				if (fres == 0)
 				{
 					// Packet not accepted by the filter, ignore it.

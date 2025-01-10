@@ -420,16 +420,12 @@ extern "C"
 	/*!
 	  \brief The filtering pseudo-machine interpreter.
 	  \param pc The filter.
-	  \param p Pointer to a Memory Descriptor List (MDL) containing the packet on which the filter will be executed.
-	  \param data_offset The offset to the start of the used data space in the NET_BUFFER structure
-	  \param wirelen Original length of the packet.
+	  \param pNB Pointer to a NET_BUFFER containing the packet on which the filter will be executed.
 	  \return The portion of the packet to keep, in bytes. 0 means that the packet must be rejected, -1 means that
 	   the whole packet must be kept.
 	*/
 	u_int bpf_filter( _In_opt_ const struct bpf_insn* pc,
-			_In_ const PMDL p,
-			_In_ u_int data_offset,
-			_In_ u_int wirelen);
+			_In_ const PNET_BUFFER pNB);
 
 #ifdef __cplusplus
 }

@@ -161,8 +161,11 @@ static u_int32 xnum(
 #define xnum_B(p, k, err) xnum(p, k, 1, err)
 
 _Use_decl_annotations_
-u_int bpf_filter(const struct bpf_insn *pc, const PMDL p, u_int data_offset, u_int wirelen)
+u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB)
 {
+	PMDL p = NET_BUFFER_CURRENT_MDL(pNB);
+	ULONG data_offset = NET_BUFFER_CURRENT_MDL_OFFSET(pNB);
+	ULONG wirelen = NET_BUFFER_DATA_LENGTH(pNB);
 	register u_int32 A, X;
 	register bpf_u_int32 k;
 
