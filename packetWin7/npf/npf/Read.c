@@ -415,9 +415,6 @@ ULONG NPF_GetMetadata(
 		}
 		RtlZeroMemory(pNBLCopy, sizeof(NPF_NBL_COPY));
 		pNBLCopy->refcount = 1;
-		NT_ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
-		pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
-		pNBLCopyPrev = pNBLCopyPrev->Next;
 		pNBLCopy->SystemTime = SystemTime;
 		pNBLCopy->PerfCount = PerfCount;
 		PSINGLE_LIST_ENTRY pSrcNBPrev = &pNBLCopy->NBCopiesHead;
@@ -633,6 +630,17 @@ ULONG NPF_GetMetadata(
 		RadiotapDone:;
 #endif
 		}
+
+		// If no NBCopies were added, drop this NBLCopy also.
+		if (pNBLCopy->NBCopiesHead.Next == NULL) {
+			ExFreeToLookasideListEx(&g_pDriverExtension->NBLCopyPool, pNBLCopy);
+			continue;
+		}
+
+		// Otherwise, add it to the chain.
+		NT_ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
+		pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
+		pNBLCopyPrev = pNBLCopyPrev->Next;
 	}
 	return resdropped;
 }
@@ -708,11 +716,30 @@ NPF_DoTap(
 	/* If we got this far, there is at least 1 instance at OpenRunning,
 	 * so gather metadata before locking the list. */
 	ULONG resdropped = NPF_GetMetadata(NetBufferLists, &NBLCopiesHead, pFiltMod, SystemTime, PerfCount);
-	BOOLEAN firstpass = TRUE;
+	BOOLEAN firstpass = resdropped > 0;
 	/* Lock the filter programs */
 	// Read-only lock since list is not being modified.
 	NdisAcquireRWLockRead(pFiltMod->BpfProgramsLock, &lockState,
 			AtDispatchLevel ? NDIS_RWL_AT_DISPATCH_LEVEL : 0);
+
+	if (NBLCopiesHead.Next == NULL) {
+		// No packets, all resdropped!
+		// Have to deal with this here, since otherwise the next loop won't be entered.
+		for (CurrFilter = pFiltMod->BpfPrograms.Flink; CurrFilter != &pFiltMod->BpfPrograms; CurrFilter = CurrFilter->Flink)
+		{
+			PNPCAP_BPF_PROGRAM pBpf = CONTAINING_RECORD(CurrFilter, NPCAP_BPF_PROGRAM, BpfProgramsEntry);
+			POPEN_INSTANCE pOpen = CONTAINING_RECORD(pBpf, OPEN_INSTANCE, BpfProgram);
+			// If this instance originated the packet and doesn't want to see it, don't capture.
+			if (pOpen == pOpenOriginating && pOpen->SkipSentPackets)
+			{
+				continue;
+			}
+			// Account for packets lost due to inadequate resources earlier
+			NpfInterlockedExchangeAdd(&(LONG)pOpen->ResourceDropped, resdropped);
+		}
+		NdisReleaseRWLock(pFiltMod->BpfProgramsLock, &lockState);
+		return;
+	}
 
 	PNPF_CAP_DATA pCapPrev = pCaptures;
 	for (Curr = NBLCopiesHead.Next; Curr != NULL; Curr = Curr->Next)
