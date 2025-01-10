@@ -459,6 +459,15 @@ ULONG NPF_GetMetadata(
 			pSrcNB->pNBCopy->pNBLCopy = pNBLCopy;
 			pSrcNB->pNBCopy->ulPacketSize = NET_BUFFER_DATA_LENGTH(pNetBuf);
 			pSrcNB->pNBCopy->refcount = 1;
+		}
+
+		// If no NBCopies were added, drop this NBLCopy also.
+		if (pNBLCopy->NBCopiesHead.Next == NULL) {
+			ExFreeToLookasideListEx(&g_pDriverExtension->NBLCopyPool, pNBLCopy);
+			continue;
+		}
+
+		// Otherwise, gather the appropriate metadata
 #ifdef HAVE_DOT11_SUPPORT
 			// Handle native 802.11 media specific OOB data here.
 			// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
@@ -629,15 +638,7 @@ ULONG NPF_GetMetadata(
 			}
 		RadiotapDone:;
 #endif
-		}
 
-		// If no NBCopies were added, drop this NBLCopy also.
-		if (pNBLCopy->NBCopiesHead.Next == NULL) {
-			ExFreeToLookasideListEx(&g_pDriverExtension->NBLCopyPool, pNBLCopy);
-			continue;
-		}
-
-		// Otherwise, add it to the chain.
 		NT_ASSERT(pNBLCopy->NBLCopyEntry.Next == NULL);
 		pNBLCopyPrev->Next = &pNBLCopy->NBLCopyEntry;
 		pNBLCopyPrev = pNBLCopyPrev->Next;
