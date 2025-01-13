@@ -106,6 +106,7 @@
 #include <ndis.h>
 #include <limits.h>
 
+#include "Packet.h"
 #include "win_bpf.h"
 
 #include "valid_insns.h"
@@ -160,10 +161,35 @@ static u_int32 xnum(
 #define xnum_H(p, k, err) xnum(p, k, 2, err)
 #define xnum_B(p, k, err) xnum(p, k, 1, err)
 
+static int is_extension_offset(_In_ u_int32 k) {
+	switch (k) {
+		case SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT:
+		case SKF_AD_OFF + SKF_AD_VLAN_TAG:
+			return 1;
+	}
+	return 0;
+}
+
+static int do_extension(_In_ u_int32 k, _In_ const PNPF_NBL_COPY pNBLCopy)
+{
+	switch (k) {
+		case SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT:
+			return (pNBLCopy->qInfo.Value == 0 ? 0 : 1);
+			break;
+		case SKF_AD_OFF + SKF_AD_VLAN_TAG:
+			return ((pNBLCopy->qInfo.TagHeader.UserPriority & 0x7) << 13 |
+				(pNBLCopy->qInfo.TagHeader.CanonicalFormatId & 0x1) << 12 |
+				(pNBLCopy->qInfo.TagHeader.VlanId & 0xfff));
+			break;
+	}
+	return 0;
+}
+
 _Use_decl_annotations_
-u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB)
+u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB, const PVOID pContext)
 {
 	PMDL p = NET_BUFFER_CURRENT_MDL(pNB);
+	PNPF_NBL_COPY pNBLCopy = (PNPF_NBL_COPY)pContext;
 	ULONG data_offset = NET_BUFFER_CURRENT_MDL_OFFSET(pNB);
 	ULONG wirelen = NET_BUFFER_DATA_LENGTH(pNB);
 	register u_int32 A, X;
@@ -200,10 +226,14 @@ u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB)
 		CASE_RET(K);
 		CASE_RET(A);
 
+#define EXTRA_STMT_ABS if (is_extension_offset(pc->k)) \
+	{ A = do_extension(pc->k, pNBLCopy); continue; }
+#define EXTRA_STMT_IND
 #define ADDR_MODE_ABS (pc->k)
 #define ADDR_MODE_IND (X + pc->k)
 #define CASE_LD_XNUM(_Size, _Mode) \
 		case BPF_LD|BPF_##_Size|BPF_##_Mode: \
+			EXTRA_STMT_##_Mode; \
 			A = xnum_##_Size(p, ADDR_MODE_##_Mode + data_offset, &merr); \
 			if (merr != 0) { \
 				return 0; \
@@ -365,17 +395,24 @@ int bpf_validate(struct bpf_insn * f, int len)
 		case BPF_LDX:
 			switch (BPF_MODE(p->code))
 			{
-			case BPF_IMM:
-				break;
 			case BPF_ABS:
-			case BPF_IND:
 			case BPF_MSH:
+				// Check for valid special offsets
+				if ((int)p->k < 0 && !is_extension_offset(p->k)) {
+					return 0;
+				}
+				// Anything else is fine.
+				break;
+			case BPF_IND:
+			case BPF_IMM:
+				// Anything goes
 				break;
 			case BPF_MEM:
 				if (p->k >= BPF_MEMWORDS)
 					return 0;
 				break;
 			case BPF_LEN:
+				// p->k is ignored
 				break;
 			default:
 				return 0;

@@ -467,6 +467,7 @@ typedef struct _NPF_NBL_COPY
 	SINGLE_LIST_ENTRY NBLCopyEntry;
 	LARGE_INTEGER PerfCount;
 	LARGE_INTEGER SystemTime;
+	NDIS_NET_BUFFER_LIST_8021Q_INFO qInfo;
 #ifdef HAVE_DOT11_SUPPORT
 	PUCHAR Dot11RadiotapHeader;
 #endif

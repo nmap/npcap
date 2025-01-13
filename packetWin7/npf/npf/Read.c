@@ -464,6 +464,7 @@ ULONG NPF_GetMetadata(
 		}
 
 		// Otherwise, gather the appropriate metadata
+		pNBLCopy->qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
 #ifdef HAVE_DOT11_SUPPORT
 			// Handle native 802.11 media specific OOB data here.
 			// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
@@ -763,7 +764,7 @@ NPF_DoTap(
 				}
 
 				ULONG TotalPacketSize = pSrcNB->pNBCopy->ulPacketSize;
-				UINT fres = bpf_filter(pBpf->bpf_program, pSrcNB->pNetBuffer);
+				UINT fres = bpf_filter(pBpf->bpf_program, pSrcNB->pNetBuffer, pNBLCopy);
 				if (fres == 0)
 				{
 					// Packet not accepted by the filter, ignore it.

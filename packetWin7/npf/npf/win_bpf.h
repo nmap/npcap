@@ -397,6 +397,17 @@ struct dump_bpf_hdr
  */
 #define BPF_MEMWORDS 16
 
+/* Special offsets to mimic Linux kernel's BPF extensions
+ */
+/* The base offset for these extensions */
+#define SKF_AD_OFF (-0x1000)
+/* Boolean: is there a VLAN tag present? Currently, we cannot distinguish VLAN
+ * 0 and priority class 0 (both defaults) from the case of no VLAN tag present,
+ * so this will return false in that case. */
+#define SKF_AD_VLAN_TAG_PRESENT 48
+/* Halfword (2 bytes) representing the 802.1q header. */
+#define SKF_AD_VLAN_TAG 44
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -424,8 +435,7 @@ extern "C"
 	  \return The portion of the packet to keep, in bytes. 0 means that the packet must be rejected, -1 means that
 	   the whole packet must be kept.
 	*/
-	u_int bpf_filter( _In_opt_ const struct bpf_insn* pc,
-			_In_ const PNET_BUFFER pNB);
+	u_int bpf_filter(_In_ const struct bpf_insn* pc, _In_ const PNET_BUFFER pNB, _In_ const PVOID pContext);
 
 #ifdef __cplusplus
 }
