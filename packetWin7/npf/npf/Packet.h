@@ -519,11 +519,13 @@ NPF_CAP_DATA, *PNPF_CAP_DATA;
 #define NPF_CAP_SIZE(_CapLen) (sizeof(struct bpf_hdr) + _CapLen)
 
 #ifdef HAVE_DOT11_SUPPORT
-#define NPF_CAP_OBJ_SIZE(_P, _R) NPF_CAP_SIZE( \
+#define NPF_CAP_RADIOTAP(_P) ((_P)->pNBCopy->pNBLCopy->Dot11RadiotapHeader)
+#define NPF_CAP_RADIOTAP_SIZE(_R) ((_R) != NULL ? ((PIEEE80211_RADIOTAP_HEADER)(_R))->it_len : 0)
+#define NPF_CAP_OBJ_SIZE(_P) NPF_CAP_SIZE( \
 		(_P)->ulCaplen \
-		+ (_R != NULL ? _R->it_len : 0))
+		+ NPF_CAP_RADIOTAP_SIZE(NPF_CAP_RADIOTAP(_P)))
 #else
-#define NPF_CAP_OBJ_SIZE(_P, _N) NPF_CAP_SIZE((_P)->ulCaplen)
+#define NPF_CAP_OBJ_SIZE(_P) NPF_CAP_SIZE((_P)->ulCaplen)
 #endif
 
 _When_(AcquireLock == FALSE, _Requires_lock_held_(Open->BufferLock))

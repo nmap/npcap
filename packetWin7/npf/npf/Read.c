@@ -269,10 +269,8 @@ NPF_Read(
 
 #ifdef HAVE_DOT11_SUPPORT
 		PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pCapData->pNBCopy->pNBLCopy->Dot11RadiotapHeader;
-#else
-		PVOID pRadiotapHeader = NULL;
 #endif
-		ULONG ulCapSize = NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader);
+		ULONG ulCapSize = NPF_CAP_OBJ_SIZE(pCapData);
 		if (ulCapSize > available - copied)
 		{
 			//if the packet does not fit into the user buffer, we've ended copying packets
@@ -394,8 +392,6 @@ ULONG NPF_GetMetadata(
 	{
 #ifdef HAVE_DOT11_SUPPORT
 		PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = NULL;
-#else
-		PVOID pRadiotapHeader = NULL;
 #endif
 
 		NT_ASSERT(pNBLCopyPrev);
@@ -1061,7 +1057,6 @@ NPF_TapExForEachOpen(
 	PNPF_NB_COPIES pNBCopy = pCapData->pNBCopy;
 	PNPF_NBL_COPY pNBLCopy = pNBCopy->pNBLCopy;
 	ULONG TotalPacketSize = pNBCopy->ulPacketSize;
-	ULONG fres = pCapData->ulCaplen;
 	BOOLEAN bEnqueued = FALSE;
 
 	NT_ASSERT((Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION && pNBLCopy->PerfCount.QuadPart > 0)
@@ -1108,15 +1103,9 @@ NPF_TapExForEachOpen(
 
 #ifdef HAVE_DOT11_SUPPORT
 	PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pNBLCopy->Dot11RadiotapHeader;
-#else
-	PVOID pRadiotapHeader = NULL;
 #endif
 
-	LONG lCapSize = NPF_CAP_SIZE(fres)
-#ifdef HAVE_DOT11_SUPPORT
-		+ (pRadiotapHeader != NULL ? pRadiotapHeader->it_len : 0)
-#endif
-		;
+	LONG lCapSize = NPF_CAP_OBJ_SIZE(pCapData);
 	NT_ASSERT(lCapSize > 0);
 	if (lCapSize < 0)
 	{
@@ -1133,7 +1122,7 @@ NPF_TapExForEachOpen(
 		if (0 > NpfInterlockedExchangeAdd(&Open->Free, -lCapSize))
 		{
 			NpfInterlockedIncrement(&(LONG)Open->Dropped);
-			INFO_DBG("Dropped++, fres = %lu, Open->Free = %d\n", fres, Open->Free);
+			INFO_DBG("Dropped++, lCapSize = %ld, Open->Free = %d\n", lCapSize, Open->Free);
 			// May as well tell the application, even if MinToCopy is not met,
 			// to avoid dropping further packets
 			if (Open->ReadEvent != NULL)
@@ -1149,10 +1138,10 @@ NPF_TapExForEachOpen(
 		 * bugs in NPF_CopyFromNetBufferToNBCopy. Handle the
 		 * consequences here, but bail if we're debugging
 		 * because this is a big deal. */
-		if (!NT_VERIFY(NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader) == lCapSize))
+		if (!NT_VERIFY(NPF_CAP_OBJ_SIZE(pCapData) == lCapSize))
 		{
 			// Add the difference back, otherwise we never recover it.
-			NpfInterlockedExchangeAdd(&Open->Free, lCapSize - NPF_CAP_OBJ_SIZE(pCapData, pRadiotapHeader));
+			NpfInterlockedExchangeAdd(&Open->Free, lCapSize - NPF_CAP_OBJ_SIZE(pCapData));
 		}
 		ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
 		// We successfully put this into the queue
