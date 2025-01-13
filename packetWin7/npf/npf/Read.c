@@ -1082,14 +1082,14 @@ NPF_TapExForEachOpen(
 
 		FILTER_RELEASE_LOCK(&Open->CountersLock, AtDispatchLevel);
 
-		goto TEFEO_next_NB;
+		return FALSE;
 	}
 
 	// Special case: zero-length buffer or negative free space can be checked without locking buffer
 	if (Open->Size <= 0)
 	{
 		NpfInterlockedIncrement(&(LONG)Open->Dropped);
-		goto TEFEO_next_NB;
+		return FALSE;
 	}
 
 	// Special case: negative free space can be checked without locking buffer
@@ -1099,12 +1099,8 @@ NPF_TapExForEachOpen(
 		// Wake the application
 		if (Open->ReadEvent != NULL)
 			KeSetEvent(Open->ReadEvent, 0, FALSE);
-		goto TEFEO_next_NB;
+		return FALSE;
 	}
-
-#ifdef HAVE_DOT11_SUPPORT
-	PIEEE80211_RADIOTAP_HEADER pRadiotapHeader = (PIEEE80211_RADIOTAP_HEADER) pNBLCopy->Dot11RadiotapHeader;
-#endif
 
 	LONG lCapSize = NPF_CAP_OBJ_SIZE(pCapData);
 	NT_ASSERT(lCapSize > 0);
@@ -1112,7 +1108,7 @@ NPF_TapExForEachOpen(
 	{
 		// Overflow; this is an impossibly large packet
 		NpfInterlockedIncrement(&(LONG)Open->Dropped);
-		goto TEFEO_next_NB;
+		return FALSE;
 	}
 
 	// Lock "buffer" whenever checking Size/Free
@@ -1163,9 +1159,6 @@ NPF_TapExForEachOpen(
 		NpfInterlockedExchangeAdd(&Open->Free, lCapSize);
 	}
 	NdisReleaseRWLock(Open->BufferLock, &lockState);
-
-TEFEO_next_NB:
-
 
 	return bEnqueued;
 	//TRACE_EXIT();
