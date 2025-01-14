@@ -670,6 +670,60 @@ NPF_GetCapData(
 	_In_range_(1, 0xffffffff) UINT uCapLen
 );
 
+/* 802.1q header is 4 bytes inserted after the Ethernet destination (6 bytes)
+ * and source (6 bytes) */
+#define SIZEOF_VLAN_HEADER 4
+#define SIZEOF_ETH_HEADER 12
+VOID
+NPF_HandleVlanHeader(
+		_Inout_ PNPF_CAP_DATA pCapData,
+		_In_ const NPCAP_FILTER_MODULE *pFiltMod
+		)
+{
+	PNPF_NB_COPIES pNBCopy = pCapData->pNBCopy;
+	PNPF_SRC_NB pSrcNB = pCapData->pSrcNB;
+	const NDIS_NET_BUFFER_LIST_8021Q_INFO *pQinfo = &pNBCopy->pNBLCopy->qInfo;
+	// If the adapter doesn't use Ethernet headers or there's no VLAN metadata,
+	// we don't need to do anything.
+	if (!pFiltMod->EtherHeader || pQinfo->Value == 0)
+	{
+		return;
+	}
+	// The packet has VLAN metadata, so it needs to have a 802.1q header
+	// Check if we know it's already there.
+	if (!pSrcNB->bVlanHeaderInPacket) {
+		// If it's not already there, add one.
+		if (RtlCompareMemory(pNBCopy->Buffer + SIZEOF_ETH_HEADER, "\x81\x00", 2) < 2) {
+			const PUCHAR pRemainder = pNBCopy->Buffer + SIZEOF_ETH_HEADER;
+
+			// Shift the packet data down 4 bytes
+			RtlMoveMemory(pRemainder + SIZEOF_VLAN_HEADER,
+					pRemainder,
+					pNBCopy->ulSize - SIZEOF_ETH_HEADER);
+			// Add the VLAN TPID
+			pRemainder[0] = '\x81';
+			pRemainder[1] = '\x00';
+			// Add the VLAN TCI
+			pRemainder[2] = (pQinfo->TagHeader.UserPriority & 0x7) << 5 |
+				(pQinfo->TagHeader.CanonicalFormatId & 0x1) << 4 |
+				(pQinfo->TagHeader.VlanId & 0xf00) >> 8;
+			pRemainder[3] = (pQinfo->TagHeader.VlanId & 0xff);
+
+			// Update accounting for the new packet length
+			pNBCopy->ulSize += SIZEOF_VLAN_HEADER;
+			pNBCopy->ulPacketSize += SIZEOF_VLAN_HEADER;
+			pSrcNB->bVlanHeaderAdded = TRUE;
+		}
+		// Now we know for sure the header is present.
+		pSrcNB->bVlanHeaderInPacket = TRUE;
+	}
+
+	// If we added the header ourselves, adjust the capture length.
+	if (pSrcNB->bVlanHeaderAdded) {
+		pCapData->ulCaplen += SIZEOF_VLAN_HEADER;
+	}
+}
+
 _Use_decl_annotations_
 VOID
 NPF_DoTap(
@@ -821,7 +875,7 @@ NPF_DoTap(
 	PNPF_CAP_DATA pCapData = NULL;
 	while (NULL != (pCapData = pCaptures)) {
 		pCaptures = pCapData->Next;
-		if (pCapData->pSrcNB->pNBCopy->ulSize < pCapData->pSrcNB->ulDesired)
+		if (pCapData->pNBCopy->ulSize < pCapData->pSrcNB->ulDesired)
 		{
 			// The data hasn't been copied yet
 			if (!NPF_CopyFromNetBufferToNBCopy(pCapData->pSrcNB))
@@ -832,6 +886,9 @@ NPF_DoTap(
 				continue;
 			}
 		}
+
+		// Deal with VLAN header if needed
+		NPF_HandleVlanHeader(pCapData, pFiltMod);
 
 		// Have to cache this value; it may be overwritten by NPF_TapExForEachOpen.
 		POPEN_INSTANCE pOpen = pCapData->pOpen;
@@ -1018,8 +1075,10 @@ NPF_CopyFromNetBufferToNBCopy(
 	NT_ASSERT(pNBCopy->ulSize == 0);
 	NT_ASSERT(pNBCopy->Buffer == NULL);
 	NT_ASSERT(ulDesired > 0);
+	NT_ASSERT(ulDesired <= NET_BUFFER_DATA_LENGTH(pSrcNB->pNetBuffer));
 
-	pNBCopy->Buffer = NPF_AllocateZeroNonpaged(ulDesired, NPF_PACKET_DATA_TAG);
+	// Allocate enough space to add the VLAN header if necessary
+	pNBCopy->Buffer = NPF_AllocateZeroNonpaged((SIZE_T)ulDesired + SIZEOF_VLAN_HEADER, NPF_PACKET_DATA_TAG);
 	if (pNBCopy->Buffer == NULL)
 	{
 		INFO_DBG("Failed to allocate Buffer\n");

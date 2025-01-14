@@ -461,6 +461,8 @@ typedef struct _OPEN_INSTANCE
 }
 OPEN_INSTANCE, *POPEN_INSTANCE;
 
+/* Packet metadata that is the same for every NET_BUFFER in the NET_BUFFER_LIST
+ * and that we need until all related captures are retrieved. */
 typedef struct _NPF_NBL_COPY
 {
 	SINGLE_LIST_ENTRY NBCopiesHead;
@@ -474,6 +476,10 @@ typedef struct _NPF_NBL_COPY
 	LONG refcount;
 } NPF_NBL_COPY, *PNPF_NBL_COPY;
 
+
+/* Packet data and metadata that is unique to each packet, but common to every
+ * capture of that packet, and which we need to keep until all related captures
+ * are retrieved. */
 typedef struct _NPF_NB_COPIES
 {
 	PNPF_NBL_COPY pNBLCopy;
@@ -483,12 +489,16 @@ typedef struct _NPF_NB_COPIES
 	PUCHAR Buffer; // packet data
 } NPF_NB_COPIES, *PNPF_NB_COPIES;
 
+/* Packet metadata that we only need prior to putting the NPF_CAP_DATA in the
+ * queue. Only lives as long as the call to NPF_DoTap. */
 typedef struct _NPF_SRC_NB
 {
 	SINGLE_LIST_ENTRY CopiesEntry;
 	PNPF_NB_COPIES pNBCopy;
 	PNET_BUFFER pNetBuffer; // source NET_BUFFER
 	ULONG ulDesired; // How much data we want from the packet
+	BOOLEAN bVlanHeaderInPacket:1; // Is there a 802.1q VLAN header in the packet data?
+	BOOLEAN bVlanHeaderAdded:1; // Was a VLAN header added to the pNBCopy, increasing size by 4 bytes?
 } NPF_SRC_NB, *PNPF_SRC_NB;
 
 // so we can use the same lookaside list for all these things
