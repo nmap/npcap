@@ -284,4 +284,20 @@
 // Because handles can be inherited, this may not be a complete set.
 #define BIOCGETPIDS CTL_CODE(FILE_DEVICE_TRANSPORT, 0xb01, METHOD_BUFFERED, FILE_READ_DATA)
 
+// Get driver info. Valid on any handle in any state.
+// Uses PACKET_OID_DATA structure, but instead of OID, we define our own Info IDs here
+#define BIOCGETINFO CTL_CODE(FILE_DEVICE_TRANSPORT, 0xb02, METHOD_BUFFERED, FILE_READ_DATA)
+/* Info IDs for BIOCGETINFO */
+// Version of driver. Output is ULONG in MMmmbbbb format
+#define NPF_GETINFO_VERSION 0x00000001
+// Bitfield of capabilities, configs, and build attributes. Output is ULONG.
+#define NPF_GETINFO_CONFIG 0x00000002
+#define NPF_CONFIG_OEM       0x01 /* Npcap OEM */
+#define NPF_CONFIG_INJECT    0x02 /* ifndef NPCAP_READ_ONLY */
+#define NPF_CONFIG_ADMINONLY 0x04 /* AdminOnly */
+#define NPF_CONFIG_DLTNULL   0x08 /* DltNull */
+#define NPF_CONFIG_WIFI      0x10 /* Dot11Support */
+#define NPF_CONFIG_LOOPBACK  0x20 /* LoopbackSupport */
+#define NPF_CONFIG_TESTMODE  0x40 /* TestMode */
+
 #endif //__NPF_IOCTLS_H__

@@ -1950,6 +1950,80 @@ static NTSTATUS funcBIOCGETPIDS(_In_ POPEN_INSTANCE pOpen,
 	return STATUS_SUCCESS;
 }
 
+_Must_inspect_result_
+static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
+	       _Inout_updates_bytes_(ulBufLenIn) PPACKET_OID_DATA OidData,
+	       _In_ ULONG ulBufLenIn,
+	       _In_ ULONG ulBufLenOut,
+	       _Out_ PULONG_PTR Info)
+{
+	NTSTATUS Status = STATUS_UNSUCCESSFUL;
+	PSINGLE_LIST_ENTRY Curr = NULL;
+	PNPCAP_FILTER_MODULE pFiltMod = NULL;
+	ULONG ulTmp = 0;
+
+	*Info = 0;
+	// NDIS OID requests use the same buffer for in/out, so the caller must supply the same size buffers, too.
+	if (ulBufLenIn != ulBufLenOut ||
+			ulBufLenIn < sizeof(PACKET_OID_DATA) || // check before dereferencing OidData
+			ulBufLenIn < (FIELD_OFFSET(PACKET_OID_DATA, Data) + OidData->Length) ||
+			OidData->Length < sizeof(ULONG)
+		)
+	{
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	// Now Length is at least sizeof(ULONG)
+	INFO_DBG("BIOCGETINFO: ID=%08lx, Length=%08lx\n", OidData->Oid, OidData->Length);
+
+	switch (OidData->Oid) {
+		case NPF_GETINFO_VERSION:
+			*((PULONG)OidData->Data) = 
+				((WINPCAP_MINOR & 0xff) << 24) |
+				((WINPCAP_REV & 0xff) << 16) |
+				((WINPCAP_BUILD & 0xffff));
+			OidData->Length = sizeof(ULONG);
+			*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(ULONG);
+			Status = STATUS_SUCCESS;
+			break;
+
+		case NPF_GETINFO_CONFIG:
+			ulTmp = (0
+#ifdef NPCAP_OEM
+					| NPF_CONFIG_OEM
+#endif
+#ifndef NPCAP_READ_ONLY
+					| NPF_CONFIG_INJECT
+#endif
+				);
+			if (g_pDriverExtension->bAdminOnlyMode)
+				ulTmp |= NPF_CONFIG_ADMINONLY;
+			if (g_pDriverExtension->bDltNullMode)
+				ulTmp |= NPF_CONFIG_DLTNULL;
+#ifdef HAVE_DOT11_SUPPORT
+			if (g_pDriverExtension->bDot11SupportMode)
+				ulTmp |= NPF_CONFIG_WIFI;
+#endif
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+			if (g_pDriverExtension->bLoopbackSupportMode)
+				ulTmp |= NPF_CONFIG_LOOPBACK;
+#endif
+			if (g_pDriverExtension->bTestMode)
+				ulTmp |= NPF_CONFIG_TESTMODE;
+
+			*((PULONG)OidData->Data) = ulTmp;
+			OidData->Length = sizeof(ULONG);
+			*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(ULONG);
+			Status = STATUS_SUCCESS;
+			break;
+
+		default:
+			Status = STATUS_INVALID_DEVICE_REQUEST;
+			break;
+	}
+	return Status;
+}
+
 _Use_decl_annotations_
 NTSTATUS
 NPF_IoControl(
@@ -2062,6 +2136,9 @@ NPF_IoControl(
 		// OPEN_STATE doesn't matter for now, since it's global for the whole driver.
 		case BIOCGTIMESTAMPMODES:
 			Status = funcBIOCGTIMESTAMPMODES(Open, pBuf, OutputBufferLength, &Information);
+			break;
+		case BIOCGETINFO:
+			Status = funcBIOCGETINFO(Open, pBuf, InputBufferLength, OutputBufferLength, &Information);
 			break;
 
 #if DBG
