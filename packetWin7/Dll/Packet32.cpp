@@ -927,7 +927,7 @@ static PCHAR WChar2SChar(_In_ LPCWCH string)
 BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 {
 	BOOLEAN    Status;
-	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG))] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	DWORD err = ERROR_SUCCESS;
 
@@ -2918,13 +2918,13 @@ _Success_(return == ERROR_SUCCESS)
 static DWORD PacketRequestHelper(
 		_In_ HANDLE hAdapter,
 		_In_ BOOLEAN Set,
-		_In_ PPACKET_OID_DATA OidData)
+		_Inout_updates_bytes_(PACKET_OID_DATA_LENGTH(OidData->Length)) PPACKET_OID_DATA OidData)
 {
 	DWORD BytesReturned = 0;
 	DWORD err = ERROR_SUCCESS;
 	if(!DeviceIoControl(hAdapter, (DWORD) (Set ? BIOCSETOID : BIOCQUERYOID),
-                           OidData, sizeof(PACKET_OID_DATA) - 1 + OidData->Length,
-			   OidData, sizeof(PACKET_OID_DATA) - 1 + OidData->Length,
+                           OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+			   OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
 			   &BytesReturned, NULL))
 	{
 		err = GetLastError();
@@ -2991,7 +2991,7 @@ BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 {
     BOOLEAN    Status;
     DWORD err = ERROR_SUCCESS;
-	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(ULONG) - 1] = { 0 };
+    CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG))] = { 0 };
     PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA) IoCtlBuffer;
 	
 	TRACE_ENTER();
@@ -3454,7 +3454,7 @@ _Use_decl_annotations_
 BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 {
 	DWORD err = ERROR_SUCCESS;
-	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA)+sizeof(NDIS_LINK_SPEED)] = {0};
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(NDIS_LINK_SPEED))] = {0};
 
 	TRACE_ENTER();
 	if (type == NULL) {
@@ -3569,7 +3569,7 @@ int PacketIsMonitorModeSupported(PCCH AdapterName)
 {
 	HANDLE hAdapter;
 	PCHAR AdapterID = NULL;
-	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_OPERATION_MODE_CAPABILITY) - 1] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_OPERATION_MODE_CAPABILITY))] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_OPERATION_MODE_CAPABILITY pOperationModeCapability;
 	int mode;
@@ -3641,7 +3641,7 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 	DWORD dwResult = ERROR_INVALID_DATA;
 	PCHAR AdapterID = NULL;
 	HANDLE hAdapter = INVALID_HANDLE_VALUE;
-	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_CURRENT_OPERATION_MODE))] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_CURRENT_OPERATION_MODE pOpMode = (PDOT11_CURRENT_OPERATION_MODE)OidData->Data;
 
@@ -3713,7 +3713,7 @@ int PacketGetMonitorMode(PCCH AdapterName)
 	int mode;
 	HANDLE hAdapter = INVALID_HANDLE_VALUE;
 	DWORD dwResult = ERROR_INVALID_DATA;
-	CHAR IoCtlBuffer[sizeof(PACKET_OID_DATA) + sizeof(DOT11_CURRENT_OPERATION_MODE) - 1] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_CURRENT_OPERATION_MODE))] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_CURRENT_OPERATION_MODE pOperationMode = (PDOT11_CURRENT_OPERATION_MODE)OidData->Data;
 	PCHAR AdapterID = NULL;

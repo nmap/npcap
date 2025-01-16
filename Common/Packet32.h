@@ -372,10 +372,13 @@ struct _PACKET_OID_DATA
 	///< for a complete list of valid codes.
 	ULONG Length;				///< Length of the data field
 	_Field_size_full_(Length)
-	UCHAR Data[1];				///< variable-lenght field that contains the information passed to or received 
+	UCHAR Data[1];				///< variable-length field that contains the information passed to or received
 	///< from the adapter.
 }; 
 typedef struct _PACKET_OID_DATA PACKET_OID_DATA, * PPACKET_OID_DATA;
+
+#define PACKET_OID_DATA_LENGTH(_DataLength) \
+	(FIELD_OFFSET(PACKET_OID_DATA, Data) + _DataLength)
 
 #ifdef __cplusplus
 extern "C"
@@ -420,7 +423,7 @@ extern "C"
 	_Success_(return) BOOLEAN PacketSetHwFilter(_In_ LPADAPTER AdapterObject, _In_ ULONG Filter);
 	_Success_(return) BOOLEAN PacketGetAdapterNames(_Out_writes_opt_(_Old_(*BufferSize)) PCHAR pStr, _Inout_ PULONG  BufferSize);
 	_Success_(return) BOOLEAN PacketGetNetInfoEx(_In_ PCCH AdapterName, _Out_writes_to_(_Old_(*NEntries),*NEntries) npf_if_addr* buffer, _Inout_ PLONG NEntries);
-	_Success_(return) BOOLEAN PacketRequest(_In_ LPADAPTER  AdapterObject, _In_ BOOLEAN Set, _Inout_ PPACKET_OID_DATA  OidData);
+	_Success_(return) BOOLEAN PacketRequest(_In_ LPADAPTER  AdapterObject, _In_ BOOLEAN Set, _Inout_updates_bytes_(PACKET_OID_DATA_LENGTH(OidData->Length)) PPACKET_OID_DATA  OidData);
 	HANDLE PacketGetReadEvent(_In_ LPADAPTER AdapterObject);
 	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void* name, int len);
 	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxnpacks);
