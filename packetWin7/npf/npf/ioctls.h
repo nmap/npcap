@@ -299,5 +299,7 @@
 #define NPF_CONFIG_WIFI      0x10 /* Dot11Support */
 #define NPF_CONFIG_LOOPBACK  0x20 /* LoopbackSupport */
 #define NPF_CONFIG_TESTMODE  0x40 /* TestMode */
+// BPF Extensions supported. Output is ULONG, max extension supported.
+#define NPF_GETINFO_BPFEXT 0x00000003
 
 #endif //__NPF_IOCTLS_H__

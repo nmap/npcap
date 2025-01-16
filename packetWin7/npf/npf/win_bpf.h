@@ -397,16 +397,26 @@ struct dump_bpf_hdr
  */
 #define BPF_MEMWORDS 16
 
-/* Special offsets to mimic Linux kernel's BPF extensions
+/* Special offsets to mimic Linux kernel's BPF extensions.
+ * The names are taken directly from Linux in order to allow libpcap's
+ * gencode.c to use the same code for both, but the values are different.
  */
 /* The base offset for these extensions */
 #define SKF_AD_OFF (-0x1000)
-/* Boolean: is there a VLAN tag present? Currently, we cannot distinguish VLAN
+/* The extensions are numbered in the order they were added.
+ * Since they are treated like offsets, we space them by 4 to avoid the
+ * appearance of reading overlapped memory segments.
+ * User can issue BIOCGETINFO(NPF_GETINFO_BPFEXT) to retrieve the value of
+ * SKF_AD_MAX, and any extension less than or equal to that value will be
+ * supported.
+ */
+/* Halfword (2 bytes) representing the 802.1q header. */
+#define SKF_AD_VLAN_TAG 0
+/* Boolean: is there VLAN metadata present? Currently, we cannot distinguish VLAN
  * 0 and priority class 0 (both defaults) from the case of no VLAN tag present,
  * so this will return false in that case. */
-#define SKF_AD_VLAN_TAG_PRESENT 48
-/* Halfword (2 bytes) representing the 802.1q header. */
-#define SKF_AD_VLAN_TAG 44
+#define SKF_AD_VLAN_TAG_PRESENT 4
+#define SKF_AD_MAX 4
 
 #ifdef __cplusplus
 extern "C"

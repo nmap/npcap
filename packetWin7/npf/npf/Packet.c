@@ -2017,6 +2017,13 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 			Status = STATUS_SUCCESS;
 			break;
 
+		case NPF_GETINFO_BPFEXT:
+			*((PULONG)OidData->Data) = SKF_AD_MAX;
+			OidData->Length = sizeof(ULONG);
+			*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(ULONG);
+			Status = STATUS_SUCCESS;
+			break;
+
 		default:
 			Status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
