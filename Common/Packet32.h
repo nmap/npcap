@@ -424,6 +424,7 @@ extern "C"
 	_Success_(return) BOOLEAN PacketGetAdapterNames(_Out_writes_opt_(_Old_(*BufferSize)) PCHAR pStr, _Inout_ PULONG  BufferSize);
 	_Success_(return) BOOLEAN PacketGetNetInfoEx(_In_ PCCH AdapterName, _Out_writes_to_(_Old_(*NEntries),*NEntries) npf_if_addr* buffer, _Inout_ PLONG NEntries);
 	_Success_(return) BOOLEAN PacketRequest(_In_ LPADAPTER  AdapterObject, _In_ BOOLEAN Set, _Inout_updates_bytes_(PACKET_OID_DATA_LENGTH(OidData->Length)) PPACKET_OID_DATA  OidData);
+	_Success_(return) BOOLEAN PacketGetInfo(_In_opt_ LPADAPTER AdapterObject, _Inout_updates_bytes_(PACKET_OID_DATA_LENGTH(OidData->Length)) PPACKET_OID_DATA OidData);
 	HANDLE PacketGetReadEvent(_In_ LPADAPTER AdapterObject);
 	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketSetDumpName(LPADAPTER AdapterObject, void* name, int len);
 	__declspec(deprecated("Kernel dump mode is not supported")) BOOLEAN PacketSetDumpLimits(LPADAPTER AdapterObject, UINT maxfilesize, UINT maxnpacks);

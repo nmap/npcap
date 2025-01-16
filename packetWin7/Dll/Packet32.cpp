@@ -3792,4 +3792,50 @@ PAirpcapHandle PacketGetAirPcapHandle(LPADAPTER AdapterObject)
 	return handle;
 }
 
+_Use_decl_annotations_
+BOOLEAN PacketGetInfo(
+		LPADAPTER AdapterObject,
+		PPACKET_OID_DATA OidData)
+{
+	HANDLE hAdapter = INVALID_HANDLE_VALUE;
+	BOOLEAN bCloseAdapter = FALSE;
+	DWORD BytesReturned = 0;
+	DWORD err = ERROR_SUCCESS;
+	TRACE_ENTER();
+
+	if (AdapterObject == NULL) {
+		hAdapter = PacketGetAdapterHandle("", 0);
+		bCloseAdapter = TRUE;
+	}
+	else if(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
+	{
+		TRACE_PRINT("PacketRequest not supported on non-NPF adapters.");
+		TRACE_EXIT();
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return FALSE;
+	}
+	else {
+		hAdapter = AdapterObject->hFile;
+	}
+
+	if(!DeviceIoControl(hAdapter, BIOCGETINFO,
+                           OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+			   OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+			   &BytesReturned, NULL))
+	{
+		err = GetLastError();
+	}
+	TRACE_PRINT3("PacketGetInfo: ID = 0x%.08x, Length = %d, ErrCode = 0x%.08x",
+			OidData->Oid,
+			OidData->Length,
+			err);
+
+	if (bCloseAdapter) {
+		CloseHandle(hAdapter);
+	}
+	TRACE_EXIT();
+	SetLastError(err);
+	return (err == ERROR_SUCCESS);
+}
+
 /* @} */
