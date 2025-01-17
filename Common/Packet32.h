@@ -118,6 +118,7 @@
 #include <sal.h>
 #include <winsock2.h>
 #include "npcap-bpf.h"
+#include "npcap-defs.h"
 
 #ifdef HAVE_AIRPCAP_API
 #include <airpcap.h>
@@ -273,26 +274,6 @@ typedef struct _PACKET
 	PACKET_WINPCAP_DEPRECATED BOOLEAN bIoComplete;	///< \deprecated Still present for compatibility with old applications.
 }  PACKET, * LPPACKET;
 
-/*!
-  \brief Structure containing an OID request.
-
-  It is used by the PacketRequest() function to send an OID to the interface card driver. 
-  It can be used, for example, to retrieve the status of the error counters on the adapter, its MAC address, 
-  the list of the multicast groups defined on it, and so on.
-*/
-struct _PACKET_OID_DATA
-{
-	ULONG Oid;					///< OID code. See the Microsoft DDK documentation or the file ntddndis.h
-	///< for a complete list of valid codes.
-	ULONG Length;				///< Length of the data field
-	_Field_size_full_(Length)
-	UCHAR Data[1];				///< variable-length field that contains the information passed to or received
-	///< from the adapter.
-}; 
-typedef struct _PACKET_OID_DATA PACKET_OID_DATA, * PPACKET_OID_DATA;
-
-#define PACKET_OID_DATA_LENGTH(_DataLength) \
-	(FIELD_OFFSET(PACKET_OID_DATA, Data) + _DataLength)
 
 #ifdef __cplusplus
 extern "C"

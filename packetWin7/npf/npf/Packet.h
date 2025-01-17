@@ -115,6 +115,7 @@
 #define __PACKET_INCLUDE______
 
 #include "win_bpf.h"
+#include "../../../Common/npcap-defs.h"
 #include <wdm.h>
 
 /* If DISPATCH_LEVEL can be determined, use that in the FILTER_*_LOCK macros
@@ -205,25 +206,6 @@ typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTE
 			+ 12 /* VHT */
 #define NPCAP_DOT11_RAW_PACKET_FILTER (NDIS_PACKET_TYPE_802_11_RAW_DATA | NDIS_PACKET_TYPE_802_11_RAW_MGMT)
 #endif
-
-/*!
-  \brief Structure containing an OID request.
-
-  It is used by the PacketRequest() function to send an OID to the interface card driver.
-  It can be used, for example, to retrieve the status of the error counters on the adapter, its MAC address,
-  the list of the multicast groups defined on it, and so on.
-*/
-typedef struct _PACKET_OID_DATA
-{
-	ULONG Oid;					///< OID code. See the Microsoft DDK documentation or the file ntddndis.h
-								///< for a complete list of valid codes.
-	ULONG Length;				///< Length of the data field
-	UCHAR Data[1];				///< variable-lenght field that contains the information passed to or received
-								///< from the adapter.
-}
-PACKET_OID_DATA, * PPACKET_OID_DATA;
-
-C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
 
 typedef struct _NPCAP_FILTER_MODULE NPCAP_FILTER_MODULE, * PNPCAP_FILTER_MODULE;
 
