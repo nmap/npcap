@@ -472,17 +472,20 @@ int bpf_validate(struct bpf_insn * f, int len)
 			 */
 			/* Never assume; check instead. */
 			C_ASSERT(BPF_MAXINSNS < UINT_MAX - UCHAR_MAX);
+			// Jump can't be the last instruction
+			if (from >= (u_int32)len)
+				return 0;
 			switch (BPF_OP(p->code))
 			{
 			case BPF_JA:
-				if (from + p->k < from || from + p->k >= (u_int32)len)
+				if (p->k >= len - from)
 					return 0;
 				break;
 			case BPF_JEQ:
 			case BPF_JGT:
 			case BPF_JGE:
 			case BPF_JSET:
-				if (from + p->jt >= (u_int32)len || from + p->jf >= (u_int32)len)
+				if (p->jt >= len - from || p->jf >= len - from)
 					return 0;
 				break;
 			default:
