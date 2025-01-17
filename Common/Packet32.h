@@ -117,6 +117,7 @@
 
 #include <sal.h>
 #include <winsock2.h>
+#include "npcap-bpf.h"
 
 #ifdef HAVE_AIRPCAP_API
 #include <airpcap.h>
@@ -185,93 +186,6 @@ typedef struct NetType
 	ULONGLONG LinkSpeed;	/// UNUSED, set to 0
 }NetType;
 
-
-//some definitions stolen from libpcap
-
-#ifndef BPF_MAJOR_VERSION
-
-/*!
-  \brief A BPF pseudo-assembly program.
-
-  The program will be injected in the kernel by the PacketSetBPF() function and applied to every incoming packet. 
-*/
-struct bpf_program
-{
-	UINT bf_len;				///< Indicates the number of instructions of the program, i.e. the number of struct bpf_insn that will follow.
-	_Field_size_full_(bf_len)
-	struct bpf_insn* bf_insns;	///< A pointer to the first instruction of the program.
-};
-
-/*!
-  \brief A single BPF pseudo-instruction.
-
-  bpf_insn contains a single instruction for the BPF register-machine. It is used to send a filter program to the driver.
-*/
-struct bpf_insn
-{
-	USHORT code;		///< Instruction type and addressing mode.
-	UCHAR jt;			///< Jump if true
-	UCHAR jf;			///< Jump if false
-	int k;				///< Generic field used for various purposes.
-};
-
-/*!
-  \brief Structure that contains a couple of statistics values on the current capture.
-
-  It is used by packet.dll to return statistics about a capture session.
-*/
-struct bpf_stat
-{
-	UINT bs_recv;		///< Number of packets that the driver received from the network adapter 
-	///< from the beginning of the current capture. This value includes the packets 
-	///< lost by the driver.
-	UINT bs_drop;		///< number of packets that the driver lost from the beginning of a capture. 
-	///< Basically, a packet is lost when the the buffer of the driver is full. 
-	///< In this situation the packet cannot be stored and the driver rejects it.
-	UINT ps_ifdrop;		///< drops by interface. XXX not yet supported
-	UINT bs_capt;		///< number of packets that pass the filter, find place in the kernel buffer and
-	///< thus reach the application.
-};
-
-/*!
-  \brief Packet header.
-
-  This structure defines the header associated with every packet delivered to the application.
-*/
-struct bpf_hdr
-{
-	struct timeval bh_tstamp;	///< The timestamp associated with the captured packet. 
-	///< It is stored in a TimeVal structure.
-	UINT bh_caplen;			///< Length of captured portion. The captured portion <b>can be different</b>
-	///< from the original packet, because it is possible (with a proper filter)
-	///< to instruct the driver to capture only a portion of the packets.
-	UINT bh_datalen;			///< Original length of packet
-	USHORT bh_hdrlen;		///< Length of bpf header (this struct plus alignment padding). In some cases,
-	///< a padding could be added between the end of this structure and the packet
-	///< data for performance reasons. This filed can be used to retrieve the actual data 
-	///< of the packet.
-};
-
-/*!
-  \brief Dump packet header.
-
-  This structure defines the header associated with the packets in a buffer to be used with PacketSendPackets().
-  It is simpler than the bpf_hdr, because it corresponds to the header associated by WinPcap and libpcap to a
-  packet in a dump file. This makes straightforward sending WinPcap dump files to the network.
-*/
-struct dump_bpf_hdr
-{
-	struct timeval ts;			///< Time stamp of the packet
-	UINT caplen;		///< Length of captured portion. The captured portion can smaller than the 
-	///< the original packet, because it is possible (with a proper filter) to 
-	///< instruct the driver to capture only a portion of the packets. 
-	UINT len;		///< Length of the original packet (off wire).
-};
-
-
-#endif
-
-struct bpf_stat;
 
 #define 	   DOSNAMEPREFIX   TEXT("Packet_")	///< Prefix added to the adapters device names to create the WinPcap devices
 #define 	   MAX_LINK_NAME_LENGTH	64			//< Maximum length of the devices symbolic links

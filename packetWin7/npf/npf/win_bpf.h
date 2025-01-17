@@ -116,6 +116,7 @@
 
 #include <ndis.h>
 #include "time_calls.h"
+#include "../../../Common/npcap-bpf.h"
 
 typedef	UCHAR u_char;
 typedef	USHORT u_short;
@@ -126,92 +127,6 @@ typedef	ULONG bpf_u_int32;
 typedef	ULONG u_int32;
 
 #define BPF_MAXINSNS 4096
-
-/*
- * The instruction data structure.
- */
-struct bpf_insn
-{
-	u_short code;
-	u_char jt;
-	u_char jf;
-	bpf_u_int32 k;
-};
-
-/*
- *  Structure for BIOCSETF.
- */
-struct bpf_program
-{
-	u_int bf_len;
-	struct bpf_insn* bf_insns;
-};
-
-/*
- * Struct returned by BIOCGSTATS.
- */
-struct bpf_stat
-{
-	UINT bs_recv;		///< Number of packets that the driver received from the network adapter 
-	///< from the beginning of the current capture. This value includes the packets 
-	///< lost by the driver.
-	UINT bs_drop;		///< number of packets that the driver lost from the beginning of a capture. 
-	///< Basically, a packet is lost when the the buffer of the driver is full. 
-	///< In this situation the packet cannot be stored and the driver rejects it.
-	UINT ps_ifdrop;		///< drops by interface. XXX not yet supported
-	UINT bs_capt;		///< number of packets that pass the filter, find place in the kernel buffer and
-	///< thus reach the application.
-};
-
-/*
- * Struct return by BIOCVERSION.  This represents the version number of 
- * the filter language described by the instruction encodings below.
- * bpf understands a program iff kernel_major == filter_major &&
- * kernel_minor >= filter_minor, that is, if the value returned by the
- * running kernel has the same major number and a minor number equal
- * equal to or less than the filter being downloaded.  Otherwise, the
- * results are undefined, meaning an error may be returned or packets
- * may be accepted haphazardly.
- * It has nothing to do with the source code version.
- */
-struct bpf_version
-{
-	u_short bv_major;
-	u_short bv_minor;
-};
-/* Current version number of filter architecture. */
-#define BPF_MAJOR_VERSION 1
-#define BPF_MINOR_VERSION 1
-
-
-/*
- * Structure prepended to each packet.
- */
-struct bpf_hdr
-{
-	struct timeval bh_tstamp;	/* time stamp */
-	bpf_u_int32 bh_caplen;	/* length of captured portion */
-	bpf_u_int32 bh_datalen;	/* original length of packet */
-	u_short bh_hdrlen;	/* length of bpf header (this struct
-						 plus alignment padding) */
-};
-
-/*!
-  \brief Dump packet header.
-
-  This structure defines the header associated with the packets in a buffer to be used with PacketSendPackets().
-  It is simpler than the bpf_hdr, because it corresponds to the header in the pcap-savefile(5) format.
-  This makes straightforward sending pcap dump files to the network.
-*/
-struct dump_bpf_hdr
-{
-	struct timeval ts;			///< Time stamp of the packet
-	UINT caplen;		///< Length of captured portion. The captured portion can smaller than the 
-	///< the original packet, because it is possible (with a proper filter) to 
-	///< instruct the driver to capture only a portion of the packets. 
-	UINT len;		///< Length of the original packet (off wire).
-};
-
 
 /*
  * Data-link level type codes.
@@ -396,27 +311,6 @@ struct dump_bpf_hdr
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
  */
 #define BPF_MEMWORDS 16
-
-/* Special offsets to mimic Linux kernel's BPF extensions.
- * The names are taken directly from Linux in order to allow libpcap's
- * gencode.c to use the same code for both, but the values are different.
- */
-/* The base offset for these extensions */
-#define SKF_AD_OFF (-0x1000)
-/* The extensions are numbered in the order they were added.
- * Since they are treated like offsets, we space them by 4 to avoid the
- * appearance of reading overlapped memory segments.
- * User can issue BIOCGETINFO(NPF_GETINFO_BPFEXT) to retrieve the value of
- * SKF_AD_MAX, and any extension less than or equal to that value will be
- * supported.
- */
-/* Halfword (2 bytes) representing the 802.1q header. */
-#define SKF_AD_VLAN_TAG 0
-/* Boolean: is there VLAN metadata present? Currently, we cannot distinguish VLAN
- * 0 and priority class 0 (both defaults) from the case of no VLAN tag present,
- * so this will return false in that case. */
-#define SKF_AD_VLAN_TAG_PRESENT 4
-#define SKF_AD_MAX 4
 
 #ifdef __cplusplus
 extern "C"
