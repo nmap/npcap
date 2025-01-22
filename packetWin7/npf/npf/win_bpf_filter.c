@@ -314,6 +314,8 @@ u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB, const PVOID p
 #define ALU_OP_OR(_Val)  A |= _Val;
 #define ALU_OP_LSH(_Val) A <<= _Val;
 #define ALU_OP_RSH(_Val) A >>= _Val;
+#define ALU_OP_MOD(_Val) if ((_Val) == 0) return 0; A %= _Val;
+#define ALU_OP_XOR(_Val) A ^= _Val;
 
 #define CASE_ALU(_Op, _Val) \
 		case BPF_ALU|BPF_##_Op|BPF_##_Val: \
@@ -328,6 +330,8 @@ u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB, const PVOID p
 		CASE_ALU(OR,  X);
 		CASE_ALU(LSH, X);
 		CASE_ALU(RSH, X);
+		CASE_ALU(MOD, X);
+		CASE_ALU(XOR, X);
 
 		CASE_ALU(ADD, K);
 		CASE_ALU(SUB, K);
@@ -337,6 +341,8 @@ u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB, const PVOID p
 		CASE_ALU(OR,  K);
 		CASE_ALU(LSH, K);
 		CASE_ALU(RSH, K);
+		CASE_ALU(MOD, K);
+		CASE_ALU(XOR, K);
 
 		case BPF_ALU|BPF_NEG:
 			(int)A = -((int)A);
@@ -389,8 +395,8 @@ int bpf_validate(struct bpf_insn * f, int len)
 		switch (BPF_CLASS(p->code))
 		{
 			/*
-										 * Check that memory operations use valid addresses.
-										 */
+			 * Check that memory operations use valid addresses.
+			 */
 		case BPF_LD:
 		case BPF_LDX:
 			switch (BPF_MODE(p->code))
@@ -440,11 +446,13 @@ int bpf_validate(struct bpf_insn * f, int len)
 			case BPF_LSH:
 			case BPF_RSH:
 			case BPF_NEG:
+			case BPF_XOR:
 				break;
 			case BPF_DIV:
+			case BPF_MOD:
 				/*
-								 * Check for constant division by 0.
-								 */
+				 * Check for constant division by 0.
+				 */
 				if (BPF_SRC(p->code) == BPF_K && p->k == 0)
 					return 0;
 				break;

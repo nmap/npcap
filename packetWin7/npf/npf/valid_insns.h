@@ -145,6 +145,8 @@ u_short valid_instructions[] =
 	BPF_OP_KX(BPF_ALU | BPF_LSH),
 	BPF_OP_KX(BPF_ALU | BPF_RSH),
 	BPF_ALU | BPF_NEG,
+	BPF_OP_KX(BPF_ALU | BPF_MOD),
+	BPF_OP_KX(BPF_ALU | BPF_XOR),
 
 	BPF_MISC | BPF_TAX,
 	BPF_MISC | BPF_TXA,
