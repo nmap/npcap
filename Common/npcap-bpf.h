@@ -114,6 +114,8 @@
  */
 #ifndef lib_pcap_bpf_h
 
+#include <winsock2.h>
+
 /*!
   \brief A BPF pseudo-assembly program.
 
@@ -122,7 +124,9 @@
 struct bpf_program
 {
 	UINT bf_len; ///< Indicates the number of instructions of the program, i.e. the number of struct bpf_insn that will follow.
+#ifdef _Field_size_full_  /* SAL annotation */
 	_Field_size_full_(bf_len)
+#endif
 	struct bpf_insn* bf_insns; ///< A pointer to the first instruction of the program.
 };
 

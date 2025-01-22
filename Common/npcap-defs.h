@@ -105,6 +105,9 @@
 #define NPCAP_DEFS_H
 /* Data structures and constants used by Npcap's driver and DLLs. */
 
+typedef unsigned long ULONG;
+typedef unsigned char UCHAR;
+
 /*!
   \brief Structure containing an OID request.
 
@@ -117,12 +120,16 @@ struct _PACKET_OID_DATA
 	ULONG Oid; ///< OID code. See the Microsoft DDK documentation or the file ntddndis.h
 	///< for a complete list of valid codes.
 	ULONG Length; ///< Length of the data field
+#ifdef _Field_size_full_  /* SAL annotation */
 	_Field_size_full_(Length)
+#endif
 	UCHAR Data[1]; ///< variable-length field that contains the information passed to or received
 	///< from the adapter.
 }; 
 typedef struct _PACKET_OID_DATA PACKET_OID_DATA, * PPACKET_OID_DATA;
+#ifdef C_ASSERT
 C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
+#endif
 
 #define PACKET_OID_DATA_LENGTH(_DataLength) \
 	(FIELD_OFFSET(PACKET_OID_DATA, Data) + _DataLength)
