@@ -42,7 +42,7 @@
 				<listitem><para><literal>2</literal>: Installation aborted by script.</para></listitem>
 				<listitem><para><literal>350</literal> (<literal>ERROR_FAIL_NOACTION_REBOOT</literal>): Installation failed; reboot and try again.</para></listitem>
 				<listitem><para><literal>3010</literal> (<literal>ERROR_SUCCESS_REBOOT_REQUIRED</literal>): Installation succeeded; reboot required before Npcap is ready to use.</para></listitem>
-			</itemizedList>
+			</itemizedlist>
 
       <para>It is important to note that the installer is a backgrounded app (even in silent mode) and so to get
         the correct process exit code, you need to launch and wait for it. Two ways to do this are using 
@@ -135,8 +135,6 @@
                     installations. This option also installs the DLLs to the
                     system directory, replacing WinPcap. Any existing WinPcap
                     installation will be removed.
-              </para>
-              <para>
             </para></listitem>
           </varlistentry>
 
@@ -155,7 +153,6 @@
 		code <varname>0xe0000247</varname>), try again with <option>/prior_driver=yes</option>. This
 		option isn't the default because many/most old Windows systems still accept the newest Npcap
 		drivers. They may be configured with less-strict codesigning requirements.
-              <para>
             </para></listitem>
           </varlistentry>
 
@@ -169,7 +166,6 @@
                 through 8.1 systems will not accept Npcap drivers later than 1.79. These last compatible
 		drivers are installed by default, but users can override this using the
 		<option>/latest_driver=yes</option> option.
-              <para>
             </para></listitem>
           </varlistentry>
         </variablelist>
