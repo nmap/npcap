@@ -22,8 +22,8 @@ rem Requires msys2 or cygwin, roffit, xsltproc and Docbook XSL stylesheets
 call create_docs.bat %1 %2 || goto :fail
 
 del %SDKFILENAME%
-copy SDK_README.md .\npcap-sdk\SDK_README.md
-xcopy /v /Y "SDK_README.md" .\npcap-sdk\
+copy SDK_CHANGELOG.md .\npcap-sdk\SDK_CHANGELOG.md
+
 cd .\npcap-sdk
 "C:\Program Files\7-Zip\7z.exe" a ..\%SDKFILENAME% .
 PAUSE
