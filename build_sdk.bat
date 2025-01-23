@@ -18,8 +18,8 @@ call create_lib.bat %1 %2 || goto :fail
 
 call create_examples.bat %1 %2
 
-rem Requires xsltproc and Docbook XSL stylesheets
-call create_docs.bat %1 %2
+rem Requires msys2 or cygwin, roffit, xsltproc and Docbook XSL stylesheets
+call create_docs.bat %1 %2 || goto :fail
 
 del %SDKFILENAME%
 copy SDK_README.md .\npcap-sdk\SDK_README.md
