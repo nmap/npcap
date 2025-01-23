@@ -1,3 +1,26 @@
+## Npcap SDK 1.15 [2025]
+
+* Added a new function, `PacketGetInfo()`. This uses the `PACKET_OID_DATA`
+  structure to issue information requests to the Npcap driver. Currently
+  defined requests are `NPF_GETINFO_VERSION`, `NPF_GETINFO_CONFIG`, and
+  `NPF_GETINFO_BPFEXT`.
+
+* Using `PacketGetInfo()` with `NPF_GETINFO_BPFEXT` allows user code to
+  determine which BPF extensions are supported by the driver. The first
+  extensions supported by the driver will be `SKF_AD_VLAN_TAG` and
+  `SKF_AD_VLAN_TAG_PRESENT`, which have the same meanings as the Linux kernel's
+  BPF extensions of the same names.
+
+* Moved Npcap's BPF definitions to `npcap-bpf.h` and other definitions to
+  `npcap-defs.h` to allow them to be used independently of `Packet32.h`. They
+  are included by `Packet32.h`, so there should be no need to change existing
+  code.
+
+## Npcap SDK 1.14 [2022-08-18]
+
+* Restored `PacketLibraryVersion` export. It is still preferred to use
+  `PacketGetVersion()`
+
 ## Npcap SDK 1.13 [2022-06-21]
 
 * Added SAL annotations to most function prototypes and several struct fields
