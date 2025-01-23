@@ -11,17 +11,11 @@ mkdir %WPDPACKDESTDIR%\Include\pcap  	2>nul >nul
 
 
 SETLOCAL ENABLEEXTENSIONS
-for /F "usebackq tokens=*" %%m in (`where.exe make`) do set MAKE=%%m
-if not exist "%MAKE%" set MAKE=C:\cygwin\bin\make.exe
-if not exist "%MAKE%" set MAKE=C:\msys64\usr\bin\make.exe
-if not exist "%MAKE%" (
-	echo "No make found"
-	exit 1
+
+xcopy /v /Y %WINPCAPSOURCEDIR%\wpcap\libpcap\pcap\  %WPDPACKDESTDIR%\Include\pcap\ >nul
+for /F "usebackq skip=1 tokens=3 delims=/ " %%i in (`findstr "CMAKE_INSTALL_INCLUDEDIR" "%WINPCAPSOURCEDIR%\wpcap\libpcap\CMakeLists.txt"`) do (
+	copy /v /Y "%WINPCAPSOURCEDIR%\wpcap\libpcap\%%i"  "%WPDPACKDESTDIR%\Include\%%i"
 )
-for /F "usebackq tokens=2* delims==" %%i in (`%MAKE% -p -q -f Makefile.in -C "%WINPCAPSOURCEDIR%\wpcap\libpcap" ^| findstr /b "PUBHDR"`) do set PUBHDR=%%i
-
-for %%i in (%PUBHDR:/=\%) do copy /v /Y "%WINPCAPSOURCEDIR%\wpcap\libpcap\%%i" "%WPDPACKDESTDIR%\Include\%%i"
-
 
 xcopy /v /Y %WINPCAPSOURCEDIR%\Common\Packet32.h   %WPDPACKDESTDIR%\Include\ >nul
 xcopy /v /Y %WINPCAPSOURCEDIR%\Common\npcap-bpf.h  %WPDPACKDESTDIR%\Include\ >nul

@@ -12,7 +12,6 @@ cd installer
 call Build.bat
 cd %TOPSRCDIR%
 
-rem Requires Cygwin to provide make.exe
 call create_include.bat %1 %2
 
 call create_lib.bat %1 %2 || goto :fail
