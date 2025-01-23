@@ -1,3 +1,20 @@
+## Unreleased changes
+
+* Added complete capture support for 802.1q VLAN packets. The 802.1q frame tag
+  is usually stripped by NDIS before Npcap encounters it, but Npcap will now
+  restore it from the packet metadata if the VLAN ID is not 0. Filtering with the
+  "vlan" keyword is also now supported on live captures. The deprecated
+  `/vlan_support` installer option has no impact on this feature.
+
+* Npcap now supports the `BPF_MOD` and `BPF_XOR` instructions. Previously, pcap
+  filter expressions using the `%` and `^` operators would result in
+  less-efficient user-mode filtering.
+
+* The Npcap driver now supports a range of NDIS versions depending on what is
+  available at runtime. This will allow us to support newer features like URO
+  and hardware timestamping when available, without needing to have separate
+  builds for each NDIS version at install time.
+
 ## Npcap 1.80 [2024-09-16]
 
 * On ARM64, Npcap now installs ARM64X pure-forwarder DLLs so that Npcap can be used by x86_64
