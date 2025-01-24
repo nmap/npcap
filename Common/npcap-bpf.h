@@ -114,7 +114,9 @@
  */
 #ifndef lib_pcap_bpf_h
 
+#ifndef _NTDDK_
 #include <winsock2.h>
+#endif
 
 /*!
   \brief A BPF pseudo-assembly program.

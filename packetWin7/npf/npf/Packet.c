@@ -104,8 +104,8 @@
 
 #include "stdafx.h"
 
-#include "Loopback.h"
 #include "Packet.h"
+#include "Loopback.h"
 #include "win_bpf.h"
 #include "ioctls.h"
 

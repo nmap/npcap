@@ -114,9 +114,9 @@
 #ifndef __PACKET_INCLUDE______
 #define __PACKET_INCLUDE______
 
+#include <wdm.h>
 #include "win_bpf.h"
 #include "../../../Common/npcap-defs.h"
-#include <wdm.h>
 
 /* If DISPATCH_LEVEL can be determined, use that in the FILTER_*_LOCK macros
  * Otherwise, use NPF_IRQL_UNKNOWN so we can find and update them as we add more tracking
