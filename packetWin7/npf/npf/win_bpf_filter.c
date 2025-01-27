@@ -111,55 +111,54 @@
 
 #include "valid_insns.h"
 
-#define EXTRACT_LONG(p)\
-		((((u_int32)(((u_char*)p)[0])) << 24) |\
-		 (((u_int32)(((u_char*)p)[1])) << 16) |\
-		 (((u_int32)(((u_char*)p)[2])) << 8 ) |\
-		 (((u_int32)(((u_char*)p)[3])) << 0 ))
-
-static u_int32 xnum(
-	_Inout_ PMDL p,
-	_In_ u_int32 k,
-	_In_range_(1,4) const u_int32 size,
-	_Out_ int *err)
-{
-	u_char bytes[4] = {0,0,0,0};
-	u_int32 len=0, limit=0;
-	u_int32 i = 0;
-	const u_char * CurBuf=NULL;
-
-	*err = 1;
-	if (!NT_VERIFY(size <= 4))
-		return 0;
-	i = 4 - size;
-
-	while (p && (len = MmGetMdlByteCount(p)) < k) {
-		k -= len;
-		p = p->Next;
+#define MDL_NEXT_BYTE() \
+	k++; \
+	if (len <= k) { \
+		p = p->Next; \
+		if (p == NULL) return 0; \
+		NdisQueryMdl(p, &CurBuf, &len, NormalPagePriority); \
+		if (CurBuf == NULL) return 0; \
+		k = 0; \
 	}
-	while (i < size) {
-		if (p == NULL)
-			return 0;
-		if (CurBuf == NULL) {
-			NdisQueryMdl(p, &CurBuf, &len, NormalPagePriority);
-			if (CurBuf == NULL)
-				return 0;
-		}
-		for (; i < size && k < len; i++, k++) {
-			/* VS2022 analysis can't see that since size <= 4 and i < size, then i < 4 */
-			NT_ASSERT_ASSUME(i < 4);
-			bytes[i] = CurBuf[k];
-		}
-		k = 0;
-		p = p->Next;
-		CurBuf = NULL;
-	}
-	*err = 0;
-	return EXTRACT_LONG(bytes);
+
+#define XNUM_GET_B() value |= CurBuf[k];
+
+#define XNUM_GET_H() \
+	value |= (CurBuf[k] << 8); \
+	MDL_NEXT_BYTE(); \
+	XNUM_GET_B();
+
+#define XNUM_GET_W() \
+	value |= (CurBuf[k] << 24); \
+	MDL_NEXT_BYTE(); \
+	value |= (CurBuf[k] << 16); \
+	MDL_NEXT_BYTE(); \
+	XNUM_GET_H();
+
+#define DECLARE_XNUM(_Size) \
+static u_int32 xnum_##_Size( _Inout_ PMDL p, _In_ u_int32 k, _Out_ int *err) \
+{ \
+	u_int32 len = 0; \
+	const u_char * CurBuf=NULL; \
+	u_int32 value = 0; \
+	*err = 1; \
+ \
+	while ((len = MmGetMdlByteCount(p)) < k) { \
+		k -= len; \
+		p = p->Next; \
+		if (p == NULL) return 0; \
+	} \
+	NdisQueryMdl(p, &CurBuf, &len, NormalPagePriority); \
+	if (CurBuf == NULL) return 0; \
+	XNUM_GET_##_Size(); \
+ \
+	*err = 0; \
+	return value; \
 }
-#define xnum_W(p, k, err) xnum(p, k, 4, err)
-#define xnum_H(p, k, err) xnum(p, k, 2, err)
-#define xnum_B(p, k, err) xnum(p, k, 1, err)
+
+DECLARE_XNUM(W)
+DECLARE_XNUM(H)
+DECLARE_XNUM(B)
 
 static int is_extension_offset(_In_ u_int32 k) {
 	switch (k) {
