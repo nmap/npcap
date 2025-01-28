@@ -259,13 +259,13 @@ DriverEntry(
 
 	g_pDriverExtension->NdisVersion = NdisGetVersion();
 	if (!NT_VERIFY(g_pDriverExtension->NdisVersion >= MAKELONG(
-					NDIS_FILTER_MINIMUM_MAJOR_VERSION, NDIS_FILTER_MINIMUM_MINOR_VERSION))) {
+					NDIS_FILTER_MINIMUM_MINOR_VERSION, NDIS_FILTER_MINIMUM_MAJOR_VERSION))) {
 		ERROR_DBG("Incompatible NDIS version (too low).\n");
 		TRACE_EXIT();
 		return STATUS_NDIS_BAD_VERSION;
 	}
-	if (g_pDriverExtension->NdisVersion > MAKELONG(NDIS_FILTER_MAJOR_VERSION, NDIS_FILTER_MINOR_VERSION)) {
-		g_pDriverExtension->NdisVersion = MAKELONG(NDIS_FILTER_MAJOR_VERSION, NDIS_FILTER_MINOR_VERSION);
+	if (g_pDriverExtension->NdisVersion > MAKELONG(NDIS_FILTER_MINOR_VERSION, NDIS_FILTER_MAJOR_VERSION)) {
+		g_pDriverExtension->NdisVersion = MAKELONG(NDIS_FILTER_MINOR_VERSION, NDIS_FILTER_MAJOR_VERSION);
 	}
 
 	RtlInitUnicodeString(&parametersPath, NULL);
