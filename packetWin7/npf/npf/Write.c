@@ -329,6 +329,7 @@ NPF_Write(
 	NTSTATUS Status = STATUS_SUCCESS;
 	PMDL TmpMdl = NULL;
 	BOOLEAN IrpWasPended = FALSE;
+	BOOLEAN bPendedIrpDispatched = FALSE;
 	BOOLEAN bFreeBuf = FALSE;
 	BOOLEAN bFreeMdl = FALSE;
 	USHORT EthType = 0;
@@ -542,6 +543,15 @@ NPF_Write(
 
 		pNetBufferList = NULL;
 		numSentPackets ++;
+
+		// SendComplete will handle freeing these now
+		bFreeMdl = FALSE;
+		bFreeBuf = FALSE;
+
+		// At this point, if the IRP was marked pending, SendComplete
+		// will be called and will complete the IRP, so we need to
+		// return STATUS_PENDING and not complete it ourselves.
+		bPendedIrpDispatched = IrpWasPended;
 	}
 
 
@@ -565,14 +575,19 @@ NPF_Write_End:
 		{
 			NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
 		}
-		Irp->IoStatus.Status = Status;
-		Irp->IoStatus.Information = numSentPackets > 0 ? buflen : 0;
-		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		// If we already sent the NBL with pIrp set, SendComplete will
+		// complete the IRP. Only if we haven't yet sent the NBL should
+		// we complete the IRP with the error status.
+		if (!bPendedIrpDispatched) {
+			Irp->IoStatus.Status = Status;
+			Irp->IoStatus.Information = numSentPackets > 0 ? buflen : 0;
+			IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		}
 	}
 
 	TRACE_EXIT();
 
-	return (IrpWasPended ? STATUS_PENDING : Status);
+	return ((IrpWasPended && bPendedIrpDispatched) ? STATUS_PENDING : Status);
 }
 
 //-------------------------------------------------------------------
