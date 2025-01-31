@@ -160,7 +160,8 @@ DECLARE_XNUM(W)
 DECLARE_XNUM(H)
 DECLARE_XNUM(B)
 
-static int is_extension_offset(_In_ u_int32 k) {
+#define IS_EXTENSION_OFFSET(_k) ((int)(_k) < 0)
+static int valid_extension_offset(_In_ u_int32 k) {
 	switch (k) {
 		case SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT:
 		case SKF_AD_OFF + SKF_AD_VLAN_TAG:
@@ -180,6 +181,9 @@ static int do_extension(_In_ u_int32 k, _In_ const PNPF_NBL_COPY pNBLCopy)
 				(pNBLCopy->qInfo.TagHeader.CanonicalFormatId & 0x1) << 12 |
 				(pNBLCopy->qInfo.TagHeader.VlanId & 0xfff));
 			break;
+		default:
+			// BAD validation failure
+			NT_ASSERT(FALSE);
 	}
 	return 0;
 }
@@ -225,7 +229,7 @@ u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB, const PVOID p
 		CASE_RET(K);
 		CASE_RET(A);
 
-#define EXTRA_STMT_ABS if (is_extension_offset(pc->k)) \
+#define EXTRA_STMT_ABS if (IS_EXTENSION_OFFSET(pc->k)) \
 	{ A = do_extension(pc->k, pNBLCopy); continue; }
 #define EXTRA_STMT_IND
 #define ADDR_MODE_ABS (pc->k)
@@ -403,7 +407,7 @@ int bpf_validate(struct bpf_insn * f, int len)
 			case BPF_ABS:
 			case BPF_MSH:
 				// Check for valid special offsets
-				if ((int)p->k < 0 && !is_extension_offset(p->k)) {
+				if (IS_EXTENSION_OFFSET(p->k) && !valid_extension_offset(p->k)) {
 					return 0;
 				}
 				// Anything else is fine.
