@@ -588,8 +588,9 @@ NPF_Write_End:
 	}
 
 	TRACE_EXIT();
-
-	return ((IrpWasPended && bPendedIrpDispatched) ? STATUS_PENDING : Status);
+	// We have to return STATUS_PENDING if we pended the IRP, even if we
+	// also completed it due to a later error.
+	return (IrpWasPended ? STATUS_PENDING : Status);
 }
 
 //-------------------------------------------------------------------
