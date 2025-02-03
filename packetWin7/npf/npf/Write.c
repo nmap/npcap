@@ -279,37 +279,39 @@ static USHORT NPF_GetIPVersion(
 		_In_reads_bytes_(buflen) PVOID pBuf,
 		_In_ ULONG buflen)
 {
-	UINT uCmp = 0;
-
 	if (pFiltMod->EtherHeader)
 	{
-		uCmp = RtlUshortByteSwap(((PETHER_HEADER)pBuf)->ether_type);
+		if (buflen < sizeof(ETHER_HEADER))
+			return 0;
+		return RtlUshortByteSwap(((PETHER_HEADER)pBuf)->ether_type);
 	}
-	else {
-		if (pFiltMod->RawIP && NT_VERIFY(buflen > 1))
-		{
-			uCmp = *(PUCHAR)pBuf & 0xf0;
-		}
-		else if (pFiltMod->Loopback && g_pDriverExtension->bDltNullMode)
-		{
-			uCmp = ((PDLT_NULL_HEADER)pBuf)->null_type;
-		}
-
-		switch(uCmp)
+	else if (pFiltMod->RawIP)
+	{
+		if (buflen < 1)
+			return 0;
+		switch (*(PUCHAR)pBuf & 0xf0)
 		{
 			case 0x40:
-			case DLTNULLTYPE_IP:
-				uCmp = ETHERTYPE_IP;
-				break;
+				return ETHERTYPE_IP;
 			case 0x60:
-			case DLTNULLTYPE_IPV6:
-				uCmp = ETHERTYPE_IPV6;
-				break;
-			default:
-				break;
+				return ETHERTYPE_IPV6;
 		}
 	}
-	return (USHORT)uCmp;
+	else if (pFiltMod->Loopback && g_pDriverExtension->bDltNullMode)
+	{
+		if (buflen < sizeof(DLT_NULL_HEADER))
+			return 0;
+		switch(((PDLT_NULL_HEADER)pBuf)->null_type)
+		{
+			case DLTNULLTYPE_IP:
+				return ETHERTYPE_IP;
+			case DLTNULLTYPE_IPV6:
+				return ETHERTYPE_IPV6;
+		}
+	}
+
+	// Unknown/unhandled DLT or packet type
+	return 0;
 }
 
 _Use_decl_annotations_
