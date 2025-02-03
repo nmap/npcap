@@ -3361,12 +3361,12 @@ NDIS_STATUS NPF_DoInternalRequest(
 		NdisRequest->Header.Revision = NDIS_OID_REQUEST_REVISION_2;
 		NdisRequest->Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_2;
 	} else
-#else
+#endif
 	{
 		NdisRequest->Header.Revision = NDIS_OID_REQUEST_REVISION_1;
 		NdisRequest->Header.Size = NDIS_SIZEOF_OID_REQUEST_REVISION_1;
 	}
-#endif
+
 	NdisRequest->RequestType = RequestType;
 	NdisRequest->RequestHandle = pFiltMod->AdapterHandle;
 	*(PVOID *)NdisRequest->SourceReserved = NULL; //indicates this is a self-sent request
