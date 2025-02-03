@@ -546,6 +546,7 @@ DriverEntry(
 				break;
 			}
 			pFiltMod->Loopback = TRUE;
+			pFiltMod->EtherHeader = !g_pDriverExtension->bDltNullMode;
 			pFiltMod->AdapterBindingStatus = FilterRunning;
 			pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
 			g_pDriverExtension->pLoopbackFilter = pFiltMod;
