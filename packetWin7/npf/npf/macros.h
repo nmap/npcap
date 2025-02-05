@@ -109,6 +109,10 @@
 */
 #define	ETHER_HDR_LEN		(ETHER_ADDR_LEN * 2 + ETHER_TYPE_LEN)
 
+/* 802.1q header is 4 bytes inserted after the Ethernet destination (6 bytes)
+ * and source (6 bytes) */
+#define VLAN_HDR_LEN 4
+
 /*
 * Structure of a 10Mb/s Ethernet header.
 */

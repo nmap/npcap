@@ -670,10 +670,6 @@ NPF_GetCapData(
 	_In_range_(1, 0xffffffff) UINT uCapLen
 );
 
-/* 802.1q header is 4 bytes inserted after the Ethernet destination (6 bytes)
- * and source (6 bytes) */
-#define SIZEOF_VLAN_HEADER 4
-#define SIZEOF_ETH_HEADER 12
 VOID
 NPF_HandleVlanHeader(
 		_Inout_ PNPF_CAP_DATA pCapData,
@@ -692,14 +688,14 @@ NPF_HandleVlanHeader(
 	// The packet has VLAN metadata, so it needs to have a 802.1q header
 	// Check if we know it's already there.
 	if (!pSrcNB->bVlanHeaderInPacket) {
+#define ETHERTYPE_OFFSET FIELD_OFFSET(ETHER_HEADER, ether_type)
+		const PUCHAR pRemainder = pNBCopy->Buffer + ETHERTYPE_OFFSET;
 		// If it's not already there, add one.
-		if (RtlCompareMemory(pNBCopy->Buffer + SIZEOF_ETH_HEADER, "\x81\x00", 2) < 2) {
-			const PUCHAR pRemainder = pNBCopy->Buffer + SIZEOF_ETH_HEADER;
-
+		if (RtlCompareMemory(pRemainder, "\x81\x00", 2) < 2) {
 			// Shift the packet data down 4 bytes
-			RtlMoveMemory(pRemainder + SIZEOF_VLAN_HEADER,
+			RtlMoveMemory(pRemainder + VLAN_HDR_LEN,
 					pRemainder,
-					pNBCopy->ulSize - SIZEOF_ETH_HEADER);
+					pNBCopy->ulSize - ETHERTYPE_OFFSET);
 			// Add the VLAN TPID
 			pRemainder[0] = '\x81';
 			pRemainder[1] = '\x00';
@@ -710,8 +706,8 @@ NPF_HandleVlanHeader(
 			pRemainder[3] = (pQinfo->TagHeader.VlanId & 0xff);
 
 			// Update accounting for the new packet length
-			pNBCopy->ulSize += SIZEOF_VLAN_HEADER;
-			pNBCopy->ulPacketSize += SIZEOF_VLAN_HEADER;
+			pNBCopy->ulSize += VLAN_HDR_LEN;
+			pNBCopy->ulPacketSize += VLAN_HDR_LEN;
 			pSrcNB->bVlanHeaderAdded = TRUE;
 		}
 		// Now we know for sure the header is present.
@@ -720,7 +716,7 @@ NPF_HandleVlanHeader(
 
 	// If we added the header ourselves, adjust the capture length.
 	if (pSrcNB->bVlanHeaderAdded) {
-		pCapData->ulCaplen += SIZEOF_VLAN_HEADER;
+		pCapData->ulCaplen += VLAN_HDR_LEN;
 	}
 }
 
@@ -1078,7 +1074,7 @@ NPF_CopyFromNetBufferToNBCopy(
 	NT_ASSERT(ulDesired <= NET_BUFFER_DATA_LENGTH(pSrcNB->pNetBuffer));
 
 	// Allocate enough space to add the VLAN header if necessary
-	pNBCopy->Buffer = NPF_AllocateZeroNonpaged((SIZE_T)ulDesired + SIZEOF_VLAN_HEADER, NPF_PACKET_DATA_TAG);
+	pNBCopy->Buffer = NPF_AllocateZeroNonpaged((SIZE_T)ulDesired + VLAN_HDR_LEN, NPF_PACKET_DATA_TAG);
 	if (pNBCopy->Buffer == NULL)
 	{
 		INFO_DBG("Failed to allocate Buffer\n");
