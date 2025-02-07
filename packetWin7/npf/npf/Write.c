@@ -139,22 +139,13 @@ _Must_inspect_result_
 _Success_(return != NULL)
 __drv_allocatesMem(mem)
 __declspec(restrict) PMDL
-NPF_CloneBufferToMdl(
+NPF_MakePacketMdlChain(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ PVOID pBuf,
+	_In_ _On_failure_(__drv_freesMem(mem)) __drv_aliasesMem PVOID npBuff,
 	_In_ ULONG uDataLen
        )
 {
-	PVOID npBuff = NPF_AllocateZeroNonpaged(uDataLen, NPF_BUFFERED_WRITE_TAG);
 	ULONG uMdlLen;
-	if (npBuff == NULL)
-	{
-		INFO_DBG("NPF_BufferedWrite: unable to allocate non-paged buffer.\n");
-		return NULL;
-	}
-
-	RtlCopyMemory(npBuff, pBuf, uDataLen);
-
 	// Allocate an MDL to map the packet data
 	if (pFiltMod->SplitMdls && uDataLen > ETHER_HDR_LEN) {
 		uMdlLen = ETHER_HDR_LEN;
@@ -185,7 +176,7 @@ NPF_CloneBufferToMdl(
 		}
 		// The MDL is aliased because it is accessed via TmpMdl->Next.
 		// As long as TmpMdl doesn't leak, this is not a leak.
-		NPF_AnalysisAssumeAliased(TmpMdl->Next);
+		//NPF_AnalysisAssumeAliased(TmpMdl->Next);
 
 	}
 
@@ -195,6 +186,72 @@ NPF_CloneBufferToMdl(
 	NPF_AnalysisAssumeAliased(npBuff);
 	return TmpMdl;
 }
+
+_Must_inspect_result_
+_Success_(return != NULL)
+__drv_allocatesMem(mem)
+__declspec(restrict) PMDL
+NPF_CloneMdlToMdl(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PMDL pMdl,
+	_In_ ULONG uDataLen
+       )
+{
+	PUCHAR npBuff = NPF_AllocateZeroNonpaged(uDataLen, NPF_BUFFERED_WRITE_TAG);
+	ULONG copied = 0;
+	if (npBuff == NULL)
+	{
+		INFO_DBG("NPF_CloneMdlToMdl: unable to allocate non-paged buffer.\n");
+		return NULL;
+	}
+	while(copied < uDataLen) {
+		PVOID pBuf = NULL;
+		ULONG ulLen = 0;
+		if (!NT_VERIFY(pMdl)) {
+			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+			INFO_DBG("NPF_CloneMdlToMdl: Source MDL chain incomplete.");
+			return NULL;
+		}
+
+		NdisQueryMdl(pMdl, &pBuf, &ulLen, NormalPagePriority | MdlMappingNoExecute);
+		if (pBuf == NULL) {
+			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
+			INFO_DBG("NPF_CloneMdlToMdl: Unable to map MDL.");
+			return NULL;
+		}
+
+		if (ulLen > uDataLen - copied) {
+			ulLen = uDataLen - copied;
+		}
+		RtlCopyMemory(npBuff + copied, pBuf, ulLen);
+		copied += ulLen;
+		pMdl = pMdl->Next;
+	}
+
+	return NPF_MakePacketMdlChain(pFiltMod, npBuff, uDataLen);
+}
+
+_Must_inspect_result_
+_Success_(return != NULL)
+__drv_allocatesMem(mem)
+__declspec(restrict) PMDL
+NPF_CloneBufferToMdl(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PVOID pBuf,
+	_In_ ULONG uDataLen
+       )
+{
+	PVOID npBuff = NPF_AllocateZeroNonpaged(uDataLen, NPF_BUFFERED_WRITE_TAG);
+	if (npBuff == NULL)
+	{
+		INFO_DBG("NPF_CloneBufferToMdl: unable to allocate non-paged buffer.\n");
+		return NULL;
+	}
+
+	RtlCopyMemory(npBuff, pBuf, uDataLen);
+	return NPF_MakePacketMdlChain(pFiltMod, npBuff, uDataLen);
+}
+
 
 // We may have a chain of MDLs, but they all refer to the same buffer.
 VOID
@@ -330,10 +387,12 @@ NPF_Write(
 	PVOID pBuf = NULL;
 	NTSTATUS Status = STATUS_SUCCESS;
 	PMDL TmpMdl = NULL;
+	PMDL pSrcMdl = NULL;
 	BOOLEAN IrpWasPended = FALSE;
 	BOOLEAN bPendedIrpDispatched = FALSE;
 	BOOLEAN bFreeBuf = FALSE;
 	BOOLEAN bFreeMdl = FALSE;
+	BOOLEAN bFreeSrcMdl = FALSE;
 	USHORT EthType = 0;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
@@ -400,6 +459,60 @@ NPF_Write(
 	}
 
 	EthType = NPF_GetIPVersion(Open->pFiltMod, pBuf, buflen);
+	pSrcMdl = Irp->MdlAddress;
+
+	// Check for 802.1q tag
+	NDIS_NET_BUFFER_LIST_8021Q_INFO Qinfo;
+	Qinfo.Value = 0;
+	if (Open->pFiltMod->EtherHeader
+			&& buflen >= (ETHER_HDR_LEN + VLAN_HDR_LEN)
+			&& EthType == 0x8100) {
+		// Turn it into NDIS metadata
+		PUCHAR pucBuf = ((PUCHAR)pBuf) + ETHER_HDR_LEN;
+		Qinfo.TagHeader.UserPriority = (pucBuf[0] & 0x70) >> 5;
+		Qinfo.TagHeader.CanonicalFormatId = (pucBuf[0] & 0x10) >> 4;
+		Qinfo.TagHeader.VlanId = ((pucBuf[0] & 0x0f) << 8) + pucBuf[1];
+
+		// Strip the tag:
+		// 1. Copy the Ethernet header with inner EtherType to a new buffer.
+		PUCHAR pEthHdr = NPF_AllocateZeroNonpaged(ETHER_HDR_LEN, NPF_BUFFERED_WRITE_TAG);
+		if (pEthHdr == NULL) {
+			Status = STATUS_INSUFFICIENT_RESOURCES;
+			goto NPF_Write_End;
+		}
+		bFreeBuf = TRUE;
+
+		TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pEthHdr, ETHER_HDR_LEN);
+		if (TmpMdl == NULL) {
+			ExFreePoolWithTag(pEthHdr, NPF_BUFFERED_WRITE_TAG);
+			Status = STATUS_INSUFFICIENT_RESOURCES;
+			goto NPF_Write_End;
+		}
+		bFreeMdl = TRUE;
+
+		RtlCopyMemory(pEthHdr, pBuf, ETHER_ADDR_LEN * 2);
+		pEthHdr[ETHER_ADDR_LEN * 2] = pucBuf[2];
+		pEthHdr[ETHER_ADDR_LEN * 2 + 1] = pucBuf[3];
+
+		// 2. Map the remainder of the packet to a new MDL
+		TmpMdl->Next = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, buflen);
+		if (TmpMdl->Next == NULL)
+		{
+			Status = STATUS_INSUFFICIENT_RESOURCES;
+			goto NPF_Write_End;
+		}
+		IoBuildPartialMdl(TmpMdl, TmpMdl->Next,
+				(PUCHAR)pBuf + (ETHER_HDR_LEN + VLAN_HDR_LEN),
+				buflen - (ETHER_HDR_LEN + VLAN_HDR_LEN));
+
+		// 3. Get the new, real EthType
+		EthType = ((USHORT)pucBuf[2] << 8) + pucBuf[3];
+
+		// 4. Use this MDL instead of Irp->MdlAddress going forward
+		pSrcMdl = TmpMdl;
+		bFreeSrcMdl = TRUE;
+	}
+
 	numSentPackets = 0;
 
 	while (numSentPackets < NumSends)
@@ -407,44 +520,55 @@ NPF_Write(
 		if (NumSends - numSentPackets == 1) 
 		{
 			// Last packet; use the IRP's buffer and pend it.
-			if (Open->pFiltMod->SplitMdls) {
-				// As a workaround for a bug in bthpan.sys, we need to define
-				// separate MDLs for the Eth header and payload. See #708
-				ULONG uMdlLen = min(ETHER_HDR_LEN, buflen);
-				PVOID pVA = MmGetMdlVirtualAddress(Irp->MdlAddress);
-				TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, uMdlLen);
+			ULONG mdllen = MmGetMdlByteCount(pSrcMdl);
+			// As a workaround for a bug in bthpan.sys, we need to define
+			// separate MDLs for the Eth header and payload. See #708
+			if (Open->pFiltMod->SplitMdls
+					&& buflen > ETHER_HDR_LEN
+					&& mdllen > ETHER_HDR_LEN
+					// We only need to do this if it hasn't
+					// been done earlier as part of the
+					// VLAN header extraction, which we
+					// test via bFreeSrcMdl.
+					&& NT_VERIFY(!bFreeSrcMdl)) {
+				// Assert that we're working directly with the
+				// original MDL, so it's okay to use pBuf here.
+				NT_ASSERT(pSrcMdl == Irp->MdlAddress);
+				TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, ETHER_HDR_LEN);
 				if (TmpMdl == NULL)
 				{
 					Status = STATUS_INSUFFICIENT_RESOURCES;
 					break;
 				}
-				IoBuildPartialMdl(Irp->MdlAddress, TmpMdl, pVA, uMdlLen);
-				if (uMdlLen < buflen) {
-					TmpMdl->Next = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, uMdlLen);
-					if (TmpMdl->Next == NULL)
-					{
-						NdisFreeMdl(TmpMdl);
-						TmpMdl = NULL;
-						Status = STATUS_INSUFFICIENT_RESOURCES;
-						break;
-					}
-					// The MDL is aliased because it is accessed via TmpMdl->Next.
-					// As long as TmpMdl doesn't leak, this is not a leak.
-					NPF_AnalysisAssumeAliased(TmpMdl->Next);
-					IoBuildPartialMdl(Irp->MdlAddress, TmpMdl->Next, (PUCHAR)pVA + uMdlLen, buflen - uMdlLen);
-				}
 				bFreeMdl = TRUE;
+
+				TmpMdl->Next = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, mdllen);
+				if (TmpMdl->Next == NULL)
+				{
+					Status = STATUS_INSUFFICIENT_RESOURCES;
+					break;
+				}
+				// The MDL is aliased because it is accessed via TmpMdl->Next.
+				// As long as TmpMdl doesn't leak, this is not a leak.
+				NPF_AnalysisAssumeAliased(TmpMdl->Next);
+				IoBuildPartialMdl(pSrcMdl, TmpMdl->Next, (PUCHAR)pBuf + ETHER_HDR_LEN, mdllen - ETHER_HDR_LEN);
 			}
 			else {
-				TmpMdl = Irp->MdlAddress;
+				TmpMdl = pSrcMdl;
 			}
 			IoMarkIrpPending(Irp);
 			IrpWasPended = TRUE;
+			// If we need to free the MDL and buffer we allocated
+			// when we stripped the VLAN header, make sure we do that.
+			if (bFreeSrcMdl) {
+				bFreeBuf = TRUE;
+				bFreeMdl = TRUE;
+			}
 		}
 		else
 		{
 			// We will need to make a copy of the buffer for each additional send
-			TmpMdl = NPF_CloneBufferToMdl(Open->pFiltMod, pBuf, buflen);
+			TmpMdl = NPF_CloneMdlToMdl(Open->pFiltMod, pSrcMdl, buflen);
 			if (TmpMdl == NULL)
 			{
 				Status = STATUS_INSUFFICIENT_RESOURCES;
@@ -477,6 +601,7 @@ NPF_Write(
 			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV6);
 		}
 		NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(EthType);
+		NET_BUFFER_LIST_INFO(pNetBufferList, Ieee8021QNetBufferListInfo) = Qinfo.Value;
 
 		RESERVED(pNetBufferList)->pState = NULL;
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = bFreeBuf;
@@ -570,7 +695,18 @@ NPF_Write_End:
 		// Otherwise, clean up TmpMdl directly
 		else if (TmpMdl && bFreeMdl)
 		{
+			// If TmpMdl is an alias of pSrcMdl,
+			if (bFreeSrcMdl && TmpMdl == pSrcMdl) {
+				// don't free pSrcMdl below, and
+				bFreeSrcMdl = FALSE;
+				// Make sure we free the pEthHdr buffer, too.
+				bFreeBuf = TRUE;
+			}
 			NPF_FreeMdlAndBuffer(TmpMdl, bFreeBuf);
+		}
+		// If we made a copy of the IRP data, free that
+		if (bFreeSrcMdl) {
+			NPF_FreeMdlAndBuffer(pSrcMdl, TRUE);
 		}
 
 		if (Open)
