@@ -2067,6 +2067,16 @@ NPF_IoControl(
 		goto NPF_IoControl_End;
 	}
 
+	/* All our ioctls use METHOD_BUFFERED currently. Verify that here so
+	 * that handler functions don't have to. If this changes in the future,
+	 * we'll have to split this check by ioctl code.
+	 */
+	if (!NT_VERIFY(Irp->Flags & IRP_BUFFERED_IO))
+	{
+		Status = STATUS_INVALID_PARAMETER;
+		goto NPF_IoControl_End;
+	}
+
 	// Make sure at least one buffer is valid and not 0-length.
 	if (pBuf == NULL || InputBufferLength + OutputBufferLength == 0)
 	{

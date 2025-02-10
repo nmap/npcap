@@ -122,7 +122,7 @@
   and resets all the parameters associated with the buffer in the OPEN_INSTANCE structure. The currently 
   buffered packets are lost.
 */
-#define W_BIOCSETBUFFERSIZE 9592
+#define W_BIOCSETBUFFERSIZE 9592 /*CTL_CODE(0, 0x95e, METHOD_BUFFERED, FILE_ANY_ACCESS)*/
 #define BIOCSETBUFFERSIZE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa01, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -136,7 +136,7 @@
   to store packets. This is done to avoid the presence in the buffer of packets that do not match the filter.
 */
 /* Historical number 9030 */
-#define W_BIOCSETF 9030
+#define W_BIOCSETF 9030 /*CTL_CODE(0, 0x8d1, METHOD_OUT_DIRECT, FILE_ANY_ACCESS)*/
 #define BIOCSETF CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa02, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -146,7 +146,7 @@
   an instance of the driver.
 */
 /* Historical number 9031 */
-#define W_BIOCGSTATS 9031
+#define W_BIOCGSTATS 9031 /*CTL_CODE(0, 0x8d1, METHOD_NEITHER, FILE_ANY_ACCESS)*/
 #define BIOCGSTATS CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa03, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -154,7 +154,7 @@
 
   This command sets the maximum timeout after which a read is released, also if no data packets were received.
 */
-#define W_BIOCSRTIMEOUT 7416
+#define W_BIOCSRTIMEOUT 7416 /*CTL_CODE(0, 0x73e, METHOD_BUFFERED, FILE_ANY_ACCESS)*/
 #define BIOCSRTIMEOUT CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa04, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -164,7 +164,7 @@
   buffer associated with the IOCTL command, can be #MODE_CAPT for capture mode (the default), #MODE_STAT for
   statistical mode.
 */
-#define W_BIOCSMODE 7412
+#define W_BIOCSMODE 7412 /*CTL_CODE(0, 0x73d, METHOD_BUFFERED, FILE_ANY_ACCESS)*/
 #define BIOCSMODE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa05, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -173,7 +173,7 @@
   Sets the number of times a single write call must be repeated. This command sets the OPEN_INSTANCE::Nwrites 
   member, and is used to implement the 'multiple write' feature of the driver.
 */
-#define W_BIOCSWRITEREP 7413
+#define W_BIOCSWRITEREP 7413 /*CTL_CODE(0, 0x73d, METHOD_IN_DIRECT, FILE_ANY_ACCESS)*/
 #define BIOCSWRITEREP CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa06, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /*!
@@ -181,7 +181,7 @@
 
   This command sets the OPEN_INSTANCE::MinToCopy member.
 */
-#define W_BIOCSMINTOCOPY 7414
+#define W_BIOCSMINTOCOPY 7414 /*CTL_CODE(0, 0x73d, METHOD_OUT_DIRECT, FILE_ANY_ACCESS)*/
 #define BIOCSMINTOCOPY CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa07, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -189,7 +189,7 @@
 
   This IOCTL is used to perform an OID set operation on the NIC driver. 
 */
-#define W_BIOCSETOID 0x80000000
+#define W_BIOCSETOID 0x80000000 /*CTL_CODE(0, 0x0, METHOD_BUFFERED, FILE_ANY_ACCESS)*/
 #define BIOCSETOID CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa08, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /*!
@@ -197,11 +197,11 @@
 
   This IOCTL is used to perform an OID get operation on the NIC driver. 
 */
-#define W_BIOCQUERYOID 0x80000004
+#define W_BIOCQUERYOID 0x80000004 /*CTL_CODE(0, 0x1, METHOD_BUFFERED, FILE_ANY_ACCESS)*/
 #define BIOCQUERYOID CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa09, METHOD_BUFFERED, FILE_READ_DATA)
 
 // kernel dump mode not supported by Npcap.
-#define W_BIOCSETDUMPFILENAME 9029
+#define W_BIOCSETDUMPFILENAME 9029 /*CTL_CODE(0, 0x8d1, METHOD_IN_DIRECT, FILE_ANY_ACCESS)*/
 #define BIOCSETDUMPFILENAME CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0a, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -210,7 +210,7 @@
   Command used by the application to retrieve the name of the global event associated with a NPF instance.
   The event is signaled by the driver when the kernel buffer contains enough data for a transfer.
 */
-#define W_BIOCGEVNAME 7415
+#define W_BIOCGEVNAME 7415 /*CTL_CODE(0, 0x73d, METHOD_NEITHER, FILE_ANY_ACCESS)*/
 #define BIOCGEVNAME CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0b, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -220,8 +220,7 @@
   a dump_bpf_hdr structure. The timestamps of the packets are ignored, i.e. the packets are sent as fast as 
   possible. The NPF_BufferedWrite() function is invoked to send the packets.
 */
-#define W_BIOCSENDPACKETSNOSYNC 9032
-/* Possibly consider METHOD_IN_DIRECT to avoid issues like #1398 */
+#define W_BIOCSENDPACKETSNOSYNC 9032 /*CTL_CODE(0, 0x8d2, METHOD_BUFFERED, FILE_ANY_ACCESS)*/
 #define BIOCSENDPACKETSNOSYNC CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0c, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 /*!
@@ -232,15 +231,15 @@
   are sent to the network respecting the intervals specified in the dump_bpf_hdr structure assiciated with each
   packet. NPF_BufferedWrite() function is invoked to send the packets. 
 */
-#define W_BIOCSENDPACKETSSYNC 9033
+#define W_BIOCSENDPACKETSSYNC 9033 /*CTL_CODE(0, 0x8d2, METHOD_IN_DIRECT, FILE_ANY_ACCESS)*/
 #define BIOCSENDPACKETSSYNC CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0d, METHOD_BUFFERED, FILE_WRITE_DATA)
 
 // kernel dump mode not supported by Npcap.
-#define W_BIOCSETDUMPLIMITS 9034
+#define W_BIOCSETDUMPLIMITS 9034 /*CTL_CODE(0, 0x8d2, METHOD_OUT_DIRECT, FILE_ANY_ACCESS)*/
 #define BIOCSETDUMPLIMITS CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0e, METHOD_BUFFERED, FILE_READ_DATA)
 
 // kernel dump mode not supported by Npcap.
-#define W_BIOCISDUMPENDED 7411
+#define W_BIOCISDUMPENDED 7411 /*CTL_CODE(0, 0x73c, METHOD_NEITHER, FILE_ANY_ACCESS)*/
 #define BIOCISDUMPENDED CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa0f, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -248,7 +247,7 @@
 
   This IOCTL sets the loopback behavior of the driver with packets sent by itself: capture or drop.
 */
-#define W_BIOCISETLOBBEH 7410
+#define W_BIOCISETLOBBEH 7410 /*CTL_CODE(0, 0x73c, METHOD_OUT_DIRECT, FILE_ANY_ACCESS)*/
 #define BIOCISETLOBBEH CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa10, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*!
@@ -259,7 +258,7 @@
 		is 8 bytes. That's why in this IOCTL code handler we detect a 32bit calling process and do the necessary thunking.
 
 */
-#define W_BIOCSETEVENTHANDLE 7920
+#define W_BIOCSETEVENTHANDLE 7920 /*CTL_CODE(0, 0x7bc, METHOD_BUFFERED, FILE_ANY_ACCESS)*/
 #define BIOCSETEVENTHANDLE CTL_CODE(FILE_DEVICE_TRANSPORT, 0xa11, METHOD_BUFFERED, FILE_READ_DATA)
 
 /*
