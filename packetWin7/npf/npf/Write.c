@@ -1019,7 +1019,7 @@ NPF_FreePackets(
 		}
 	}
 
-	PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNBL)->pState;
+	PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNetBufList)->pState;
 	if (pState != NULL)
 	{
 		if (0 == NpfInterlockedDecrement(&pState->PacketsPending))
