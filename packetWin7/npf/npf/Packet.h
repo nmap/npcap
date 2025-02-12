@@ -544,9 +544,11 @@ VOID NPF_ReturnCapData(
   \brief Function to free the Net Buffer Lists initiated by ourself.
 */
 VOID
+_When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 NPF_FreePackets(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ __drv_freesMem(mem) PNET_BUFFER_LIST    NetBufferLists
+	_In_ __drv_freesMem(mem) PNET_BUFFER_LIST    NetBufferLists,
+	_In_ BOOLEAN AtDispatchLevel
 	);
 
 // This function exists only to suppress C6014 regarding memory leak.

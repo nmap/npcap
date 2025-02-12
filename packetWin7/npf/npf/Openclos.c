@@ -3063,6 +3063,7 @@ Arguments:
 --*/
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
+	BOOLEAN bAtDispatchLevel = NDIS_TEST_RETURN_AT_DISPATCH_LEVEL(ReturnFlags);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	/* This callback is only for the NDIS LWF, not WFP/loopback */
@@ -3072,7 +3073,7 @@ Arguments:
 	if (NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
 	{
 		// This is one of ours; free it.
-		NPF_FreePackets(pFiltMod, NetBufferLists);
+		NPF_FreePackets(pFiltMod, NetBufferLists, bAtDispatchLevel);
 	}
 	else
 	{

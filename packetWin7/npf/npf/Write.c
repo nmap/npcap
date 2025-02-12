@@ -109,6 +109,18 @@
 
 extern PNPCAP_DRIVER_EXTENSION g_pDriverExtension;
 
+typedef struct {
+	PVOID DriverContext[4];
+} IRP_TAIL_OVERLAY;
+
+typedef struct {
+	ULONG ulRefcount;
+} WRITE_IRP_CONTEXT, *PWRITE_IRP_CONTEXT;
+
+C_ASSERT(sizeof(WRITE_IRP_CONTEXT) <= sizeof(IRP_TAIL_OVERLAY));
+
+#define GET_WRITE_IRP_CONTEXT(_Irp) ((PWRITE_IRP_CONTEXT)_Irp->Tail.Overlay.DriverContext)
+
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 /*!
   \brief Send a loopback NBL.
@@ -135,125 +147,145 @@ NPF_AnalysisAssumeAllocated(_In_ PVOID *p)
 	return *p;
 }
 
+static USHORT NPF_GetIPVersion(
+		_In_ PNPCAP_FILTER_MODULE pFiltMod,
+		_In_reads_(buflen) PUCHAR pBuf,
+		_In_ ULONG buflen);
+
 _Must_inspect_result_
 _Success_(return != NULL)
-__drv_allocatesMem(mem)
-__declspec(restrict) PMDL
-NPF_MakePacketMdlChain(
+PMDL
+NPF_BufferToMdl(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ _On_failure_(__drv_freesMem(mem)) __drv_aliasesMem PVOID npBuff,
-	_In_ ULONG uDataLen
-       )
+	_In_reads_(ulLen) PUCHAR pBuf,
+	_In_ ULONG ulLen,
+	_In_opt_ PMDL pMdlOrig,
+	_Out_ PULONG pPktlen,
+	_Out_ PNDIS_NET_BUFFER_LIST_8021Q_INFO pQinfo,
+	_Out_ PUSHORT pEthType,
+	_Out_ PBOOLEAN pbFreeBuf
+	)
 {
-	ULONG uMdlLen;
-	// Allocate an MDL to map the packet data
-	if (pFiltMod->SplitMdls && uDataLen > ETHER_HDR_LEN) {
-		uMdlLen = ETHER_HDR_LEN;
-	}
-	else {
-		uMdlLen = uDataLen;
-	}
-	PMDL TmpMdl = NdisAllocateMdl(pFiltMod->AdapterHandle, npBuff, uMdlLen);
+	PMDL TmpMdl = NULL;
+	PUCHAR pPayload = pBuf + ETHER_HDR_LEN;
+	ULONG ulPktlen = ulLen;
 
-	if (TmpMdl == NULL)
-	{
-		// Unable to map the memory: packet lost
-		INFO_DBG("NPF_BufferedWrite: unable to allocate the MDL.\n");
+	pQinfo->Value = 0;
+	*pEthType = NPF_GetIPVersion(pFiltMod, pBuf, ulLen);
+	*pbFreeBuf = FALSE;
 
-		ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
-		return NULL;
-	}
+	// Check for VLAN header. If it's there, we'll strip it and end up
+	// with Ethernet header in one MDL and payload in the next one.
+	if (pFiltMod->EtherHeader
+			&& ulLen >= (ETHER_HDR_LEN + VLAN_HDR_LEN)
+			&& *pEthType == 0x8100) {
+		// Turn it into NDIS metadata
+		pQinfo->TagHeader.UserPriority = (pPayload[0] & 0x70) >> 5;
+		pQinfo->TagHeader.CanonicalFormatId = (pPayload[0] & 0x10) >> 4;
+		pQinfo->TagHeader.VlanId = ((pPayload[0] & 0x0f) << 8) + pPayload[1];
 
-	if (uMdlLen < uDataLen) {
-		TmpMdl->Next = NdisAllocateMdl(pFiltMod->AdapterHandle, (PUCHAR)npBuff + uMdlLen, uDataLen - uMdlLen);
-		if (TmpMdl == NULL)
-		{
-			// Unable to map the memory: packet lost
-			INFO_DBG("NPF_BufferedWrite: unable to allocate split MDL.\n");
-			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
-			NdisFreeMdl(TmpMdl);
+		// Strip the tag:
+		// 1. Copy the Ethernet header with inner EtherType to a new buffer.
+		PUCHAR pEthHdr = NPF_AllocateZeroNonpaged(ETHER_HDR_LEN, NPF_BUFFERED_WRITE_TAG);
+		if (pEthHdr == NULL) {
 			return NULL;
 		}
-		// The MDL is aliased because it is accessed via TmpMdl->Next.
-		// As long as TmpMdl doesn't leak, this is not a leak.
-		//NPF_AnalysisAssumeAliased(TmpMdl->Next);
 
+		TmpMdl = IoAllocateMdl(pEthHdr, ETHER_HDR_LEN, FALSE, FALSE, NULL);
+		if (TmpMdl == NULL) {
+			ExFreePoolWithTag(pEthHdr, NPF_BUFFERED_WRITE_TAG);
+			return NULL;
+		}
+		MmBuildMdlForNonPagedPool(TmpMdl);
+
+		RtlCopyMemory(pEthHdr, pBuf, ETHER_ADDR_LEN * 2);
+		pEthHdr[ETHER_ADDR_LEN * 2] = pPayload[2];
+		pEthHdr[ETHER_ADDR_LEN * 2 + 1] = pPayload[3];
+
+		// 2. Map the remainder of the packet to a new MDL
+		ulPktlen -= VLAN_HDR_LEN;
+		TmpMdl->Next = IoAllocateMdl(
+				pPayload + VLAN_HDR_LEN,
+				ulPktlen - ETHER_HDR_LEN,
+				FALSE, FALSE, NULL);
+		if (TmpMdl->Next == NULL)
+		{
+			IoFreeMdl(TmpMdl);
+			ExFreePoolWithTag(pEthHdr, NPF_BUFFERED_WRITE_TAG);
+			return NULL;
+		}
+		if (pMdlOrig == NULL) {
+			// Easy case: just make a new MDL for the remainder of the buffer
+			MmBuildMdlForNonPagedPool(TmpMdl->Next);
+		}
+		else {
+			// Make the remainder a partial MDL. The caller will be
+			// responsible for freeing the original one.
+			IoBuildPartialMdl(pMdlOrig, TmpMdl->Next,
+					pPayload + VLAN_HDR_LEN,
+					ulPktlen - ETHER_HDR_LEN);
+		}
+
+		// 3. Get the new, real EthType
+		*pEthType = ((USHORT)pPayload[2] << 8) + pPayload[3];
+
+		// 4. Account for allocated buffer
+		*pbFreeBuf = TRUE;
+	}
+	else if (pFiltMod->SplitMdls && ulLen > ETHER_HDR_LEN) {
+		// As a workaround for a bug in bthpan.sys, we need to define
+		// separate MDLs for the Eth header and payload. See #708
+		TmpMdl = IoAllocateMdl(pBuf, ETHER_HDR_LEN, FALSE, FALSE, NULL);
+		if (TmpMdl == NULL)
+		{
+			return NULL;
+		}
+		MmBuildMdlForNonPagedPool(TmpMdl);
+
+		TmpMdl->Next = IoAllocateMdl(pPayload,
+				ulLen - ETHER_HDR_LEN, FALSE, FALSE, NULL);
+		if (TmpMdl->Next == NULL)
+		{
+			IoFreeMdl(TmpMdl);
+			return NULL;
+		}
+
+		if (pMdlOrig == NULL) {
+			// Easy case: just make a new MDL for the remainder of the buffer
+			MmBuildMdlForNonPagedPool(TmpMdl->Next);
+		}
+		else {
+			// Make the remainder a partial MDL. The caller will be
+			// responsible for freeing the original one.
+			IoBuildPartialMdl(pMdlOrig, TmpMdl->Next,
+					pPayload,
+					ulLen - ETHER_HDR_LEN);
+		}
+	}
+	else {
+		// Nothing special to be done.
+		// Return the original MDL if there is one
+		TmpMdl = pMdlOrig;
+		// Otherwise, allocate and map a new one.
+		if (pMdlOrig == NULL) {
+			TmpMdl = IoAllocateMdl(pBuf, ulLen, FALSE, FALSE, NULL);
+			if (TmpMdl == NULL) {
+				return NULL;
+			}
+			MmBuildMdlForNonPagedPool(TmpMdl);
+		}
 	}
 
-	// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
-	// is stored in the MDL and we retrieve it (via NdisQueryMdl) in NPF_FreePackets called from NPF_ReturnEx.
-	// Therefore, it is not leaking after this point.
-	NPF_AnalysisAssumeAliased(npBuff);
+	*pPktlen = ulPktlen;
+	NT_ASSERT(TmpMdl != NULL);
+	// Since we don't append new data to the end of the MDL chain, any
+	// allocated buffer must be prepended to the chain. Therefore we can't
+	// have allocated a new buffer and also return the original MDL.
+	NT_ASSERT(!(TmpMdl == pMdlOrig && *pbFreeBuf));
 	return TmpMdl;
 }
 
-_Must_inspect_result_
-_Success_(return != NULL)
-__drv_allocatesMem(mem)
-__declspec(restrict) PMDL
-NPF_CloneMdlToMdl(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ PMDL pMdl,
-	_In_ ULONG uDataLen
-       )
-{
-	PUCHAR npBuff = NPF_AllocateZeroNonpaged(uDataLen, NPF_BUFFERED_WRITE_TAG);
-	ULONG copied = 0;
-	if (npBuff == NULL)
-	{
-		INFO_DBG("NPF_CloneMdlToMdl: unable to allocate non-paged buffer.\n");
-		return NULL;
-	}
-	while(copied < uDataLen) {
-		PVOID pBuf = NULL;
-		ULONG ulLen = 0;
-		if (!NT_VERIFY(pMdl)) {
-			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
-			INFO_DBG("NPF_CloneMdlToMdl: Source MDL chain incomplete.");
-			return NULL;
-		}
-
-		NdisQueryMdl(pMdl, &pBuf, &ulLen, NormalPagePriority | MdlMappingNoExecute);
-		if (pBuf == NULL) {
-			ExFreePoolWithTag(npBuff, NPF_BUFFERED_WRITE_TAG);
-			INFO_DBG("NPF_CloneMdlToMdl: Unable to map MDL.");
-			return NULL;
-		}
-
-		if (ulLen > uDataLen - copied) {
-			ulLen = uDataLen - copied;
-		}
-		RtlCopyMemory(npBuff + copied, pBuf, ulLen);
-		copied += ulLen;
-		pMdl = pMdl->Next;
-	}
-
-	return NPF_MakePacketMdlChain(pFiltMod, npBuff, uDataLen);
-}
-
-_Must_inspect_result_
-_Success_(return != NULL)
-__drv_allocatesMem(mem)
-__declspec(restrict) PMDL
-NPF_CloneBufferToMdl(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ PVOID pBuf,
-	_In_ ULONG uDataLen
-       )
-{
-	PVOID npBuff = NPF_AllocateZeroNonpaged(uDataLen, NPF_BUFFERED_WRITE_TAG);
-	if (npBuff == NULL)
-	{
-		INFO_DBG("NPF_CloneBufferToMdl: unable to allocate non-paged buffer.\n");
-		return NULL;
-	}
-
-	RtlCopyMemory(npBuff, pBuf, uDataLen);
-	return NPF_MakePacketMdlChain(pFiltMod, npBuff, uDataLen);
-}
-
-
-// We may have a chain of MDLs, but they all refer to the same buffer.
+// Frees an entire chain of MDLs and optionally the buffer mapped by the first of them.
 VOID
 NPF_FreeMdlAndBuffer(_In_ __drv_freesMem(mem) PMDL pMdl, _In_ BOOLEAN FreeBuf)
 {
@@ -267,7 +299,7 @@ NPF_FreeMdlAndBuffer(_In_ __drv_freesMem(mem) PMDL pMdl, _In_ BOOLEAN FreeBuf)
 	}
 	while (pMdl != NULL) {
 		pNext = pMdl->Next;
-		NdisFreeMdl(pMdl); //Free MDL
+		IoFreeMdl(pMdl); //Free MDL
 		pMdl = pNext;
 	}
 }
@@ -331,10 +363,11 @@ NPF_AllocateNBL(
 }
 //-------------------------------------------------------------------
 
+_Use_decl_annotations_
 static USHORT NPF_GetIPVersion(
-		_In_ PNPCAP_FILTER_MODULE pFiltMod,
-		_In_reads_bytes_(buflen) PVOID pBuf,
-		_In_ ULONG buflen)
+		PNPCAP_FILTER_MODULE pFiltMod,
+		PUCHAR pBuf,
+		ULONG buflen)
 {
 	if (pFiltMod->EtherHeader)
 	{
@@ -382,18 +415,15 @@ NPF_Write(
 	ULONG				SendFlags = 0;
 	PNET_BUFFER_LIST	pNetBufferList = NULL;
 	ULONG				NumSends;
-	ULONG numSentPackets = 0;
 	ULONG buflen = 0;
 	PVOID pBuf = NULL;
 	NTSTATUS Status = STATUS_SUCCESS;
 	PMDL TmpMdl = NULL;
-	PMDL pSrcMdl = NULL;
+	PWRITE_IRP_CONTEXT pContext = GET_WRITE_IRP_CONTEXT(Irp);
 	BOOLEAN IrpWasPended = FALSE;
-	BOOLEAN bPendedIrpDispatched = FALSE;
+	BOOLEAN bCompleteIrp = TRUE;
 	BOOLEAN bFreeBuf = FALSE;
 	BOOLEAN bFreeMdl = FALSE;
-	BOOLEAN bFreeSrcMdl = FALSE;
-	USHORT EthType = 0;
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 	TRACE_ENTER();
@@ -458,129 +488,36 @@ NPF_Write(
 		SendFlags |= NDIS_SEND_FLAGS_CHECK_FOR_LOOPBACK;
 	}
 
-	EthType = NPF_GetIPVersion(Open->pFiltMod, pBuf, buflen);
-	pSrcMdl = Irp->MdlAddress;
-
-	// Check for 802.1q tag
+	USHORT EthType = 0;
 	NDIS_NET_BUFFER_LIST_8021Q_INFO Qinfo;
-	Qinfo.Value = 0;
-	if (Open->pFiltMod->EtherHeader
-			&& buflen >= (ETHER_HDR_LEN + VLAN_HDR_LEN)
-			&& EthType == 0x8100) {
-		// Turn it into NDIS metadata
-		PUCHAR pucBuf = ((PUCHAR)pBuf) + ETHER_HDR_LEN;
-		Qinfo.TagHeader.UserPriority = (pucBuf[0] & 0x70) >> 5;
-		Qinfo.TagHeader.CanonicalFormatId = (pucBuf[0] & 0x10) >> 4;
-		Qinfo.TagHeader.VlanId = ((pucBuf[0] & 0x0f) << 8) + pucBuf[1];
-
-		// Strip the tag:
-		// 1. Copy the Ethernet header with inner EtherType to a new buffer.
-		PUCHAR pEthHdr = NPF_AllocateZeroNonpaged(ETHER_HDR_LEN, NPF_BUFFERED_WRITE_TAG);
-		if (pEthHdr == NULL) {
-			Status = STATUS_INSUFFICIENT_RESOURCES;
-			goto NPF_Write_End;
-		}
-		bFreeBuf = TRUE;
-
-		TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pEthHdr, ETHER_HDR_LEN);
-		if (TmpMdl == NULL) {
-			ExFreePoolWithTag(pEthHdr, NPF_BUFFERED_WRITE_TAG);
-			Status = STATUS_INSUFFICIENT_RESOURCES;
-			goto NPF_Write_End;
-		}
+	ULONG pktlen = 0;
+	TmpMdl = NPF_BufferToMdl(Open->pFiltMod, pBuf, buflen, Irp->MdlAddress,
+			&pktlen, &Qinfo, &EthType, &bFreeBuf);
+	if (TmpMdl == NULL) {
+		Status = STATUS_INSUFFICIENT_RESOURCES;
+		goto NPF_Write_End;
+	}
+	if (TmpMdl != Irp->MdlAddress) {
 		bFreeMdl = TRUE;
-
-		RtlCopyMemory(pEthHdr, pBuf, ETHER_ADDR_LEN * 2);
-		pEthHdr[ETHER_ADDR_LEN * 2] = pucBuf[2];
-		pEthHdr[ETHER_ADDR_LEN * 2 + 1] = pucBuf[3];
-
-		// 2. Map the remainder of the packet to a new MDL
-		TmpMdl->Next = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, buflen);
-		if (TmpMdl->Next == NULL)
-		{
-			Status = STATUS_INSUFFICIENT_RESOURCES;
-			goto NPF_Write_End;
-		}
-		IoBuildPartialMdl(TmpMdl, TmpMdl->Next,
-				(PUCHAR)pBuf + (ETHER_HDR_LEN + VLAN_HDR_LEN),
-				buflen - (ETHER_HDR_LEN + VLAN_HDR_LEN));
-
-		// 3. Get the new, real EthType
-		EthType = ((USHORT)pucBuf[2] << 8) + pucBuf[3];
-
-		// 4. Use this MDL instead of Irp->MdlAddress going forward
-		pSrcMdl = TmpMdl;
-		bFreeSrcMdl = TRUE;
 	}
 
-	numSentPackets = 0;
+	// If bFreeBuf, then also bFreeMdl.
+	NT_ASSERT_ASSUME(bFreeMdl || !bFreeBuf);
 
-	while (numSentPackets < NumSends)
+	pContext->ulRefcount = NumSends;
+
+	// Pend the IRP
+	IoMarkIrpPending(Irp);
+	IrpWasPended = TRUE;
+	// Now we shouldn't complete the IRP unless we're the one to decrement
+	// ulRefcount to 0.
+	bCompleteIrp = FALSE;
+
+	while (NumSends > 0)
 	{
-		if (NumSends - numSentPackets == 1) 
-		{
-			// Last packet; use the IRP's buffer and pend it.
-			ULONG mdllen = MmGetMdlByteCount(pSrcMdl);
-			// As a workaround for a bug in bthpan.sys, we need to define
-			// separate MDLs for the Eth header and payload. See #708
-			if (Open->pFiltMod->SplitMdls
-					&& buflen > ETHER_HDR_LEN
-					&& mdllen > ETHER_HDR_LEN
-					// We only need to do this if it hasn't
-					// been done earlier as part of the
-					// VLAN header extraction, which we
-					// test via bFreeSrcMdl.
-					&& NT_VERIFY(!bFreeSrcMdl)) {
-				// Assert that we're working directly with the
-				// original MDL, so it's okay to use pBuf here.
-				NT_ASSERT(pSrcMdl == Irp->MdlAddress);
-				TmpMdl = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, ETHER_HDR_LEN);
-				if (TmpMdl == NULL)
-				{
-					Status = STATUS_INSUFFICIENT_RESOURCES;
-					break;
-				}
-				bFreeMdl = TRUE;
-
-				TmpMdl->Next = NdisAllocateMdl(Open->pFiltMod->AdapterHandle, pBuf, mdllen);
-				if (TmpMdl->Next == NULL)
-				{
-					Status = STATUS_INSUFFICIENT_RESOURCES;
-					break;
-				}
-				// The MDL is aliased because it is accessed via TmpMdl->Next.
-				// As long as TmpMdl doesn't leak, this is not a leak.
-				NPF_AnalysisAssumeAliased(TmpMdl->Next);
-				IoBuildPartialMdl(pSrcMdl, TmpMdl->Next, (PUCHAR)pBuf + ETHER_HDR_LEN, mdllen - ETHER_HDR_LEN);
-			}
-			else {
-				TmpMdl = pSrcMdl;
-			}
-			IoMarkIrpPending(Irp);
-			IrpWasPended = TRUE;
-			// If we need to free the MDL and buffer we allocated
-			// when we stripped the VLAN header, make sure we do that.
-			if (bFreeSrcMdl) {
-				bFreeBuf = TRUE;
-				bFreeMdl = TRUE;
-			}
-		}
-		else
-		{
-			// We will need to make a copy of the buffer for each additional send
-			TmpMdl = NPF_CloneMdlToMdl(Open->pFiltMod, pSrcMdl, buflen);
-			if (TmpMdl == NULL)
-			{
-				Status = STATUS_INSUFFICIENT_RESOURCES;
-				break;
-			}
-			bFreeBuf = TRUE;
-			bFreeMdl = TRUE;
-		}
-
 		Status = NPF_AllocateNBL(Open->pFiltMod,
 				TmpMdl,
-				buflen,
+				pktlen,
 				&pNetBufferList);
 
 		if (!NT_SUCCESS(Status))
@@ -588,8 +525,6 @@ NPF_Write(
 			// Alloc failure, abandon ship
 			break;
 		}
-		// Otherwise, TmpMdl is aliased via pNetBufferList
-		TmpMdl = NULL;
 
 		// Mark packet as necessary
 		if (EthType == ETHERTYPE_IP)
@@ -603,26 +538,16 @@ NPF_Write(
 		NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(EthType);
 		NET_BUFFER_LIST_INFO(pNetBufferList, Ieee8021QNetBufferListInfo) = Qinfo.Value;
 
+		RESERVED(pNetBufferList)->pIrp = Irp;
 		RESERVED(pNetBufferList)->pState = NULL;
 		RESERVED(pNetBufferList)->FreeBufAfterWrite = bFreeBuf;
 		RESERVED(pNetBufferList)->FreeMdlAfterWrite = bFreeMdl;
-		if (IrpWasPended)
-		{
-			// This is the only NBL that uses the IRP's buffer. Let SendComplete know it should complete the IRP, too.
-			RESERVED(pNetBufferList)->pIrp = Irp;
-		}
-		else
-		{
-			// This NBL uses our own buffer copy. SendComplete should free it, but not complete the IRP until we're done sending.
-			RESERVED(pNetBufferList)->pIrp = NULL;
-		}
+		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 
 		//receive the packets before sending them
 
 		// Used to avoid capturing loopback injected traffic here because it's captured later, but now I do it here and avoid capturing it later.
 		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
-
-		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 
 		//
 		//  Call the MAC
@@ -669,60 +594,69 @@ NPF_Write(
 			}
 
 		pNetBufferList = NULL;
-		numSentPackets ++;
-
-		// SendComplete will handle freeing these now
-		bFreeMdl = FALSE;
-		bFreeBuf = FALSE;
-
-		// At this point, if the IRP was marked pending, SendComplete
-		// will be called and will complete the IRP, so we need to
-		// return STATUS_PENDING and not complete it ourselves.
-		bPendedIrpDispatched = IrpWasPended;
+		NumSends--;
 	}
 
 
 NPF_Write_End:
-	if (!NT_SUCCESS(Status))
+	// If Status is success, all intended sends have been initiated and
+	// SendCompleteEx can be trusted to clean up.
+	if (Open && !NT_SUCCESS(Status))
 	{
-		WARNING_DBG("NBL %p failed: %#08x; IrpWasPended = %u\n", pNetBufferList, Status, IrpWasPended);
+		WARNING_DBG("NBL %p failed: %#08x\n", pNetBufferList, Status);
 		// Failed somehow. Clean up.
-		// If pNetBufferList is not NULL, we need to free it, which will also free TmpMdl
+		// If we allocated a NBL and failed to send it, free it.
 		if (pNetBufferList)
 		{
-			NPF_FreePackets(Open->pFiltMod, pNetBufferList);
+			NT_ASSERT(IrpWasPended);
+			NT_ASSERT(NumSends > 0);
+			// This call might complete the IRP, but we don't care.
+			// Treat it as though SendCompleteEx completed it.
+			NPF_FreePackets(Open->pFiltMod, pNetBufferList, NPF_IRQL_UNKNOWN);
+			NumSends--;
 		}
-		// Otherwise, clean up TmpMdl directly
-		else if (TmpMdl && bFreeMdl)
-		{
-			// If TmpMdl is an alias of pSrcMdl,
-			if (bFreeSrcMdl && TmpMdl == pSrcMdl) {
-				// don't free pSrcMdl below, and
-				bFreeSrcMdl = FALSE;
-				// Make sure we free the pEthHdr buffer, too.
-				bFreeBuf = TRUE;
+		// If the IRP was pended, only the one who decrements ulRefcount
+		// to 0 can free the MDL and buffer.
+		if (IrpWasPended) {
+			// If there are any sends left after an error,
+			// we need to remove them from ulRefcount
+			while (NumSends > 0) {
+				NumSends--;
+				if (0 == NpfInterlockedDecrement(&pContext->ulRefcount))
+				{
+					// This was the last reference. It's our job to free it!
+					NT_ASSERT(TmpMdl != NULL);
+					if (bFreeMdl)
+					{
+						NPF_FreeMdlAndBuffer(TmpMdl, bFreeBuf);
+					}
+					// Make sure we don't free it again later
+					bFreeBuf = FALSE;
+					bFreeMdl = FALSE;
+					// SendCompleteEx will not complete this IRP
+					bCompleteIrp = TRUE;
+					NT_ASSERT(NumSends == 0);
+					break;
+				}
 			}
-			NPF_FreeMdlAndBuffer(TmpMdl, bFreeBuf);
 		}
-		// If we made a copy of the IRP data, free that
-		if (bFreeSrcMdl) {
-			NPF_FreeMdlAndBuffer(pSrcMdl, TRUE);
-		}
-
-		if (Open)
+		// If the IRP wasn't pended, SendCompleteEx will never be
+		// called, so do our own cleanup.
+		else if (bFreeMdl)
 		{
-			NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
-		}
-		// If we already sent the NBL with pIrp set, SendComplete will
-		// complete the IRP. Only if we haven't yet sent the NBL should
-		// we complete the IRP with the error status.
-		if (!bPendedIrpDispatched) {
-			Irp->IoStatus.Status = Status;
-			Irp->IoStatus.Information = numSentPackets > 0 ? buflen : 0;
-			IoCompleteRequest(Irp, IO_NO_INCREMENT);
+			NPF_FreeMdlAndBuffer(TmpMdl, bFreeBuf);
+			NT_ASSERT(bCompleteIrp);
 		}
 	}
 
+	if (bCompleteIrp) {
+		if (Open) {
+			NPF_StopUsingOpenInstance(Open, OpenRunning, NPF_IRQL_UNKNOWN);
+		}
+		Irp->IoStatus.Status = Status;
+		Irp->IoStatus.Information = NT_SUCCESS(Status) ? buflen : 0;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
+	}
 	TRACE_EXIT();
 	// We have to return STATUS_PENDING if we pended the IRP, even if we
 	// also completed it due to a later error.
@@ -837,11 +771,13 @@ NTSTATUS NPF_BufferedWrite(
 			break;
 		}
 
-		USHORT EthType = NPF_GetIPVersion(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen);
-
-		/* Copy packet data to non-paged memory, otherwise we induce
-		 * page faults in NIC drivers: http://issues.nmap.org/1398 */
-		TmpMdl = NPF_CloneBufferToMdl(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen);
+		USHORT EthType = 0;
+		NDIS_NET_BUFFER_LIST_8021Q_INFO Qinfo;
+		ULONG pktlen = 0;
+		BOOLEAN bFreeBuf = FALSE;
+		TmpMdl = NPF_BufferToMdl(Open->pFiltMod, UserBuff + ulDataOffset, pHdr->caplen,
+				NULL, // No existing MDL because METHOD_BUFFERED
+				&pktlen, &Qinfo, &EthType, &bFreeBuf);
 
 		if (TmpMdl == NULL)
 		{
@@ -855,7 +791,7 @@ NTSTATUS NPF_BufferedWrite(
 		// Allocate a packet from our free list
 		Status = NPF_AllocateNBL(Open->pFiltMod,
 				TmpMdl,
-				pHdr->caplen,
+				pktlen,
 				&pNetBufferList);
 		if (!NT_SUCCESS(Status))
 		{
@@ -863,7 +799,7 @@ NTSTATUS NPF_BufferedWrite(
 			
 			INFO_DBG("NPF_BufferedWrite: no more free packets, returning.\n");
 
-			NPF_FreeMdlAndBuffer(TmpMdl, TRUE);
+			NPF_FreeMdlAndBuffer(TmpMdl, bFreeBuf);
 
 			break;
 		}
@@ -879,14 +815,17 @@ NTSTATUS NPF_BufferedWrite(
 			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_IPV6);
 		}
 		NET_BUFFER_LIST_INFO(pNetBufferList, NetBufferListFrameType) = (PVOID)RtlUshortByteSwap(EthType);
+		NET_BUFFER_LIST_INFO(pNetBufferList, Ieee8021QNetBufferListInfo) = Qinfo.Value;
 
 		// The packet has a buffer that needs to be freed after every single write
-		RESERVED(pNetBufferList)->FreeBufAfterWrite = TRUE;
 		RESERVED(pNetBufferList)->pIrp = NULL;
 		RESERVED(pNetBufferList)->pState = pState;
+		RESERVED(pNetBufferList)->FreeBufAfterWrite = bFreeBuf;
+		RESERVED(pNetBufferList)->FreeMdlAfterWrite = TRUE;
 		pNetBufferList->SourceHandle = Open->pFiltMod->AdapterHandle;
 
-		TmpMdl->Next = NULL;
+		NpfInterlockedIncrement(&pState->PacketsPending);
+		NdisResetEvent(&pState->WriteCompleteEvent);
 
 		if (StartTicks.QuadPart == 0)
 		{
@@ -908,7 +847,7 @@ NTSTATUS NPF_BufferedWrite(
 				WARNING_DBG("timestamp %08x.%08x out of order by %lld usecs!\n",
 						pHdr->ts.tv_sec, pHdr->ts.tv_usec, prev_usec_diff - usec_diff);
 				if (prev_usec_diff - usec_diff > 1000) {
-					NPF_FreePackets(Open->pFiltMod, pNetBufferList);
+					NPF_FreePackets(Open->pFiltMod, pNetBufferList, NPF_IRQL_UNKNOWN);
 					Status = RPC_NT_INVALID_TIMEOUT;
 					break;
 				}
@@ -924,7 +863,7 @@ NTSTATUS NPF_BufferedWrite(
 				{
 					INFO_DBG("timestamp elapsed, returning.\n");
 
-					NPF_FreePackets(Open->pFiltMod, pNetBufferList);
+					NPF_FreePackets(Open->pFiltMod, pNetBufferList, NPF_IRQL_UNKNOWN);
 					break;
 				}
 
@@ -958,8 +897,6 @@ NTSTATUS NPF_BufferedWrite(
 		//receive the packets before sending them
 		NPF_DoTap(Open->pFiltMod, pNetBufferList, Open, NPF_IRQL_UNKNOWN);
 
-		NpfInterlockedIncrement(&pState->PacketsPending);
-		NdisResetEvent(&pState->WriteCompleteEvent);
 		//
 		// Call the MAC
 		//
@@ -972,8 +909,7 @@ NTSTATUS NPF_BufferedWrite(
 				pNetBufferList);
 			if (!NT_SUCCESS(Status))
 			{
-				NpfInterlockedDecrement(&pState->PacketsPending);
-				NPF_FreePackets(Open->pFiltMod, pNetBufferList);
+				NPF_FreePackets(Open->pFiltMod, pNetBufferList, NPF_IRQL_UNKNOWN);
 				break;
 			}
 		}
@@ -1029,7 +965,8 @@ _Use_decl_annotations_
 VOID
 NPF_FreePackets(
 	PNPCAP_FILTER_MODULE pFiltMod,
-	PNET_BUFFER_LIST    NetBufferLists
+	PNET_BUFFER_LIST    pNetBufList,
+	BOOLEAN AtDispatchLevel
 	)
 	/*++
 
@@ -1047,25 +984,57 @@ NPF_FreePackets(
 
 	--*/
 {
-	PNET_BUFFER_LIST    pNetBufList = NetBufferLists;
 	PNET_BUFFER         Currbuff;
+	PIRP pIrp = RESERVED(pNetBufList)->pIrp;
+	BOOLEAN bDoCleanup = TRUE;
 
 /*	TRACE_ENTER();*/
 
-	BOOLEAN FreeBufAfterWrite = RESERVED(pNetBufList)->FreeBufAfterWrite;
-	BOOLEAN FreeMdlAfterWrite = RESERVED(pNetBufList)->FreeMdlAfterWrite;
+	INFO_DBG("NBL %p complete: Irp = %p\n", pNBL, pIrp);
 
-	if (FreeBufAfterWrite || FreeMdlAfterWrite)
+	if (pIrp != NULL) {
+		PWRITE_IRP_CONTEXT pContext = GET_WRITE_IRP_CONTEXT(pIrp);
+		// Only do cleanup if we remove the last reference.
+		if (0 == NpfInterlockedDecrement(&pContext->ulRefcount)) {
+			PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(pIrp);
+			POPEN_INSTANCE pOpen = IrpSp->FileObject->FsContext;
+			NT_ASSERT(pOpen->pFiltMod == pFiltMod);
+			bDoCleanup = TRUE;
+
+			NPF_StopUsingOpenInstance(pOpen, OpenRunning, AtDispatchLevel);
+
+			NDIS_STATUS Status = NET_BUFFER_LIST_STATUS(pNetBufList);
+			pIrp->IoStatus.Status = Status;
+			if (NDIS_STATUS_SUCCESS == Status)
+			{
+				pIrp->IoStatus.Information = IrpSp->Parameters.Write.Length;
+			}
+			else
+			{
+				WARNING_DBG("NBL status = %#08x\n", Status);
+				pIrp->IoStatus.Information = 0;
+			}
+			IoCompleteRequest(pIrp, IO_NO_INCREMENT);
+			INFO_DBG("Write complete\n");
+		}
+	}
+
+	PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNBL)->pState;
+	if (pState != NULL)
 	{
-		//
-		// Packet sent by NPF_BufferedWrite()
-		//
+		if (0 == NpfInterlockedDecrement(&pState->PacketsPending))
+		{
+			NdisSetEvent(&pState->WriteCompleteEvent);
+		}
+	}
 
+	if (bDoCleanup && RESERVED(pNetBufList)->FreeMdlAfterWrite)
+	{
 		//Free the NBL allocate by myself
 		Currbuff = NET_BUFFER_LIST_FIRST_NB(pNetBufList);
 		while (Currbuff)
 		{
-			NPF_FreeMdlAndBuffer(NET_BUFFER_FIRST_MDL(Currbuff), FreeBufAfterWrite);
+			NPF_FreeMdlAndBuffer(NET_BUFFER_FIRST_MDL(Currbuff), RESERVED(pNetBufList)->FreeBufAfterWrite);
 			Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
 		}
 	}
@@ -1159,40 +1128,8 @@ Return Value:
 		}
 		NET_BUFFER_LIST_NEXT_NBL(pNBL) = NULL;
 
-		PIRP pIrp = RESERVED(pNBL)->pIrp;
-		PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNBL)->pState;
-		INFO_DBG("NBL %p complete: pIrp = %p, pState = %p\n", pNBL, pIrp, pState);
-		if (pIrp != NULL)
-		{
-			PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(pIrp);
-			POPEN_INSTANCE pOpen = IrpSp->FileObject->FsContext;
-			NT_ASSERT(pOpen->pFiltMod == pFiltMod);
 
-			NPF_StopUsingOpenInstance(pOpen, OpenRunning, bAtDispatchLevel);
-
-			NDIS_STATUS Status = NET_BUFFER_LIST_STATUS(pNBL);
-			pIrp->IoStatus.Status = Status;
-			if (NDIS_STATUS_SUCCESS == Status)
-			{
-				pIrp->IoStatus.Information = IrpSp->Parameters.Write.Length;
-			}
-			else
-			{
-				WARNING_DBG("NBL status = %#08x\n", Status);
-				pIrp->IoStatus.Information = 0;
-			}
-			IoCompleteRequest(pIrp, IO_NO_INCREMENT);
-		}
-		if (pState != NULL)
-		{
-			if (0 == NpfInterlockedDecrement(&pState->PacketsPending))
-			{
-				INFO_DBG("Buffered Write complete\n");
-				NdisSetEvent(&pState->WriteCompleteEvent);
-			}
-		}
-
-		NPF_FreePackets(pFiltMod, pNBL);
+		NPF_FreePackets(pFiltMod, pNBL, bAtDispatchLevel);
 	}
 
 	// Send complete any NBLS that are left (didn't originate with us)
