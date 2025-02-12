@@ -990,7 +990,7 @@ NPF_FreePackets(
 
 /*	TRACE_ENTER();*/
 
-	INFO_DBG("NBL %p complete: Irp = %p\n", pNBL, pIrp);
+	INFO_DBG("NBL %p complete: Irp = %p\n", pNetBufList, pIrp);
 
 	if (pIrp != NULL) {
 		PWRITE_IRP_CONTEXT pContext = GET_WRITE_IRP_CONTEXT(pIrp);
