@@ -679,9 +679,15 @@ NPF_HandleVlanHeader(
 	PNPF_NB_COPIES pNBCopy = pCapData->pNBCopy;
 	PNPF_SRC_NB pSrcNB = pCapData->pSrcNB;
 	const NDIS_NET_BUFFER_LIST_8021Q_INFO *pQinfo = &pNBCopy->pNBLCopy->qInfo;
-	// If the adapter doesn't use Ethernet headers or there's no VLAN metadata,
-	// we don't need to do anything.
-	if (!pFiltMod->EtherHeader || pQinfo->Value == 0)
+	// Reasons to quit early:
+	if (
+		// the adapter doesn't use Ethernet headers
+		!pFiltMod->EtherHeader
+		// there's no VLAN metadata
+		|| pQinfo->Value == 0
+		// there's less than an Ethernet header captured
+		|| pNBCopy->ulSize < ETHER_HDR_LEN
+	   )
 	{
 		return;
 	}
@@ -693,7 +699,7 @@ NPF_HandleVlanHeader(
 		// If it's not already there, add one.
 		if (pVlan->tpid != VLAN_TPID_LITTLEENDIAN) {
 			// Shift the packet data down 4 bytes
-			RtlMoveMemory(pNBCopy->Buffer + FIELD_OFFSET(ETHER_VLAN_HEADER, ether_type),
+			RtlMoveMemory(pNBCopy->Buffer + ETHERTYPE_OFFSET + VLAN_HDR_LEN,
 					pNBCopy->Buffer + ETHERTYPE_OFFSET,
 					pNBCopy->ulSize - ETHERTYPE_OFFSET);
 			// Add the VLAN TPID
