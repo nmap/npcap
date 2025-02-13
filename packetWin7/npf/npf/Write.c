@@ -168,7 +168,6 @@ NPF_BufferToMdl(
 {
 	BOOLEAN bSuccess = FALSE;
 	PMDL TmpMdl = NULL;
-	PUCHAR pPayload = pBuf + ETHER_HDR_LEN;
 	ULONG ulPktlen = ulLen;
 	ULONG ulRemainder = ulLen;
 	PUCHAR pEthHdr = NULL;
@@ -185,10 +184,11 @@ NPF_BufferToMdl(
 		if (pFiltMod->EtherHeader
 				&& ulLen >= (ETHER_HDR_LEN + VLAN_HDR_LEN)
 				&& *pEthType == 0x8100) {
+			PETHER_VLAN_HEADER pHeader = (PETHER_VLAN_HEADER) pBuf;
 			// Turn it into NDIS metadata
-			pQinfo->TagHeader.UserPriority = (pPayload[0] & 0x70) >> 5;
-			pQinfo->TagHeader.CanonicalFormatId = (pPayload[0] & 0x10) >> 4;
-			pQinfo->TagHeader.VlanId = ((pPayload[0] & 0x0f) << 8) + pPayload[1];
+			pQinfo->TagHeader.UserPriority = pHeader->vlan.pcp;
+			pQinfo->TagHeader.CanonicalFormatId = pHeader->vlan.dei;
+			pQinfo->TagHeader.VlanId = RtlUshortByteSwap(pHeader->vlan.vid_BIGENDIAN);
 
 			// Strip the tag:
 			// 1. Copy the Ethernet header with inner EtherType to a new buffer.
@@ -204,16 +204,15 @@ NPF_BufferToMdl(
 			MmBuildMdlForNonPagedPool(TmpMdl);
 
 			RtlCopyMemory(pEthHdr, pBuf, ETHER_ADDR_LEN * 2);
-			pEthHdr[ETHER_ADDR_LEN * 2] = pPayload[2];
-			pEthHdr[ETHER_ADDR_LEN * 2 + 1] = pPayload[3];
+			((PETHER_HEADER)pEthHdr)->ether_type = pHeader->ether_type;
 
 			// 2. Map the remainder of the packet to a new MDL
 			ulPktlen -= VLAN_HDR_LEN;
-			pVA += (ETHER_HDR_LEN + VLAN_HDR_LEN);
-			ulRemainder -= (ETHER_HDR_LEN + VLAN_HDR_LEN);
+			pVA += sizeof(ETHER_VLAN_HEADER);
+			ulRemainder -= sizeof(ETHER_VLAN_HEADER);
 
 			// 3. Get the new, real EthType
-			*pEthType = ((USHORT)pPayload[2] << 8) + pPayload[3];
+			*pEthType = RtlUshortByteSwap(pHeader->ether_type);
 		}
 		else if (pFiltMod->SplitMdls && ulLen > ETHER_HDR_LEN) {
 			// As a workaround for a bug in bthpan.sys, we need to define

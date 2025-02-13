@@ -689,21 +689,19 @@ NPF_HandleVlanHeader(
 	// Check if we know it's already there.
 	if (!pSrcNB->bVlanHeaderInPacket) {
 #define ETHERTYPE_OFFSET FIELD_OFFSET(ETHER_HEADER, ether_type)
-		const PUCHAR pRemainder = pNBCopy->Buffer + ETHERTYPE_OFFSET;
+		PVLAN_HEADER pVlan = (PVLAN_HEADER)(pNBCopy->Buffer + ETHERTYPE_OFFSET);
 		// If it's not already there, add one.
-		if (RtlCompareMemory(pRemainder, "\x81\x00", 2) < 2) {
+		if (pVlan->tpid != VLAN_TPID_LITTLEENDIAN) {
 			// Shift the packet data down 4 bytes
-			RtlMoveMemory(pRemainder + VLAN_HDR_LEN,
-					pRemainder,
+			RtlMoveMemory(pNBCopy->Buffer + FIELD_OFFSET(ETHER_VLAN_HEADER, ether_type),
+					pNBCopy->Buffer + ETHERTYPE_OFFSET,
 					pNBCopy->ulSize - ETHERTYPE_OFFSET);
 			// Add the VLAN TPID
-			pRemainder[0] = '\x81';
-			pRemainder[1] = '\x00';
+			pVlan->tpid = VLAN_TPID_LITTLEENDIAN;
 			// Add the VLAN TCI
-			pRemainder[2] = (pQinfo->TagHeader.UserPriority & 0x7) << 5 |
-				(pQinfo->TagHeader.CanonicalFormatId & 0x1) << 4 |
-				(pQinfo->TagHeader.VlanId & 0xf00) >> 8;
-			pRemainder[3] = (pQinfo->TagHeader.VlanId & 0xff);
+			pVlan->pcp = pQinfo->TagHeader.UserPriority;
+			pVlan->dei = pQinfo->TagHeader.CanonicalFormatId;
+			pVlan->vid_BIGENDIAN = RtlUshortByteSwap(pQinfo->TagHeader.VlanId);
 
 			// Update accounting for the new packet length
 			pNBCopy->ulSize += VLAN_HDR_LEN;

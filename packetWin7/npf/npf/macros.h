@@ -112,6 +112,23 @@
 /* 802.1q header is 4 bytes inserted after the Ethernet destination (6 bytes)
  * and source (6 bytes) */
 #define VLAN_HDR_LEN 4
+// Same as RtlUshortByteSwap(ETHERTYPE_VLAN)
+#define VLAN_TPID_LITTLEENDIAN 0x0081
+
+typedef struct _VLAN_HEADER
+{
+	USHORT tpid;
+	union {
+		USHORT tci;
+		struct {
+			/* Windows is little-endian, so these are reverse order: */
+			USHORT vid_BIGENDIAN:12; // This one needs a byte swap.
+			USHORT dei:1;
+			USHORT pcp:3;
+		};
+	};
+} VLAN_HEADER, *PVLAN_HEADER;
+C_ASSERT(sizeof(VLAN_HEADER) == VLAN_HDR_LEN);
 
 /*
 * Structure of a 10Mb/s Ethernet header.
@@ -122,6 +139,17 @@ typedef struct _ETHER_HEADER
 	UCHAR	ether_shost[ETHER_ADDR_LEN];
 	USHORT	ether_type;
 } ETHER_HEADER, *PETHER_HEADER;
+C_ASSERT(sizeof(ETHER_HEADER) == ETHER_HDR_LEN);
+
+/* Convenience struct for accessing fields in a 802.1q-tagged Ethernet header
+ */
+typedef struct _ETHER_VLAN_HEADER
+{
+	UCHAR ether_dhost[ETHER_ADDR_LEN];
+	UCHAR ether_shost[ETHER_ADDR_LEN];
+	VLAN_HEADER vlan;
+	USHORT ether_type;
+} ETHER_VLAN_HEADER, *PETHER_VLAN_HEADER;
 
 /*
 * Types in an Ethernet (MAC) header.
