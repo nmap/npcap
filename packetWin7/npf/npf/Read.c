@@ -699,8 +699,8 @@ NPF_HandleVlanHeader(
 			// Add the VLAN TPID
 			pVlan->tpid = VLAN_TPID_LITTLEENDIAN;
 			// Add the VLAN TCI
-			pVlan->pcp = pQinfo->TagHeader.UserPriority;
-			pVlan->dei = pQinfo->TagHeader.CanonicalFormatId;
+			pVlan->pcp = (USHORT)pQinfo->TagHeader.UserPriority;
+			pVlan->dei = (USHORT)pQinfo->TagHeader.CanonicalFormatId;
 			pVlan->vid_BIGENDIAN = RtlUshortByteSwap(pQinfo->TagHeader.VlanId);
 
 			// Update accounting for the new packet length
