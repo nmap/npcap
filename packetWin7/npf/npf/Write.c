@@ -166,116 +166,119 @@ NPF_BufferToMdl(
 	_Out_ PBOOLEAN pbFreeBuf
 	)
 {
+	BOOLEAN bSuccess = FALSE;
 	PMDL TmpMdl = NULL;
 	PUCHAR pPayload = pBuf + ETHER_HDR_LEN;
 	ULONG ulPktlen = ulLen;
+	ULONG ulRemainder = ulLen;
+	PUCHAR pEthHdr = NULL;
+	PUCHAR pVA = pMdlOrig ? MmGetMdlVirtualAddress(pMdlOrig) : pBuf;
 
+	*pPktlen = ulLen;
 	pQinfo->Value = 0;
 	*pEthType = NPF_GetIPVersion(pFiltMod, pBuf, ulLen);
 	*pbFreeBuf = FALSE;
 
-	// Check for VLAN header. If it's there, we'll strip it and end up
-	// with Ethernet header in one MDL and payload in the next one.
-	if (pFiltMod->EtherHeader
-			&& ulLen >= (ETHER_HDR_LEN + VLAN_HDR_LEN)
-			&& *pEthType == 0x8100) {
-		// Turn it into NDIS metadata
-		pQinfo->TagHeader.UserPriority = (pPayload[0] & 0x70) >> 5;
-		pQinfo->TagHeader.CanonicalFormatId = (pPayload[0] & 0x10) >> 4;
-		pQinfo->TagHeader.VlanId = ((pPayload[0] & 0x0f) << 8) + pPayload[1];
+	do {
+		// Check for VLAN header. If it's there, we'll strip it and end up
+		// with Ethernet header in one MDL and payload in the next one.
+		if (pFiltMod->EtherHeader
+				&& ulLen >= (ETHER_HDR_LEN + VLAN_HDR_LEN)
+				&& *pEthType == 0x8100) {
+			// Turn it into NDIS metadata
+			pQinfo->TagHeader.UserPriority = (pPayload[0] & 0x70) >> 5;
+			pQinfo->TagHeader.CanonicalFormatId = (pPayload[0] & 0x10) >> 4;
+			pQinfo->TagHeader.VlanId = ((pPayload[0] & 0x0f) << 8) + pPayload[1];
 
-		// Strip the tag:
-		// 1. Copy the Ethernet header with inner EtherType to a new buffer.
-		PUCHAR pEthHdr = NPF_AllocateZeroNonpaged(ETHER_HDR_LEN, NPF_BUFFERED_WRITE_TAG);
-		if (pEthHdr == NULL) {
-			return NULL;
-		}
+			// Strip the tag:
+			// 1. Copy the Ethernet header with inner EtherType to a new buffer.
+			pEthHdr = NPF_AllocateZeroNonpaged(ETHER_HDR_LEN, NPF_BUFFERED_WRITE_TAG);
+			if (pEthHdr == NULL) {
+				break;
+			}
 
-		TmpMdl = IoAllocateMdl(pEthHdr, ETHER_HDR_LEN, FALSE, FALSE, NULL);
-		if (TmpMdl == NULL) {
-			ExFreePoolWithTag(pEthHdr, NPF_BUFFERED_WRITE_TAG);
-			return NULL;
-		}
-		MmBuildMdlForNonPagedPool(TmpMdl);
-
-		RtlCopyMemory(pEthHdr, pBuf, ETHER_ADDR_LEN * 2);
-		pEthHdr[ETHER_ADDR_LEN * 2] = pPayload[2];
-		pEthHdr[ETHER_ADDR_LEN * 2 + 1] = pPayload[3];
-
-		// 2. Map the remainder of the packet to a new MDL
-		ulPktlen -= VLAN_HDR_LEN;
-		TmpMdl->Next = IoAllocateMdl(
-				pPayload + VLAN_HDR_LEN,
-				ulPktlen - ETHER_HDR_LEN,
-				FALSE, FALSE, NULL);
-		if (TmpMdl->Next == NULL)
-		{
-			IoFreeMdl(TmpMdl);
-			ExFreePoolWithTag(pEthHdr, NPF_BUFFERED_WRITE_TAG);
-			return NULL;
-		}
-		if (pMdlOrig == NULL) {
-			// Easy case: just make a new MDL for the remainder of the buffer
-			MmBuildMdlForNonPagedPool(TmpMdl->Next);
-		}
-		else {
-			// Make the remainder a partial MDL. The caller will be
-			// responsible for freeing the original one.
-			IoBuildPartialMdl(pMdlOrig, TmpMdl->Next,
-					pPayload + VLAN_HDR_LEN,
-					ulPktlen - ETHER_HDR_LEN);
-		}
-
-		// 3. Get the new, real EthType
-		*pEthType = ((USHORT)pPayload[2] << 8) + pPayload[3];
-
-		// 4. Account for allocated buffer
-		*pbFreeBuf = TRUE;
-	}
-	else if (pFiltMod->SplitMdls && ulLen > ETHER_HDR_LEN) {
-		// As a workaround for a bug in bthpan.sys, we need to define
-		// separate MDLs for the Eth header and payload. See #708
-		TmpMdl = IoAllocateMdl(pBuf, ETHER_HDR_LEN, FALSE, FALSE, NULL);
-		if (TmpMdl == NULL)
-		{
-			return NULL;
-		}
-		MmBuildMdlForNonPagedPool(TmpMdl);
-
-		TmpMdl->Next = IoAllocateMdl(pPayload,
-				ulLen - ETHER_HDR_LEN, FALSE, FALSE, NULL);
-		if (TmpMdl->Next == NULL)
-		{
-			IoFreeMdl(TmpMdl);
-			return NULL;
-		}
-
-		if (pMdlOrig == NULL) {
-			// Easy case: just make a new MDL for the remainder of the buffer
-			MmBuildMdlForNonPagedPool(TmpMdl->Next);
-		}
-		else {
-			// Make the remainder a partial MDL. The caller will be
-			// responsible for freeing the original one.
-			IoBuildPartialMdl(pMdlOrig, TmpMdl->Next,
-					pPayload,
-					ulLen - ETHER_HDR_LEN);
-		}
-	}
-	else {
-		// Nothing special to be done.
-		// Return the original MDL if there is one
-		TmpMdl = pMdlOrig;
-		// Otherwise, allocate and map a new one.
-		if (pMdlOrig == NULL) {
-			TmpMdl = IoAllocateMdl(pBuf, ulLen, FALSE, FALSE, NULL);
+			TmpMdl = IoAllocateMdl(pEthHdr, ETHER_HDR_LEN, FALSE, FALSE, NULL);
 			if (TmpMdl == NULL) {
-				return NULL;
+				break;
 			}
 			MmBuildMdlForNonPagedPool(TmpMdl);
+
+			RtlCopyMemory(pEthHdr, pBuf, ETHER_ADDR_LEN * 2);
+			pEthHdr[ETHER_ADDR_LEN * 2] = pPayload[2];
+			pEthHdr[ETHER_ADDR_LEN * 2 + 1] = pPayload[3];
+
+			// 2. Map the remainder of the packet to a new MDL
+			ulPktlen -= VLAN_HDR_LEN;
+			pVA += (ETHER_HDR_LEN + VLAN_HDR_LEN);
+			ulRemainder -= (ETHER_HDR_LEN + VLAN_HDR_LEN);
+
+			// 3. Get the new, real EthType
+			*pEthType = ((USHORT)pPayload[2] << 8) + pPayload[3];
 		}
+		else if (pFiltMod->SplitMdls && ulLen > ETHER_HDR_LEN) {
+			// As a workaround for a bug in bthpan.sys, we need to define
+			// separate MDLs for the Eth header and payload. See #708
+			TmpMdl = IoAllocateMdl(pVA, ETHER_HDR_LEN, FALSE, FALSE, NULL);
+			if (TmpMdl == NULL)
+			{
+				break;
+			}
+			if (pMdlOrig == NULL) {
+				MmBuildMdlForNonPagedPool(TmpMdl);
+			}
+			else {
+				IoBuildPartialMdl(pMdlOrig, TmpMdl, pVA, ETHER_HDR_LEN);
+			}
+
+			pVA += ETHER_HDR_LEN;
+			ulRemainder -= ETHER_HDR_LEN;
+		}
+
+		// In both these cases we need to make a new MDL:
+		if (TmpMdl || pMdlOrig == NULL) {
+			PMDL NewMdl = IoAllocateMdl(pVA, ulRemainder,
+					FALSE, FALSE, NULL);
+			if (NewMdl == NULL)
+			{
+				break;
+			}
+
+			if (pMdlOrig == NULL) {
+				// Easy case: just make a new MDL for the remainder of the buffer
+				MmBuildMdlForNonPagedPool(NewMdl);
+				if (TmpMdl) {
+					TmpMdl->Next = NewMdl;
+				}
+				else {
+					TmpMdl = NewMdl;
+				}
+			}
+			else {
+				// Make the remainder a partial MDL. The caller will be
+				// responsible for freeing the original one.
+				IoBuildPartialMdl(pMdlOrig, NewMdl,
+						pVA, ulRemainder);
+				TmpMdl->Next = NewMdl;
+			}
+		}
+		else {
+			// Nothing special to be done.
+			// Return the original MDL
+			TmpMdl = pMdlOrig;
+		}
+		bSuccess = TRUE;
+	} while (FALSE);
+	if (!bSuccess) {
+		if (TmpMdl) {
+			IoFreeMdl(TmpMdl);
+		}
+		if (pEthHdr) {
+			ExFreePoolWithTag(pEthHdr, NPF_BUFFERED_WRITE_TAG);
+		}
+		return NULL;
 	}
 
+	*pbFreeBuf = (pEthHdr != NULL);
 	*pPktlen = ulPktlen;
 	NT_ASSERT(TmpMdl != NULL);
 	// Since we don't append new data to the end of the MDL chain, any
