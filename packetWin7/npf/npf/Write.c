@@ -186,9 +186,7 @@ NPF_BufferToMdl(
 				&& *pEthType == 0x8100) {
 			PETHER_VLAN_HEADER pHeader = (PETHER_VLAN_HEADER) pBuf;
 			// Turn it into NDIS metadata
-			pQinfo->TagHeader.UserPriority = pHeader->vlan.pcp;
-			pQinfo->TagHeader.CanonicalFormatId = pHeader->vlan.dei;
-			pQinfo->TagHeader.VlanId = RtlUshortByteSwap(pHeader->vlan.vid_BIGENDIAN);
+			VLAN_HEADER_TO_QINFO(&pHeader->vlan, pQinfo);
 
 			// Strip the tag:
 			// 1. Copy the Ethernet header with inner EtherType to a new buffer.

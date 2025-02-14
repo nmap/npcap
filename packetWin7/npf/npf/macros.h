@@ -112,23 +112,30 @@
 /* 802.1q header is 4 bytes inserted after the Ethernet destination (6 bytes)
  * and source (6 bytes) */
 #define VLAN_HDR_LEN 4
-// Same as RtlUshortByteSwap(ETHERTYPE_VLAN)
-#define VLAN_TPID_LITTLEENDIAN 0x0081
 
 typedef struct _VLAN_HEADER
 {
-	USHORT tpid;
-	union {
-		USHORT tci;
-		struct {
-			/* Windows is little-endian, so these are reverse order: */
-			USHORT vid_BIGENDIAN:12; // This one needs a byte swap.
-			USHORT dei:1;
-			USHORT pcp:3;
-		};
-	};
+	UCHAR buf[4];
 } VLAN_HEADER, *PVLAN_HEADER;
 C_ASSERT(sizeof(VLAN_HEADER) == VLAN_HDR_LEN);
+
+#define VLAN_HEADER_VALID(_pV) ((_pV)->buf[0] == 0x81 && (_pV)->buf[1] == 0x00)
+
+#define VLAN_HEADER_TO_QINFO(_pV, _pQ) do { \
+	NT_ASSERT(VLAN_HEADER_VALID(_pV)); \
+	(_pQ)->TagHeader.UserPriority = ((_pV)->buf[2] & 0x70) >> 5; \
+	(_pQ)->TagHeader.CanonicalFormatId = ((_pV)->buf[2] & 0x10) >> 4; \
+	(_pQ)->TagHeader.VlanId = (((_pV)->buf[2] & 0x0f) << 8) + (_pV)->buf[3]; \
+} while (0);
+
+#define QINFO_TO_VLAN_HEADER(_pQ, _pV) do { \
+	(_pV)->buf[0] = 0x81; \
+	(_pV)->buf[1] = 0x00; \
+	(_pV)->buf[2] = ((_pQ)->TagHeader.UserPriority & 0x7) << 5 | \
+			((_pQ)->TagHeader.CanonicalFormatId & 0x1) << 4 | \
+			((_pQ)->TagHeader.VlanId & 0xf00) >> 8; \
+	(_pV)->buf[3] = (_pQ->TagHeader.VlanId & 0xff); \
+} while (0);
 
 /*
 * Structure of a 10Mb/s Ethernet header.

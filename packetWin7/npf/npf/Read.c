@@ -697,17 +697,13 @@ NPF_HandleVlanHeader(
 #define ETHERTYPE_OFFSET FIELD_OFFSET(ETHER_HEADER, ether_type)
 		PVLAN_HEADER pVlan = (PVLAN_HEADER)(pNBCopy->Buffer + ETHERTYPE_OFFSET);
 		// If it's not already there, add one.
-		if (pVlan->tpid != VLAN_TPID_LITTLEENDIAN) {
+		if (!VLAN_HEADER_VALID(pVlan)) {
 			// Shift the packet data down 4 bytes
 			RtlMoveMemory(pNBCopy->Buffer + ETHERTYPE_OFFSET + VLAN_HDR_LEN,
 					pNBCopy->Buffer + ETHERTYPE_OFFSET,
 					pNBCopy->ulSize - ETHERTYPE_OFFSET);
-			// Add the VLAN TPID
-			pVlan->tpid = VLAN_TPID_LITTLEENDIAN;
-			// Add the VLAN TCI
-			pVlan->pcp = (USHORT)pQinfo->TagHeader.UserPriority;
-			pVlan->dei = (USHORT)pQinfo->TagHeader.CanonicalFormatId;
-			pVlan->vid_BIGENDIAN = RtlUshortByteSwap(pQinfo->TagHeader.VlanId);
+			// Add the VLAN header
+			QINFO_TO_VLAN_HEADER(pQinfo, pVlan);
 
 			// Update accounting for the new packet length
 			pNBCopy->ulSize += VLAN_HDR_LEN;
