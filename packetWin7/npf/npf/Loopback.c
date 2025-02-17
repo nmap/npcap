@@ -855,6 +855,12 @@ injection handles will be removed during DriverUnload.
 	sCallout.flags = FWP_CALLOUT_FLAG_ALLOW_OFFLOAD
 #if(NTDDI_VERSION >= NTDDI_WIN8)
 		| FWP_CALLOUT_FLAG_ALLOW_RSC
+#if (NTDDI_VERSION >= NTDDI_WIN10_19H1)
+		| FWP_CALLOUT_FLAG_ALLOW_USO
+#if (NTDDI_VERSION >= NTDDI_WIN10_VB)
+		| FWP_CALLOUT_FLAG_ALLOW_URO
+#endif
+#endif
 #endif
 		;
 
