@@ -386,29 +386,31 @@
   </sect2>
 
   <sect2 id="npcap-platforms">
-	  <title>Windows platforms supported</title>
-	  <para>Npcap supports all Windows versions currently supported by Microsoft. Depending on Windows version, the
-		  driver may support a different NDIS version, which corresponds to a set of network stack
-		  features.</para>
-	  <itemizedlist>
-		  <listitem>
-			  <para>On <emphasis>Windows 10</emphasis>, <emphasis>Windows Server 2016</emphasis>, and
-				  <emphasis>Windows Server 2019</emphasis>, Npcap installs a NDIS 6.50
-				  driver.</para></listitem>
-		  <listitem>
-			  <para>On <emphasis>Windows 8.1</emphasis>, <emphasis>Windows 8</emphasis>,
-				  <emphasis>Windows Server 2012 R2</emphasis>, and
-				  <emphasis>Windows Server 2012</emphasis>,
-				  Npcap installs a NDIS 6.30 driver.</para></listitem>
-		  <listitem>
-			  <para>On <emphasis>Windows 7</emphasis> and <emphasis>Windows Server 2008 R2</emphasis>, Npcap
-				  installs a NDIS 6.20 driver.</para></listitem>
-	  </itemizedlist>
-	  <para>Microsoft will end Extended support for Windows versions prior to Windows 10 on January 10, 2023. After
-		  that time, new Npcap releases <emphasis>may</emphasis> omit support for these operating
-		  systems.</para>
-	  <para>Npcap can be installed on x86, x86-64, and ARM64. DLLs for the native architecture will be installed, as
-		  well as x86 DLLs for applications running in 32-bit emulation.</para>
+    <title>Windows platforms supported</title>
+    <para>Npcap supports all Windows versions currently supported by Microsoft. Depending on Windows version, the
+      driver may support a different NDIS version, which corresponds to a set of network stack
+      features.</para>
+    <itemizedlist>
+      <listitem>
+        <para>On <emphasis>Windows 11</emphasis>, <emphasis>Windows Server 2022</emphasis>,
+        <emphasis>Windows 10</emphasis>, <emphasis>Windows Server 2016</emphasis>, and
+        <emphasis>Windows Server 2019</emphasis>, Npcap installs a NDIS 6.50
+          driver.</para></listitem>
+      <listitem>
+        <para>On <emphasis>Windows 8.1</emphasis>, <emphasis>Windows 8</emphasis>,
+        <emphasis>Windows Server 2012 R2</emphasis>, and
+        <emphasis>Windows Server 2012</emphasis>,
+          Npcap installs a NDIS 6.30 driver.</para></listitem>
+      <listitem>
+        <para>On <emphasis>Windows 7</emphasis> and <emphasis>Windows Server 2008 R2</emphasis>, Npcap
+          installs a NDIS 6.20 driver.</para></listitem>
+    </itemizedlist>
+    <para>Microsoft ended Extended support for Windows versions prior to Windows 10 on January 10, 2023. Future
+      Npcap releases <emphasis>may</emphasis> omit support for these operating systems, especially after
+      Microsoft ends the pricier Extended Security Update support in 2024 for Server 2008 R2 and in 2026
+      for Server 2012 R2.</para>
+    <para>Npcap can be installed on x86, x86-64, and ARM64. DLLs for the native architecture will be installed, as
+      well as x86 DLLs for applications running in 32-bit emulation.</para>
   </sect2>
 
   <sect2 id="npcap-feature-dot11-wireshark">
