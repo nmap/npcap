@@ -373,7 +373,7 @@
 
   </sect2>
 
-  <sect2> id="npcap-watchdog">
+  <sect2 id="npcap-watchdog">
     <title>The <literal>npcapwatchdog</literal> scheduled task</title>
     <para>
       Due to the complexities of installing Npcap as a device driver and an NDIS filter driver, Windows
