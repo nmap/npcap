@@ -373,6 +373,18 @@
 
   </sect2>
 
+  <sect2> id="npcap-watchdog">
+    <title>The <literal>npcapwatchdog</literal> scheduled task</title>
+    <para>
+      Due to the complexities of installing Npcap as a device driver and an NDIS filter driver, Windows
+      Feature Updates have occasionally uninstalled the Npcap driver, leading to a broken installation. To
+      reduce the likelihood and impact of such a removal, the Npcap installer creates a scheduled task
+      named <literal>npcapwatchdog</literal> that runs once at each system startup. The script executes
+      the <filename>CheckStatus.bat</filename> script from the Npcap installation directory to determine
+      whether the Npcap service is running and installed correctly. If it finds a problem, it runs the
+      adjacent <filename>FixInstall.bat</filename> script to reinstall the Npcap driver.</para>
+  </sect2>
+
   <sect2 id="npcap-platforms">
 	  <title>Windows platforms supported</title>
 	  <para>Npcap supports all Windows versions currently supported by Microsoft. Depending on Windows version, the
