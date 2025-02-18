@@ -1,7 +1,7 @@
 /***********************IMPORTANT NPCAP LICENSE TERMS***********************
  *
  * Npcap (https://npcap.com) is a Windows packet sniffing driver and library and
- * is copyright (c) 2013-2023 by Nmap Software LLC ("The Nmap Project").  All
+ * is copyright (c) 2013-2025 by Nmap Software LLC ("The Nmap Project").  All
  * rights reserved.
  *
  * Even though Npcap source code is publicly available for review, it is not

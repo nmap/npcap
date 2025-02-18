@@ -1,7 +1,7 @@
 ;-------------------------------------------------------------------------
 ; NPCAP_WFP.INF -- Npcap NDIS 6.x LightWeight Filter Driver
 ;
-; Copyright (c) 2023, Insecure.Com LLC.  All rights reserved.
+; Copyright (c) 2025, Nmap Software LLC.  All rights reserved.
 ;------------------------------------------------------------------------
 [version]
 Signature       = "$Windows NT$"
