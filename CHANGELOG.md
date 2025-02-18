@@ -1,10 +1,25 @@
-## Unreleased changes
+## Npcap 1.81 [2025-02-20]
 
 * Added complete capture support for 802.1q VLAN packets. The 802.1q frame tag
   is usually stripped by NDIS before Npcap encounters it, but Npcap will now
   restore it from the packet metadata if the VLAN ID is not 0. Filtering with the
   "vlan" keyword is also now supported on live captures. The deprecated
-  `/vlan_support` installer option has no impact on this feature.
+  `/vlan_support` installer option has no impact on this feature. Fixes [#171](http://issues.npcap.org/171).
+
+* Added support for sending 802.1q VLAN packets. Ethernet frames passed to `pcap_sendpacket()` or
+  `pcap_inject()` with 802.1q VLAN tags will have those tags converted to NDIS metadata, and the
+  NDIS stack will process them appropriately. The adapter must be configured to allow traffic on the
+  target VLAN.
+
+* Significantly streamlined packet sending operations, especially for `pcap_sendqueue()`, removing
+  unnecessary copying of packet data. Fixes [#555](http://issues.npcap.org/555).
+
+* Fixed an issue with the installer where the appropriate code-signing certificates for the
+  `/prior_driver=yes` option were not installed on Windows 7, 8, and 8.1. This could lead to failed
+  installations on those versions of Windows.
+
+* Fixed a layout issue in the installer that prevented the full warning from
+  being displayed when a Win10Pcap installation is detected.
 
 * Npcap now supports the `BPF_MOD` and `BPF_XOR` instructions. Previously, pcap
   filter expressions using the `%` and `^` operators would result in
