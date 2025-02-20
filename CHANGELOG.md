@@ -19,7 +19,8 @@
   installations on those versions of Windows.
 
 * Fixed a layout issue in the installer that prevented the full warning from
-  being displayed when a Win10Pcap installation is detected.
+  being displayed when a Win10Pcap installation is detected. Win10Pcap hasn’t been actively
+  maintained since 2015, and we recommend uninstalling it before installing Npcap.
 
 * Npcap now supports the `BPF_MOD` and `BPF_XOR` instructions. Previously, pcap
   filter expressions using the `%` and `^` operators would result in
