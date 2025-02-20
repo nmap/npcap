@@ -348,6 +348,7 @@ typedef struct _NPCAP_FILTER_MODULE
 	LONG nTimestampQPC; // Opens wanting TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
 	LONG nTimestampQST; // Opens wanting TIMESTAMPMODE_QUERYSYSTEMTIME
 	LONG nTimestampQST_Precise; // Opens wanting TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
+	LONG nTimestampQPC_Relative; // Opens wanting TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE
 
 	ULONG SupportedPacketFilters;
 	ULONG					MyPacketFilter;

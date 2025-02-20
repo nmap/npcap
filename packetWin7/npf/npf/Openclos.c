@@ -691,7 +691,20 @@ NPF_StartUsingOpenInstance(
 			{
 				// Get the absolute value of the system boot time.
 				// This is used for timestamp conversion.
-				TIME_SYNCHRONIZE(&pOpen->start);
+				if (pOpen->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE)
+				{
+					// When using relative QPC timestamps, we skip system clock
+					// synchronisation and just set the start time to 0.
+					pOpen->start.tv_sec = 0;
+					pOpen->start.tv_usec = 0;
+
+					// But, we must make sure the performance counter frequency is still initialised.
+					KeQueryPerformanceCounter(&TimeFreq);
+				}
+				else
+				{
+					TIME_SYNCHRONIZE(&pOpen->start);
+				}
 				NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 
 				// Insert a null filter (accept all)
@@ -2260,7 +2273,7 @@ NPF_AttachAdapter(
 		pFiltMod->AdapterBindingStatus = FilterPaused;
 		NPF_AddToFilterModuleArray(pFiltMod);
 		// If any handles are running, enable ops again.
-		if (pFiltMod->nTimestampQPC > 0 || pFiltMod->nTimestampQST > 0 || pFiltMod->nTimestampQST_Precise > 0)
+		if (pFiltMod->nTimestampQPC > 0 || pFiltMod->nTimestampQST > 0 || pFiltMod->nTimestampQST_Precise > 0 || pFiltMod->nTimestampQPC_Relative > 0)
 		{
 			NPF_EnableOps(pFiltMod);
 		}
@@ -2496,7 +2509,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		Curr = PopEntryList(&pFiltMod->OpenInstances);
 	}
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
-	NT_ASSERT(pFiltMod->nTimestampQPC == 0 && pFiltMod->nTimestampQST == 0 && pFiltMod->nTimestampQST_Precise == 0);
+	NT_ASSERT(pFiltMod->nTimestampQPC == 0 && pFiltMod->nTimestampQST == 0 && pFiltMod->nTimestampQST_Precise == 0 && pFiltMod->nTimestampQPC_Relative == 0);
 
 	// Restore original filter and lookahead value
 	NPF_SetPacketFilter(pFiltMod, 0);
@@ -3479,6 +3492,9 @@ VOID NPF_UpdateTimestampModeCounts(
 		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
 			result = InterlockedIncrement(&pFiltMod->nTimestampQST_Precise);
 			break;
+		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE:
+			result = InterlockedIncrement(&pFiltMod->nTimestampQPC_Relative);
+			break;
 		default:
 			NT_ASSERT(FALSE);
 			break;
@@ -3497,6 +3513,9 @@ VOID NPF_UpdateTimestampModeCounts(
 			break;
 		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
 			result = InterlockedDecrement(&pFiltMod->nTimestampQST_Precise);
+			break;
+		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE:
+			result = InterlockedDecrement(&pFiltMod->nTimestampQPC_Relative);
 			break;
 		default:
 			NT_ASSERT(FALSE);
