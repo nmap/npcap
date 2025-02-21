@@ -300,7 +300,7 @@ NPF_Read(
 				GetTimevalFromSystemTime(&header->bh_tstamp, pCapData->pNBCopy->pNBLCopy->SystemTime);
 				break;
 			default:
-				NT_ASSERT(Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION);
+				NT_ASSERT(Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION || Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE);
 				NT_ASSERT(pCapData->pNBCopy->pNBLCopy->PerfCount.QuadPart > 0);
 				GetTimevalFromPerfCount(&header->bh_tstamp, &Open->start, pCapData->pNBCopy->pNBLCopy->PerfCount);
 				break;
@@ -740,13 +740,13 @@ NPF_DoTap(
 	PNPF_CAP_DATA pCaptures = NULL;
 
 	/* Get relevant timestamps */
-	if (pFiltMod->nTimestampQPC == 0 && pFiltMod->nTimestampQST == 0 && pFiltMod->nTimestampQST_Precise == 0)
+	if (pFiltMod->nTimestampQPC == 0 && pFiltMod->nTimestampQST == 0 && pFiltMod->nTimestampQST_Precise == 0 && pFiltMod->nTimestampQPC_Relative == 0)
 	{
 		// No instances at OpenRunning
 		return;
 	}
 	// Any instances need performance counter?
-	if (pFiltMod->nTimestampQPC > 0)
+	if (pFiltMod->nTimestampQPC > 0 || pFiltMod->nTimestampQPC_Relative > 0)
 	{
 		PerfCount = KeQueryPerformanceCounter(NULL);
 	}
@@ -1115,10 +1115,13 @@ NPF_TapExForEachOpen(
 	ULONG TotalPacketSize = pNBCopy->ulPacketSize;
 	BOOLEAN bEnqueued = FALSE;
 
-	NT_ASSERT((Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION && pNBLCopy->PerfCount.QuadPart > 0)
-			|| ((Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME
-					|| Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE)
-				&& pNBLCopy->SystemTime.QuadPart > 0));
+	NT_ASSERT(
+		((Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
+			|| Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE)
+			&& pNBLCopy->PerfCount.QuadPart > 0)
+		|| ((Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME
+			|| Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE)
+			&& pNBLCopy->SystemTime.QuadPart > 0));
 
 	if (!Open->bModeCapt)
 	{

@@ -112,6 +112,7 @@
 #define TIMESTAMPMODE_QUERYSYSTEMTIME 2
 #define /* DEPRECATED */ TIMESTAMPMODE_RDTSC 3
 #define TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE 4
+#define TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE 5
 #define /* DEPRECATED */ TIMESTAMPMODE_SYNCHRONIZATION_ON_CPU_NO_FIXUP 99
 
 #define TIMESTAMPMODE_UNSET ((ULONG) -1)
@@ -122,7 +123,8 @@ inline BOOLEAN NPF_TimestampModeSupported(_In_ ULONG mode)
 {
 	return mode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
 		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME
-		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE;
+		|| mode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
+		|| mode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE;
 }
 
 inline void BestQuerySystemTime(
@@ -189,7 +191,7 @@ inline void GetTimevalFromPerfCount(
 	NT_ASSERT(TimeFreq.QuadPart != 0);
 	LONG tmp = (LONG)(PTime.QuadPart / TimeFreq.QuadPart);
 
-	//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
+	//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION (or TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE)
 	dst->tv_sec = start->tv_sec + tmp;
 	dst->tv_usec = start->tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
 
