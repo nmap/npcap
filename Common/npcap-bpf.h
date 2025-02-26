@@ -206,24 +206,35 @@ struct dump_bpf_hdr
 
 /* BPF extensions */
 /* Special offsets to mimic Linux kernel's BPF extensions.
- * The names are taken directly from Linux in order to allow libpcap's
- * gencode.c to use the same code for both, but the values are different.
+ * The names are modeled off of Linux, though the values are different.
+ * Code that uses Linux's SKF_AD_* constants, like libpcap's
+ * gencode.c, can generally use the same code for Npcap.
  */
 /* The base offset for these extensions */
-#define SKF_AD_OFF (-0x1000)
+#define NPCAP_AD_OFF (-0x1000)
 /* The extensions are numbered in the order they were added.
  * Since they are treated like offsets, we space them by 4 to avoid the
  * appearance of reading overlapped memory segments.
  * User can issue BIOCGETINFO(NPF_GETINFO_BPFEXT) to retrieve the value of
- * SKF_AD_MAX, and any extension less than or equal to that value will be
- * supported.
+ * NPCAP_AD_MAX, and any extension less than or equal to that value will be
+ * supported. This is the same logic as Linux uses with the SO_BPF_EXTENSIONS socket option.
  */
 /* Halfword (2 bytes) representing the 802.1q header. */
-#define SKF_AD_VLAN_TAG 0
+#define NPCAP_AD_VLAN_TAG 0
 /* Boolean: is there VLAN metadata present? Currently, we cannot distinguish VLAN
  * 0 and priority class 0 (both defaults) from the case of no VLAN tag present,
  * so this will return false in that case. */
-#define SKF_AD_VLAN_TAG_PRESENT 4
-#define SKF_AD_MAX 4
+#define NPCAP_AD_VLAN_TAG_PRESENT 4
+#define NPCAP_AD_MAX 4
+
+/* Npcap SDK 1.15 defined these names instead, so they are preserved here for
+ * compatibility and to simplify integration with existing Linux-targeted code.
+ * However, it is preferred to use the NPCAP_AD_* prefix in new code. */
+#ifndef SKF_AD_OFF
+#define SKF_AD_OFF              NPCAP_AD_OFF
+#define SKF_AD_VLAN_TAG         NPCAP_AD_VLAN_TAG
+#define SKF_AD_VLAN_TAG_PRESENT NPCAP_AD_VLAN_TAG_PRESENT
+#define SKF_AD_MAX              NPCAP_AD_MAX
+#endif
 
 #endif /* NPCAP_BPF_H */

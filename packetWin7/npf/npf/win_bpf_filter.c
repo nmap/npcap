@@ -163,8 +163,8 @@ DECLARE_XNUM(B)
 #define IS_EXTENSION_OFFSET(_k) ((int)(_k) < 0)
 static int valid_extension_offset(_In_ u_int32 k) {
 	switch (k) {
-		case SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT:
-		case SKF_AD_OFF + SKF_AD_VLAN_TAG:
+		case NPCAP_AD_OFF + NPCAP_AD_VLAN_TAG_PRESENT:
+		case NPCAP_AD_OFF + NPCAP_AD_VLAN_TAG:
 			return 1;
 	}
 	return 0;
@@ -173,10 +173,10 @@ static int valid_extension_offset(_In_ u_int32 k) {
 static int do_extension(_In_ u_int32 k, _In_ const PNPF_NBL_COPY pNBLCopy)
 {
 	switch (k) {
-		case SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT:
+		case NPCAP_AD_OFF + NPCAP_AD_VLAN_TAG_PRESENT:
 			return (pNBLCopy->qInfo.Value == 0 ? 0 : 1);
 			break;
-		case SKF_AD_OFF + SKF_AD_VLAN_TAG:
+		case NPCAP_AD_OFF + NPCAP_AD_VLAN_TAG:
 			return ((pNBLCopy->qInfo.TagHeader.UserPriority & 0x7) << 13 |
 				(pNBLCopy->qInfo.TagHeader.CanonicalFormatId & 0x1) << 12 |
 				(pNBLCopy->qInfo.TagHeader.VlanId & 0xfff));

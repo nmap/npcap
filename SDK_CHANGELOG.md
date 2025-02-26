@@ -1,3 +1,9 @@
+## Unreleased changes
+
+* Renamed the `SKF_AD_*` constants to `NPCAP_AD_*` to avoid confusion with code
+  that may expect the same values or ordering as the constants defined by
+  Linux. The old names are still conditionally defined for convenience.
+
 ## Npcap SDK 1.15 [2025]
 
 * Added a new function, `PacketGetInfo()`. This uses the `PACKET_OID_DATA`

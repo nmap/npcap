@@ -2019,7 +2019,7 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 			break;
 
 		case NPF_GETINFO_BPFEXT:
-			*((PULONG)OidData->Data) = SKF_AD_MAX;
+			*((PULONG)OidData->Data) = NPCAP_AD_MAX;
 			OidData->Length = sizeof(ULONG);
 			*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(ULONG);
 			Status = STATUS_SUCCESS;
