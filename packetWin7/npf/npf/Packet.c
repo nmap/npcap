@@ -548,7 +548,9 @@ DriverEntry(
 			pFiltMod->Loopback = TRUE;
 			pFiltMod->EtherHeader = !g_pDriverExtension->bDltNullMode;
 			pFiltMod->AdapterBindingStatus = FilterRunning;
-			pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + ETHER_HDR_LEN;
+			pFiltMod->MaxFrameSize = NPF_LOOPBACK_INTERFACR_MTU + (
+					pFiltMod->EtherHeader ? ETHER_HDR_LEN : DLT_NULL_HDR_LEN
+					);
 			g_pDriverExtension->pLoopbackFilter = pFiltMod;
 
 			// No need to mess with SendToRx/BlockRx, packet filters, NDIS filter characteristics, Dot11, etc.

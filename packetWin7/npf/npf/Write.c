@@ -468,14 +468,6 @@ NPF_Write(
 		goto NPF_Write_End;
 	}
 
-	// Check that the frame size is smaller than the MTU
-	if (buflen > Open->pFiltMod->MaxFrameSize)
-	{
-		// TODO: better status code
-		Status = STATUS_UNSUCCESSFUL;
-		goto NPF_Write_End;
-	}
-
 	INFO_DBG(
 		"Max frame size = %u, packet size = %u",
 		Open->pFiltMod->MaxFrameSize,
@@ -503,6 +495,13 @@ NPF_Write(
 
 	// If bFreeBuf, then also bFreeMdl.
 	NT_ASSERT_ASSUME(bFreeMdl || !bFreeBuf);
+
+	// Check that the frame size is smaller than the MTU
+	if (pktlen > Open->pFiltMod->MaxFrameSize)
+	{
+		Status = NDIS_STATUS_INVALID_LENGTH;
+		goto NPF_Write_End;
+	}
 
 	pContext->ulRefcount = NumSends;
 
@@ -764,10 +763,9 @@ NTSTATUS NPF_BufferedWrite(
 			Status = STATUS_INVALID_PARAMETER;
 			break;
 		}
-		if (pHdr->caplen > Open->pFiltMod->MaxFrameSize
-			|| pHdr->caplen > (UserBuffSize - ulDataOffset))
+		if (pHdr->caplen > (UserBuffSize - ulDataOffset))
 		{
-			Status = STATUS_PORT_MESSAGE_TOO_LONG;
+			Status = NDIS_STATUS_BUFFER_TOO_SHORT;
 			break;
 		}
 
@@ -785,6 +783,11 @@ NTSTATUS NPF_BufferedWrite(
 			INFO_DBG("NPF_BufferedWrite: unable to allocate the MDL.\n");
 
 			Status = STATUS_INSUFFICIENT_RESOURCES;
+			break;
+		}
+		if (pktlen > Open->pFiltMod->MaxFrameSize)
+		{
+			Status = NDIS_STATUS_INVALID_LENGTH;
 			break;
 		}
 
