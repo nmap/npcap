@@ -123,7 +123,7 @@ C_ASSERT(sizeof(VLAN_HEADER) == VLAN_HDR_LEN);
 
 #define VLAN_HEADER_TO_QINFO(_pV, _pQ) do { \
 	NT_ASSERT(VLAN_HEADER_VALID(_pV)); \
-	(_pQ)->TagHeader.UserPriority = ((_pV)->buf[2] & 0x70) >> 5; \
+	(_pQ)->TagHeader.UserPriority = ((_pV)->buf[2] & 0xe0) >> 5; \
 	(_pQ)->TagHeader.CanonicalFormatId = ((_pV)->buf[2] & 0x10) >> 4; \
 	(_pQ)->TagHeader.VlanId = (((_pV)->buf[2] & 0x0f) << 8) + (_pV)->buf[3]; \
 } while (0);
