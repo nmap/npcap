@@ -452,6 +452,7 @@ typedef struct _NPF_NBL_COPY
 	LARGE_INTEGER PerfCount;
 	LARGE_INTEGER SystemTime;
 	NDIS_NET_BUFFER_LIST_8021Q_INFO qInfo;
+	BOOLEAN bQinfoPresent;
 #ifdef HAVE_DOT11_SUPPORT
 	PUCHAR Dot11RadiotapHeader;
 #endif
@@ -587,6 +588,7 @@ typedef __declspec(align(MEMORY_ALLOCATION_ALIGNMENT)) struct _PACKET_RESERVED
 {
 	PIRP pIrp;
 	BOOLEAN FreeBufAfterWrite; // True if the memory buffer associated with the packet must be freed.
+				   // This is currently only true if there was a VLAN header in the original user buffer.
 	BOOLEAN FreeMdlAfterWrite; // True if the MDL chain must be freed (always true if FreeBufAfterWrite is true)
 	PNPF_BUFFERED_WRITE_STATE pState;
 }  PACKET_RESERVED, *PPACKET_RESERVED;

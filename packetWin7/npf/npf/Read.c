@@ -465,6 +465,13 @@ ULONG NPF_GetMetadata(
 
 		// Otherwise, gather the appropriate metadata
 		pNBLCopy->qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
+		// We can't distinguish VLAN 0 from no VLAN tag, so we try this:
+		// If it's one of our own injected packets,
+		if (pNetBufList->SourceHandle == pFiltMod->AdapterHandle) {
+			// then bFreeBufAfterWrite means the Ethernet header is a replacement
+			// and we can infer that the original packet had a VLAN header.
+			pNBLCopy->bQinfoPresent = RESERVED(pNetBufList)->bFreeBufAfterWrite;
+		}
 #ifdef HAVE_DOT11_SUPPORT
 			// Handle native 802.11 media specific OOB data here.
 			// This code will help provide the radiotap header for 802.11 packets, see http://www.radiotap.org for details.
@@ -683,10 +690,11 @@ NPF_HandleVlanHeader(
 	if (
 		// the adapter doesn't use Ethernet headers
 		!pFiltMod->EtherHeader
-		// there's no VLAN metadata
-		|| pQinfo->Value == 0
 		// there's less than an Ethernet header captured
 		|| pNBCopy->ulSize < ETHER_HDR_LEN
+		// there's no VLAN metadata
+		|| (pQinfo->Value == 0
+			&& !pNBCopy->pNBLCopy->bQinfoPresent)
 	   )
 	{
 		return;
