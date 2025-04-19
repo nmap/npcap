@@ -468,9 +468,9 @@ ULONG NPF_GetMetadata(
 		// We can't distinguish VLAN 0 from no VLAN tag, so we try this:
 		// If it's one of our own injected packets,
 		if (pNetBufList->SourceHandle == pFiltMod->AdapterHandle) {
-			// then bFreeBufAfterWrite means the Ethernet header is a replacement
+			// then FreeBufAfterWrite means the Ethernet header is a replacement
 			// and we can infer that the original packet had a VLAN header.
-			pNBLCopy->bQinfoPresent = RESERVED(pNetBufList)->bFreeBufAfterWrite;
+			pNBLCopy->bQinfoPresent = RESERVED(pNetBufList)->FreeBufAfterWrite;
 		}
 #ifdef HAVE_DOT11_SUPPORT
 			// Handle native 802.11 media specific OOB data here.
