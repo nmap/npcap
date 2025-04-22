@@ -1,3 +1,16 @@
+## Npcap 1.82 [2025-04-21]
+
+* Fixed an issue where Npcap 1.81 would incorrectly reject packets as too large
+  which had VLAN headers and would be equal to the maximum frame size when the
+  header was removed. Fixes [#790](http://issues.npcap.org/790).
+
+* Fixed an issue where captured frames with an 802.1q VLAN header would have
+  the high-order bit of the 802.1p priority always set to `0`, so a priority of
+  5 would be shown as 1, for instance. Fixes [#783](http://issues.npcap.org/783).
+
+* Fixed an issue where packets with VLAN tags having a TCI of 0 would not have
+  a VLAN tag when captured. Fixes [#791](http://issues.npcap.org/791).
+
 ## Npcap 1.81 [2025-02-20]
 
 * Added complete capture support for 802.1q VLAN packets. The 802.1q frame tag
