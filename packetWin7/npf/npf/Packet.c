@@ -477,6 +477,7 @@ DriverEntry(
 		if (g_pDriverExtension->AllOpensLock == NULL)
 		{
 			ERROR_DBG("Failed to allocate AllOpensLock\n");
+			Status = STATUS_INSUFFICIENT_RESOURCES;
 			break;
 		}
 		Status = STATUS_SUCCESS;
