@@ -2580,6 +2580,14 @@ NOTE: Called at <= DISPATCH_LEVEL  (unlike a miniport's MiniportOidRequest)
 
 	do
 	{
+		if (!NT_VERIFY(Request) ||
+				!NT_VERIFY(Request->Header.Type == NDIS_OBJECT_TYPE_OID_REQUEST) ||
+				!NT_VERIFY(Request->Header.Revision >= NDIS_OID_REQUEST_REVISION_1) ||
+				!NT_VERIFY(Request->Header.Size >= NDIS_SIZEOF_OID_REQUEST_REVISION_1)
+		   ) {
+			Status = NDIS_STATUS_INVALID_OID;
+			break;
+		}
 		Status = NdisAllocateCloneOidRequest(pFiltMod->AdapterHandle,
 											Request,
 											NPF_CLONE_OID_TAG,
