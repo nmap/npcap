@@ -3072,19 +3072,44 @@ Arguments:
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 	BOOLEAN bAtDispatchLevel = NDIS_TEST_RETURN_AT_DISPATCH_LEVEL(ReturnFlags);
+	PNET_BUFFER_LIST    pNetBufList = NULL;
+	PNET_BUFFER_LIST    pPrevNetBufList = NULL;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	/* This callback is only for the NDIS LWF, not WFP/loopback */
 	NT_ASSERT(!pFiltMod->Loopback);
 #endif
 
-	if (NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
+	pNetBufList = NetBufferLists;
+	while (pNetBufList != NULL)
 	{
-		// This is one of ours; free it.
-		NPF_FreePackets(pFiltMod, NetBufferLists, bAtDispatchLevel);
+		// Keep track of this one
+		PNET_BUFFER_LIST pNBL = pNetBufList;
+		// Point to the next one
+		pNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
+
+		if (pNBL->SourceHandle != pFiltMod->AdapterHandle)
+		{
+			// No match, just move down.
+			pPrevNetBufList = pNBL;
+			continue;
+		}
+		// this is our self-sent packets
+
+		// Remove this one from the chain and move down.
+		if (pPrevNetBufList == NULL) {
+			// head of list, repoint NetBufferLists
+			NetBufferLists = pNetBufList;
+		}
+		else {
+			NET_BUFFER_LIST_NEXT_NBL(pPrevNetBufList) = pNetBufList;
+		}
+		NET_BUFFER_LIST_NEXT_NBL(pNBL) = NULL;
+
+		NPF_FreePackets(pFiltMod, pNBL, bAtDispatchLevel);
 	}
-	else
-	{
+
+	if (NetBufferLists != NULL) {
 		// Return the received NBLs.  If you removed any NBLs from the chain, make
 		// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
 		NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
