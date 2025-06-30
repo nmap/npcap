@@ -1867,13 +1867,14 @@ static NTSTATUS funcBIOCGTIMESTAMPMODES(_In_ POPEN_INSTANCE pOpen,
 	// Need to at least deliver the number of modes
 	ULONG uNeeded = sizeof(ULONG);
 	static ULONG SupportedModes[] = {
-		0, // count of modes, 0 means not initialized yet
-		TIMESTAMPMODE_SINGLE_SYNCHRONIZATION,
-		TIMESTAMPMODE_QUERYSYSTEMTIME,
+		0 // count of modes, 0 means not initialized yet
+		, TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
+		, TIMESTAMPMODE_QUERYSYSTEMTIME
 #if (NTDDI_VERSION >= NTDDI_WIN8)
 		// This is last and is not reported if not different than QST
-		TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
+		, TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
 #endif
+		, TIMESTAMPMODE_SINGLE_SYNCHRONIZATION_RELATIVE
 	};
 
 	// Initialize the count if not already done.
