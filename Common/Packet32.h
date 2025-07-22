@@ -141,7 +141,8 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 #define PACKET_DEPRECATED_INTERNAL_STRUCT_DEFINITION
 #endif
 
-// Working modes, a bitfield
+// Working modes, a 32-bit integer
+// 0x000000ff: WinPcap legacy modes (least-significant byte)
 // 0b00000000
 //      |  ||_ STAT or CAPT
 //      |  |__ MON (TME extensions, not supported)
@@ -153,6 +154,12 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 #define PACKET_MODE_MON 0x2 ///< Monitoring mode
 #define PACKET_MODE_DUMP 0x10 ///< Dump mode
 #define PACKET_MODE_STAT_DUMP PACKET_MODE_DUMP | PACKET_MODE_STAT ///< Statistical dump Mode
+// 0x0000ff00: Npcap extensions
+// 0b00000000
+//         ||_ SENDTORX
+//         |__ SENDTORX_CLEAR
+#define PACKET_MODE_SENDTORX       (1 << 8)  /// SendToRx mode
+#define PACKET_MODE_SENDTORX_CLEAR (1 << 9)  /// Disable SendToRx, overriding Registry
 
 
 /// Alignment macro. Defines the alignment size.

@@ -1252,8 +1252,12 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 	// Compile-time assertion to ensure that MODE_CAPT and MODE_STAT are mutually exclusive.
 	C_ASSERT(MODE_CAPT == 0 && MODE_STAT == 1);
 
-	// If any bits except the least-significant are set, it's an invalid mode.
-	if (mode > 1) 
+	// Check for invalid modes
+	if ((mode & (~SUPPORTED_MODES)) // No unsupported bits
+		|| ((mode & MODE_SENDTORX) && (
+			pOpen->bLoopback // SendToRx not supported for Loopback
+			|| mode & MODE_SENDTORX_CLEAR)) // Mutually exclusive
+	   )
 	{
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
@@ -1265,7 +1269,7 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 				: STATUS_CANCELLED);
 	}
 
-	if (mode == MODE_STAT)
+	if (mode & MODE_STAT)
 	{
 		pOpen->bModeCapt = 0;
 		NdisAcquireSpinLock(&pOpen->CountersLock);
@@ -1276,6 +1280,14 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 	else // MODE_CAPT
 	{
 		pOpen->bModeCapt = 1;
+	}
+
+	if (pOpen->pFiltMod->SendToRxPath) {
+		pOpen->bSendToRx = mode & MODE_SENDTORX_CLEAR;
+	}
+	else
+	{
+		pOpen->bSendToRx = mode & MODE_SENDTORX;
 	}
 
 	NPF_StopUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN);

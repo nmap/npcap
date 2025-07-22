@@ -566,7 +566,7 @@ NPF_Write(
 		else
 #endif
 #ifdef HAVE_RX_SUPPORT
-			if (Open->pFiltMod->SendToRxPath == TRUE)
+			if (Open->bSendToRx)
 			{
 				INFO_DBG("NPF_Write::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);
 				// pretend to receive these packets from network and indicate them to upper layers
@@ -919,7 +919,7 @@ NTSTATUS NPF_BufferedWrite(
 		else
 #endif
 #ifdef HAVE_RX_SUPPORT
-			if (Open->pFiltMod->SendToRxPath == TRUE)
+			if (Open->bSendToRx)
 			{
 				INFO_DBG("NPF_BufferedWrite::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);
 				// pretend to receive these packets from network and indicate them to upper layers

@@ -146,10 +146,16 @@ typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTE
 
 
 // Working modes
-#define MODE_CAPT							0x0		///< Capture working mode
-#define MODE_STAT							0x1		///< Statistical working mode
-#define MODE_MON							0x2		///< Kernel monitoring mode
-#define MODE_DUMP							0x10		///< Kernel dump working mode
+// WinPcap legacy modes:
+#define MODE_CAPT 0x00  /// Capture working mode
+#define MODE_STAT 0x01  /// Statistical working mode
+#define MODE_MON  0x02  /// Kernel monitoring mode
+#define MODE_DUMP 0x10  /// Kernel dump working mode
+// Npcap extension modes:
+#define MODE_SENDTORX       0x0100 /// SendToRx mode
+#define MODE_SENDTORX_CLEAR 0x0200 /// disable SendToRx mode
+#define SUPPORTED_MODES (MODE_CAPT | MODE_STAT \
+			| MODE_SENDTORX | MODE_SENDTORX_CLEAR)
 
 
 #define IMMEDIATE 1			///< Immediate timeout. Forces a read call to return immediately.
@@ -408,6 +414,7 @@ typedef struct _OPEN_INSTANCE
 	// working modes, see PacketSetMode():
 	BOOLEAN bModeCapt:1; // MODE_CAPT (1) vs MODE_STAT (0)
 	// BOOLEAN bModeMon:1; // MODE_MON not supported
+	BOOLEAN bSendToRx:1;
 	// Loopback Behavior:
 	BOOLEAN SkipSentPackets:1; ///< True if this instance should not capture back the packets that it transmits.
 	// Info used to match a FilterModule when reattaching:

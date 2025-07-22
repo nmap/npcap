@@ -1379,6 +1379,7 @@ NPF_AddToGroupOpenArray(
 
 	pOpen->pFiltMod = pFiltMod;
 	pOpen->AdapterID = pFiltMod->AdapterID;
+	pOpen->bSendToRx = pFiltMod->SendToRxPath;
 	pOpen->bDot11 = pFiltMod->Dot11;
 	pOpen->bLoopback = pFiltMod->Loopback;
 	pOpen->OpenStatus = OpenAttached;
