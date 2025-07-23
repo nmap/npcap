@@ -1290,6 +1290,8 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 		pOpen->bSendToRx = mode & MODE_SENDTORX;
 	}
 
+	pOpen->bNano = mode & MODE_NANO;
+
 	NPF_StopUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN);
 	return STATUS_SUCCESS;
 }

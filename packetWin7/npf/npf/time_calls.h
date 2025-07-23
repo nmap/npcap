@@ -146,6 +146,14 @@ struct timeval
 	long tv_sec;		 ///< seconds
 	long tv_usec;   	 ///< microseconds
 };
+// Number of usecs in a second
+#define NUM_USECS 1000000
+// Number of nsecs in a second
+#define NUM_NSECS 1000000000
+// Number of 100-nsec intervals in a second
+#define NUM_SYSTIME 10000000
+// Number of seconds between MS epoch and Unix epoch
+#define MS_EPOCH 11644473600
 
 /* KeQueryPerformanceCounter TimeStamps */
 inline void TIME_SYNCHRONIZE(
@@ -166,38 +174,39 @@ inline void TIME_SYNCHRONIZE(
 	PTime = KeQueryPerformanceCounter(&TimeFreq);
 	BestQuerySystemTime(&SystemTime);
 
-	start->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
+	start->tv_sec = (LONG)(SystemTime.QuadPart / NUM_SYSTIME - MS_EPOCH);
 
-	start->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
+	start->tv_usec = (LONG)((SystemTime.QuadPart % NUM_SYSTIME) * 100);
 
 	start->tv_sec -= (ULONG)(PTime.QuadPart / TimeFreq.QuadPart);
 
-	start->tv_usec -= (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
+	start->tv_usec -= (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * NUM_NSECS / TimeFreq.QuadPart);
 
 	if (start->tv_usec < 0)
 	{
 		start->tv_sec --;
-		start->tv_usec += 1000000;
+		start->tv_usec += NUM_NSECS;
 	}
 }	
 
 inline void GetTimevalFromPerfCount(
 		_Out_ struct timeval* __restrict dst,
 		_In_ struct timeval* __restrict start,
-		_In_ LARGE_INTEGER PTime)
+		_In_ LARGE_INTEGER PTime,
+		_In_ BOOLEAN bNano)
 {
 	NT_ASSERT(TimeFreq.QuadPart != 0);
-	LONG tmp = (LONG)(PTime.QuadPart / TimeFreq.QuadPart);
 
 	//it should be only the normal case i.e. TIMESTAMPMODE_SINGLESYNCHRONIZATION
-	dst->tv_sec = start->tv_sec + tmp;
-	dst->tv_usec = start->tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * 1000000 / TimeFreq.QuadPart);
+	dst->tv_sec = start->tv_sec + (LONG)(PTime.QuadPart / TimeFreq.QuadPart);
+	LONG ns = start->tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * NUM_NSECS / TimeFreq.QuadPart);
 
-	if (dst->tv_usec >= 1000000)
+	if (ns >= NUM_NSEC)
 	{
 		dst->tv_sec ++;
-		dst->tv_usec -= 1000000;
+		ns -= NUM_NSEC;
 	}
+	dst->tv_usec = bNano ? ns : ns / 1000;
 }
 
 inline void GetTimeKQPC(
@@ -207,15 +216,17 @@ inline void GetTimeKQPC(
 	LARGE_INTEGER PTime;
 
 	PTime = KeQueryPerformanceCounter(NULL);
-	GetTimevalFromPerfCount(dst, start, PTime);
+	GetTimevalFromPerfCount(dst, start, PTime, FALSE);
 }
 
 inline void GetTimevalFromSystemTime(
 		_Out_ struct timeval* dst,
-		_In_ LARGE_INTEGER SystemTime)
+		_In_ LARGE_INTEGER SystemTime,
+		_In_ BOOLEAN bNano)
 {
-	dst->tv_sec = (LONG)(SystemTime.QuadPart / 10000000 - 11644473600);
-	dst->tv_usec = (LONG)((SystemTime.QuadPart % 10000000) / 10);
+	LONG tmp = (LONG)(SystemTime.QuadPart % NUM_SYSTIME);
+	dst->tv_sec = (LONG)(SystemTime.QuadPart / NUM_SYSTIME - MS_EPOCH);
+	dst->tv_usec = bNano ? (tmp * 100) : (tmp / 10);
 }
 
 inline void GetTimeQST(
@@ -225,7 +236,7 @@ inline void GetTimeQST(
 
 	KeQuerySystemTime(&SystemTime);
 
-	GetTimevalFromSystemTime(dst, SystemTime);
+	GetTimevalFromSystemTime(dst, SystemTime, FALSE);
 }
 
 inline void GetTimeQST_precise(
@@ -235,7 +246,7 @@ inline void GetTimeQST_precise(
 
 	BestQuerySystemTime(&SystemTime);
 
-	GetTimevalFromSystemTime(dst, SystemTime);
+	GetTimevalFromSystemTime(dst, SystemTime, FALSE);
 }
 
 

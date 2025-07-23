@@ -297,12 +297,12 @@ NPF_Read(
 			case TIMESTAMPMODE_QUERYSYSTEMTIME:
 			case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
 				NT_ASSERT(pCapData->pNBCopy->pNBLCopy->SystemTime.QuadPart > 0);
-				GetTimevalFromSystemTime(&header->bh_tstamp, pCapData->pNBCopy->pNBLCopy->SystemTime);
+				GetTimevalFromSystemTime(&header->bh_tstamp, pCapData->pNBCopy->pNBLCopy->SystemTime, Open->bNano);
 				break;
 			default:
 				NT_ASSERT(Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION);
 				NT_ASSERT(pCapData->pNBCopy->pNBLCopy->PerfCount.QuadPart > 0);
-				GetTimevalFromPerfCount(&header->bh_tstamp, &Open->start, pCapData->pNBCopy->pNBLCopy->PerfCount);
+				GetTimevalFromPerfCount(&header->bh_tstamp, &Open->start, pCapData->pNBCopy->pNBLCopy->PerfCount, Open->bNano);
 				break;
 		}
 		NT_ASSERT(header->bh_tstamp.tv_sec > 0 || header->bh_tstamp.tv_usec > 0);

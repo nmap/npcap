@@ -154,8 +154,10 @@ typedef struct _NDIS_OID_REQUEST *FILTER_REQUEST_CONTEXT,**PFILTER_REQUEST_CONTE
 // Npcap extension modes:
 #define MODE_SENDTORX       0x0100 /// SendToRx mode
 #define MODE_SENDTORX_CLEAR 0x0200 /// disable SendToRx mode
+#define MODE_NANO           0x0400 /// Nanosecond precision timestamps
 #define SUPPORTED_MODES (MODE_CAPT | MODE_STAT \
-			| MODE_SENDTORX | MODE_SENDTORX_CLEAR)
+			| MODE_SENDTORX | MODE_SENDTORX_CLEAR \
+			| MODE_NANO)
 
 
 #define IMMEDIATE 1			///< Immediate timeout. Forces a read call to return immediately.
@@ -415,6 +417,7 @@ typedef struct _OPEN_INSTANCE
 	BOOLEAN bModeCapt:1; // MODE_CAPT (1) vs MODE_STAT (0)
 	// BOOLEAN bModeMon:1; // MODE_MON not supported
 	BOOLEAN bSendToRx:1;
+	BOOLEAN bNano:1;
 	// Loopback Behavior:
 	BOOLEAN SkipSentPackets:1; ///< True if this instance should not capture back the packets that it transmits.
 	// Info used to match a FilterModule when reattaching:
@@ -446,6 +449,7 @@ typedef struct _OPEN_INSTANCE
 	NDIS_SPIN_LOCK			OpenInUseLock;
 	ULONG TimestampMode;
 	struct timeval start; // Time synchronization of QPC with last boot
+			      // This is now always in nanosecond precision
 	ULONG UserPID; // A PID associated with this handle
 }
 OPEN_INSTANCE, *POPEN_INSTANCE;

@@ -156,10 +156,12 @@ typedef struct _AirpcapHandle* PAirpcapHandle;
 #define PACKET_MODE_STAT_DUMP PACKET_MODE_DUMP | PACKET_MODE_STAT ///< Statistical dump Mode
 // 0x0000ff00: Npcap extensions
 // 0b00000000
-//         ||_ SENDTORX
-//         |__ SENDTORX_CLEAR
+//        |||_ SENDTORX
+//        ||__ SENDTORX_CLEAR
+//        |___ NANO
 #define PACKET_MODE_SENDTORX       (1 << 8)  /// SendToRx mode
 #define PACKET_MODE_SENDTORX_CLEAR (1 << 9)  /// Disable SendToRx, overriding Registry
+#define PACKET_MODE_NANO           (1 << 10) /// Nanosecond precision timestamps
 
 
 /// Alignment macro. Defines the alignment size.
