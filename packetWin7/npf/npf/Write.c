@@ -553,7 +553,7 @@ NPF_Write(
 		//
 		INFO_DBG("NBL %p send: Open = %p, Irp = %p\n", pNetBufferList, Open, Irp);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		if (Open->pFiltMod->Loopback == TRUE)
+		if (Open->pFiltMod->Loopback)
 		{
 			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET);
 			Status = NPF_LoopbackSendNetBufferLists(Open,
@@ -905,7 +905,7 @@ NTSTATUS NPF_BufferedWrite(
 		//
 		INFO_DBG("NBL %p Buffered send: Open = %p, pState = %p\n", pNetBufferList, Open, pState);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		if (Open->pFiltMod->Loopback == TRUE)
+		if (Open->pFiltMod->Loopback)
 		{
 			NdisSetNblFlag(pNetBufferList, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET);
 			Status = NPF_LoopbackSendNetBufferLists(Open,
