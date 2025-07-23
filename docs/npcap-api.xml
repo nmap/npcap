@@ -18,8 +18,17 @@
   <para>The Npcap API is exported by <filename>wpcap.dll</filename> and is the
 	  Windows port of <ulink url="https://www.tcpdump.org/">libpcap</ulink>.
 	  The API and functions are described in
-	  <ulink url="wpcap/pcap.html">the pcap(1) man page</ulink>.
+          <ulink url="wpcap/pcap.html">the pcap(1) man page</ulink>.
+          This port varies from the standard Unix libpcap API in just a few ways.
+          First, the <literal>pcap_get_selectable_fd()</literal> and
+          <literal>pcap_get_required_select_timeout()</literal>
+          functions are not defined or exported. Second, as described in
+          <xref linkend="npcap-api-extensions"/>, Npcap extends the libpcap API with
+          a set of non-portable functions. Lastly, Npcap includes functions from the
+          remote capture API of libpcap, which is described in
+          <xref linkend="npcap-api-remote"/>.
   </para>
+
   <sect2 id="npcap-api-extensions">
     <title>Extensions to libpcap for Windows</title>
     <para>
@@ -276,6 +285,202 @@
         </listitem>
       </varlistentry>
 
+    </variablelist>
+  </sect2>
+
+  <sect2 id="npcap-api-remote">
+    <title>The libpcap remote capture API</title>
+    <para>
+      WinPcap introduced several additional functions to the libpcap API in
+      order to support remote capture. While the upstream libpcap project has
+      absorbed these functions, they have not yet published documentation on
+      them. Here is a brief overview.
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term>
+          <code>pcap_open</code>
+        </term>
+        <listitem>
+          <para>
+            Opens a remote or local capture handle.
+          </para>
+	  <code>pcap_t* pcap_open(const char * source, int snaplen, int flags, int read_timeout, struct pcap_rmtauth *auth, char *errbuf);</code>
+          <para>
+            This routine can open a savefile, a local device, or a device on
+            a remote machine running an RPCAP server.
+          </para>
+          <variablelist>
+            <varlistentry>
+              <term><code>source</code></term>
+              <listitem>
+                <para>
+                  Zero-terminated string containing the source name to open.
+                  The source name must be in one of the following formats:
+                </para>
+                <itemizedlist>
+                  <listitem><para><literal>file://path/to/file.pcap</literal></para></listitem>
+                  <listitem><para>
+                      <literal>rpcap://devicename</literal> (or the equivalent,
+                      <literal>devicename</literal>)
+                  </para></listitem>
+                  <listitem><para><literal>rpcap://host/devicename</literal></para></listitem>
+                  <listitem><para><literal>rpcap://host:port/devicename</literal></para></listitem>
+                </itemizedlist>
+                <para>
+                  Adapter names returned by <literal>pcap_findalldevs_ex()</literal>
+                  are already in this format. For convenience, compatible source
+                  strings can be built with the helper function,
+                  <literal>int pcap_createsrcstr(char *source, int type, const char *host, const char *port, const char *name, char *errbuf)</literal>,
+                  where <literal>type</literal> is one of
+                  <literal>PCAP_SRC_FILE</literal>,
+                  <literal>PCAP_SRC_IFLOCAL</literal>, or
+                  <literal>PCAP_SRC_IFREMOTE</literal>,
+                  and <literal>source</literal> is a user-allocated buffer of
+                  at least <literal>PCAP_BUF_SIZE</literal> bytes.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>snaplen</code></term>
+              <listitem>
+                <para>
+                  See the documentation for
+                  <ulink url="wpcap/pcap_open_live.html">pcap_open_live()</ulink>.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>flags</code></term>
+              <listitem>
+                <para>
+                  Keeps several flags that can be needed for capturing packets.
+                  The allowed flags are defined in the pcap_open() flags .
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>read_timeout></code></term>
+              <listitem>
+                <para>
+                  See the documentation for
+                  <ulink url="wpcap/pcap_open_live.html">pcap_open_live()</ulink>.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>auth</code></term>
+              <listitem>
+                <para>
+                  A pointer to a 'struct pcap_rmtauth' that keeps the
+                  information required to authenticate the user on a remote
+                  machine. In case this is not a remote capture, this pointer
+                  can be set to NULL.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>errbuf</code></term>
+              <listitem>
+                <para>
+                <para>
+                  See the documentation for
+                  <ulink url="wpcap/pcap_open_live.html">pcap_open_live()</ulink>.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+ 
+          <para>
+            <emphasis>Portability notes:</emphasis> For opening a savefile, the
+            <ulink url="wpcap/pcap_open_offline.html">pcap_open_offline</ulink>
+            routines can be used, and will work just as well; code using them
+            will work on more platforms than code using <literal>pcap_open()</literal>
+            to open savefiles.
+          </para>
+ 
+          <para>
+            For opening a local device,
+            <ulink url="wpcap/pcap_open_live.html">pcap_open_live()</ulink>
+            can be used; it supports most of the capabilities than
+            <literal>pcap_open()</literal> supports, and code using it will work
+            on more platforms than code using <literal>pcap_open()</literal>.
+            <ulink url="wpcap/pcap_create.html">pcap_create()</ulink> and
+            <ulink url="wpcap/pcap_activate.html">pcap_activate()</literal>
+            can also be used; they support all capabilities that
+            <literal>pcap_open()</literal> supports, except for the Windows-only
+            <literal>PCAP_OPENFLAG_NOCAPTURE_LOCAL</literal>,
+            and they support additional capabilities.
+          </para>
+ 
+          <para>
+            For opening a remote capture, <literal>pcap_open()</literal> is
+            currently the only API available.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <code>pcap_findalldevs_ex</code>
+        </term>
+        <listitem>
+          <para>
+            Lists local and remote capture sources.
+          </para>
+          <code>int pcap_findalldevs_ex(char *source, struct pcap_rmtauth *auth, pcap_if_t **alldevs, char *errbuf);</code>
+          <variablelist>
+            <varlistentry>
+              <term><code>source</code></term>
+              <listitem>
+                <para>
+                  Zero-terminated string containing the source name to list.
+                  The source name must be in one of the following formats:
+                </para>
+                <itemizedlist>
+                  <listitem><para>
+                      <literal>file://path/to/directory</literal>
+                      - lists capture files in a directory
+                  </para></listitem>
+                  <listitem><para>
+                      <literal>rpcap://</literal> - lists local adapters
+                  </para></listitem>
+                  <listitem><para>
+                      <literal>rpcap://host[:port]</literal>
+                        - lists remote adapters
+                  </para></listitem>
+                </itemizedlist>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>auth</code></term>
+              <listitem>
+                <para>See <literal>pcap_open()</literal>.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>alldevs</code></term>
+              <listitem>
+                <para>
+                  See <ulink href="wpcap/pcap_findalldevs.html">pcap_findalldevs()</ulink>.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>errbuf</code></term>
+              <listitem>
+                <para>
+                  See <ulink href="wpcap/pcap_findalldevs.html">pcap_findalldevs()</ulink>.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+          <para>
+            As with <literal> pcap_findalldevs()</literal>, the buffer returned in
+            <literal>alldevs</literal> must be freed using
+            <ulink href="wpcap/pcap_freealldevs.html">pcap_freealldevs()</ulink>.
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
   </sect2>
 </sect1>
