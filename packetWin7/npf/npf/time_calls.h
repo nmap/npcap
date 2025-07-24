@@ -201,10 +201,10 @@ inline void GetTimevalFromPerfCount(
 	dst->tv_sec = start->tv_sec + (LONG)(PTime.QuadPart / TimeFreq.QuadPart);
 	LONG ns = start->tv_usec + (LONG)((PTime.QuadPart % TimeFreq.QuadPart) * NUM_NSECS / TimeFreq.QuadPart);
 
-	if (ns >= NUM_NSEC)
+	if (ns >= NUM_NSECS)
 	{
 		dst->tv_sec ++;
-		ns -= NUM_NSEC;
+		ns -= NUM_NSECS;
 	}
 	dst->tv_usec = bNano ? ns : ns / 1000;
 }

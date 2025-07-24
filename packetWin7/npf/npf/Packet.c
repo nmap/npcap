@@ -1283,14 +1283,14 @@ static NTSTATUS funcBIOCSMODE(_In_ POPEN_INSTANCE pOpen,
 	}
 
 	if (pOpen->pFiltMod->SendToRxPath) {
-		pOpen->bSendToRx = mode & MODE_SENDTORX_CLEAR;
+		pOpen->bSendToRx = (mode & MODE_SENDTORX_CLEAR) != 0;
 	}
 	else
 	{
-		pOpen->bSendToRx = mode & MODE_SENDTORX;
+		pOpen->bSendToRx = (mode & MODE_SENDTORX) != 0;
 	}
 
-	pOpen->bNano = mode & MODE_NANO;
+	pOpen->bNano = (mode & MODE_NANO) != 0;
 
 	NPF_StopUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN);
 	return STATUS_SUCCESS;
