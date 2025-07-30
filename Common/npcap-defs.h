@@ -148,5 +148,7 @@ C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
 #define NPF_CONFIG_TESTMODE  0x40 /* TestMode */
 // BPF Extensions supported. Output is ULONG, max extension supported.
 #define NPF_GETINFO_BPFEXT 0x00000003
+// Supported mode bits for BIOCSMODE (PacketSetMode, pcap_setmode). Output is ULONG.
+#define NPF_GETINFO_MODES 0x00000004
 
 #endif /* NPCAP_DEFS_H */
