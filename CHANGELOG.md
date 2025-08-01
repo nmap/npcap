@@ -1,3 +1,26 @@
+## Npcap 1.83 [2025-08-01]
+
+* \[SECURITY\] Rebuilt the Windows self-installer with NSIS 3.11, addressing
+  CVE-2025-43715--a race condition in earlier NSIS versions that could allow
+  local attackers to escalate to SYSTEM privileges when a vulnerable installer
+  is run as SYSTEM. The Npcap installer does not run as SYSTEM by default.
+
+* Added a check for malformed OID request objects. This should prevent the BSoD
+  crashes that have been reported when setting up a PPPoE connection ([#296](http://issues.npcap.org/296)).
+
+* Fixed an issue with SendToRx mode that resulted in packet injection calls
+  hanging. Fixes [#785](http://issues.npcap.org/785).
+
+* SendToRx mode, which causes injected packets to be indicated as receives
+  instead of sends, can now be enabled per capture handle using the
+  `pcap_setmode(handle, PACKET_MODE_SENDTORX)`. Since this feature was
+  previously enabled globally via the Registry, user code can now opt out of it
+  with `pcap_setmode(handle, PACKET_MODE_SENDTORX_CLEAR)`.
+
+* The Npcap driver now can deliver packet timestamps using nanosecond
+  precision. This feature will be made available via the portable libpcap API
+  in the next Npcap SDK.
+
 ## Npcap 1.82 [2025-04-21]
 
 * Fixed an issue where Npcap 1.81 would incorrectly reject packets as too large
