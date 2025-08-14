@@ -1020,13 +1020,20 @@ NPF_TapEx(
 	else
 #endif
 	{
-		//return the packets immediately
 		NdisFIndicateReceiveNetBufferLists(
 			pFiltMod->AdapterHandle,
 			NetBufferLists,
 			PortNumber,
 			NumberOfNetBufferLists,
 			ReceiveFlags);
+		//return the packets immediately
+		if (NDIS_TEST_RECEIVE_CANNOT_PEND(ReceiveFlags))
+		{
+			NdisFReturnNetBufferLists(
+				pFiltMod->AdapterHandle,
+				NetBufferLists,
+				ReturnFlags);
+		}
 	}
 
 	TRACE_EXIT();
