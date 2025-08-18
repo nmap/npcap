@@ -1,3 +1,8 @@
+## Npcap 1.84 [2025-08-01]
+
+* Fixed an issue where Npcap would not return resources to the miniport driver
+  when requested, leading to loss of connectivity.
+
 ## Npcap 1.83 [2025-08-01]
 
 * \[SECURITY\] Rebuilt the Windows self-installer with NSIS 3.11, addressing
