@@ -653,6 +653,13 @@ NPF_DoInternalRequest(
 	_Out_ PULONG						pBytesProcessed
 	);
 
+
+PNET_BUFFER_LIST
+NPF_CleanupNBLs(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PNET_BUFFER_LIST NetBufferLists,
+	_In_ BOOLEAN bAtDispatchLevel
+	);
 /**
  *  @}
  */

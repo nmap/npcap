@@ -3073,15 +3073,34 @@ Arguments:
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 	BOOLEAN bAtDispatchLevel = NDIS_TEST_RETURN_AT_DISPATCH_LEVEL(ReturnFlags);
-	PNET_BUFFER_LIST    pNetBufList = NULL;
-	PNET_BUFFER_LIST    pPrevNetBufList = NULL;
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	/* This callback is only for the NDIS LWF, not WFP/loopback */
 	NT_ASSERT(!pFiltMod->Loopback);
 #endif
 
-	pNetBufList = NetBufferLists;
+	NetBufferLists = NPF_CleanupNBLs(pFiltMod, NetBufferLists, bAtDispatchLevel);
+
+	if (NetBufferLists != NULL) {
+		// Return the received NBLs.  If you removed any NBLs from the chain, make
+		// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
+		NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
+	}
+
+/*	TRACE_EXIT();*/
+}
+
+_Use_decl_annotations_
+PNET_BUFFER_LIST
+NPF_CleanupNBLs(
+	PNPCAP_FILTER_MODULE pFiltMod,
+	PNET_BUFFER_LIST NetBufferLists,
+	BOOLEAN bAtDispatchLevel
+	)
+{
+	PNET_BUFFER_LIST pNetBufList = NetBufferLists;
+	PNET_BUFFER_LIST pPrevNetBufList = NULL;
+
 	while (pNetBufList != NULL)
 	{
 		// Keep track of this one
@@ -3109,14 +3128,7 @@ Arguments:
 
 		NPF_FreePackets(pFiltMod, pNBL, bAtDispatchLevel);
 	}
-
-	if (NetBufferLists != NULL) {
-		// Return the received NBLs.  If you removed any NBLs from the chain, make
-		// sure the chain isn't empty (i.e., NetBufferLists!=NULL).
-		NdisFReturnNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, ReturnFlags);
-	}
-
-/*	TRACE_EXIT();*/
+	return NetBufferLists;
 }
 
 //-------------------------------------------------------------------
