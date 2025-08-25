@@ -1979,6 +1979,7 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 	PSINGLE_LIST_ENTRY Curr = NULL;
 	PNPCAP_FILTER_MODULE pFiltMod = NULL;
 	ULONG ulTmp = 0;
+	ULONG ulInput = 0;
 
 	*Info = 0;
 	// NDIS OID requests use the same buffer for in/out, so the caller must supply the same size buffers, too.
@@ -1994,6 +1995,9 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 	// Now Length is at least sizeof(ULONG)
 	INFO_DBG("BIOCGETINFO: ID=%08lx, Length=%08lx\n", OidData->Oid, OidData->Length);
 
+	ulInput = *((PULONG)OidData->Data);
+	USHORT *puStat = NULL;
+	C_ASSERT(sizeof(ULONG) >= 2 * sizeof(USHORT));
 	switch (OidData->Oid) {
 		case NPF_GETINFO_VERSION:
 			*((PULONG)OidData->Data) = 
@@ -2049,6 +2053,33 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 			Status = STATUS_SUCCESS;
 			break;
 
+		case NPF_GETINFO_STATS:
+			if (pOpen->OpenStatus <= OpenAttached && pOpen->pFiltMod) {
+				switch (ulInput) {
+					case NPF_STATSINFO_RECVTIMES:
+						puStat = pOpen->pFiltMod->TimeInRecv;
+						break;
+					case NPF_STATSINFO_SENDTIMES:
+						puStat = pOpen->pFiltMod->TimeInSend;
+						break;
+					case NPF_STATSINFO_DPCTIMES:
+						puStat = pOpen->pFiltMod->TimeAtDPC;
+						break;
+					default:
+						Status = STATUS_INVALID_DEVICE_REQUEST;
+						break;
+				}
+				if (puStat != NULL) {
+					((PUSHORT)OidData->Data)[0] = puStat[0];
+					((PUSHORT)OidData->Data)[1] = puStat[1];
+					OidData->Length = 2 * sizeof(USHORT);
+					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + 2 * sizeof(USHORT);
+				}
+			}
+			else {
+				Status = STATUS_CANCELLED;
+			}
+			break;
 		default:
 			Status = STATUS_INVALID_DEVICE_REQUEST;
 			break;

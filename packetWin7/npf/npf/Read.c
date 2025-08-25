@@ -931,6 +931,36 @@ NPF_DoTap(
 	return;
 }
 
+#define EMA_SCALE 24
+#define ALPHA_SHORT_TERM (1677722) // 0.1 * 2^24
+#define ONE_MINUS_ALPHA_SHORT_TERM (15100100) // 0.9 * 2^24
+
+#define ALPHA_LONG_TERM (16) // 0.000001 * 2^24
+#define ONE_MINUS_ALPHA_LONG_TERM (16777199) // 0.999999 * 2^24
+
+static VOID CalculateEMA(_Inout_updates_(2) PUSHORT pStat, _In_ LARGE_INTEGER value)
+{
+	USHORT capped = MAXUSHORT;
+	if (value.QuadPart < MAXUSHORT) {
+		capped = (USHORT)value.QuadPart;
+	}
+
+	if (pStat[0] == 0) {
+		// Initialize both short-term and long-term averages
+		pStat[0] = capped;
+		pStat[1] = capped;
+	}
+	else {
+		// Short-term EMA calculation using scaled integers
+		LONGLONG tempAvg0 = (LONGLONG)capped * ALPHA_SHORT_TERM + (LONGLONG)pStat[0] * ONE_MINUS_ALPHA_SHORT_TERM;
+		pStat[0] = (USHORT)(tempAvg0 >> EMA_SCALE);
+
+		// Long-term EMA calculation using scaled integers
+		LONGLONG tempAvg1 = (LONGLONG)capped * ALPHA_LONG_TERM + (LONGLONG)pStat[1] * ONE_MINUS_ALPHA_LONG_TERM;
+		pStat[1] = (USHORT)(tempAvg1 >> EMA_SCALE);
+	}
+}
+
 _Use_decl_annotations_
 VOID
 NPF_SendEx(
@@ -941,6 +971,8 @@ NPF_SendEx(
 	)
 {
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
+	LARGE_INTEGER PTime = KeQueryPerformanceCounter(NULL);
+	BOOLEAN bAtDispatchLevel = NDIS_TEST_SEND_AT_DISPATCH_LEVEL(SendFlags);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	/* This callback is only for the NDIS LWF, not WFP/loopback */
@@ -954,13 +986,19 @@ NPF_SendEx(
 	if (pFiltMod->Loopback == FALSE)
 	{
 #endif
-		NPF_DoTap(pFiltMod, NetBufferLists, NULL, NDIS_TEST_SEND_AT_DISPATCH_LEVEL(SendFlags));
+		NPF_DoTap(pFiltMod, NetBufferLists, NULL, bAtDispatchLevel);
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
 #endif
 
 	NdisFSendNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
 
+	LARGE_INTEGER EndTime = KeQueryPerformanceCounter(NULL);
+	PTime.QuadPart = EndTime.QuadPart - PTime.QuadPart;
+	CalculateEMA(pFiltMod->TimeInSend, PTime);
+	if (bAtDispatchLevel) {
+		CalculateEMA(pFiltMod->TimeAtDPC, PTime);
+	}
 	TRACE_EXIT();
 }
 
@@ -979,18 +1017,19 @@ NPF_TapEx(
 
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
 	ULONG				ReturnFlags = 0;
+	BOOLEAN bAtDispatchLevel = NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags);
+	LARGE_INTEGER PTime = KeQueryPerformanceCounter(NULL);
 
 	TRACE_ENTER();
 
 	UNREFERENCED_PARAMETER(PortNumber);
-	UNREFERENCED_PARAMETER(NumberOfNetBufferLists);
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	/* This callback is only for the NDIS LWF, not WFP/loopback */
 	NT_ASSERT(!pFiltMod->Loopback);
 #endif
 
-	if (NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags))
+	if (bAtDispatchLevel)
 	{
 		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
 	}
@@ -1047,6 +1086,12 @@ NPF_TapEx(
 				bAtDispatchLevel ? NDIS_RETURN_FLAGS_DISPATCH_LEVEL : 0);
 	}
 #endif
+	LARGE_INTEGER EndTime = KeQueryPerformanceCounter(NULL);
+	PTime.QuadPart = EndTime.QuadPart - PTime.QuadPart;
+	CalculateEMA(pFiltMod->TimeInRecv, PTime);
+	if (bAtDispatchLevel) {
+		CalculateEMA(pFiltMod->TimeAtDPC, PTime);
+	}
 
 	TRACE_EXIT();
 }

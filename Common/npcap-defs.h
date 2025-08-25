@@ -150,5 +150,11 @@ C_ASSERT(sizeof(PACKET_OID_DATA) == 12);
 #define NPF_GETINFO_BPFEXT 0x00000003
 // Supported mode bits for BIOCSMODE (PacketSetMode, pcap_setmode). Output is ULONG.
 #define NPF_GETINFO_MODES 0x00000004
+// Performance statistics for the filter module
+#define NPF_GETINFO_STATS 0x00000005
+// All of these are 2 USHORTs: average for last 10 and last 10K calls
+#define NPF_STATSINFO_RECVTIMES 0x00000001 /* ticks per recieve indication */
+#define NPF_STATSINFO_SENDTIMES 0x00000002 /* ticks per send indication */
+#define NPF_STATSINFO_DPCTIMES  0x00000003 /* ticks at DPC level, both dirs */
 
 #endif /* NPCAP_DEFS_H */

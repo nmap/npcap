@@ -377,7 +377,11 @@ typedef struct _NPCAP_FILTER_MODULE
 	NDIS_SPIN_LOCK			AdapterHandleLock;
 	FILTER_STATE					AdapterBindingStatus;	///< Specifies if NPF is still bound to the adapter used by this instance, it's unbinding or it's not bound.
 	FILTER_OPS_STATE OpsState; // Whether all operations are enabled
-
+	// Exponential Moving Average processing time per call
+	// (last 20 packets, alpha=0.1; last 20K packets, alpha=0.0001)
+	USHORT TimeInSend[2]; // send path
+	USHORT TimeInRecv[2]; // receive path
+	USHORT TimeAtDPC[2]; // both paths
 } 
 NPCAP_FILTER_MODULE, *PNPCAP_FILTER_MODULE;
 
