@@ -974,22 +974,17 @@ NPF_SendEx(
 	LARGE_INTEGER PTime = KeQueryPerformanceCounter(NULL);
 	BOOLEAN bAtDispatchLevel = NDIS_TEST_SEND_AT_DISPATCH_LEVEL(SendFlags);
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	/* This callback is only for the NDIS LWF, not WFP/loopback */
-	NT_ASSERT(!pFiltMod->Loopback);
-#endif
 
 	TRACE_ENTER();
 
+	if (pFiltMod->OpsState == OpsEnabled
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// Do not capture the normal NDIS send traffic, if this is our loopback adapter.
-	if (pFiltMod->Loopback == FALSE)
+		&& NT_VERIFY(!pFiltMod->Loopback)
+#endif
+	   )
 	{
-#endif
 		NPF_DoTap(pFiltMod, NetBufferLists, NULL, bAtDispatchLevel);
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
 	}
-#endif
 
 	NdisFSendNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
 
@@ -1016,7 +1011,6 @@ NPF_TapEx(
 {
 
 	PNPCAP_FILTER_MODULE pFiltMod = (PNPCAP_FILTER_MODULE) FilterModuleContext;
-	ULONG				ReturnFlags = 0;
 	BOOLEAN bAtDispatchLevel = NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags);
 	LARGE_INTEGER PTime = KeQueryPerformanceCounter(NULL);
 
@@ -1024,20 +1018,13 @@ NPF_TapEx(
 
 	UNREFERENCED_PARAMETER(PortNumber);
 
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	/* This callback is only for the NDIS LWF, not WFP/loopback */
-	NT_ASSERT(!pFiltMod->Loopback);
-#endif
-
-	if (bAtDispatchLevel)
-	{
-		NDIS_SET_RETURN_FLAG(ReturnFlags, NDIS_RETURN_FLAGS_DISPATCH_LEVEL);
-	}
-
-	if (
+	if (pFiltMod->OpsState == OpsEnabled
 		// If this is a Npcap-sent packet being looped back, then it has already been captured.
-		!(NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
-		 && NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
+#ifdef HAVE_WFP_LOOPBACK_SUPPORT
+		&& NT_VERIFY(!pFiltMod->Loopback)
+#endif
+		&& !(NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
+			&& NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
 
 	   )
 	{
