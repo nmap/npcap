@@ -323,7 +323,7 @@ extern "C"
 	LPPACKET PacketAllocatePacket(void);
 	VOID PacketInitPacket(_Out_ LPPACKET lpPacket, _In_reads_bytes_(Length) PVOID  Buffer, _In_ UINT  Length);
 	VOID PacketFreePacket(_In_ _Post_invalid_ LPPACKET lpPacket);
-	_Success_(return) BOOLEAN PacketReceivePacket(_In_ LPADAPTER AdapterObject, _Out_ LPPACKET lpPacket, _In_ BOOLEAN Sync);
+	_Success_(return) BOOLEAN PacketReceivePacket(_In_ LPADAPTER AdapterObject, _Inout_updates_bytes_(lpPacket->Length) LPPACKET lpPacket, _In_ BOOLEAN Sync);
 	_Success_(return) BOOLEAN PacketSetHwFilter(_In_ LPADAPTER AdapterObject, _In_ ULONG Filter);
 	_Success_(return) BOOLEAN PacketGetAdapterNames(_Out_writes_opt_(_Old_(*BufferSize)) PCHAR pStr, _Inout_ PULONG  BufferSize);
 	_Success_(return) BOOLEAN PacketGetNetInfoEx(_In_ PCCH AdapterName, _Out_writes_to_(_Old_(*NEntries),*NEntries) npf_if_addr* buffer, _Inout_ PLONG NEntries);
