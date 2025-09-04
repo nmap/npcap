@@ -1366,6 +1366,54 @@ HANDLE PacketGetAdapterHandle(PCCH AdapterNameA, ULONG NpfOpenFlags)
 	return hFile;
 }
 
+_Success_(return == ERROR_SUCCESS)
+static DWORD PacketRequestHelper(
+	_In_ HANDLE hAdapter,
+	_In_ BOOLEAN Set,
+	_Inout_updates_bytes_(PACKET_OID_DATA_LENGTH(OidData->Length)) PPACKET_OID_DATA OidData)
+{
+	DWORD BytesReturned = 0;
+	DWORD err = ERROR_SUCCESS;
+	if (!DeviceIoControl(hAdapter, (DWORD)(Set ? BIOCSETOID : BIOCQUERYOID),
+		OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+		OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+		&BytesReturned, NULL))
+	{
+		err = GetLastError();
+	}
+	TRACE_PRINT4("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, ErrCode = 0x%.08x",
+		OidData->Oid,
+		OidData->Length,
+		Set,
+		err & ~(1 << 29));
+	return err;
+}
+
+_Success_(return == ERROR_SUCCESS)
+static DWORD _PacketGetInfoPriv(
+		_In_ LPADAPTER lpAdapter, _In_ ULONG ulID, _Out_ PULONG ulInfo)
+{
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG))] = { 0 };
+	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
+	DWORD dwResult = ERROR_INVALID_DATA;
+
+	OidData->Oid = ulID;
+	OidData->Length = sizeof(ULONG);
+	dwResult = PacketRequestHelper(lpAdapter->hFile, FALSE, OidData);
+	if (dwResult == ERROR_SUCCESS)
+	{
+		*ulInfo = *(ULONG*) OidData->Data;
+	}
+	else
+	{
+		TRACE_PRINT("_PacketGetInfoPriv failed, PacketRequest error");
+	}
+
+	TRACE_EXIT();
+	SetLastError(dwResult);
+	return dwResult;
+}
+
 /*!
   \brief Opens an adapter using the NPF device driver.
   \param AdapterName A string containing the name of the device to open.
@@ -1379,17 +1427,19 @@ LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterID, ULONG NpfOpenFlags)
 {
 	DWORD error;
 	LPADAPTER lpAdapter;
+	PADAPTER_PRIV pAdPriv;
 
 	TRACE_ENTER();
 
-	lpAdapter=(LPADAPTER)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER));
-	if (lpAdapter==NULL)
+	pAdPriv = (PADAPTER_PRIV)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER_PRIV));
+	if (pAdPriv == NULL)
 	{
 		TRACE_PRINT("PacketOpenAdapterNPF: HeapAlloc Failed to allocate the ADAPTER structure");
 		TRACE_EXIT();
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
+	lpAdapter = &pAdPriv->ad;
 
 	if ((NpfOpenFlags & NPF_OPEN_FLAG_WIFI) > 0) {
 		lpAdapter->Flags |= INFO_FLAG_NPCAP_DOT11;
@@ -1416,6 +1466,11 @@ LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterID, ULONG NpfOpenFlags)
 			TRACE_PRINT("PacketOpenAdapterNPF: Unable to set lookahead");
 			// We do not consider this a failure. Would like to avoid it for loopback, though.
 			// break;
+		}
+		if (ERROR_SUCCESS != _PacketGetInfoPriv(lpAdapter,
+					NPF_GETINFO_CONFIG, &pAdPriv->ulConfig))
+		{
+			pAdPriv->ulConfig = 0;
 		}
 
 		TRACE_PRINT("Successfully opened adapter");
@@ -1450,7 +1505,8 @@ static BOOLEAN IsAirpcapName(LPCSTR AdapterName)
 static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 {
 	CHAR Ebuf[AIRPCAP_ERRBUF_SIZE];
-    LPADAPTER lpAdapter;
+	LPADAPTER lpAdapter;
+	PADAPTER_PRIV pAdPriv;
 
 	TRACE_ENTER();
 
@@ -1463,13 +1519,15 @@ static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 		return NULL;
 	}
 	
-	lpAdapter = (LPADAPTER) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER));
-	if (lpAdapter == NULL)
+	pAdPriv = (PADAPTER_PRIV)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ADAPTER_PRIV));
+	if (pAdPriv == NULL)
 	{
+		TRACE_PRINT("PacketOpenAdapterAirPcap: HeapAlloc Failed to allocate the ADAPTER structure");
 		TRACE_EXIT();
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
+	lpAdapter = &pAdPriv->ad;
 
 	//
 	// Indicate that this is a aircap card
@@ -1483,7 +1541,7 @@ static LPADAPTER PacketOpenAdapterAirpcap(LPCSTR AdapterName)
 	
 	if(lpAdapter->AirpcapAd == NULL)
 	{
-		HeapFree(GetProcessHeap(), 0, lpAdapter);
+		HeapFree(GetProcessHeap(), 0, pAdPriv);
 		TRACE_EXIT();
 		return NULL;					
 	}
@@ -1790,7 +1848,7 @@ VOID PacketCloseAdapter(LPADAPTER lpAdapter)
 		if (lpAdapter->hFile != INVALID_HANDLE_VALUE && lpAdapter->hFile != NULL) {
 			CloseHandle(lpAdapter->hFile);
 		}
-		HeapFree(GetProcessHeap(), 0, lpAdapter);
+		HeapFree(GetProcessHeap(), 0, LPAD_TO_ADAPTER_PRIV(lpAdapter));
 	}
 
 	TRACE_EXIT();
@@ -2912,29 +2970,6 @@ BOOLEAN PacketGetStatsEx(LPADAPTER AdapterObject,struct bpf_stat *s)
 	SetLastError(err);
 	return Res;
 
-}
-
-_Success_(return == ERROR_SUCCESS)
-static DWORD PacketRequestHelper(
-		_In_ HANDLE hAdapter,
-		_In_ BOOLEAN Set,
-		_Inout_updates_bytes_(PACKET_OID_DATA_LENGTH(OidData->Length)) PPACKET_OID_DATA OidData)
-{
-	DWORD BytesReturned = 0;
-	DWORD err = ERROR_SUCCESS;
-	if(!DeviceIoControl(hAdapter, (DWORD) (Set ? BIOCSETOID : BIOCQUERYOID),
-                           OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
-			   OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
-			   &BytesReturned, NULL))
-	{
-		err = GetLastError();
-	}
-	TRACE_PRINT4("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, ErrCode = 0x%.08x",
-			OidData->Oid,
-			OidData->Length,
-			Set,
-			err & ~(1 << 29));
-	return err;
 }
 
 /*!

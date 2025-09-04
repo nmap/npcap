@@ -144,6 +144,17 @@ typedef struct ADAPTERS_INFO_LIST
 // After this many ms, regen the list of adapters
 #define ADINFO_LIST_STALE_TICK_COUNT 1000
 
+/* Npcap's internal representation of an adapter object. This allows us to
+ * extend the adapter struct without breaking the public API, since the WinPcap
+ * API we inherited foolishly made the ADAPTER type a publicly-defined struct.
+ */
+typedef struct _ADAPTER_PRIV
+{
+	ADAPTER ad;
+	ULONG ulConfig;
+} ADAPTER_PRIV, *PADAPTER_PRIV;
+#define LPAD_TO_ADAPTER_PRIV(_LPAD) \
+	CONTAINING_RECORD(_LPAD, ADAPTER_PRIV, ad)
 
 //
 // Internal functions
