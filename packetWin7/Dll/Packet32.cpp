@@ -673,6 +673,7 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 {
 	TRACE_ENTER();
 
+	ULONG DriverVersion = 0;
 	PADAPTER_INFO NewAdInfo;
 	g_hDllHandle = DllHandle;
 
@@ -693,12 +694,21 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 		g_DynamicLibrariesMutex = CreateMutex(NULL, FALSE, NULL);
 #endif
 
-		//
-		// Retrieve NPF.sys version information from the file
-		//
-		// XXX We want to replace this with a constant. We leave it out for the moment
-		// TODO fixme. Those hardcoded strings are terrible...
-		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
+		if (ERROR_SUCCESS == _PacketGetInfoPriv(INVALID_HANDLE_VALUE, NPF_GETINFO_VERSION, &DriverVersion)) {
+			StringCchPrintfA(PacketDriverVersion, sizeof(PacketDriverVersion),
+					"%u.%u.%u",
+					(DriverVersion >> 24) & 0xff,
+					(DriverVersion >> 16) & 0xff,
+					DriverVersion & 0xffff);
+		}
+		else {
+			//
+			// Retrieve NPF.sys version information from the file
+			//
+			// XXX We want to replace this with a constant. We leave it out for the moment
+			// TODO fixme. Those hardcoded strings are terrible...
+			PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
+		}
 
 		// Get the name for "Npcap Loopback Adapter"
 		NpcapGetLoopbackInterfaceName();
