@@ -152,6 +152,9 @@ typedef struct _ADAPTER_PRIV
 {
 	ADAPTER ad;
 	ULONG ulConfig;
+	int minToCopy;
+	DWORD dwReadLength;
+	int reduceCounter;
 } ADAPTER_PRIV, *PADAPTER_PRIV;
 #define LPAD_TO_ADAPTER_PRIV(_LPAD) \
 	CONTAINING_RECORD(_LPAD, ADAPTER_PRIV, ad)

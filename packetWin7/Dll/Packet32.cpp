@@ -668,11 +668,23 @@ static PCHAR NpcapGetAdapterID(_In_ LPCSTR AdapterName, _Out_opt_ PULONG pNpfOpe
 /*! 
   \brief The main dll function.
 */
+struct PacketGlobalSettings {
+	DWORD dwPageSize;
+	BOOLEAN bInitialized:1;
+	BOOLEAN bExperimentalOptimization:1;
+	PacketGlobalSettings() :
+		dwPageSize(0),
+		bInitialized(0),
+		bExperimentalOptimization(0)
+	{};
+};
+static PacketGlobalSettings g_Settings;
 
 BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 {
 	TRACE_ENTER();
 
+	SYSTEM_INFO si = { 0 };
 	ULONG DriverVersion = 0;
 	PADAPTER_INFO NewAdInfo;
 	g_hDllHandle = DllHandle;
@@ -684,6 +696,14 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 	case DLL_PROCESS_ATTACH:
 
 		TRACE_PRINT("************Packet32: DllMain************");
+		if (!g_Settings.bInitialized) {
+			GetNativeSystemInfo(&si);
+			g_Settings.dwPageSize = si.dwPageSize;
+			if (0 != GetEnvironmentVariable(_T("PACKET_EXPERIMENTAL_OPTIMIZATION"), NULL, 0)) {
+				g_Settings.bExperimentalOptimization = TRUE;
+			}
+			g_Settings.bInitialized = TRUE;
+		}
 
 
 		// Create the mutex that will protect the adapter information list
@@ -1960,6 +1980,40 @@ VOID PacketInitPacket(LPPACKET lpPacket,PVOID Buffer,UINT Length)
 	TRACE_EXIT();
 }
 
+#ifndef PAGE_ALIGN
+#define PAGE_ALIGN(_VA) (((_VA)+(dwPageSize-1))&~(dwPageSize-1))
+#endif
+#define MIN_BUFFER 0x10000
+static DWORD IncreaseReadLength(DWORD dwCurr, DWORD dwMax)
+{
+	DWORD dwNew = dwCurr;
+	DWORD dwPageSize = g_Settings.dwPageSize;
+	assert(dwPageSize > 0);
+	if (dwNew == dwMax) {
+		return dwMax;
+	}
+	if (dwNew >= 4 * MIN_BUFFER) {
+		dwNew += MIN_BUFFER;
+	}
+	else {
+		dwNew *= 2;
+	}
+	dwNew = PAGE_ALIGN(dwNew);
+	return (dwNew > dwMax) ? dwMax : dwNew;
+}
+
+static DWORD DecreaseReadLength(DWORD dwMin, DWORD dwCurr, DWORD dwMax)
+{
+	DWORD dwNew = dwCurr / 2;
+	DWORD dwPageSize = g_Settings.dwPageSize;
+	assert(dwPageSize > 0);
+	if (dwNew <= dwMin) {
+		dwNew = dwMin;
+	}
+	dwNew = PAGE_ALIGN(dwNew);
+	return (dwNew > dwMax) ? dwMax : dwNew;
+}
+
 /*! 
   \brief Read data (packets or statistics) from the NPF driver.
   \param AdapterObject Pointer to an _ADAPTER structure identifying the network adapter from which 
@@ -1995,6 +2049,7 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
 {
 	BOOLEAN res;
 	DWORD err = ERROR_SUCCESS;
+	PADAPTER_PRIV pAdPriv = LPAD_TO_ADAPTER_PRIV(AdapterObject);
 
 	UNUSED(Sync);
 
@@ -2035,10 +2090,65 @@ BOOLEAN PacketReceivePacket(LPADAPTER AdapterObject,LPPACKET lpPacket,BOOLEAN Sy
 	}
 	else
 	{
+		DWORD Length = lpPacket->Length;
+		if (g_Settings.bExperimentalOptimization) {
+			if (pAdPriv->dwReadLength > 0 && pAdPriv->dwReadLength < Length) {
+				Length = pAdPriv->dwReadLength;
+			}
+		}
+
 		if((int)AdapterObject->ReadTimeOut != -1)
 			WaitForSingleObject(AdapterObject->ReadEvent, (AdapterObject->ReadTimeOut==0)?INFINITE:AdapterObject->ReadTimeOut);
 	
-		res = (BOOLEAN)ReadFile(AdapterObject->hFile, lpPacket->Buffer, lpPacket->Length, &lpPacket->ulBytesReceived,NULL);
+		res = (BOOLEAN)ReadFile(AdapterObject->hFile, lpPacket->Buffer, Length, &lpPacket->ulBytesReceived, NULL);
+		if (g_Settings.bExperimentalOptimization) {
+			DWORD dwMin = max(pAdPriv->minToCopy, MIN_BUFFER);
+#ifdef _DBG				
+			DWORD dwPageSize = g_Settings.dwPageSize;
+			ULONG saved=0, wasted=0;
+			static ULONG total_saved=0;
+			static ULONG total_wasted=0;
+			static const char did[4][4] = {
+				"===", "...", "---", "+++" };
+			int i = 0;
+#define DID(_i) (i = _i)
+#else
+#define DID(_i) ((void)0)
+#endif
+			if (Length > dwMin && lpPacket->ulBytesReceived < Length / 4) {
+				DID(1);
+				// Too long, size down if allowed
+				if (++pAdPriv->reduceCounter > 2) {
+					DID(2);
+					pAdPriv->dwReadLength = DecreaseReadLength(
+							dwMin,
+							Length,
+							lpPacket->Length
+							);
+					pAdPriv->reduceCounter = 0;
+				}
+			}
+			else if (Length < lpPacket->Length && Length - lpPacket->ulBytesReceived < 2048) {
+				DID(3);
+				// Too short, size up
+				pAdPriv->dwReadLength = IncreaseReadLength(
+						Length,
+						lpPacket->Length
+						);
+			}
+#ifdef _DBG
+			saved = (lpPacket->Length - Length)/dwPageSize;
+			wasted = PAGE_ALIGN(lpPacket->ulBytesReceived);
+			wasted = (Length - min(wasted, Length))/dwPageSize;
+			total_saved += saved;
+			total_wasted += wasted;
+			TRACE_PRINT10("got %u/%u (min:%u, max:%u) (saved:%u (%u), wasted: %u (%u)) %s = %u\n",
+					lpPacket->ulBytesReceived, Length,
+					pAdPriv->minToCopy, lpPacket->Length,
+					saved, total_saved, wasted, total_wasted,
+					did[i], pAdPriv->dwReadLength);
+#endif
+		}
 		err = GetLastError();
 	}
 	
@@ -2310,8 +2420,11 @@ BOOLEAN PacketSetMinToCopy(LPADAPTER AdapterObject,int nbytes)
 	DWORD BytesReturned;
 	BOOLEAN Result;
 	DWORD err = ERROR_SUCCESS;
+	PADAPTER_PRIV pAdPriv = LPAD_TO_ADAPTER_PRIV(AdapterObject);
 
 	TRACE_ENTER();
+
+	pAdPriv->minToCopy = nbytes;
 	
 #ifdef HAVE_AIRPCAP_API
 	if(AdapterObject->Flags & INFO_FLAG_AIRPCAP_CARD)
