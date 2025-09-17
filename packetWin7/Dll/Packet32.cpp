@@ -220,6 +220,10 @@ __declspec (dllexport) VOID PacketRegWoemLeaveHandler(PVOID Handler)
 _Success_(return != 0)
 static BOOL PacketGetFileVersion(_In_ LPCTSTR FileName, _Out_writes_(VersionBuffLen) PCHAR VersionBuff, _In_ UINT VersionBuffLen);
 
+_Success_(return == ERROR_SUCCESS)
+static DWORD _PacketGetInfoPriv(
+		_In_ HANDLE hFile, _In_ ULONG ulID, _Out_ PULONG ulInfo);
+
 static BOOL NpcapCreatePipe(const char *pipeName, HANDLE moduleName)
 {
 	const int pid = GetCurrentProcessId();
@@ -1389,24 +1393,39 @@ static DWORD PacketRequestHelper(
 	return err;
 }
 
-_Success_(return == ERROR_SUCCESS)
+_Use_decl_annotations_
 static DWORD _PacketGetInfoPriv(
-		_In_ LPADAPTER lpAdapter, _In_ ULONG ulID, _Out_ PULONG ulInfo)
+		HANDLE hFile, ULONG ulID, PULONG ulInfo)
 {
 	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG))] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	DWORD dwResult = ERROR_INVALID_DATA;
+	DWORD BytesReturned = 0;
 
-	OidData->Oid = ulID;
-	OidData->Length = sizeof(ULONG);
-	dwResult = PacketRequestHelper(lpAdapter->hFile, FALSE, OidData);
-	if (dwResult == ERROR_SUCCESS)
-	{
-		*ulInfo = *(ULONG*) OidData->Data;
+	HANDLE hAdapter = hFile;
+	if (hAdapter == INVALID_HANDLE_VALUE) {
+		hAdapter = PacketGetAdapterHandle(NPCAP_LOOPBACK_ADAPTER_BUILTIN, 0);
 	}
-	else
-	{
-		TRACE_PRINT("_PacketGetInfoPriv failed, PacketRequest error");
+
+	if (hAdapter != INVALID_HANDLE_VALUE) {
+		OidData->Oid = ulID;
+		OidData->Length = sizeof(ULONG);
+		if(!DeviceIoControl(hAdapter, BIOCGETINFO,
+					OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+					OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+					&BytesReturned, NULL))
+		{
+			dwResult = GetLastError();
+			TRACE_PRINT("_PacketGetInfoPriv failed, PacketRequest error");
+		}
+		else {
+			dwResult = ERROR_SUCCESS;
+			*ulInfo = *((ULONG*)OidData->Data);
+		}
+
+		if (hAdapter != hFile) {
+			CloseHandle(hAdapter);
+		}
 	}
 
 	TRACE_EXIT();
@@ -1467,7 +1486,7 @@ LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterID, ULONG NpfOpenFlags)
 			// We do not consider this a failure. Would like to avoid it for loopback, though.
 			// break;
 		}
-		if (ERROR_SUCCESS != _PacketGetInfoPriv(lpAdapter,
+		if (ERROR_SUCCESS != _PacketGetInfoPriv(lpAdapter->hFile,
 					NPF_GETINFO_CONFIG, &pAdPriv->ulConfig))
 		{
 			pAdPriv->ulConfig = 0;
@@ -3839,7 +3858,10 @@ BOOLEAN PacketGetInfo(
 	TRACE_ENTER();
 
 	if (AdapterObject == NULL) {
-		hAdapter = PacketGetAdapterHandle("", 0);
+		hAdapter = PacketGetAdapterHandle(NPCAP_LOOPBACK_ADAPTER_BUILTIN, 0);
+		if (hAdapter == INVALID_HANDLE_VALUE) {
+			return FALSE;
+		}
 		bCloseAdapter = TRUE;
 	}
 	else if(AdapterObject->Flags & INFO_FLAG_MASK_NOT_NPF)
