@@ -172,7 +172,7 @@ VOID printAdapters()
 	       	sizeof(ULONG))
 
 #define DO_OID_READ_HEXDUMP(_Oid, _Length) DO_OID_READ(_Oid, #_Oid, \
-		hexDump(OidData->Data, _Length), \
+		hexDump(OidData->Data, OidData->Length), \
 		_Length)
 
 			DO_OID_READ_ULONG(OID_GEN_RCV_OK);
