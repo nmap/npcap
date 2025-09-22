@@ -191,19 +191,36 @@ BOOL checkModulePathName(tstring strModulePathName)
 	}
 	else
 	{
-		tstring strModuleName = strModulePathName.substr(iStart + 1, tstring::npos);
-		// Uninstaller renames X.dll to X.dll.del to avoid race condition
-		if (strModuleName == _T("wpcap.dll") || strModuleName == _T("packet.dll")
-			|| strModuleName == _T("wpcap.dll.del")
-			|| strModuleName == _T("packet.dll.del"))
-		{
-			return TRUE;
+		iStart++;
+
+		if (0 == strModulePathName.compare(iStart, 5, _T("wpcap"))) {
+			iStart += 5;
 		}
-		else
-		{
+		else if (0 == strModulePathName.compare(iStart, 6, _T("packet"))) {
+			iStart += 6;
+		}
+		else {
 			return FALSE;
 		}
+
+#ifdef _M_ARM64
+		// ARM64X pure forwarder DLL works with these two arch-specific DLLs
+		if (0 == strModulePathName.compare(iStart, 4, _T("_x64"))) {
+			iStart += 4;
+		}
+		else if (0 == strModulePathName.compare(iStart, 5, _T("_arm64"))) {
+			iStart += 5;
+		}
+		// The forwarder itself is wpcap.dll or packet.dll, so no else statement here.
+#endif
+
+		// Uninstaller renames X.dll to X.dll.del to avoid race condition
+		if (0 == strModulePathName.compare(iStart, tstring::npos, _T(".dll"))
+			|| 0 == strModulePathName.compare(iStart, tstring::npos, _T(".dll.del"))) {
+			return TRUE;
+		}
 	}
+	return FALSE;
 }
 
 BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
