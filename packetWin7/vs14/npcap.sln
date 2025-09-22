@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.34601.136
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36401.2 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npf", "..\npf\npf\npf.vcxproj", "{3556F5BC-F8EC-437E-93E3-7CF2DC63FF61}"
 EndProject
@@ -14,6 +14,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WlanHelper", "..\WlanHelper\WlanHelper\WlanHelper.vcxproj", "{044CB4DC-827D-4134-B14B-DE114E884BB9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NPFInstall", "..\NPFInstall\NPFInstall\NPFInstall.vcxproj", "{5D8A2717-4F35-4402-B868-45612D27291B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DriverQuery", "..\DriverQuery\DriverQuery.vcxproj", "{C87689C8-9CEE-4E97-953C-7C981385522F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52} = {17D62EEB-EABF-4D94-B1FF-BCDAAFA7DA52}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -593,6 +598,120 @@ Global
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release|x64.Build.0 = Release|x64
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release|x86.ActiveCfg = Release|Win32
 		{5D8A2717-4F35-4402-B868-45612D27291B}.Release|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug No AirPcap|ARM64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug No AirPcap|ARM64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug No AirPcap|x64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug No AirPcap|x64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug No AirPcap|x86.ActiveCfg = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug No AirPcap|x86.Build.0 = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win10 driver|ARM64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win10 driver|ARM64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win10 driver|x64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win10 driver|x64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win10 driver|x86.ActiveCfg = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win10 driver|x86.Build.0 = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win7 driver|ARM64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win7 driver|ARM64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win7 driver|x64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win7 driver|x64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win7 driver|x86.ActiveCfg = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win7 driver|x86.Build.0 = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win8 driver|ARM64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win8 driver|ARM64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win8 driver|x64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win8 driver|x64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win8 driver|x86.ActiveCfg = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug Win8 driver|x86.Build.0 = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug|ARM64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug|ARM64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug|x64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug|x64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug|x86.ActiveCfg = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Debug|x86.Build.0 = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug Win10 driver|ARM64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug Win10 driver|ARM64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug Win10 driver|x64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug Win10 driver|x64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug Win10 driver|x86.ActiveCfg = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug Win10 driver|x86.Build.0 = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug|ARM64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug|ARM64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug|x64.ActiveCfg = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug|x64.Build.0 = Debug|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug|x86.ActiveCfg = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Debug|x86.Build.0 = Debug|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win10 driver|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win10 driver|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win10 driver|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win10 driver|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win10 driver|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win10 driver|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win8 driver|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win8 driver|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win8 driver|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win8 driver|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win8 driver|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release Win8 driver|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM Release|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win10 driver|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win10 driver|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win10 driver|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win10 driver|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win10 driver|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win10 driver|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win7 driver|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win7 driver|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win7 driver|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win7 driver|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win7 driver|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win7 driver|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win8 driver|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win8 driver|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win8 driver|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win8 driver|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win8 driver|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release Win8 driver|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.OEM RO Release|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release No AirPcap|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release No AirPcap|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release No AirPcap|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release No AirPcap|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release No AirPcap|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release No AirPcap|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win10 driver|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win10 driver|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win10 driver|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win10 driver|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win10 driver|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win10 driver|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win7 driver|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win7 driver|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win7 driver|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win7 driver|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win7 driver|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win7 driver|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win8 driver|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win8 driver|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win8 driver|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win8 driver|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win8 driver|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release Win8 driver|x86.Build.0 = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release|ARM64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release|ARM64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release|x64.ActiveCfg = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release|x64.Build.0 = Release|x64
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release|x86.ActiveCfg = Release|Win32
+		{C87689C8-9CEE-4E97-953C-7C981385522F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
