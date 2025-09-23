@@ -250,6 +250,10 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 			TCHAR szModName[MAX_PATH];
 
 			// Get the full path to the module's file.
+			// If we want to actually open the file to check something (like getFileProductName below),
+			// we'll have to switch GetModuleFileNameEx for GetMappedFileName so that we get the correct
+			// SysWOW64 path. For now, we'll just assume everything with a wpcap.dll or Packet.dll
+			// is gonna need to be stopped.
 			if (GetModuleFileNameEx(hProcess, hArrModules[i], szModName, MAX_PATH))
 			{
 				tstring strModulePathName = szModName;
@@ -259,9 +263,10 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 // 				if (strProcessName != _T("nmap.exe"))
 // 					continue;
 
-				if (checkModulePathName(strModulePathName) && (getFileProductName(strModulePathName) == _T(NPF_DRIVER_NAME_NORMAL)
-				|| getFileProductName(strModulePathName) == _T("WinPcap")
-						))
+				if (checkModulePathName(strModulePathName))
+					//&& (getFileProductName(strModulePathName) == _T(NPF_DRIVER_NAME_NORMAL)
+					//|| getFileProductName(strModulePathName) == _T("WinPcap")
+					//))
 				{
 					TRACE_PRINT2("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.", strProcessName.c_str(), strModulePathName.c_str());
 					// _tprintf(_T("enumDLLs: succeed, strProcessName = %s, strModulePathName = %s.\n"), strProcessName.c_str(), strModulePathName.c_str());
