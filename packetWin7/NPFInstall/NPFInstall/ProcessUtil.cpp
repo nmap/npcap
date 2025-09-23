@@ -615,7 +615,7 @@ BOOL killProcess_Wait(DWORD dwProcessID)
 		}
 	}
 
-	DWORD dwTickBefore = GetTickCount();
+	ULONGLONG ullTickBefore = GetTickCount64();
 	if (WaitForSingleObject(hProcess, dwTimeout) != WAIT_OBJECT_0)
 	{
 		dwTimeout = 0;
@@ -635,14 +635,14 @@ BOOL killProcess_Wait(DWORD dwProcessID)
 		}
 	}
 
-	DWORD dwTickAfter = GetTickCount();
-	if (dwTimeout <= dwTickAfter - dwTickBefore)
+	ULONGLONG ullTickAfter = GetTickCount64();
+	if (dwTimeout <= ullTickAfter - ullTickBefore)
 	{
 		dwTimeout = 0;
 	}
 	else
 	{
-		dwTimeout -= (dwTickAfter - dwTickBefore);
+		dwTimeout -= (ullTickAfter - ullTickBefore);
 	}
 
 	TRACE_PRINT2("killProcess_Wait: the process terminates itself, dwProcessID = %d, dwTimeout = %d.", dwProcessID, dwTimeout);
