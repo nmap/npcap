@@ -235,38 +235,35 @@ int main()
 	
 	ULONG ulInfo = 0;
 	USHORT usStat[2] = {0};
+	PULONG pulWhere = NULL;
 	DWORD err = ERROR_SUCCESS;
+	ULONG ulVersion = 0;
 
-#define GETINFO(_Name) do { \
-	err = doPacketGetInfo(_Name, &ulInfo, sizeof(ulInfo)); \
+#define _GETINFO(_Name, _strName, _SubName, _strSubName, _Ptr, _Size, _Minver, _Block) do { \
+	pulWhere = (ULONG *) _Ptr; \
+	*pulWhere = _SubName; \
+	err = doPacketGetInfo(_Name, pulWhere, _Size); \
 	if (err == ERROR_SUCCESS) { \
-		_tprintf(_T( #_Name ": %08x\n"), ulInfo); \
+		_Block; \
 	} \
-	else { \
-		_tprintf(_T("PacketGetInfo(" #_Name ") error: %08x\n"), \
+	else if (ulVersion > _Minver) { \
+		_tprintf(_T("PacketGetInfo(" _strName " / " _strSubName ") error: %08x\n"), \
 				GetLastError()); \
 	} \
 } while (0);
 
-	GETINFO(NPF_GETINFO_VERSION);
-	ULONG ulVersion = ulInfo;
+#define GETINFO(_Name, _Var) _GETINFO(_Name, #_Name, 0, "", &_Var, sizeof(ULONG), 0, \
+		_tprintf(_T( #_Name ": %08x\n"), _Var) )
 
-	GETINFO(NPF_GETINFO_CONFIG);
-	GETINFO(NPF_GETINFO_BPFEXT);
-	GETINFO(NPF_GETINFO_MODES);
+	GETINFO(NPF_GETINFO_VERSION, ulVersion);
 
-#define GETSTATS(_Name) do { \
-	*((ULONG *)usStat) = _Name; \
-	err = doPacketGetInfo(NPF_GETINFO_STATS, &usStat, sizeof(usStat)); \
-	if (err == ERROR_SUCCESS) { \
-		_tprintf(_T( #_Name ": %hu, %hu\n"), \
-			       	usStat[0], usStat[1]); \
-	} \
-	else if (ulVersion > 0x01540000) { \
-		_tprintf(_T("PacketGetInfo(" #_Name ") error: %08x\n"), \
-				GetLastError()); \
-	} \
-} while (0);
+	GETINFO(NPF_GETINFO_CONFIG, ulInfo);
+	GETINFO(NPF_GETINFO_BPFEXT, ulInfo);
+	GETINFO(NPF_GETINFO_MODES, ulInfo);
+
+#define GETSTATS(_Name) _GETINFO(NPF_GETINFO_STATS, "NPF_GETINFO_STATS", \
+		_Name, #_Name, usStat, 2 * sizeof(USHORT), 0x01540000, \
+		_tprintf(_T( #_Name ": %hu, %hu\n"), usStat[0], usStat[1]) )
 
 	GETSTATS(NPF_STATSINFO_RECVTIMES);
 	GETSTATS(NPF_STATSINFO_SENDTIMES);
