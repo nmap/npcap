@@ -1977,7 +1977,7 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 {
 	NTSTATUS Status = STATUS_UNSUCCESSFUL;
 	PSINGLE_LIST_ENTRY Curr = NULL;
-	PNPCAP_FILTER_MODULE pFiltMod = NULL;
+	PNPCAP_FILTER_MODULE pFiltMod = pOpen->pFiltMod;
 	ULONG ulTmp = 0;
 	ULONG ulInput = 0;
 
@@ -2054,16 +2054,16 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 			break;
 
 		case NPF_GETINFO_STATS:
-			if (pOpen->OpenStatus <= OpenAttached && pOpen->pFiltMod) {
+			if (pOpen->OpenStatus <= OpenAttached && pFiltMod) {
 				switch (ulInput) {
 					case NPF_STATSINFO_RECVTIMES:
-						puStat = pOpen->pFiltMod->TimeInRecv;
+						puStat = pFiltMod->TimeInRecv;
 						break;
 					case NPF_STATSINFO_SENDTIMES:
-						puStat = pOpen->pFiltMod->TimeInSend;
+						puStat = pFiltMod->TimeInSend;
 						break;
 					case NPF_STATSINFO_DPCTIMES:
-						puStat = pOpen->pFiltMod->TimeAtDPC;
+						puStat = pFiltMod->TimeAtDPC;
 						break;
 					default:
 						Status = STATUS_INVALID_DEVICE_REQUEST;
@@ -2078,6 +2078,51 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 			}
 			else {
 				Status = STATUS_CANCELLED;
+			}
+			break;
+		case NPF_GETINFO_MODDBG:
+			OidData->Length = sizeof(ULONG);
+			switch (ulInput) {
+				case NPF_MODDBG_PF_SUPPORTED:
+					*((PULONG)OidData->Data) = pFiltMod->SupportedPacketFilters;
+					break;
+				case NPF_MODDBG_PF_MY:
+					*((PULONG)OidData->Data) = pFiltMod->MyPacketFilter;
+					break;
+				case NPF_MODDBG_PF_HIGHER:
+					*((PULONG)OidData->Data) = pFiltMod->HigherPacketFilter;
+					break;
+				case NPF_MODDBG_LA_MY:
+					*((PULONG)OidData->Data) = pFiltMod->MyLookaheadSize;
+					break;
+				case NPF_MODDBG_LA_HIGHER:
+					*((PULONG)OidData->Data) = pFiltMod->HigherLookaheadSize;
+					break;
+				case NPF_MODDBG_BITS:
+					*((PULONG)OidData->Data) =  (
+						(pFiltMod->Loopback ? 0x1 : 0) |
+						(pFiltMod->RawIP ? 0x2 : 0) |
+						(pFiltMod->EtherHeader ? 0x4 : 0) |
+						(pFiltMod->SplitMdls ? 0x8 : 0) |
+						(pFiltMod->SendToRxPath ? 0x10 : 0) |
+						(pFiltMod->BlockRxPath ? 0x20 : 0) |
+						(pFiltMod->Dot11 ? 0x40 : 0) |
+						(pFiltMod->PacketFilterGetOK ? 0x80 : 0) |
+						(pFiltMod->HigherPacketFilterSet ? 0x100 : 0) |
+						(pFiltMod->Fragile ? 0x200 : 0) );
+					break;
+				case NPF_MODDBG_MAXFRAME:
+					*((PULONG)OidData->Data) = pFiltMod->MaxFrameSize;
+					break;
+				case NPF_MODDBG_NUMOPENS:
+					*((PULONG)OidData->Data) = (
+							pFiltMod->nTimestampQPC +
+							pFiltMod->nTimestampQST +
+							pFiltMod->nTimestampQST_Precise);
+					break;
+				default:
+					Status = STATUS_INVALID_DEVICE_REQUEST;
+					break;
 			}
 			break;
 		default:

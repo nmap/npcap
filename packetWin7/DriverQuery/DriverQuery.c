@@ -201,6 +201,30 @@ VOID printAdapters()
 			DO_OID_READ_HEXDUMP(OID_GEN_INTERRUPT_MODERATION,
 				       	sizeof(NDIS_INTERRUPT_MODERATION_PARAMETERS));
 
+#ifdef NPF_GETINFO_MODDBG
+			ULONG ulInfo = 0;
+			DWORD err = ERROR_SUCCESS;
+#define MODDBG(_SubName) do { \
+	ulInfo = _SubName; \
+	err = doPacketGetInfo(dev, NPF_GETINFO_MODDBG, &ulInfo, sizeof(ulInfo)); \
+	if (err == ERROR_SUCCESS) { \
+		_tprintf(_T( #_SubName ": %08x\n"), ulInfo); \
+	} \
+	else { \
+		_tprintf(_T("PacketGetInfo(NPF_GETINFO_MODDBG / " #_SubName ") error: %08x\n"), \
+				GetLastError()); \
+	} \
+} while (0);
+
+			MODDBG(NPF_MODDBG_PF_SUPPORTED);
+			MODDBG(NPF_MODDBG_PF_MY);
+			MODDBG(NPF_MODDBG_PF_HIGHER);
+			MODDBG(NPF_MODDBG_LA_MY);
+			MODDBG(NPF_MODDBG_LA_HIGHER);
+			MODDBG(NPF_MODDBG_BITS);
+			MODDBG(NPF_MODDBG_MAXFRAME);
+			MODDBG(NPF_MODDBG_NUMOPENS);
+#endif
 			HeapFree(GetProcessHeap(), 0, OidData);
 			PacketCloseAdapter(dev);
 		}
