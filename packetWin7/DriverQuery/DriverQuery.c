@@ -38,7 +38,7 @@ VOID hexDump(PVOID pMem, ULONG Len)
 	_tprintf(_T("\n"));
 }
 
-DWORD doPacketGetInfo(ULONG ulID, PVOID pInfo, ULONG infoLen)
+DWORD doPacketGetInfo(LPADAPTER pAd, ULONG ulID, PVOID pInfo, ULONG infoLen)
 {
 	PUCHAR IoCtlBuffer = NULL;
 	PPACKET_OID_DATA  OidData = NULL;
@@ -58,7 +58,7 @@ DWORD doPacketGetInfo(ULONG ulID, PVOID pInfo, ULONG infoLen)
 	OidData = (PPACKET_OID_DATA) IoCtlBuffer;
 	OidData->Oid = ulID;
 	OidData->Length = infoLen;
-	if (!PacketGetInfo(NULL, OidData)) {
+	if (!PacketGetInfo(pAd, OidData)) {
 		HeapFree(GetProcessHeap(), 0, IoCtlBuffer);
 		return GetLastError();
 	}
@@ -242,7 +242,7 @@ int main()
 #define _GETINFO(_Name, _strName, _SubName, _strSubName, _Ptr, _Size, _Minver, _Block) do { \
 	pulWhere = (ULONG *) _Ptr; \
 	*pulWhere = _SubName; \
-	err = doPacketGetInfo(_Name, pulWhere, _Size); \
+	err = doPacketGetInfo(NULL, _Name, pulWhere, _Size); \
 	if (err == ERROR_SUCCESS) { \
 		_Block; \
 	} \
