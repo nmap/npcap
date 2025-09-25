@@ -126,7 +126,8 @@ VOID printAdapters()
 			size_t data_length = max(sizeof(NDIS_LINK_STATE), sizeof(NDIS_STATISTICS_INFO));
 			//data_length = max(data_length, sizeof(IP_OFFLOAD_STATS));
 			data_length = max(data_length, sizeof(NDIS_OFFLOAD));
-			data_length = max(data_length, sizeof(NDIS_INTERRUPT_MODERATION_PARAMETERS));
+			//data_length = max(data_length, sizeof(NDIS_INTERRUPT_MODERATION_PARAMETERS));
+			data_length = max(data_length, sizeof(NDIS_TIMESTAMP_CAPABILITIES));
 			PPACKET_OID_DATA OidData = (PPACKET_OID_DATA) HeapAlloc(
 					GetProcessHeap(),
 					HEAP_ZERO_MEMORY,
@@ -175,6 +176,8 @@ VOID printAdapters()
 		hexDump(OidData->Data, OidData->Length), \
 		_Length)
 
+			DO_OID_READ_ULONG(OID_GEN_DRIVER_VERSION);
+			USHORT NdisVersion = *(USHORT *)OidData->Data;
 			DO_OID_READ_ULONG(OID_GEN_RCV_OK);
 			DO_OID_READ_ULONG(OID_GEN_RCV_NO_BUFFER);
 			DO_OID_READ_ULONG(OID_GEN_RECEIVE_BUFFER_SPACE);
@@ -192,14 +195,20 @@ VOID printAdapters()
 			//DO_OID_READ_HEXDUMP(OID_IP6_OFFLOAD_STATS, sizeof(IP_OFFLOAD_STATS));
 			DO_OID_READ_HEXDUMP(OID_TCP_OFFLOAD_CURRENT_CONFIG, sizeof(NDIS_OFFLOAD));
 
+			DO_OID_READ_ULONG(OID_GEN_PHYSICAL_MEDIUM_EX);
 			DO_OID_READ_HEXDUMP(OID_GEN_MEDIA_IN_USE, 3 * sizeof(ULONG));
 
 			DO_OID_READ_HEXDUMP(OID_GEN_LINK_STATE,
 				       	sizeof(NDIS_LINK_STATE));
 			DO_OID_READ_HEXDUMP(OID_GEN_STATISTICS,
 				       	sizeof(NDIS_STATISTICS_INFO));
-			DO_OID_READ_HEXDUMP(OID_GEN_INTERRUPT_MODERATION,
-				       	sizeof(NDIS_INTERRUPT_MODERATION_PARAMETERS));
+			// Always fails?
+			//DO_OID_READ_HEXDUMP(OID_GEN_INTERRUPT_MODERATION,
+					//sizeof(NDIS_INTERRUPT_MODERATION_PARAMETERS));
+			if (NdisVersion >= 0x600 + 82) {
+				DO_OID_READ_HEXDUMP(OID_TIMESTAMP_CAPABILITY,
+						sizeof(NDIS_TIMESTAMP_CAPABILITIES));
+			}
 
 #ifdef NPF_GETINFO_MODDBG
 			ULONG ulInfo = 0;
