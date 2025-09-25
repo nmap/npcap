@@ -21,10 +21,10 @@ BOOL LoadNpcapDlls()
 	return TRUE;
 }
 
-VOID hexDump(PVOID pMem, size_t Len)
+VOID hexDump(PVOID pMem, ULONG Len)
 {
 	PUCHAR data = (PUCHAR) pMem;
-	for (size_t i=0; i < Len; i++) {
+	for (ULONG i=0; i < Len; i++) {
 		if (i % 4 == 0) {
 			if (i % 8 == 0) {
 				_tprintf(_T("\n%04X "), i);
@@ -38,7 +38,7 @@ VOID hexDump(PVOID pMem, size_t Len)
 	_tprintf(_T("\n"));
 }
 
-DWORD doPacketGetInfo(ULONG ulID, PVOID pInfo, size_t infoLen)
+DWORD doPacketGetInfo(ULONG ulID, PVOID pInfo, ULONG infoLen)
 {
 	PUCHAR IoCtlBuffer = NULL;
 	PPACKET_OID_DATA  OidData = NULL;
