@@ -988,57 +988,60 @@ NPF_FreePackets(
 	--*/
 {
 	PNET_BUFFER         Currbuff;
-	PIRP pIrp = RESERVED(pNetBufList)->pIrp;
+	PPACKET_RESERVED pRsvd = RESERVED(pNetBufList);
 	BOOLEAN bDoCleanup = TRUE;
 
 /*	TRACE_ENTER();*/
 
-	INFO_DBG("NBL %p complete: Irp = %p\n", pNetBufList, pIrp);
+	if (pRsvd) {
+		PIRP pIrp = pRsvd->pIrp;
+		if (pIrp != NULL) {
+			INFO_DBG("NBL %p complete: Irp = %p\n", pNetBufList, pIrp);
 
-	if (pIrp != NULL) {
-		PWRITE_IRP_CONTEXT pContext = GET_WRITE_IRP_CONTEXT(pIrp);
-		// Only do cleanup if we remove the last reference.
-		if (0 == NpfInterlockedDecrement(&pContext->ulRefcount)) {
-			PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(pIrp);
-			POPEN_INSTANCE pOpen = IrpSp->FileObject->FsContext;
-			NT_ASSERT(pOpen->pFiltMod == pFiltMod);
-			bDoCleanup = TRUE;
+			PWRITE_IRP_CONTEXT pContext = GET_WRITE_IRP_CONTEXT(pIrp);
+			// Only do cleanup if we remove the last reference.
+			if (0 == NpfInterlockedDecrement(&pContext->ulRefcount)) {
+				PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(pIrp);
+				POPEN_INSTANCE pOpen = IrpSp->FileObject->FsContext;
+				NT_ASSERT(pOpen->pFiltMod == pFiltMod);
+				bDoCleanup = TRUE;
 
-			NPF_StopUsingOpenInstance(pOpen, OpenRunning, AtDispatchLevel);
+				NPF_StopUsingOpenInstance(pOpen, OpenRunning, AtDispatchLevel);
 
-			NDIS_STATUS Status = NET_BUFFER_LIST_STATUS(pNetBufList);
-			pIrp->IoStatus.Status = Status;
-			if (NDIS_STATUS_SUCCESS == Status)
-			{
-				pIrp->IoStatus.Information = IrpSp->Parameters.Write.Length;
+				NDIS_STATUS Status = NET_BUFFER_LIST_STATUS(pNetBufList);
+				pIrp->IoStatus.Status = Status;
+				if (NDIS_STATUS_SUCCESS == Status)
+				{
+					pIrp->IoStatus.Information = IrpSp->Parameters.Write.Length;
+				}
+				else
+				{
+					WARNING_DBG("NBL status = %#08x\n", Status);
+					pIrp->IoStatus.Information = 0;
+				}
+				IoCompleteRequest(pIrp, IO_NO_INCREMENT);
+				INFO_DBG("Write complete\n");
 			}
-			else
+		}
+
+		PNPF_BUFFERED_WRITE_STATE pState = pRsvd->pState;
+		if (pState != NULL)
+		{
+			if (0 == NpfInterlockedDecrement(&pState->PacketsPending))
 			{
-				WARNING_DBG("NBL status = %#08x\n", Status);
-				pIrp->IoStatus.Information = 0;
+				NdisSetEvent(&pState->WriteCompleteEvent);
 			}
-			IoCompleteRequest(pIrp, IO_NO_INCREMENT);
-			INFO_DBG("Write complete\n");
 		}
-	}
 
-	PNPF_BUFFERED_WRITE_STATE pState = RESERVED(pNetBufList)->pState;
-	if (pState != NULL)
-	{
-		if (0 == NpfInterlockedDecrement(&pState->PacketsPending))
+		if (bDoCleanup && pRsvd->FreeMdlAfterWrite)
 		{
-			NdisSetEvent(&pState->WriteCompleteEvent);
-		}
-	}
-
-	if (bDoCleanup && RESERVED(pNetBufList)->FreeMdlAfterWrite)
-	{
-		//Free the NBL allocate by myself
-		Currbuff = NET_BUFFER_LIST_FIRST_NB(pNetBufList);
-		while (Currbuff)
-		{
-			NPF_FreeMdlAndBuffer(NET_BUFFER_FIRST_MDL(Currbuff), RESERVED(pNetBufList)->FreeBufAfterWrite);
-			Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
+			//Free the NBL allocate by myself
+			Currbuff = NET_BUFFER_LIST_FIRST_NB(pNetBufList);
+			while (Currbuff)
+			{
+				NPF_FreeMdlAndBuffer(NET_BUFFER_FIRST_MDL(Currbuff), pRsvd->FreeBufAfterWrite);
+				Currbuff = NET_BUFFER_NEXT_NB(Currbuff);
+			}
 		}
 	}
 
