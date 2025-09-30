@@ -1415,7 +1415,12 @@ static DWORD PacketRequestHelper(
 	{
 		err = GetLastError();
 	}
-	OidData->Length = BytesReturned;
+	if (BytesReturned > PACKET_OID_DATA_LENGTH(0)) {
+		OidData->Length = BytesReturned - PACKET_OID_DATA_LENGTH(0);
+	}
+	else {
+		OidData->Length = 0;
+	}
 	TRACE_PRINT4("PacketRequest: OID = 0x%.08x, Length = %d, Set = %d, ErrCode = 0x%.08x",
 		OidData->Oid,
 		OidData->Length,
