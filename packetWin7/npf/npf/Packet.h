@@ -602,13 +602,19 @@ NPF_BUFFERED_WRITE_STATE, *PNPF_BUFFERED_WRITE_STATE;
 typedef __declspec(align(MEMORY_ALLOCATION_ALIGNMENT)) struct _PACKET_RESERVED
 {
 	PIRP pIrp;
-	BOOLEAN FreeBufAfterWrite; // True if the memory buffer associated with the packet must be freed.
+	BOOLEAN FreeBufAfterWrite:1; // True if the memory buffer associated with the packet must be freed.
 				   // This is currently only true if there was a VLAN header in the original user buffer.
-	BOOLEAN FreeMdlAfterWrite; // True if the MDL chain must be freed (always true if FreeBufAfterWrite is true)
+	BOOLEAN FreeMdlAfterWrite:1; // True if the MDL chain must be freed (always true if FreeBufAfterWrite is true)
+	BOOLEAN bReceivePath:1; // True if this was indicated as a receive (bSendToRx).
+				// Otherwise, its presence on the receive path
+				// is only due to NDIS loopback.
 	PNPF_BUFFERED_WRITE_STATE pState;
 }  PACKET_RESERVED, *PPACKET_RESERVED;
 
-#define RESERVED(_p) ((PPACKET_RESERVED)((_p)->Context->ContextData + (_p)->Context->Offset)) ///< Macro to obtain a NDIS_PACKET from a PACKET_RESERVED
+// Macro to obtain a PACKET_RESERVED from a NET_BUFFER_LIST
+#define RESERVED(_p) ( (_p)->Context ? \
+		((PPACKET_RESERVED)((_p)->Context->ContextData + (_p)->Context->Offset)) \
+		: NULL)
 
 
 /// Macro used in the I/O routines to return the control to user-mode with a success status.

@@ -1038,33 +1038,26 @@ NPF_TapEx(
 	 */
 #ifdef HAVE_RX_SUPPORT
 	if (!pFiltMod->BlockRxPath)
-#endif
 	{
+#endif
 		NdisFIndicateReceiveNetBufferLists(
 			pFiltMod->AdapterHandle,
 			NetBufferLists,
 			PortNumber,
 			NumberOfNetBufferLists,
 			ReceiveFlags);
-	}
+		// No need to call CleanupNBLs/NPF_FreePackets because we're
+		// just passing this indication along.
 
-	/* CleanupNBLs only if not pending, otherwise ReturnEx handles it.
-	 *			|CAN_PEND	|CANNOT_PEND
-	 * BlockRxPath yes	|no		| yes
-	 * BlockRxPath no	|no		| yes
-	 */
-	if (NDIS_TEST_RECEIVE_CANNOT_PEND(ReceiveFlags))
-	{
-		NetBufferLists = NPF_CleanupNBLs(pFiltMod, NetBufferLists, bAtDispatchLevel);
-	}
 
 #ifdef HAVE_RX_SUPPORT
+	}
 	/* NdisFReturnNetBufferLists can only be called if NDIS_TEST_RECEIVE_CAN_PEND
 	 *			|CAN_PEND	|CANNOT_PEND
 	 * BlockRxPath yes	|yes		| no
 	 * BlockRxPath no	|no		| no
 	 */
-	else if (pFiltMod->BlockRxPath)
+	else if (NDIS_TEST_RECEIVE_CAN_PEND(ReceiveFlags))
 	{
 		// no NDIS_RECEIVE_FLAGS_RESOURCES in ReceiveFlags
 		NdisFReturnNetBufferLists(

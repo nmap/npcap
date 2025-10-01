@@ -570,6 +570,7 @@ NPF_Write(
 			{
 				INFO_DBG("NPF_Write::SendToRxPath, Open->pFiltMod->AdapterHandle=%p, pNetBufferList=%p\n", Open->pFiltMod->AdapterHandle, pNetBufferList);
 				// pretend to receive these packets from network and indicate them to upper layers
+				RESERVED(pNetBufferList)->bReceivePath = Open->bSendToRx;
 				NdisFIndicateReceiveNetBufferLists(
 					Open->pFiltMod->AdapterHandle,
 					pNetBufferList,

@@ -3107,8 +3107,11 @@ NPF_CleanupNBLs(
 		PNET_BUFFER_LIST pNBL = pNetBufList;
 		// Point to the next one
 		pNetBufList = NET_BUFFER_LIST_NEXT_NBL(pNetBufList);
+		PPACKET_RESERVED pRsvd = RESERVED(pNBL);
 
-		if (pNBL->SourceHandle != pFiltMod->AdapterHandle)
+		// Only remove packets if we originated them on the receive path
+		if (pNBL->SourceHandle != pFiltMod->AdapterHandle
+				|| pRsvd == NULL || !pRsvd->bReceivePath)
 		{
 			// No match, just move down.
 			pPrevNetBufList = pNBL;
