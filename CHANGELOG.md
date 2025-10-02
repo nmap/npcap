@@ -1,3 +1,30 @@
+## Npcap 1.84 [2025-10-02]
+
+* Fixed a regression in #742 (previously fixed in Npcap 1.80). The fix changes
+  to libpcap had been overwritten in our local branch, causing the same
+  Application Verifier faults to recur.
+
+* Resolve an issue in the installer/uninstaller where x64-emulated processes on
+  ARM64 (and possibly 32-bit processes on both x64 and ARM64) that were using
+  Npcap were not correctly terminated, leading to failed installations.
+
+* New DriverQuery.exe diagnostic tool. This will be run as part of
+  [DiagReport](https://npcap.com/guide/npcap-users-guide.html#npcap-issues-diagreport)
+  on new installations, but can be run independently on older installations for
+  better diagnosis of connection issues.
+
+* Added performance metrics for time spent processing packets. These can be
+  queried with the DriverQuery diagnostic tool or via `PacketGetInfo()` using
+  the `NPF_GETINFO_STATS` query ID.
+
+* Added additional checks to ensure data structures allocated when injecting
+  packets are freed. No leaks were reported, but it is possible some packets
+  could have been leaked when using the SendToRx feature.
+
+* An experimental feature, adaptive buffer sizing, can be enabled in Packet.dll
+  by setting the `PACKET_EXPERIMENTAL_OPTIMIZATION` environment variable.
+  See ([#622](http://issues.npcap.org/622)).
+
 ## Npcap 1.83 [2025-08-01]
 
 * \[SECURITY\] Rebuilt the Windows self-installer with NSIS 3.11, addressing
