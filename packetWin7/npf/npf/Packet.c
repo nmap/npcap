@@ -2054,34 +2054,38 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 			break;
 
 		case NPF_GETINFO_STATS:
-			if (pOpen->OpenStatus <= OpenAttached && pFiltMod) {
-				switch (ulInput) {
-					case NPF_STATSINFO_RECVTIMES:
-						puStat = pFiltMod->TimeInRecv;
-						break;
-					case NPF_STATSINFO_SENDTIMES:
-						puStat = pFiltMod->TimeInSend;
-						break;
-					case NPF_STATSINFO_DPCTIMES:
-						puStat = pFiltMod->TimeAtDPC;
-						break;
-					default:
-						Status = STATUS_INVALID_DEVICE_REQUEST;
-						break;
-				}
-				if (puStat != NULL) {
-					((PUSHORT)OidData->Data)[0] = puStat[0];
-					((PUSHORT)OidData->Data)[1] = puStat[1];
-					OidData->Length = 2 * sizeof(USHORT);
-					*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + 2 * sizeof(USHORT);
-				}
-			}
-			else {
+			if (pOpen->OpenStatus > OpenAttached || !pFiltMod) {
 				Status = STATUS_CANCELLED;
+				break;
+			}
+			Status = STATUS_SUCCESS;
+			switch (ulInput) {
+				case NPF_STATSINFO_RECVTIMES:
+					puStat = pFiltMod->TimeInRecv;
+					break;
+				case NPF_STATSINFO_SENDTIMES:
+					puStat = pFiltMod->TimeInSend;
+					break;
+				case NPF_STATSINFO_DPCTIMES:
+					puStat = pFiltMod->TimeAtDPC;
+					break;
+				default:
+					Status = STATUS_INVALID_DEVICE_REQUEST;
+					break;
+			}
+			if (puStat != NULL) {
+				((PUSHORT)OidData->Data)[0] = puStat[0];
+				((PUSHORT)OidData->Data)[1] = puStat[1];
+				OidData->Length = 2 * sizeof(USHORT);
+				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + 2 * sizeof(USHORT);
 			}
 			break;
 		case NPF_GETINFO_MODDBG:
-			OidData->Length = sizeof(ULONG);
+			if (pOpen->OpenStatus > OpenAttached || !pFiltMod) {
+				Status = STATUS_CANCELLED;
+				break;
+			}
+			Status = STATUS_SUCCESS;
 			switch (ulInput) {
 				case NPF_MODDBG_PF_SUPPORTED:
 					*((PULONG)OidData->Data) = pFiltMod->SupportedPacketFilters;
@@ -2123,6 +2127,10 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 				default:
 					Status = STATUS_INVALID_DEVICE_REQUEST;
 					break;
+			}
+			if (Status == STATUS_SUCCESS) {
+				OidData->Length = sizeof(ULONG);
+				*Info = FIELD_OFFSET(PACKET_OID_DATA, Data) + sizeof(ULONG);
 			}
 			break;
 		default:
