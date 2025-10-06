@@ -1,4 +1,6 @@
 #include <stdio.h>
+#define UM_NDIS685
+
 #include <Packet32.h>
 #pragma comment(lib, "packet.lib")
 
@@ -58,6 +60,7 @@ DWORD doPacketGetInfo(LPADAPTER pAd, ULONG ulID, PVOID pInfo, ULONG infoLen)
 	OidData = (PPACKET_OID_DATA) IoCtlBuffer;
 	OidData->Oid = ulID;
 	OidData->Length = infoLen;
+	CopyMemory(OidData->Data, pInfo, infoLen);
 	if (!PacketGetInfo(pAd, OidData)) {
 		HeapFree(GetProcessHeap(), 0, IoCtlBuffer);
 		return GetLastError();
@@ -124,6 +127,7 @@ VOID printAdapters()
 		if (dev != NULL) {
 			BOOLEAN Status = FALSE;
 			size_t data_length = max(sizeof(NDIS_LINK_STATE), sizeof(NDIS_STATISTICS_INFO));
+			data_length = max(data_length, sizeof(NDIS_RSC_STATISTICS_INFO));
 			//data_length = max(data_length, sizeof(IP_OFFLOAD_STATS));
 			data_length = max(data_length, sizeof(NDIS_OFFLOAD));
 			//data_length = max(data_length, sizeof(NDIS_INTERRUPT_MODERATION_PARAMETERS));
@@ -137,8 +141,8 @@ VOID printAdapters()
 				goto next_name;
 			}
 
-#define DO_OID_READ(_Oid, _StrOid, _Block, _Length) do { \
-	ZeroMemory(OidData->Data, data_length); \
+#define DO_OID_READ(_Oid, _StrOid, _Pre, _Block, _Length) do { \
+	_Pre; \
 	OidData->Oid = _Oid; \
 	OidData->Length = _Length; \
 	Status = PacketRequest(dev, FALSE, OidData); \
@@ -168,11 +172,15 @@ VOID printAdapters()
 	} \
 } while (0);
 
-#define DO_OID_READ_ULONG(_Oid) DO_OID_READ(_Oid, #_Oid, \
+#define DO_OID_READ_ULONG(_Oid) DO_OID_READ(_Oid, #_Oid, ZeroMemory(OidData->Data, data_length),  \
 	       	_tprintf(_T("%08x\n"), *(ULONG *)OidData->Data), \
 	       	sizeof(ULONG))
 
-#define DO_OID_READ_HEXDUMP(_Oid, _Length) DO_OID_READ(_Oid, #_Oid, \
+#define NOP (void)0
+#define DO_OID_READ_HEXDUMP(_Oid, _Length, _Extra) DO_OID_READ(_Oid, #_Oid, do { \
+	ZeroMemory(OidData->Data, data_length); \
+	_Extra; \
+	} while (0);, \
 		hexDump(OidData->Data, OidData->Length), \
 		_Length)
 
@@ -191,24 +199,54 @@ VOID printAdapters()
 			DO_OID_READ_ULONG(OID_GEN_MAXIMUM_TOTAL_SIZE);
 			DO_OID_READ_ULONG(OID_GEN_CURRENT_LOOKAHEAD);
 
+#define SET_NDIS_OBJ(_Type, _Rev, _Size) do { \
+	((NDIS_OBJECT_HEADER *)(OidData->Data))->Type = _Type; \
+	((NDIS_OBJECT_HEADER *)(OidData->Data))->Revision = _Rev; \
+	((NDIS_OBJECT_HEADER *)(OidData->Data))->Size = _Size; \
+} while (0);
+
 			//DO_OID_READ_HEXDUMP(OID_IP4_OFFLOAD_STATS, sizeof(IP_OFFLOAD_STATS));
 			//DO_OID_READ_HEXDUMP(OID_IP6_OFFLOAD_STATS, sizeof(IP_OFFLOAD_STATS));
-			DO_OID_READ_HEXDUMP(OID_TCP_OFFLOAD_CURRENT_CONFIG, sizeof(NDIS_OFFLOAD));
+			DO_OID_READ_HEXDUMP(OID_TCP_OFFLOAD_CURRENT_CONFIG,
+					sizeof(NDIS_OFFLOAD),
+					SET_NDIS_OBJ(NDIS_OBJECT_TYPE_OFFLOAD,
+						NDIS_OFFLOAD_REVISION_6,
+						NDIS_SIZEOF_NDIS_OFFLOAD_REVISION_6));
 
 			DO_OID_READ_ULONG(OID_GEN_PHYSICAL_MEDIUM_EX);
-			DO_OID_READ_HEXDUMP(OID_GEN_MEDIA_IN_USE, 3 * sizeof(ULONG));
+			DO_OID_READ_HEXDUMP(OID_GEN_MEDIA_IN_USE, 3 * sizeof(ULONG), NOP);
 
 			DO_OID_READ_HEXDUMP(OID_GEN_LINK_STATE,
-				       	sizeof(NDIS_LINK_STATE));
+					sizeof(NDIS_LINK_STATE),
+					SET_NDIS_OBJ(NDIS_OBJECT_TYPE_DEFAULT,
+						NDIS_LINK_STATE_REVISION_1,
+						NDIS_SIZEOF_LINK_STATE_REVISION_1));
+
 			DO_OID_READ_HEXDUMP(OID_GEN_STATISTICS,
-				       	sizeof(NDIS_STATISTICS_INFO));
-			// Always fails?
-			//DO_OID_READ_HEXDUMP(OID_GEN_INTERRUPT_MODERATION,
-					//sizeof(NDIS_INTERRUPT_MODERATION_PARAMETERS));
-			if (NdisVersion >= 0x600 + 82) {
-				DO_OID_READ_HEXDUMP(OID_TIMESTAMP_CAPABILITY,
-						sizeof(NDIS_TIMESTAMP_CAPABILITIES));
-			}
+					sizeof(NDIS_STATISTICS_INFO),
+					SET_NDIS_OBJ(NDIS_OBJECT_TYPE_DEFAULT,
+						NDIS_STATISTICS_INFO_REVISION_1,
+						NDIS_SIZEOF_STATISTICS_INFO_REVISION_1));
+
+			DO_OID_READ_HEXDUMP(OID_TCP_RSC_STATISTICS,
+					sizeof(NDIS_RSC_STATISTICS_INFO),
+					SET_NDIS_OBJ(NDIS_OBJECT_TYPE_DEFAULT,
+						NDIS_RSC_STATISTICS_REVISION_1,
+						NDIS_SIZEOF_RSC_STATISTICS_REVISION_1));
+
+			/* // Always fails?
+			DO_OID_READ_HEXDUMP(OID_GEN_INTERRUPT_MODERATION,
+					sizeof(NDIS_INTERRUPT_MODERATION_PARAMETERS),
+					SET_NDIS_OBJ(NDIS_OBJECT_TYPE_DEFAULT,
+						NDIS_INTERRUPT_MODERATION_PARAMETERS_REVISION_1,
+						NDIS_SIZEOF_INTERRUPT_MODERATION_PARAMETERS_REVISION_1));
+						*/
+
+			DO_OID_READ_HEXDUMP(OID_TIMESTAMP_CAPABILITY,
+					sizeof(NDIS_TIMESTAMP_CAPABILITIES),
+					SET_NDIS_OBJ(NDIS_OBJECT_TYPE_DEFAULT,
+						NDIS_TIMESTAMP_CAPABILITIES_REVISION_1,
+						NDIS_SIZEOF_TIMESTAMP_CAPABILITIES_REVISION_1));
 
 #ifdef NPF_GETINFO_MODDBG
 			ULONG ulInfo = 0;
