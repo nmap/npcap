@@ -143,7 +143,7 @@ static u_int32 xnum_##_Size( _Inout_ PMDL p, _In_ u_int32 k, _Out_ int *err) \
 	u_int32 value = 0; \
 	*err = 1; \
  \
-	while ((len = MmGetMdlByteCount(p)) < k) { \
+	while ((len = MmGetMdlByteCount(p)) <= k) { \
 		k -= len; \
 		p = p->Next; \
 		if (p == NULL) return 0; \
