@@ -278,10 +278,14 @@ u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB, const PVOID p
 		CASE_LD_OP(LDX, LEN);
 
 		case BPF_ST:
+			if (!NT_VERIFY(pc->k < BPF_MEMWORDS))
+				return 0;
 			mem[pc->k] = A;
 			continue;
 
 		case BPF_STX:
+			if (!NT_VERIFY(pc->k < BPF_MEMWORDS))
+				return 0;
 			mem[pc->k] = X;
 			continue;
 
