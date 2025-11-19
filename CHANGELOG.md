@@ -1,3 +1,11 @@
+## Npcap 1.85 [2025-11-18]
+
+* Fix a BSoD crash in `bpf_filter()` caused by reading 1 byte past the end of a
+  data buffer. Npcap 1.81 through 1.84 are affected. Fixes [#820](http://issues.npcap.org/820).
+
+* Fix an intermittent issue where upgrading Npcap would fail due to a failure
+  to remove the previous version's Uninstall.exe. Fixes [#811](http://issues.npcap.org/811).
+
 ## Npcap 1.84 [2025-10-02]
 
 * Fixed a regression in #742 (previously fixed in Npcap 1.80). The fix changes
