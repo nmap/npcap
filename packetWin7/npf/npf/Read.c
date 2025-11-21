@@ -467,7 +467,8 @@ ULONG NPF_GetMetadata(
 		pNBLCopy->qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
 		// We can't distinguish VLAN 0 from no VLAN tag, so we try this:
 		// If it's one of our own injected packets,
-		if (pNetBufList->SourceHandle == pFiltMod->AdapterHandle) {
+		if (pNetBufList->SourceHandle == pFiltMod->AdapterHandle
+				&& RESERVED(pNetBufList) != NULL) {
 			// then FreeBufAfterWrite means the Ethernet header is a replacement
 			// and we can infer that the original packet had a VLAN header.
 			pNBLCopy->bQinfoPresent = RESERVED(pNetBufList)->FreeBufAfterWrite;
