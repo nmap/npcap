@@ -685,7 +685,6 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 	TRACE_ENTER();
 
 	SYSTEM_INFO si = { 0 };
-	ULONG DriverVersion = 0;
 	PADAPTER_INFO NewAdInfo;
 	g_hDllHandle = DllHandle;
 
@@ -713,22 +712,15 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 		// Create the mutex that will protect the PacketLoadLibrariesDynamically() function		
 		g_DynamicLibrariesMutex = CreateMutex(NULL, FALSE, NULL);
 #endif
-
-		if (ERROR_SUCCESS == _PacketGetInfoPriv(INVALID_HANDLE_VALUE, NPF_GETINFO_VERSION, &DriverVersion)) {
-			StringCchPrintfA(PacketDriverVersion, sizeof(PacketDriverVersion),
-					"%u.%u.%u",
-					(DriverVersion >> 24) & 0xff,
-					(DriverVersion >> 16) & 0xff,
-					DriverVersion & 0xffff);
-		}
-		else {
-			//
-			// Retrieve NPF.sys version information from the file
-			//
-			// XXX We want to replace this with a constant. We leave it out for the moment
-			// TODO fixme. Those hardcoded strings are terrible...
-			PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
-		}
+		//
+		// Retrieve NPF.sys version information from the file
+		// With any luck, this will be overwritten when the user calls
+		// PacketGetDriverVersion(), but we can't call
+		// _PacketGetInfoPriv() here in DllMain because it *may* call
+		// ShellExecuteExA() due to admin-only mode, causing a deadlock.
+		//
+		// TODO fixme. Those hardcoded strings are terrible...
+		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
 
 		// Get the name for "Npcap Loopback Adapter"
 		NpcapGetLoopbackInterfaceName();
@@ -1637,6 +1629,19 @@ LPCSTR PacketGetVersion()
 LPCSTR PacketGetDriverVersion()
 {
 	TRACE_ENTER();
+	ULONG DriverVersion = 0;
+	static ULONG OldVersion = 0;
+	// By checking every time, we allow long-running processes to notice if
+	// the driver version is updated. Not likely, but possible.
+	if (ERROR_SUCCESS == _PacketGetInfoPriv(INVALID_HANDLE_VALUE, NPF_GETINFO_VERSION, &DriverVersion)
+			&& DriverVersion != OldVersion) {
+		StringCchPrintfA(PacketDriverVersion, sizeof(PacketDriverVersion),
+				"%u.%u.%u",
+				(DriverVersion >> 24) & 0xff,
+				(DriverVersion >> 16) & 0xff,
+				DriverVersion & 0xffff);
+		OldVersion = DriverVersion;
+	}
 	TRACE_EXIT();
 	return PacketDriverVersion;
 }
