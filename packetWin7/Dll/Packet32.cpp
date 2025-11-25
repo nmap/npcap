@@ -688,8 +688,6 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 	PADAPTER_INFO NewAdInfo;
 	g_hDllHandle = DllHandle;
 
-	UNUSED(lpReserved);
-
     switch(Reason)
     {
 	case DLL_PROCESS_ATTACH:
@@ -731,13 +729,23 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 
 		CloseHandle(g_AdaptersInfoMutex);
 		
-		while(g_AdaptersInfoList.Adapters != NULL)
-		{
-			NewAdInfo = g_AdaptersInfoList.Adapters->Next;
+		/* Per https://learn.microsoft.com/en-us/windows/win32/dlls/dllmain
+		 * "If the process is terminating (the lpvReserved parameter is
+		 * non-NULL), all threads in the process except the current
+		 * thread have exited already which might leave some process
+		 * resources such as heaps in an inconsistent state. In this
+		 * case, the DLL should allow the operating system to reclaim
+		 * the memory."
+		 */
+		if (lpReserved == NULL) {
+			while(g_AdaptersInfoList.Adapters != NULL)
+			{
+				NewAdInfo = g_AdaptersInfoList.Adapters->Next;
 
-			HeapFree(GetProcessHeap(), 0, g_AdaptersInfoList.Adapters);
-			
-			g_AdaptersInfoList.Adapters = NewAdInfo;
+				HeapFree(GetProcessHeap(), 0, g_AdaptersInfoList.Adapters);
+
+				g_AdaptersInfoList.Adapters = NewAdInfo;
+			}
 		}
 
 		// NpcapHelper De-Initialization.
