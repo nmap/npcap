@@ -174,7 +174,7 @@ static int do_extension(_In_ u_int32 k, _In_ const PNPF_NBL_COPY pNBLCopy)
 {
 	switch (k) {
 		case NPCAP_AD_OFF + NPCAP_AD_VLAN_TAG_PRESENT:
-			return (pNBLCopy->qInfo.Value == 0 ? 0 : 1);
+			return ((pNBLCopy->qInfo.Value == 0 && !pNBLCopy->bQinfoPresent) ? 0 : 1);
 			break;
 		case NPCAP_AD_OFF + NPCAP_AD_VLAN_TAG:
 			return ((pNBLCopy->qInfo.TagHeader.UserPriority & 0x7) << 13 |
