@@ -884,7 +884,7 @@ NTSTATUS NPF_BufferedWrite(
 				}
 
 				// Calculate the target QPC ticks to send the next packet
-				LARGE_INTEGER TargetTicks;
+				LARGE_INTEGER TargetTicks = { 0 };
 				TargetTicks.QuadPart = StartTicks.QuadPart + usec_diff * TimeFreq.QuadPart / 1000000;
 
 				// Save the current time stamp counter

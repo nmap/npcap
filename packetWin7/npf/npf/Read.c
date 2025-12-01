@@ -741,7 +741,7 @@ NPF_DoTap(
 	PSINGLE_LIST_ENTRY Curr;
 	LOCK_STATE_EX lockState;
 	PNPF_NBL_COPY pNBLCopy = NULL;
-	SINGLE_LIST_ENTRY NBLCopiesHead;
+	SINGLE_LIST_ENTRY NBLCopiesHead = { 0 };
 	NBLCopiesHead.Next = NULL;
 	PNPF_SRC_NB pSrcNB = NULL;
 	LARGE_INTEGER SystemTime = { 0 }, PerfCount = { 0 };
