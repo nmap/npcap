@@ -359,6 +359,14 @@ NPF_AllocateNBL(
 			Status = STATUS_INSUFFICIENT_RESOURCES;
 		}
 	}
+	if (*ppNBL
+		&& !NT_VERIFY(RESERVED(*ppNBL) != NULL
+		&& NET_BUFFER_LIST_CONTEXT_DATA_SIZE(*ppNBL) >= sizeof(PACKET_RESERVED)))
+	{
+		NPF_FreePackets(pFiltMod, *ppNBL, NPF_IRQL_UNKNOWN);
+		*ppNBL = NULL;
+		Status = STATUS_FAIL_CHECK;
+	}
 	return Status;
 }
 //-------------------------------------------------------------------
@@ -524,6 +532,8 @@ NPF_Write(
 			// Alloc failure, abandon ship
 			break;
 		}
+		NT_ASSERT(RESERVED(pNetBufferList) != NULL);
+		NT_ASSERT(NET_BUFFER_LIST_CONTEXT_DATA_SIZE(pNetBufferList) >= sizeof(PACKET_RESERVED));
 
 		// Mark packet as necessary
 		if (EthType == ETHERTYPE_IP)
@@ -808,6 +818,8 @@ NTSTATUS NPF_BufferedWrite(
 			break;
 		}
 		NT_ASSERT(pNetBufferList != NULL);
+		NT_ASSERT(RESERVED(pNetBufferList) != NULL);
+		NT_ASSERT(NET_BUFFER_LIST_CONTEXT_DATA_SIZE(pNetBufferList) >= sizeof(PACKET_RESERVED));
 
 		// Mark packet as necessary
 		if (EthType == ETHERTYPE_IP)

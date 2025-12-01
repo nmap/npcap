@@ -613,7 +613,7 @@ typedef __declspec(align(MEMORY_ALLOCATION_ALIGNMENT)) struct _PACKET_RESERVED
 
 // Macro to obtain a PACKET_RESERVED from a NET_BUFFER_LIST
 #define RESERVED(_p) ( (_p)->Context ? \
-		((PPACKET_RESERVED)((_p)->Context->ContextData + (_p)->Context->Offset)) \
+		((PPACKET_RESERVED)NET_BUFFER_LIST_CONTEXT_DATA_START(_p)) \
 		: NULL)
 
 
