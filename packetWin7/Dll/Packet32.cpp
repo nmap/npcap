@@ -154,6 +154,13 @@ VOID PacketLoadLibrariesDynamically();
 
 #include <WpcapNames.h>
 
+/* Driver versions before 1.60 require a different OID buffer length
+ * calculation. This is only relevant for /prior_driver=yes, which only affects
+ * versions of Windows older than Windows 10. */
+static bool bOidLenCompat = false;
+#define PACKET_COMPAT_OID_LEN_DIFF (sizeof(PACKET_OID_DATA) - 1 - PACKET_OID_DATA_LENGTH(0))
+#define PACKET_COMPAT_OID_LEN(_L) ( PACKET_OID_DATA_LENGTH(_L) + ( \
+			bOidLenCompat ? PACKET_COMPAT_OID_LEN_DIFF : 0))
 
 //
 // Current packet.dll version. It can be retrieved directly or through the PacketGetVersion() function.
@@ -719,6 +726,11 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 		//
 		// TODO fixme. Those hardcoded strings are terrible...
 		PacketGetFileVersion(TEXT("drivers\\") TEXT(NPF_DRIVER_NAME) TEXT(".sys"), PacketDriverVersion, sizeof(PacketDriverVersion));
+		// Check if older than 1.60
+		if (PacketDriverVersion[0] == '1' && PacketDriverVersion[1] == '.'
+			       	&& PacketDriverVersion[2] < '6') {
+			bOidLenCompat = true;
+		}
 
 		// Get the name for "Npcap Loopback Adapter"
 		NpcapGetLoopbackInterfaceName();
@@ -961,7 +973,7 @@ static PCHAR WChar2SChar(_In_ LPCWCH string)
 BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 {
 	BOOLEAN    Status;
-	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG))] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG)) + PACKET_COMPAT_OID_LEN_DIFF] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	DWORD err = ERROR_SUCCESS;
 
@@ -1409,14 +1421,14 @@ static DWORD PacketRequestHelper(
 	DWORD BytesReturned = 0;
 	DWORD err = ERROR_SUCCESS;
 	if (!DeviceIoControl(hAdapter, (DWORD)(Set ? BIOCSETOID : BIOCQUERYOID),
-		OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
-		OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+		OidData, PACKET_COMPAT_OID_LEN(OidData->Length),
+		OidData, PACKET_COMPAT_OID_LEN(OidData->Length),
 		&BytesReturned, NULL))
 	{
 		err = GetLastError();
 	}
-	if (BytesReturned > PACKET_OID_DATA_LENGTH(0)) {
-		OidData->Length = BytesReturned - PACKET_OID_DATA_LENGTH(0);
+	if (BytesReturned > PACKET_COMPAT_OID_LEN(0)) {
+		OidData->Length = BytesReturned - PACKET_COMPAT_OID_LEN(0);
 	}
 	else {
 		OidData->Length = 0;
@@ -1433,7 +1445,7 @@ _Use_decl_annotations_
 static DWORD _PacketGetInfoPriv(
 		HANDLE hFile, ULONG ulID, PULONG ulInfo)
 {
-	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG))] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG)) + PACKET_COMPAT_OID_LEN_DIFF] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	DWORD dwResult = ERROR_INVALID_DATA;
 	DWORD BytesReturned = 0;
@@ -1447,8 +1459,8 @@ static DWORD _PacketGetInfoPriv(
 		OidData->Oid = ulID;
 		OidData->Length = sizeof(ULONG);
 		if(!DeviceIoControl(hAdapter, BIOCGETINFO,
-					OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
-					OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+					OidData, PACKET_COMPAT_OID_LEN(OidData->Length),
+					OidData, PACKET_COMPAT_OID_LEN(OidData->Length),
 					&BytesReturned, NULL))
 		{
 			dwResult = GetLastError();
@@ -1649,6 +1661,8 @@ LPCSTR PacketGetDriverVersion()
 				(DriverVersion >> 16) & 0xff,
 				DriverVersion & 0xffff);
 		OldVersion = DriverVersion;
+		// Check if older than 1.60
+		bOidLenCompat = (DriverVersion < 0x013c0000);
 	}
 	TRACE_EXIT();
 	return PacketDriverVersion;
@@ -3187,7 +3201,7 @@ BOOLEAN PacketSetHwFilter(LPADAPTER  AdapterObject,ULONG Filter)
 {
     BOOLEAN    Status;
     DWORD err = ERROR_SUCCESS;
-    CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG))] = { 0 };
+    CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(ULONG)) + PACKET_COMPAT_OID_LEN_DIFF] = { 0 };
     PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA) IoCtlBuffer;
 	
 	TRACE_ENTER();
@@ -3650,7 +3664,7 @@ _Use_decl_annotations_
 BOOLEAN PacketGetNetType(LPADAPTER AdapterObject, NetType *type)
 {
 	DWORD err = ERROR_SUCCESS;
-	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(NDIS_LINK_SPEED))] = {0};
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(NDIS_LINK_SPEED)) + PACKET_COMPAT_OID_LEN_DIFF] = {0};
 
 	TRACE_ENTER();
 	if (type == NULL) {
@@ -3765,7 +3779,7 @@ int PacketIsMonitorModeSupported(PCCH AdapterName)
 {
 	HANDLE hAdapter;
 	PCHAR AdapterID = NULL;
-	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_OPERATION_MODE_CAPABILITY))] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_OPERATION_MODE_CAPABILITY)) + PACKET_COMPAT_OID_LEN_DIFF] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_OPERATION_MODE_CAPABILITY pOperationModeCapability;
 	int mode;
@@ -3837,7 +3851,7 @@ int PacketSetMonitorMode(PCCH AdapterName, int mode)
 	DWORD dwResult = ERROR_INVALID_DATA;
 	PCHAR AdapterID = NULL;
 	HANDLE hAdapter = INVALID_HANDLE_VALUE;
-	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_CURRENT_OPERATION_MODE))] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_CURRENT_OPERATION_MODE)) + PACKET_COMPAT_OID_LEN_DIFF] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_CURRENT_OPERATION_MODE pOpMode = (PDOT11_CURRENT_OPERATION_MODE)OidData->Data;
 
@@ -3909,7 +3923,7 @@ int PacketGetMonitorMode(PCCH AdapterName)
 	int mode;
 	HANDLE hAdapter = INVALID_HANDLE_VALUE;
 	DWORD dwResult = ERROR_INVALID_DATA;
-	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_CURRENT_OPERATION_MODE))] = { 0 };
+	CHAR IoCtlBuffer[PACKET_OID_DATA_LENGTH(sizeof(DOT11_CURRENT_OPERATION_MODE)) + PACKET_COMPAT_OID_LEN_DIFF] = { 0 };
 	PPACKET_OID_DATA  OidData = (PPACKET_OID_DATA)IoCtlBuffer;
 	PDOT11_CURRENT_OPERATION_MODE pOperationMode = (PDOT11_CURRENT_OPERATION_MODE)OidData->Data;
 	PCHAR AdapterID = NULL;
@@ -4018,8 +4032,8 @@ BOOLEAN PacketGetInfo(
 	}
 
 	if(!DeviceIoControl(hAdapter, BIOCGETINFO,
-                           OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
-			   OidData, PACKET_OID_DATA_LENGTH(OidData->Length),
+                           OidData, PACKET_COMPAT_OID_LEN(OidData->Length),
+			   OidData, PACKET_COMPAT_OID_LEN(OidData->Length),
 			   &BytesReturned, NULL))
 	{
 		err = GetLastError();
