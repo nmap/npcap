@@ -1,0 +1,16 @@
+INSTDIR\DiagReport.bat
+INSTDIR\DiagReport.ps1
+INSTDIR\FixInstall.bat
+INSTDIR\CheckStatus.bat
+INSTDIR\LICENSE
+INSTDIR\NPFInstall.exe
+INSTDIR\Uninstall.exe
+INSTDIR\DriverQuery.exe
+INSTDIR\npcap.sys
+INSTDIR\npcap.cat
+INSTDIR\npcap.inf
+INSTDIR\npcap_wfp.inf
+SYSDIR\wpcap.dll
+SYSDIR\Packet.dll
+SYSDIR\NpcapHelper.exe
+SYSDIR\WlanHelper.exe
