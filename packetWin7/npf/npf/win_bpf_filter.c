@@ -195,23 +195,24 @@ u_int bpf_filter(const struct bpf_insn *pc, ULONG insns, const PNET_BUFFER pNB, 
 	PNPF_NBL_COPY pNBLCopy = (PNPF_NBL_COPY)pContext;
 	ULONG data_offset = NET_BUFFER_CURRENT_MDL_OFFSET(pNB);
 	ULONG wirelen = NET_BUFFER_DATA_LENGTH(pNB);
+	const struct bpf_insn *last = pc + (insns - 1);
 	register u_int32 A, X;
 	register bpf_u_int32 k;
 
 	int merr = 0;
 	int mem[BPF_MEMWORDS];
 
-	RtlZeroMemory(mem, sizeof(mem));
-
-	if (pc == NULL)
+	if (pc == NULL || insns == 0)
 	/*
 	* No filter means accept all.
 	*/
 		return (u_int) - 1;
+
+	RtlZeroMemory(mem, sizeof(mem));
 	A = 0;
 	X = 0;
 	--pc;
-	while (1)
+	while (NT_VERIFY(pc < last))
 	{
 		++pc;
 		switch (pc->code)
@@ -290,6 +291,8 @@ u_int bpf_filter(const struct bpf_insn *pc, ULONG insns, const PNET_BUFFER pNB, 
 			continue;
 
 		case BPF_JMP|BPF_JA:
+			if (!NT_VERIFY(pc->k < BPF_MAXINSNS))
+				return 0;
 			pc += pc->k;
 			continue;
 
@@ -364,6 +367,7 @@ u_int bpf_filter(const struct bpf_insn *pc, ULONG insns, const PNET_BUFFER pNB, 
 			continue;
 		}
 	}
+	return 0;
 }
 
 //-------------------------------------------------------------------
