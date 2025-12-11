@@ -202,7 +202,7 @@ NPF_TapLoopback(
 		{
 			Offset = NET_BUFFER_CURRENT_MDL_OFFSET(pNetBuffer);
 			if (Offset >= numBytes) {
-				NdisQueryMdl(NET_BUFFER_CURRENT_MDL(pNetBuffer),
+				QueryMdl(NET_BUFFER_CURRENT_MDL(pNetBuffer),
 						&pOrigBuf,
 						&OrigLen,
 						NormalPagePriority);
@@ -222,7 +222,7 @@ NPF_TapLoopback(
 			else {
 				if (Offset > 0) {
 					/* Need to eliminate empty data prior to offset in our fake copy. */
-					NdisQueryMdl(NET_BUFFER_CURRENT_MDL(pNetBuffer),
+					QueryMdl(NET_BUFFER_CURRENT_MDL(pNetBuffer),
 							&pOrigBuf,
 							&OrigLen,
 							NormalPagePriority);
@@ -249,7 +249,7 @@ NPF_TapLoopback(
 						break;
 					}
 					// WORKAROUND: We are calling NPF_AnalysisAssumeAliased here because the buffer address
-					// is stored in the MDL and we retrieve it (via NdisQueryMdl) in the cleanup block below.
+					// is stored in the MDL and we retrieve it (via QueryMdl) in the cleanup block below.
 					// Therefore, it is not leaking after this point.
 					NPF_AnalysisAssumeAliased(pTmpBuf);
 
@@ -305,7 +305,7 @@ NPF_TapLoopback(
 			if (pMdl != NULL) {
 				/* If it's npBuff, we'll free it later.
 				 * Otherwise it's unique and we should free it now. */
-				NdisQueryMdl(pMdl, &pTmpBuf, &FirstMDLLen, HighPagePriority|MdlMappingNoExecute);
+				QueryMdl(pMdl, &pTmpBuf, &FirstMDLLen, HighPagePriority|MdlMappingNoExecute);
 				if (pTmpBuf != npBuff)
 				{
 					// See NPF_FreeNBCopies for TODO item related to this assert and

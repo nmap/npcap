@@ -116,7 +116,7 @@
 	if (len <= k) { \
 		p = p->Next; \
 		if (p == NULL) return 0; \
-		NdisQueryMdl(p, &CurBuf, &len, NormalPagePriority); \
+		QueryMdl(p, &CurBuf, &len, NormalPagePriority); \
 		if (CurBuf == NULL) return 0; \
 		k = 0; \
 	}
@@ -136,7 +136,7 @@
 	XNUM_GET_H();
 
 #define DECLARE_XNUM(_Size) \
-static u_int32 xnum_##_Size( _Inout_ PMDL p, _In_ u_int32 k, _Out_ int *err) \
+static u_int32 xnum_##_Size( _In_ PMDL p, _In_ u_int32 k, _Out_ int *err) \
 { \
 	u_int32 len = 0; \
 	const u_char * CurBuf=NULL; \
@@ -148,7 +148,7 @@ static u_int32 xnum_##_Size( _Inout_ PMDL p, _In_ u_int32 k, _Out_ int *err) \
 		p = p->Next; \
 		if (p == NULL) return 0; \
 	} \
-	NdisQueryMdl(p, &CurBuf, &len, NormalPagePriority); \
+	QueryMdl(p, &CurBuf, &len, NormalPagePriority); \
 	if (CurBuf == NULL) return 0; \
 	XNUM_GET_##_Size(); \
  \

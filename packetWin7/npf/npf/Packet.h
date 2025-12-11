@@ -589,6 +589,18 @@ NPF_AnalysisAssumeFreed(_In_ __drv_freesMem(mem) PVOID p)
 	return;
 }
 
+// This wrapper is just so we can declare some constraints with SAL
+_Success_(*ppBuf != NULL)
+inline VOID QueryMdl(
+	_In_ PMDL p,
+	_Outptr_result_bytebuffer_all_(*pLen) PVOID* ppBuf,
+	_Out_ PUINT pLen,
+	_In_ ULONG Priority)
+{
+	NdisQueryMdl(p, ppBuf, pLen, Priority);
+}
+
+
 typedef __declspec(align(4)) struct _NPF_BUFFERED_WRITE_STATE
 {
 	LONG PacketsPending;

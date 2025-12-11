@@ -1068,7 +1068,7 @@ NTSTATUS NPF_ValidateIoIrp(
 			break;
 		}
 
-		NdisQueryMdl(pIrp->MdlAddress, &pBuf, &BufLen, NormalPagePriority | MdlMappingNoExecute);
+		QueryMdl(pIrp->MdlAddress, &pBuf, &BufLen, NormalPagePriority | MdlMappingNoExecute);
 		if (pBuf == NULL)
 		{
 			Status = STATUS_INSUFFICIENT_RESOURCES;
