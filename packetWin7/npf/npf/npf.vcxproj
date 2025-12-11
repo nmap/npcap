@@ -1633,6 +1633,9 @@
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 OEM RO Release'" />
     <ResourceCompile Include="npcap.rc" Condition="'$(Configuration)'=='Win7 Release SDV'" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
