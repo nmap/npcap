@@ -1156,6 +1156,11 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
+	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
+	{
+		return STATUS_CANCELLED;
+	}
+
 	// Validate the new program (valid instructions, only forward jumps, etc.)
 	ULONG insns = ulBufLen / sizeof(struct bpf_insn);
 	if (insns > BPF_MAXINSNS || !bpf_validate(NewBpfProgram, insns))
@@ -1168,7 +1173,8 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	ulBufLen = insns * sizeof(struct bpf_insn);
 
 	// Allocate the memory to contain the new filter program
-	PUCHAR TmpBPFProgram = (PUCHAR)NPF_AllocateZeroNonpaged(ulBufLen, NPF_BPF_TAG);
+	PNPCAP_BPF_PROGRAM TmpBPFProgram = NPF_AllocateZeroNonpaged(
+			FIELD_OFFSET(NPCAP_BPF_PROGRAM, bpf_program) + (SIZE_T)ulBufLen, NPF_BPF_TAG);
 	if (TmpBPFProgram == NULL)
 	{
 		WARNING_DBG("Failed to alloc TmpBPFProgram.\n");
@@ -1176,18 +1182,22 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	}
 
 	//copy the program in the new buffer
-	RtlCopyMemory(TmpBPFProgram, NewBpfProgram, ulBufLen);
+	RtlCopyMemory(TmpBPFProgram->bpf_program, NewBpfProgram, ulBufLen);
+	TmpBPFProgram->nInsns = insns;
+	TmpBPFProgram->pOpen = pOpen;
 
-	if (!NPF_StartUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN))
-	{
-		ExFreePool(TmpBPFProgram);
-		return STATUS_CANCELLED;
+	PVOID pOld = InterlockedExchangePointer(&pOpen->BpfProgram, TmpBPFProgram);
+
+	// Register the new BPF program if the Open is Attached
+	if (NPF_StartUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN)) {
+		NPF_RegisterBpf(pOpen->pFiltMod, TmpBPFProgram, pOld);
+		NPF_StopUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN);
 	}
-
-	PVOID pOld = InterlockedExchangePointer(&pOpen->BpfProgram.bpf_program, TmpBPFProgram);
-	// After InterlockedExchangePointer above, the memory at TmpBPFProgram
-	// is pointed to by pOpen->BpfProgram.bpf_program, so there is no memory leak here.
-	NPF_AnalysisAssumeAliased(TmpBPFProgram);
+	else {
+		// After InterlockedExchangePointer above, the memory at TmpBPFProgram
+		// is pointed to by pOpen->BpfProgram, so there is no memory leak here.
+		NPF_AnalysisAssumeAliased(TmpBPFProgram);
+	}
 
 	// Free the previous buffer if it was present
 	if (pOld != NULL)

@@ -389,9 +389,21 @@ typedef struct _OPEN_INSTANCE* POPEN_INSTANCE;
 typedef struct _NPCAP_BPF_PROGRAM
 {
 	LIST_ENTRY BpfProgramsEntry;
-	struct bpf_insn *bpf_program;
+	POPEN_INSTANCE pOpen;
+	ULONG nInsns;
+	struct bpf_insn bpf_program[1];
 }
 NPCAP_BPF_PROGRAM, *PNPCAP_BPF_PROGRAM;
+
+VOID
+NPF_RegisterBpf(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ __drv_aliasesMem PNPCAP_BPF_PROGRAM pBpfProgram,
+	_In_opt_ PNPCAP_BPF_PROGRAM pOldBpfProgram);
+VOID
+NPF_UnregisterBpf(
+	_In_ PNPCAP_FILTER_MODULE pFiltMod,
+	_In_ PNPCAP_BPF_PROGRAM pBpfProgram);
 
 /* Open instance
  * Represents an open device handle by a process
@@ -407,7 +419,7 @@ typedef struct _OPEN_INSTANCE
 	ULONG					MyPacketFilter;
 	ULONG					MyLookaheadSize;
 	PKEVENT					ReadEvent;		///< Pointer to the event on which the read calls on this instance must wait.
-	NPCAP_BPF_PROGRAM BpfProgram; ///< Contains a pointer to the filtering pseudo-code associated with current handle.
+	PNPCAP_BPF_PROGRAM BpfProgram; ///< Contains a pointer to the filtering pseudo-code associated with current handle.
 	UINT					MinToCopy;		///< Minimum amount of data in the circular buffer that unlocks a read. Set with the
 											///< BIOCSMINTOCOPY IOCTL.
 	LARGE_INTEGER			Nbytes;			///< Amount of bytes accepted by the filter when this instance is in statistical mode.

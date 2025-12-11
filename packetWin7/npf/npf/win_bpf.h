@@ -226,7 +226,7 @@ extern "C"
 	  \return The portion of the packet to keep, in bytes. 0 means that the packet must be rejected, -1 means that
 	   the whole packet must be kept.
 	*/
-	u_int bpf_filter(_In_ const struct bpf_insn* pc, _In_ const PNET_BUFFER pNB, _In_ const PVOID pContext);
+	u_int bpf_filter(_In_ const struct bpf_insn* pc, ULONG insns, _In_ const PNET_BUFFER pNB, _In_ const PVOID pContext);
 
 #ifdef __cplusplus
 }

@@ -785,7 +785,7 @@ NPF_DoTap(
 		for (CurrFilter = pFiltMod->BpfPrograms.Flink; CurrFilter != &pFiltMod->BpfPrograms; CurrFilter = CurrFilter->Flink)
 		{
 			PNPCAP_BPF_PROGRAM pBpf = CONTAINING_RECORD(CurrFilter, NPCAP_BPF_PROGRAM, BpfProgramsEntry);
-			POPEN_INSTANCE pOpen = CONTAINING_RECORD(pBpf, OPEN_INSTANCE, BpfProgram);
+			POPEN_INSTANCE pOpen = pBpf->pOpen;
 			// If this instance originated the packet and doesn't want to see it, don't capture.
 			if (pOpen == pOpenOriginating && pOpen->SkipSentPackets)
 			{
@@ -810,7 +810,7 @@ NPF_DoTap(
 			for (CurrFilter = pFiltMod->BpfPrograms.Flink; CurrFilter != &pFiltMod->BpfPrograms; CurrFilter = CurrFilter->Flink)
 			{
 				PNPCAP_BPF_PROGRAM pBpf = CONTAINING_RECORD(CurrFilter, NPCAP_BPF_PROGRAM, BpfProgramsEntry);
-				POPEN_INSTANCE pOpen = CONTAINING_RECORD(pBpf, OPEN_INSTANCE, BpfProgram);
+				POPEN_INSTANCE pOpen = pBpf->pOpen;
 				// If this instance originated the packet and doesn't want to see it, don't capture.
 				if (pOpen == pOpenOriginating && pOpen->SkipSentPackets)
 				{
@@ -823,7 +823,7 @@ NPF_DoTap(
 				}
 
 				ULONG TotalPacketSize = pSrcNB->pNBCopy->ulPacketSize;
-				UINT fres = bpf_filter(pBpf->bpf_program, pSrcNB->pNetBuffer, pNBLCopy);
+				UINT fres = bpf_filter(pBpf->bpf_program, pBpf->nInsns, pSrcNB->pNetBuffer, pNBLCopy);
 				if (fres == 0)
 				{
 					// Packet not accepted by the filter, ignore it.

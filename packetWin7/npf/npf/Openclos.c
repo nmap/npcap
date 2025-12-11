@@ -558,54 +558,59 @@ NTSTATUS NPF_EnableOps(_In_ PNPCAP_FILTER_MODULE pFiltMod)
 	return Status;
 }
 
+_Use_decl_annotations_
 VOID
 NPF_RegisterBpf(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ PNPCAP_BPF_PROGRAM pBpfProgram)
+	PNPCAP_FILTER_MODULE pFiltMod,
+	PNPCAP_BPF_PROGRAM pBpfProgram,
+	PNPCAP_BPF_PROGRAM pOldBpfProgram)
 {
 	// Assert/verify pBpfProgram fields are set
 	LOCK_STATE_EX lockState;
 
+	NT_ASSERT(pBpfProgram->pOpen != NULL);
+	NT_ASSERT(pBpfProgram->BpfProgramsEntry.Flink == NULL
+			&& pBpfProgram->BpfProgramsEntry.Blink == NULL);
+
 	// Lock the BpfPrograms list
 	NdisAcquireRWLockWrite(pFiltMod->BpfProgramsLock, &lockState, 0);
 	// Insert/update the bpf for this open instance
-	if (pBpfProgram->BpfProgramsEntry.Flink != NULL)
+	if (pOldBpfProgram != NULL)
 	{
-		// This program is in the list already.
-#if DBG
-		// In debug mode, we can verify/assert this.
-		BOOLEAN bFound = FALSE;
-		NT_ASSERT(pBpfProgram->BpfProgramsEntry.Blink != NULL);
-		for (PLIST_ENTRY Curr = pFiltMod->BpfPrograms.Flink;
-				Curr != &pFiltMod->BpfPrograms;
-				Curr = Curr->Flink)
-		{
-			if (Curr == &pBpfProgram->BpfProgramsEntry)
-			{
-				NT_ASSERT(Curr->Flink->Blink == Curr);
-				bFound = TRUE;
-				break;
-			}
-		}
-		NT_ASSERT(bFound);
-#endif
+		// This Open has a program in the list already.
+		NT_ASSERT(pOldBpfProgram != pBpfProgram);
+		NT_ASSERT(pBpfProgram->pOpen == pOldBpfProgram->pOpen);
+		PLIST_ENTRY pOldEntry = &pOldBpfProgram->BpfProgramsEntry;
+		PLIST_ENTRY pNewEntry = &pBpfProgram->BpfProgramsEntry;
+
+		// Link the new program to the rest of the list
+		pNewEntry->Flink = pOldEntry->Flink;
+		pNewEntry->Blink = pOldEntry->Blink;
+		// Link the next and previous entries to the new program
+		pOldEntry->Flink->Blink = pNewEntry;
+		pOldEntry->Blink->Flink = pNewEntry;
+		// Make the old program invalid
+		// Freeing the program is the caller's responsibility.
+		pOldEntry->Flink = NULL;
+		pOldEntry->Blink = NULL;
 	}
 	else
 	{
-		NT_ASSERT(pBpfProgram->BpfProgramsEntry.Blink == NULL);
 		InsertTailList(&pFiltMod->BpfPrograms, &pBpfProgram->BpfProgramsEntry);
 	}
 	// Unlock the list
 	NdisReleaseRWLock(pFiltMod->BpfProgramsLock, &lockState);
 }
+_Use_decl_annotations_
 VOID
 NPF_UnregisterBpf(
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ PNPCAP_BPF_PROGRAM pBpfProgram)
+	PNPCAP_FILTER_MODULE pFiltMod,
+	PNPCAP_BPF_PROGRAM pBpfProgram)
 {
 	LOCK_STATE_EX lockState;
-	if (pBpfProgram->BpfProgramsEntry.Flink == NULL &&
-			NT_VERIFY(pBpfProgram->BpfProgramsEntry.Blink == NULL))
+	if (pBpfProgram == NULL ||
+			(pBpfProgram->BpfProgramsEntry.Flink == NULL &&
+			 NT_VERIFY(pBpfProgram->BpfProgramsEntry.Blink == NULL)))
 	{
 		return;
 	}
@@ -695,7 +700,7 @@ NPF_StartUsingOpenInstance(
 				NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 
 				// Insert a null filter (accept all)
-				NPF_RegisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
+				NPF_RegisterBpf(pOpen->pFiltMod, pOpen->BpfProgram, NULL);
 				pOpen->OpenStatus = OpenRunning;
 			}
 			else
@@ -778,7 +783,7 @@ NPF_DemoteOpenStatus(
 	if (OldState == OpenRunning)
 	{
 		NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
-		NPF_UnregisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
+		NPF_UnregisterBpf(pOpen->pFiltMod, pOpen->BpfProgram);
 	}
 
 	return OldState;
@@ -836,10 +841,10 @@ NPF_ReleaseOpenInstanceResources(
 	//
 	// Free the filter if it's present
 	//
-	if (pOpen->BpfProgram.bpf_program != NULL)
+	if (pOpen->BpfProgram != NULL)
 	{
-		ExFreePool(pOpen->BpfProgram.bpf_program);
-		pOpen->BpfProgram.bpf_program = NULL;
+		ExFreePool(pOpen->BpfProgram);
+		pOpen->BpfProgram = NULL;
 	}
 
 	//
@@ -1456,7 +1461,7 @@ NPF_RemoveFromGroupOpenArray(
 		return;
 	}
 	pOpen->OpenStatus = max(pOpen->OpenStatus, OpenDetached);
-	NPF_UnregisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
+	NPF_UnregisterBpf(pOpen->pFiltMod, pOpen->BpfProgram);
 	pOpen->pFiltMod = NULL;
 	NdisReleaseSpinLock(&pOpen->OpenInUseLock);
 
@@ -1804,12 +1809,22 @@ NPF_CreateOpenObject(NDIS_HANDLE NdisHandle)
 		TRACE_EXIT();
 		return NULL;
 	}
+	Open->BpfProgram = NPF_AllocateZeroNonpaged(sizeof(NPCAP_BPF_PROGRAM), NPF_BPF_TAG);
+	if (Open->BpfProgram == NULL)
+	{
+		INFO_DBG("Failed to allocate BpfProgram\n");
+		ExFreePool(Open);
+		TRACE_EXIT();
+		return NULL;
+	}
+	Open->BpfProgram->pOpen = Open;
 
 	/* Buffer */
 	Open->BufferLock = NdisAllocateRWLock(NdisHandle);
 	if (Open->BufferLock == NULL)
 	{
 		INFO_DBG("Failed to allocate BufferLock\n");
+		ExFreePool(Open->BpfProgram);
 		ExFreePool(Open);
 		TRACE_EXIT();
 		return NULL;
@@ -2250,7 +2265,7 @@ NPF_AttachAdapter(
 				if (pOpen->ReattachStatus < OpenAttached)
 				{
 					NPF_UpdateTimestampModeCounts(pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
-					NPF_RegisterBpf(pOpen->pFiltMod, &pOpen->BpfProgram);
+					NPF_RegisterBpf(pOpen->pFiltMod, pOpen->BpfProgram, NULL);
 				}
 				pOpen->OpenStatus = pOpen->ReattachStatus;
 				Curr = PopEntryList(&ReattachOpens);

@@ -189,7 +189,7 @@ static int do_extension(_In_ u_int32 k, _In_ const PNPF_NBL_COPY pNBLCopy)
 }
 
 _Use_decl_annotations_
-u_int bpf_filter(const struct bpf_insn *pc, const PNET_BUFFER pNB, const PVOID pContext)
+u_int bpf_filter(const struct bpf_insn *pc, ULONG insns, const PNET_BUFFER pNB, const PVOID pContext)
 {
 	PMDL p = NET_BUFFER_CURRENT_MDL(pNB);
 	PNPF_NBL_COPY pNBLCopy = (PNPF_NBL_COPY)pContext;
