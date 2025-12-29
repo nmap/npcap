@@ -72,11 +72,62 @@
           <para>Sets the working mode of the interface.</para>
           <code>int pcap_setmode(pcap_t *p, int mode);</code>
           <para>
-            Valid values for mode are <literal>MODE_CAPT</literal> (default
-            capture mode) and <literal>MODE_STAT</literal> (statistical mode).
-            See <xref linkend="npcap-tutorial-statistics" /> for details about
-            statistical mode.
+            The <literal>mode</literal> parameter is defined as a bitwise-OR
+            of the constants defined below. These are bit flags and may be
+            combined using bitwise-OR to enable multiple behaviors.
+            <literal>MODE_CAPT</literal> and <literal>MODE_STAT</literal>
+            share the same bit position: <literal>MODE_CAPT</literal>
+            is defined as 0 (LSB clear) and <literal>MODE_STAT</literal>
+            as 1 (LSB set). As a result, <literal>MODE_CAPT</literal>
+            is mutually exclusive with <literal>MODE_STAT</literal>
+            and cannot be explicitly combined with it.
           </para>
+          <para>
+            Valid values for mode are listed below. WinPcap also defined
+            <literal>MODE_MON</literal> and <literal>MODE_DUMP</literal>,
+            but these are not supported by Npcap.
+          </para>
+          <variablelist>
+            <varlistentry>
+              <term>
+                <literal>MODE_CAPT</literal>
+              </term>
+              <listitem>
+                <para>Default packet capture mode.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>
+                <literal>MODE_STAT</literal>
+              </term>
+              <listitem>
+                <para>Statistical mode. See <xref linkend="npcap-tutorial-statistics" /> for details.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>
+                <literal>MODE_SENDTORX</literal>
+              </term>
+              <listitem>
+                <para>Causes injected packets to be sent on the receive path as though
+                they were received by the network adapter. This is the same
+                behavior as the SendToRxAdapters Registry value, but affects
+                  only this handle.</para>
+                <note><para>This mode was added in Npcap 1.83</para></note>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>
+                <literal>MODE_SENDTORX_CLEAR</literal>
+              </term>
+              <listitem>
+                <para>Forces this handle to use the default behavior (sending injected
+                packets on the transmit path), canceling any system-wide Npcap
+                  configuration by the SendToRxAdapters Registry value.</para>
+                <note><para>This mode was added in Npcap 1.83</para></note>
+              </listitem>
+            </varlistentry>
+          </variablelist>
         </listitem>
       </varlistentry>
 
