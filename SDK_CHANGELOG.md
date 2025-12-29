@@ -4,6 +4,20 @@
   that may expect the same values or ordering as the constants defined by
   Linux. The old names are still conditionally defined for convenience.
 
+* Defined additional modes for `PacketSetMode()`/`pcap_setmode()`:
+  `MODE_SENDTORX` and `MODE_SENDTORX_CLEAR` to enable and disable the SendToRx
+  feature independent of systemwide Registry setting.
+  Requires Npcap 1.83 driver or later.
+
+* Enable nanosecond-precision timestamps on a packet handle using
+  `PACKET_MODE_NANO` with `PacketSetMode()`. Requires Npcap 1.83 driver or later.
+
+* Added new constants for `PacketGetInfo()`: `NPF_GETINFO_MODES` returns
+  supported mode bits for `PacketSetMode()`. `NPF_GETINFO_STATS` retrieves
+  performance statistics for the filter module. `NPF_GETINFO_MODDBG` gets
+  internal debugging info unique to a filter module. These require Npcap 1.84
+  driver or later.
+
 ## Npcap SDK 1.15 [2025]
 
 * Added a new function, `PacketGetInfo()`. This uses the `PACKET_OID_DATA`
