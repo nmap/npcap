@@ -155,13 +155,19 @@ tstring getFileProductName(tstring strFilePath)
 
 		// Get the Product Name.
 		// First, to get string information, we need to get language information.
-		VerQueryValue(lpVI, _T("\\VarFileInfo\\Translation"), (LPVOID*)&langInfo, &cbLang);
-		// Prepare the label -- default lang is bytes 0 & 1 of langInfo
-		_stprintf_s(tszVerStrName, 128, _T("\\StringFileInfo\\%04x%04x\\%s"), langInfo[0], langInfo[1], _T("ProductName"));
-		//Get the string from the resource data
-		if (VerQueryValue(lpVI, tszVerStrName, &lpt, &cbBufSize))
+		if (VerQueryValue(lpVI, _T("\\VarFileInfo\\Translation"), (LPVOID*)&langInfo, &cbLang))
 		{
-			strProductName.assign((LPTSTR)lpt);
+			// Prepare the label -- default lang is bytes 0 & 1 of langInfo
+			_stprintf_s(tszVerStrName, 128, _T("\\StringFileInfo\\%04x%04x\\%s"), langInfo[0], langInfo[1], _T("ProductName"));
+			//Get the string from the resource data
+			if (VerQueryValue(lpVI, tszVerStrName, &lpt, &cbBufSize))
+			{
+				strProductName.assign((LPTSTR)lpt);
+			}
+			else
+			{
+				TRACE_PRINT("VerQueryValue: error.");
+			}
 		}
 		else
 		{
