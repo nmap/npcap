@@ -121,22 +121,21 @@ HANDLE getDeviceHandleInternal(_In_ LPCSTR SymbolicLinkA, _Out_ _On_failure_(_Ou
 {
 	HANDLE hFile = CreateFileA(SymbolicLinkA, GENERIC_WRITE | GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
 	HANDLE hFileDup;
-	DWORD dwError;
 	BOOL bResult;
 	HANDLE hClientProcess;
 
 	TRACE_PRINT1("Original handle: %08p.\n", hFile);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		*pdwError = dwError = GetLastError();
-		TRACE_PRINT1("CreateFileA failed, GLE=%d.\n", dwError);
+		*pdwError = GetLastError();
+		TRACE_PRINT1("CreateFileA failed, GLE=%d.\n", *pdwError);
 		return INVALID_HANDLE_VALUE;
 	}
 	hClientProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, g_sourcePID);
 	if (hClientProcess == NULL)
 	{
-		*pdwError = dwError = GetLastError();
-		TRACE_PRINT1("OpenProcess failed, GLE=%d.\n", dwError);
+		*pdwError = GetLastError();
+		TRACE_PRINT1("OpenProcess failed, GLE=%d.\n", *pdwError);
 		CloseHandle(hFile);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -149,8 +148,6 @@ HANDLE getDeviceHandleInternal(_In_ LPCSTR SymbolicLinkA, _Out_ _On_failure_(_Ou
 		FALSE,
 		// hFile will be closed regardless of error:
 		DUPLICATE_CLOSE_SOURCE);
-	TRACE_PRINT1("Duplicated handle: %08p.\n", hFileDup);
-
 
 	if (!bResult)
 	{
@@ -160,6 +157,7 @@ HANDLE getDeviceHandleInternal(_In_ LPCSTR SymbolicLinkA, _Out_ _On_failure_(_Ou
 	}
 	else
 	{
+		TRACE_PRINT1("Duplicated handle: %08p.\n", hFileDup);
 		*pdwError = 0;
 		return hFileDup;
 	}

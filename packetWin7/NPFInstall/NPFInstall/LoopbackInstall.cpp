@@ -1624,7 +1624,7 @@ BOOL DeleteDevIDFile()
 
 	if (!DeleteFile(strLoopbackIDFilePath))
 	{
-		TRACE_PRINT1("DeleteFile %s: error: %08x", GetLastError());
+		TRACE_PRINT("DeleteFile error: %08x", GetLastError());
 		TRACE_EXIT();
 		return FALSE;
 	}

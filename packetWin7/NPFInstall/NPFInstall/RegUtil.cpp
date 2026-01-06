@@ -183,7 +183,7 @@ BOOL DeleteValueFromRegistry(LPCTSTR strSubKey, LPCTSTR strValueName)
 	HKEY hNpcapKey;
 
 	TRACE_ENTER();
-	TRACE_PRINT2("DeleteValueFromRegistry: executing, strSubKey = %s, strValueName = %s, dwSamDesired = 0x%08x.",
+	TRACE_PRINT2("DeleteValueFromRegistry: executing, strSubKey = %s, strValueName = %s.",
 		strSubKey, strValueName);
 
 	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, KEY_SET_VALUE | KEY_WOW64_32KEY, &hNpcapKey);

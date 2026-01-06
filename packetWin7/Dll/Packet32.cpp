@@ -662,7 +662,7 @@ static PCHAR NpcapGetAdapterID(_In_ LPCSTR AdapterName, _Out_opt_ PULONG pNpfOpe
 		return NULL;
 	}
 
-	for (UINT i=0; i <= NameLen && src[i] != '\0'; i++) {
+	for (size_t i=0; i <= NameLen && src[i] != '\0'; i++) {
 		outstr[i] = (char) toupper(src[i]);
 	}
 
