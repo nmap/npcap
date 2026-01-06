@@ -323,7 +323,7 @@ Return Value:
     int elements;
 
     for(scan = MultiSz, elements = 0; scan[0] ;elements++) {
-        scan += lstrlen(scan)+1;
+        scan += _tcslen(scan)+1;
     }
     array = new LPTSTR[elements+2];
     if(!array) {
@@ -334,7 +334,7 @@ Return Value:
     if(elements) {
         for(scan = MultiSz, elements = 0; scan[0]; elements++) {
             array[elements] = scan;
-            scan += lstrlen(scan)+1;
+            scan += _tcslen(scan)+1;
         }
     }
     array[elements] = NULL;
@@ -410,8 +410,8 @@ Return Value:
             //
             // last portion of match
             //
-            size_t scanlen = lstrlen(scanItem);
-            matchlen = lstrlen(wildMark);
+            size_t scanlen = _tcslen(scanItem);
+            matchlen = _tcslen(wildMark);
             if(scanlen < matchlen) {
                 return FALSE;
             }
@@ -1305,7 +1305,7 @@ EXIT_xxxx
 		&DeviceInfoData,
 		SPDRP_HARDWAREID,
 		(LPBYTE)hwIdList,
-		(lstrlen(hwIdList) + 1 + 1) * sizeof(TCHAR)))
+		(_tcslen(hwIdList) + 1 + 1) * sizeof(TCHAR)))
 	{
 		goto final;
 	}

@@ -104,7 +104,7 @@ BOOL WriteStrToRegistry(LPCTSTR strSubKey, LPCTSTR strValueName, LPCTSTR strDevi
 	Status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, strSubKey, 0, dwSamDesired | KEY_WOW64_32KEY, &hNpcapKey);
 	if (Status == ERROR_SUCCESS)
 	{
-		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strDeviceName, (lstrlen(strDeviceName) + 1) * sizeof(TCHAR));
+		Status = RegSetValueEx(hNpcapKey, strValueName, 0, REG_SZ, (PBYTE)strDeviceName, (_tcslen(strDeviceName) + 1) * sizeof(TCHAR));
 		if (Status != ERROR_SUCCESS)
 		{
 			TRACE_PRINT1("RegSetValueEx: error, errCode = 0x%08x.", Status);
