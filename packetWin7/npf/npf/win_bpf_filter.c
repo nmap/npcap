@@ -139,7 +139,7 @@
 static u_int32 xnum_##_Size( _In_ PMDL p, _In_ u_int32 k, _Out_ int *err) \
 { \
 	u_int32 len = 0; \
-	const u_char * CurBuf=NULL; \
+	u_char * CurBuf=NULL; \
 	u_int32 value = 0; \
 	*err = 1; \
  \
