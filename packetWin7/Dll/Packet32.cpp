@@ -969,7 +969,7 @@ static PCHAR WChar2SChar(_In_ LPCWCH string)
   NOTE: this function is used for NPF adapters, only.
   Npcap NOTE: This may no longer be necessary. Testing required.
 */
-
+static
 BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 {
 	BOOLEAN    Status;
@@ -1020,6 +1020,7 @@ BOOLEAN PacketSetMaxLookaheadsize (LPADAPTER AdapterObject)
 
   NOTE: this function is used for NPF adapters, only.
 */
+static
 BOOLEAN PacketSetReadEvt(LPADAPTER AdapterObject)
 {
 	DWORD BytesReturned;
@@ -1215,6 +1216,7 @@ static BOOL PacketGetFileVersion(LPCTSTR FileName, PCHAR VersionBuff, UINT Versi
 	return TRUE;
 }
 
+static
 BOOL PacketStartService()
 {
 	DWORD error = ERROR_SUCCESS;
@@ -1348,6 +1350,7 @@ BOOL PacketStartService()
 	return Result;
 }
 
+static
 PCCH NpfDeviceTag(_In_ ULONG NpfOpenFlags)
 {
 	if ((NpfOpenFlags & NPF_OPEN_FLAG_WIFI) > 0) {
@@ -1490,6 +1493,7 @@ static DWORD _PacketGetInfoPriv(
   \note internal function used by PacketOpenAdapter()
 */
 _Ret_maybenull_
+static
 LPADAPTER PacketOpenAdapterNPF(_In_ PCCH AdapterID, ULONG NpfOpenFlags)
 {
 	DWORD error;
