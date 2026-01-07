@@ -1,4 +1,6 @@
-## Unreleased changes
+## Npcap SDK 1.16 [2026-01-07]
+
+* Upgraded libpcap to 1.10.6.
 
 * Renamed the `SKF_AD_*` constants to `NPCAP_AD_*` to avoid confusion with code
   that may expect the same values or ordering as the constants defined by
