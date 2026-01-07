@@ -1,3 +1,28 @@
+## Npcap 1.86 [2026-01-07]
+
+* Updated libpcap to 1.10.6. For a summary of the last 18 years of libpcap
+  features that have been added since the libpcap 1.0.0 release that WinPcap is
+  stuck on, check out the [What's New page on npcap.com](https://npcap.com/whats-new).
+
+* Fix a BSoD crash (`DRIVER_IRQL_NOT_LESS_OR_EQUAL`) in `bpf_filter()` caused
+  by the filter program being freed and overwritten while a packet is being
+  processed. Fixes [#819](http://issues.npcap.org/819).
+
+* Fix issues with placement/deletion of Uninstall.exe and DriverQuery.exe.
+  Fixes [#821](http://issues.npcap.org/821).
+
+* Fix a deadlock in Packet.dll preventing applications from starting when Npcap
+  is installed in `/admin_only` mode. Npcap 1.84 and 1.85 were affected.
+  Fixes [#813](http://issues.npcap.org/813).
+
+* Fix a BSoD crash (`KMODE_EXCEPTION_NOT_HANDLED`) when capturing injected
+  packets. Fixes [#815](http://issues.npcap.org/815).
+
+* Fix an incompatibility that prevented Npcap 1.81 through 1.85 from being able
+  to capture when installed with the `/prior_driver=yes` option on versions of
+  Windows before Windows 10. This issue does not affect any version of Windows
+  that is supported by Microsoft. Fixes [#822](http://issues.npcap.org/822).
+
 ## Npcap 1.85 [2025-11-18]
 
 * Fix a BSoD crash in `bpf_filter()` caused by reading 1 byte past the end of a

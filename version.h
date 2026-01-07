@@ -110,13 +110,13 @@
  !define /**/ WINPCAP_MINOR				1
 /* WINPCAP_REV should be less than 256 to fit in UCHAR */
 #define /*
- !define /**/ WINPCAP_REV				85
+ !define /**/ WINPCAP_REV				86
 #define /*
- !define /**/ WINPCAP_BUILD				1117
+ !define /**/ WINPCAP_BUILD				106
 #define /*
- !define /**/ WINPCAP_VER_STRING		"1.85"
+ !define /**/ WINPCAP_VER_STRING		"1.86"
 #define /*
- !define /**/ NPCAP_SDK_VERSION "1.15"
+ !define /**/ NPCAP_SDK_VERSION "1.16"
 
 #define WINPCAP_COMPANY_NAME 			"Nmap Software LLC"
 
