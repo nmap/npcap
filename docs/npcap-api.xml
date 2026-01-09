@@ -534,4 +534,122 @@
       </varlistentry>
     </variablelist>
   </sect2>
+  <sect2 id="npcap-api-specifics">
+    <title>Implementation-specific API details</title>
+    <para>
+      Some libpcap functions and features can vary from platform to
+      platform. Here are some specific clarifications for those cases.
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term>Statistics reported by <code>pcap_stats()</code></term>
+        <listitem>
+          <para>In Npcap, the members of <code>struct pcap_stat</code> are:</para>
+          <variablelist>
+            <varlistentry>
+              <term><code>ps_recv</code></term>
+              <listitem>
+                <para>The number of packets processed by this handle, regardless of
+                  whether they passed the packet filter.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>ps_drop</code></term>
+              <listitem>
+                <para>The number of packets dropped due to resource limits
+                  or a full buffer</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>ps_ifdrop</code></term>
+              <listitem>
+                <para>Not used. This is always set to 0.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>ps_capt</code></term>
+              <listitem>
+                <para>For <code>pcap_stats()</code>, this is not used.
+                  For <code>pcap_stats_ex()</code>, this is the number of packets
+                  that passed the packet filter AND were queued for capture
+                  (i.e. not dropped due to limited buffer space).</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>ps_sent</code></term>
+              <listitem>
+                <para>Not used.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>ps_netdrop</code></term>
+              <listitem>
+                <para>Not used.</para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Timestamp types</term>
+        <listitem>
+          <para>Npcap supports the following timestamp types for
+          <ulink url="wpcap/pcap_set_tstamp_type.html"><code>pcap_set_tstamp_type()</code></ulink>:
+          </para>
+          <variablelist>
+            <varlistentry>
+              <term><code>PCAP_TSTAMP_HOST</code></term>
+              <listitem>
+                <para>Default timestamp type, usually <code>TIMESTAMP_MODE_SINGLE_SYNCHRONIZATION</code>.
+                  Registry settings may change this default for new handles.<para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>PCAP_TSTAMP_HOST_HIPREC_UNSYNCED</code></term>
+              <listitem>
+                <para>Maps to <code>TIMESTAMP_MODE_SINGLE_SYNCHRONIZATION</code>,
+                  a monotonic timestamp based on the system performance counter
+                  (<code>KeQueryPerformanceCounter()</code>).
+                  This may drift from system time, but will never move backward.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>PCAP_TSTAMP_HOST_LOWPREC</code></term>
+              <listitem>
+                <para>Maps to <code>TIMESTAMP_MODE_QUERYSYSTEMTIME</code>.
+                Timestamps are synchronized to the system clock and obtained
+                by calling <code>KeQuerySystemTime()</code>,
+                which is accurate to within one system clock tick (roughly ten milliseconds).
+                If the system time moves backwards due to NTP or other time change,
+                the timestamps will also go backwards.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><code>PCAP_TSTAMP_HOST_HIPREC</code></term>
+              <listitem>
+                <para>Maps to <code>TIMESTAMP_MODE_QUERYSYSTEMTIME_PRECISE</code>.
+                Timestamps are synchronized to the system clock and obtained
+                by calling <code>KeQuerySystemTimePrecise()</code>, which is accurate
+                to within a microsecond.</para>
+                <para>Note that Windows 7 does not have the
+                  <code>KeQuerySystemTimePrecise()</code> function, so
+                  <code>PCAP_TSTAMP_HOST_HIPREC</code> is identical to
+                  <code>PCAP_TSTAMP_HOST_LOWPREC</code> on that system.</para>
+              </listitem>
+            </varlistentry>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Timestamp precision</term>
+        <listitem>
+          <para>Npcap 1.86 and later support requesting timestamps in nanosecond precision using
+          <ulink url="wpcap/pcap_set_tstamp_precision.html"><code>pcap_set_tstamp_precision()</code></ulink>.
+            The timestamps are still subject to the 100-nanosecond
+            resolution of the Windows system clock.
+            </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect2>
 </sect1>
