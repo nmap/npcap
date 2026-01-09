@@ -434,7 +434,6 @@
               <term><code>errbuf</code></term>
               <listitem>
                 <para>
-                <para>
                   See the documentation for
                   <ulink url="wpcap/pcap_open_live.html">pcap_open_live()</ulink>.
                 </para>
@@ -457,7 +456,7 @@
             <literal>pcap_open()</literal> supports, and code using it will work
             on more platforms than code using <literal>pcap_open()</literal>.
             <ulink url="wpcap/pcap_create.html">pcap_create()</ulink> and
-            <ulink url="wpcap/pcap_activate.html">pcap_activate()</literal>
+            <ulink url="wpcap/pcap_activate.html">pcap_activate()</ulink>
             can also be used; they support all capabilities that
             <literal>pcap_open()</literal> supports, except for the Windows-only
             <literal>PCAP_OPENFLAG_NOCAPTURE_LOCAL</literal>,
@@ -602,7 +601,7 @@
               <term><code>PCAP_TSTAMP_HOST</code></term>
               <listitem>
                 <para>Default timestamp type, usually <code>TIMESTAMP_MODE_SINGLE_SYNCHRONIZATION</code>.
-                  Registry settings may change this default for new handles.<para>
+                  Registry settings may change this default for new handles.</para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -638,6 +637,7 @@
                   <code>PCAP_TSTAMP_HOST_LOWPREC</code> on that system.</para>
               </listitem>
             </varlistentry>
+          </variablelist>
         </listitem>
       </varlistentry>
       <varlistentry>
