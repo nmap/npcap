@@ -468,24 +468,31 @@
             drivers</quote>, see solution
           <ulink role="hidepdf" url="https://social.technet.microsoft.com/Forums/windows/en-US/4deb27fc-33ce-4fc0-a26f-3fec5b57733d/is-there-a-maximum-number-of-network-filter-drivers-in-windows-7?forum=w7itpronetworking">here</ulink>.
       </para></listitem>
-      <listitem><para>Npcap Loopback Adapter is missing (legacy loopback support):
-          The legacy Npcap Loopback Adapter is actually a wrapper of Microsoft Loopback Adapter.
-          Such adapters won't show up in Wireshark if the <varname>Basic Filtering Enging (BFE)</varname>
-          service was not running. To fix this issue, you should start this service at <varname>services.msc</varname>
+      <listitem><para>Npcap Adapter for Loopback Capture is missing:
+          Npcap's loopback capture is based on the Windows Filtering Platform (WFP), so it depends on the <varname>Base Filtering Enging (BFE)</varname>
+          service. To fix this issue, you should start this service at <varname>services.msc</varname>
           manually and restart the Npcap service by running <command>net stop npcap</command>
           and <command>net start npcap</command>. See details about this issue
-          <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues/802">here</ulink>.
+          <ulink role="hidepdf" url="https://github.com/nmap/npcap/issues/426">here</ulink>.
       </para></listitem>
 
-      <listitem><para>Npcap only captures TCP handshake and teardown, but not data packets.
-          Some network adapters support offloading of tasks to free up CPU time for
-          performance reasons. When this happens, Npcap may not receive all of the
-          packets, or may receive them in a different form than is actually sent on the
-          wire. To avoid this issue, you may disable TCP Chimney, IP Checksum
-          Offloading, and Large Send Offloading in the network adapter properites on
-          Windows. See details about this issue in
-          <ulink role="hidepdf" url="https://github.com/nmap/nmap/issues/989">issue
-            #989</ulink> on our tracker.
+      <listitem><para>Npcap only captures TCP handshake and teardown, but not data packets:
+        A deprecated and uncommon network adapter feature called
+        <ulink role="hidepdf" url="https://techcommunity.microsoft.com/blog/coreinfrastructureandsecurityblog/why-are-we-deprecating-network-performance-features-kb4014193/259053">TCP Chimney</ulink>
+	can cause this issue. Disable TCP Chimney in the network adapter properties on Windows.
+      </para></listitem>
+
+      <listitem><para>Captured packets have incorrect checksums or large sizes:
+        Generally speaking, offload features of a miniport driver and/or NIC
+        mean that the version of the packet that Npcap sees within the Windows
+        network stack may be different in some way from the packet that ends up
+        on the physical link. Usually, this is evident as a zero or incorrect
+        TCP, UDP, or IP checksum for sent packets, but it can also appear as
+        extra-large packets (greater than the TCP MSS or the link maximum frame
+        size) received when RSC is enabled. For most purposes, this is not a
+        problem, since the payload data is the same, but it may be relevant for
+      users who want or need a more forensically-sound packet capture.
+      These offload features can be disabled in Windows' network adapter properties page.
       </para></listitem>
     </itemizedlist>
   </sect2>
