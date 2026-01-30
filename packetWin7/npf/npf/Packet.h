@@ -398,8 +398,7 @@ NPCAP_BPF_PROGRAM, *PNPCAP_BPF_PROGRAM;
 VOID
 NPF_RegisterBpf(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ __drv_aliasesMem PNPCAP_BPF_PROGRAM pBpfProgram,
-	_In_opt_ PNPCAP_BPF_PROGRAM pOldBpfProgram);
+	_In_ __drv_aliasesMem PNPCAP_BPF_PROGRAM pBpfProgram);
 VOID
 NPF_UnregisterBpf(
 	_In_ PNPCAP_FILTER_MODULE pFiltMod,

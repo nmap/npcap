@@ -1187,11 +1187,12 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	TmpBPFProgram->pOpen = pOpen;
 
 	PVOID pOld = InterlockedExchangePointer(&pOpen->BpfProgram, TmpBPFProgram);
+	NPF_UnregisterBpf(pOpen->pFiltMod, pOld);
 
-	// Register the new BPF program if the Open is Attached
-	if (NPF_StartUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN)) {
-		NPF_RegisterBpf(pOpen->pFiltMod, TmpBPFProgram, pOld);
-		NPF_StopUsingOpenInstance(pOpen, OpenAttached, NPF_IRQL_UNKNOWN);
+	// Register the new BPF program if the Open is Running
+	if (NPF_StartUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN)) {
+		NPF_RegisterBpf(pOpen->pFiltMod, TmpBPFProgram);
+		NPF_StopUsingOpenInstance(pOpen, OpenRunning, NPF_IRQL_UNKNOWN);
 	}
 	else {
 		// After InterlockedExchangePointer above, the memory at TmpBPFProgram

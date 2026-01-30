@@ -562,45 +562,44 @@ _Use_decl_annotations_
 VOID
 NPF_RegisterBpf(
 	PNPCAP_FILTER_MODULE pFiltMod,
-	PNPCAP_BPF_PROGRAM pBpfProgram,
-	PNPCAP_BPF_PROGRAM pOldBpfProgram)
+	PNPCAP_BPF_PROGRAM pBpfProgram)
 {
 	// Assert/verify pBpfProgram fields are set
 	LOCK_STATE_EX lockState;
 
 	NT_ASSERT(pBpfProgram->pOpen != NULL);
-	NT_ASSERT(pBpfProgram->BpfProgramsEntry.Flink == NULL
-			&& pBpfProgram->BpfProgramsEntry.Blink == NULL);
+	NT_ASSERT(pBpfProgram->pOpen->pFiltMod == pFiltMod);
+
+	PLIST_ENTRY pNewEntry = &pBpfProgram->BpfProgramsEntry;
+	// If the program is already in the list, nothing more to do
+	if (pNewEntry->Flink != NULL && NT_VERIFY(pNewEntry->Blink != NULL))
+	{
+		// In debug mode we can take the time to verify
+#if defined(_DBG)
+		for (PLIST_ENTRY Curr = pFiltMod->BpfPrograms.Flink;
+				Curr != &pFiltMod->BpfPrograms;
+				Curr = Curr->Flink)
+		{
+			if (Curr == pNewEntry)
+			{
+				return;
+			}
+		}
+		NT_ASSERT(FALSE);
+#endif
+		return;
+	}
+
+	NT_ASSERT(pNewEntry->Flink == NULL && pNewEntry->Blink == NULL);
 
 	// Lock the BpfPrograms list
 	NdisAcquireRWLockWrite(pFiltMod->BpfProgramsLock, &lockState, 0);
-	// Insert/update the bpf for this open instance
-	if (pOldBpfProgram != NULL)
-	{
-		// This Open has a program in the list already.
-		NT_ASSERT(pOldBpfProgram != pBpfProgram);
-		NT_ASSERT(pBpfProgram->pOpen == pOldBpfProgram->pOpen);
-		PLIST_ENTRY pOldEntry = &pOldBpfProgram->BpfProgramsEntry;
-		PLIST_ENTRY pNewEntry = &pBpfProgram->BpfProgramsEntry;
-
-		// Link the new program to the rest of the list
-		pNewEntry->Flink = pOldEntry->Flink;
-		pNewEntry->Blink = pOldEntry->Blink;
-		// Link the next and previous entries to the new program
-		pOldEntry->Flink->Blink = pNewEntry;
-		pOldEntry->Blink->Flink = pNewEntry;
-		// Make the old program invalid
-		// Freeing the program is the caller's responsibility.
-		pOldEntry->Flink = NULL;
-		pOldEntry->Blink = NULL;
-	}
-	else
-	{
-		InsertTailList(&pFiltMod->BpfPrograms, &pBpfProgram->BpfProgramsEntry);
-	}
+	// Insert the bpf for this open instance
+	InsertTailList(&pFiltMod->BpfPrograms, pNewEntry);
 	// Unlock the list
 	NdisReleaseRWLock(pFiltMod->BpfProgramsLock, &lockState);
 }
+
 _Use_decl_annotations_
 VOID
 NPF_UnregisterBpf(
@@ -617,6 +616,21 @@ NPF_UnregisterBpf(
 	NT_ASSERT(pBpfProgram->BpfProgramsEntry.Blink != NULL);
 	// Lock the BpfPrograms list
 	NdisAcquireRWLockWrite(pFiltMod->BpfProgramsLock, &lockState, 0);
+	// In debug mode we can take the time to verify
+#if defined(_DBG)
+	BOOLEAN bFound = FALSE;
+	for (PLIST_ENTRY Curr = pFiltMod->BpfPrograms.Flink;
+			Curr != &pFiltMod->BpfPrograms;
+			Curr = Curr->Flink)
+	{
+		if (Curr == &pBpfProgram->BpfProgramsEntry)
+		{
+			bFound = TRUE;
+			break;
+		}
+	}
+	NT_ASSERT(bFound);
+#endif
 	// remove the bpf for this open instance
 	RemoveEntryList(&pBpfProgram->BpfProgramsEntry);
 	// Unlock the list
@@ -700,7 +714,7 @@ NPF_StartUsingOpenInstance(
 				NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 
 				// Insert a null filter (accept all)
-				NPF_RegisterBpf(pOpen->pFiltMod, pOpen->BpfProgram, NULL);
+				NPF_RegisterBpf(pOpen->pFiltMod, pOpen->BpfProgram);
 				pOpen->OpenStatus = OpenRunning;
 			}
 			else
@@ -2265,7 +2279,7 @@ NPF_AttachAdapter(
 				if (pOpen->ReattachStatus < OpenAttached)
 				{
 					NPF_UpdateTimestampModeCounts(pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
-					NPF_RegisterBpf(pOpen->pFiltMod, pOpen->BpfProgram, NULL);
+					NPF_RegisterBpf(pOpen->pFiltMod, pOpen->BpfProgram);
 				}
 				pOpen->OpenStatus = pOpen->ReattachStatus;
 				Curr = PopEntryList(&ReattachOpens);
