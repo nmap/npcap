@@ -112,9 +112,9 @@
 #define /*
  !define /**/ WINPCAP_REV				86
 #define /*
- !define /**/ WINPCAP_BUILD				106
+ !define /**/ WINPCAP_BUILD				203
 #define /*
- !define /**/ WINPCAP_VER_STRING		"1.86"
+ !define /**/ WINPCAP_VER_STRING		"1.87"
 #define /*
  !define /**/ NPCAP_SDK_VERSION "1.16"
 

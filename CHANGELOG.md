@@ -1,3 +1,7 @@
+## Npcap 1.87 [2026-02-04]
+
+* Fix a bug causing various BSoD crashes in `NPF_DoTap()`. Fixes [#831](https://issues.npcap.org/831).
+
 ## Npcap 1.86 [2026-01-07]
 
 * Updated libpcap to 1.10.6. For a summary of the last 18 years of libpcap
