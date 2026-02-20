@@ -337,6 +337,8 @@ typedef struct _NPCAP_FILTER_MODULE
 	PNDIS_RW_LOCK_EX OpenInstancesLock; // Also protects MyPacketFilter and MyLookaheadSize
 	LIST_ENTRY BpfPrograms;
 	PNDIS_RW_LOCK_EX BpfProgramsLock;
+	LONG BpfCount; // Number of BPF filters, equivalent to number of OpenRunning
+	LONG nTimestampQST_Precise;
 
 	NDIS_STRING				AdapterName;
 	NET_LUID AdapterID;
@@ -352,10 +354,6 @@ typedef struct _NPCAP_FILTER_MODULE
 	BOOLEAN PacketFilterGetOK:1; // Can we issue OID_GEN_CURRENT_PACKET_FILTER queries?
 	BOOLEAN HigherPacketFilterSet:1; // Have we correctly set HigherPacketFilter yet?
 	BOOLEAN Fragile:1; // Avoid OID set operations on these adapters
-
-	LONG nTimestampQPC; // Opens wanting TIMESTAMPMODE_SINGLE_SYNCHRONIZATION
-	LONG nTimestampQST; // Opens wanting TIMESTAMPMODE_QUERYSYSTEMTIME
-	LONG nTimestampQST_Precise; // Opens wanting TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
 
 	ULONG SupportedPacketFilters;
 	ULONG					MyPacketFilter;

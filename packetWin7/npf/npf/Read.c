@@ -378,9 +378,7 @@ NPF_AlignProtocolField(
 ULONG NPF_GetMetadata(
 	_In_ const PNET_BUFFER_LIST pNetBufferLists,
 	_Inout_ PSINGLE_LIST_ENTRY NBLCopyHead,
-	_In_ PNPCAP_FILTER_MODULE pFiltMod,
-	_In_ LARGE_INTEGER SystemTime,
-	_In_ LARGE_INTEGER PerfCount
+	_In_ PNPCAP_FILTER_MODULE pFiltMod
 	)
 {
 	PNPF_NBL_COPY pNBLCopy = NULL;
@@ -411,8 +409,6 @@ ULONG NPF_GetMetadata(
 		}
 		RtlZeroMemory(pNBLCopy, sizeof(NPF_NBL_COPY));
 		pNBLCopy->refcount = 1;
-		pNBLCopy->SystemTime = SystemTime;
-		pNBLCopy->PerfCount = PerfCount;
 		PSINGLE_LIST_ENTRY pSrcNBPrev = &pNBLCopy->NBCopiesHead;
 
 
@@ -744,35 +740,19 @@ NPF_DoTap(
 	SINGLE_LIST_ENTRY NBLCopiesHead = { 0 };
 	NBLCopiesHead.Next = NULL;
 	PNPF_SRC_NB pSrcNB = NULL;
-	LARGE_INTEGER SystemTime = { 0 }, PerfCount = { 0 };
 	PLIST_ENTRY CurrFilter;
 	PNPF_CAP_DATA pCaptures = NULL;
 
 	/* Get relevant timestamps */
-	if (pFiltMod->nTimestampQPC == 0 && pFiltMod->nTimestampQST == 0 && pFiltMod->nTimestampQST_Precise == 0)
+	if (pFiltMod->BpfCount == 0)
 	{
 		// No instances at OpenRunning
 		return;
 	}
-	// Any instances need performance counter?
-	if (pFiltMod->nTimestampQPC > 0)
-	{
-		PerfCount = KeQueryPerformanceCounter(NULL);
-	}
-	// Any instances need system time? All can use precise if any need it.
-	if (pFiltMod->nTimestampQST_Precise > 0)
-	{
-		BestQuerySystemTime(&SystemTime);
-	}
-	else if (pFiltMod->nTimestampQST > 0)
-	{
-		// If none need QST_Precise, we can make do with just QST
-		KeQuerySystemTime(&SystemTime);
-	}
 
 	/* If we got this far, there is at least 1 instance at OpenRunning,
 	 * so gather metadata before locking the list. */
-	ULONG resdropped = NPF_GetMetadata(NetBufferLists, &NBLCopiesHead, pFiltMod, SystemTime, PerfCount);
+	ULONG resdropped = NPF_GetMetadata(NetBufferLists, &NBLCopiesHead, pFiltMod);
 	BOOLEAN firstpass = resdropped > 0;
 	/* Lock the filter programs */
 	// Read-only lock since list is not being modified.
@@ -786,6 +766,9 @@ NPF_DoTap(
 		{
 			PNPCAP_BPF_PROGRAM pBpf = CONTAINING_RECORD(CurrFilter, NPCAP_BPF_PROGRAM, BpfProgramsEntry);
 			POPEN_INSTANCE pOpen = pBpf->pOpen;
+			if (!NT_VERIFY(pOpen != NULL)) {
+				continue;
+			}
 			// If this instance originated the packet and doesn't want to see it, don't capture.
 			if (pOpen == pOpenOriginating && pOpen->SkipSentPackets)
 			{
@@ -1168,11 +1151,6 @@ NPF_TapExForEachOpen(
 	ULONG TotalPacketSize = pNBCopy->ulPacketSize;
 	BOOLEAN bEnqueued = FALSE;
 
-	NT_ASSERT((Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION && pNBLCopy->PerfCount.QuadPart > 0)
-			|| ((Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME
-					|| Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE)
-				&& pNBLCopy->SystemTime.QuadPart > 0));
-
 	if (!Open->bModeCapt)
 	{
 		// we are in statistics mode
@@ -1247,6 +1225,21 @@ NPF_TapExForEachOpen(
 		{
 			// Add the difference back, otherwise we never recover it.
 			NpfInterlockedExchangeAdd(&Open->Free, lCapSize - NPF_CAP_OBJ_SIZE(pCapData));
+		}
+		// Great, it passed! Make sure we have a timestamp.
+		if (Open->TimestampMode == TIMESTAMPMODE_SINGLE_SYNCHRONIZATION) {
+			if (pNBLCopy->PerfCount.QuadPart == 0) {
+				pNBLCopy->PerfCount = KeQueryPerformanceCounter(NULL);
+			}
+		}
+		else if (pNBLCopy->SystemTime.QuadPart == 0) {
+			if (Open->TimestampMode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
+					|| Open->pFiltMod->nTimestampQST_Precise > 0) {
+				BestQuerySystemTime(&pNBLCopy->SystemTime);
+			}
+			else {
+				KeQuerySystemTime(&pNBLCopy->SystemTime);
+			}
 		}
 		ExInterlockedInsertTailList(&Open->PacketQueue, &pCapData->PacketQueueEntry, &Open->PacketQueueLock);
 		// We successfully put this into the queue

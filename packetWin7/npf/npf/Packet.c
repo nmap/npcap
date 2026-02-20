@@ -1873,7 +1873,12 @@ static NTSTATUS funcBIOCSTIMESTAMPMODE(_In_ POPEN_INSTANCE pOpen,
 	{
 		if (pOpen->OpenStatus <= OpenRunning)
 		{
-			NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, mode, oldmode);
+			if (oldmode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE) {
+				NpfInterlockedDecrement(&pOpen->pFiltMod->nTimestampQST_Precise);
+			}
+			else if (mode == TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE) {
+				NpfInterlockedIncrement(&pOpen->pFiltMod->nTimestampQST_Precise);
+			}
 		}
 		/* Reset buffer, since contents have differing timestamps */
 		NPF_ResetBufferContents(pOpen, TRUE);
@@ -2130,10 +2135,7 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 					*((PULONG)OidData->Data) = pFiltMod->MaxFrameSize;
 					break;
 				case NPF_MODDBG_NUMOPENS:
-					*((PULONG)OidData->Data) = (
-							pFiltMod->nTimestampQPC +
-							pFiltMod->nTimestampQST +
-							pFiltMod->nTimestampQST_Precise);
+					*((PULONG)OidData->Data) = pFiltMod->BpfCount;
 					break;
 				default:
 					Status = STATUS_INVALID_DEVICE_REQUEST;

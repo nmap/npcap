@@ -596,6 +596,8 @@ NPF_RegisterBpf(
 	NdisAcquireRWLockWrite(pFiltMod->BpfProgramsLock, &lockState, 0);
 	// Insert the bpf for this open instance
 	InsertTailList(&pFiltMod->BpfPrograms, pNewEntry);
+	// Update accounting
+	NpfInterlockedIncrement(&pFiltMod->BpfCount);
 	// Unlock the list
 	NdisReleaseRWLock(pFiltMod->BpfProgramsLock, &lockState);
 }
@@ -633,6 +635,8 @@ NPF_UnregisterBpf(
 #endif
 	// remove the bpf for this open instance
 	RemoveEntryList(&pBpfProgram->BpfProgramsEntry);
+	// Update accounting
+	NpfInterlockedDecrement(&pFiltMod->BpfCount);
 	// Unlock the list
 	NdisReleaseRWLock(pFiltMod->BpfProgramsLock, &lockState);
 
@@ -711,7 +715,6 @@ NPF_StartUsingOpenInstance(
 				// Get the absolute value of the system boot time.
 				// This is used for timestamp conversion.
 				TIME_SYNCHRONIZE(&pOpen->start);
-				NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 
 				// Insert a null filter (accept all)
 				NPF_RegisterBpf(pOpen->pFiltMod, pOpen->BpfProgram);
@@ -796,7 +799,6 @@ NPF_DemoteOpenStatus(
 	INFO_DBG("Open %p: %d -> %d\n", pOpen, OldState, NewState);
 	if (OldState == OpenRunning)
 	{
-		NPF_UpdateTimestampModeCounts(pOpen->pFiltMod, TIMESTAMPMODE_UNSET, pOpen->TimestampMode);
 		NPF_UnregisterBpf(pOpen->pFiltMod, pOpen->BpfProgram);
 	}
 
@@ -2278,7 +2280,6 @@ NPF_AttachAdapter(
 				NPF_AddToGroupOpenArray(pOpen, pFiltMod, 0);
 				if (pOpen->ReattachStatus < OpenAttached)
 				{
-					NPF_UpdateTimestampModeCounts(pFiltMod, pOpen->TimestampMode, TIMESTAMPMODE_UNSET);
 					NPF_RegisterBpf(pOpen->pFiltMod, pOpen->BpfProgram);
 				}
 				pOpen->OpenStatus = pOpen->ReattachStatus;
@@ -2290,7 +2291,7 @@ NPF_AttachAdapter(
 		pFiltMod->AdapterBindingStatus = FilterPaused;
 		NPF_AddToFilterModuleArray(pFiltMod);
 		// If any handles are running, enable ops again.
-		if (pFiltMod->nTimestampQPC > 0 || pFiltMod->nTimestampQST > 0 || pFiltMod->nTimestampQST_Precise > 0)
+		if (pFiltMod->BpfCount > 0)
 		{
 			NPF_EnableOps(pFiltMod);
 		}
@@ -2526,7 +2527,7 @@ NOTE: Called at PASSIVE_LEVEL and the filter is in paused state
 		Curr = PopEntryList(&pFiltMod->OpenInstances);
 	}
 	NdisReleaseRWLock(pFiltMod->OpenInstancesLock, &lockState);
-	NT_ASSERT(pFiltMod->nTimestampQPC == 0 && pFiltMod->nTimestampQST == 0 && pFiltMod->nTimestampQST_Precise == 0);
+	NT_ASSERT(pFiltMod->BpfCount == 0);
 
 	// Restore original filter and lookahead value
 	NPF_SetPacketFilter(pFiltMod, 0);
@@ -3531,54 +3532,4 @@ InternalRequestExit:
 	INFO_DBG("pFiltMod(%p) OID %s %#x: Status = %#x; Bytes = %lu\n", pFiltMod, RequestType == NdisRequestQueryInformation ? "GET" : "SET", Oid, Status, *pBytesProcessed);
 	TRACE_EXIT();
 	return Status;
-}
-
-_Use_decl_annotations_
-VOID NPF_UpdateTimestampModeCounts(
-		PNPCAP_FILTER_MODULE pFiltMod,
-		ULONG newmode,
-		ULONG oldmode)
-{
-	LONG result = 0;
-	if (pFiltMod == NULL || newmode == oldmode)
-		return;
-
-	switch (newmode)
-	{
-		case TIMESTAMPMODE_UNSET:
-			result = 1;
-			break;
-		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION:
-			result = InterlockedIncrement(&pFiltMod->nTimestampQPC);
-			break;
-		case TIMESTAMPMODE_QUERYSYSTEMTIME:
-			result = InterlockedIncrement(&pFiltMod->nTimestampQST);
-			break;
-		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
-			result = InterlockedIncrement(&pFiltMod->nTimestampQST_Precise);
-			break;
-		default:
-			NT_ASSERT(FALSE);
-			break;
-	}
-	NT_ASSERT(result > 0);
-	switch (oldmode)
-	{
-		case TIMESTAMPMODE_UNSET:
-			result = 0;
-			break;
-		case TIMESTAMPMODE_SINGLE_SYNCHRONIZATION:
-			result = InterlockedDecrement(&pFiltMod->nTimestampQPC);
-			break;
-		case TIMESTAMPMODE_QUERYSYSTEMTIME:
-			result = InterlockedDecrement(&pFiltMod->nTimestampQST);
-			break;
-		case TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE:
-			result = InterlockedDecrement(&pFiltMod->nTimestampQST_Precise);
-			break;
-		default:
-			NT_ASSERT(FALSE);
-			break;
-	}
-	NT_ASSERT(result >= 0);
 }
