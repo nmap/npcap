@@ -2190,14 +2190,9 @@ NPF_IoControl(
 	 * that handler functions don't have to. If this changes in the future,
 	 * we'll have to split this check by ioctl code.
 	 */
-	if (!NT_VERIFY(Irp->Flags & IRP_BUFFERED_IO))
-	{
-		Status = STATUS_INVALID_PARAMETER;
-		goto NPF_IoControl_End;
-	}
-
-	// Make sure at least one buffer is valid and not 0-length.
-	if (pBuf == NULL || InputBufferLength + OutputBufferLength == 0)
+	if (METHOD_FROM_CTL_CODE(FunctionCode) != METHOD_BUFFERED ||
+			// Make sure at least one buffer is valid and not 0-length.
+			pBuf == NULL || InputBufferLength + OutputBufferLength == 0)
 	{
 		Status = STATUS_INVALID_PARAMETER;
 		goto NPF_IoControl_End;
