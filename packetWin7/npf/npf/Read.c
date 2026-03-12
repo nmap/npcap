@@ -961,22 +961,28 @@ NPF_SendEx(
 
 	TRACE_ENTER();
 
-	if (pFiltMod->OpsState == OpsEnabled
+	if (NPF_StartUsingBinding(pFiltMod, bAtDispatchLevel)) {
+		if (pFiltMod->OpsState == OpsEnabled
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		&& NT_VERIFY(!pFiltMod->Loopback)
+				&& NT_VERIFY(!pFiltMod->Loopback)
 #endif
-	   )
-	{
-		NPF_DoTap(pFiltMod, NetBufferLists, NULL, bAtDispatchLevel);
+		   )
+		{
+			NPF_DoTap(pFiltMod, NetBufferLists, NULL, bAtDispatchLevel);
+		}
+		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel)
 	}
 
 	NdisFSendNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
 
-	LARGE_INTEGER EndTime = KeQueryPerformanceCounter(NULL);
-	PTime.QuadPart = EndTime.QuadPart - PTime.QuadPart;
-	CalculateEMA(pFiltMod->TimeInSend, PTime);
-	if (bAtDispatchLevel) {
-		CalculateEMA(pFiltMod->TimeAtDPC, PTime);
+	if (NPF_StartUsingBinding(pFiltMod, bAtDispatchLevel)) {
+		LARGE_INTEGER EndTime = KeQueryPerformanceCounter(NULL);
+		PTime.QuadPart = EndTime.QuadPart - PTime.QuadPart;
+		CalculateEMA(pFiltMod->TimeInSend, PTime);
+		if (bAtDispatchLevel) {
+			CalculateEMA(pFiltMod->TimeAtDPC, PTime);
+		}
+		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel)
 	}
 	TRACE_EXIT();
 }
@@ -1002,17 +1008,20 @@ NPF_TapEx(
 
 	UNREFERENCED_PARAMETER(PortNumber);
 
-	if (pFiltMod->OpsState == OpsEnabled
-		// If this is a Npcap-sent packet being looped back, then it has already been captured.
+	if (NPF_StartUsingBinding(pFiltMod, bAtDispatchLevel)) {
+		if (pFiltMod->OpsState == OpsEnabled
+			// If this is a Npcap-sent packet being looped back, then it has already been captured.
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
-		&& NT_VERIFY(!pFiltMod->Loopback)
+			&& NT_VERIFY(!pFiltMod->Loopback)
 #endif
-		&& !(NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
-			&& NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
+			&& !(NdisTestNblFlag(NetBufferLists, NDIS_NBL_FLAGS_IS_LOOPBACK_PACKET)
+				&& NetBufferLists->SourceHandle == pFiltMod->AdapterHandle)
 
-	   )
-	{
-		NPF_DoTap(pFiltMod, NetBufferLists, NULL, NDIS_TEST_RECEIVE_AT_DISPATCH_LEVEL(ReceiveFlags));
+		   )
+		{
+			NPF_DoTap(pFiltMod, NetBufferLists, NULL, bAtDispatchLevel);
+		}
+		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel)
 	}
 
 	/* NdisFIndicateReceiveNetBufferLists only if not BlockRxPath
@@ -1050,11 +1059,14 @@ NPF_TapEx(
 				bAtDispatchLevel ? NDIS_RETURN_FLAGS_DISPATCH_LEVEL : 0);
 	}
 #endif
-	LARGE_INTEGER EndTime = KeQueryPerformanceCounter(NULL);
-	PTime.QuadPart = EndTime.QuadPart - PTime.QuadPart;
-	CalculateEMA(pFiltMod->TimeInRecv, PTime);
-	if (bAtDispatchLevel) {
-		CalculateEMA(pFiltMod->TimeAtDPC, PTime);
+	if (NPF_StartUsingBinding(pFiltMod, bAtDispatchLevel)) {
+		LARGE_INTEGER EndTime = KeQueryPerformanceCounter(NULL);
+		PTime.QuadPart = EndTime.QuadPart - PTime.QuadPart;
+		CalculateEMA(pFiltMod->TimeInRecv, PTime);
+		if (bAtDispatchLevel) {
+			CalculateEMA(pFiltMod->TimeAtDPC, PTime);
+		}
+		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel)
 	}
 
 	TRACE_EXIT();
