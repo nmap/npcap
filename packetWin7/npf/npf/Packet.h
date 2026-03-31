@@ -491,6 +491,7 @@ typedef struct _NPF_NB_COPIES
 {
 	PNPF_NBL_COPY pNBLCopy;
 	ULONG ulSize; // Size of data in Buffer
+	ULONG ulBufSize; // Size of allocated space in Buffer
 	ULONG ulPacketSize; // Size of the original packet
 	LONG refcount;
 	PUCHAR Buffer; // packet data
@@ -504,8 +505,7 @@ typedef struct _NPF_SRC_NB
 	PNPF_NB_COPIES pNBCopy;
 	PNET_BUFFER pNetBuffer; // source NET_BUFFER
 	ULONG ulDesired; // How much data we want from the packet
-	BOOLEAN bVlanHeaderInPacket:1; // Is there a 802.1q VLAN header in the packet data?
-	BOOLEAN bVlanHeaderAdded:1; // Was a VLAN header added to the pNBCopy, increasing size by 4 bytes?
+	BOOLEAN bVlanHeaderInPacket:1; // Was a VLAN header added to the pNBCopy, increasing size by 4 bytes?
 } NPF_SRC_NB, *PNPF_SRC_NB;
 
 // so we can use the same lookaside list for all these things
