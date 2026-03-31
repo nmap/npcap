@@ -461,9 +461,12 @@ ULONG NPF_GetMetadata(
 
 		// Otherwise, gather the appropriate metadata
 		pNBLCopy->qInfo.Value = NET_BUFFER_LIST_INFO(pNetBufList, Ieee8021QNetBufferListInfo);
+		if (pNBLCopy->qInfo.Value != 0) {
+			pNBLCopy->bQinfoPresent = TRUE;
+		}
 		// We can't distinguish VLAN 0 from no VLAN tag, so we try this:
 		// If it's one of our own injected packets,
-		if (pNetBufList->SourceHandle == pFiltMod->AdapterHandle
+		else if (pNetBufList->SourceHandle == pFiltMod->AdapterHandle
 				&& RESERVED(pNetBufList) != NULL) {
 			// then FreeBufAfterWrite means the Ethernet header is a replacement
 			// and we can infer that the original packet had a VLAN header.
@@ -683,6 +686,8 @@ NPF_HandleVlanHeader(
 	PNPF_NB_COPIES pNBCopy = pCapData->pNBCopy;
 	PNPF_SRC_NB pSrcNB = pCapData->pSrcNB;
 	const NDIS_NET_BUFFER_LIST_8021Q_INFO *pQinfo = &pNBCopy->pNBLCopy->qInfo;
+	NT_ASSERT(pNBCopy->ulBufSize >= pNBCopy->ulSize);
+
 	// Reasons to quit early:
 	if (
 		// the adapter doesn't use Ethernet headers
@@ -690,8 +695,7 @@ NPF_HandleVlanHeader(
 		// there's less than an Ethernet header captured
 		|| pNBCopy->ulSize < ETHER_HDR_LEN
 		// there's no VLAN metadata
-		|| (pQinfo->Value == 0
-			&& !pNBCopy->pNBLCopy->bQinfoPresent)
+		|| !pNBCopy->pNBLCopy->bQinfoPresent
 	   )
 	{
 		return;
@@ -701,26 +705,23 @@ NPF_HandleVlanHeader(
 	if (!pSrcNB->bVlanHeaderInPacket) {
 #define ETHERTYPE_OFFSET FIELD_OFFSET(ETHER_HEADER, ether_type)
 		PVLAN_HEADER pVlan = (PVLAN_HEADER)(pNBCopy->Buffer + ETHERTYPE_OFFSET);
-		// If it's not already there, add one.
-		if (!VLAN_HEADER_VALID(pVlan)) {
-			// Shift the packet data down 4 bytes
-			RtlMoveMemory(pNBCopy->Buffer + ETHERTYPE_OFFSET + VLAN_HDR_LEN,
-					pNBCopy->Buffer + ETHERTYPE_OFFSET,
-					pNBCopy->ulSize - ETHERTYPE_OFFSET);
-			// Add the VLAN header
-			QINFO_TO_VLAN_HEADER(pQinfo, pVlan);
+		// Shift the packet data down 4 bytes
+		NT_ASSERT(pNBCopy->ulBufSize - VLAN_HDR_LEN >= pNBCopy->ulSize);
+		RtlMoveMemory(pNBCopy->Buffer + ETHERTYPE_OFFSET + VLAN_HDR_LEN,
+				pNBCopy->Buffer + ETHERTYPE_OFFSET,
+				pNBCopy->ulSize - ETHERTYPE_OFFSET);
+		// Add the VLAN header
+		QINFO_TO_VLAN_HEADER(pQinfo, pVlan);
 
-			// Update accounting for the new packet length
-			pNBCopy->ulSize += VLAN_HDR_LEN;
-			pNBCopy->ulPacketSize += VLAN_HDR_LEN;
-			pSrcNB->bVlanHeaderAdded = TRUE;
-		}
+		// Update accounting for the new packet length
+		pNBCopy->ulSize += VLAN_HDR_LEN;
+		pNBCopy->ulPacketSize += VLAN_HDR_LEN;
 		// Now we know for sure the header is present.
 		pSrcNB->bVlanHeaderInPacket = TRUE;
 	}
 
 	// If we added the header ourselves, adjust the capture length.
-	if (pSrcNB->bVlanHeaderAdded) {
+	if (pSrcNB->bVlanHeaderInPacket) {
 		pCapData->ulCaplen += VLAN_HDR_LEN;
 	}
 }
@@ -1122,9 +1123,11 @@ NPF_CopyFromNetBufferToNBCopy(
 	NT_ASSERT(ulDesired <= NET_BUFFER_DATA_LENGTH(pSrcNB->pNetBuffer));
 
 	// Allocate enough space to add the VLAN header if necessary
-	pNBCopy->Buffer = NPF_AllocateZeroNonpaged((SIZE_T)ulDesired + VLAN_HDR_LEN, NPF_PACKET_DATA_TAG);
+	pNBCopy->ulBufSize = ulDesired + VLAN_HDR_LEN;
+	pNBCopy->Buffer = NPF_AllocateZeroNonpaged((SIZE_T)pNBCopy->ulBufSize, NPF_PACKET_DATA_TAG);
 	if (pNBCopy->Buffer == NULL)
 	{
+		pNBCopy->ulBufSize = 0;
 		INFO_DBG("Failed to allocate Buffer\n");
 		return FALSE;
 	}
