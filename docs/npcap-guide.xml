@@ -41,6 +41,8 @@
 				<listitem><para><literal>1</literal>: Installation aborted by user (cancel button).</para></listitem>
 				<listitem><para><literal>2</literal>: Installation aborted by script.</para></listitem>
 				<listitem><para><literal>350</literal> (<literal>ERROR_FAIL_NOACTION_REBOOT</literal>): Installation failed; reboot and try again.</para></listitem>
+				<listitem><para><literal>1618</literal> (<literal>ERROR_INSTALL_ALREADY_RUNNING</literal)>): Another installation is already in progress. Complete that installation before proceeding with this install.</para></listitem>
+				<listitem><para><literal>1633</literal> (<literal>ERROR_INSTALL_PLATFORM_UNSUPPORTED</literal)>): Npcap is not supported on this platform.</para></listitem>
 				<listitem><para><literal>3010</literal> (<literal>ERROR_SUCCESS_REBOOT_REQUIRED</literal>): Installation succeeded; reboot required before Npcap is ready to use.</para></listitem>
 			</itemizedlist>
 
