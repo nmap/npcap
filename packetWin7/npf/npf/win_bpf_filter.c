@@ -382,7 +382,7 @@ int bpf_validate(struct bpf_insn * f, int len)
 
 	INFO_DBG("Validating program\n");
 
-	if (len < 1)
+	if (len < 1 || len > BPF_MAXINSNS)
 		return 0;
 
 	for (i = 0; i < (u_int32)len; ++i)
@@ -472,39 +472,47 @@ int bpf_validate(struct bpf_insn * f, int len)
 			}
 			break;
 		case BPF_JMP:
-			from = i + 1;
 			/*
 			 * Check that jumps are within the code block,
 			 * and that unconditional branches don't go
 			 * backwards as a result of an overflow.
-			 * Unconditional branches have a 32-bit offset,
-			 * so they could overflow; we check to make
-			 * sure they don't.  Conditional branches have
-			 * an 8-bit offset, and the from address is <=
-			 * BPF_MAXINSNS, and we assume that BPF_MAXINSNS
-			 * is sufficiently small that adding 255 to it
-			 * won't overflow.
 			 *
 			 * We know that len is <= BPF_MAXINSNS, and we
-			 * assume that BPF_MAXINSNS is < the maximum size
+			 * assert that BPF_MAXINSNS is < the maximum size
 			 * of a u_int, so that i + 1 doesn't overflow.
 			 */
-			/* Never assume; check instead. */
-			C_ASSERT(BPF_MAXINSNS < UINT_MAX - UCHAR_MAX);
-			// Jump can't be the last instruction
-			if (from >= (u_int32)len)
-				return 0;
+			C_ASSERT(BPF_MAXINSNS < UINT_MAX);
+			from = i + 1;
 			switch (BPF_OP(p->code))
 			{
+				/* Unconditional branches have a 32-bit offset,
+				 * so they could overflow; we check to make
+				 * sure they don't.
+				 * We assert that BPF_MAXINSNS is less than
+				 * half of UINT_MAX, so we can safely add two
+				 * values <= BPF_MAXINSNS without overflowing.
+				 */
+				C_ASSERT(BPF_MAXINSNS < UINT_MAX / 2);
 			case BPF_JA:
-				if (p->k >= len - from)
+				/* Make sure k < len, since any greater offset
+				 * would be past the end. Then, since from and
+				 * k are both <= len and len <= BPF_MAXINSNS,
+				 * we can compute the destination without
+				 * overflow. */
+				if (p->k >= (u_int32)len || from + p->k >= (u_int32)len)
 					return 0;
 				break;
+				/* Conditional branches have an 8-bit offset,
+				 * and the from address is <= BPF_MAXINSNS, and
+				 * we assert that BPF_MAXINSNS is sufficiently
+				 * small that adding 255 to it won't overflow.
+				 */
+				C_ASSERT(BPF_MAXINSNS < UINT_MAX - UCHAR_MAX);
 			case BPF_JEQ:
 			case BPF_JGT:
 			case BPF_JGE:
 			case BPF_JSET:
-				if (p->jt >= len - from || p->jf >= len - from)
+				if (from + p->jt >= (u_int32)len || from + p->jf >= (u_int32)len)
 					return 0;
 				break;
 			default:
