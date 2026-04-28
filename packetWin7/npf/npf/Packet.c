@@ -1165,6 +1165,7 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	ULONG insns = ulBufLen / sizeof(struct bpf_insn);
 	if (insns > BPF_MAXINSNS || !bpf_validate(NewBpfProgram, insns))
 	{
+		NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
 		WARNING_DBG("BPF filter invalid.\n");
 		return STATUS_INVALID_DEVICE_REQUEST;
 	}
@@ -1177,6 +1178,7 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 			FIELD_OFFSET(NPCAP_BPF_PROGRAM, bpf_program) + (SIZE_T)ulBufLen, NPF_BPF_TAG);
 	if (TmpBPFProgram == NULL)
 	{
+		NPF_StopUsingOpenInstance(pOpen, OpenDetached, NPF_IRQL_UNKNOWN);
 		WARNING_DBG("Failed to alloc TmpBPFProgram.\n");
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
