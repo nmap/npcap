@@ -971,7 +971,7 @@ NPF_SendEx(
 		{
 			NPF_DoTap(pFiltMod, NetBufferLists, NULL, bAtDispatchLevel);
 		}
-		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel)
+		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel);
 	}
 
 	NdisFSendNetBufferLists(pFiltMod->AdapterHandle, NetBufferLists, PortNumber, SendFlags);
@@ -983,7 +983,7 @@ NPF_SendEx(
 		if (bAtDispatchLevel) {
 			CalculateEMA(pFiltMod->TimeAtDPC, PTime);
 		}
-		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel)
+		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel);
 	}
 	TRACE_EXIT();
 }
@@ -1022,7 +1022,7 @@ NPF_TapEx(
 		{
 			NPF_DoTap(pFiltMod, NetBufferLists, NULL, bAtDispatchLevel);
 		}
-		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel)
+		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel);
 	}
 
 	/* NdisFIndicateReceiveNetBufferLists only if not BlockRxPath
@@ -1067,7 +1067,7 @@ NPF_TapEx(
 		if (bAtDispatchLevel) {
 			CalculateEMA(pFiltMod->TimeAtDPC, PTime);
 		}
-		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel)
+		NPF_StopUsingBinding(pFiltMod, bAtDispatchLevel);
 	}
 
 	TRACE_EXIT();
