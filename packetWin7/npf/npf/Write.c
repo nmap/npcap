@@ -606,7 +606,7 @@ NPF_Write(
 		pNetBufferList = NULL;
 		NumSends--;
 	}
-
+	_Analysis_assume_lock_released_(Open->PendingIrps[OpenRunning]);
 
 NPF_Write_End:
 	// If Status is success, all intended sends have been initiated and
@@ -645,6 +645,7 @@ NPF_Write_End:
 					bFreeMdl = FALSE;
 					// SendCompleteEx will not complete this IRP
 					bCompleteIrp = TRUE;
+					_Analysis_assume_lock_held_(Open->PendingIrps[OpenRunning]);
 					NT_ASSERT(NumSends == 0);
 					break;
 				}
@@ -1019,6 +1020,7 @@ NPF_FreePackets(
 				NT_ASSERT(pOpen->pFiltMod == pFiltMod);
 				bDoCleanup = TRUE;
 
+				_Analysis_assume_lock_held_(pOpen->PendingIrps[OpenRunning]);
 				NPF_StopUsingOpenInstance(pOpen, OpenRunning, AtDispatchLevel);
 
 				NDIS_STATUS Status = NET_BUFFER_LIST_STATUS(pNetBufList);

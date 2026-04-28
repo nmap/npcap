@@ -209,6 +209,7 @@ NPF_StartUsingBinding(
 	PNPCAP_FILTER_MODULE pFiltMod, BOOLEAN AtDispatchLevel
 	)
 {
+	_Analysis_suppress_lock_checking_(*pFiltMod)
 	if (!pFiltMod) {
 		return FALSE;
 	}
@@ -238,6 +239,7 @@ NPF_StopUsingBinding(
 	PNPCAP_FILTER_MODULE pFiltMod, BOOLEAN AtDispatchLevel
 	)
 {
+	_Analysis_suppress_lock_checking_(*pFiltMod)
 	NT_ASSERT(pFiltMod != NULL);
 	//
 	//  There is no risk in calling this function from abobe passive level
@@ -747,6 +749,8 @@ NPF_StartUsingOpenInstance(
 	{
 		NT_ASSERT(MaxState < OpenClosed); // No IRPs can be pending for OpenClosed or higher state.
 		pOpen->PendingIrps[MaxState]++;
+		_Analysis_assume_lock_acquired_(pOpen->PendingIrps[MaxState]);
+		_Analysis_assume_lock_not_held_(*pOpen->pFiltMod); // shadowed by the PendingIrps[MaxState] "lock"
 	}
 	else if (bAttached)
 	{
@@ -768,6 +772,8 @@ NPF_StopUsingOpenInstance(
 	BOOLEAN AtDispatchLevel
 	)
 {
+	_Analysis_suppress_lock_checking_(pOpen->PendingIrps[MaxState]);
+	_Analysis_suppress_lock_checking_(*pOpen->pFiltMod);
 	FILTER_ACQUIRE_LOCK(&pOpen->OpenInUseLock, AtDispatchLevel);
 	NT_ASSERT(MaxState < OpenClosed);
 	NT_ASSERT(pOpen->PendingIrps[MaxState] > 0);

@@ -1247,18 +1247,28 @@ NPF_ReleaseFilterModuleResources(_Inout_ PNPCAP_FILTER_MODULE pFiltMod);
 
 BOOLEAN NPF_IsOpenInstance(_In_ POPEN_INSTANCE pOpen);
 
+_Success_(return != 0)
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
-BOOLEAN NPF_StartUsingBinding(_Inout_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
+BOOLEAN NPF_StartUsingBinding(_Inout_ _Acquires_shared_lock_(*_Curr_) PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
 
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
-VOID NPF_StopUsingBinding(_Inout_ PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
+VOID NPF_StopUsingBinding(_Inout_ _Releases_shared_lock_(*_Curr_) PNPCAP_FILTER_MODULE pFiltMod, _In_ BOOLEAN AtDispatchLevel);
 
+_Success_(return != 0)
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
 _When_(MaxOpen == OpenRunning, _IRQL_requires_(PASSIVE_LEVEL))
-BOOLEAN NPF_StartUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
+BOOLEAN NPF_StartUsingOpenInstance(
+		_Inout_ POPEN_INSTANCE pOpen,
+		_Acquires_shared_lock_(pOpen->PendingIrps[_Curr_])
+	       	_In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen,
+	       	_In_ BOOLEAN AtDispatchLevel);
 
 _When_(AtDispatchLevel != FALSE, _IRQL_requires_(DISPATCH_LEVEL))
-VOID NPF_StopUsingOpenInstance(_Inout_ POPEN_INSTANCE pOpen, _In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen, _In_ BOOLEAN AtDispatchLevel);
+VOID NPF_StopUsingOpenInstance(
+		_Inout_ POPEN_INSTANCE pOpen,
+		_Releases_shared_lock_(pOpen->PendingIrps[_Curr_])
+	       	_In_range_(OpenRunning,OpenDetached) OPEN_STATE MaxOpen,
+	       	_In_ BOOLEAN AtDispatchLevel);
 
 OPEN_STATE
 NPF_DemoteOpenStatus(
