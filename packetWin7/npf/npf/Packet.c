@@ -683,7 +683,7 @@ NPF_GetRegistryOption(
 	_In_ PUNICODE_STRING RegValueName
 	)
 {
-	OBJECT_ATTRIBUTES objAttrs;
+	OBJECT_ATTRIBUTES objAttrs = {0};
 	NTSTATUS status;
 	HANDLE keyHandle;
 	PKEY_VALUE_PARTIAL_INFORMATION valueInfoP = NULL;
@@ -1146,7 +1146,6 @@ static NTSTATUS funcBIOCSETF(_In_ POPEN_INSTANCE pOpen,
 	       	_In_ ULONG ulBufLen,
 	       	_Out_ PULONG_PTR Info)
 {
-	LOCK_STATE_EX lockState;
 	static const ULONG uNeeded = sizeof(struct bpf_insn);
 	struct bpf_insn *NewBpfProgram = (struct bpf_insn *) pBuf;
 	*Info = 0;
@@ -1896,10 +1895,7 @@ static NTSTATUS funcBIOCGTIMESTAMPMODES(_In_ POPEN_INSTANCE pOpen,
 	       _In_ ULONG ulBufLen,
 	       _Out_ PULONG_PTR Info)
 {
-	// Need to at least deliver the number of modes
-	ULONG uNeeded = sizeof(ULONG);
-	static ULONG SupportedModes[] = {
-		0, // count of modes, 0 means not initialized yet
+	static const ULONG SupportedModes[] = {
 		TIMESTAMPMODE_SINGLE_SYNCHRONIZATION,
 		TIMESTAMPMODE_QUERYSYSTEMTIME,
 #if (NTDDI_VERSION >= NTDDI_WIN8)
@@ -1907,33 +1903,33 @@ static NTSTATUS funcBIOCGTIMESTAMPMODES(_In_ POPEN_INSTANCE pOpen,
 		TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE
 #endif
 	};
+#define uModesLen (sizeof(SupportedModes) / sizeof(ULONG) - 1)
+#define uNeeded   ((uModesLen + 1) * sizeof(ULONG))
 
-	// Initialize the count if not already done.
-	if (SupportedModes[0] == 0)
-	{
-		// Count is length minus 1 for the count element.
-		SupportedModes[0] = sizeof(SupportedModes) / sizeof(ULONG) - 1;
-	}
+	PULONG pulBuf = (PULONG) pBuf;
 
 	*Info = 0;
-	if (ulBufLen < uNeeded)
+	// Need to at least deliver the number of modes
+	if (ulBufLen < sizeof(ULONG))
 	{
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	uNeeded = (SupportedModes[0] + 1) * sizeof(ULONG);
+	pulBuf[0] = uModesLen;
 	if (ulBufLen < uNeeded)
 	{
 		*Info = ulBufLen;
-		RtlCopyMemory(pBuf, SupportedModes, ulBufLen);
+		RtlCopyMemory(pulBuf + 1, SupportedModes, ulBufLen - sizeof(ULONG));
 		return STATUS_BUFFER_OVERFLOW;
 	}
 	else
 	{
 		*Info = uNeeded;
-		RtlCopyMemory(pBuf, SupportedModes, uNeeded);
+		RtlCopyMemory(pulBuf + 1, SupportedModes, uNeeded - sizeof(ULONG));
 		return STATUS_SUCCESS;
 	}
+#undef uModesLen
+#undef uNeeded
 }
 
 _Must_inspect_result_
