@@ -153,6 +153,7 @@ VOID PacketLoadLibrariesDynamically();
 #include <iphlpapi.h>
 
 #include <WpcapNames.h>
+#include <string_view>
 
 /* Driver versions before 1.60 require a different OID buffer length
  * calculation. This is only relevant for /prior_driver=yes, which only affects
@@ -166,6 +167,12 @@ static bool bOidLenCompat = false;
 // Current packet.dll version. It can be retrieved directly or through the PacketGetVersion() function.
 //
 __declspec(dllexport) const char PacketLibraryVersion[] = WINPCAP_VER_STRING; 
+#define STR2(x) #x
+#define STR(x) STR2(x)
+static_assert(
+		std::string_view(STR(WINPCAP_MINOR) "." STR(WINPCAP_REV)) == WINPCAP_VER_STRING,
+		"Npcap requires WINPCAP_VER_STRING == WINPCAP_MINOR.WINPCAP_REV"
+	);
 
 //
 // Current driver version. It can be retrieved directly or through the PacketGetDriverVersion() function.
@@ -3488,6 +3495,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 				if (!NT_SUCCESS(Status))
 					break;
 				pIPv6->sin6_family = AF_INET6;
+				[[fallthrough]];
 			case 1:
 				// buffer[0] = ipv4;
 				pIfAddr = &buffer[0];
@@ -3502,6 +3510,7 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 				if (!NT_SUCCESS(Status))
 					break;
 				pIPv4->sin_family = AF_INET;
+				[[fallthrough]];
 			default:
 				Res = TRUE;
 				break;
