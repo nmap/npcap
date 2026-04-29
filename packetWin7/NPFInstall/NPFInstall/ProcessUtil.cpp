@@ -598,11 +598,19 @@ BOOL killInUseProcesses_Soft()
 	return bResult;
 }
 
-DWORD dwTimeout = 15000;
+static ULONGLONG g_deadline = 0;
 
 static BOOL killProcess_Wait(DWORD dwProcessID)
 {
 	TRACE_ENTER();
+
+	ULONGLONG ullNow = GetTickCount64();
+	if (g_deadline == 0)
+		g_deadline = ullNow + 15000;
+
+	DWORD dwTimeout = 0;
+	if (g_deadline > ullNow)
+		dwTimeout = (DWORD)(g_deadline - ullNow);
 
 	// When the all operation fail this function terminate the "winlogon" Process for force exit the system.
 	HANDLE hProcess = OpenProcess(SYNCHRONIZE | PROCESS_TERMINATE, FALSE, dwProcessID);
@@ -621,7 +629,7 @@ static BOOL killProcess_Wait(DWORD dwProcessID)
 		}
 	}
 
-	ULONGLONG ullTickBefore = GetTickCount64();
+
 	if (WaitForSingleObject(hProcess, dwTimeout) != WAIT_OBJECT_0)
 	{
 		dwTimeout = 0;
@@ -639,16 +647,6 @@ static BOOL killProcess_Wait(DWORD dwProcessID)
 			TRACE_EXIT();
 			return TRUE;
 		}
-	}
-
-	ULONGLONG ullTickAfter = GetTickCount64();
-	if (dwTimeout <= ullTickAfter - ullTickBefore)
-	{
-		dwTimeout = 0;
-	}
-	else
-	{
-		dwTimeout -= (ullTickAfter - ullTickBefore);
 	}
 
 	TRACE_PRINT2("killProcess_Wait: the process terminates itself, dwProcessID = %d, dwTimeout = %d.", dwProcessID, dwTimeout);
