@@ -98,7 +98,7 @@ using namespace std;
 #include "LoopbackRename2.h"
 #include "debug.h"
 
-BOOL enableDebugPrivilege(BOOL bEnable)
+static BOOL enableDebugPrivilege(BOOL bEnable)
 {
 	HANDLE hToken = nullptr;
 	LUID luid;
@@ -106,7 +106,7 @@ BOOL enableDebugPrivilege(BOOL bEnable)
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)) return FALSE;
 	if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) return FALSE;
 
-	TOKEN_PRIVILEGES tokenPriv;
+	TOKEN_PRIVILEGES tokenPriv = {};
 	tokenPriv.PrivilegeCount = 1;
 	tokenPriv.Privileges[0].Luid = luid;
 	tokenPriv.Privileges[0].Attributes = bEnable ? SE_PRIVILEGE_ENABLED : 0;
@@ -116,7 +116,7 @@ BOOL enableDebugPrivilege(BOOL bEnable)
 	return TRUE;
 }
 
-tstring getFileProductName(tstring strFilePath)
+static tstring getFileProductName(tstring strFilePath)
 {
 	DWORD dwLen, dwUseless;
 	LPTSTR lpVI;
@@ -145,7 +145,7 @@ tstring getFileProductName(tstring strFilePath)
 	if (lpVI)
 	{
 		BOOL bRet = FALSE;
-		WORD* langInfo;
+		WORD* langInfo = NULL;
 		UINT cbLang;
 		TCHAR tszVerStrName[128];
 		LPVOID lpt;
@@ -187,7 +187,7 @@ tstring getFileProductName(tstring strFilePath)
 	}
 }
 
-BOOL checkModulePathName(tstring strModulePathName)
+static BOOL checkModulePathName(tstring strModulePathName)
 {
 	size_t iStart = strModulePathName.find_last_of(_T('\\'));
 	if (iStart == tstring::npos)
@@ -229,7 +229,7 @@ BOOL checkModulePathName(tstring strModulePathName)
 	return FALSE;
 }
 
-BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
+static BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 {
 	BOOL bResult = FALSE;
 	HMODULE hArrModules[1024];
@@ -297,7 +297,7 @@ BOOL enumDLLs(tstring strProcessName, DWORD dwProcessID)
 	return bResult;
 }
 
-set<ULONG> getNpcapPIDs()
+static set<ULONG> getNpcapPIDs()
 {
 	set<ULONG> empty;
 	DWORD dwLen = 1024;
@@ -379,7 +379,7 @@ set<ULONG> getNpcapPIDs()
 	return empty;
 }
 
-vector<tstring> enumProcesses()
+static vector<tstring> enumProcesses()
 {
 	TRACE_ENTER();
 
@@ -392,7 +392,7 @@ vector<tstring> enumProcesses()
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
-		PROCESSENTRY32 PEInfo;
+		PROCESSENTRY32 PEInfo = {};
 		PEInfo.dwSize = sizeof(PEInfo);
 		BOOL bHasNextProcess = Process32First(hSnapshot, &PEInfo);
 		bool found = false;
@@ -424,7 +424,7 @@ vector<tstring> enumProcesses()
 	return strArrProcessNames;
 }
 
-vector<DWORD> enumProcesses_PID()
+static vector<DWORD> enumProcesses_PID()
 {
 	TRACE_ENTER();
 
@@ -437,7 +437,7 @@ vector<DWORD> enumProcesses_PID()
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
-		PROCESSENTRY32 PEInfo;
+		PROCESSENTRY32 PEInfo = {};
 		PEInfo.dwSize = sizeof(PEInfo);
 		BOOL bHasNextProcess = Process32First(hSnapshot, &PEInfo);
 		bool found = false;
@@ -491,7 +491,7 @@ tstring getInUseProcesses()
 	return strResult;
 }
 
-BOOL killProcess(DWORD dwProcessID)
+static BOOL killProcess(DWORD dwProcessID)
 {
 	TRACE_ENTER();
 
@@ -549,7 +549,7 @@ BOOL killInUseProcesses()
 	return bResult;
 }
 
-BOOL killProcess_Soft(DWORD dwProcessID)
+static BOOL killProcess_Soft(DWORD dwProcessID)
 {
 	TRACE_ENTER();
 
@@ -600,7 +600,7 @@ BOOL killInUseProcesses_Soft()
 
 DWORD dwTimeout = 15000;
 
-BOOL killProcess_Wait(DWORD dwProcessID)
+static BOOL killProcess_Wait(DWORD dwProcessID)
 {
 	TRACE_ENTER();
 
