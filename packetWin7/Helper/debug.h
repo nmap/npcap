@@ -113,7 +113,7 @@ extern CHAR g_LogFileName[1024];
 #pragma warning(push)
 #pragma warning(disable : 4127)
 
-static VOID OutputDebugStringVA(LPCSTR Format, ...)
+static VOID OutputDebugStringVA(LPCSTR Format, ...) noexcept
 {
 	FILE *f;											
 	SYSTEMTIME LocalTime;								

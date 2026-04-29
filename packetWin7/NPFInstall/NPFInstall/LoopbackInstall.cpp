@@ -1305,7 +1305,7 @@ EXIT_xxxx
 		&DeviceInfoData,
 		SPDRP_HARDWAREID,
 		(LPBYTE)hwIdList,
-		(_tcslen(hwIdList) + 1 + 1) * sizeof(TCHAR)))
+		(DWORD)((_tcslen(hwIdList) + 1 + 1) * sizeof(TCHAR))))
 	{
 		goto final;
 	}
@@ -1624,7 +1624,7 @@ BOOL DeleteDevIDFile()
 
 	if (!DeleteFile(strLoopbackIDFilePath))
 	{
-		TRACE_PRINT("DeleteFile error: %08x", GetLastError());
+		TRACE_PRINT1("DeleteFile error: %08x", GetLastError());
 		TRACE_EXIT();
 		return FALSE;
 	}
