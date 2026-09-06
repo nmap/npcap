@@ -544,6 +544,8 @@
         <filename>C:\Program Files\Npcap\NPFInstall.log</filename>, please submit
         it together in your report if you encounter issues during the driver
         installation or problems with the <quote>Npcap Loopback Adapter</quote>.
+        The same information is also recorded as an Event Tracing for Windows
+        trace; see <xref linkend="npcap-issues-trace"/>.
       </para>
 
       <para>
@@ -555,20 +557,61 @@
       </para>
     </sect3>
 
-    <sect3 id="npcap-issues-packet-log">
-      <title>Dynamic link library (DLL) log</title>
+    <sect3 id="npcap-issues-trace">
+      <title>User-mode trace</title>
+
+      <!-- Keeps links to the section this replaced from breaking. -->
+      <anchor id="npcap-issues-packet-log"/>
 
       <para>
-        For problems with Npcap's regular operation, you may need to obtain a
-        debug log from <filename>Packet.dll</filename>.  To do this, you will
-        need a debug build of Npcap.  If you are a Npcap developer, you can build
-        the <filename>Packet.sln</filename> project with the
-        <varname>_DEBUG_TO_FILE</varname> macro defined. If you are an end user,
-        you can contact the Npcap development team for the latest Npcap debug
-        build.  The debugging process will continue to append to the debug log
-        (<filename>C:\Program Files\Npcap\Packet.log</filename>), so you may want
-        to delete it after an amount of time, or save your output to another
-        place before it gets too large.
+        For problems with Npcap's regular operation, or with driver
+        installation, a trace of <filename>Packet.dll</filename>,
+        <filename>NPFInstall.exe</filename> and
+        <filename>NpcapHelper.exe</filename> is often required. These
+        components emit <ulink role="hidepdf"
+          url="https://learn.microsoft.com/windows/win32/etw/about-event-tracing">Event
+          Tracing for Windows</ulink> events under the provider name
+        <varname>Npcap</varname>,
+        <varname>{5FED140C-C8A2-5A73-7B61-C3F3BBB00B48}</varname>. Tracing is
+        included in every release, so no special build is required, and it
+        costs nothing until a trace is collected.
+        <filename>NPFInstall.exe</filename> additionally writes its own log
+        file, as described above, because an installation cannot readily be
+        repeated with a trace session already running.
+      </para>
+
+      <para>
+        From an <emphasis>Administrator</emphasis> command prompt, begin
+        collection into a file that wraps at 64 MB rather than growing
+        without bound:
+      </para>
+
+      <screen>logman create trace Npcap -ets -o %TEMP%\npcap.etl -f bincirc -max 64 ^
+    -p "{5FED140C-C8A2-5A73-7B61-C3F3BBB00B48}" 0xffffffffffffffff 5</screen>
+
+      <para>
+        Reproduce the problem, then stop the collection and convert the result
+        to text:
+      </para>
+
+      <screen>logman stop Npcap -ets
+tracerpt %TEMP%\npcap.etl -o %TEMP%\npcap.csv -of CSV -y</screen>
+
+      <para>
+        Please submit the <filename>.etl</filename> file with your report, as
+        it retains more detail than the text conversion.
+        <command>logman</command> and <command>tracerpt</command> are supplied
+        with Windows, so nothing needs to be installed.
+      </para>
+
+      <para>
+        The final argument to <command>logman</command> is the trace level.
+        Level 5 records every event; level 4 omits the function entry and exit
+        events, which account for most of the volume. To collect the same
+        trace with Windows Performance Recorder instead, the Npcap source tree
+        provides a profile at <filename>installer\Npcap.wprp</filename>: run
+        <command>wpr -start Npcap.wprp!Npcap -filemode</command>, reproduce the
+        problem, then run <command>wpr -stop npcap.etl</command>.
       </para>
     </sect3>
 
