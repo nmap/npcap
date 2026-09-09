@@ -3,10 +3,10 @@
 ## Npcap 1.88 [2026-05-05]
 
 * Fixed an issue that would cause processes to hang when closing a capture
-  handle if the Npcap driver had rejected a BPF filter. Fixes [#842](http://issues.npcap.org/842).
+  handle if the Npcap driver had rejected a BPF filter. Fixes [#842](https://issues.npcap.org/842).
 
 * Fixed the behavior where the outermost VLAN tag would be stripped from
-  packets with more than one VLAN tag. Fixes [#838](http://issues.npcap.org/838).
+  packets with more than one VLAN tag. Fixes [#838](https://issues.npcap.org/838).
 
 * Expanded the list of [installer exit codes](https://npcap.com/guide/npcap-users-guide.html#npcap-installation-exit)
   to cover the cases of installer already running and unsupported versions of
@@ -16,7 +16,7 @@
 * Installer is built with NSIS 3.12, addressing a potential privilege escalation.
 
 * Signed NSIS plugin DLLs that had not been signed in some previous releases.
-  Fixes [#832](http://issues.npcap.org/832).
+  Fixes [#832](https://issues.npcap.org/832).
 
 ## Npcap 1.87 [2026-02-04]
 
@@ -30,30 +30,30 @@
 
 * Fix a BSoD crash (`DRIVER_IRQL_NOT_LESS_OR_EQUAL`) in `bpf_filter()` caused
   by the filter program being freed and overwritten while a packet is being
-  processed. Fixes [#819](http://issues.npcap.org/819).
+  processed. Fixes [#819](https://issues.npcap.org/819).
 
 * Fix issues with placement/deletion of Uninstall.exe and DriverQuery.exe.
-  Fixes [#821](http://issues.npcap.org/821).
+  Fixes [#821](https://issues.npcap.org/821).
 
 * Fix a deadlock in Packet.dll preventing applications from starting when Npcap
   is installed in `/admin_only` mode. Npcap 1.84 and 1.85 were affected.
-  Fixes [#813](http://issues.npcap.org/813).
+  Fixes [#813](https://issues.npcap.org/813).
 
 * Fix a BSoD crash (`KMODE_EXCEPTION_NOT_HANDLED`) when capturing injected
-  packets. Fixes [#815](http://issues.npcap.org/815).
+  packets. Fixes [#815](https://issues.npcap.org/815).
 
 * Fix an incompatibility that prevented Npcap 1.81 through 1.85 from being able
   to capture when installed with the `/prior_driver=yes` option on versions of
   Windows before Windows 10. This issue does not affect any version of Windows
-  that is supported by Microsoft. Fixes [#822](http://issues.npcap.org/822).
+  that is supported by Microsoft. Fixes [#822](https://issues.npcap.org/822).
 
 ## Npcap 1.85 [2025-11-18]
 
 * Fix a BSoD crash in `bpf_filter()` caused by reading 1 byte past the end of a
-  data buffer. Npcap 1.81 through 1.84 are affected. Fixes [#820](http://issues.npcap.org/820).
+  data buffer. Npcap 1.81 through 1.84 are affected. Fixes [#820](https://issues.npcap.org/820).
 
 * Fix an intermittent issue where upgrading Npcap would fail due to a failure
-  to remove the previous version's Uninstall.exe. Fixes [#811](http://issues.npcap.org/811).
+  to remove the previous version's Uninstall.exe. Fixes [#811](https://issues.npcap.org/811).
 
 ## Npcap 1.84 [2025-10-02]
 
@@ -80,7 +80,7 @@
 
 * An experimental feature, adaptive buffer sizing, can be enabled in Packet.dll
   by setting the `PACKET_EXPERIMENTAL_OPTIMIZATION` environment variable.
-  See ([#622](http://issues.npcap.org/622)).
+  See ([#622](https://issues.npcap.org/622)).
 
 ## Npcap 1.83 [2025-08-01]
 
@@ -90,10 +90,10 @@
   is run as SYSTEM. The Npcap installer does not run as SYSTEM by default.
 
 * Added a check for malformed OID request objects. This should prevent the BSoD
-  crashes that have been reported when setting up a PPPoE connection ([#296](http://issues.npcap.org/296)).
+  crashes that have been reported when setting up a PPPoE connection ([#296](https://issues.npcap.org/296)).
 
 * Fixed an issue with SendToRx mode that resulted in packet injection calls
-  hanging. Fixes [#785](http://issues.npcap.org/785).
+  hanging. Fixes [#785](https://issues.npcap.org/785).
 
 * SendToRx mode, which causes injected packets to be indicated as receives
   instead of sends, can now be enabled per capture handle using the
@@ -109,14 +109,14 @@
 
 * Fixed an issue where Npcap 1.81 would incorrectly reject packets as too large
   which had VLAN headers and would be equal to the maximum frame size when the
-  header was removed. Fixes [#790](http://issues.npcap.org/790).
+  header was removed. Fixes [#790](https://issues.npcap.org/790).
 
 * Fixed an issue where captured frames with an 802.1q VLAN header would have
   the high-order bit of the 802.1p priority always set to `0`, so a priority of
-  5 would be shown as 1, for instance. Fixes [#783](http://issues.npcap.org/783).
+  5 would be shown as 1, for instance. Fixes [#783](https://issues.npcap.org/783).
 
 * Fixed an issue where packets with VLAN tags having a TCI of 0 would not have
-  a VLAN tag when captured. Fixes [#791](http://issues.npcap.org/791).
+  a VLAN tag when captured. Fixes [#791](https://issues.npcap.org/791).
 
 ## Npcap 1.81 [2025-02-20]
 
@@ -124,7 +124,7 @@
   is usually stripped by NDIS before Npcap encounters it, but Npcap will now
   restore it from the packet metadata if the VLAN ID is not 0. Filtering with the
   "vlan" keyword is also now supported on live captures. The deprecated
-  `/vlan_support` installer option has no impact on this feature. Fixes [#171](http://issues.npcap.org/171).
+  `/vlan_support` installer option has no impact on this feature. Fixes [#171](https://issues.npcap.org/171).
 
 * Added support for sending 802.1q VLAN packets. Ethernet frames passed to `pcap_sendpacket()` or
   `pcap_inject()` with 802.1q VLAN tags will have those tags converted to NDIS metadata, and the
@@ -132,7 +132,7 @@
   target VLAN.
 
 * Significantly streamlined packet sending operations, especially for `pcap_sendqueue()`, removing
-  unnecessary copying of packet data. Fixes [#555](http://issues.npcap.org/555).
+  unnecessary copying of packet data. Fixes [#555](https://issues.npcap.org/555).
 
 * Fixed an issue with the installer where the appropriate code-signing certificates for the
   `/prior_driver=yes` option were not installed on Windows 7, 8, and 8.1. This could lead to failed
@@ -155,63 +155,63 @@
 
 * On ARM64, Npcap now installs ARM64X pure-forwarder DLLs so that Npcap can be used by x86_64
   processes running under emulation as well as x86 and ARM64 processes. Programmers do not need to
-  make any special changes to take advantage of this feature. Fixes [#585](http://issues.npcap.org/585).
+  make any special changes to take advantage of this feature. Fixes [#585](https://issues.npcap.org/585).
 
 * Npcap now supports packet capture on SR-IOV virtual function adapters directly. Some
   manufacturers, such as Intel, were already supported because they use a separate miniport driver
   on top of the virtual function driver. Others that use a virtual function only, such as Broadcom,
-  are now supported. Fixes [#34](http://issues.npcap.org/34).
+  are now supported. Fixes [#34](https://issues.npcap.org/34).
 
 * Due to Microsoft's deprecation of software publisher certificates with kernel-mode signing
   capability, installations of Npcap on Windows 7, 8, and 8.1 will use the Npcap 1.79 driver by
   default. The Npcap 1.80 driver can be chosen in the GUI and via the `/latest_driver=yes`
-  command-line option if driver signing is disabled in Windows. See [#751](http://issues.npcap.org/751).
+  command-line option if driver signing is disabled in Windows. See [#751](https://issues.npcap.org/751).
 
 * Addressed faults found with Application Verifier: `WSACleanup()` was not being called in some
   cases, and in other cases was called from the `DllMain()` function of `wpcap.dll`, which Microsoft
-  warns may cause deadlocks. Fixes [#742](http://issues.npcap.org/742).
+  warns may cause deadlocks. Fixes [#742](https://issues.npcap.org/742).
 
 * Fixed a BSoD crash due to a race condition between `NPF_DetachAdapter` and
-  `NPF_Cleanup` when closing a capture handle. Fixes [#746](http://issues.npcap.org/746).
+  `NPF_Cleanup` when closing a capture handle. Fixes [#746](https://issues.npcap.org/746).
 
 * Upgraded build system to Visual Studio 2022. This version prevents building drivers for earlier
   Windows versions, so the npcap.sys driver for Windows 7 through 8.1 is still built on Visual
-  Studio 2019. See [#629](http://issues.npcap.org/629).
+  Studio 2019. See [#629](https://issues.npcap.org/629).
 
 ## Npcap 1.79 [2024-01-19]
 
 * Fixed a condition where disabling and re-enabling a network adapter while a
   capture is active would prevent any packets from being received by the system
-  until the capture handle was closed. Fixes [#710](http://issues.npcap.org/710).
+  until the capture handle was closed. Fixes [#710](https://issues.npcap.org/710).
 
 * Introduced a workaround for a previously-unknown bug in Microsoft's bthpan.sys that was
   causing BSoD crashes with `INVALID_MDL_RANGE` when Npcap or other drivers sent packets over
   a Bluetooth-tethered connection. Microsoft intends to patch this Windows bug, but Npcap will
-  no longer trigger it regardless of patch status. Fixes [#708](http://issues.npcap.org/708).
+  no longer trigger it regardless of patch status. Fixes [#708](https://issues.npcap.org/708).
 
 ## Npcap 1.78 [2023-10-18]
 
 * Fixed a memory leak in Npcap 1.77 which occurs when the kernel buffer is
-  full. Fixes [#701](http://issues.npcap.org/701).
+  full. Fixes [#701](https://issues.npcap.org/701).
 
 * Correctly handle an allocation failure during out-of-memory condition,
-  avoiding a null pointer dereference. Fixes [#698](http://issues.npcap.org/698).
+  avoiding a null pointer dereference. Fixes [#698](https://issues.npcap.org/698).
 
 ## Npcap 1.77 [2023-09-29]
 
 * Fixed a memory leak in Npcap 1.76 only which occurs while capturing traffic
-  at high data rates. Fixes [#688](http://issues.npcap.org/688).
+  at high data rates. Fixes [#688](https://issues.npcap.org/688).
 
 * Fixed an issue in Npcap 1.76 where packets delivered to the driver by NDIS in
   a single indication, having the same timestamp, would be placed in the packet
-  queue in reverse order. Fixes [#684](http://issues.npcap.org/684).
+  queue in reverse order. Fixes [#684](https://issues.npcap.org/684).
 
 * Fixed an issue with Npcap 1.75 and 1.76 where changing timestamp modes could
-  result in all packets being delivered with the same timestamp. Fixes [#695](http://issues.npcap.org/695).
+  result in all packets being delivered with the same timestamp. Fixes [#695](https://issues.npcap.org/695).
 
 * Fixed an issue with the Npcap installer that caused it to install duplicate
   certificates in the system's certificate store, which caused problems for
-  some software. The fixed installer will remove the duplicates. Fixes [#692](http://issues.npcap.org/692).
+  some software. The fixed installer will remove the duplicates. Fixes [#692](https://issues.npcap.org/692).
 
 ## Npcap 1.76 [2023-07-19]
 
@@ -220,31 +220,31 @@
 
 * Improve performance of the driver by reducing lock contention and
   consolidating data copy operations. This may help address
-  [#663](http://issues.npcap.org/663).
+  [#663](https://issues.npcap.org/663).
 
-* Additional fixes to locking discipline to potentially address a BSoD issue, [#679](http://issues.npcap.org/679).
+* Additional fixes to locking discipline to potentially address a BSoD issue, [#679](https://issues.npcap.org/679).
 
 ## Npcap 1.75 [2023-04-27]
 
 * Fix a critical regression in Npcap 1.74 which caused all captured packets to
-  have the same timestamp. Fixes [#668](http://issues.npcap.org/668).
+  have the same timestamp. Fixes [#668](https://issues.npcap.org/668).
 
 ## Npcap 1.74 [2023-04-19]
 
 * Updated libpcap to 1.10.4.
 
-* Fixed an issue ([#667](http://issues.npcap.org/667)) that prevented capture
+* Fixed an issue ([#667](https://issues.npcap.org/667)) that prevented capture
   handles from receiving packets after a NDIS stack pause operation.
 
 * Fixed an issue that could cause inaccurate timestamps when multiple handles
-  were open and using different timestamp modes. Fixes [#666](http://issues.npcap.org/666).
+  were open and using different timestamp modes. Fixes [#666](https://issues.npcap.org/666).
 
 * Fixed an issue preventing raw WiFi frame capture since Npcap 1.60.
 
 * Fixed an issue causing "failed to set hardware filter to promiscuous mode"
   errors with NetAdapterCx-based Windows 11 miniport drivers. Npcap was
   interpreting the NDIS spec too strictly; we have [opened an issue with Microsoft](https://github.com/microsoft/Network-Adapter-Class-Extension/issues/14)
-  to address the fault in netadaptercx.sys. Fixes [#628](http://issues.npcap.org/628).
+  to address the fault in netadaptercx.sys. Fixes [#628](https://issues.npcap.org/628).
 
 * Addressed several code readability and portability fixes in Packet.dll
   discovered using clang-tidy via Visual Studio Code Analysis.
@@ -254,17 +254,17 @@
 * Fixed an issue causing "failed to set hardware filter to promiscuous mode"
   errors due to a new code path failing to return appropriate error codes. Fix
   by Guy Harris in [PR #656](https://github.com/nmap/npcap/pull/656).
-  Fixes [#628](http://issues.npcap.org/628).
+  Fixes [#628](https://issues.npcap.org/628).
 
 * Fixed an issue with WlanHelper causing "error 0x7b" since Npcap 1.70.Fix by
   Hauke Neitzel in [PR #652](https://github.com/nmap/npcap/pull/652).
-  Fixes [#649](http://issues.npcap.org/649).
+  Fixes [#649](https://issues.npcap.org/649).
 
 * Fixed an issue preventing capture handles from reattaching after NDIS stack
   pause operations, resulting in persistent `ERROR_DEVICE_REMOVED` (1617)
-  errors. Fixes [#627](http://issues.npcap.org/627).
+  errors. Fixes [#627](https://issues.npcap.org/627).
 
-* Restored original behavior of timestamps in the default case, 
+* Restored original behavior of timestamps in the default case,
   `PCAP_TSTAMP_HOST_HIPREC_UNSYNCED`/`TIMESTAMPMODE_SINGLE_SYNCHRONIZATION`.
   Since Npcap 0.9994, the timestamp was resynchronized after NDIS stack pause
   operations, which reduced timestamp drift from wall clock time but made it no
@@ -273,7 +273,7 @@
 
 * Fixed an issue that prevented Npcap 1.71 and 1.72 from being completely
   removed on uninstall. A misconfigured npcap driver service had persisted.
-  Fixes [#657](http://issues.npcap.org/657).
+  Fixes [#657](https://issues.npcap.org/657).
 
 * Fixed an issue where applications using Npcap 1.20 or later DLLs with a Npcap
   1.00 driver would crash due to a stack buffer overrun when the driver returned
@@ -287,10 +287,10 @@
 
 * Fixed an issue where promiscuous mode or other hardware packet filters are ignored after a second
   handle is opened on the same adapter, including handles opened in the process of listing adapters
-  with `pcap_findalldevs()`. Fixes [#647](http://issues.npcap.org/647).
+  with `pcap_findalldevs()`. Fixes [#647](https://issues.npcap.org/647).
 
 * Fixed an issue with validation of parameters to `PacketGetNetInfoEx()`. The `NEntries` parameter
-  was not being checked for values less than or equal to 0. Fixes [#625](http://issues.npcap.org/625).
+  was not being checked for values less than or equal to 0. Fixes [#625](https://issues.npcap.org/625).
 ﻿
 ## Npcap 1.71 [2022-08-19]
 
@@ -300,24 +300,24 @@
   adapters) after a capture is closed.
 
 * Modify NDIS binding parameters so that Npcap will bind both above and below a NIC teaming or
-  network bridge IM driver. This may improve capture options in related situations, like [#115](http://issues.npcap.org/115).
+  network bridge IM driver. This may improve capture options in related situations, like [#115](https://issues.npcap.org/115).
 
 * Updated build configurations to enable DEP and ASLR for npcap.sys, which were missing from the
   original configs inherited from WinPcap. Additionally, enabled Control Flow Guard for Packet.dll
   and all helper EXEs.
 
-* Fix a BSoD issue on Windows 8.1 due to registering a service without a name. Fixes [#565](http://issues.npcap.org/565).
+* Fix a BSoD issue on Windows 8.1 due to registering a service without a name. Fixes [#565](https://issues.npcap.org/565).
 
 * The silent-install option (/S) in [Npcap OEM](https://npcap.com/oem/) is now case-insensitive so that /s works
   as well.  All other Npcap installer options are already case-insensitive except for /D (destination directory)
-  which is handled by NSIS itself. Closes [#630](http://issues.npcap.org/630).
+  which is handled by NSIS itself. Closes [#630](https://issues.npcap.org/630).
 
 * Fix an issue with admin-only mode where high-integrity processes (UAC not enforced) could not open
-  or list adapters. Fixes [#606](http://issues.npcap.org/606).
+  or list adapters. Fixes [#606](https://issues.npcap.org/606).
 
 * Restored an undocumented data member of the struct `ADAPTER` that is not used internally. Directly
   accessing members of the `ADAPTER` struct from `Packet32.h` is highly discouraged, since the
-  API in `Packet32.h` is not intended for use apart from libpcap. Closes [#609](http://issues.npcap.org/609).
+  API in `Packet32.h` is not intended for use apart from libpcap. Closes [#609](https://issues.npcap.org/609).
 
 * Extensive refactoring of driver code for performance and maintainability.
 
@@ -327,7 +327,7 @@
   `pcap_findalldevs()`, and `PacketOpenAdapter()`, used in all libpcap functions that return a
   `pcap_t`. Reduced calls to `GetAdaptersAddresses()`, properly caching results for short periods.
   Errors from lower functions are correctly propagated, making diagnosis of failures easier. Fixes
-  [#168](http://issues.npcap.org/168), [#61](http://issues.npcap.org/61), and [#586](http://issues.npcap.org/586).
+  [#168](https://issues.npcap.org/168), [#61](https://issues.npcap.org/61), and [#586](https://issues.npcap.org/586).
 
 * PacketGetNetType() now always sets the LinkSpeed field to 0. Many adapters did not support the OID
   that was being used to get the link speed, and libpcap (Npcap's published API) does not pass this
@@ -370,7 +370,7 @@
   with time synchronization (`sync` parameter) have been improved to use timed waits when
   possible, only falling back to busy wait for inter-packet delays of less than 50
   microseconds. Time difference calculations have been revised to avoid integer overflows
-  and loss of precision. Fixes [#580](http://issues.npcap.org/580).
+  and loss of precision. Fixes [#580](https://issues.npcap.org/580).
 
 * Packet sendqueue operations now more strictly check timestamp order. If an out-of-order
   timestamp is encountered, the packet will not be transmitted. `PacketSendPackets()` will
@@ -383,14 +383,14 @@
   implementing support for the exciting new features of NDIS and WFP.
 
 * Improve capture handle state transitions within the Npcap driver. Fixes BSoD
-  [#601](http://issues.npcap.org/601) as well as
-  [#584](http://issues.npcap.org/584), where the wrong error code was reported
+  [#601](https://issues.npcap.org/601) as well as
+  [#584](https://issues.npcap.org/584), where the wrong error code was reported
   when the adapter was detached and reattached.
 
 * Fix an issue where raw WiFi capture handles (`/dot11_support` install option) would not
   reattach after a network disconnect and reconnect. Normal handles got this ability in
   Npcap 1.60, but raw WiFi frame captures (monitor mode) did not take advantage of it.
-  Fixes [#591](http://issues.npcap.org/591).
+  Fixes [#591](https://issues.npcap.org/591).
 
 * Npcap now avoids setting hardware packet filters (`OID_GEN_CURRENT_PACKET_FILTER`,
   `PacketSetHwFilter()`) that the miniport does not declare support for. This may improve
@@ -409,7 +409,7 @@
   been removed. (1617)". This error may still be returned, but user
   programs can consider it a transient error.  If the network is
   reconnected, capture can resume on the same handle.  Fixes
-  [#506](http://issues.npcap.org/506).
+  [#506](https://issues.npcap.org/506).
 
 * Improved validation for IRP parameters, resolving potential BSoD
   crashes that could be triggered by software interacting directly
@@ -419,10 +419,10 @@
 
 * Fix an issue with NX pool compatibility that caused Npcap 1.50 and
   1.55 to fail to run on some Windows 7 systems. Fixes
-  [#536](http://issues.npcap.org/536).
+  [#536](https://issues.npcap.org/536).
 
 * Fix how the installer handles `/option=enforced`, which was broken
-  in Npcap 1.55. Fixes [#556](http://issues.npcap.org/556).
+  in Npcap 1.55. Fixes [#556](https://issues.npcap.org/556).
 
 * Concurrently released the Npcap SDK Version 1.12, which fixes native
   ARM compilation by including the ARM64 wpcap.lib, among other
@@ -436,7 +436,7 @@
 * The `/prior_driver` installer option now selects the Npcap 1.30
   driver, since Microsoft's cross-certificate expired 30 minutes
   before we signed Version 1.31. See
-  [#536](http://issues.npcap.org/536).
+  [#536](https://issues.npcap.org/536).
 
 * Simplified the code base by removing a bunch of unused or
   unneccessary code. This includes "kernel dump mode" (`MODE_DUMP`)
@@ -453,7 +453,7 @@
   so this only affects software that uses `MODE_STAT` and then
   switches to `MODE_CAPT`, or software that expects a call to
   `pcap_setmode(MODE_CAPT)` on a handle already in `MODE_CAPT` to
-  succeed. Fixes [#558](http://issues.npcap.org/558).
+  succeed. Fixes [#558](https://issues.npcap.org/558).
 
 * When installing Npcap in WinPcap API-Compatible mode (the default),
   the Npcap installer will perform the uninstallation of WinPcap
@@ -470,7 +470,7 @@
 
 * Replaced a feature of NPFInstall.exe and the SimpleSC.dll NSIS
   plugin with Powershell commands to improve installer size and
-  compatibility.  May fix [#226](http://issues.npcap.org/226).
+  compatibility.  May fix [#226](https://issues.npcap.org/226).
 
 * While you won't see it in the code itself, we dramatically improved
   our automated build and testing proceses.  We now run automated
@@ -487,7 +487,7 @@
 * Npcap installer can now recognize NetCfg status codes indicating that a
   reboot is required (0x0004a020, `NETCFG_S_REBOOT`), and will prompt the user
   to reboot. In silent mode, the installer will return code 3010 (0x0bc2,
-  `ERROR_SUCCESS_REBOOT_REQUIRED`) to indicate this result. Fixes [#224](http://issues.npcap.org/224).
+  `ERROR_SUCCESS_REBOOT_REQUIRED`) to indicate this result. Fixes [#224](https://issues.npcap.org/224).
 
 * The silent installer (only available in Nmap OEM) now offers better
   control over when to remove and reinstall an existing Npcap. You can
@@ -499,19 +499,19 @@
   immediately. These new options are documented at
   https://npcap.com/guide/npcap-users-guide.html and Nmap OEM is
   described at https://npcap.com/oem/ . Fixes
-  [#523](http://issues.npcap.org/523).
+  [#523](https://issues.npcap.org/523).
 
 * Fixed an installation failure (0xe0000247) on Windows 8.1/Server 2012 R2 and
   earlier systems which have not updated root certificates. The root certificates
-  are now installed to the Roots trust store. Fixes [#233](http://issues.npcap.org/233).
+  are now installed to the Roots trust store. Fixes [#233](https://issues.npcap.org/233).
 
 * Fixed an issue since Npcap 1.30 where broadcast and subnet masks for adapters
   returned by `pcap_findalldevs()` were in host byte order, displaying values
-  like "0.240.255.255". Fixes [#525](http://issues.npcap.org/525).
+  like "0.240.255.255". Fixes [#525](https://issues.npcap.org/525).
 
 * Libpcap 1.10.1 has been updated to include some recent changes to the libpcap-1.10
   release branch which extend support to adapters with the NdisMediumIP media type,
-  including Wireguard Wintun virtual adapters. Fixes [#173](http://issues.npcap.org/173).
+  including Wireguard Wintun virtual adapters. Fixes [#173](https://issues.npcap.org/173).
 
 * Added specific bad-value checks for issues originating in other drivers which
   may be incorrectly attributed to Npcap. These checks, in combination with
@@ -519,17 +519,17 @@
   modifying traffic during capture and cannot be responsible for such crashes.
 
 * Powershell commands launched by the installer are now run with the
-  `-NoProfile` option. Fixes [#529](http://issues.npcap.org/529).
+  `-NoProfile` option. Fixes [#529](https://issues.npcap.org/529).
 
 * Npcap SDK 1.11 released. This includes upstream libpcap changes to allow building with older
   Visual Studio versions, as well as minor changes to add const qualifiers to parameters to several
-  Packet.dll functions.  Fixes [#518](http://issues.npcap.org/518).
+  Packet.dll functions.  Fixes [#518](https://issues.npcap.org/518).
 
 * Npcap installer now uses Unicode internally. This may result in mixed-encoding install.log files.
 
 ## Npcap 1.50 [2021-06-22]
 
-* Fixed [#513](http://issues.npcap.org/513) which prevented Npcap 1.40 from installing.
+* Fixed [#513](https://issues.npcap.org/513) which prevented Npcap 1.40 from installing.
 
 * Npcap can now be installed on Windows 10 for ARM64 devices. Both ARM64 and
   x86 DLLs will be installed, allowing existing x86 applications such as Nmap
@@ -562,40 +562,40 @@
 * The "npcapwatchdog" scheduled task, which ensures the Npcap driver service is
   configured to start at boot, is now installed with a description when
   possible (Windows 7 does not support creating scheduled tasks via PowerShell).
-  Fixes [#498](http://issues.npcap.org/498).
+  Fixes [#498](https://issues.npcap.org/498).
 
 * All PowerShell scripts installed or used during installation are now digitally signed.
 
 * Fix an issue where installation under Citrix Remote Access or other
   situations would fail with the message "Installer runtime error 255 at
-  76539962, Could not load SimpleSC.dll". Fixes [#226](http://issues.npcap.org/226).
+  76539962, Could not load SimpleSC.dll". Fixes [#226](https://issues.npcap.org/226).
 
 * Ensure driver signature can be validated on systems without Internet access
   by installing the entire certificate chain, including the chain for the
-  timestamp counter-signature. This should address [#233](http://issues.npcap.org/233).
+  timestamp counter-signature. This should address [#233](https://issues.npcap.org/233).
 
 * Fix an issue with comparing adapter names retrieved from the Registry. This
   prevented Npcap 1.31 from being used for SendToRx and other less-used
-  features. Fixes [#311](http://issues.npcap.org/311).
+  features. Fixes [#311](https://issues.npcap.org/311).
 
 * Npcap driver no longer excludes adapters based on media type, which may allow
   capture on some devices that were previously unavailable.
 
 ## Npcap 1.40 [2021-06-21]
 
-* This release was retracted due to installer issues. See [#513](http://issues.npcap.org/513).
+* This release was retracted due to installer issues. See [#513](https://issues.npcap.org/513).
 
 ## Npcap 1.31 [2021-04-21]
 
 * Fix a bug with the non-default legacy loopback capture support that caused
   all requests to open a capture handle to open the loopback capture instead.
   It is recommended to not select "Legacy loopback support" at installation
-  unless you know your application relies on it. Fixes [#302](http://issues.npcap.org/302).
+  unless you know your application relies on it. Fixes [#302](https://issues.npcap.org/302).
 
 * For Windows 10 and Server 2016 and later, restore the ability to capture
   traffic on VMware VMnet interfaces such as the host-only and NAT virtual
   networks. This will be restored for other supported Windows versions in a
-  later release. Fixes [#304](http://issues.npcap.org/304).
+  later release. Fixes [#304](https://issues.npcap.org/304).
 
 ## Npcap 1.30 [2021-04-09]
 
@@ -605,12 +605,12 @@
   monitor mode via checkbox without requiring WlanHelper.exe.
 
 * Fixed WlanHelper.exe to correctly set modes and channels for adapters, if run
-  with Administrator privileges. Fixes [#122](http://issues.npcap.org/122).
+  with Administrator privileges. Fixes [#122](https://issues.npcap.org/122).
 
 * Improved speed of `pcap_findalldevs()` by using fewer calls to
   `GetAdaptersAddresses()` and avoiding direct Registry inspection. The new
   method may result in more adapters being available for capture than
-  previously reported. See [#169](http://issues.npcap.org/169).
+  previously reported. See [#169](https://issues.npcap.org/169).
 
 * Updated Packet.dll to use modern `HeapAlloc()` allocation, faster than the
   legacy `GlobalAlloc()` inherited from WinPcap.
@@ -629,20 +629,20 @@
 
 * Fix an issue preventing `WlanHelper.exe` from changing WiFi parameters for
   adapters which caused the error message "makeOIDRequest::My_PacketOpenAdapter
-  error". Fixes [#122](http://issues.npcap.org/122) and several other reports
+  error". Fixes [#122](https://issues.npcap.org/122) and several other reports
   of the same issue.
 
 * Fixed an issue that prevented NDIS protocol drivers from reducing the
   hardware packet filter, even if the removed bits/filters were only set by
   that protocol driver initially. This caused network interruptions on VMware systems.
-  Fixes [#106](http://issues.npcap.org/106).
+  Fixes [#106](https://issues.npcap.org/106).
 
 * Fixed an issue with `pcap_sendqueue_transmit()` that caused it to busy-wait
   in an attempt to synchronize packet sends with pcap timestamps, even when the
-  program did not request synchronization. Fixes [#113](http://issues.npcap.org/113).
+  program did not request synchronization. Fixes [#113](https://issues.npcap.org/113).
 
 * The installer will now safely remove and replace broken installations due to
-  [#268](http://issues.npcap.org/268).
+  [#268](https://issues.npcap.org/268).
 
 * Upgraded installer to NSIS 3, which improves compatibility with modern Windows versions.
 
@@ -653,7 +653,7 @@
 
 * Fixed an issue where our upgrade uninstaller would trigger the
   [#1924](https://issues.nmap.org/1924) BSoD crash when upgrading from Npcap 0.9988 or older to
-  version 0.9996 or greater. Fixes [#268](http://issues.npcap.org/268).
+  version 0.9996 or greater. Fixes [#268](https://issues.npcap.org/268).
 
 * Improved handling of large packets when a very small user buffer size is specified, which could
   lead to stalled captures and dropped packets.
@@ -676,7 +676,7 @@
 * New Packet.dll function `PacketGetTimestampModes()` to retrieve supported
   packet timestamping modes. These do not currently vary by adapter, but
   `TIMESTAMPMODE_QUERYSYSTEMTIME_PRECISE` is not supported on Windows 7, for
-  example. Fixes [#174](http://issues.npcap.org/174).
+  example. Fixes [#174](https://issues.npcap.org/174).
 
 * Npcap driver is now only signed with SHA256 signatures on platforms other
   than Windows 7, which may resolve signature validation issues on some
@@ -685,7 +685,7 @@
 ## Npcap 0.9997 [2020-08-25]
 
 * Fix an integer underflow in the amount of free buffer space available leading
-  to excessive memory consumption. Fixes [#223](http://issues.npcap.org/223).
+  to excessive memory consumption. Fixes [#223](https://issues.npcap.org/223).
 
 * Significantly reduced per-packet memory overhead for packets in the kernel capture buffer.
 
@@ -696,16 +696,16 @@
 ## Npcap 0.9996 [2020-08-07]
 
 * Fix a runaway memory leak triggered by low-resources condition leading to
-  system hangs. Fixes [#213](http://issues.npcap.org/213).
+  system hangs. Fixes [#213](https://issues.npcap.org/213).
 
-* Fix a BSoD crash in `NPF_Read` in some high-traffic cases. Fixes [#206](http://issues.npcap.org/206).
+* Fix a BSoD crash in `NPF_Read` in some high-traffic cases. Fixes [#206](https://issues.npcap.org/206).
 
-* Fix a handle leak in Packet.dll when enumerating interfaces. Fixes [#26](http://issues.npcap.org/26).
+* Fix a handle leak in Packet.dll when enumerating interfaces. Fixes [#26](https://issues.npcap.org/26).
 
 * Fix an inconsistency between return value and IRP completion status in
   `NPF_Read` when an adapter is removed. Driver Verifier would cause a bugcheck
   (BSoD) in this case, and pcap API functions would not detect an error.
-  Fixes [#217](http://issues.npcap.org/217)
+  Fixes [#217](https://issues.npcap.org/217)
 
 * Improved performance by reusing allocated packet data buffers and
   implementing `DISPATCH_LEVEL` tracking throughout the driver to speed up lock
@@ -721,24 +721,24 @@
 ## Npcap 0.9995 [2020-07-10]
 
 * Fix a BSoD crash in `NPF_Read` when NDIS filter module is detached from the
-  adapter. Fixes [#194](http://issues.npcap.org/194)
+  adapter. Fixes [#194](https://issues.npcap.org/194)
 
 * On Windows 10, the Npcap driver has been updated to NDIS 6.50 and Windows 10
   WFP compatibility, supporting network stack improvements like RSC.
-  Fixes [#196](http://issues.npcap.org/196).
+  Fixes [#196](https://issues.npcap.org/196).
 
 * Correctly obey maximum frame size for an adapter by querying
   `OID_GEN_MAXIMUM_TOTAL_SIZE` instead of using MTU, which does not include
-  space for the link layer header. Fixes [#186](http://issues.npcap.org/186).
+  space for the link layer header. Fixes [#186](https://issues.npcap.org/186).
 
 * Fix detection of processes using Npcap resources during uninstall or upgrade.
-  The fix for [#2015](http://issues.nmap.org/2015) had broken this so such
+  The fix for [#2015](https://issues.nmap.org/2015) had broken this so such
   processes were not terminated, leading to failed installations.
 
 * Obey snaplen (`pcap_set_snaplen()`) even if a packet filter is not set. This
   is a backported change from upstream libpcap that corrects a deficiency that
   has been present in all previous versions of WinPcap and Npcap.
-  Fixes [#201](http://issues.npcap.org/201).
+  Fixes [#201](https://issues.npcap.org/201).
 
 * Improvements to object pool/slab allocator to allow nonpaged memory to be
   freed when not in use.
@@ -749,7 +749,7 @@
 ## Npcap 0.9994 [2020-06-12]
 
 * Fix a BSoD crash in `NPF_ReleaseOpenInstanceResources` due to miscounting of
-  number of open Loopback capture instances. Fixes [#185](http://issues.npcap.org/185).
+  number of open Loopback capture instances. Fixes [#185](https://issues.npcap.org/185).
 
 * Fix corrupted and missing packets in Npcap 0.9992 and 0.9993 due to reusing a
   data structure that already contained packet data.
@@ -791,7 +791,7 @@
 
 * Fix a BSoD crash in `NPF_DoInternalRequest` triggered by suspending the
   system while a capture is running. Added source annotations to allow static
-  analysis to catch bugs like this in the future. Fixes [#181](http://issues.npcap.org/181).
+  analysis to catch bugs like this in the future. Fixes [#181](https://issues.npcap.org/181).
 
 * Fix a bug introduced in Npcap 0.9992 which caused loopback capture to fail if
   any loopback capture had been previously started and finished.
@@ -814,7 +814,7 @@
 ## Npcap 0.9992 [2020-06-03]
 
 * Npcap issues are now tracked on [their own Github Issues
-  page](http://issues.npcap.org), separate from Nmap issues. Many existing
+  page](https://issues.npcap.org), separate from Nmap issues. Many existing
   issues have been migrated, and issue numbers may have changed.
 
 * Rewrote the kernel packet capture buffer code again to avoid requiring a
@@ -832,10 +832,10 @@
   about "A LWF & WFP driver installation tool has stopped working."
 
 * Update Npcap from NDIS 6.10 to NDIS 6.20, which limits its compatibility to
-  Windows 7 and higher. Closes [#167](http://issues.npcap.org/167).
+  Windows 7 and higher. Closes [#167](https://issues.npcap.org/167).
 
 * Fix a bug in Npcap 0.9991 which prevented packets from being captured until a
-  BPF filter had been set. Fixes [#168](http://issues.npcap.org/168) (migrated
+  BPF filter had been set. Fixes [#168](https://issues.npcap.org/168) (migrated
   from nmap/nmap#2037).
 
 * Allow capture statistics and captured packets remaining in the buffer to be
@@ -952,24 +952,24 @@
 * If a capture is in progress when the system is suspended, it will continue
   without interruption after the system is woken. This also prevents capture
   interruptions when the OS makes certain network stack changes.
-  Fixes [#1903](http://issues.nmap.org/1903).
+  Fixes [#1903](https://issues.nmap.org/1903).
 
 * If the npcap driver is stopped, Packet.dll will attempt to start it
   automatically. This feature requires Administrator privilege and had been
-  removed in Npcap 0.9983. Fixes [#1911](http://issues.nmap.org/1911). 
+  removed in Npcap 0.9983. Fixes [#1911](https://issues.nmap.org/1911).
 
 * Fix the check for fragmented packets in loopback capture.
   Closes [PR #22](https://github.com/nmap/npcap/pull/22).
 
 * Eliminate clone/block/inject pattern from loopback capture except for packets
-  already injected by Npcap. Should fix [#1529](http://issues.nmap.org/1529)
-  and [#1789](http://issues.nmap.org/1789).
+  already injected by Npcap. Should fix [#1529](https://issues.nmap.org/1529)
+  and [#1789](https://issues.nmap.org/1789).
 
 * Fix an issue in the Npcap OEM installer where silent mode would not detect a
-  failure to install the npcap driver. Fixes [#1910](http://issues.nmap.org/1910).
+  failure to install the npcap driver. Fixes [#1910](https://issues.nmap.org/1910).
 
 * Improve the installer to avoid broken installations and allow the installer
-  to continue if a broken installation is detected. Fixes [#1935](http://issues.nmap.org/1935).
+  to continue if a broken installation is detected. Fixes [#1935](https://issues.nmap.org/1935).
 
 * Formally removed support for Windows Vista and Server 2008 r1, which
   are no longer supported by Microsoft either. This allows us to support
@@ -988,7 +988,7 @@
   until finally all packets are dropped. Our fix changes the way remaining free
   space in the kernel buffer is calculated, which ought to prevent the free
   space accounting from drifting from reality. Fixes
-  [#1891](http://issues.nmap.org/1891).
+  [#1891](https://issues.nmap.org/1891).
 
 * Fix a potential race condition when opening the loopback capture adapter. If
   two threads simultaneously determine that the WFP filters need to be
@@ -1003,13 +1003,13 @@
   traffic capture and injection capability.
 
 * Ensure open handles to the Service Control Manager are closed on error in
-  PacketGetFileVersion. Fixes [#1882](http://issues.nmap.org/1882).
+  PacketGetFileVersion. Fixes [#1882](https://issues.nmap.org/1882).
 
 ## Npcap 0.9986 [2019-12-17]
 
 * Fix a driver signing issue that made Npcap 0.9985 uninstallable on default
   configurations of Windows 8.1 and older, as well as certain older Windows
-  Server releases. Fixes [#1856](http://issues.nmap.org/1856).
+  Server releases. Fixes [#1856](https://issues.nmap.org/1856).
 
 ## Npcap 0.9985 [2019-12-13]
 
@@ -1022,7 +1022,7 @@
 * WinPcap API-compatible mode no longer installs a separate filter driver.
   Packet.DLL will translate NPF device names so that they are all serviced by
   the npcap.sys driver. The npf.sys driver has been removed. See
-  [#1812](http://issues.nmap.org/1812).
+  [#1812](https://issues.nmap.org/1812).
 
 * Improve the speed of `pcap_findalldevs` by reducing the number of calls to
   `GetAdaptersAddresses`, removing a redundant function call, and improving
@@ -1036,7 +1036,7 @@
 * Fixed a bug in the uninstaller preventing downgrades to prior versions of
   Npcap. On 64-bit Windows, the driver file `npcap.sys` was not properly
   removed, and Windows would not replace it with any older version. Fixes
-  [#1686](http://issues.nmap.org/1686).
+  [#1686](https://issues.nmap.org/1686).
 
 ## Npcap 0.9984 [2019-10-30]
 
@@ -1048,7 +1048,7 @@
   Tangible Security using Coverity source code analysis.
 
 * Fixed processing of the "enforced" value for several command-line installer
-  options. Fixes [#1719](http://issues.nmap.org/1719).
+  options. Fixes [#1719](https://issues.nmap.org/1719).
 
 * The `DisplayName` value in the Uninstall registry key for Npcap no longer
   includes the version number, which has always been available in the
@@ -1059,13 +1059,13 @@
 * Fixed a couple of issues with the
   [DiagReport tool](https://npcap.com/guide/npcap-users-guide.html#npcap-issues-diagreport)
   used for bug report diagnostics: remove extraneous partial output lines
-  ([#1760](http://issues.nmap.org/1760)), and avoid relying on the Server
-  service to determine privilege level ([#1757](http://issues.nmap.org/1757)).
+  ([#1760](https://issues.nmap.org/1760)), and avoid relying on the Server
+  service to determine privilege level ([#1757](https://issues.nmap.org/1757)).
 
 ## Npcap 0.9983 [2019-08-30]
 
 * Npcap can now detect newly-added network adapters without restarting the
-  driver. Fixes [#664](http://issues.nmap.org/664).
+  driver. Fixes [#664](https://issues.nmap.org/664).
 
 * Loopback capture and injection no longer requires the Npcap Loopback Adapter
   to be installed. This is a minor API change, so Nmap 7.80 and earlier will
@@ -1086,19 +1086,19 @@
   and set to `1` for software that consults this value.
 
 * Some operations like `pcap_stats()` can now be completed even after the
-  adapter that was in use is removed. See [#1650](http://issues.nmap.org/1650).
+  adapter that was in use is removed. See [#1650](https://issues.nmap.org/1650).
 
 * Fixed a crash that could happen when stopping the driver during a loopback
-  traffic capture. Fixes [#1678](http://issues.nmap.org/1678).
+  traffic capture. Fixes [#1678](https://issues.nmap.org/1678).
 
 ## Npcap 0.9982 [2019-07-30]
 
 * Fix the packet statistics functionality used by `pcap_stats()`, which was
-  broken in 0.9981. Fixes [#1668](http://issues.nmap.org/1668).
+  broken in 0.9981. Fixes [#1668](https://issues.nmap.org/1668).
 
 * Rework the flow of packets through the WFP callout driver that implements
   loopback traffic capture. This should prevent clobbering of redirect context
-  data reported in [#1529](http://issues.nmap.org/1529).
+  data reported in [#1529](https://issues.nmap.org/1529).
 
 * Restore the `/dlt_null` installer option to default to "yes" since it has
   been defaulting to "no" since Npcap 0.992. Using `DLT_NULL` for loopback
@@ -1122,7 +1122,7 @@
 
 * In cases where PacketOpenAdapter is given an adapter name in UTF-16LE,
   translate it to ASCII before doing string operations on it. See
-  [#1575](http://issues.nmap.org/1575).
+  [#1575](https://issues.nmap.org/1575).
 
 * Significant reorganization of internal data structures to reduce memory use
   and initialization overhead.
@@ -1137,7 +1137,7 @@
   Npcap, `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_DetachAdapter`. Since Npcap
   0.994 and 0.995 may crash when upgrading, the installer will offer to disable
   the npcap driver service if it is running, allowing the user to reboot and
-  attempt the install again, avoiding a crash. Fixes [#1626](http://issues.nmap.org/1626).
+  attempt the install again, avoiding a crash. Fixes [#1626](https://issues.nmap.org/1626).
 
 * Ensure the uninstaller for the previous version of Nmap is called when
   upgrading. Npcap 0.95 through 0.995 erroneously skipped this step in simple
@@ -1148,21 +1148,21 @@
 
 * Fix a crash reported via Microsoft crash telemetry,
   `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_NetworkClassify` introduced in Npcap
-  0.994.  Fixes [#1591](http://issues.nmap.org/1591).
+  0.994.  Fixes [#1591](https://issues.nmap.org/1591).
 
 ## Npcap 0.994 [2019-05-07]
 
 * Fix the installer options screen, which would immediately proceed to
   installation when you clicked on the "Support loopback traffic" option. Fixes
-  [#1577](http://issues.nmap.org/1577).
+  [#1577](https://issues.nmap.org/1577).
 
 * Use the `/F` option to `SCHTASKS.EXE` in the installer so that the
   `npcapwatchdog` task can be successfully overwritten if it is present, though
-  newer uninstallers also remove the task. Fixes [#1580](http://issues.nmap.org/1580).
+  newer uninstallers also remove the task. Fixes [#1580](https://issues.nmap.org/1580).
 
 * Fix the `CheckStatus.bat` script run by the `npcapwatchdog` scheduled task to
   correctly match output of `reg.exe` on non-English systems. Fixes
-  [#1582](http://issues.nmap.org/1582).
+  [#1582](https://issues.nmap.org/1582).
 
 * Improve synchronization between WFP (Loopback) and NDIS (control) functions
   within the driver, which ought to improve stability during system
@@ -1171,48 +1171,48 @@
 
 ## Npcap 0.993 [2019-04-27]
 
-* Complete the fix for [#1398](http://issues.nmap.org/1398) that was only
+* Complete the fix for [#1398](https://issues.nmap.org/1398) that was only
   partially applied in Npcap 0.992. Due to this partial fix, the user-provided
   buffer was double-freed, resulting in a `BAD_POOL_CALLER` BSoD. This issue
-  was separately reported as [#1568](http://issues.nmap.org/1568), and has been
+  was separately reported as [#1568](https://issues.nmap.org/1568), and has been
   issued the identifier CVE-2019-11490.
 
 * Fix output of `pcap_lib_version` to again report "Npcap version 0.993, based
   on libpcap version 1.9.0" instead of "libpcap version 1.9.0 (packet.dll
   version 0.992)". Npcap 0.992 was the only version affected. Fixes
-  [#1566](http://issues.nmap.org/1566).
+  [#1566](https://issues.nmap.org/1566).
 
 * Fix a regression in loopback capture that was causing the loopback adapter to
   be missing from `pcap_findalldevs` until the driver was manually stopped and
-  restarted. Fixes [#1570](http://issues.nmap.org/1570).
+  restarted. Fixes [#1570](https://issues.nmap.org/1570).
 
 * Remove installer interface option "Automatically start the Npcap driver at
   boot time." Command-line and registry settings are still respected, but
   automatic start will be the default for all new installations, since manual
   start results in delays in network connectivity at boot. See
-  [#1502](http://issues.nmap.org/1502).
+  [#1502](https://issues.nmap.org/1502).
 
 * Avoid interpreting null or uninitialized memory as out-of-band media-specific
   information for purposes of constructing the Radiotap header when capturing
-  in raw 802.11 monitor mode. Fixes [#1528](http://issues.nmap.org/1528).
+  in raw 802.11 monitor mode. Fixes [#1528](https://issues.nmap.org/1528).
 
 * Ensure the uninstaller removes the `npcapwatchdog` scheduled task.
 
 * Avoid an uninstaller failure if DLLs and executables are in use during
   uninstall by causing them to be deleted at reboot. See
-  [#1555](http://issues.nmap.org/1555).
+  [#1555](https://issues.nmap.org/1555).
 
 ## Npcap 0.992 [2019-03-24]
 
 * Update libpcap to 1.9.0. See [the libpcap CHANGES
   file](https://github.com/the-tcpdump-group/libpcap/blob/libpcap-1.9.0/CHANGES)
-  for this release and [#1506](http://issues.nmap.org/1506).
+  for this release and [#1506](https://issues.nmap.org/1506).
 
-* Fix a bug in the fix for [#1406](http://issues.nmap.org/1406) that caused
+* Fix a bug in the fix for [#1406](https://issues.nmap.org/1406) that caused
   capture filters to reject all packets when the packet header was offset from
   the start of the kernel data structure.
 
-* Fix a bug in the fix for [#1398](http://issues.nmap.org/1398) that caused
+* Fix a bug in the fix for [#1398](https://issues.nmap.org/1398) that caused
   BSoD (`BAD_POOL_CALLER`) due to mismatch in functions used to allocate and
   free a data structure.
 
@@ -1230,49 +1230,49 @@
 
 * Fix a bug in the BPF packet filter engine that caused capture filters with
   byte offsets to reject packets due to fragmentation within `NET_BUFFER`
-  structures. See [#1406](http://issues.nmap.org/1406) and
-  [#1438](http://issues.nmap.org/1438).
+  structures. See [#1406](https://issues.nmap.org/1406) and
+  [#1438](https://issues.nmap.org/1438).
 
 * Fix a bug that caused several network device drivers to crash when using the
   `pcap_sendqueue_transmit` function, due to queued network packets being
   allocated from paged memory that paged out before the drivers accessed it.
-  See [#1398](http://issues.nmap.org/1398).
+  See [#1398](https://issues.nmap.org/1398).
 
 * Fix a crash (`SYSTEM_EXCEPTION_NOT_HANDLED_M`) in `WSKCloseSocket` due to
   double-free, reported via Microsoft crash telemetry.
 
 * Fix a BSOD inherited from WinPcap triggered when `PacketGetStats` is called
-  with low system resources. See [#1517](http://issues.nmap.org/1517).
+  with low system resources. See [#1517](https://issues.nmap.org/1517).
 
 * Properly quote the path to the `CheckStatus.bat` script in the
-  `npcapwatchdog` scheduled task. See [#1513](http://issues.nmap.org/1513).
+  `npcapwatchdog` scheduled task. See [#1513](https://issues.nmap.org/1513).
 
 * Fix errors when installing in WinPcap API-compatible mode over WinPcap when
   Npcap install directory does not already exist. See
-  [#1456](http://issues.nmap.org/1456).
+  [#1456](https://issues.nmap.org/1456).
 
 ## Npcap 0.99-r9 [2019-01-22]
 
 * Install a scheduled task at startup to check whether the Npcap Loopback
   Adapter has been removed and restore it. Windows 10 feature updates remove
-  the Adapter. See [#1416](http://issues.nmap.org/1416).
+  the Adapter. See [#1416](https://issues.nmap.org/1416).
 
 * Package the correct driver version. On some platforms, the Npcap 0.99-r8
   installer would install the Npcap 0.99-r7 driver.
 
 * Fix a crash (`REFERENCE_BY_POINTER`) in `NPF_ReleaseOpenInstanceResources`
-  reported via Microsoft crash telemetry. See [#1419](http://issues.nmap.org/1419).
+  reported via Microsoft crash telemetry. See [#1419](https://issues.nmap.org/1419).
 
 ## Npcap 0.99-r8 [2018-12-17]
 
 * Revert to using `SERVICE_SYSTEM_START` for the "Automatically start Npcap at
   boot" option. The previous value, `SERVICE_AUTO_START` had been introduced as
   a workaround for network interruption on Windows 7 that was finally solved in
-  Npcap 0.99-r7. See [#1208](http://issues.nmap.org/1208).
+  Npcap 0.99-r7. See [#1208](https://issues.nmap.org/1208).
 
 * Removed extra Registry keywords from Npcap Loopback Adapter which were
   causing it to not appear properly in Windows API calls.
-  Fixes [#1368](http://issues.nmap.org/1368).
+  Fixes [#1368](https://issues.nmap.org/1368).
 
 * Detect in-use WinPcap installations before attempting to overwrite DLLs.
   Offer to terminate the processes just as we do for in-use Npcap.
@@ -1287,40 +1287,40 @@
 
 * On Windows 8 and Server 2012, Npcap will rebind to network adapters after
   installation to ensure a more complete fix to
-  [#1031](http://issues.nmap.org/1031).
+  [#1031](https://issues.nmap.org/1031).
 
 ## Npcap 0.99-r7 [2018-07-05]
 
 * Fixed the installer so that Npcap in WinPcap API-compatible mode can do
   loopback capture. This capability is not guaranteed for future releases, but
   was only missing from 0.99-r3 to 0.99-r6. Native-mode Npcap was unaffected.
-  Fixes [#1213](http://issues.nmap.org/1213)
+  Fixes [#1213](https://issues.nmap.org/1213)
 
 * Added a script, `FixInstall.bat`, to fix common problems with installations,
   such as those caused by Windows 10 feature upgrades.
-  See [#1216](http://issues.nmap.org/1216)
+  See [#1216](https://issues.nmap.org/1216)
 
 * Improved stability by restoring certain passthrough NDIS callbacks that are
   not used, but appear to cause connectivity problems if omitted.
-  See [#1208](http://issues.nmap.org/1208).
+  See [#1208](https://issues.nmap.org/1208).
 
 ## Npcap 0.99-r6 [2018-06-12]
 
 * Fixed installation on Windows 8 and Server 2012 so that Npcap is able to
   capture on adapters without requiring a reboot. Fixes
-  [#1031](http://issues.nmap.org/1031).
+  [#1031](https://issues.nmap.org/1031).
 
 * Fixed loss of networking on Windows 7 when Npcap was configured to start at
   boot. Using `AUTO_START` instead of `SYSTEM_START` for the Npcap driver
-  service solves the problem. Fixes [#1208](http://issues.nmap.org/1208).
+  service solves the problem. Fixes [#1208](https://issues.nmap.org/1208).
 
 * Fixed a crash reported via Microsoft crash telemetry,
   `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_IOControl` when setting
-  `OID_GEN_CURRENT_LOOKAHEAD`. Fixes [#1194](http://issues.nmap.org/1194).
+  `OID_GEN_CURRENT_LOOKAHEAD`. Fixes [#1194](https://issues.nmap.org/1194).
 
 * Fixed certain interactions between processes with open Npcap handles that
   could allow one process to stop other running captures from receiving
-  packets. Fixes [#1035](http://issues.nmap.org/1035).
+  packets. Fixes [#1035](https://issues.nmap.org/1035).
 
 ## Npcap 0.99-r5 [2018-05-01]
 
@@ -1334,7 +1334,7 @@
 
 * Fixed a crash reported via Microsoft crash telemetry,
   `DRIVER_IRQL_NOT_LESS_OR_EQUAL` in `NPF_SendCompleteExForEachOpen` when the
-  system is suspended. Fixes [#1193](http://issues.nmap.org/1193).
+  system is suspended. Fixes [#1193](https://issues.nmap.org/1193).
 
 * Bundle and install the correct public code signing certificate. The
   certificate used to sign Npcap was updated for Npcap 0.99-r4, but the public
@@ -1345,10 +1345,10 @@
 
 * On Windows 7, if Npcap driver installation fails due to maximum NDIS filters
   installed, attempt to increase the limit. No such limit exists on other
-  Windows versions. Fixes [#1182](http://issues.nmap.org/1182).
+  Windows versions. Fixes [#1182](https://issues.nmap.org/1182).
 
 * Avoid some cmd.exe popup windows during installation. See
-  [#1188](http://issues.nmap.org/1188).
+  [#1188](https://issues.nmap.org/1188).
 
 * Improve the license to allow unlimited copies of Npcap to be used
   (removes the 5 copy limitation) if the copies are solely used for
@@ -1358,10 +1358,10 @@
 
 * Fix recording of the Npcap Loopback Adapter's name in the service registry
   key. Loopback packet injection was broken in WinPcap API-compatible mode in
-  Npcap 0.99-r1 and 0.99-r2. Fixes [#1165](http://issues.nmap.org/1165).
+  Npcap 0.99-r1 and 0.99-r2. Fixes [#1165](https://issues.nmap.org/1165).
 
 * Fix a double-close of a Registry key which could cause a crash in Packet.dll
-  when debugging. Fixes [#1163](http://issues.nmap.org/1163).
+  when debugging. Fixes [#1163](https://issues.nmap.org/1163).
 
 ## Npcap 0.99-r2 [2018-03-13]
 
@@ -1406,7 +1406,7 @@
 
 * Only include data rate and channel fields in the RadioTap header if they are
   reported by the underlying WiFi card driver. See
-  [#1036](http://issues.nmap.org/1036).
+  [#1036](https://issues.nmap.org/1036).
 
 * When the Npcap installer detects that WinPcap is present, it will default to
   installing in WinPcap API-compatible mode, replacing WinPcap. This can be
@@ -1430,8 +1430,8 @@
 * Expand the Npcap public license to allow 5 installations rather than only 1.
 
 * Fix memory layout and accounting when writing Radiotap headers in raw 802.11
-  monitor mode. Fixes [#1001](http://issues.nmap.org/1001),
-  [#1028](http://issues.nmap.org/1028), and [#1036](http://issues.nmap.org/1036).
+  monitor mode. Fixes [#1001](https://issues.nmap.org/1001),
+  [#1028](https://issues.nmap.org/1028), and [#1036](https://issues.nmap.org/1036).
 
 ## Npcap 0.95 [2017-10-19]
 
@@ -1440,11 +1440,11 @@
 
 * The installer detects Win10pcap as distinct from WinPcap; since the installer
   cannot uninstall Win10pcap, WinPcap API-compatible mode will be disabled in
-  the installer when it is present. Fixes [#999](http://issues.nmap.org/999).
+  the installer when it is present. Fixes [#999](https://issues.nmap.org/999).
 
 * The npcap.cat file is no longer dual-signed; since it was not a PE
   executable, only one signature is supported. The invalid signature was
-  causing some installation failures. Fixes [#994](http://issues.nmap.org/994).
+  causing some installation failures. Fixes [#994](https://issues.nmap.org/994).
 
 * Silent installs will not downgrade the Npcap version unless the new
   `/downgrade=yes` option is given. Any version of [Npcap OEM](https://npcap.com/oem/)
@@ -1456,7 +1456,7 @@
   adapters that support them. This may cause problems with sniffing outgoing
   packets on those interfaces when those features are enabled, but users can
   disable them through standard Windows configuration means. Fixes
-  [#989](http://issues.nmap.org/989)
+  [#989](https://issues.nmap.org/989)
 
 ## Npcap 0.93 [2017-07-27]
 
@@ -1469,7 +1469,7 @@
 * Prevent the installer/uninstaller from crashing when faced with an incomplete
   Npcap installation, such as that created by applying a Windows version
   upgrade. Safely distinguish between old WinPcap installations and broken
-  Npcap-in-WinPcap-API-mode installations. Fixes [#906](http://issues.nmap.org/906)
+  Npcap-in-WinPcap-API-mode installations. Fixes [#906](https://issues.nmap.org/906)
 
 ## Npcap 0.92 [2017-06-12]
 
@@ -1494,7 +1494,7 @@
 
 ## Npcap 0.86 [2017-04-12]
 
-* Fix BSOD introduced in 0.85; wrong driver build had been packaged. Fixes [#840](http://issues.nmap.org/840)
+* Fix BSOD introduced in 0.85; wrong driver build had been packaged. Fixes [#840](https://issues.nmap.org/840)
 
 ## Npcap 0.85 [2017-04-10]
 
@@ -1504,15 +1504,15 @@
 ## Npcap 0.84 [2017-03-28]
 
 * Fix a failure of 64-bit Npcap when installed in Admin-Only mode.
-  [#814](http://issues.nmap.org/814)
+  [#814](https://issues.nmap.org/814)
 
 ## Npcap 0.83 [2017-03-04]
 
 * Fix a crash caused by recieving loopback traffic after Windows starts to
-  sleep. [#721](http://issues.nmap.org/721)
+  sleep. [#721](https://issues.nmap.org/721)
 
 * Don't override CLI installer options like `/wpcap_mode` when WinPcap is
-  found. [#717](http://issues.nmap.org/717)
+  found. [#717](https://issues.nmap.org/717)
 
 * Restore the uninstaller instruction that deletes the npcap driver files.
 
@@ -1531,7 +1531,7 @@
 
 * Report human-readable error when LWF filter fails to be installed.
 
-* Add `*NdisDeviceType=1` key to registry for Loopback adapter. Fixes [#653](http://issues.nmap.org/653)
+* Add `*NdisDeviceType=1` key to registry for Loopback adapter. Fixes [#653](https://issues.nmap.org/653)
 
 ## Npcap 0.80 [2017-01-09]
 
@@ -1550,7 +1550,7 @@
 ## Npcap 0.78 r5 [2016-12-15]
 
 * Microsoft Attestation-signed drivers for Windows 10, required in Win10 1607.
-  See [#492](http://issues.nmap.org/492)
+  See [#492](https://issues.nmap.org/492)
 
 * Removed Windows XP support from the executable installer. XP users can use
   WinPcap instead, as that is all that we were installing on that platform.

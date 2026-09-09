@@ -91,7 +91,7 @@
 
 * Updated libpcap headers to 1.10.1 from 1.9.1. See [the libpcap CHANGES
   file](https://github.com/the-tcpdump-group/libpcap/blob/libpcap-1.10/CHANGES)
-  and issue [#276](http://issues.npcap.org/276) for notable changes.
+  and issue [#276](https://issues.npcap.org/276) for notable changes.
 
 * Added `Packet32.h` functions to set per-handle time source and precision.
   This supports libpcap function `pcap_set_tstamp_type()` on Npcap 1.20 and
