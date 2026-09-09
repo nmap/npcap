@@ -1,3 +1,5 @@
+* Updated libpcap to 1.10.7.
+
 ## Npcap 1.88 [2026-05-05]
 
 * Fixed an issue that would cause processes to hang when closing a capture
