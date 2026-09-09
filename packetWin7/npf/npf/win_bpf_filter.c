@@ -322,8 +322,8 @@ u_int bpf_filter(const struct bpf_insn *pc, ULONG insns, const PNET_BUFFER pNB, 
 #define ALU_OP_DIV(_Val) if ((_Val) == 0) return 0; A /= _Val;
 #define ALU_OP_AND(_Val) A &= _Val;
 #define ALU_OP_OR(_Val)  A |= _Val;
-#define ALU_OP_LSH(_Val) A <<= _Val;
-#define ALU_OP_RSH(_Val) A >>= _Val;
+#define ALU_OP_LSH(_Val) A = ((_Val) >= 32) ? 0 : (A << (_Val));
+#define ALU_OP_RSH(_Val) A = ((_Val) >= 32) ? 0 : (A >> (_Val));
 #define ALU_OP_MOD(_Val) if ((_Val) == 0) return 0; A %= _Val;
 #define ALU_OP_XOR(_Val) A ^= _Val;
 
@@ -454,10 +454,13 @@ int bpf_validate(struct bpf_insn * f, int len)
 			case BPF_MUL:
 			case BPF_OR:
 			case BPF_AND:
-			case BPF_LSH:
-			case BPF_RSH:
 			case BPF_NEG:
 			case BPF_XOR:
+				break;
+			case BPF_LSH:
+			case BPF_RSH:
+				if (BPF_SRC(p->code) == BPF_K && p->k >= 32)
+					return 0;
 				break;
 			case BPF_DIV:
 			case BPF_MOD:
@@ -481,8 +484,8 @@ int bpf_validate(struct bpf_insn * f, int len)
 			 * assert that BPF_MAXINSNS is < the maximum size
 			 * of a u_int, so that i + 1 doesn't overflow.
 			 */
-			C_ASSERT(BPF_MAXINSNS < UINT_MAX);
 			from = i + 1;
+			C_ASSERT(BPF_MAXINSNS < UINT_MAX);
 			switch (BPF_OP(p->code))
 			{
 				/* Unconditional branches have a 32-bit offset,
