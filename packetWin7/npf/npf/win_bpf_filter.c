@@ -264,7 +264,7 @@ u_int bpf_filter(const struct bpf_insn *pc, ULONG insns, const PNET_BUFFER pNB, 
 #define DST_LD A
 #define DST_LDX X
 #define VAL_MODE_IMM (pc->k)
-#define VAL_MODE_MEM (mem[pc->k])
+#define VAL_MODE_MEM (NT_VERIFY(pc->k < BPF_MEMWORDS) ? mem[pc->k] : 0)
 #define VAL_MODE_LEN (wirelen)
 #define CASE_LD_OP(_Ld, _Mode) \
 		case BPF_##_Ld|BPF_##_Mode: \
