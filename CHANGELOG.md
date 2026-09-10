@@ -1,3 +1,12 @@
+## Npcap 1.89 [2026-09-09]
+
+* Fixed a crash encountered on some systems when upgrading, due to NDIS calling
+  `NPF_ReturnEx` after the driver has been unloaded.
+
+* Changed Npcap's adapter binding ComponentID from `INSECURE_NPCAP` to
+  `npcap_npf`, reflecting the change in company name from Insecure.Org, LLC to
+  Nmap Software, LLC. Fixes [#853](https://issues.npcap.org/853).
+
 * Updated libpcap to 1.10.7.
 
 ## Npcap 1.88 [2026-05-05]
