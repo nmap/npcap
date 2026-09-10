@@ -39,6 +39,66 @@ information you think necessary. Refer to [the Npcap Guide section on reporting
 bugs](https://npcap.com/guide/npcap-users-guide.html#npcap-issues) for more
 complete directions.
 
+## Contribution
+
+If you want to contribute to the development of this project, first you need to setup the development environment.
+
+### Development Environment
+
+Install a Windows. For example, use Windows 11, version 21H2. 
+
+When you install Visual Studio 2022, select the Desktop development with C++ workload, then under Individual Components add:
+
+- MSVC v143 - VS 2022 C++ ARM64/ARM64EC Spectre-mitigated libs (Latest)
+- MSVC v143 - VS 2022 C++ x64/x86 Spectre-mitigated libs (Latest)
+- C++ ATL for latest v143 build tools with Spectre Mitigations (ARM64/ARM64EC)
+- C++ ATL for latest v143 build tools with Spectre Mitigations (x86 & x64)
+- C++ MFC for latest v143 build tools with Spectre Mitigations (ARM64/ARM64EC)
+- C++ MFC for latest v143 build tools with Spectre Mitigations (x86 & x64)
+- Windows Driver Kit
+
+Install Windows SDK from https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/ if you get the error "The Windows SDK version 10.0.26100.0 was not found.".
+
+You also need WDK for Windows 11, version 21H2. Download and install it from https://go.microsoft.com/fwlink/?linkid=2166289
+
+For addition tasks, like building the documentation, you need roffit. Clone it from 
+```
+cd C:\Users\Measurement\
+git clone https://github.com/bagder/roffit.git
+```
+
+Also, download 7z from https://www.7-zip.org/a/7z2409-x64.exe
+
+As this version of Visual Studio does not support the compilation for Win32 drivers out of the box, please follow the instructions given in 
+https://stackoverflow.com/questions/75509242/compiling-32-bits-driver-using-msvc-2022
+In addition, you might need additional files (TODO).
+
+Next, download AirPCAP Devpack from https://support.riverbed.com/bin/support/download?sid=l3vk3eu649usgu3rj60uncjqqu
+and unpack it to, for example to %USERPROFILE%\Airpcap_Devpack
+
+Then, download https://npcap.com/dist/ npcap-sdk and install it under, e.g. %USERPROFILE%\npcap-sdk-1.14
+
+We need Winflex, which can be download at https://github.com/lexxmark/winflexbison/releases . Be sure that it is in environment variable 'Path'. 
+Test it by entering 'win_flex -V' into a command shell.
+
+You might also need pkg-config from https://download.gnome.org/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip
+
+#### Cloing the reposiory
+
+On https://github.com, fork both the repositories npcap https://github.com/nmap/npcap and libpcap https://github.com/the-tcpdump-group/libpcap.
+Then, enter the following commands.
+
+```
+cd %USERPROFILE%
+git clone https://github.com/YOURUSER/npcap
+git submodule update --init --recursive
+cd wpcap
+wpcap-cmake.bat
+cd ..
+cd installer
+build.bat
+```
+
 ## License
 
 The [Npcap License](https://github.com/nmap/npcap/blob/master/LICENSE) allows

@@ -8,9 +8,9 @@ for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio
 :break1
 if %ERRORLEVEL% NEQ 0 goto :badenv
 
-msbuild "%NPCAPDIR%\packetWin7\vs14\npcap.sln" /m /t:Build /p:Configuration="%MODE%" /p:Platform="x86"
-msbuild "%NPCAPDIR%\packetWin7\vs14\npcap.sln" /m /t:Build /p:Configuration="%MODE% Win10 driver" /p:Platform="x86"
-msbuild "%NPCAPDIR%\wpcap\build-win32\wpcap.vcxproj" /m /t:Build /p:Configuration="%MODE%" /p:Platform="Win32"
+REM msbuild "%NPCAPDIR%\packetWin7\vs14\npcap.sln" /m /t:Build /p:Configuration="%MODE%" /p:Platform="x86"
+REM msbuild "%NPCAPDIR%\packetWin7\vs14\npcap.sln" /m /t:Build /p:Configuration="%MODE% Win10 driver" /p:Platform="x86"
+REM msbuild "%NPCAPDIR%\wpcap\build-win32\wpcap.vcxproj" /m /t:Build /p:Configuration="%MODE%" /p:Platform="Win32"
 
 for /f "usebackq delims=#" %%a in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -version %VSVER% -property installationPath`) do call "%%a\VC\Auxiliary\Build\vcvarsall.bat" x64 & goto :break2
 :break2
