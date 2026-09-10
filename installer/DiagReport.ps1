@@ -136,7 +136,7 @@ write_report ("*************************************************")
 get_props_safe 'HKLM:\SYSTEM\CurrentControlSet\Control\Network\{4d36e974-e325-11ce-bfc1-08002be10318}\*'
 
 Get-NetAdapterBinding -ComponentID "INSECURE_NPCAP*"
-Get-NetAdapterBinding -ComponentID "npcap_npf*"
+Get-NetAdapterBinding -ComponentID "nmap_npcap*"
 
 #########################################################
 write_report ("`n")

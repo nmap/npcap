@@ -4,7 +4,7 @@
   `NPF_ReturnEx` after the driver has been unloaded.
 
 * Changed Npcap's adapter binding ComponentID from `INSECURE_NPCAP` to
-  `npcap_npf`, reflecting the change in company name from Insecure.Org, LLC to
+  `nmap_npcap`, reflecting the change in company name from Insecure.Org, LLC to
   Nmap Software, LLC. Fixes [#853](https://issues.npcap.org/853).
 
 * Updated libpcap to 1.10.7.
