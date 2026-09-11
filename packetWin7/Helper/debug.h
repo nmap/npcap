@@ -99,197 +99,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#ifndef __NPCAPHELPER_DEBUG_393073863432093179878957
+#define __NPCAPHELPER_DEBUG_393073863432093179878957
 
-#ifndef __PACKET_DEBUG_393073863432093179878957
-#define __PACKET_DEBUG_393073863432093179878957
+#include "../Dll/npcap_trace.h"
 
-#ifdef _DEBUG_TO_FILE
+/*
+ * These macros formerly appended a line to NpcapHelper.log, reopening the
+ * file on every call. They now write ETW events; npcap_trace.h describes how
+ * to collect them.
+ *
+ * The format strings and their arguments here are narrow even though the
+ * project builds Unicode, as the "%s" call sites are passed char *, so they
+ * use the explicitly narrow NPCAP_TRACE_MSGA rather than the TCHAR flavored
+ * NPCAP_TRACE_MSG that Packet.dll and NPFInstall use.
+ */
 
-#include <stdio.h>
-#include <windows.h>
+/* Formerly a no-op, because the file back end could not be called from
+ * DllMain, where opening a file risks deadlock. An ETW event carries no such
+ * restriction.
+ */
+#define TRACE_PRINT_DLLMAIN(_x)							NPCAP_TRACE_MSGA(_x)
 
-extern CHAR g_LogFileName[1024];
+#define TRACE_ENTER(_x)									NPCAP_TRACE_ENTER_AT(_x)
+#define TRACE_EXIT(_x)									NPCAP_TRACE_EXIT_AT(_x)
+#define TRACE_PRINT(_x)									NPCAP_TRACE_MSGA(_x)
+#define TRACE_PRINT1(_x, _p1)							NPCAP_TRACE_MSGA(_x, _p1)
+#define TRACE_PRINT2(_x, _p1, _p2)						NPCAP_TRACE_MSGA(_x, _p1, _p2)
+#define TRACE_PRINT4(_x, _p1, _p2, _p3, _p4)			NPCAP_TRACE_MSGA(_x, _p1, _p2, _p3, _p4)
+#define TRACE_PRINT6(_x, _p1, _p2, _p3, _p4, _p5, _p6)	NPCAP_TRACE_MSGA(_x, _p1, _p2, _p3, _p4, _p5, _p6)
+#define TRACE_PRINT_OS_INFO()							NpcapTraceOsInfo()
 
-#pragma warning(push)
-#pragma warning(disable : 4127)
-
-static VOID OutputDebugStringVA(LPCSTR Format, ...) noexcept
-{
-	FILE *f;											
-	SYSTEMTIME LocalTime;								
-	va_list Marker;
-	DWORD dwThreadId;
-	int loops = 0;
-	DWORD dwLastError = GetLastError();
-
-	dwThreadId = GetCurrentThreadId();
-
-	va_start( Marker, Format );     /* Initialize variable arguments. */
-														
-	GetLocalTime(&LocalTime);							
-														
-	do
-	{
-		if (fopen_s(&f, "C:\\Program Files\\Npcap\\NpcapHelper.log", "a") == 0)
-			break;
-
-		Sleep(0);
-		loops++;
-	}
-	while(loops <= 10);
-
-	if (loops > 10 || !f)
-	{
-		SetLastError(dwLastError);
-		return;
-	}
-
-	fprintf(f, "[%.08X] %.04u-%.02u-%.02u %.02u:%02u:%02u ",
-			dwThreadId,
-			LocalTime.wYear,							
-			LocalTime.wMonth,							
-			LocalTime.wDay,								
-			LocalTime.wHour,							
-			LocalTime.wMinute,							
-			LocalTime.wSecond);										
-	vfprintf(f, Format, Marker);
-	
-	fclose(f);											
-
-
-	SetLastError(dwLastError);
-}
-
-#pragma warning(pop)
-
-#elif defined (_DBG)
-
-#include <strsafe.h>
-
-static VOID OutputDebugStringVA(LPCSTR Format, ...)
-{
-	va_list Marker;
-	CHAR string[1024];
-	DWORD dwLastError = GetLastError();
-
-	va_start( Marker, Format );     /* Initialize variable arguments. */
-
-	StringCchVPrintfA(string, sizeof(string), Format, Marker);
-
-	OutputDebugStringA(string);
-
-	va_end(Marker);
-
-	SetLastError(dwLastError);
-}
-#endif
-
-
-#if defined(_DBG) || defined(_DEBUG_TO_FILE)
-
-#ifdef _DBG
-#define TRACE_PRINT_DLLMAIN(_x)			OutputDebugStringVA ("    " _x "\n")
-#else
-#define TRACE_PRINT_DLLMAIN(_x)			//we cannot use the _DEBUG_TO_FILE stuff from DllMain!!
-#endif
-
-#define TRACE_ENTER(_x)					OutputDebugStringVA ("--> " _x "\n")
-#define TRACE_EXIT(_x)					OutputDebugStringVA ("<-- " _x "\n")
-#define TRACE_PRINT(_x)					OutputDebugStringVA ("    " _x "\n")
-#define TRACE_PRINT1(_x, _y)			OutputDebugStringVA("    " _x "\n", _y)   		
-#define TRACE_PRINT2(_x, _p1, _p2)		OutputDebugStringVA("    " _x "\n", _p1, _p2)   		
-#define TRACE_PRINT4(_x, _p1, _p2, _p3, _p4) OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4) 
-#define TRACE_PRINT6(_x, _p1, _p2, _p3, _p4, _p5, _p6) OutputDebugStringVA("    " _x "\n", _p1, _p2, _p3, _p4, _p5, _p6 )
-
-static __forceinline void TRACE_PRINT_OS_INFO()
-{
-	HKEY	hKey;
-	CHAR buffer[1024];
-	DWORD size = sizeof(buffer);
-	DWORD type;
-	DWORD dwLastError;
-
-	dwLastError = GetLastError();
-
-	TRACE_PRINT("********************* OS info.*********************");
-	buffer[size-1] = 0;
-	if(	RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-	{
-		if (RegQueryValueExA(hKey, "PROCESSOR_ARCHITECTURE", 0, &type, (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
-		{
-			OutputDebugStringVA("Architecture = %s\n", buffer);
-		}
-		else
-		{
-			OutputDebugStringVA("Architecture = <UNKNOWN>\n");
-		}
-		
-		RegCloseKey(hKey);
-	}
-	else
-	{
-		OutputDebugStringVA("Architecture = <UNKNOWN>\n");
-	}
-
-	size = sizeof(buffer);
-	buffer[size-1] = 0;
-
-	if(	RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-	{
-		if (RegQueryValueExA(hKey, "CurrentVersion", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
-		{
-			OutputDebugStringVA("Windows version = %s\n", buffer);
-		}
-		else
-		{
-			OutputDebugStringVA("Windows version = <UNKNOWN>\n");
-		}
-		
-		RegCloseKey(hKey);
-	}
-	else
-	{
-		OutputDebugStringVA("Windows version = <UNKNOWN>\n");
-	}
-
-	size = sizeof(buffer);
-	buffer[size-1] = 0;
-	if(	RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-	{
-		if (RegQueryValueExA(hKey, "CurrentType", 0, &type,  (LPBYTE)buffer, &size) == ERROR_SUCCESS && type == REG_SZ)
-		{
-			OutputDebugStringVA("Windows CurrentType = %s\n", buffer);
-		}
-		else
-		{
-			OutputDebugStringVA("Windows CurrentType = <UNKNOWN>\n");
-		}
-		
-		RegCloseKey(hKey);
-	}
-	else
-	{
-		OutputDebugStringVA("Windows CurrentType = <UNKNOWN>\n");
-	}
-
-	OutputDebugStringVA("*************************************************** \n");
-
-	SetLastError(dwLastError);
-}
-#else
-
-#define TRACE_ENTER(_x)
-#define TRACE_PRINT_DLLMAIN(_x)
-#define TRACE_EXIT(_x) 
-#define TRACE_PRINT(_x)
-#define TRACE_PRINT1(_x, _y)
-#define TRACE_PRINT2(_x, _p1, _p2)
-#define TRACE_PRINT4(_x, _p1, _p2, _p3, _p4) 
-#define TRACE_PRINT6(_x, _p1, _p2, _p3, _p4, _p5, _p6) 
-#define TRACE_PRINT_OS_INFO()
-
-#endif
-
-
-
-#endif //__PACKET_DEBUG_393073863432093179878957
+#endif //__NPCAPHELPER_DEBUG_393073863432093179878957

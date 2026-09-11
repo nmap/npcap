@@ -706,6 +706,16 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
     {
 	case DLL_PROCESS_ATTACH:
 
+		/* ETW asks that a provider not be registered from DllMain.
+		 * TraceLoggingRegister only resolves an export from a module
+		 * that is already loaded, so it takes no lock this thread does
+		 * not already hold, and registering here is what allows DllMain
+		 * itself to be traced. Deferring registration to the first trace
+		 * call outside DllMain would discard exactly the events that
+		 * describe a failure to initialize.
+		 */
+		NpcapTraceRegister();
+
 		TRACE_PRINT("************Packet32: DllMain************");
 		if (!g_Settings.bInitialized) {
 			GetNativeSystemInfo(&si);
@@ -777,7 +787,13 @@ BOOL APIENTRY DllMain(HANDLE DllHandle, DWORD Reason, LPVOID lpReserved)
 		}
 #endif // WPCAP_OEM_UNLOAD_H
 
-		break;
+		/* ETW retains a callback pointer into this module, so the
+		 * provider must be unregistered before the module can be
+		 * unmapped.
+		 */
+		TRACE_EXIT();
+		NpcapTraceUnregister();
+		return TRUE;
 		
 	default:
 		break;
