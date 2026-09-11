@@ -1035,7 +1035,7 @@ NPF_TapEx(
 	{
 #endif
 		/* Track only receives that will result in a call to NPF_ReturnEx */
-		if (0 == ReceiveFlags & NDIS_RECEIVE_FLAGS_RESOURCES) {
+		if (0 == (ReceiveFlags & NDIS_RECEIVE_FLAGS_RESOURCES)) {
 			NPF_TrackReceives(pFiltMod, NumberOfNetBufferLists, bAtDispatchLevel);
 		}
 		NdisFIndicateReceiveNetBufferLists(
