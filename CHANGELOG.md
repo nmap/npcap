@@ -1,4 +1,4 @@
-## Npcap 1.89 [2026-09-09]
+## Npcap 1.89 [2026-09-12]
 
 * Fixed a crash encountered on some systems when upgrading, due to NDIS calling
   `NPF_ReturnEx` after the driver has been unloaded.

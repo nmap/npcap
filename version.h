@@ -112,7 +112,7 @@
 #define /*
  !define /**/ WINPCAP_REV				89
 #define /*
- !define /**/ WINPCAP_BUILD				909
+ !define /**/ WINPCAP_BUILD				911
 #define /*
  !define /**/ WINPCAP_VER_STRING		"1.89"
 #define /*
