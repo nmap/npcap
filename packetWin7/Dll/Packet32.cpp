@@ -3538,13 +3538,13 @@ BOOLEAN PacketGetNetInfoEx(PCCH AdapterName, npf_if_addr* buffer, PLONG NEntries
 	for (int i = 0; i < ADAPTERS_ADDRESSES_MAX_TRIES; i++)
 	{
 
-		RetVal = GetAdaptersAddresses(AF_UNSPEC,
+		RetVal = PacketGetAdaptersAddresses(AF_UNSPEC,
 			GAA_FLAG_SKIP_DNS_INFO | // Undocumented, reported to help avoid errors on Win10 1809
 			// We don't use any of these features:
 			GAA_FLAG_SKIP_DNS_SERVER |
 			GAA_FLAG_SKIP_ANYCAST |
 			GAA_FLAG_SKIP_MULTICAST |
-			GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
+			GAA_FLAG_SKIP_FRIENDLY_NAME, AdBuffer, &BufLen);
 		if (RetVal == ERROR_BUFFER_OVERFLOW)
 		{
 			TRACE_PRINT("PacketGetNetInfoEx: GetAdaptersAddresses Too small buffer");
