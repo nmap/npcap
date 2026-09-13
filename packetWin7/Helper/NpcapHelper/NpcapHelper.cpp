@@ -115,6 +115,60 @@ void terminateSelf() noexcept
 	TerminateProcess(hself, 0);
 }
 
+// Slightly modified from:
+// https://learn.microsoft.com/en-us/windows/win32/secauthz/enabling-and-disabling-privileges-in-c--
+BOOL SetPrivilege(
+	HANDLE hToken,          // access token handle
+	LPCTSTR lpszPrivilege,  // name of privilege to enable/disable
+	BOOL bEnablePrivilege   // to enable or disable privilege
+)
+{
+	TOKEN_PRIVILEGES tp;
+	LUID luid;
+
+	if (!LookupPrivilegeValue(
+		NULL,            // lookup privilege on local system
+		lpszPrivilege,   // privilege to lookup
+		&luid))			 // receives LUID of privilege
+	{
+		TRACE_PRINT1("LookupPrivilegeValue error: %u\n", GetLastError());
+		return FALSE;
+	}
+
+	tp.PrivilegeCount = 1;
+	tp.Privileges[0].Luid = luid;
+	if (bEnablePrivilege)
+	{
+		tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+	}
+	else
+	{
+		tp.Privileges[0].Attributes = 0;
+	}
+
+	// Enable the privilege or disable all privileges.
+
+	if (!AdjustTokenPrivileges(
+		hToken,
+		FALSE,
+		&tp,
+		sizeof(TOKEN_PRIVILEGES),
+		(PTOKEN_PRIVILEGES)NULL,
+		(PDWORD)NULL))
+	{
+		TRACE_PRINT1("AdjustTokenPrivileges error: %u\n", GetLastError());
+		return FALSE;
+	}
+
+	if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+	{
+		TRACE_PRINT("The token does not have the specified privilege.\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 _Must_inspect_result_
 _Success_(return != INVALID_HANDLE_VALUE)
 HANDLE getDeviceHandleInternal(_In_ LPCSTR SymbolicLinkA, _Out_ _On_failure_(_Out_range_(1,MAXDWORD)) DWORD *pdwError)
@@ -123,6 +177,7 @@ HANDLE getDeviceHandleInternal(_In_ LPCSTR SymbolicLinkA, _Out_ _On_failure_(_Ou
 	HANDLE hFileDup;
 	BOOL bResult;
 	HANDLE hClientProcess;
+	HANDLE hMyToken;
 
 	TRACE_PRINT1("Original handle: %08p.\n", hFile);
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -131,6 +186,23 @@ HANDLE getDeviceHandleInternal(_In_ LPCSTR SymbolicLinkA, _Out_ _On_failure_(_Ou
 		TRACE_PRINT1("CreateFileA failed, GLE=%d.\n", *pdwError);
 		return INVALID_HANDLE_VALUE;
 	}
+
+	bResult = OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hMyToken);
+	if (!bResult)
+	{
+		*pdwError = dwError = GetLastError();
+		TRACE_PRINT1("OpenProcessToken failed, GLE=%d.\n", dwError);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	bResult = SetPrivilege(hMyToken, SE_DEBUG_NAME, TRUE);
+	if (!bResult)
+	{
+		*pdwError = dwError = GetLastError();
+		TRACE_PRINT1("SetPrivilege failed, GLE=%d.\n", dwError);
+		return INVALID_HANDLE_VALUE;
+	}
+
 	hClientProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, g_sourcePID);
 	if (hClientProcess == NULL)
 	{
@@ -206,13 +278,17 @@ BOOL createPipe(LPCSTR pipeName) noexcept
 		TRACE_PRINT("Invalid owner SID\n");
 		return FALSE;
 	}
+
+	SID creatorOwnerRightsSid{ 1, 1, SECURITY_CREATOR_SID_AUTHORITY, {SECURITY_CREATOR_OWNER_RIGHTS_RID} };
+
 	SECURITY_DESCRIPTOR sd;
 	if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
 	{
 		TRACE_PRINT1("InitializeSecurityDescriptor failed: %#x\n", GetLastError());
 		return FALSE;
 	}
-	DWORD cbDacl = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD);
+	DWORD cbDacl = sizeof(ACL) + 2 * sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD);
+	cbDacl += GetLengthSid(&creatorOwnerRightsSid);
 	cbDacl += GetLengthSid(tokenInfoBuffer.tokenUser.User.Sid);
 	PACL pDacl = (PACL) HeapAlloc(hHeap, 0, cbDacl);
 	if (pDacl == NULL)
@@ -223,6 +299,12 @@ BOOL createPipe(LPCSTR pipeName) noexcept
 	if (!InitializeAcl(pDacl,cbDacl,ACL_REVISION))
 	{
 		TRACE_PRINT1("InitializeACL failed: %#x\n", GetLastError());
+		HeapFree(hHeap, 0, pDacl);
+		return FALSE;
+	}
+	if (!AddAccessAllowedAce(pDacl, ACL_REVISION, GENERIC_ALL, &creatorOwnerRightsSid))
+	{
+		TRACE_PRINT1("AddAccessAllowedAce failed: %#x\n", GetLastError());
 		HeapFree(hHeap, 0, pDacl);
 		return FALSE;
 	}
