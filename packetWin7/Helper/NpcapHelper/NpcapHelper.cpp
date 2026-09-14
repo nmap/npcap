@@ -452,8 +452,11 @@ VOID GetAnswerToRequest( LPCSTR pchRequest,
 int main(int argc, char* argv[])
 {
 	char *pipeName = NULL;
+
+	NpcapTraceRegister();
 	if (argc != 3)
 	{
+		NpcapTraceUnregister();
 		return -1;
 	}
 	else
@@ -466,6 +469,8 @@ int main(int argc, char* argv[])
 
 #pragma warning(suppress: 6031)
 	getchar();
+
+	NpcapTraceUnregister();
 	return 0;
 }
 

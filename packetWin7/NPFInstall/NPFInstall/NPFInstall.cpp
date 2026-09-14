@@ -119,11 +119,13 @@ _T("SEE THE MAN PAGE (https://github.com/nmap/npcap) FOR MORE OPTIONS AND EXAMPL
 static int trace_exit(_In_ int nStatus)
 {
 	TRACE_PRINT2("<-- _tmain: %s, nStatus = %d.", nStatus == 0 ? _T("succeed") : _T("error"), nStatus);
+	NpcapTraceUnregister();
 	return nStatus;
 }
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	NpcapTraceRegister();
 	TRACE_ENTER();
 
 	BOOL bSuccess = FALSE;
