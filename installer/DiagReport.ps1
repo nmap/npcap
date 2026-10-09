@@ -3,6 +3,14 @@
 # Author: Yang Luo
 # Date: August 29, 2016
 #
+# 1. Force all PowerShell cmdlets and redirection operators (>, >>) to use UTF-8
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
+
+# 2. Ensure PowerShell reads external command output as UTF-8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
+# 3. Ensure the console and spawned external tools use UTF-8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 $report_file_name = $MyInvocation.MyCommand.Definition.Replace(".ps1", "-" + (Get-Date -Format 'yyyyMMdd-HHmmss') + ".txt")
 
@@ -83,7 +91,6 @@ write_report ("*************************************************")
 "PowerShell Version:`t`t" + ($PSVersionTable.PSVersion)
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("OS Info:")
 write_report ("*************************************************")
@@ -91,7 +98,6 @@ write_report ("*************************************************")
 (Get-WmiObject Win32_OperatingSystem) | Format-List Caption, BuildNumber, Locale, MUILanguages, OSArchitecture, ServicePackMajorVersion, ServicePackMinorVersion, SystemDirectory, Version
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("CPU Info:")
 write_report ("*************************************************")
@@ -99,7 +105,6 @@ write_report ("*************************************************")
 (Get-WmiObject Win32_Processor) | Format-List Name, Manufacturer, DeviceID, NumberOfCores, NumberOfEnabledCore, NumberOfLogicalProcessors, Addresswidth
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("Memory Info:")
 write_report ("*************************************************")
@@ -107,7 +112,6 @@ write_report ("*************************************************")
 "Size:`t`t`t`t" + [int]((Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory / 1024 / 1024) + " MB" + " (" + (Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory + " Bytes)"
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("Network Adapter(s) Info:")
 write_report ("*************************************************")
@@ -115,7 +119,6 @@ write_report ("*************************************************")
 (Get-WmiObject Win32_NetworkAdapter) | Where-Object {$_.GUID -ne $null} | Format-List Caption, GUID, Index, InterfaceIndex, Manufacturer, MACAddress, Speed, NetConnectionID, NetConnectionStatus, PNPDeviceID, ServiceName, AdapterType
 
 #########################################################
-#write_report ("`n")
 #write_report ("*************************************************")
 #write_report ("Driver Info:")
 #write_report ("*************************************************")
@@ -128,7 +131,6 @@ write_report ("*************************************************")
 #    Format-Table Name, Description, ServiceType, State, ExitCode, CompanyName, PathName
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("NDIS Light-Weight Filter (LWF) Info:")
 write_report ("*************************************************")
@@ -139,7 +141,6 @@ Get-NetAdapterBinding -ComponentID "INSECURE_NPCAP*"
 Get-NetAdapterBinding -ComponentID "nmap_npcap*"
 
 #########################################################
-write_report ("`n")
 "*************************************************"
 write_report ("File Info:")
 write_report ("*************************************************")
@@ -166,7 +167,6 @@ if ($os_bit -eq "64-bit")
 }
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("WinPcap Info:")
 write_report ("*************************************************")
@@ -181,7 +181,6 @@ else
 }
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("Registry Info:")
 write_report ("*************************************************")
@@ -205,7 +204,6 @@ get_props_safe ("HKLM:\SYSTEM\CurrentControlSet\Services\npf\Parameters")
 get_props_safe ("HKLM:\SYSTEM\CurrentControlSet\Services\npf_wifi")
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("Service Info:")
 write_report ("*************************************************")
@@ -215,7 +213,6 @@ Get-Service npcap
 Get-Service npf
 
 #########################################################
-write_report ("`n")
 write_report ("*************************************************")
 write_report ("Install Info:")
 write_report ("*************************************************")
@@ -236,8 +233,8 @@ notepad $report_file_name
 # SIG # Begin signature block
 # MIIouAYJKoZIhvcNAQcCoIIoqTCCKKUCAQExDzANBglghkgBZQMEAgEFADB5Bgor
 # BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCDFOYxrrmsFf38/
-# K4G5Z6hlTZhMVncdU3qscbtNt+CZyKCCIbUwggWNMIIEdaADAgECAhAOmxiO+dAt
+# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCCV9+WGm55zppmo
+# oK09Q134S4Mj/b21pLEGTEyL9O5zBqCCIbUwggWNMIIEdaADAgECAhAOmxiO+dAt
 # 5+/bUOIIQBhaMA0GCSqGSIb3DQEBDAUAMGUxCzAJBgNVBAYTAlVTMRUwEwYDVQQK
 # EwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5jb20xJDAiBgNV
 # BAMTG0RpZ2lDZXJ0IEFzc3VyZWQgSUQgUm9vdCBDQTAeFw0yMjA4MDEwMDAwMDBa
@@ -339,25 +336,25 @@ notepad $report_file_name
 # gpIUsWTjd6xpR6oaQf/DJbg3s6KCLPAlZ66RzIg9sC+NJpud/v4+7RWsWCiKi9EO
 # LLHfMR2ZyJ/+xhCx9yHbxtl5TPau1j/1MIDpMPx0LckTetiSuEtQvLsNz3Qbp7wG
 # WqbIiOWCnb5WqxL3/BAPvIXKUjPSxyZsq8WhbaM2tszWkPZPubdcMIIG7TCCBNWg
-# AwIBAgIQCoDvGEuN8QWC0cR2p5V0aDANBgkqhkiG9w0BAQsFADBpMQswCQYDVQQG
+# AwIBAgIQCE/cM09+RU7bww+P+ZIYNTANBgkqhkiG9w0BAQsFADBpMQswCQYDVQQG
 # EwJVUzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0
 # IFRydXN0ZWQgRzQgVGltZVN0YW1waW5nIFJTQTQwOTYgU0hBMjU2IDIwMjUgQ0Ex
-# MB4XDTI1MDYwNDAwMDAwMFoXDTM2MDkwMzIzNTk1OVowYzELMAkGA1UEBhMCVVMx
+# MB4XDTI2MDgwNTAwMDAwMFoXDTM3MTEwNDIzNTk1OVowYzELMAkGA1UEBhMCVVMx
 # FzAVBgNVBAoTDkRpZ2lDZXJ0LCBJbmMuMTswOQYDVQQDEzJEaWdpQ2VydCBTSEEy
-# NTYgUlNBNDA5NiBUaW1lc3RhbXAgUmVzcG9uZGVyIDIwMjUgMTCCAiIwDQYJKoZI
-# hvcNAQEBBQADggIPADCCAgoCggIBANBGrC0Sxp7Q6q5gVrMrV7pvUf+GcAoB38o3
-# zBlCMGMyqJnfFNZx+wvA69HFTBdwbHwBSOeLpvPnZ8ZN+vo8dE2/pPvOx/Vj8Tch
-# TySA2R4QKpVD7dvNZh6wW2R6kSu9RJt/4QhguSssp3qome7MrxVyfQO9sMx6ZAWj
-# FDYOzDi8SOhPUWlLnh00Cll8pjrUcCV3K3E0zz09ldQ//nBZZREr4h/GI6Dxb2Uo
-# yrN0ijtUDVHRXdmncOOMA3CoB/iUSROUINDT98oksouTMYFOnHoRh6+86Ltc5zjP
-# KHW5KqCvpSduSwhwUmotuQhcg9tw2YD3w6ySSSu+3qU8DD+nigNJFmt6LAHvH3KS
-# uNLoZLc1Hf2JNMVL4Q1OpbybpMe46YceNA0LfNsnqcnpJeItK/DhKbPxTTuGoX7w
-# JNdoRORVbPR1VVnDuSeHVZlc4seAO+6d2sC26/PQPdP51ho1zBp+xUIZkpSFA8vW
-# doUoHLWnqWU3dCCyFG1roSrgHjSHlq8xymLnjCbSLZ49kPmk8iyyizNDIXj//cOg
-# rY7rlRyTlaCCfw7aSUROwnu7zER6EaJ+AliL7ojTdS5PWPsWeupWs7NpChUk555K
-# 096V1hE0yZIXe+giAwW00aHzrDchIc2bQhpp0IoKRR7YufAkprxMiXAJQ1XCmnCf
-# gPf8+3mnAgMBAAGjggGVMIIBkTAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBTkO/zy
-# Me39/dfzkXFjGVBDz2GM6DAfBgNVHSMEGDAWgBTvb1NK6eQGfHrK4pBW9i/USezL
+# NTYgUlNBNDA5NiBUaW1lc3RhbXAgUmVzcG9uZGVyIDIwMjYgMTCCAiIwDQYJKoZI
+# hvcNAQEBBQADggIPADCCAgoCggIBALZ7pvLJ/s1K+NSbTGWz/TjGMPh8CQ6RucZC
+# Lv5anHzWJjF/NWJrFIhy24fcpKXlgRiky4WAawDfU3YP0BMxt9l3Dm5oCG5Z69Aq
+# EN1kgHg2epx+l+lZBcmJCcN0ASURML5uFIS80sZsDwO3BSkUxDjLJhBI+qiZP3ai
+# xAC/qEGLjsBNlLol9VZ7pfGEXiMlneJIC5/YKuizVzNFKZZEeoy/0B8Zm+nzKBgS
+# WG52lCO1w+nCg6XpCtklTJXeIg283hw7TmmsZXR+SMbjbrEOvZ3fP2VxIgeR28Y9
+# 0ZStd3F9VuA5RVynb/whITPAo9b75Zr4Ta6Mj3URm26QZYMn/FnbuTegcoRcFEZ9
+# FOqM5T6MTdtr/n74lIT/ug0eeOzmZ6QTFg33otX+bFRsIolvykE1jive4PuESaT8
+# zzVeFWDAMDtozNgLctkGD1ZjkEyZtJrLl5ya0m5doH/ScpaZCZVl6pNUOCybMc/k
+# xC6EAmSJY24L0yYKD1Nkddsnb/ItVKi/2nXpQNMu1PT5prW83vV8d67WowuUs0Hd
+# Y4H8AMLGvdL/WHEj3ZnqMqAQQP9u3Ai9t+5eQ02GDwy0ODjdzi0xlp70W+ow63/0
+# ++YDEX1M0iwgUHwbrJvfpklkZQvw3+kv3vUPItdwroczk9icflf55W1zOEKAcJVA
+# IXpcMCU9AgMBAAGjggGVMIIBkTAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBQUyWOK
+# MC7USvtulPPm40B+9ezN4jAfBgNVHSMEGDAWgBTvb1NK6eQGfHrK4pBW9i/USezL
 # TjAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwgwgZUGCCsG
 # AQUFBwEBBIGIMIGFMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2VydC5j
 # b20wXQYIKwYBBQUHMAKGUWh0dHA6Ly9jYWNlcnRzLmRpZ2ljZXJ0LmNvbS9EaWdp
@@ -365,17 +362,17 @@ notepad $report_file_name
 # dDBfBgNVHR8EWDBWMFSgUqBQhk5odHRwOi8vY3JsMy5kaWdpY2VydC5jb20vRGln
 # aUNlcnRUcnVzdGVkRzRUaW1lU3RhbXBpbmdSU0E0MDk2U0hBMjU2MjAyNUNBMS5j
 # cmwwIAYDVR0gBBkwFzAIBgZngQwBBAIwCwYJYIZIAYb9bAcBMA0GCSqGSIb3DQEB
-# CwUAA4ICAQBlKq3xHCcEua5gQezRCESeY0ByIfjk9iJP2zWLpQq1b4URGnwWBdEZ
-# D9gBq9fNaNmFj6Eh8/YmRDfxT7C0k8FUFqNh+tshgb4O6Lgjg8K8elC4+oWCqnU/
-# ML9lFfim8/9yJmZSe2F8AQ/UdKFOtj7YMTmqPO9mzskgiC3QYIUP2S3HQvHG1FDu
-# +WUqW4daIqToXFE/JQ/EABgfZXLWU0ziTN6R3ygQBHMUBaB5bdrPbF6MRYs03h4o
-# bEMnxYOX8VBRKe1uNnzQVTeLni2nHkX/QqvXnNb+YkDFkxUGtMTaiLR9wjxUxu2h
-# ECZpqyU1d0IbX6Wq8/gVutDojBIFeRlqAcuEVT0cKsb+zJNEsuEB7O7/cuvTQasn
-# M9AWcIQfVjnzrvwiCZ85EE8LUkqRhoS3Y50OHgaY7T/lwd6UArb+BOVAkg2oOvol
-# /DJgddJ35XTxfUlQ+8Hggt8l2Yv7roancJIFcbojBcxlRcGG0LIhp6GvReQGgMgY
-# xQbV1S3CrWqZzBt1R9xJgKf47CdxVRd/ndUlQ05oxYy2zRWVFjF7mcr4C34Mj3oc
-# CVccAvlKV9jEnstrniLvUxxVZE/rptb7IRE2lskKPIJgbaP5t2nGj/ULLi49xTcB
-# ZU8atufk+EMF/cWuiC7POGT75qaL6vdCvHlshtjdNXOCIUjsarfNZzCCB8MwggWr
+# CwUAA4ICAQCNxTphHp1SCt+ZrAmAfn0oQLFr0mLywSLaDXQIENoyKqxrFbJblzCV
+# P/pkXmwXOdrOpWygLzlT12os5ipDCy35RBCg2UMeApEtrfGhz45F4Wt4WGdNdIbR
+# Wt3YTYJmpR+b7lr4d7Uwn+H600u4D7RnOGf8Wj4UNgAdZkfHhHv1mx9EVh71SJel
+# cEN/oORSjXzdjfw1iZH9d8Nh/thn6hH23d+VsPAr6GAYyzSA02nXD1nYLI7Ijmiv
+# +xLCiYC41DSFYL3GhTiy0PxpawPtGRyaBVGzq+UiTfM8pD7KVyF5aQyWP4KhVGUU
+# Tnmm/RlYJoW3TiXA/+t0YcT2oRVBm3JETjajHug2AL+v5jhtKVnd3D0rbHXEu27o
+# +Q8p4sEWPMqKDB+qbceb6T/6WcwTwXmQ9lOCLLYcsQeSWmvKqzpAec9etE14jOQA
+# zLKWdE3w/TCaKtLRaRT7LCkRYVnhA2D73FLje1O5b3HR5eHs0NzU/+xX7NbEdcof
+# y0W3Wdwd1XOqtlpg/JgwtKfZM5dqO94lbUveOiJBI+xZEbGRsMNbXmMREUTgu+Oc
+# a7Y73MPWcslIx2VhkSKSXjDbD6rgg39H5Mh7QfieAIjWagkJNt68Yfim6cjEzVSi
+# LSeZfdkr5dtFPTW6jATlWJdYeeDRGCyatf8R1hSjzSvdN8yWQPT9gzCCB8MwggWr
 # oAMCAQICEAZ11rWe8bCrMOXS4EbaJDEwDQYJKoZIhvcNAQELBQAwaTELMAkGA1UE
 # BhMCVVMxFzAVBgNVBAoTDkRpZ2lDZXJ0LCBJbmMuMUEwPwYDVQQDEzhEaWdpQ2Vy
 # dCBUcnVzdGVkIEc0IENvZGUgU2lnbmluZyBSU0E0MDk2IFNIQTM4NCAyMDIxIENB
@@ -422,34 +419,34 @@ notepad $report_file_name
 # RzQgQ29kZSBTaWduaW5nIFJTQTQwOTYgU0hBMzg0IDIwMjEgQ0ExAhAGdda1nvGw
 # qzDl0uBG2iQxMA0GCWCGSAFlAwQCAQUAoIGEMBgGCisGAQQBgjcCAQwxCjAIoAKA
 # AKECgAAwGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIBCzEO
-# MAwGCisGAQQBgjcCARUwLwYJKoZIhvcNAQkEMSIEIEwm6jZgTgKl93mRaGxU+RPF
-# EtT8hYcmKZ52UCy4UHcFMA0GCSqGSIb3DQEBAQUABIICAIBIXDFpG72P9Gwx58w3
-# k3DSz6y9wMIb6cAVkoq8iwMslUmBwNnw4fnDh8C/yp732+pTE6cLSJIpJ3GmPxNY
-# wZQMLMslqwvxuIiQXKP+H6fpTVROUyb1E78p675+1oD5BE9/oM5smG/PeMZl/8x8
-# 5Ur0iQHy7AKYWB1WH2Q7ewtlxietHGY95Jthm2VYInUojmhzFPDLmBJAJU+dwi/f
-# JSjtiOKU4FEFdfnYBrhfuX5wnGESpAJVwkEZW9Uu8FFpNIFuc+CrcsA1YAntffNz
-# 2TJgP7TMYG0ziDhCuMiZnylbH/T4/kptvb9vAW+aYlS/xAkOns4moL7T+7pkYn8k
-# cx7cRRJEt2m0BV+CH8zenrQbMDI1hqGkUaeMjW2UKp8m+EHgbPsga/HeUy6fNwSg
-# EgHRDRHebCtGqqIXFVPru/TtoJL73KdXM6bIFaOzUT3F83BR1SPSbfYSS4IQM5rx
-# PvpR8wIXdXICc5wEgE4nOG2t3K9E0ZcRvbUxOAEy/RSsmm7wf0okmk07jYGftN6I
-# U42I/Rl+P2I9F5ivQVtsRlRWs5To2AZzv2/U+JZSg2W0H+thL8yOcDjbPjgR8sNI
-# NGdAKNMnMqL8LmFZFOsW+UsJgYTNiFBzMVxD77s0h6iaV45RaBl+eTsUd44c98jj
-# JMdspRIhWGu2KHkpBnugGlWSoYIDJjCCAyIGCSqGSIb3DQEJBjGCAxMwggMPAgEB
+# MAwGCisGAQQBgjcCARUwLwYJKoZIhvcNAQkEMSIEIEGcAzWBgsbo4RA93oZWY4cL
+# yssYBI/22FNOP+LpG+x8MA0GCSqGSIb3DQEBAQUABIICAAE29lNOjhl4unPchkVW
+# OsBe4EplTrmzzpkRd6+/VQ9at11Pmv1K5DEyU3xYqhqx7CyZ3N7G6hGVt1Jk8Fnh
+# 4PMAXpbp3sv5TZSVSAmj0umb7BhlgeINKpsznfaLQaArHLSygkrDED38blWfVk98
+# WRRi9/gvOF7+ImXnPetG5WwjMbwshQ8ZnzbaGCzYeLqXX0bybNlcNrQCZ+vWepft
+# EmWa9S4hJH0F/Ayg/AnrcVMT6Fgwl8EKT65XMke1TFcDfhE3azM7t426Ybx+vIev
+# UspS1hYMygA4P7hCS6xhbe1AjV0fGUu26X0zWVCHlKPRfZDVdMFkpj8bT1VVheGI
+# UQ8nTqS6/2axTXl1AQAbLPyU9qqfyyhUusGSIC+2JpO4PTNEq9yfW1qNzagKjgxK
+# qvCNN8JdUNHuEeqNGd9XwrGs3YJJUYTPVoQ1ErIS30MFDrqGM2XGV1JT1AikI6KX
+# vu8+J7fDDm7uzEPj863gd8WH/BozvC86ntgUFRpDpTIfxh3S02uKzxk2S2hWyoke
+# AyTYqXxbfNWG+E/IztdKOzbdxBM5MxIpeXkSCGUTsiieQ453mZ0mM7/5KocaBOlt
+# aXeSlCOsToc3xv10PPgKz9ucJj9e7o6NW8K4nU1GX8ExTIpr0rRvmTcZZkRDTg3H
+# eBV+52+O7NahLQeR4n+/Fjn6oYIDJjCCAyIGCSqGSIb3DQEJBjGCAxMwggMPAgEB
 # MH0waTELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDkRpZ2lDZXJ0LCBJbmMuMUEwPwYD
 # VQQDEzhEaWdpQ2VydCBUcnVzdGVkIEc0IFRpbWVTdGFtcGluZyBSU0E0MDk2IFNI
-# QTI1NiAyMDI1IENBMQIQCoDvGEuN8QWC0cR2p5V0aDANBglghkgBZQMEAgEFAKBp
-# MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTI1MDky
-# NjE1NTIyNVowLwYJKoZIhvcNAQkEMSIEIM7PeEYxOZ1aYcQ3cPw2oToQ5sNp1Twv
-# dxpJOWaoJTI5MA0GCSqGSIb3DQEBAQUABIICAG+k8vS1/n/jk2e5kWfDNZ4ZPEqR
-# hK+McYhc5yRQwkilIxg7QzicWxWpu4i7q5SAwXnFmBm3XrpywAkqJ2cJeqz79sZS
-# /XRKuMDxNTjXx7LCOZuLiEusJpaUSNpUA34gZSLxny1XoUQzemO9d4jHX5D+S3nZ
-# LRmJ3nzczmGexZYOvDcRDFP1E1u44N+rbxCPR65CGimz3JDL0D9n1eyqI9A1FLV+
-# AnAuv8VASqHSRjS8SOD1dHE/FZiaF1qC80ua2/1f/kpHISonIvD8k9ymY41JbcsT
-# 2ogYZ4To7+iSCSVbl7Rb1bN9mgnDGsezmcKbRk/7clGyrC9ef6tJuZl0RNaqsQJL
-# gNujdE7ciMNs3qke6q2IcxAx+N8XT6G5beEVGtD6j/Y5txKFFalQr/hXlo2YoAFi
-# d5rjyDjCYBP7qPYxvM0iV/OXMILRjoC+l7Q6mqXt7MZiE4On4JT757G4/7e8ZBtS
-# SMMsC6SjMeW2NDAmAVM+XIYxDYxAmuW+yd3CeNLZvtaXmPj8M4BfADaV/hskPh9R
-# 6ZW+H4iWPepngK1UqczhwZ16FafkiPBPympH9f5d7fBPnqWboneYblIDJ19izugG
-# qvdBnpYloinhwEwF5EpnN+7ZU+Nn0PTsnf0AzEBl3Qb8K4VBLcBajLt7Vx1cz64E
-# PDeHUAqnC4YfQJ4Q
+# QTI1NiAyMDI1IENBMQIQCE/cM09+RU7bww+P+ZIYNTANBglghkgBZQMEAgEFAKBp
+# MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTI2MTAw
+# OTIyMjA1OVowLwYJKoZIhvcNAQkEMSIEIDRJj4PBVc6RB28fzr44wvjjyexdrUSQ
+# j/uTiAWWAZnTMA0GCSqGSIb3DQEBAQUABIICAE4C95HXZFZ0LtW8bwJazvgtljoI
+# pEwhMUrv0JQA+IMo83SIoVqHSGFY5D0fIhqbIrUON9fo68lJanWfz14zr83zvvWO
+# LKGB2yE65vyPgXURL53IIEekalQqlHfZBPvZU8/KiAIA35rolbSfYW5v1sAoosIc
+# 64ppFR7Azw+7sqcDmqCcZvq+ezSdtnNK3wjoxxnb8JNjDCkqLkpYcZKN778O/UbX
+# +b4eteOQQlOyrkILfMyqXHjShVh1PZy51uuRR+ru/ROX+gZpwDUs0S7MREv1/m48
+# psjyjKPh6oGr2UG69uYlienRm3jtdJFa3301DZ2L0MGiSuOrlxu1ZJV9Dk0jpYrM
+# tRNdW93JDJS5zZy05WALrrUf87W68uTfXo7FYY9F6kFCtqQncwpriI/+L99CwykC
+# lxczV0IAraYXyfKvapGjQObzZfRvGdie6+eAXIlG7ogL6817xUz2EN8hEdCgrrEA
+# 7hdsQO22VkjLumEVhEFjhZrEhzY6NAdN19z2bdaDuDRrBGYmmdA57mjs2GT2KQuP
+# HIP37FX7ZfJcbfbTfcyMuv2rGayPZTSKwlTXX7zKr3WL6ZPHCgQbfpGjjmtj291W
+# K4bKZiP1CbhSeIp8ehzPdzpa9M1N35DdZjodvsL+vaoHTwpezY1wvTVAYXF6zlQj
+# Koy07hkMJwPQeH+8
 # SIG # End signature block
