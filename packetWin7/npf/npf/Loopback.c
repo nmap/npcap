@@ -430,13 +430,6 @@ NPF_NetworkClassifyInbound(
 
 	TRACE_ENTER();
 
-	if (pLoopbackFilter == NULL || pLoopbackFilter->AdapterBindingStatus != FilterRunning)
-	{
-		WARNING_DBG("pLoopbackFilter invalid: %p (AdapterBindingStatus: %d)\n",
-				pLoopbackFilter, pLoopbackFilter ? pLoopbackFilter->AdapterBindingStatus : 0);
-		return;
-	}
-
 	if (pNetBufferList == NULL || !NPF_ShouldProcess(inFixedValues, inMetaValues, &uIPv4))
 	{
 		return;
@@ -459,6 +452,13 @@ NPF_NetworkClassifyInbound(
 		return;
 	}
 
+	if (!NPF_StartUsingBinding(pLoopbackFilter, NPF_IRQL_UNKNOWN))
+	{
+		WARNING_DBG("pLoopbackFilter invalid: %p (AdapterBindingStatus: %d)\n",
+				pLoopbackFilter, pLoopbackFilter ? pLoopbackFilter->AdapterBindingStatus : 0);
+		return;
+	}
+
 	INFO_DBG("inFixedValues->layerId = %u, inMetaValues->currentMetadataValues = 0x%x, inMetaValues->ipHeaderSize = %u, inMetaValues->compartmentId = 0x%x\n",
 		inFixedValues->layerId, inMetaValues->currentMetadataValues, inMetaValues->ipHeaderSize, inMetaValues->compartmentId);
 
@@ -474,7 +474,7 @@ NPF_NetworkClassifyInbound(
 	if (status != NDIS_STATUS_SUCCESS)
 	{
 		INFO_DBG("NdisRetreatNetBufferListDataStart(bytesRetreated) [status: %#x]\n", status);
-
+		NPF_StopUsingBinding(pLoopbackFilter, NPF_IRQL_UNKNOWN);
 		TRACE_EXIT();
 		return;
 	}
@@ -489,6 +489,8 @@ NPF_NetworkClassifyInbound(
 				0);
 		bytesRetreated = 0;
 	}
+
+    NPF_StopUsingBinding(pLoopbackFilter, NPF_IRQL_UNKNOWN);
 
 	TRACE_EXIT();
 	return;
