@@ -894,6 +894,10 @@ Return Value:
 	}
 
 #ifdef HAVE_WFP_LOOPBACK_SUPPORT
+	// Release WFP resources.
+	NPF_ReleaseWFP(TRUE);
+	NPF_WFPCalloutUnregister();
+
 	// Free Loopback filter module
 	if (g_pDriverExtension->pLoopbackFilter)
 	{
@@ -911,12 +915,6 @@ Return Value:
 		NdisAcquireSpinLock(&g_pDriverExtension->FilterArrayLock);
 	}
 	NdisReleaseSpinLock(&g_pDriverExtension->FilterArrayLock);
-
-#ifdef HAVE_WFP_LOOPBACK_SUPPORT
-	// Release WFP resources.
-	NPF_ReleaseWFP(TRUE);
-	NPF_WFPCalloutUnregister();
-#endif
 
 	// Must still acquire this lock because NDIS could still be doing things with filter modules
 	// Specifically, NPF_AttachAdapter acquires this for Read.
