@@ -106,15 +106,15 @@
 
 HRESULT HrGetINetCfg(IN BOOL fGetWriteLock, IN LPCTSTR lpszAppName, OUT INetCfg** ppnc, OUT LPTSTR* lpszLockedBy);
 
-HRESULT HrReleaseINetCfg(INetCfg* pnc, BOOL fHasWriteLock);
+HRESULT HrReleaseINetCfg(IN INetCfg* pnc, IN BOOL fHasWriteLock);
 
-HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguildClass, IN LPCTSTR lpszInfFullPath);
+HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const GUID* pguildClass, IN LPCTSTR lpszInfFullPath);
 
 HRESULT HrInstallComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const GUID* pguidClass);
 
 HRESULT HrUninstallNetComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId);
 
-VOID ReleaseRef(IUnknown* punk);
+VOID ReleaseRef(IN IUnknown* punk);
 
 BOOL RestartAllBindings(INetCfg *netcfg, PCWSTR szComponentId);
 

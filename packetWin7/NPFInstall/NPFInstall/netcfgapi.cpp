@@ -288,7 +288,7 @@ HRESULT HrReleaseINetCfg(IN INetCfg* pnc, IN BOOL fHasWriteLock)
 // Notes:
 //
 
-HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguidClass, IN LPCTSTR lpszInfFullPath)
+HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN LPCTSTR szComponentId, IN const GUID* pguidClass, IN LPCTSTR lpszInfFullPath)
 {
 	TRACE_ENTER();
 
@@ -297,6 +297,7 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguidClass, IN LPC
 	TCHAR szDrive[_MAX_DRIVE];
 	TCHAR szDir[_MAX_DIR];
 	TCHAR szDirWithDrive[_MAX_DRIVE + _MAX_DIR];
+    TCHAR szComponentId_WIFI[128];
 
 	//
 	// If full path to INF has been specified, the INF
@@ -340,15 +341,17 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguidClass, IN LPC
 		// Install the network component.
 		//
 		TRACE_PRINT1("bWiFiService = %d.", bWiFiService);
-		TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
-		hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID, pguidClass);
+		TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %s.", szComponentId);
+		hr = HrInstallComponent(pnc, szComponentId, pguidClass);
 
 		if (hr == S_OK)
 		{
 			if (bWiFiService)
 			{
-				TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
-				hr = HrInstallComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, pguidClass);
+                _tcscpy_s(szComponentId_WIFI, 128, szComponentId);
+                _tcscat_s(szComponentId_WIFI, 128, NDISLWF_SUFFIX_WIFI);
+				TRACE_PRINT1("HrInstallComponent: executing, szComponentId = %s.", szComponentId_WIFI);
+				hr = HrInstallComponent(pnc, szComponentId_WIFI, pguidClass);
 
 				if (hr == S_OK)
 				{
@@ -363,7 +366,7 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguidClass, IN LPC
 				}
 				else
 				{
-					TRACE_PRINT1("HrInstallComponent: error, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+					TRACE_PRINT1("HrInstallComponent: error, szComponentId = %s.", szComponentId_WIFI);
 					// at least install the first service
 					hr = pnc->Apply();
 					if (hr != S_OK)
@@ -386,7 +389,7 @@ HRESULT HrInstallNetComponent(IN INetCfg* pnc, IN const GUID* pguidClass, IN LPC
 		}
 		else
 		{
-			TRACE_PRINT1("HrInstallComponent: error, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+			TRACE_PRINT1("HrInstallComponent: error, szComponentId = %s.", szComponentId);
 		}
 	}
 

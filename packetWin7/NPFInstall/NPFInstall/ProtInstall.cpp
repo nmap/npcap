@@ -242,7 +242,7 @@ DWORD GetWFPCalloutInfFilePath(LPTSTR lpFilename, DWORD nSize)
 // Notes:
 //
 
-HRESULT InstallSpecifiedComponent(LPCTSTR lpszInfFile, LPCTSTR lpszAppName, const GUID* pguidClass)
+HRESULT InstallSpecifiedComponent(LPCTSTR lpszInfFile, IN LPCTSTR szComponentId, LPCTSTR lpszAppName, const GUID* pguidClass)
 {
 	INetCfg* pnc;
 	LPTSTR lpszApp;
@@ -257,7 +257,7 @@ HRESULT InstallSpecifiedComponent(LPCTSTR lpszInfFile, LPCTSTR lpszAppName, cons
 		//
 		// Install the network component.
 		//
-		hr = HrInstallNetComponent(pnc, pguidClass, lpszInfFile);
+		hr = HrInstallNetComponent(pnc, szComponentId, pguidClass, lpszInfFile);
 
 		if ((hr == S_OK) || (hr == NETCFG_S_REBOOT))
 		{
@@ -291,7 +291,7 @@ HRESULT InstallSpecifiedComponent(LPCTSTR lpszInfFile, LPCTSTR lpszAppName, cons
 	return hr;
 }
 
-BOOL InstallDriver()
+BOOL InstallDriver(IN LPCTSTR szComponentId)
 {
 	TCHAR szFileFullPath[_MAX_PATH];
 	HRESULT hr = S_OK;
@@ -311,7 +311,7 @@ BOOL InstallDriver()
 			break;
 		}
 
-		hr = InstallSpecifiedComponent(szFileFullPath, APP_NAME, &GUID_DEVCLASS_NETSERVICE);
+		hr = InstallSpecifiedComponent(szFileFullPath, szComponentId, APP_NAME, &GUID_DEVCLASS_NETSERVICE);
 
 		if (hr != S_OK)
 		{
@@ -326,12 +326,13 @@ BOOL InstallDriver()
 	return SUCCEEDED(hr);
 }
 
-BOOL UninstallDriver()
+BOOL UninstallDriver(IN LPCTSTR szComponentId)
 {
 	BOOL bSucceed = TRUE;
 	INetCfg* pnc;
 	LPTSTR lpszApp;
 	HRESULT hr;
+    TCHAR szComponentId_WIFI[128];
 
 	TRACE_ENTER();
 
@@ -340,8 +341,8 @@ BOOL UninstallDriver()
 	if (hr == S_OK)
 	{
 		TRACE_PRINT1("bWiFiService = %d.", bWiFiService);
-		TRACE_PRINT1("HrUninstallNetComponent: executing, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
-		hr = HrUninstallNetComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID);
+		TRACE_PRINT1("HrUninstallNetComponent: executing, szComponentId = %s.", szComponentId);
+		hr = HrUninstallNetComponent(pnc, szComponentId);
 
 		if (hr != S_OK)
 		{
@@ -354,8 +355,10 @@ BOOL UninstallDriver()
 
 		if (bWiFiService)
 		{
-			TRACE_PRINT1("HrUninstallNetComponent: executing, szComponentId = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
-			hr = HrUninstallNetComponent(pnc, NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+            _tcscpy_s(szComponentId_WIFI, 128, szComponentId);
+            _tcscat_s(szComponentId_WIFI, 128, NDISLWF_SUFFIX_WIFI);
+			TRACE_PRINT1("HrUninstallNetComponent: executing, szComponentId = %s.", szComponentId_WIFI);
+			hr = HrUninstallNetComponent(pnc, szComponentId_WIFI);
 
 			if (hr != S_OK)
 			{
@@ -388,11 +391,12 @@ BOOL UninstallDriver()
 	return bSucceed;
 }
 
-BOOL RenableBindings()
+BOOL RenableBindings(IN LPCTSTR szComponentId)
 {
 	CComPtr<INetCfg> netcfg;
 	CComPtr<INetCfgLock> lock;
 	HRESULT hr;
+    TCHAR szComponentId_WIFI[128];
 
 	TRACE_ENTER();
 
@@ -404,18 +408,20 @@ BOOL RenableBindings()
 		return 1;
 	}
 
-	BOOL bSucceed = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID, APP_NAME);
+	BOOL bSucceed = ConnectToNetCfg(szComponentId, APP_NAME);
 	if (!bSucceed)
 	{
-		TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID);
+		TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %s.", szComponentId);
 	}
 
 	if (bWiFiService)
 	{
-		bSucceed = ConnectToNetCfg(NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI, APP_NAME);
+        _tcscpy_s(szComponentId_WIFI, 128, szComponentId);
+        _tcscat_s(szComponentId_WIFI, 128, NDISLWF_SUFFIX_WIFI);
+		bSucceed = ConnectToNetCfg(szComponentId_WIFI, APP_NAME);
 		if (!bSucceed)
 		{
-			TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %s.", NDISLWF_SERVICE_PNP_DEVICE_ID_WIFI);
+			TRACE_PRINT1("ConnectToNetCfg: error, PNP Device ID = %s.", szComponentId_WIFI);
 		}
 	}
 

@@ -124,9 +124,9 @@ extern "C"
 {
 #endif
 
-	BOOL InstallDriver();
-	BOOL UninstallDriver();
-	BOOL RenableBindings();
+	BOOL InstallDriver(IN LPCTSTR szComponentId);
+	BOOL UninstallDriver(IN LPCTSTR szComponentId);
+	BOOL RenableBindings(IN LPCTSTR szComponentId);
 
 #ifdef __cplusplus
 }

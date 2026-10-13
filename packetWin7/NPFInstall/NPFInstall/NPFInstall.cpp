@@ -106,6 +106,7 @@ _T("  -kill_proc_soft\t: Gracefully terminate all the processes that are still u
 _T("  -kill_proc_polite\t: Politely terminate all the processes that are still using Npcap DLLs (wait for 15 seconds for GUI processes to close themselves, CLI processes will still be terminiated immediatelly)\n") \
 _T("  -c\t\t\t: Clear all the driverstore cache for the driver\n") \
 _T("  -n\t\t\t: Hide this window when executing the command\n") \
+_T("  -p\t\t\t: Use old component ID, needed for 1.79 and 1.30 drivers\n") \
 _T("  -h\t\t\t: Print this help summary page\n") \
 _T("\n") \
 _T("EXAMPLES:\n") \
@@ -129,6 +130,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	BOOL bSuccess = FALSE;
 	BOOL bNoWindow = FALSE;
 	int nStatus = 0;
+    TCHAR szComponentId[128] = NDISLWF_SERVICE_PNP_DEVICE_ID;
 
 	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (https://npcap.com)"));
 	bWiFiService = FALSE;
@@ -148,6 +150,10 @@ int _tmain(int argc, _TCHAR* argv[])
 				// -n
 				bNoWindow = TRUE;
 			}
+            else if (argv[i][1] == _T('p') && argv[i][2] == _T('\0')) {
+                // -p
+                _tcscpy_s(szComponentId, 128, _T("INSECURE_NPCAP"));
+            }
 			else if (argv[i][1] != _T('\0')) {
 				if (theArg != NULL) {
 					// only one command at a time!
@@ -183,10 +189,10 @@ int _tmain(int argc, _TCHAR* argv[])
 				BOOL first_time = TRUE;
 				BOOL try_again = FALSE;
 				// Make sure NetCfg doesn't keep an old driver around
-				UninstallDriver(); // Don't care about return value
+				UninstallDriver(szComponentId); // Don't care about return value
 				do {
 					try_again = FALSE;
-					if (InstallDriver())
+					if (InstallDriver(szComponentId))
 					{
 						_tprintf(_T("%s has been successfully installed!\n"),
 								bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);
@@ -257,7 +263,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			break;
 		case _T('u'):
 			if (theArg[2] == _T('\0')) {
-				bSuccess = UninstallDriver();
+				bSuccess = UninstallDriver(szComponentId);
 				if (bSuccess)
 				{
 					_tprintf(_T("%s has been successfully uninstalled!\n"),
@@ -310,7 +316,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			break;
 		case _T('r'):
 			if (theArg[2] == _T('\0')) {
-				if (RenableBindings())
+				if (RenableBindings(szComponentId))
 				{
 					_tprintf(_T("The bindings of %s have been successfully restarted!\n"),
 							bWiFiService ? NPF_SERVICE_DESC_TCHAR_WIFI : NPF_SERVICE_DESC_TCHAR);

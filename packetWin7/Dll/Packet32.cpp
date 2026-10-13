@@ -1253,31 +1253,6 @@ BOOL PacketStartService()
 	}
 	else
 	{
-		// check if the NPF registry key is already present
-		// this means that the driver is already installed and that we don't need to call PacketInstallDriver
-		KeyRes = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-			SERVICES_REG_KEY NPF_DRIVER_NAME,
-			0,
-			KEY_READ | KEY_WOW64_32KEY,
-			&PathKey);
-
-		if (KeyRes != ERROR_SUCCESS)
-		{
-			Result = FALSE;
-#ifdef NPCAP_PACKET_INSTALL_SERVICE
-			TRACE_PRINT("NPF registry key not present, trying to install the driver.");
-			Result = InstallDriver();
-#endif
-		}
-		else
-		{
-			TRACE_PRINT("NPF registry key present, driver is installed.");
-			Result = TRUE;
-			RegCloseKey(PathKey);
-		}
-
-		if (Result)
-		{
 			TRACE_PRINT("Trying to see if the NPF service is running...");
 			svcHandle = OpenServiceA(scmHandle, NPF_DRIVER_NAME, SERVICE_START | SERVICE_QUERY_STATUS);
 
@@ -1340,13 +1315,6 @@ BOOL PacketStartService()
 				TRACE_PRINT1("OpenService failed! Error=%8.8x", error);
 				Result = FALSE;
 			}
-		}
-		else
-		{
-			error = GetLastError();
-			TRACE_PRINT1("InstallDriver failed! Error=%8.8x", error);
-			Result = FALSE;
-		}
 	}
 
 	if (scmHandle != NULL) CloseServiceHandle(scmHandle);
