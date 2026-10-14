@@ -1227,11 +1227,9 @@ static
 BOOL PacketStartService()
 {
 	DWORD error = ERROR_SUCCESS;
-	BOOL Result;
+	BOOL Result = TRUE;
 	SC_HANDLE svcHandle = NULL;
 	SC_HANDLE scmHandle = NULL;
-	LONG KeyRes;
-	HKEY PathKey;
 	SERVICE_STATUS SStat;
 	BOOL QuerySStat;
 	static BOOL ServiceStartAttempted = FALSE;
