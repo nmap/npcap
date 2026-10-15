@@ -130,6 +130,36 @@ extern AirpcapFreeDeviceListHandler g_PAirpcapFreeDeviceList;
 #endif /* HAVE_AIRPCAP_API */
 
 /*!
+  \brief Wrapper for GetAdaptersAddresses() that also reports adapters in other network compartments.
+  \return ERROR_SUCCESS on success, otherwise a Win32 error code, same as GetAdaptersAddresses().
+
+  A plain GetAdaptersAddresses() call only reports adapters in the caller's own network
+  compartment. WSL in mirrored networking mode puts its vEthernet adapter in a compartment of
+  its own, so we never listed it even though we are bound to it. See #854.
+  GAA_FLAG_INCLUDE_ALL_COMPARTMENTS is documented as reserved for future use, but it works; if
+  a system rejects it, fall back to a plain call.
+*/
+ULONG PacketGetAdaptersAddresses(_In_ ULONG Family, _In_ ULONG Flags, _Out_writes_bytes_to_opt_(*pBufLen, *pBufLen) PIP_ADAPTER_ADDRESSES pAddresses, _Inout_ PULONG pBufLen)
+{
+	static BOOL bTryAllCompartments = TRUE;
+	ULONG RetVal;
+
+	if (bTryAllCompartments)
+	{
+		RetVal = GetAdaptersAddresses(Family, Flags | GAA_FLAG_INCLUDE_ALL_COMPARTMENTS, NULL, pAddresses, pBufLen);
+		if (RetVal != ERROR_INVALID_PARAMETER)
+		{
+			return RetVal;
+		}
+
+		TRACE_PRINT("PacketGetAdaptersAddresses: GAA_FLAG_INCLUDE_ALL_COMPARTMENTS not supported");
+		bTryAllCompartments = FALSE;
+	}
+
+	return GetAdaptersAddresses(Family, Flags, NULL, pAddresses, pBufLen);
+}
+
+/*!
   \brief Adds an entry to the adapter description list.
   \return If the function succeeds, the return value is nonzero.
 
@@ -287,14 +317,14 @@ static BOOLEAN PacketGetAdaptersNPF()
 	for (Iterations = 0; Iterations < ADAPTERS_ADDRESSES_MAX_TRIES; Iterations++)
 	{
 
-		RetVal = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_INTERFACES | // Get everything
+		RetVal = PacketGetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_INTERFACES | // Get everything
 			GAA_FLAG_SKIP_DNS_INFO | // Undocumented, reported to help avoid errors on Win10 1809
 			// We don't use any of these features:
 			GAA_FLAG_SKIP_DNS_SERVER |
 			GAA_FLAG_SKIP_UNICAST | // We don't need any address info, just names
 			GAA_FLAG_SKIP_ANYCAST |
 			GAA_FLAG_SKIP_MULTICAST |
-			GAA_FLAG_SKIP_FRIENDLY_NAME, NULL, AdBuffer, &BufLen);
+			GAA_FLAG_SKIP_FRIENDLY_NAME, AdBuffer, &BufLen);
 		if (RetVal == ERROR_BUFFER_OVERFLOW)
 		{
 			TRACE_PRINT1("PacketGetAdaptersNPF: GetAdaptersAddresses Too small buffer (need %u)", BufLen);
