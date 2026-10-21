@@ -1,3 +1,10 @@
+## Npcap 1.90 [2026-10-21]
+
+* Fix an incompatibility between NPFInstall.exe and the older drivers installed
+  on Windows 7, 8, and 8.1. Those drivers still use the `INSECURE_NPCAP`
+  ComponentID and will not install with the `nmap_npcap` ID. A symptom is the
+  installation failing with error 0x800f0203.
+
 ## Npcap 1.89 [2026-09-12]
 
 * Fixed a crash encountered on some systems when upgrading, due to NDIS calling

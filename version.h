@@ -110,11 +110,11 @@
  !define /**/ WINPCAP_MINOR				1
 /* WINPCAP_REV should be less than 256 to fit in UCHAR */
 #define /*
- !define /**/ WINPCAP_REV				89
+ !define /**/ WINPCAP_REV				90
 #define /*
- !define /**/ WINPCAP_BUILD				911
+ !define /**/ WINPCAP_BUILD				1020
 #define /*
- !define /**/ WINPCAP_VER_STRING		"1.89"
+ !define /**/ WINPCAP_VER_STRING		"1.90"
 #define /*
  !define /**/ NPCAP_SDK_VERSION "1.17"
 
