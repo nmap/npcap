@@ -1,3 +1,7 @@
+## Npcap SDK 1.17 [2026-10-21]
+
+* Upgraded libpcap to 1.10.7.
+
 ## Npcap SDK 1.16 [2026-01-07]
 
 * Upgraded libpcap to 1.10.6.

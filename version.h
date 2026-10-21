@@ -116,7 +116,7 @@
 #define /*
  !define /**/ WINPCAP_VER_STRING		"1.89"
 #define /*
- !define /**/ NPCAP_SDK_VERSION "1.16"
+ !define /**/ NPCAP_SDK_VERSION "1.17"
 
 #define WINPCAP_COMPANY_NAME 			"Nmap Software LLC"
 
