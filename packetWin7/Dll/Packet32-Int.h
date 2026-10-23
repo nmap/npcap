@@ -110,6 +110,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <ntddndis.h>
+#include <iphlpapi.h>
 
 #define ADAPTERS_ADDRESSES_INITIAL_BUFFER_SIZE 15000
 #define ADAPTERS_ADDRESSES_MAX_TRIES 3
@@ -169,6 +170,8 @@ DWORD PacketPopulateAdaptersInfoList();
 _Success_(return != INVALID_HANDLE_VALUE)
 _Must_inspect_result_
 HANDLE PacketGetAdapterHandle(_In_ PCCH AdapterNameA, _In_ ULONG NpfOpenFlags);
+
+ULONG PacketGetAdaptersAddresses(_In_ ULONG Family, _In_ ULONG Flags, _Out_writes_bytes_to_opt_(*pBufLen, *pBufLen) PIP_ADAPTER_ADDRESSES pAddresses, _Inout_ PULONG pBufLen);
 
 static inline VOID InterlockedMax(PULONG Location, ULONG NewValue)
 {
