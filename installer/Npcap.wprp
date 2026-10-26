@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Windows Performance Recorder profile for collecting an Npcap user-mode
+  trace. wpr.exe is part of Windows 8 and later, so nothing needs to be
+  installed to use it:
+
+      wpr -start Npcap.wprp!Npcap -filemode
+      (reproduce the problem)
+      wpr -stop npcap.etl
+
+  Submit npcap.etl with the report, or convert it to text first with the
+  in-box tracerpt:
+
+      tracerpt npcap.etl -o npcap.csv -of CSV -y
+
+  The Npcap profile records everything. The NpcapNoScope profile omits the
+  function entry and exit events, which account for most of the volume.
+
+  The provider is named "Npcap", but Windows Performance Recorder resolves
+  provider names only for providers registered with the system, so its GUID
+  is given here instead. That GUID is the standard hash of the provider name
+  and must be kept in step with packetWin7\Dll\npcap_trace.c.
+-->
+<WindowsPerformanceRecorder Version="1.0">
+  <Profiles>
+
+    <EventCollector Id="EC_Npcap" Name="NpcapCollector">
+      <BufferSize Value="64"/>
+      <Buffers Value="64"/>
+    </EventCollector>
+
+    <!-- Level 5 (Verbose): every event, function entry and exit included. -->
+    <EventProvider Id="EP_Npcap_Verbose" Name="5fed140c-c8a2-5a73-7b61-c3f3bbb00b48" Level="5"/>
+
+    <!-- Level 4 (Information): messages only. -->
+    <EventProvider Id="EP_Npcap_Info" Name="5fed140c-c8a2-5a73-7b61-c3f3bbb00b48" Level="4"/>
+
+    <Profile Id="Npcap.Verbose.File" Name="Npcap" Description="Npcap user-mode trace"
+             LoggingMode="File" DetailLevel="Verbose">
+      <Collectors>
+        <EventCollectorId Value="EC_Npcap">
+          <EventProviders>
+            <EventProviderId Value="EP_Npcap_Verbose"/>
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+
+    <Profile Id="Npcap.Verbose.Memory" Name="Npcap" Description="Npcap user-mode trace"
+             LoggingMode="Memory" DetailLevel="Verbose" Base="Npcap.Verbose.File"/>
+
+    <Profile Id="NpcapNoScope.Verbose.File" Name="NpcapNoScope" Description="Npcap user-mode trace, messages only"
+             LoggingMode="File" DetailLevel="Verbose">
+      <Collectors>
+        <EventCollectorId Value="EC_Npcap">
+          <EventProviders>
+            <EventProviderId Value="EP_Npcap_Info"/>
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+
+    <Profile Id="NpcapNoScope.Verbose.Memory" Name="NpcapNoScope" Description="Npcap user-mode trace, messages only"
+             LoggingMode="Memory" DetailLevel="Verbose" Base="NpcapNoScope.Verbose.File"/>
+
+  </Profiles>
+</WindowsPerformanceRecorder>
