@@ -77,6 +77,7 @@
 #include "LoopbackInstall.h"
 #include "CalloutInstall.h"
 #include "DriverStoreClear.h"
+#include "GroupAccess.h"
 #include "RegUtil.h"
 #include "ProcessUtil.h"
 #include <Netcfgx.h>
@@ -96,6 +97,9 @@ _T("  -u\t\t\t: Uninstall the LWF driver\n") \
 _T("  -u2\t\t\t: Uninstall the LWF driver (with Wi-Fi support)\n") \
 _T("  -iw\t\t\t: Install the WFP callout driver\n") \
 _T("  -uw\t\t\t: Uninstall the WFP callout driver\n") \
+_T("  -ia\t\t\t: Install admin_only device class ACL\n") \
+_T("  -ip\t\t\t: Install permissive device class ACL\n") \
+_T("  -up\t\t\t: Revert to admin_only device class ACL\n") \
 _T("  -il\t\t\t: Install \"Npcap loopback adapter\"\n") \
 _T("  -ul\t\t\t: Uninstall \"Npcap loopback adapter\"\n") \
 _T("  -r\t\t\t: Restart all bindings\n") \
@@ -129,12 +133,14 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	BOOL bSuccess = FALSE;
 	BOOL bNoWindow = FALSE;
+	BOOL bAdminOnly = FALSE;
 	int nStatus = 0;
     TCHAR szComponentId[128] = NDISLWF_SERVICE_PNP_DEVICE_ID;
 
 	SetConsoleTitle(_T("NPFInstall for Npcap ") _T(WINPCAP_VER_STRING) _T(" (https://npcap.com)"));
 	bWiFiService = FALSE;
 	PTSTR theArg = NULL;
+	DWORD err = 0;
 
 	if (argc <= 1 || argc > 3)
 	{
@@ -250,6 +256,17 @@ int _tmain(int argc, _TCHAR* argv[])
 							nStatus = err ? err : 1;
 						}
 						break;
+					case _T('a'):
+						bAdminOnly = TRUE;
+					case _T('p'):
+						if (!ConfigureNpcapUsersSecurity(&err, bAdminOnly))
+						{
+							_tprintf(_T("Error configuring security for the Npcap device class: %08x"),
+								err);
+							nStatus = err;
+						}
+
+						break;
 					default:
 						_tprintf(STR_INVALID_PARAMETER);
 						nStatus = -1;
@@ -302,6 +319,9 @@ int _tmain(int argc, _TCHAR* argv[])
 							_tprintf(_T("Npcap WFP callout driver has failed to be uninstalled.\n"));
 							nStatus = err ? err : 1;
 						}
+						break;
+					case _T('p'):
+						nStatus = DeleteAURemovalTask() ? 1 : -1;
 						break;
 					default:
 						_tprintf(STR_INVALID_PARAMETER);

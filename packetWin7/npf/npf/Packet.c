@@ -234,14 +234,11 @@ DriverEntry(
 	UNICODE_STRING parametersPath;
 	NTSTATUS Status = STATUS_SUCCESS;
 	// https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/sddl-for-device-objects
+	/* This SDDL is the default access control for the Npcap device, which
+	 * allows full access only to SYSTEM and BUILTIN\Administrators. The
+	 * installer overrides this for the Npcap device class to also allow GRGW
+	 * access to the Npcap Users local group. */
 #define SDDL_ALLOW_ALL_SYSTEM_ADMIN L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"
-#ifndef NPCAP_READ_ONLY
-	UNICODE_STRING sddl = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN L"(A;;GRGW;;;WD)");
-#else
-	// For convenience and clarity, deny write access (GW) here. In reality, we
-	// remove any code that injects packets in this configuration
-	UNICODE_STRING sddl = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN L"(A;;GR;;;WD)");
-#endif
 	UNICODE_STRING sddl_admin_only = RTL_CONSTANT_STRING(SDDL_ALLOW_ALL_SYSTEM_ADMIN);
 	const GUID guidClassNPF = { 0x26e0d1e0L, 0x8189, 0x12e0, { 0x99, 0x14, 0x08, 0x00, 0x22, 0x30, 0x19, 0x04 } };
 	UNICODE_STRING AdapterName = RTL_CONSTANT_STRING(DEVICE_PATH_PREFIX NPF_DRIVER_NAME_WIDECHAR);
@@ -283,12 +280,6 @@ DriverEntry(
 	Status = RtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE,
 			parametersPath.Buffer);
 	if (NT_SUCCESS(Status)) {
-		// Get the AdminOnly option, if AdminOnly=1, devices will be created with the safe SDDL, to make sure only Administrators can use Npcap driver.
-		// If the registry key doesn't exist, we view it as AdminOnly=0, so no protect to the driver access.
-		NDIS_STRING AdminOnlyRegValueName = NDIS_STRING_CONST("AdminOnly");
-		g_pDriverExtension->bAdminOnlyMode = !!NPF_GetRegistryOption_Integer(&parametersPath, &AdminOnlyRegValueName);
-		INFO_DBG("g_AdminOnlyMode = %lu\n", g_pDriverExtension->bAdminOnlyMode);
-
 		// Get the DltNull option, if DltNull=1, loopback traffic will be DLT_NULL/DLT_LOOP style, including captured and sent packets.
 		// If the registry key doesn't exist, we view it as DltNull=0, so loopback traffic are Ethernet packets.
 		NDIS_STRING DltNullRegValueName = NDIS_STRING_CONST("DltNull");
@@ -360,7 +351,7 @@ DriverEntry(
 
 	// Create the "NPCAP" device itself:
 	Status = IoCreateDeviceSecure(DriverObject, sizeof(PVOID), &AdapterName, FILE_DEVICE_UNKNOWN,
-			FILE_DEVICE_SECURE_OPEN, FALSE, (g_pDriverExtension->bAdminOnlyMode ? &sddl_admin_only : &sddl), (LPCGUID)&guidClassNPF, &g_pDriverExtension->pNpcapDeviceObject);
+			FILE_DEVICE_SECURE_OPEN, FALSE, &sddl_admin_only, (LPCGUID)&guidClassNPF, &g_pDriverExtension->pNpcapDeviceObject);
 	if (!NT_SUCCESS(Status))
 	{
 		ERROR_DBG("IoCreateDevice failed: %#08x\n", Status);
@@ -2030,8 +2021,6 @@ static NTSTATUS funcBIOCGETINFO(_In_ POPEN_INSTANCE pOpen,
 					| NPF_CONFIG_INJECT
 #endif
 				);
-			if (g_pDriverExtension->bAdminOnlyMode)
-				ulTmp |= NPF_CONFIG_ADMINONLY;
 			if (g_pDriverExtension->bDltNullMode)
 				ulTmp |= NPF_CONFIG_DLTNULL;
 #ifdef HAVE_DOT11_SUPPORT

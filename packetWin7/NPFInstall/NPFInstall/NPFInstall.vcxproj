@@ -577,6 +577,8 @@
   <ItemGroup>
     <ClCompile Include="CalloutInstall.cpp" />
     <ClCompile Include="DriverStoreClear.cpp" />
+    <ClCompile Include="GroupAccess.cpp" />
+    <ClCompile Include="SchedTask.cpp" />
     <ClCompile Include="LoopbackInstall.cpp" />
     <ClCompile Include="LoopbackRecord.cpp" />
     <ClCompile Include="LoopbackRename.cpp" />
@@ -590,6 +592,8 @@
   <ItemGroup>
     <ClInclude Include="CalloutInstall.h" />
     <ClInclude Include="DriverStoreClear.h" />
+    <ClInclude Include="GroupAccess.h" />
+    <ClInclude Include="SchedTask.h" />
     <ClInclude Include="LoopbackInstall.h" />
     <ClInclude Include="LoopbackRecord.h" />
     <ClInclude Include="LoopbackRename.h" />
