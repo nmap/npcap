@@ -109,6 +109,19 @@
                 elevation, a helper binary, <literal>NpcapHelper.exe</literal>,
                 is used to request elevation for each process that opens a
                 capture handle.
+            </para>
+            <para>
+                We recommend enabling this option, particularly on multi-user
+                systems. Npcap is a kernel-mode driver exposing a powerful API
+                for capturing and injecting raw network traffic. Allowing
+                non-administrative users to access this functionality enables
+                them to monitor network traffic, transmit arbitrary packets, and
+                consume substantial system resources, including kernel memory,
+                network bandwidth, and CPU time. Misuse of these capabilities,
+                whether accidental or deliberate, can affect network performance
+                and system stability. Administrator-only mode helps mitigate
+                these risks by restricting Npcap access to trusted, authorized
+                users.
             </para></listitem>
           </varlistentry>
 
