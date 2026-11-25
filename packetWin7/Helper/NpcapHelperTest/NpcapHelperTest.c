@@ -402,6 +402,8 @@ int main(int argc, char* argv[])
 	char SymbolicLink1[BUFSIZE] = "\\\\.\\Global\\NPCAP_{14AFDBFA-FD9E-48D4-8FF5-C7FD0EB924A4}";
 	char SymbolicLink2[BUFSIZE] = "\\\\.\\Global\\NPCAP_{14AFDBFA-FD9E-48D4-1111-C7FD0EB924A5}";
 
+	NpcapTraceRegister();
+
 	//g_DllHandle = DllHandle;
 
 	// NpcapHelper Initialization, used for accessing the driver with Administrator privilege.
@@ -439,6 +441,7 @@ int main(int argc, char* argv[])
 		NPcapStopHelper();
 	}
 
+	NpcapTraceUnregister();
 	return 0;
 }
 
