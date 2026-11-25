@@ -1,5 +1,6 @@
-PCAP_PATH = ../../lib
-CFLAGS = -g -O -mno-cygwin -I ../../include
+CYGWIN_FLAGS = -mno-cygwin
+PCAP_PATH = ../../Lib$(LIBARCH)
+CFLAGS = -g -O $(CYGWIN_FLAGS) -I ../../Include
 
 OBJS = pktdump_ex.o
 LIBS = -L ${PCAP_PATH} -lwpcap
